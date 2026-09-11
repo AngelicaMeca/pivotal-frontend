@@ -1,14 +1,14 @@
-"use client";
-
-import { motion } from "framer-motion";
 import Container from "./Container";
+import Globe from "./Globe";
+import MarketSegments from "./MarketSegments";
+import Reveal from "./Reveal";
 import SectionHeading from "./SectionHeading";
-import Reveal, { staggerContainer, staggerItem } from "./Reveal";
-import { marketSegments } from "@/lib/content";
 
+// Server component so the globe's land data stays on the server; only the
+// animated segment cards run on the client.
 export default function Market() {
   return (
-    <section className="border-b border-cocoa/10 bg-cream py-24 md:py-32">
+    <section className="overflow-hidden border-b border-cocoa/10 bg-cream pt-24 md:pt-32">
       <Container>
         <Reveal>
           <SectionHeading
@@ -19,33 +19,10 @@ export default function Market() {
           />
         </Reveal>
 
-        <motion.div
-          className="mt-16 grid grid-cols-1 gap-6 md:grid-cols-2"
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, margin: "-80px" }}
-        >
-          {marketSegments.map((segment) => (
-            <motion.div
-              key={segment.index}
-              variants={staggerItem}
-              whileHover={{ y: -6 }}
-              transition={{ type: "spring", stiffness: 300, damping: 22 }}
-              className="rounded-[28px] border border-clay/20 bg-clay/[0.05] p-8 backdrop-blur-md hover:border-clay/30 hover:bg-clay/[0.08]"
-            >
-              <span className="font-mono text-xs tnum text-clay">
-                {segment.index}
-              </span>
-              <h3 className="mt-4 text-xl font-semibold text-cocoa">
-                {segment.name}
-              </h3>
-              <p className="mt-3 text-sm leading-relaxed text-olive">
-                {segment.description}
-              </p>
-            </motion.div>
-          ))}
-        </motion.div>
+        <MarketSegments />
+
+        {/* Rises from the bottom edge of the section, which crops it */}
+        <Globe className="mt-20 md:mt-28" />
       </Container>
     </section>
   );
