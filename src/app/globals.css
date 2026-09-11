@@ -1,26 +1,630 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-cocoa: #2b1c18;
+  --color-brown: #7d5545;
+  --color-clay: #c18477;
+  --color-cream: #f1dccb;
+  --color-olive: #7c8465;
+  /* Olive lifted toward cream: same hue, readable as small text on cocoa */
+  --color-olive-soft: color-mix(in srgb, #7c8465 55%, #f1dccb);
+
+  --font-sans: var(--font-archivo);
+  --font-mono: var(--font-plex-mono);
+  --font-serif: var(--font-newsreader);
+
+  --breakpoint-3xl: 1920px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  --grid-line: color-mix(in srgb, var(--color-cocoa) 8%, transparent);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-cream);
+  color: var(--color-cocoa);
+  font-family: var(--font-sans);
+}
+
+::selection {
+  background: var(--color-clay);
+  color: var(--color-cocoa);
+}
+
+/* Swiss grid backdrop: faint vertical rules, no gradients of any kind */
+.swiss-grid-bg {
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--grid-line) 0,
+    var(--grid-line) 1px,
+    transparent 1px,
+    transparent calc(100% / 12)
+  );
+}
+
+.swiss-grid-bg-dark {
+  --grid-line: color-mix(in srgb, var(--color-cream) 8%, transparent);
+}
+
+/* Hard, instant-fill button interaction — never opacity fade */
+.fill-btn {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.fill-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateY(101%);
+  transition: transform 0.22s cubic-bezier(0.65, 0, 0.35, 1);
+  z-index: -1;
+}
+
+.fill-btn:hover::before,
+.fill-btn:focus-visible::before {
+  transform: translateY(0);
+}
+
+.fill-btn-clay::before {
+  background: var(--color-clay);
+}
+
+.fill-btn-cocoa::before {
+  background: var(--color-cocoa);
+}
+
+.fill-btn-cream::before {
+  background: var(--color-cream);
+}
+
+.fill-btn-olive::before {
+  background: var(--color-olive);
+}
+
+/* Tabular numerals for stat blocks and index numbers */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 32s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee {
+    animation: none;
+  }
+}
+
+/* Scroll-driven media expansion */
+.scroll-expand {
+  position: relative;
+  width: 100%;
+}
+
+.scroll-expand--scroller {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  overscroll-behavior: contain;
+}
+
+.scroll-expand--scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.scroll-expand__track {
+  position: relative;
+  width: 100%;
+}
+
+.scroll-expand__stage {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  overflow: hidden;
+  --se-title-size: 4rem;
+  /* The stage can be transparent and sit over other content; only the
+     visible frame (clip-path also clips hit testing) takes the pointer. */
+  pointer-events: none;
+}
+
+.scroll-expand__frame {
+  position: absolute;
+  inset: 0;
+  clip-path: inset(21% 29% 21% 29% round 24px);
+  will-change: clip-path;
+  pointer-events: auto;
+}
+
+.scroll-expand__media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  will-change: transform;
+  transform-origin: center;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.scroll-expand__scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  /* Overlay copy sits centred, so the middle is darkened too rather than
+     left clear the way a media-only scrim would. */
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--color-cocoa) 92%, transparent),
+    color-mix(in srgb, var(--color-cocoa) 66%, transparent) 45%,
+    color-mix(in srgb, var(--color-cocoa) 82%, transparent)
+  );
+}
+
+.scroll-expand__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  /* Percentage padding resolves against width on every side, so the vertical
+     figure is the smaller one: the pinned stage has height to spare across. */
+  padding: 3.5% 6%;
+  opacity: 0;
+  will-change: opacity, transform;
+}
+
+.scroll-expand__title {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0 6%;
+  text-align: center;
+  font-family: var(--font-serif);
+  font-size: var(--se-title-size);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: var(--color-cream);
+  text-shadow: 0 2px 24px rgba(43, 28, 24, 0.55);
+  pointer-events: none;
+  will-change: opacity, transform;
+}
+
+.scroll-expand__hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 1.25rem;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: color-mix(in srgb, var(--color-cream) 65%, transparent);
+  pointer-events: none;
+  will-change: opacity, transform;
+}
+
+/* Section held in place while the next one scrolls over it. --pin-top is
+   set by PinUntilCovered. Keep the query in step with useCompactLayout in
+   Product.tsx: below it the product section flows normally and nothing
+   should pin. */
+/* Veil over the last screenful of a pinned block, which is exactly what is
+   on screen while it is held. Opacity is driven by PinUntilCovered. */
+.cover-pin__veil {
+  display: none;
+}
+
+@media (min-width: 1024px) and (min-height: 700px) {
+  .cover-pin {
+    position: sticky;
+    top: var(--pin-top, 0px);
+  }
+
+  .cover-pin__veil {
+    display: block;
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    height: 100vh;
+    /* Above the open product card (z-30) inside the pinned block; the next
+       section sits outside that block and still paints over the veil. */
+    z-index: 40;
+    pointer-events: none;
+    opacity: 0;
+    background: color-mix(in srgb, var(--color-cocoa) 70%, transparent);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+}
+
+/* Text running along an SVG curve, looped end to end */
+.text-loop {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.text-loop-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.text-loop-text,
+.text-loop-measure {
+  font-family: var(--font-mono);
+}
+
+.text-loop-text {
+  user-select: none;
+}
+
+/* Sizes the repetitions; never painted */
+.text-loop-measure {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Accordion of content panels: the open one widens, the rest tilt away */
+.accordion-gallery {
+  --ag-accent: #ffffff;
+  --ag-overlay: #060010;
+  --ag-gap: 10px;
+  --ag-radius: 16px;
+  --ag-pad: 28px;
+  --ag-height: 460px;
+  --ag-media-size: 320px;
+  --ag-content-w: 320px;
+
+  display: flex;
+  gap: var(--ag-gap);
+  width: 100%;
+  height: var(--ag-height);
+  perspective: 1400px;
+}
+
+.ag-panel {
+  --ag-dim: 0.35;
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: var(--ag-radius);
+  cursor: pointer;
+  outline: none;
+  transform-style: preserve-3d;
+  box-shadow: 0 10px 30px -18px rgba(0, 0, 0, 0.8);
+  will-change: flex-grow, transform;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ag-panel:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--ag-accent),
+    0 10px 30px -18px rgba(0, 0, 0, 0.8);
+}
+
+.ag-panel__frame {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.ag-panel__media {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--ag-media-size);
+  height: 100%;
+  will-change: transform;
+}
+
+.ag-panel__overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, transparent 40%, color-mix(in srgb, var(--ag-overlay) 70%, transparent) 100%),
+    color-mix(in srgb, var(--ag-overlay) calc(var(--ag-dim) * 100%), transparent);
+}
+
+.ag-panel__content {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: var(--ag-pad);
+}
+
+.ag-panel__detail {
+  display: flex;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.ag-panel__bar {
+  flex: 0 0 auto;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--ag-accent);
+  opacity: 0;
+}
+
+/* Fixed at the open panel's width: collapsed panels clip it, nothing reflows */
+.ag-panel__text {
+  flex: 0 0 auto;
+  width: calc(var(--ag-content-w) - 17px);
+  opacity: 0;
+}
+
+/* Line art in the media layer: upper part of the panel, clear of the copy */
+.tech-art {
+  position: absolute;
+  top: 8%;
+  left: 50%;
+  width: min(70%, 300px);
+  transform: translateX(-50%);
+  color: var(--color-cream);
+  opacity: 0.22;
+}
+
+/* Below md the row is too narrow for three panels: stack them, all open */
+@media (max-width: 767px) {
+  .accordion-gallery {
+    flex-direction: column;
+    height: auto;
+    perspective: none;
+  }
+
+  .ag-panel {
+    --ag-dim: 0 !important;
+    flex: none !important;
+    transform: none !important;
+    cursor: default;
+  }
+
+  .ag-panel__content {
+    position: relative;
+    min-height: 340px;
+  }
+
+  .ag-panel__bar,
+  .ag-panel__text {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .ag-panel__text {
+    flex: 1 1 auto;
+    width: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ag-panel,
+  .ag-panel__media {
+    will-change: auto;
+  }
+}
+
+/* Stack of cards receding in depth; the front one is in focus */
+.depth-carousel {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: var(--dc-perspective, 1400px);
+  perspective-origin: 50% 50%;
+  /* Vertical swipes still scroll the page; horizontal ones drive the stack */
+  touch-action: pan-y;
+  outline: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
+}
+
+.depth-carousel:active {
+  cursor: grabbing;
+}
+
+.depth-carousel:focus-visible {
+  outline: 2px solid var(--color-olive);
+  outline-offset: 4px;
+  border-radius: 12px;
+}
+
+.depth-carousel__stage {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+.depth-carousel__card {
+  position: absolute;
+  /* Centred in the space left above the controls row */
+  top: calc(50% - var(--dc-controls-h, 0px) / 2);
+  left: 50%;
+  overflow: hidden;
+  transform: translate(-50%, -50%);
+  transform-origin: center center;
+  box-shadow:
+    0 30px 60px -24px rgba(43, 28, 24, 0.55),
+    0 8px 20px -12px rgba(43, 28, 24, 0.4);
+  will-change: transform, opacity, filter;
+  cursor: pointer;
+}
+
+/* Shades receding cards toward the tint colour */
+.depth-carousel__tint {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+
+.depth-carousel__controls {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.depth-carousel__controls--start {
+  justify-content: flex-start;
+}
+
+.depth-carousel__arrow {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--color-cocoa);
+  color: var(--color-cream);
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.depth-carousel__arrow:hover,
+.depth-carousel__arrow:focus-visible {
+  background: var(--color-olive);
+}
+
+.depth-carousel__arrow:focus-visible {
+  outline: 2px solid var(--color-cocoa);
+  outline-offset: 3px;
+}
+
+.depth-carousel__arrow:active {
+  transform: scale(0.94);
+}
+
+.depth-carousel__dots {
+  display: flex;
+  gap: 8px;
+}
+
+.depth-carousel__dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-cocoa) 30%, transparent);
+  cursor: pointer;
+  transition:
+    width 0.25s ease,
+    background-color 0.25s ease;
+}
+
+.depth-carousel__dot.is-active {
+  width: 24px;
+  background: var(--color-cocoa);
+}
+
+.depth-carousel__dot:focus-visible {
+  outline: 2px solid var(--color-olive);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .depth-carousel__card {
+    will-change: auto;
+  }
+
+  .depth-carousel__arrow,
+  .depth-carousel__dot {
+    transition: none;
+  }
+}
+
+/* Text in the value panel that changes with the front card eases in */
+@keyframes value-swap {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.value-panel__swap {
+  animation: value-swap 0.4s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .value-panel__swap {
+    animation: none;
+  }
+}
+
+/* Row of pillar cards scrolled sideways; arrows and dots drive the scroll */
+.pillar-scroller {
+  scroll-padding-inline-start: var(--pillar-inset, 0px);
+  padding-inline-start: var(--pillar-inset, 0px);
+  scrollbar-width: none;
+}
+
+.pillar-scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.pillar-scroller:focus-visible {
+  outline: 2px solid var(--color-olive);
+  outline-offset: 4px;
+}
+
+/* Ghost wordmark: faint fill fallback, outline-only where supported */
+.text-outline {
+  color: color-mix(in srgb, var(--color-cream) 10%, transparent);
+  -webkit-text-stroke: 2px color-mix(in srgb, var(--color-cream) 45%, transparent);
+}
+
+@supports (-webkit-text-stroke: 1px black) {
+  .text-outline {
+    color: transparent;
+  }
 }
