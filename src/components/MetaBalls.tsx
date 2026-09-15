@@ -15,7 +15,14 @@ type MetaBallsProps = {
   cursorBallSize?: number;
   cursorBallColor?: string;
   enableTransparency?: boolean;
+  // Stretch the orbits to the container and keep every blob, the cursor one
+  // included, a margin away from its edges, so none is ever cut off
+  contain?: boolean;
 };
+
+// Distance, in shader units, that contained blobs keep from the edges: enough
+// for the largest ball and the bulge where two of them merge
+const CONTAIN_MARGIN = 3;
 
 function parseHexColor(hex: string): [number, number, number] {
   const c = hex.replace("#", "");
@@ -114,6 +121,7 @@ export default function MetaBalls({
   cursorBallSize = 3,
   cursorBallColor = "#ffffff",
   enableTransparency = true,
+  contain = false,
 }: MetaBallsProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -240,6 +248,18 @@ export default function MetaBalls({
       const elapsed = (t - startTime) * 0.001;
       program.uniforms.iTime.value = elapsed;
 
+      // Contained: the field is sized by the container's shorter side, so a
+      // tall, narrow container still has room across for its blobs; then the
+      // widest orbit (baseScale tops out at 10) is mapped onto the container,
+      // less the margin, separately on each axis
+      const aspect = gl.canvas.width / Math.max(1, gl.canvas.height);
+      const size = contain ? animationSize * Math.max(1, 1 / aspect) : animationSize;
+      program.uniforms.iAnimationSize.value = size;
+      const halfH = size / 2;
+      const halfW = halfH * aspect;
+      const reach = 10 * clumpFactor;
+      const sx = contain ? Math.max(0, halfW - CONTAIN_MARGIN) / reach : 1;
+      const sy = contain ? Math.max(0, halfH - CONTAIN_MARGIN) / reach : 1;
       for (let i = 0; i < effectiveBallCount; i++) {
         const p = ballParams[i];
         const dt = elapsed * speed * p.dtFactor;
@@ -247,8 +267,8 @@ export default function MetaBalls({
         const x = Math.cos(th);
         const y = Math.sin(th + dt * p.toggle);
         metaBallsUniform[i].set(
-          x * p.baseScale * clumpFactor,
-          y * p.baseScale * clumpFactor,
+          x * p.baseScale * clumpFactor * sx,
+          y * p.baseScale * clumpFactor * sy,
           p.radius,
         );
       }
@@ -263,6 +283,14 @@ export default function MetaBalls({
         const cy = gl.canvas.height * 0.5;
         targetX = cx + Math.cos(elapsed * speed) * gl.canvas.width * 0.15;
         targetY = cy + Math.sin(elapsed * speed) * gl.canvas.height * 0.15;
+      }
+      if (contain) {
+        // Keep the cursor blob inside the margin even with the pointer at an edge
+        const px = CONTAIN_MARGIN * (gl.canvas.height / size);
+        const w = gl.canvas.width;
+        const h = gl.canvas.height;
+        targetX = w > px * 2 ? Math.min(w - px, Math.max(px, targetX)) : w / 2;
+        targetY = h > px * 2 ? Math.min(h - px, Math.max(px, targetY)) : h / 2;
       }
       mouseBallPos.x += (targetX - mouseBallPos.x) * hoverSmoothness;
       mouseBallPos.y += (targetY - mouseBallPos.y) * hoverSmoothness;
@@ -302,6 +330,7 @@ export default function MetaBalls({
     clumpFactor,
     cursorBallSize,
     enableTransparency,
+    contain,
   ]);
 
   return <div ref={containerRef} className={`relative h-full w-full ${className}`} />;

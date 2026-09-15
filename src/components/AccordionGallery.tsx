@@ -24,8 +24,11 @@ export type AccordionItem = {
   media?: ReactNode;
   // Always visible, pinned to the top of the panel.
   header: ReactNode;
-  // Always visible, above the detail block.
+  // Above the detail block. Always visible, unless collapsedTitle is set.
   title: ReactNode;
+  // Stands in for the title while the panel is closed, set vertically along
+  // the panel's height: for titles too long to fit across a narrow panel.
+  collapsedTitle?: ReactNode;
   // Revealed only on the open panel.
   detail: ReactNode;
 };
@@ -47,6 +50,9 @@ type AccordionGalleryProps = {
   tilt?: number;
   stagger?: number;
   trigger?: "hover" | "click";
+  // Fade the media layer out on closed panels, for media that reads badly
+  // once cropped to a narrow strip (large numerals, for instance)
+  hideMediaWhenCollapsed?: boolean;
   label?: string;
   className?: string;
 };
@@ -69,6 +75,7 @@ export default function AccordionGallery({
   tilt = 8,
   stagger = 0.06,
   trigger = "hover",
+  hideMediaWhenCollapsed = false,
   label,
   className = "",
 }: AccordionGalleryProps) {
@@ -77,6 +84,8 @@ export default function AccordionGallery({
   const mediaRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const barRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const textRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const titleRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const vtitleRefs = useRef<(HTMLDivElement | null)[]>([]);
   const tlRef = useRef<gsap.core.Timeline | null>(null);
   const firstRunRef = useRef(true);
   const mediaSizeRef = useRef(320);
@@ -107,6 +116,8 @@ export default function AccordionGallery({
         const media = mediaRefs.current[i];
         const bar = barRefs.current[i];
         const text = textRefs.current[i];
+        const title = titleRefs.current[i];
+        const vtitle = vtitleRefs.current[i];
 
         // Dim lives on the panel, the common ancestor of the media and the
         // overlay that reads it.
@@ -130,7 +141,24 @@ export default function AccordionGallery({
               xPercent: -50,
               yPercent: -50,
               x: isActive ? 0 : drift * parallax * mediaSize * 0.06,
+              opacity: hideMediaWhenCollapsed && !isActive ? 0 : 1,
               duration: dur,
+              ease,
+            },
+            0,
+          );
+        }
+
+        // Vertical title while closed, horizontal once open. The horizontal
+        // one waits a moment so it never shows in a panel still too narrow.
+        if (vtitle && title) {
+          tl.to(vtitle, { opacity: isActive ? 0 : 1, duration: dur * 0.5, ease }, 0);
+          tl.to(
+            title,
+            {
+              opacity: isActive ? 1 : 0,
+              duration: isActive ? dur * 0.6 : dur * 0.3,
+              delay: isActive ? dur * 0.4 : 0,
               ease,
             },
             0,
@@ -156,7 +184,7 @@ export default function AccordionGallery({
 
       tlRef.current = tl;
     },
-    [active, count, expandRatio, duration, ease, tilt, parallax, stagger],
+    [active, count, expandRatio, duration, ease, tilt, parallax, stagger, hideMediaWhenCollapsed],
   );
 
   // The resize observer below outlives changes to `active`; it reads the
@@ -219,7 +247,7 @@ export default function AccordionGallery({
   return (
     <div
       ref={rootRef}
-      className={`accordion-gallery ${className}`.trim()}
+      className={`accordion-gallery${hideMediaWhenCollapsed ? " accordion-gallery--hide-media" : ""} ${className}`.trim()}
       style={
         {
           "--ag-accent": accentColor,
@@ -265,10 +293,29 @@ export default function AccordionGallery({
               <span className="ag-panel__overlay" />
             </span>
 
+            {item.collapsedTitle ? (
+              <div
+                className="ag-panel__vtitle"
+                aria-hidden="true"
+                ref={(el) => {
+                  vtitleRefs.current[i] = el;
+                }}
+              >
+                {item.collapsedTitle}
+              </div>
+            ) : null}
+
             <div className="ag-panel__content">
               <div>{item.header}</div>
               <div>
-                {item.title}
+                <div
+                  className={`ag-panel__title${item.collapsedTitle ? " ag-panel__title--swap" : ""}`}
+                  ref={(el) => {
+                    titleRefs.current[i] = el;
+                  }}
+                >
+                  {item.title}
+                </div>
                 <div className="ag-panel__detail">
                   <span
                     className="ag-panel__bar"

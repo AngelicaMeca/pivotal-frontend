@@ -9,7 +9,9 @@ export default function SectionHeading({
   eyebrow: string;
   title: string;
   description?: string;
-  tone?: "light" | "dark";
+  // glass: on a translucent dark panel over moving imagery, where light
+  // shapes can pass behind the copy; stronger than dark to hold contrast
+  tone?: "light" | "dark" | "glass";
 }) {
   const styles = {
     light: {
@@ -25,6 +27,13 @@ export default function SectionHeading({
       rule: "bg-olive-soft",
       title: "text-cream",
       description: "text-cream/70",
+    },
+    glass: {
+      index: "text-cream/80",
+      eyebrow: "text-cream/80",
+      rule: "bg-cream/60",
+      title: "text-cream",
+      description: "text-cream/90",
     },
   }[tone];
 

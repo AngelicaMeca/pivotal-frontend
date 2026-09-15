@@ -51,12 +51,14 @@ export default function Nav() {
     <motion.header
       animate={{ top: scrolled ? 12 : 20 }}
       transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-      className="fixed inset-x-4 z-50 rounded-[28px] border border-cream/10 bg-cocoa/95 shadow-[0_10px_40px_-12px_rgba(43,28,24,0.55)] backdrop-blur-xl sm:inset-x-6 lg:inset-x-10"
+      className="fixed inset-x-4 z-50 mx-auto max-w-[1400px] rounded-[28px] border border-cream/10 bg-cocoa/95 shadow-[0_10px_40px_-12px_rgba(43,28,24,0.55)] backdrop-blur-xl sm:inset-x-6 lg:inset-x-10"
     >
+      {/* The bar is as wide as the page content and ends right after its last
+          control: the demo button from md up, the menu toggle below */}
       <motion.div
         animate={{ height: scrolled ? 56 : 68 }}
         transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-        className="mx-auto flex w-full max-w-[1400px] items-center justify-between px-5 sm:px-7"
+        className="flex w-full items-center justify-between pl-5 pr-3.5 sm:pl-7 md:pr-2"
       >
         <Link
           href="/"

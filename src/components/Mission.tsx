@@ -29,13 +29,10 @@ const valueItems: AccordionItem[] = values.map((value, i) => {
         Valor {index}
       </span>
     ),
-    // Closed panels are narrow: long Spanish words hyphenate (the page is lang="es")
-    // and, as a last resort, break anywhere rather than overflow the panel
-    title: (
-      <h3 className="hyphens-auto text-lg font-semibold leading-snug text-cream [overflow-wrap:anywhere]">
-        {value.name}
-      </h3>
-    ),
+    // Horizontal only on the open panel, which is wide enough for it; closed
+    // panels carry the name vertically instead of cutting it
+    title: <h3 className="text-lg font-semibold leading-snug text-cream">{value.name}</h3>,
+    collapsedTitle: <span className="text-base font-semibold text-cream">{value.name}</span>,
     detail: <p className="text-[0.95rem] leading-relaxed text-cream">{value.detail}</p>,
   };
 });
@@ -100,6 +97,7 @@ export default function Mission() {
               radius={24}
               padding={24}
               tilt={6}
+              hideMediaWhenCollapsed
               accentColor="#f1dccb"
               overlayColor="#2b1c18"
             />
