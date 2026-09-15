@@ -209,28 +209,34 @@ export default function MetaBalls({
     resizeObserver.observe(container);
     resize();
 
+    // Listens on the window and tests the container's box rather than using
+    // enter/leave on the container: the canvas usually sits behind other
+    // content (cards, panels), which would swallow those events.
     function onPointerMove(event: PointerEvent) {
       if (!enableMouseInteraction) return;
       const rect = container!.getBoundingClientRect();
+      const inside =
+        event.clientX >= rect.left &&
+        event.clientX <= rect.right &&
+        event.clientY >= rect.top &&
+        event.clientY <= rect.bottom;
+      pointerInside = inside;
+      if (!inside) return;
       pointerX = ((event.clientX - rect.left) / rect.width) * gl.canvas.width;
       pointerY = (1 - (event.clientY - rect.top) / rect.height) * gl.canvas.height;
     }
-    function onPointerEnter() {
-      if (enableMouseInteraction) pointerInside = true;
-    }
-    function onPointerLeave() {
-      if (enableMouseInteraction) pointerInside = false;
+    function onPointerLeaveWindow() {
+      pointerInside = false;
     }
 
-    container.addEventListener("pointermove", onPointerMove);
-    container.addEventListener("pointerenter", onPointerEnter);
-    container.addEventListener("pointerleave", onPointerLeave);
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    document.documentElement.addEventListener("pointerleave", onPointerLeaveWindow);
 
     const startTime = performance.now();
     let animationFrameId = 0;
 
     function update(t: number) {
-      animationFrameId = requestAnimationFrame(update);
+      animationFrameId = visible ? requestAnimationFrame(update) : 0;
       const elapsed = (t - startTime) * 0.001;
       program.uniforms.iTime.value = elapsed;
 
@@ -265,14 +271,23 @@ export default function MetaBalls({
       renderer.render({ scene, camera });
     }
 
+    // Off screen there is nothing to draw; with more than one instance on
+    // the page, idle WebGL loops add up
+    let visible = true;
+    const intersection = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
+      if (visible && !animationFrameId) animationFrameId = requestAnimationFrame(update);
+    });
+    intersection.observe(container);
+
     animationFrameId = requestAnimationFrame(update);
 
     return () => {
       cancelAnimationFrame(animationFrameId);
       resizeObserver.disconnect();
-      container.removeEventListener("pointermove", onPointerMove);
-      container.removeEventListener("pointerenter", onPointerEnter);
-      container.removeEventListener("pointerleave", onPointerLeave);
+      intersection.disconnect();
+      window.removeEventListener("pointermove", onPointerMove);
+      document.documentElement.removeEventListener("pointerleave", onPointerLeaveWindow);
       container.removeChild(gl.canvas);
       gl.getExtension("WEBGL_lose_context")?.loseContext();
     };

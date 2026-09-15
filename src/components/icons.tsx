@@ -190,3 +190,31 @@ export function MailIcon({ className = "" }: { className?: string }) {
     </svg>
   );
 }
+
+export function BuildingIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" className={className} aria-hidden="true">
+      <path
+        d="M2.2 5.6 8 2.2l5.8 3.4H2.2ZM3.4 5.6v6.2M6.2 5.6v6.2M9.8 5.6v6.2M12.6 5.6v6.2M1.8 13.8h12.4"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function SproutIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" className={className} aria-hidden="true">
+      <path
+        d="M8 14V7.4M8 9.6C8 6.8 6 5 3 5c0 2.8 2 4.6 5 4.6ZM8 7.4c0-2.7 1.9-4.6 5-4.6 0 2.7-1.9 4.6-5 4.6ZM4.4 14h7.2"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}

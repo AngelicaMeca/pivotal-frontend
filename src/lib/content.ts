@@ -99,6 +99,24 @@ export const provinciaProducts = [
   },
 ];
 
+export const marketPhases = [
+  {
+    index: "01",
+    name: "Argentina",
+    detail: "El ecosistema agroalimentario argentino, con la Beta en marcha y el piloto en Santiago del Estero.",
+  },
+  {
+    index: "02",
+    name: "Latinoamérica",
+    detail: "Las bases de la región se incorporan de forma progresiva a medida que el proyecto escala.",
+  },
+  {
+    index: "03",
+    name: "Resto del mundo",
+    detail: "Una mirada sistémica del análisis agroalimentario, sin compartimentos aislados por país.",
+  },
+];
+
 export const marketSegments = [
   {
     index: "01",

@@ -16,12 +16,15 @@ const GROUPS: { tone: ValueTone; items: { title: string; detail: string }[] }[] 
 const items: DepthCarouselItem[] = GROUPS.flatMap(({ tone, items: group }) =>
   group.map((item, i) => {
     const t = VALUE_TONES[tone];
+    const key = `${tone}-${i}`;
     return {
-      key: `${tone}-${i}`,
+      key,
       label: item.title,
       className: t.card,
+      // Keyed too: these elements are built inside a list on the server and
+      // React validates them as list children once rendered on the client
       content: (
-        <div className="flex h-full flex-col justify-between p-8">
+        <div key={key} className="flex h-full flex-col justify-between p-8">
           <div>
             <span className={`font-mono text-[0.65rem] uppercase tracking-[0.2em] ${t.tag}`}>
               {t.label}
