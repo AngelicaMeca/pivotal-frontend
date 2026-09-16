@@ -1,0 +1,40 @@
+# JC f137-f153: "Movimientos cabezas ingresadas (introducción) por provincia de origen - 2025".
+# Misma sensibilidad que la vista de extraccion: sale detras del gate hasta que Francisco decida.
+base: 85
+slug: introduccion-por-provincia-origen
+comunes: _comunes-base-85
+
+igual_que: 85-extraccion-por-provincia-destino
+
+titulo: "De qué provincias viene la hacienda que entra"
+subtitulo: "Cabezas que ingresan a Santiago del Estero, por provincia de origen"
+
+sensibilidad: comparativo
+aprobado_por: null
+
+titulo_componentes:
+  apertura: provincia-origen
+titulo_protocolo_ejemplo: "Ranking de cabezas movidas de la hacienda bovina (introducción) por provincia de origen - Santiago del Estero - año 2025"
+
+dimensiones: [provincia_origen]
+
+universo:
+  recorte: introduccion
+  geo: origen
+  nivel_geo: provincia
+
+columnas_tabla:
+  - {campo: puesto, etiqueta: "Puesto", formato: "1°"}
+  - {campo: provincia_origen, etiqueta: "Provincia de origen"}
+  - {campo: documentos, etiqueta: "DTE emitidos"}
+  - {campo: cabezas, etiqueta: "Cabezas"}
+  - {campo: participacion_pct, etiqueta: "% del total"}
+  - {campo: variacion_interanual_pct, etiqueta: "Var. vs año anterior"}
+
+origen: {tipo: modelo-analisis, detalle: "hoja 'Modelo Analisis' base 85, filas 137 a 153", fecha: 2026-07-31}
+nota_interpretacion: >
+  Verificado contra JC (f139-f152): Chaco 123.836, Santa Fe 118.823, Corrientes 79.045,
+  Salta 61.333. Exactos, 14 provincias de origen.
+  Puesta al lado de la vista de extraccion cuenta sola de que se trata el negocio ganadero
+  santiaguenio: entra hacienda del NEA (Chaco, Corrientes, Formosa) y sale hacia la zona
+  nucleo y Tucuman. Vale la pena que las dos vistas se enlacen entre si.

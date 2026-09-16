@@ -1,0 +1,89 @@
+# El gráfico de evolución del mockup de JC (specs/fuentes/0000000000 Modelo 1.xlsx, hojas
+# Modelo 1 y 2). Título original del gráfico de JC:
+# "Soja - Sgo del Estero - Total - Evolución de la superficie cosechada y producción -
+#  Campañas 2013/14 a 2024/25". Dos series en líneas: Sup. Cos. (Ha) y Producción (Tn).
+#
+# No reemplaza a 09-cultivo-evolucion-prod-rendimiento (producción + rendimiento) ni a
+# 09-cultivo-evolucion-sup-sembrada (superficie sembrada): es la tercera mirada, la que JC
+# eligió para la portada de la sección.
+base: 9
+slug: cultivo-evolucion-cosecha-produccion
+comunes: _comunes-base-9
+titulo: "Cómo evolucionaron la cosecha y la producción"
+subtitulo: "Superficie cosechada en hectáreas y producción en toneladas, por campaña"
+
+# --- Titulo del cuadro: lo arma _protocolo-presentacion, no se escribe a mano ---
+protocolo: _protocolo-presentacion
+titulo_componentes:
+  area: {desde_filtro: geo}
+  sujeto: {desde_filtro: cultivo}
+  variable:
+    override: "evolución de la superficie cosechada y producción"
+    motivo: >
+      Literal del título que JC escribió en su propio gráfico del mockup. La composición
+      mecánica daría "evolución de superficie cosechada y producción" (artículo `multiple`),
+      que no es como lo escribe él.
+  apertura: null
+  periodo: {ventana: ventana_campanias}
+titulo_protocolo_ejemplo: "Evolución de la superficie cosechada y producción de soja - Santiago del Estero - campañas 2015/16 a 2024/25"
+nota_interpretacion: >
+  El mockup de JC ordena los componentes distinto (sujeto - área - recorte - variable - período,
+  con "Sgo del Estero" abreviado) y cubre 12 campañas (2013/14 a 2024/25). Se mantienen las
+  plantillas v1 del protocolo ("Santiago del Estero" completo, ventana de 10 campañas del demo,
+  2013/14 además excluida por calidad). Backlog preguntas 31 y 32.
+
+tipo: serie
+grafico: lineas          # así lo dibujó JC: dos líneas, no barras
+
+variables: [sup_cosechada_ha, produccion_tn]
+dimensiones: [campania]
+filtros: [cultivo, geo]
+orden: {por: campania, dir: asc}
+
+defaults:
+  cultivo: "Soja total"
+  geo: provincia
+
+universo:
+  ambito: sde
+  nivel_geo: [provincia, departamento]
+  cultivo_rol: [agregado, simple]
+  campanias: ventana_campanias
+
+# JC grafica hectáreas y toneladas sobre un único eje rotulado "Millones". Son unidades
+# distintas: la interpretación más simple y honesta es eje secundario con la MISMA cantidad
+# de intervalos (regla eje_secundario del protocolo). Preguntado: backlog 31.
+ejes:
+  izquierdo: {medida: sup_cosechada_ha, unidad: ha}
+  derecho: {medida: produccion_tn, unidad: tn}
+
+transformaciones:
+  - variacion_interanual            # JC f27: solo sup. sembrada y producción; acá aplica a producción
+  - variacion_decadica
+  - variacion_promedio_anual
+
+mouseover: "campaña + hectáreas cosechadas + toneladas + variación de producción contra la campaña anterior"
+
+notas_metodologicas: [total-no-suma-componentes, campania-en-curso]
+notas_metodologicas_si_departamento: [estimacion-departamental]
+filtros_calidad: [excluir-campanias-sin-departamento]
+
+fuente:
+  pie: "Fuente: MAGyP"
+  organismo_esperado: "MAGyP"
+  publicacion: null
+
+sensibilidad: normal
+# Despublicada el 10-ago-2026 (tercera tanda, Facu con JC: "OLVIDATE DEL ANALISIS COMPLETO,
+# ESO YA NO EXISTE MAS... NECESITO QUE LO SAQUES Y TE QUEDES CON LOS TABLEROS"). El spec queda
+# como REGISTRO de la regla: no se construye pagina propia ni se linkea desde ningun lado.
+# Las unicas paginas publicadas de cultivos son el tablero (index), 09-departamento-datos y
+# 09-noa-participacion-provincia. Regla: _protocolo-presentacion.formato_v1.tercera_tanda.solo_tableros.
+# Sus transformaciones SIGUEN alimentando el panel tendencia (y tabla-datos) del tablero
+# (tablero-cultivos-extensivos.paneles): muere la pagina propia, no la regla.
+estado: no-publicada
+
+origen:
+  tipo: documento-de-jc
+  detalle: "specs/fuentes/0000000000 Modelo 1.xlsx, gráfico de líneas de las hojas 'Modelo 1' y 'Modelo 2' (charts 1 a 6 del xlsx, todos el mismo), datos de la hoja 'Data' C6:E18"
+  fecha: 2026-08-10

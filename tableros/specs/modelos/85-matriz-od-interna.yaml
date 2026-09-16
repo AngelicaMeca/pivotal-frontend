@@ -1,0 +1,82 @@
+# JC f84-f113: "Matriz Origen Destino (OD) movimientos internos - Cabezas totales 2025".
+# El dejo la matriz armada pero vacia, con la instruccion "COMPLETAR TODA LA MATRIZ" (f94).
+base: 85
+slug: matriz-od-interna
+comunes: _comunes-base-85
+
+titulo: "De qué departamento a qué departamento se mueve la hacienda"
+subtitulo: "Cabezas movidas dentro de Santiago del Estero, origen contra destino"
+
+protocolo: _protocolo-presentacion
+titulo_componentes:
+  variable: {desde_filtro: medida}
+  sujeto: {desde: subsector}
+  recorte: {desde_universo: true}
+  apertura: origen-destino
+  area: provincia
+  periodo: {desde_filtro: anio}
+titulo_protocolo_ejemplo: "Cabezas movidas de la hacienda bovina (movimientos internos) por departamento de origen y de destino - Santiago del Estero - año 2025"
+
+tipo: flujo-od
+
+variables: [cabezas, documentos]
+dimensiones: [departamento_origen, departamento_destino]
+filtros: [anio, medida, categoria]
+
+defaults:
+  anio: parametros.ventana_anios.anio_por_defecto
+  medida: cabezas
+  categoria: Total
+
+opciones_medida: [cabezas, documentos]
+opciones_categoria: [Total, Terneros, Terneras, Novillitos, Novillos,
+                     "Toritos / mejoradores", Toros, Vacas, Vaquillonas]
+
+universo:
+  ambito: sde
+  recorte: internos              # las dos puntas dentro de Santiago, por definicion de la matriz
+  especie: bovinos
+  nivel_geo: departamento
+  anios: ventana_anios
+  excluye_anio_en_curso: true
+
+presentacion_matriz:
+  filas: departamento_origen
+  columnas: departamento_destino
+  orden: alfabetico              # los 27 en el mismo orden en los dos ejes, como en su planilla
+  diagonal:
+    incluir: true
+    etiqueta: "Movimientos dentro del mismo departamento"
+    nota: >
+      La diagonal no es un error: son traslados entre dos establecimientos del mismo
+      departamento, que existen y son muchos.
+  # Un guion, NO un cero. Que no haya habido ningun traslado entre ese par de departamentos no
+  # es lo mismo que haber medido cero: la celda simplemente no existe. Va el guion ASCII, que es
+  # el unico que admite el protocolo (tipografia.prohibidos).
+  celda_vacia: "-"
+  intensidad: "color por volumen, escala de 5 clases"
+  totales: {fila: true, columna: true}
+
+columnas_tabla:
+  - {campo: departamento_origen, etiqueta: "Sale de"}
+  - {campo: departamento_destino, etiqueta: "Entra a"}
+  - {campo: cabezas, etiqueta: "Cabezas"}
+  - {campo: documentos, etiqueta: "DTE"}
+
+filtros_calidad: [excluir-fila-total-al-pie, bubalinos-fuera-de-las-vistas]
+notas_metodologicas: [que-es-un-dte, total-no-suma-categorias, anio-en-curso]
+
+fuente:
+  pie: "Fuente: SENASA"
+  organismo_esperado: "SENASA"
+estado: publicada
+
+origen: {tipo: modelo-analisis, detalle: "hoja 'Modelo Analisis' base 85, filas 84 a 113", fecha: 2026-07-31}
+nota_interpretacion: >
+  JC dejo la matriz de 27x27 dibujada y con una sola fila cargada a mano (Alberdi). "COMPLETAR
+  TODA LA MATRIZ" es literalmente el trabajo que el no queria hacer a mano: son 729 celdas por
+  año y por categoria. Es el mejor ejemplo de lo que el pipeline le resuelve.
+  Sobre el tipo de vista: `flujo-od` en CLAUDE.md, pero se renderiza como MATRIZ (tabla con
+  intensidad de color), no como diagrama de flujos con curvas. Con 27 origenes y 27 destinos
+  un diagrama de cintas es ilegible, y ademas la matriz es la forma en que el ya lo penso.
+  En una tabla de 27x27 hay que fijar la primera columna y el encabezado al hacer scroll.

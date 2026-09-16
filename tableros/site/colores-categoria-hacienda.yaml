@@ -1,0 +1,14 @@
+# Color fijo por categoria de hacienda. GENERADO por pipeline/site_build.py, no editar.
+#
+# Se asigna en orden alfabetico contra site/theme.yaml -> paleta_categorica, asi es la
+# misma en cada build. Las escalas de INTENSIDAD (mapa, matriz OD) no salen de aca: esas
+# las define el protocolo por tipo de variable (cabezas marron, documentos gris azulado).
+colores:
+  "Novillitos": "#22502c"
+  "Novillos": "#b8552e"
+  "Terneras": "#407a47"
+  "Terneros": "#c9a226"
+  "Toritos / mejoradores": "#8fb07b"
+  "Toros": "#6b5344"
+  "Vacas": "#2f6b6a"
+  "Vaquillonas": "#8c3b52"

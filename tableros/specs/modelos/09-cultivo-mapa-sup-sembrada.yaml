@@ -1,0 +1,132 @@
+# Vista principal de la base 9. Es la que abre la seccion de cultivos.
+base: 9
+slug: cultivo-mapa-sup-sembrada
+comunes: _comunes-base-9
+titulo: "Dónde se siembra cada cultivo en Santiago del Estero"
+subtitulo: "Superficie sembrada por departamento, en hectáreas"
+
+# --- Titulo del cuadro: lo arma _protocolo-presentacion, no se escribe a mano ---
+protocolo: _protocolo-presentacion
+titulo_componentes:
+  area: provincia
+  sujeto: {desde_filtro: cultivo}        # "Soja total" -> "soja" (rol agregado: manda el grupo)
+  variable: {desde_filtro: variable}     # el titulo acompaña al selector de variable
+  apertura: departamento
+  periodo: {desde_filtro: campania}
+titulo_protocolo_ejemplo: "Santiago del Estero - soja - Superficie sembrada por departamento - campaña 2024/25"
+# Es el unico titulo del sitio que sigue el orden de mapa de JC (area primero). Ver la plantilla
+# `mapa` del protocolo, calcada de su ejemplo del Chaco.
+
+tipo: mapa
+
+variables: [sup_sembrada_ha, sup_cosechada_ha, produccion_tn, rendimiento_kg_ha]
+variables_mouseover: [sup_sembrada_ha, sup_cosechada_ha, produccion_tn, rendimiento_kg_ha]
+dimensiones: [departamento]
+filtros: [cultivo, campania, variable]   # los 3 permitidos. Ver `selector_de_variable`.
+orden: {por: variable_elegida, dir: desc}
+
+selector_de_variable:
+  pedido_por: Francisco
+  fecha: 2026-07-30
+  texto: >
+    "un grafico del mapa de los departamentos pudiendo elegir la variable (rendimiento,
+    produccion, sembrado o cosechado)".
+  que_cambio: >
+    El spec ya dejaba el tercer filtro libre a proposito y ya declaraba las cuatro variables en
+    `variables_mouseover`. Se promueven a `variables` y el tercer filtro pasa a ser el selector
+    de variable. El titulo y el subtitulo acompañan al selector; cada variable usa SU rampa del
+    protocolo (superficie verde, produccion ocre, rendimiento azul), porque son tipos de
+    variable distintos y esa es la regla mas fuerte del docx de JC.
+  sigue_siendo_el_default: sup_sembrada_ha
+
+ranking_vinculado:
+  pedido_por: Francisco
+  fecha: 2026-07-30
+  texto: "un ranking que este linkeado con el mapa"
+  detalle: >
+    En la misma pagina, a la derecha del mapa, va el ranking de departamentos de la MISMA
+    variable, cultivo y campaña. Pasar el mouse por un departamento resalta su fila y pasar
+    el mouse por una fila resalta el departamento. Es la unica interactividad agregada sobre
+    lo que declara el spec, y esta pedida explicitamente.
+  fuente_al_pie: "el ranking lleva su propio titulo de protocolo y su propio pie de fuente"
+
+defaults:
+  cultivo: "Soja total"             # el cultivo de mayor superficie de la provincia
+  campania: parametros.ventana_campanias.campania_por_defecto   # JC f12: "SIEMPRE ULTIMA CAMPAÑA"
+  variable: sup_sembrada_ha         # la vista sigue abriendo en superficie sembrada
+
+universo:
+  ambito: sde
+  nivel_geo: departamento
+  cultivo_rol: [agregado, simple]   # JC f22-24: nunca componentes en un total
+  campanias: ventana_campanias
+
+pie_de_vista:
+  total_provincial: true            # JC f12: "el total provincial se mostrara en la parte inferior"
+  origen_total: "fila 'Total provincia' de la fuente, no la suma de los departamentos"
+  nota: >
+    El total provincial se toma de la fila que informa la fuente, no se reconstruye sumando
+    departamentos. QA verifico que coinciden en 450 de 471 comparaciones; las 21 que no cierran
+    son de las dos campañas excluidas.
+
+navegacion:
+  - accion: "Ver todas las campañas"
+    va_a: [09-cultivo-evolucion-sup-sembrada, 09-cultivo-evolucion-prod-rendimiento]
+    nota_interpretacion: >
+      JC pregunta "pop up u otra pagina?" (f12). Se elige OTRA PAGINA: es la opcion mas simple,
+      no necesita interactividad extra y CLAUDE.md prefiere paginas separadas antes que
+      interactividad compleja. Confirmar con JC.
+  - accion: "clic en un departamento"
+    va_a: 09-departamento-ficha-cultivos
+    referencia: "JC f16 y f153"
+  - accion: "Ver detalle"
+    va_a: 09-cultivo-detalle-componentes
+    visible_si: "el cultivo elegido tiene apertura publicable (soja y poroto). Nunca en trigo ni cebada."
+    referencia: "JC f24"
+
+transformaciones: []
+
+notas_metodologicas: [estimacion-departamental, salavina-sin-datos, total-no-suma-componentes]
+filtros_calidad: [excluir-campanias-sin-departamento]
+
+fuente:                                  # _protocolo-presentacion.pie_de_fuente
+  pie: "Fuente: MAGyP"                   # lo arma el protocolo, no se escribe en el template
+  organismo_esperado: "MAGyP"            # tiene que coincidir con la columna `fuente` del mart
+  publicacion: null                      # JC declara la cita como "Fuente: MAGyP" en su indice.
+                                         # Si quiere "MAGyP, Estimaciones Agrícolas", se completa
+                                         # aca y cambia en las 16 vistas. Backlog pregunta 14.
+sensibilidad: normal
+# Despublicada el 10-ago-2026 (tercera tanda, Facu con JC: "OLVIDATE DEL ANALISIS COMPLETO,
+# ESO YA NO EXISTE MAS... NECESITO QUE LO SAQUES Y TE QUEDES CON LOS TABLEROS"). El spec queda
+# como REGISTRO de la regla: no se construye pagina propia ni se linkea desde ningun lado.
+# Las unicas paginas publicadas de cultivos son el tablero (index), 09-departamento-datos y
+# 09-noa-participacion-provincia. Regla: _protocolo-presentacion.formato_v1.tercera_tanda.solo_tableros.
+# Sus transformaciones SIGUEN alimentando el panel mapa del tablero
+# (tablero-cultivos-extensivos.paneles): muere la pagina propia, no la regla.
+estado: no-publicada
+
+requiere:
+  - tipo: geojson
+    detalle: "Polígonos de los 27 departamentos de Santiago del Estero con código INDEC (86xxx)"
+    estado: DISPONIBLE
+    archivo: "configs/dims/sde-departamentos.geojson"
+    procedencia: "configs/dims/sde-departamentos.yaml (IGN, capa ign:departamento, bajado el 2026-07-30)"
+    join: "properties.geo_id contra dim_geo.geo_id. Verificado: los 26 departamentos con datos pegan, cero huerfanos."
+    nota: >
+      Cuando se escribio este spec el archivo no existia y la vista figuraba trabada por eso. Ya
+      esta en el repo, con su procedencia documentada y el resultado del join verificado.
+
+# Presentacion: sale entera de _protocolo-presentacion (bloques `mapa` y `colores`). Acá no se
+# repite nada; se deja el puntero a la prueba de aceptacion, que esta calculada con los datos de
+# esta misma vista (soja, campaña 2024/25: 26 departamentos, 5 clases y SALAVINA sin dato).
+presentacion:
+  escala: "_protocolo-presentacion.mapa.escala (quintiles proporcionales, 5 clases)"
+  rampa: "_protocolo-presentacion.colores.rampas.superficie (la variable es sup_sembrada_ha)"
+  prueba_de_aceptacion: "_protocolo-presentacion.mapa.prueba_de_aceptacion"
+  rotulos_de_departamento: true
+
+origen: {tipo: modelo-analisis, detalle: "hoja 'Modelo  Analisis' base 9, filas 11 a 14", fecha: 2026-07-30}
+nota_interpretacion: >
+  JC deja abierto si el selector de cultivo es "lista plana o menu desplegable" (f11). Se elige
+  menu desplegable, que es lo mismo que ya pidio explicitamente para el selector de campaña (f13),
+  y asi los dos selectores se ven igual.

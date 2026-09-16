@@ -1,0 +1,196 @@
+# Parametros de las validaciones, por base. Los lee pipeline/validations.py.
+#
+# Por que vive en validations/ y no en configs/bases/: configs/bases/*.yaml es la
+# receta de LECTURA (la escribe ingestor-bases). Esto es la receta de CONTROL (la
+# escribe qa-datos). Separadas para que los dos agentes no se pisen el archivo.
+#
+# Todos los checks son genericos: leen las columnas que se nombran aca. Una base
+# sin entrada en `bases` igual pasa por los checks que no necesitan parametros
+# (filas duplicadas, negativos, cobertura de entrega, geo, drift).
+
+defaults:
+  # Un total embebido que difiere mas de esto de la suma de su propio detalle es anomalia.
+  tolerancia_agregado_pct: 0.5
+  # CANT x PESO_UNITARIO vs PESO_TOTAL (bases DTV).
+  tolerancia_producto_pct: 1.0
+  # Columna calculada (ej. rendimiento) vs su propia formula.
+  tolerancia_derivada_pct: 1.0
+  # Un valor que se multiplica o se divide por mas que esto de un periodo al
+  # siguiente se lista para que JC lo mire. No es error: en agro pasa.
+  salto_serie_factor: 5
+  # Cuantos periodos seguidos con el MISMO numero hacen sospechar de un dato
+  # arrastrado (copy/paste o estimacion repetida).
+  repeticion_min_periodos: 5
+  # Minimo de filas para que dos particiones con igual conteo sean sospechosas.
+  copypaste_min_filas: 50
+
+bases:
+
+  9:
+    etiqueta: "Cultivos extensivos"
+    columnas:
+      particion: hoja            # dentro de una particion las comparaciones tienen sentido
+      periodo: campania
+      orden_periodo: campania_inicio
+      categoria: cultivo
+      grupo_categoria: cultivo_grupo
+      rol_categoria: cultivo_rol
+    clave_unica: [hoja, geo_id, campania, cultivo, medida]
+
+    medidas_sumables: [sup_sembrada_ha, sup_cosechada_ha, produccion_tn]
+    medidas_no_negativas: [sup_sembrada_ha, sup_cosechada_ha, produccion_tn, rendimiento_kg_ha]
+    medidas_enteras: []          # ninguna: hectareas y toneladas pueden ser decimales
+
+    # Una medida nunca puede superar a la otra.
+    no_mayor_que:
+      - menor: sup_cosechada_ha
+        mayor: sup_sembrada_ha
+        texto: "no se puede cosechar mas superficie de la que se sembro"
+
+    # Columnas calculadas: resultado = numerador / denominador * factor.
+    derivadas:
+      - resultado: rendimiento_kg_ha
+        numerador: produccion_tn
+        denominador: sup_cosechada_ha
+        factor: 1000
+        texto: "rendimiento = produccion (tn) / superficie cosechada (ha) x 1.000"
+
+    # Si A > 0 entonces B tiene que ser > 0.
+    coherencia_actividad:
+      - si: sup_cosechada_ha
+        entonces: produccion_tn
+        texto: "si se cosecho superficie tiene que haber produccion"
+
+    # Grupos agregado/componente que NO se comparan porque el archivo no trae los
+    # componentes por diseno de la fuente. Sin esto el check grita 94 veces al pedo.
+    grupos_sin_componentes: [Cebada]
+
+    # Rangos de validations/rangos.yaml que aplican a esta base, medida por medida.
+    rangos:
+      rendimiento_kg_ha: {tabla: rendimiento_kg_ha, por: cultivo}
+      sup_sembrada_ha:   {tabla: superficie_ha,     por: nivel_geo}
+      sup_cosechada_ha:  {tabla: superficie_ha,     por: nivel_geo}
+      produccion_tn:     {tabla: produccion_tn,     por: nivel_geo}
+
+    # Padron geografico: cuantas unidades tiene que haber si la base es censal.
+    padron_geo:
+      - provincia_id: 86
+        nombre: "Santiago del Estero"
+        unidades_esperadas: 27
+        fuente_padron: "INDEC: SDE tiene 27 departamentos"
+
+    # Rango de periodos que JC declaro PARA LA ENTREGA (no el de la fuente, que el
+    # indice declara desde 1969). Lo que caiga afuera se reporta.
+    periodos_declarados:
+      desde: "2014/15"
+      hasta: "2025/26"
+      texto: >
+        JC en el indice: "Campanas 2014/2015 hasta 2025/6 (en algunos casos hasta 2024/25)".
+    # El indice declara 1969-2025 para la fuente completa del MAGyP; el archivo es un
+    # recorte. Se reporta como cobertura, no como error.
+    periodos_declarados_fuente:
+      desde: "1969"
+      hasta: "2025"
+
+    # Particiones que no se comparan contra el resto (otro ambito, otra cobertura).
+    particiones_de_referencia: ["9 PB 3 - B", "9 PB 3 - C"]
+
+    # OJO: `registros_declarados: 147184` del indice es el conteo NACIONAL de la base
+    # completa del MAGyP. El archivo recibido es el recorte SDE + NOA + pais. NO se usa
+    # como validacion de cantidad de filas.
+    ignorar_registros_declarados: true
+
+  85:
+    etiqueta: "Movimientos de hacienda bovina (DTE)"
+    columnas:
+      particion: hoja            # ORIGEN y DESTINO son dos universos distintos: lo que sale
+                                 # de Santiago y lo que entra. No se comparan entre si.
+      periodo: periodo           # 2022-01
+      orden_periodo: orden_periodo   # mes corrido y contiguo, para detectar huecos de verdad
+      categoria: categoria       # Terneros, Vacas, Total...
+      grupo_categoria: especie   # bovinos / bubalinos: el total de cada especie cierra aparte
+      rol_categoria: categoria_rol
+      unidad: fila_origen        # una observacion = una fila del Excel = un movimiento.
+                                 # Es el grano al que el total tiene que dar la suma de las
+                                 # categorias (en las bases tidy ese grano es geo_id).
+      variable: variable         # columna de origen, para el check de la fila de total al pie
+
+    # Cada fila del Excel es un movimiento agregado por SENASA. Que se repita la
+    # combinacion entera significa que el mismo movimiento entro dos veces.
+    clave_unica: [hoja, periodo, motivo, tipo_origen, tipo_destino, origen_departamento,
+                  origen_provincia, destino_departamento, destino_provincia, variable]
+
+    medidas_sumables: [cabezas, documentos]
+    medidas_no_negativas: [cabezas, documentos, ingreso_establecimiento, egreso_establecimiento]
+    # Las cabezas de hacienda y los documentos son enteros por definicion. Si aparece un
+    # decimal es un problema de la fuente (paso en la base 100, con 17.712,5 bovinos
+    # faenados). Este check nunca se habia podido ejercitar con datos reales.
+    medidas_enteras: [cabezas, documentos, ingreso_establecimiento, egreso_establecimiento]
+
+    # Cobertura declarada. El archivo llega hasta mitad de 2026, asi que el ano en curso
+    # esta incompleto por definicion y no es una anomalia.
+    periodos_declarados:
+      desde: "2022-01"
+      hasta: "2026-12"
+      texto: >
+        El archivo cubre de enero 2022 a mitad de 2026. El 2026 esta incompleto: JC lo marca
+        con asterisco en su propia hoja de analisis.
+
+    # Sin `padron_geo`: el check necesita las columnas geo_id / provincia_id sueltas y esta
+    # base tiene la geografia en dos puntas (origen y destino). La cobertura igual esta
+    # verificada a mano: aparecen los 27 departamentos en las dos puntas.
+
+    # Sin `rangos`: no hay tabla de rangos razonables para cabezas por movimiento todavia.
+    # Cuando entre la base 48 (stock bovino) se va a poder acotar con algun criterio.
+
+  48:
+    etiqueta: "Stock bovino por departamento"
+    columnas:
+      particion: hoja            # una sola hoja de datos, pero el check la usa de llave
+      periodo: anio              # 2012, 2013, ... (enteros: el grano es el anio calendario)
+      orden_periodo: anio        # el anio ya es su propio orden y es contiguo
+      categoria: categoria       # Vacas, Vaquillonas, Novillos, ... y Total
+      grupo_categoria: especie   # bovinos
+      rol_categoria: categoria_rol
+      unidad: fila_origen        # una observacion = una fila del Excel = un anio y un
+                                 # departamento. Es el grano al que el Total tiene que dar
+                                 # la suma de las nueve categorias.
+      variable: variable         # columna de origen
+
+    # Un anio y un departamento no pueden venir dos veces con la misma columna.
+    clave_unica: [hoja, anio, departamento, variable]
+
+    medidas_sumables: [cabezas, unidades_productivas]
+    medidas_no_negativas: [cabezas, unidades_productivas]
+    # Aca es donde se ejercita de verdad el check: la fuente informa el stock de 2021 con
+    # decimales. Un animal no se parte y un establecimiento tampoco.
+    medidas_enteras: [cabezas, unidades_productivas]
+
+    # Base censal: la vacunacion cubre los 27 departamentos de la provincia.
+    padron_geo:
+      - provincia_id: 86
+        nombre: "Santiago del Estero"
+        unidades_esperadas: 27
+        fuente_padron: "INDEC: SDE tiene 27 departamentos"
+
+    # Lo que el indice declara para esta base. El archivo arranca en 2012, asi que la
+    # diferencia sale como cobertura y va al reporte para que JC decida.
+    periodos_declarados:
+      desde: 2007
+      hasta: 2025
+      texto: >
+        El indice de JC declara la base 48 de 2007 a 2025. Se declara ese rango y no el del
+        archivo a proposito: si se declarara 2012-2025 el control diria que esta todo bien y
+        los cinco anios que faltan no se reportarian nunca.
+    periodos_declarados_fuente:
+      desde: 2007
+      hasta: 2025
+
+    # OJO: `registros_declarados: 7633` del indice no se usa como validacion de cantidad de
+    # filas. El archivo recibido trae 392 filas (14 anios x 28 filas) y es el recorte de
+    # Santiago; 7.633 es del orden de la base nacional completa. Se pregunta, no se valida.
+    ignorar_registros_declarados: true
+
+    # Sin `rangos`: para acotar cabezas por departamento hace falta una referencia de stock
+    # razonable que todavia no existe en validations/rangos.yaml. Queda para cuando haya
+    # dos entregas y se pueda mirar la variacion interanual.

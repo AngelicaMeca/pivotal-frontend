@@ -1,0 +1,70 @@
+# JC f80: "HACER LOS 5 AÑOS POR DEPARTAMENTO (luego irá a la base de datos departamentales)"
+# y f81: "AGREGAR VARIACIONES".
+base: 85
+slug: departamento-evolucion
+comunes: _comunes-base-85
+
+titulo: "Cómo evolucionó cada departamento"
+subtitulo: "Cabezas movidas por año, para el departamento seleccionado"
+
+protocolo: _protocolo-presentacion
+titulo_componentes:
+  variable: {desde_filtro: medida}
+  sujeto: {desde: subsector}
+  recorte: {desde_universo: true}
+  apertura: {desde_filtro: apertura}
+  area: {desde_filtro: departamento}
+  periodo: {ventana: ventana_anios}
+titulo_protocolo_ejemplo: "Evolución de las cabezas movidas de la hacienda bovina (sin introducción) - MORENO (Santiago del Estero) - años 2022 a 2025"
+
+tipo: serie
+
+variables: [cabezas, documentos]
+dimensiones: [anio]
+filtros: [departamento, medida, apertura]
+orden: {por: anio, dir: asc}
+
+defaults:
+  departamento: primero_del_ranking       # el que mas movio en el año por defecto
+  medida: cabezas
+  apertura: total
+
+opciones_medida: [cabezas, documentos]
+opciones_apertura: [total, categoria]
+
+universo:
+  ambito: sde
+  recorte: totales_sin_introduccion
+  especie: bovinos
+  geo: origen
+  nivel_geo: departamento
+  anios: ventana_anios
+  excluye_anio_en_curso: true
+
+columnas_tabla:
+  - {campo: anio, etiqueta: "Año"}
+  - {campo: documentos, etiqueta: "DTE emitidos"}
+  - {campo: cabezas, etiqueta: "Cabezas movidas"}
+  - {campo: variacion_interanual_pct, etiqueta: "Var. interanual"}
+  - {campo: participacion_provincial_pct, etiqueta: "% de la provincia"}
+
+transformaciones:
+  - variacion_interanual: {sobre: [cabezas, documentos]}
+  - variacion_decadica: {sobre: [cabezas, documentos]}
+  - variacion_promedio_anual: {sobre: [cabezas, documentos]}
+  - participacion_geografica_pct: {denominador: "total provincial del mismo año"}
+
+filtros_calidad: [excluir-fila-total-al-pie, bubalinos-fuera-de-las-vistas]
+notas_metodologicas: [que-es-un-dte, sin-introduccion, anio-en-curso]
+
+fuente:
+  pie: "Fuente: SENASA"
+  organismo_esperado: "SENASA"
+estado: publicada
+
+origen: {tipo: modelo-analisis, detalle: "hoja 'Modelo Analisis' base 85, filas 80 y 81", fecha: 2026-07-31}
+nota_interpretacion: >
+  Con 4 años cerrados la serie es corta, asi que el grafico va con las tres variaciones en la
+  tabla (interanual, del periodo y promedio anual), que es donde esta la lectura. Cuando JC
+  dice "luego ira a la base de datos departamentales" esta anticipando la ficha unica por
+  departamento que integra agricultura y ganaderia: eso queda para cuando entre la base 48.

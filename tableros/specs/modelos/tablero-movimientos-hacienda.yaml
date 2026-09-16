@@ -1,0 +1,81 @@
+# Tablero de la base 85 (movimientos de hacienda bovina, DTE de SENASA). Es la PORTADA de la
+# sección Ganadería › Movimientos de hacienda. Mismo layout que el tablero de cultivos: la
+# forma se define una vez y se repite en todas las bases (JC f39-f41: "los formatos se
+# mantienen SIEMPRE, sino sería un carnaval").
+#
+# La diferencia con cultivos es el filtro principal: acá no se elige un cultivo, se elige uno
+# de los CUATRO UNIVERSOS que definió JC en su hoja Modelo Análisis (_comunes-base-85.universos).
+# Confundirlos cambia los números, así que el universo elegido manda sobre todo el tablero.
+
+id: tablero-movimientos-hacienda
+tipo: tablero
+base: 85
+seccion: movimientos-hacienda
+
+titulo: "Movimientos de hacienda"
+subtitulo: "Provincia de Santiago del Estero · bovinos, documentos de tránsito electrónico"
+
+# Los cuatro universos, en el orden de la hoja de JC. El primero es el que abre el tablero.
+recortes: [totales_sin_introduccion, internos, extraccion, introduccion]
+
+# ---------------------------------------------------------------------------
+# INDICADORES DE CABECERA
+# ---------------------------------------------------------------------------
+# Los tres primeros los calcula el constructor sobre el universo elegido: cabezas movidas,
+# documentos emitidos y cabezas por documento (el tamaño medio del envío).
+#
+# El cuarto es el CONTRAPUNTO: si se está mirando lo que sale, el dato que falta es cuánto
+# entra. JC nunca suma introducción con extracción, así que el contrapunto se muestra al lado
+# pero nunca sumado.
+indicadores:
+  contrapunto:
+    totales_sin_introduccion: {etiqueta: "Introducción", recorte: introduccion}
+    internos:                 {etiqueta: "Extracción",   recorte: extraccion}
+    extraccion:               {etiqueta: "Introducción", recorte: introduccion}
+    introduccion:             {etiqueta: "Extracción",   recorte: extraccion}
+
+# ---------------------------------------------------------------------------
+# PANELES
+# ---------------------------------------------------------------------------
+paneles:
+  anillo:
+    titulo: "Participación por categoría"
+
+  mapa:
+    titulo: "Movimientos por departamento"
+    # Contar animales y contar papeles son dos tipos de variable distintos y no comparten
+    # escala de color (_comunes-base-85.tipos_de_variable).
+    medidas: [cabezas, documentos]
+
+  tendencia:
+    # Mes a mes y no año a año: la base tiene cuatro años cerrados y la serie anual salia con
+    # cuatro puntos, casi plana. La hacienda se mueve por temporada, y eso es lo que el panel
+    # tiene que dejar ver. Es ademas lo que pide JC en su hoja Modelo Analisis (f45,
+    # "MENSUALIZAR LOS MISMOS CUADROS PARA ESTABLECER ESTACIONALIDAD").
+    titulo: "Movimientos mes a mes"
+
+  top:
+    titulo: "Top 5 departamentos de origen"
+    cuantos: 5
+
+  # Los `badge` de tipo de gráfico se sacaron el 10-ago-2026 por regla de JC
+  # (_protocolo-presentacion.formato_v1.sin_leyendas_de_tipo_de_grafico).
+  orden:
+    - id: anillo
+      ancho: 4
+      alto: 2
+      detalle: 85-participacion-categorias
+    - id: mapa
+      ancho: 5
+      alto: 2
+      detalle: 85-mapa-movimientos-departamento
+    - id: tendencia
+      ancho: 3
+      alto: 1
+      # El detalle acompaña a lo que muestra el panel: si el panel es mensual, "ver detalle"
+      # lleva a la vista de estacionalidad y no a la de evolucion anual.
+      detalle: 85-estacionalidad-mensual
+    - id: top
+      ancho: 3
+      alto: 1
+      detalle: 85-ranking-departamento-origen

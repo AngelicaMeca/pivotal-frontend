@@ -1,0 +1,228 @@
+# Base 9 - Cultivos extensivos (MAGyP). Superficies, produccion y rendimientos
+# por provincia y departamento, grano campania.
+# Escrito por ingestor-bases el 2026-07-30 sobre raw/entrega-01/9 - Cultivos extensivos SDE.xlsx.
+# El adapter de la familia (adapters/tidy.py) lee este archivo y no sabe nada mas de la base.
+base: 9
+slug: cultivos-extensivos
+familia: tidy
+estado: activa
+demo_prioritaria: true
+
+archivo:
+  patron: "^9 - Cultivos extensivos"     # regex sobre el nombre del archivo en raw/entrega-NN/
+
+# ---------------------------------------------------------------------------
+# HOJAS
+# ---------------------------------------------------------------------------
+# El indice de JC declara las hojas "9 PB 3 - A", "9 PB 3 - B", "9 PB 3 - C" y "CR".
+# En el archivo recibido la cuarta se llama "Calculos Ranking" (JC la abrevio "CR" en
+# el indice) y ademas hay dos hojas no declaradas: "Modelo  Analisis" (con dos espacios)
+# y "Hoja1" (vacia). Ver notas.
+hojas:
+  datos:
+    - nombre: "9 PB 3 - A"
+      header_fila: 1
+      ambito: sde                  # publicable
+      contenido: "Santiago del Estero por departamento, campanias 2000/01 y 2013/14 a 2025/26"
+      geo:
+        nivel: departamento
+    - nombre: "9 PB 3 - B"
+      header_fila: 1
+      ambito: comparativo          # SENSIBLE: otras provincias del NOA, va detras del gate
+      contenido: "Catamarca, Jujuy, Salta y Tucuman por departamento, solo campania 2024/25"
+      geo:
+        nivel: departamento
+    - nombre: "9 PB 3 - C"
+      header_fila: 1
+      ambito: pais                 # SENSIBLE por prudencia: total nacional para participaciones
+      contenido: "Totales Argentina, solo campania 2024/25"
+      geo:
+        nivel: pais
+        geo_id_fijo: "AR"
+        provincia_slug: "ar"
+      columnas:                    # esta hoja tiene otros encabezados; se mergea sobre `columnas`
+        "PAIS": geo_nombre
+        "Sup. Sembrada": sup_sembrada_ha
+        "Sup. Cosechada": sup_cosechada_ha
+        "Producción": produccion_tn
+        "Rendimiento": rendimiento_kg_ha
+
+  ignorar:
+    - nombre: "Calculos Ranking"
+      motivo: >
+        Hoja de calculo del propio Excel: replica las filas de "Soja total" de la hoja A y
+        arma rankings de departamentos con tablas lado a lado. Los rankings y variaciones se
+        computan en marts, nunca se ingieren de la planilla (CLAUDE.md). Verificado el 2026-07-30.
+    - nombre: "Modelo  Analisis"
+      motivo: >
+        Especificacion de negocio escrita por JC (que graficos, que rankings, que variaciones,
+        y la clasificacion verano/invierno de cada cultivo). No son datos: va a constructor-reglas
+        para convertirse en specs/modelos/base-9-*.yaml.
+    - nombre: "Hoja1"
+      motivo: "Hoja vacia (dims A1:A1)."
+
+# ---------------------------------------------------------------------------
+# COLUMNAS: origen -> canonico snake_case (aplica a todas las hojas de datos,
+# cada hoja puede sobreescribir/agregar en hojas.datos[].columnas)
+# ---------------------------------------------------------------------------
+columnas:
+  "Cultivo": cultivo
+  "Campaña": campania
+  "Provincia": provincia_nombre
+  "Departamento": departamento
+  "idProvincia": provincia_id
+  "idDepartamento": departamento_id
+  "Sup. Sembrada (Ha)": sup_sembrada_ha
+  "Sup. Cosechada (Ha)": sup_cosechada_ha
+  "Producción (Tn)": produccion_tn
+  "Rendimiento (Kg/Ha)": rendimiento_kg_ha
+
+# ---------------------------------------------------------------------------
+# MEDIDAS: el adapter despivotea estas columnas a filas (medida, valor, unidad).
+# `agregable: false` = no se suma ni se promedia sin ponderar (rendimiento es un ratio).
+# ---------------------------------------------------------------------------
+medidas:
+  sup_sembrada_ha:
+    etiqueta: "Superficie sembrada"
+    unidad: ha
+    agregable: true
+  sup_cosechada_ha:
+    etiqueta: "Superficie cosechada"
+    unidad: ha
+    agregable: true
+  produccion_tn:
+    etiqueta: "Producción"
+    unidad: tn
+    agregable: true
+  rendimiento_kg_ha:
+    etiqueta: "Rendimiento"
+    unidad: kg/ha
+    agregable: false
+
+unidades:
+  conversiones: []    # el archivo ya viene en ha / tn / kg-ha, no hay conversion que hacer
+
+# ---------------------------------------------------------------------------
+# TIEMPO
+# ---------------------------------------------------------------------------
+tiempo:
+  grano: campania
+  columna: campania
+  formato: "AAAA/AA"   # 2014/15 => campania_inicio 2014, campania_fin 2015
+
+# ---------------------------------------------------------------------------
+# GEOGRAFIA
+# ---------------------------------------------------------------------------
+# El archivo trae ids INDEC propios (idProvincia + idDepartamento), asi que no hace
+# falta resolver nombres contra configs/dims/geo-alias.yaml. Igual la ingesta siembra
+# esa tabla con los pares nombre->codigo que ve, para las bases que solo traen nombre.
+geo:
+  nivel: departamento
+  usa_ids_indec: true
+  clave: "provincia_id * 1000 + departamento_id"   # AGUIRRE: 86 * 1000 + 7 = 86007
+  provincias:                # id INDEC -> slug de particion. Si aparece un id que no esta
+    86: sde                  # aca, la ingesta FALLA (no se dropea ni se adivina).
+    10: catamarca
+    38: jujuy
+    66: salta
+    90: tucuman
+  agregados:                 # filas de total embebidas entre el detalle: se MARCAN, no se borran
+    departamento_id_total: 0
+    nombres_total: ["Total provincia"]
+
+# ---------------------------------------------------------------------------
+# CULTIVOS: agregados vs componentes (regla de JC, ver notas)
+# ---------------------------------------------------------------------------
+# Regla general, no caso por caso: el cultivo cuyo nombre termina en " total" es el
+# AGREGADO del grupo; los cultivos listados como componentes son sus partes. Para sumar
+# o sacar participaciones se usa SOLO el agregado; los componentes se muestran como detalle.
+# El adapter escribe dos columnas: cultivo_grupo y cultivo_rol (agregado|componente|simple).
+agregados_cultivo:
+  columna: cultivo
+  sufijo_agregado: " total"
+  grupos:
+    Soja:
+      agregado: "Soja total"
+      componentes: ["Soja 1ra", "Soja 2da"]
+    Trigo:
+      agregado: "Trigo total"
+      componentes: ["Trigo candeal"]     # falta el componente "Trigo pan" en el archivo
+    Poroto:
+      agregado: "Poroto total"
+      componentes: ["Poroto negro", "Poroto otros", "Poroto alubia"]
+    Cebada:
+      agregado: "Cebada total"
+      componentes: []                    # el archivo no trae cervecera/forrajera por separado
+
+# ---------------------------------------------------------------------------
+# SALIDA
+# ---------------------------------------------------------------------------
+salida:
+  staging: "staging/base-09-cultivos-extensivos.parquet"
+  mart: hecho_cultivos                 # a que tabla de hechos alimenta esta base
+  particiones: [provincia, campania]   # provincia es filtro obligatorio en el sitio:
+                                       # la vista arranca en provincia=sde y lo comparativo
+                                       # (ambito comparativo/pais) queda detras del gate.
+
+# ---------------------------------------------------------------------------
+# METADATA HEREDADA DEL INDICE (configs/manifiesto-indice.yaml, base nro 9)
+# ---------------------------------------------------------------------------
+indice:
+  fuente: "MAGyP"
+  frecuencia: "mensual"
+  rango_declarado: "1969-01-01 a 2025-12-31"
+  registros_declarados: 147184   # OJO: es el conteo NACIONAL de la base completa del MAGyP.
+                                 # El archivo recibido es el recorte SDE + NOA + pais.
+                                 # NO usar como validacion de filas.
+  unidades_declaradas: [ha, tn, kg/ha]
+  geografia_declarada: [prov, depart]
+  hojas_declaradas: ["9 PB 3 - A", "9 PB 3 - B", "9 PB 3 - C", "CR"]
+  estatus_modelo: "CON MODELO"
+  cita_fuente_al_pie: "Fuente: MAGyP"
+
+# ---------------------------------------------------------------------------
+notas:
+  - fecha: "2026-07-30"
+    tipo: familia
+    texto: >
+      Familia `tidy`: 1 fila = 1 observacion, header limpio en fila 1 y ids INDEC de provincia
+      y departamento en el propio archivo. Es el formato objetivo del pipeline. La decision se
+      tomo mirando header y forma, no el nombre del archivo.
+  - fecha: "2026-07-30"
+    tipo: regla-jc
+    texto: >
+      JC (indice y hoja Modelo Analisis, r22-r24): "Para los graficos y totales deben tomarse
+      solamente el que dice TOTAL. Ejemplo: esta soja de 1ra y soja de 2da, debe tomarse soja
+      total y no sumar todo, porque sino estarias duplicando las cantidades. Lo mismo para
+      poroto y trigo, o la cebada". Los tres se ingieren; el bloque `agregados_cultivo` marca
+      cual es agregado y cual componente para que nadie los sume junto.
+  - fecha: "2026-07-30"
+    tipo: drift
+    texto: >
+      El indice declara la hoja "CR" y el archivo la trae como "Calculos Ranking". Ademas el
+      archivo trae dos hojas no declaradas en el indice: "Modelo  Analisis" (con dos espacios
+      entre las palabras) y "Hoja1" (vacia). No se corrige nada: queda registrado aca.
+  - fecha: "2026-07-30"
+    tipo: anomalia
+    texto: >
+      La hoja A trae 157 filas "Total provincia" (idDepartamento 0) mezcladas entre el detalle
+      departamental. No se dropean: quedan marcadas con nivel_geo=provincia y es_agregado_geo=true.
+      Para qa-datos: verificar si el total coincide con la suma de departamentos.
+  - fecha: "2026-07-30"
+    tipo: anomalia
+    texto: >
+      Campanias fuera del rango que JC declaro para la entrega (2014/15 a 2025/26): aparecen
+      2013/14 (7 filas) y 2000/01 (1 fila), todas de "Total provincia". Para qa-datos.
+  - fecha: "2026-07-30"
+    tipo: cobertura
+    texto: >
+      La hoja A cubre 26 de los 27 departamentos de Santiago del Estero: no aparece SALAVINA
+      (86168). Puede ser real (sin cultivos extensivos declarados) o un faltante de la fuente.
+      Para qa-datos.
+  - fecha: "2026-07-30"
+    tipo: pendiente
+    texto: >
+      La clasificacion verano/invierno (gruesa/fina) de cada cultivo la escribio JC en la hoja
+      Modelo Analisis (filas 238-300) y es imprescindible para las participaciones porcentuales
+      ("si no, la suma sera mayor al todo"). NO se ingiere aca porque es regla de negocio:
+      la tiene que levantar constructor-reglas a specs/modelos/.

@@ -1,0 +1,304 @@
+# Base 48 - Stocks bovinos por departamento y categoria (MAGyP). Existencias al 31 de
+# diciembre de cada anio, grano anio x departamento, con las cabezas abiertas por categoria.
+# Escrito por ingestor-bases el 2026-08-05 sobre
+# raw/entrega-01/48 - Stocks bovinos por depto y categ - SDE.xlsx.
+# El adapter de la familia (adapters/stock.py) lee este archivo y no sabe nada mas de la base.
+#
+# OJO, no confundir con la base 85: aca las cabezas son STOCK (cuantos animales HAY en un
+# momento) y en la 85 son FLUJO (cuantos se MOVIERON en el anio, y un animal que se movio tres
+# veces cuenta tres). No se suman entre si ni se comparan sin aclararlo.
+base: 48
+slug: stocks-bovinos
+familia: stock
+estado: activa
+demo_prioritaria: true
+
+archivo:
+  patron: "^48 - Stocks bovinos"     # regex sobre el nombre del archivo en raw/entrega-NN/
+
+# ---------------------------------------------------------------------------
+# HOJAS
+# ---------------------------------------------------------------------------
+# El indice de JC declara una sola hoja, "Data SDE". El archivo recibido la trae como
+# "Data stock SDE" y ademas suma otras dos no declaradas: "Modelo An 01" y "Estratificacion".
+# Ver notas (drift).
+hojas:
+  datos:
+    - nombre: "Data stock SDE"
+      header_fila: 2               # la r1 esta vacia
+      ambito: sde                  # publicable
+      contenido: "Santiago del Estero por departamento, anios 2012 a 2025, 28 filas por anio"
+      geo:
+        nivel: departamento
+
+  ignorar:
+    - nombre: "Modelo An 01"
+      motivo: >
+        Especificacion de negocio escrita por JC: la tabla de composicion del stock por
+        categoria comparando dos anios, con participaciones, y una columna ZONA que agrupa los
+        departamentos en zonas productivas. No son datos: va a constructor-reglas para
+        convertirse en specs/modelos/48-*.yaml. La zonificacion NO existe en ninguna otra
+        parte del repo y hay que levantarla de ahi.
+
+  pendientes:
+    - nombre: "Estratificación"
+      motivo: >
+        Estratificacion de establecimientos con existencias bovinas segun stock total: 9
+        estratos ("Hasta 20", "Entre 21 y 100", ... "Mas de 4000") x 4 campos
+        (Establecimientos, Cantidad de UP, Vacas, Total Bovinos), con los estratos en la r3 y
+        los campos en la r4. Es otro GRANO (provincia x estrato, no departamento) y otra forma
+        de schema (grupos de columnas repetidos, como la familia cuadro-indec), asi que no
+        entra en el mismo parquet que el stock departamental.
+      ambito: comparativo
+      sensibilidad: >
+        SENSIBLE. Trae Buenos Aires, CABA, Catamarca, Jujuy, Salta, Tucuman y Total Pais.
+        Comparaciones interprovinciales: no se publican sin decision de Francisco (CLAUDE.md).
+      fuente_declarada_en_la_hoja: "SENASA"
+
+# ---------------------------------------------------------------------------
+# COLUMNAS: origen -> canonico snake_case
+# ---------------------------------------------------------------------------
+# El titulo de la columna de departamento viene con un espacio al final en el Excel
+# ("Partido/Departamento "). Se declara sin el espacio: el adapter compara con strip.
+columnas:
+  "Año": anio
+  "Provincia": provincia_nombre
+  "Partido/Departamento": departamento
+  "Vacas": vacas
+  "Vaquillonas": vaquillonas
+  "Novillos": novillos
+  "Novillitos": novillitos
+  "Terneros": terneros
+  "Terneras": terneras
+  "Toros": toros
+  "Toritos": toritos
+  "Bueyes": bueyes
+  "Total": total_bovinos
+  "Cantidad de UP": cantidad_up
+
+# ---------------------------------------------------------------------------
+# VALORES: las columnas que el adapter despivotea a filas.
+# ---------------------------------------------------------------------------
+# Aca lo que viene WIDE es la CATEGORIA del animal, no la medida: las nueve columnas son la
+# misma medida (cabezas) abierta por categoria. Por eso cada entrada declara `categoria`, y
+# `rol` distingue el agregado de sus partes para que nadie sume el Total con las categorias.
+#
+# Los nombres de categoria se dejan tal cual los escribe esta fuente. Unificarlos con los de
+# la base 85 ("Toritos / mejoradores") es decision de reglas, no de ingesta: ver notas.
+valores:
+  vacas:
+    etiqueta: "Vacas"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Vacas"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  vaquillonas:
+    etiqueta: "Vaquillonas"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Vaquillonas"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  novillos:
+    etiqueta: "Novillos"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Novillos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  novillitos:
+    etiqueta: "Novillitos"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Novillitos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  terneros:
+    etiqueta: "Terneros"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Terneros"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  terneras:
+    etiqueta: "Terneras"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Terneras"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  toros:
+    etiqueta: "Toros"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Toros"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  toritos:
+    etiqueta: "Toritos"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Toritos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  bueyes:
+    etiqueta: "Bueyes"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Bueyes"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  total_bovinos:
+    etiqueta: "Total de cabezas"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Total"
+    rol: agregado
+    unidad: cabezas
+    agregable: true
+  cantidad_up:
+    etiqueta: "Unidades productivas"
+    medida: unidades_productivas
+    especie: bovinos
+    categoria: "Total"
+    rol: simple
+    unidad: up
+    agregable: true
+
+unidades:
+  conversiones: []    # el archivo ya viene en cabezas, no hay conversion que hacer
+
+# ---------------------------------------------------------------------------
+# TIEMPO
+# ---------------------------------------------------------------------------
+# Grano ANIO calendario: el stock es una foto al 31 de diciembre, no un acumulado del anio.
+# Es el mismo grano que la base 85, asi que las dos comparten dim_tiempo.
+tiempo:
+  grano: anio
+  columna: anio
+
+# ---------------------------------------------------------------------------
+# GEOGRAFIA
+# ---------------------------------------------------------------------------
+# El archivo NO trae ids INDEC: los departamentos vienen por nombre y en Title Case con
+# tildes ("Río Hondo", "Guasayán"), mientras que geo-alias.yaml los tiene en mayusculas y sin
+# tildes. Ademas la fuente escribe el mismo departamento de varias formas ("Ojo De Agua",
+# "Ojo de Agua", "Ojo de agua"). Por eso el lookup se hace NORMALIZADO (mayusculas, sin
+# tildes, espacios colapsados): resuelve las tres variantes contra la misma entrada y evita
+# ensuciar la tabla de alias con ruido de tipeo. Ver notas.
+geo:
+  nivel: departamento
+  usa_ids_indec: false
+  normalizar_nombre: true
+  particion: sde
+  provincia_propia: 86
+  resolver: [86]             # solo SDE: la hoja de datos no trae otras provincias
+  agregados:                 # filas de total embebidas entre el detalle: se MARCAN, no se borran
+    nombres_total: ["Total"]
+
+# ---------------------------------------------------------------------------
+# SALIDA
+# ---------------------------------------------------------------------------
+salida:
+  staging: "staging/base-48-stocks-bovinos.parquet"
+  mart: hecho_stock_bovino
+  particiones: [provincia, anio]
+
+# ---------------------------------------------------------------------------
+# METADATA HEREDADA DEL INDICE (configs/manifiesto-indice.yaml, base nro 48)
+# ---------------------------------------------------------------------------
+indice:
+  fuente: "MAGyP"
+  frecuencia: "anual"
+  rango_declarado: "2007-01-01 a 2025-12-31"
+  registros_declarados: 7633     # OJO: el archivo trae 392 filas. Ver notas (cobertura).
+  unidades_declaradas: [cabezas, categorias]
+  geografia_declarada: []
+  hojas_declaradas: ["Data SDE"]
+  estatus_modelo: "CON MODELO"
+  cita_fuente_al_pie: "Fuente: MAGyP"
+
+# ---------------------------------------------------------------------------
+notas:
+  - fecha: "2026-08-05"
+    tipo: familia
+    texto: >
+      Familia `stock`, NUEVA (la novena). No encajaba en ninguna de las ocho de CLAUDE.md: no es
+      `tidy` (las categorias vienen wide, una columna por categoria, no una fila por
+      observacion), no es `dte` (no hay origen-destino, ni motivo, ni mes) y no es `wide-mes`
+      (lo que abre a lo ancho es la categoria, no el mes). La decision se tomo mirando header y
+      forma, no el nombre del archivo. El config declara los valores igual que la 85, asi que
+      quien conoce esa base lee esta sin aprender nada nuevo.
+  - fecha: "2026-08-05"
+    tipo: drift
+    texto: >
+      El indice declara la hoja "Data SDE" y el archivo la trae como "Data stock SDE". Ademas
+      el archivo suma dos hojas no declaradas: "Modelo An 01" y "Estratificación".
+  - fecha: "2026-08-05"
+    tipo: cobertura
+    texto: >
+      El indice declara rango 2007-2025 y 7.633 registros. El archivo cubre 2012-2025 (14
+      anios, 28 filas por anio, 392 filas en total). Faltan los anios 2007 a 2011 que JC
+      declaro. Para qa-datos: preguntarle a JC si el recorte es a proposito o si falta data.
+  - fecha: "2026-08-05"
+    tipo: anomalia
+    texto: >
+      Cada anio trae una fila "Total" embebida ENTRE el detalle departamental (es la primera
+      fila de cada anio, no la ultima). Son 14 filas de agregado sobre 392. No se dropean:
+      quedan marcadas con es_agregado_geo=true y nivel_geo=provincia. Es el caso que el propio
+      JC advirtio y que esta en docs/audit-bases-1ra-entrega.md.
+  - fecha: "2026-08-05"
+    tipo: anomalia
+    texto: >
+      Cabezas fraccionarias: el total provincial de 2021 da 1.355.173,25. Un animal no se
+      parte. Se ingiere el valor tal cual viene (nunca se corrige en silencio) y queda para
+      qa-datos, que ya tiene el check de cabezas fraccionarias entre las validaciones minimas.
+  - fecha: "2026-08-05"
+    tipo: anomalia
+    texto: >
+      "Cantidad de UP" (unidades productivas) esta cargada en 112 de las 392 filas: la fuente
+      la informa solo en algunos anios. Las filas sin dato quedan con valor nulo, no con cero:
+      no informado no es lo mismo que ninguno.
+  - fecha: "2026-08-05"
+    tipo: control
+    texto: >
+      La columna "Total" cuadra con la suma de las nueve categorias en las 392 filas, sin una
+      sola diferencia. Verificado al perfilar, el 2026-08-05.
+  - fecha: "2026-08-05"
+    tipo: geo
+    texto: >
+      La fuente escribe el mismo departamento de hasta tres formas distintas ("Ojo De Agua",
+      "Ojo de Agua", "Ojo de agua"; "Río Hondo" y "Río hondo"). Se resuelven por normalizacion
+      (mayusculas, sin tildes), no agregando cada variante a geo-alias.yaml: son erratas de
+      tipeo, no nombres alternativos. Los 27 departamentos matchean, ninguna fila queda sin geo.
+  - fecha: "2026-08-05"
+    tipo: pendiente
+    texto: >
+      La hoja "Estratificación" no se ingiere en esta pasada (ver hojas.pendientes): otro grano,
+      otra forma de schema y ademas material comparativo interprovincial, que necesita decision
+      de Francisco antes de publicarse. Cuando entre, va a un parquet propio.
+  - fecha: "2026-08-05"
+    tipo: pendiente
+    texto: >
+      Las categorias de esta base y las de la 85 no son el mismo vocabulario: aca hay "Toritos"
+      y "Bueyes", y en la 85 "Toritos / mejoradores" y sin bueyes. Para que el color por
+      categoria sea el mismo en las dos (protocolo de JC: mismo color para el mismo tipo de
+      variable) hace falta una tabla de equivalencia. Es regla de negocio: la escribe
+      constructor-reglas, no la ingesta.
+  - fecha: "2026-08-05"
+    tipo: fuente
+    texto: >
+      El indice declara la base como MAGyP y la hoja "Estratificación" trae al pie
+      "Fuente: SENASA". El stock bovino se releva por la vacunacion antiaftosa (SENASA) y lo
+      publica MAGyP, asi que las dos pueden ser ciertas. Se cita lo que declara el indice
+      ("Fuente: MAGyP"), igual que en la base 9, y queda la pregunta para JC.

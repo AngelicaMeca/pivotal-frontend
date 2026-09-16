@@ -1,0 +1,88 @@
+# JC f214-f254: los cuadros de ingresos y egresos de tambo y de engorde a corral, con su
+# advertencia en mayuscula: "Están incluidos en los totales anteriores, NO implica sumatoria".
+# Y f252-f254: "> Por departamento / > Por provincia origen / > Por provincia destino".
+base: 85
+slug: tambos-engorde-corral
+comunes: _comunes-base-85
+
+titulo: "Movimientos de tambos y de engorde a corral"
+subtitulo: "Cabezas que entran y salen de estos establecimientos, por año"
+
+protocolo: _protocolo-presentacion
+titulo_componentes:
+  variable: {multiple: [ingreso_establecimiento, egreso_establecimiento]}
+  sujeto:
+    desde_filtro: tipo_establecimiento
+    # El rotulo del selector y la frase del titulo no son el mismo texto: el selector dice
+    # "Engorde a corral" (singular, como lo nombra la fuente) y el titulo necesita el plural
+    # con articulo. Va escrito, no deducido.
+    frases:
+      "Engorde a corral": "los engordes a corral"
+      "Tambo": "los tambos"
+  apertura: {desde_filtro: desglose}
+  area: provincia
+  periodo: {ventana: ventana_anios}
+titulo_protocolo_ejemplo:
+  - "Evolución de ingresos y egresos de los engordes a corral - Santiago del Estero - años 2022 a 2025"
+  - "Evolución de ingresos y egresos de los tambos por departamento - Santiago del Estero - años 2022 a 2025"
+
+tipo: serie
+
+variables: [ingreso_establecimiento, egreso_establecimiento]
+dimensiones: [anio]
+filtros: [tipo_establecimiento, desglose]
+orden: {por: anio, dir: asc}
+
+defaults:
+  tipo_establecimiento: "Engorde a corral"     # es el que tiene volumen: 681.476 cabezas
+  desglose: total
+
+opciones_tipo_establecimiento: ["Engorde a corral", "Tambo"]
+opciones_desglose: [total, departamento]       # JC f252. Por provincia queda pendiente, ver abajo
+
+universo:
+  ambito: sde
+  recorte: totales_sin_introduccion
+  especie: bovinos
+  geo: origen
+  anios: ventana_anios
+  excluye_anio_en_curso: true
+  solo_valores_distintos_de_cero: true         # JC f250, ver nota
+
+columnas_tabla:
+  - {campo: anio, etiqueta: "Año"}
+  - {campo: ingreso_establecimiento, etiqueta: "Ingresos"}
+  - {campo: egreso_establecimiento, etiqueta: "Egresos"}
+  - {campo: balance_establecimiento, etiqueta: "Diferencia"}
+  - {campo: variacion_interanual_pct, etiqueta: "Var. interanual"}
+
+transformaciones:
+  - variacion_interanual: {sobre: [ingreso_establecimiento, egreso_establecimiento]}
+
+advertencias:
+  - id: no-sumar-a-los-totales
+    texto_en_pantalla: >
+      Estos movimientos ya están contados en los cuadros de movimientos totales. Marcan cuáles
+      de esos traslados corresponden a un tambo o a un engorde a corral. No hay que sumarlos a
+      los totales: serían los mismos animales contados dos veces.
+    obligatoria: true
+    texto_jc: "Están incluidos en los totales anteriores, NO implica sumatoria"
+
+filtros_calidad: [excluir-fila-total-al-pie, bubalinos-fuera-de-las-vistas]
+notas_metodologicas: [que-es-un-dte, tambo-y-corral-no-se-suman, anio-en-curso]
+
+fuente:
+  pie: "Fuente: SENASA"
+  organismo_esperado: "SENASA"
+estado: publicada
+
+origen: {tipo: modelo-analisis, detalle: "hoja 'Modelo Analisis' base 85, filas 214 a 254", fecha: 2026-07-31}
+nota_interpretacion: >
+  JC dejo las cuatro tablas armadas y vacias, con la instruccion f250: "HAY QUE IDENTIFICAR LAS
+  CELDAS EN LAS COLUMNAS DE REFERENCIA (AE, AF, AG y AH) CON VALORES DISTINTOS A '0' Y TOMAR LOS
+  DATOS". Eso es exactamente `solo_valores_distintos_de_cero`: se muestran los movimientos donde
+  la columna tiene algo, no las 46.032 filas con cero.
+  El volumen esta en el engorde a corral: 681.476 cabezas ingresadas y 990.778 egresadas en toda
+  la serie, contra 18.457 y 71.686 de tambo. Vale la pena que el selector arranque en engorde.
+  Lo que NO se especifica todavia es la apertura por provincia de origen y de destino (f253 y
+  f254): queda atada a la misma decision de sensibilidad que las dos vistas provinciales.

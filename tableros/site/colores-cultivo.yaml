@@ -1,0 +1,35 @@
+# Color fijo por cultivo. GENERADO por pipeline/site_build.py, no editar a mano.
+#
+# El protocolo pide que, cuando el color distingue CATEGORIAS y no magnitudes, cada
+# cultivo tenga un color fijo asignado una sola vez y respetado en todas las vistas
+# (_comunes-base-9.uniformidad.regla_color_cultivo). La asignacion se hace en orden
+# alfabetico contra site/theme.yaml -> paleta_categorica, asi es la misma en cada build.
+#
+# Las escalas de INTENSIDAD de los mapas no salen de aca: las define el protocolo por
+# tipo de variable (superficie verde, produccion ocre, rendimiento azul).
+colores:
+  "Algodón": "#22502c"
+  "Alpiste": "#b8552e"
+  "Arveja": "#407a47"
+  "Avena": "#c9a226"
+  "Cártamo": "#8fb07b"
+  "Cebada total": "#6b5344"
+  "Centeno": "#2f6b6a"
+  "Colza": "#8c3b52"
+  "Garbanzo": "#4a5c8a"
+  "Girasol": "#a8763a"
+  "Lenteja": "#5c7a3a"
+  "Lino": "#7a5c8a"
+  "Maíz": "#2d6e4e"
+  "Maní": "#c1743f"
+  "Mijo": "#4f6f7f"
+  "Poroto alubia": "#9a9a3d"
+  "Poroto negro": "#7d4a2e"
+  "Poroto otros": "#3f8a7a"
+  "Poroto total": "#a55c6b"
+  "Soja 1ra": "#5f6b47"
+  "Soja 2da": "#8a6f2e"
+  "Soja total": "#35544f"
+  "Sorgo": "#b98a5e"
+  "Trigo candeal": "#64553f"
+  "Trigo total": "#22502c"

@@ -1,0 +1,70 @@
+# Mapa departamental de movimientos de hacienda.
+#
+# OJO CON EL ORIGEN DE ESTA VISTA: JC no pide un mapa en la hoja Modelo Analisis de la base
+# 85. La proponemos nosotros por dos motivos escritos: su propio protocolo de graficos manda
+# el "volcado a mapas" como tratamiento general de todo dato departamental, y el mapa es la
+# pieza que hace que el tablero de ganaderia se lea igual que el de cultivos. Queda marcada
+# como propuesta para que la confirme, no como regla suya.
+base: 85
+slug: mapa-movimientos-departamento
+comunes: _comunes-base-85
+
+titulo: "Desde qué departamentos sale la hacienda"
+subtitulo: "Cabezas movidas por departamento de origen, en el año seleccionado"
+
+protocolo: _protocolo-presentacion
+titulo_componentes:
+  variable: {desde_filtro: medida}
+  sujeto: {desde: subsector}                 # en la plantilla `mapa` va suelto: "ganado bovino"
+  recorte: {desde_universo: true}
+  apertura: departamento
+  area: provincia
+  periodo: {desde_filtro: anio}
+titulo_protocolo_ejemplo: "Santiago del Estero - ganado bovino - Cabezas movidas (sin introducción) por departamento - año 2025"
+
+tipo: mapa
+# Misma mecanica que 09-cultivo-mapa-sup-sembrada (coropleta + ranking linkeado al costado),
+# pero NO hereda de ese spec: es otra base, con otras medidas y otros filtros. Lo unico que
+# comparten es el tipo de vista, y eso ya lo dice `tipo`.
+
+variables: [cabezas, documentos]
+dimensiones: [departamento]
+filtros: [anio, medida, categoria]
+
+defaults:
+  anio: parametros.ventana_anios.anio_por_defecto
+  medida: cabezas
+  categoria: Total
+
+opciones_medida: [cabezas, documentos]
+opciones_categoria: [Total, Terneros, Terneras, Novillitos, Novillos,
+                     "Toritos / mejoradores", Toros, Vacas, Vaquillonas]
+
+universo:
+  ambito: sde
+  recorte: totales_sin_introduccion
+  especie: bovinos
+  geo: origen
+  nivel_geo: departamento
+  anios: ventana_anios
+  excluye_anio_en_curso: true
+
+escala:
+  clases: 5                       # quintiles, igual que el mapa de cultivos
+  recalcula_por: "año y categoría seleccionados"
+  sin_dato: "gris, nunca cero"
+
+filtros_calidad: [excluir-fila-total-al-pie, bubalinos-fuera-de-las-vistas]
+notas_metodologicas: [que-es-un-dte, sin-introduccion, anio-en-curso]
+
+fuente:
+  pie: "Fuente: SENASA"
+  organismo_esperado: "SENASA"
+estado: publicada-a-confirmar   # construida y visible; falta el visto de JC (backlog 22)
+
+origen: {tipo: propuesta-nuestra, detalle: "no figura en la hoja Modelo Analisis de la base 85", fecha: 2026-07-31}
+nota_interpretacion: >
+  A diferencia de la base 9, aca los 27 departamentos tienen dato, asi que el mapa no va a
+  tener ningun gris por falta de informacion. Si JC prefiere no tener mapa en ganaderia, se
+  borra este spec y no afecta a ninguna otra vista: ninguna hereda de esta.
+  Queda anotado en el backlog como pregunta para el.

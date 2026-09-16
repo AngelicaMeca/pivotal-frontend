@@ -1,0 +1,93 @@
+# "Tambien se colocara una tabla con la posicion del departamento en el RANKING de cultivos en
+# cada campaña" (JC f157). El ejemplo de JC esta en las filas 200 a 227 de la hoja, donde el mismo
+# escribio "COMPLETAR POR SISTEMA" sobre las campañas que le faltaban cargar a mano.
+base: 9
+slug: departamento-posicion-ranking
+comunes: _comunes-base-9
+titulo: "En qué puesto quedó el departamento, campaña por campaña"
+subtitulo: "Posición entre los departamentos de la provincia"
+
+# --- Titulo del cuadro: lo arma _protocolo-presentacion, no se escribe a mano ---
+protocolo: _protocolo-presentacion
+titulo_componentes:
+  area: {desde_filtro: departamento}
+  sujeto: {desde: subsector}
+  variable:
+    desde_filtro: variable
+    override: "posición en el ranking {art} {frase}"
+    motivo: >
+      El prefijo mecanico de `tabla-variaciones` es "diferencias y variaciones de la ...", que es lo
+      que muestra la tabla de ejemplo de JC pero NO lo que muestra esta: acá las celdas son puestos,
+      no diferencias. Decir "variaciones" seria decir algo falso. El override sigue siendo una
+      plantilla, asi que acompaña al selector de variable (producción o rendimiento).
+  apertura: null
+  periodo: {ventana: ventana_campanias}
+titulo_protocolo_ejemplo: "Posición en el ranking de la producción de los cultivos extensivos - MORENO (Santiago del Estero) - campañas 2015/16 a 2024/25"
+protocolo_tablas:
+  fila_total_arriba: false
+  motivo: >
+    El protocolo de JC pide la fila del total provincial arriba (asi esta su tabla del Chaco). Acá
+    no aplica: las celdas son la posicion del departamento en el ranking y la provincia no tiene
+    posicion. Se deja anotado para que no parezca un olvido.
+
+tipo: tabla-variaciones
+
+variables: [produccion_tn]
+dimensiones: [cultivo, campania]
+filtros: [departamento, variable]
+orden: {por: "posición en la última campaña", dir: asc}
+
+defaults:
+  variable: produccion_tn
+
+universo:
+  ambito: sde
+  nivel_geo: departamento
+  cultivo_rol: [agregado, simple]
+  campanias: ventana_campanias
+
+forma_de_la_tabla:
+  filas: "un cultivo por fila (los que el departamento hizo en alguna campaña de la ventana)"
+  columnas: "una campaña por columna, de la más nueva a la más vieja"
+  celda: "puesto del departamento en ese cultivo y esa campaña, con el símbolo de grado (1°, 2°, ...)"
+  celda_sin_dato: "S/D"
+  celda_destacada: "el mejor puesto de cada fila"
+
+transformaciones:
+  - ranking:
+      particion: "cultivo + campania"
+      ordenado_por: produccion_tn
+      direccion: desc
+      empates: "mismo puesto para valores iguales, el siguiente puesto salta (competition ranking)"
+      base_universo: "los 26 departamentos con datos; los que no informaron ese cultivo esa campaña quedan S/D, no ultimos"
+      calculado_en: marts
+      nota: "La hoja 'Calculos Ranking' del Excel NO se lee, ni siquiera para verificar (CLAUDE.md)."
+
+variable_alternativa:
+  - {variable: rendimiento_kg_ha, etiqueta: "Ranking por rendimiento"}
+
+notas_metodologicas: [estimacion-departamental, salavina-sin-datos, total-no-suma-componentes, campania-en-curso]
+filtros_calidad: [excluir-campanias-sin-departamento]
+
+fuente:                                  # _protocolo-presentacion.pie_de_fuente
+  pie: "Fuente: MAGyP"                   # lo arma el protocolo, no se escribe en el template
+  organismo_esperado: "MAGyP"            # tiene que coincidir con la columna `fuente` del mart
+  publicacion: null                      # JC declara la cita como "Fuente: MAGyP" en su indice.
+                                         # Si quiere "MAGyP, Estimaciones Agrícolas", se completa
+                                         # aca y cambia en las 16 vistas. Backlog pregunta 14.
+sensibilidad: normal
+# Despublicada el 10-ago-2026 (tercera tanda, Facu con JC: "OLVIDATE DEL ANALISIS COMPLETO,
+# ESO YA NO EXISTE MAS... NECESITO QUE LO SAQUES Y TE QUEDES CON LOS TABLEROS"). El spec queda
+# como REGISTRO de la regla: no se construye pagina propia ni se linkea desde ningun lado.
+# Las unicas paginas publicadas de cultivos son el tablero (index), 09-departamento-datos y
+# 09-noa-participacion-provincia. Regla: _protocolo-presentacion.formato_v1.tercera_tanda.solo_tableros.
+estado: no-publicada
+
+origen: {tipo: modelo-analisis, detalle: "hoja 'Modelo  Analisis' base 9, fila 157 y ejemplo de filas 200 a 227", fecha: 2026-07-30}
+nota_interpretacion: >
+  El tipo `tabla-variaciones` es el unico de la lista permitida que representa una tabla de
+  departamento por campaña. Acá las celdas no son variaciones sino posiciones de ranking. Si esto
+  se repite en otras bases, conviene proponerle a Francisco un tipo `tabla-posiciones`. Por ahora
+  no se inventa un tipo nuevo.
+  Segunda interpretacion: JC arma su ejemplo con las 11 campañas 2014/15 a 2024/25. Acá la tabla
+  usa la ventana de 10 campañas del demo, para que sea consistente con el resto del sitio.

@@ -1,0 +1,22 @@
+# Tercer cuadro de JC (Modelo Analisis f18-f24): "Movimientos cabezas salidas (extracción)".
+base: 85
+slug: evolucion-extraccion
+comunes: _comunes-base-85
+
+igual_que: 85-evolucion-movimientos
+
+titulo: "Hacienda que sale de la provincia"
+subtitulo: "Cabezas con destino fuera de Santiago del Estero, por año"
+
+titulo_protocolo_ejemplo: "Evolución de las cabezas movidas de la hacienda bovina (extracción) - Santiago del Estero - años 2022 a 2025"
+
+universo:
+  recorte: extraccion
+
+notas_metodologicas: [que-es-un-dte, total-no-suma-categorias, anio-en-curso]
+
+origen: {tipo: modelo-analisis, detalle: "hoja 'Modelo Analisis' base 85, filas 18 a 24", fecha: 2026-07-31}
+nota_interpretacion: >
+  JC la llama extraccion: la hacienda que se va de la provincia. En 2025 fueron 574.913 cabezas,
+  el 60% de lo que Santiago movio. Su tabla no trae la columna de documentos para este recorte;
+  nosotros la calculamos igual (14.668 en 2025) porque el dato esta y sirve.

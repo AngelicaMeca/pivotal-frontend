@@ -1,0 +1,78 @@
+# "Tambien podran consultarse la evolucion de los rendimientos" (JC f19).
+base: 9
+slug: departamento-evolucion-rendimientos
+comunes: _comunes-base-9
+titulo: "Cómo evolucionaron los rendimientos del departamento"
+subtitulo: "Rendimiento por campaña, en kilos por hectárea"
+
+# --- Titulo del cuadro: lo arma _protocolo-presentacion, no se escribe a mano ---
+protocolo: _protocolo-presentacion
+titulo_componentes:
+  area: {desde_filtro: departamento}
+  sujeto: {desde_filtro: cultivo, si_varios: subsector}   # 1 cultivo -> "soja"; 2 o mas -> "los cultivos extensivos"
+  variable: {fijo: rendimiento_kg_ha}
+  apertura: cultivo
+  periodo: {ventana: ventana_campanias}
+titulo_protocolo_ejemplo: "Evolución del rendimiento de los cultivos extensivos por cultivo - MORENO (Santiago del Estero) - campañas 2015/16 a 2024/25"
+
+tipo: serie
+grafico: lineas
+
+variables: [rendimiento_kg_ha]
+dimensiones: [campania, cultivo]
+filtros: [departamento, cultivo]
+orden: {por: campania, dir: asc}
+
+defaults:
+  cultivo: "los 3 cultivos de mayor superficie sembrada del departamento en la última campaña"
+  nota_default: "Se calcula, no se hardcodea. Si el departamento tiene menos de 3, se muestran los que haya."
+
+universo:
+  ambito: sde
+  nivel_geo: departamento
+  cultivo_rol: [agregado, simple]
+  campanias: ventana_campanias
+
+comparacion:
+  linea_provincial: true
+  descripcion: "Se dibuja punteada la línea del rendimiento provincial del mismo cultivo, para que se vea si el departamento está arriba o abajo del promedio de la provincia."
+
+transformaciones:
+  - variacion_rendimiento_extremos
+  - variacion_promedio_anual
+
+resumen_al_pie:
+  - {etiqueta: "Variación del rendimiento entre extremos", valor: variacion_rendimiento_extremos}
+  - {etiqueta: "Var. anual promedio", valor: variacion_promedio_anual}
+
+exclusiones:
+  - regla: "no se grafican los puntos con estado `sembrado_sin_cosechar` ni `produccion_no_informada`"
+    motivo_legible: >
+      Cuando un cultivo se sembró y no se cosechó, el rendimiento figura en cero. Si ese cero
+      entrara en el gráfico, parecería un derrumbe del rendimiento cuando en realidad no hubo
+      cosecha. Esos casos se muestran como corte de la línea, con la aclaración.
+
+mouseover: "campaña + cultivo + rendimiento"
+
+notas_metodologicas: [estimacion-departamental, rendimiento-no-se-suma, campania-en-curso]
+filtros_calidad: [excluir-campanias-sin-departamento]
+
+fuente:                                  # _protocolo-presentacion.pie_de_fuente
+  pie: "Fuente: MAGyP"                   # lo arma el protocolo, no se escribe en el template
+  organismo_esperado: "MAGyP"            # tiene que coincidir con la columna `fuente` del mart
+  publicacion: null                      # JC declara la cita como "Fuente: MAGyP" en su indice.
+                                         # Si quiere "MAGyP, Estimaciones Agrícolas", se completa
+                                         # aca y cambia en las 16 vistas. Backlog pregunta 14.
+sensibilidad: normal
+# Despublicada el 10-ago-2026 (tercera tanda, Facu con JC: "OLVIDATE DEL ANALISIS COMPLETO,
+# ESO YA NO EXISTE MAS... NECESITO QUE LO SAQUES Y TE QUEDES CON LOS TABLEROS"). El spec queda
+# como REGISTRO de la regla: no se construye pagina propia ni se linkea desde ningun lado.
+# Las unicas paginas publicadas de cultivos son el tablero (index), 09-departamento-datos y
+# 09-noa-participacion-provincia. Regla: _protocolo-presentacion.formato_v1.tercera_tanda.solo_tableros.
+estado: no-publicada
+
+origen: {tipo: modelo-analisis, detalle: "hoja 'Modelo  Analisis' base 9, fila 19 y cálculo c (fila 29)", fecha: 2026-07-30}
+nota_interpretacion: >
+  JC no dice cuantos cultivos mostrar a la vez. Se eligen los 3 de mayor superficie del
+  departamento, que es lo mas simple y lo que responde "que se hace acá". El resto se agrega con
+  el selector.

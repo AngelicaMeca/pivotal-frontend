@@ -1,0 +1,70 @@
+# Spec de vista. Copiar como NN-slug.yaml, donde NN = numero de base. Una vista = un spec.
+# Ver el agente constructor-reglas. Ampliado el 2026-07-30 con los campos que hicieron falta
+# para la base 9 (marcados como AMPLIACION mas abajo).
+base: 0
+slug: ejemplo-ranking
+titulo: "Ranking de producción por departamento"   # NOMBRE CORTO: menu, catalogo, breadcrumb,
+                                                   # pestaña del navegador. NO es lo que se ve
+                                                   # arriba del cuadro (eso lo arma el protocolo).
+tipo: ranking                # ranking | serie | torta | mapa | flujo-od | lista | tabla-variaciones
+
+# El titulo que va ARRIBA del cuadro lo arma specs/modelos/_protocolo-presentacion.yaml con estos
+# componentes. Es obligatorio: sin esto, el build no puede titular la vista y falla.
+# Sintaxis completa en `titulo.como_lo_declara_cada_spec` del protocolo.
+protocolo: _protocolo-presentacion
+titulo_componentes:
+  area: provincia                    # provincia | {desde_filtro: geo} | {fijo: "NOA"} | {comparacion: [...]}
+  sujeto: {desde_filtro: cultivo}    # el "sector o subsector" de JC
+  variable: {fijo: produccion_tn}    # {fijo:} | {desde_filtro:} | {multiple: []} | {override:, motivo:}
+  apertura: departamento             # por que dimension se abre el dato, o null
+  periodo: {desde_filtro: campania}  # {desde_filtro:} | {ventana: ventana_campanias} | {fijo:}
+titulo_protocolo_ejemplo: "Ranking de producción de soja por departamento - Santiago del Estero - campaña 2024/25"
+# igual_que: 09-ranking-cultivo-produccion    # herencia: se copian solo las diferencias.
+                                              # El valor es el nombre del archivo del spec padre,
+                                              # sin .yaml.
+
+variables: [produccion_tn]
+dimensiones: [departamento]
+filtros: [cultivo, campania]  # máximo 3
+orden: {por: produccion_tn, dir: desc}
+top_n: 10
+
+transformaciones: []          # variacion_interanual | participacion_pct | promedio_movil(n)
+                              # cruces entre bases: declarar claves de join (geo INDEC, tiempo)
+
+fuente:                          # cita al pie, OBLIGATORIA. La arma el protocolo.
+  pie: "Fuente: MAGyP"           # resultado escrito, para poder leerlo sin correr el pipeline
+  organismo_esperado: "MAGyP"    # el build lo compara contra la columna `fuente` del mart
+  publicacion: null              # se agrega solo si esta declarada en el config de la base
+sensibilidad: normal          # normal | comparativo (requiere aprobado_por antes de publicar)
+# aprobado_por: {quien: fran, fecha: }
+
+origen: {tipo: modelo-analisis, detalle: "hoja Modelo Analisis base 9", fecha: 2026-07-30}
+# nota_interpretacion: ""     # si la regla de JC era ambigua, qué se interpretó
+
+# ---------------------------------------------------------------------------
+# AMPLIACION 2026-07-30 (base 9). Todos opcionales.
+# ---------------------------------------------------------------------------
+# comunes: _comunes-base-9
+#   Archivo de parametros compartidos por todas las vistas de una base: ventana temporal, filtros
+#   de calidad, notas metodologicas, precision de display, uniformidad visual. Se aplica ANTES de
+#   la herencia por `igual_que`. Evita repetir lo mismo en 15 specs.
+#
+# subtitulo: ""            Segunda linea del cuadro, con las unidades.
+# grafico: barras          Forma concreta dentro del `tipo`. Ej: barras | lineas | barras-y-linea |
+#                          barras-apiladas | barras-apiladas-100 | barras-horizontales | coropleta.
+# defaults: {}             Valor inicial de cada filtro al abrir la vista.
+# universo: {}             Que filas del mart entran: ambito, nivel_geo, cultivo_rol, campanias.
+# estado: pendiente-construccion    publicada | pendiente-construccion | pendiente-decision-francisco |
+#                                   bloqueada
+# publicable: true         false = no sale al sitio aunque el build este verde.
+# requiere_decision: {quien, que, motivo}   Que falta y de quien depende.
+# requiere: []             Insumos que NO existen en el repo (ej. un GeoJSON). constructor-dashboards
+#                          no los inventa: los pide.
+# filtros_calidad: []      Ids de filtros definidos en el archivo `comunes`, con motivo legible.
+#                          Los recortes por calidad de dato van ACA, nunca escondidos en codigo.
+# notas_metodologicas: []  Ids de notas definidas en `comunes`. Se renderizan como icono de
+#                          pregunta al lado del titulo (lo pidio JC).
+# navegacion: []           A que otras vistas se llega desde esta y con que accion.
+# prueba_de_aceptacion: {} Resultado conocido que el pipeline tiene que reproducir.
+# advertencias: []         Texto que va SI o SI en pantalla (ej. "suma toneladas no comparables").

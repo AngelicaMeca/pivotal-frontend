@@ -1,0 +1,77 @@
+# JC f156-f174: "Total de cabezas movidas (sin introducción) por motivo - año 2025", con
+# participacion. Y f180: "IDEM EXTRACCIÓN E INTRODUCCIÓN POR SEPARADO", que se resuelve con
+# el filtro de recorte en vez de con tres paginas distintas.
+base: 85
+slug: movimientos-por-motivo
+comunes: _comunes-base-85
+
+titulo: "Para qué se mueve la hacienda"
+subtitulo: "Cabezas movidas por motivo del traslado"
+
+protocolo: _protocolo-presentacion
+titulo_componentes:
+  variable: {desde_filtro: medida}
+  sujeto: {desde: subsector}
+  recorte: {desde_filtro: recorte}
+  apertura: motivo
+  area: provincia
+  periodo: {desde_filtro: anio}
+titulo_protocolo_ejemplo: "Ranking de cabezas movidas de la hacienda bovina (sin introducción) por motivo - Santiago del Estero - año 2025"
+
+tipo: ranking
+
+variables: [cabezas, documentos]
+dimensiones: [motivo]
+filtros: [anio, recorte, medida]
+orden: {por: cabezas, dir: desc}
+
+defaults:
+  anio: parametros.ventana_anios.anio_por_defecto
+  recorte: totales_sin_introduccion
+  medida: cabezas
+
+opciones_medida: [cabezas, documentos]
+opciones_recorte: [totales_sin_introduccion, extraccion, introduccion]   # JC f180
+
+universo:
+  ambito: sde
+  especie: bovinos
+  categoria_rol: [agregado]
+  anios: ventana_anios
+  excluye_anio_en_curso: true
+
+columnas_tabla:
+  - {campo: puesto, etiqueta: "Puesto", formato: "1°"}
+  - {campo: motivo, etiqueta: "Motivo"}
+  - {campo: documentos, etiqueta: "DTE emitidos"}
+  - {campo: cabezas, etiqueta: "Cabezas"}
+  - {campo: participacion_pct, etiqueta: "% del total"}
+
+transformaciones:
+  - ranking: {particion: "anio + recorte + medida", ordenado_por: cabezas, direccion: desc}
+  - participacion_pct: {denominador: "total del mismo año y recorte"}
+
+advertencias:
+  - id: motivos-de-otras-especies
+    aplica_cuando: "recorte = introduccion"
+    texto_en_pantalla: >
+      En los movimientos que entran a la provincia aparecen algunos motivos que no son propios
+      de la hacienda bovina (por ejemplo "Traslado de Aves Ornamentales"). Vienen así de la
+      fuente y se muestran sin filtrar hasta confirmar con SENASA.
+    obligatoria: true
+
+filtros_calidad: [excluir-fila-total-al-pie, bubalinos-fuera-de-las-vistas, motivos-ajenos-a-bovinos]
+notas_metodologicas: [que-es-un-dte, sin-introduccion, anio-en-curso]
+
+fuente:
+  pie: "Fuente: SENASA"
+  organismo_esperado: "SENASA"
+estado: publicada
+
+origen: {tipo: modelo-analisis, detalle: "hoja 'Modelo Analisis' base 85, filas 156 a 193", fecha: 2026-07-31}
+nota_interpretacion: >
+  Verificado contra JC (f158-f173): Invernada 443.457, Faena 333.039, Invernada UE 76.763,
+  Faena Exportacion UE 47.391. Exactos.
+  Es la vista que mas rapido cuenta el perfil de la provincia: invernada y faena se llevan el
+  80% de los movimientos. JC f180 pide el mismo cuadro para extraccion e introduccion por
+  separado, y eso se resuelve con el selector de recorte en una sola pagina.

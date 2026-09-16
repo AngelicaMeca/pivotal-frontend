@@ -1,0 +1,110 @@
+# Branding del sitio. F3: un theme por cliente. NADA de estilo hardcodeado en los componentes.
+#
+# Todo lo que se ve (colores, tipografia, ancho, textos de marca) sale de aca. El CSS del
+# sitio se genera desde site/templates/pivotal.css.j2 con estos valores: para re-brandear a
+# otro cliente se edita este archivo y se corre `make site`, sin tocar una linea de codigo.
+#
+# Los colores de DATOS (rampas de mapa por tipo de variable) NO viven aca: los define
+# specs/modelos/_protocolo-presentacion.yaml, porque son una regla de JC y no del cliente.
+# Aca vive la paleta CATEGORICA, que es cromo de marca y se usa cuando el color distingue
+# categorias (un cultivo por serie) y no magnitudes.
+#
+# --- Revision 2026-08-03 -----------------------------------------------------------------
+# JC rechazo el diseño anterior en la reunion del 3-ago: el sitio parecia un informe y no un
+# tablero. Los valores de abajo salen del mockup aprobado por Francisco, que esta archivado en
+# specs/fuentes/WhatsApp Image 2026-07-27 at 20.24.16.jpeg. Los hex se muestrearon del propio
+# archivo, no se eligieron a ojo.
+#
+# --- Revision 2026-08-10 -----------------------------------------------------------------
+# TEMA VISUAL FINAL (Facu, en persona con JC): la pagina tiene que verse como la captura de
+# specs/fuentes/WhatsApp Image 2026-08-10 at 11.08.41.jpeg
+# (_protocolo-presentacion.formato_v1.tema_visual). Queda derogado el lienzo greige: el lienzo
+# es BLANCO y el cromo institucional VERDE (cabecera, menu lateral, banda de breadcrumb).
+# Los hex del bloque `cromo` se muestrearon de la propia captura, no se eligieron a ojo.
+# Los tokens del 3-ago que siguen abajo quedan para los DATOS (series, barras, links), que no
+# cambian: los colores de datos los manda el protocolo, no el tema.
+
+cliente: "Pivotal (beta interna)"
+titulo_sitio: "Pivotal · Santiago del Estero"
+# La marca se escribe PIVOTAL, sin articulo. El mockup dice "EL PIVOTAL" y esta mal:
+# CLAUDE.md fija que es "Pivotal", nunca "El Pivotal".
+marca_corta: "PIVOTAL"
+bajada_sitio: "Inteligencia de datos agroproductivos para el gobierno de Santiago del Estero"
+colores:
+  primario: "#22502c"        # verde profundo: series, chips activos de detalle, links
+  primario_medio: "#407a47"  # verde medio: barras, lineas de tendencia, segunda categoria
+  secundario: "#3f5343"      # verde grisado: rotulos de seccion y bordes de encabezado de tabla
+  fondo: "#ffffff"           # el lienzo es BLANCO desde el 10-ago (tema_visual; greige derogado)
+  texto: "#23241c"           # casi negro, calido
+  texto_apoyo: "#7c786f"     # gris calido para rotulos y pies
+  borde: "#dcd7cc"
+  fondo_cuadro: "#ffffff"
+  fondo_apoyo: "#f2f1ec"     # relleno de rieles, filas de total, chips inactivos
+  # Cromo institucional de la captura del 10-ago. Muestreado de la captura misma.
+  cromo: "#00af50"           # verde institucional: cabecera, menu lateral, banda de breadcrumb
+  cromo_oscuro: "#24502d"    # tira de pestañitas de campaña y estados activos sobre el cromo
+  seleccion: "#538235"       # chip de cultivo SELECCIONADO (el verde del mockup de JC)
+  borde_panel: "#00af50"     # borde fino de las cajas de panel, KPI y chips (asi esta en la captura)
+  # Los tokens del "tema moderno" de la segunda tanda (borde_suave, menu_fondo, sombra_panel)
+  # se sacaron el 10-ago-2026, tercera tanda: JC rechazo ese rediseño ("Todo deformado Facu")
+  # y el mockup Modelo 2 volvio a mandar de forma LITERAL, diseño incluido
+  # (formato_v1.tercera_tanda.mockup_literal). No hay tema alternativo en cultivos.
+# Logo provincial (cabecera). El asset llego el 10-ago-2026 (Facu): es el isologotipo
+# multicolor "SANTiAGO del Estero / ARGENTINA" en PNG con fondo transparente, guardado en
+# site/assets/logo-provincia.png. `archivo` es la ruta PUBLICA; el build lo copia a
+# public/plataforma/ del sitio (y le antepone el prefijo /plataforma). La `bajada` se dibuja chica debajo del logo, como en la captura del 10-ago.
+# El wordmark de texto queda como fallback si otro cliente no trae asset (F3).
+logo_provincia:
+  nombre: "Santiago del Estero"
+  bajada: "Gobierno de la Provincia de Santiago del Estero"
+  archivo: "/logo-provincia.png"
+logo: null                   # logo Pivotal: sigue pendiente (semana 3-ago)
+pie: "Pivotal · Elaboración propia en base a fuentes oficiales citadas en cada cuadro"
+# Pie de tecnologia del Modelo 2 de JC (aprobado el 10-ago, backlog 35).
+pie_tecnologia: "Tecnología Pivotal: B3, Minibox y ∞ Prompt"
+
+tipografia:
+  # Regla de JC (Protocolo de formato V1, 10-ago-2026): "Calibri, y como segunda opcion Arial".
+  # Sin descargar fuentes: Calibri donde este instalada (Windows/Office), Carlito (su
+  # equivalente metrico libre) donde exista, Arial como segunda opcion de JC. Si marketing
+  # propone otra, se cambia aca (backlog pregunta 27).
+  familia: "Calibri, Carlito, Arial, sans-serif"
+  # Los rotulos chicos en versalita espaciada son lo que le da caracter al mockup. Van en
+  # monoespaciada de sistema: no se descarga ninguna fuente, el sitio sigue siendo autonomo.
+  familia_rotulos: "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace"
+  base_px: 15
+ancho_maximo_px: 1280
+
+# Paleta categorica: cuando el color distingue CATEGORIAS (un cultivo por serie, una
+# provincia por porcion de torta) y no magnitudes. La asignacion concreta la escribe
+# constructor-dashboards en site/colores-cultivo.yaml, en orden alfabetico, para que sea
+# la misma en todas las vistas y en todos los builds (protocolo: `regla_color_cultivo`).
+#
+# Los cinco primeros son los del anillo del mockup, en su mismo orden. El resto extiende la
+# misma familia (tierras, verdes y ocres apagados): tonos que aguantan proyeccion y que se
+# siguen distinguiendo en escala de grises, que es como JC imprime.
+paleta_categorica:
+  - "#22502c"   # verde profundo      (mockup)
+  - "#b8552e"   # terracota           (mockup)
+  - "#407a47"   # verde medio         (mockup)
+  - "#c9a226"   # oro                 (mockup)
+  - "#8fb07b"   # salvia              (mockup)
+  - "#6b5344"   # marron
+  - "#2f6b6a"   # verde petroleo
+  - "#8c3b52"   # borgoña
+  - "#4a5c8a"   # azul apagado
+  - "#a8763a"   # caramelo
+  - "#5c7a3a"   # oliva
+  - "#7a5c8a"   # violeta apagado
+  - "#2d6e4e"   # esmeralda
+  - "#c1743f"   # naranja tostado
+  - "#4f6f7f"   # azul pizarra
+  - "#9a9a3d"   # lima apagado
+  - "#7d4a2e"   # siena
+  - "#3f8a7a"   # verde agua
+  - "#a55c6b"   # rosa viejo
+  - "#5f6b47"   # verde militar
+  - "#8a6f2e"   # mostaza oscuro
+  - "#35544f"   # petroleo oscuro
+  - "#b98a5e"   # arena
+  - "#64553f"   # topo

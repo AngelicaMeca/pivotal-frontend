@@ -1,0 +1,138 @@
+# GRAF 5 de la hoja Modelo Analisis: torta "Produccion de soja en NOA - participacion por
+# provincia - Campaña 2024/25 - en %". JC anota debajo (f137-138): "habia pensado en la variante
+# de un mapa del NOA con porcentajes, pero esto es, por lejos, mas representativo de la
+# participacion de Santiago".
+#
+# ############################################################################
+# MATERIAL SENSIBLE: compara provincias entre si (CLAUDE.md). Recorrido de la decision:
+# - 3-ago-2026: Francisco la aprobo como anillo del tablero de cultivos (bloque `decision`).
+# - 10-ago-2026 (mañana): el anillo del tablero paso a la participacion por cultivo y la
+#   comparacion NOA volvio detras del gate como boton de cabecera "Santiago en el NOA"
+#   (backlog 11, ratificado: la habilita Francisco). La vista quedo construida en _privado/.
+# - 10-ago-2026 (segunda tanda): Facu ordeno HABILITARLA. Ver `habilitacion_10_ago` abajo:
+#   pasa a ser publica dentro de cultivos, con la ratificacion de Francisco PENDIENTE.
+# ############################################################################
+base: 9
+slug: noa-participacion-provincia
+comunes: _comunes-base-9
+titulo: "Cuánto pesa Santiago del Estero en el NOA"
+subtitulo: "Participación de cada provincia en la producción del NOA, en porcentaje"
+
+# --- Titulo del cuadro: lo arma _protocolo-presentacion, no se escribe a mano ---
+protocolo: _protocolo-presentacion
+titulo_componentes:
+  area: {fijo: "NOA"}
+  sujeto: {desde_filtro: cultivo}
+  variable: {fijo: produccion_tn}
+  apertura: provincia
+  periodo: {fijo: "2024/25"}             # la hoja del NOA trae una sola campaña
+titulo_protocolo_ejemplo: "Distribución porcentual de la producción de soja por provincia - NOA - campaña 2024/25"
+
+tipo: torta
+
+variables: [produccion_tn]
+dimensiones: [provincia]
+filtros: [cultivo, campania]
+orden: {por: produccion_tn, dir: desc}
+
+defaults:
+  cultivo: "Soja total"
+  campania: "2024/25"
+
+universo:
+  ambito: [sde, comparativo]
+  provincias: [sde, catamarca, jujuy, salta, tucuman]
+  nivel_geo: departamento          # se agrega a provincia sumando departamentos
+  cultivo_rol: [agregado, simple]
+  campanias: ["2024/25"]
+
+transformaciones:
+  - participacion_geografica_pct:
+      numerador: "producción de cada provincia"
+      denominador: "suma de las 5 provincias del NOA"
+      join: "cultivo + campania + medida"
+      calculado_en: marts
+
+presentacion:
+  lineas_guia: true
+  nota_jc: "JC pide líneas guía en Catamarca y Jujuy (celda J125), porque las porciones son muy chicas para etiquetarlas adentro."
+  mouseover: "provincia + toneladas + porcentaje"
+
+cobertura_verificada:
+  texto: >
+    La hoja del NOA (9 PB 3 - B) trae UNA SOLA campaña, la 2024/25, con 377 filas: 5 departamentos
+    de Catamarca, 8 de Jujuy, 16 de Salta y 17 de Tucumán. No hay serie histórica de las otras
+    provincias, así que esta vista no tiene evolución: es una foto de una campaña.
+  implicancia: "El selector de campaña queda fijo en 2024/25 hasta que llegue más historia."
+
+advertencias:
+  - id: cobertura-parcial-noa
+    texto_en_pantalla: >
+      La comparación toma los departamentos de cada provincia que informaron el cultivo. No cubre
+      necesariamente toda la provincia.
+
+notas_metodologicas: [total-no-suma-componentes, clasificacion-provisoria]
+
+fuente:                                  # _protocolo-presentacion.pie_de_fuente
+  pie: "Fuente: MAGyP"                   # lo arma el protocolo, no se escribe en el template
+  organismo_esperado: "MAGyP"            # tiene que coincidir con la columna `fuente` del mart
+  publicacion: null                      # JC declara la cita como "Fuente: MAGyP" en su indice.
+                                         # Si quiere "MAGyP, Estimaciones Agrícolas", se completa
+                                         # aca y cambia en las 16 vistas. Backlog pregunta 14.
+sensibilidad: comparativo
+publicable: true
+aprobado_por: Francisco
+aprobado_el: 2026-08-03
+decision:
+  quien: Francisco
+  que: >
+    Se publica. La vista sale del material reservado y además pasa a ser el panel principal del
+    tablero de cultivos extensivos (specs/modelos/tablero-cultivos-extensivos.yaml).
+  motivo: >
+    CLAUDE.md pide decisión escrita de Francisco para publicar comparaciones interprovinciales.
+    La decisión se tomó el 3-ago-2026, en la misma conversación en la que se aprobó el mockup
+    del tablero: el anillo del mockup es esta vista.
+  alcance: >
+    Cubre a esta vista únicamente. Las otras tres del material reservado
+    (09-pais-participacion-sde, 85-extraccion-por-provincia-destino,
+    85-introduccion-por-provincia-origen) siguen sin publicar.
+  vigencia: >
+    Esta decisión del 3-ago quedó superada el 10-ago a la mañana, cuando el anillo del tablero
+    pasó a la participación por cultivo y la comparación NOA volvió detrás del gate (backlog 11).
+    Se conserva como historial.
+
+habilitacion_10_ago:
+  quien: Facu
+  fecha: 2026-08-10
+  contexto: "segunda tanda de decisiones del día, en persona con JC presente"
+  cita: "Habilita tambien los datos de deparamentos y santiago en el NOA."
+  que: >
+    La vista pasa a ser PÚBLICA dentro de la sección de cultivos (sale de _privado/) y el botón
+    de cabecera "Santiago en el NOA" pasa a funcionar apuntando acá
+    (_protocolo-presentacion.formato_v1.navegacion.comparacion_noa).
+  ratificacion_pendiente: >
+    La regla dura de CLAUDE.md dice que las comparaciones interprovinciales las habilita
+    Francisco. La habilitación de Facu queda registrada con atribución y fecha; queda PENDIENTE
+    la ratificación de Francisco (backlog 11). Si Francisco la baja, se vuelve atrás: la vista
+    regresa a _privado/ y el botón no se dibuja.
+
+# El boton de cabecera en ESTA vista: misma regla que
+# 09-departamento-datos.yaml (cabecera.boton_datos_por_departamento), que traduce la
+# cuarta tanda del 10-ago-2026 (_protocolo-presentacion.formato_v1.cuarta_tanda.
+# boton_volver_provincia: "un botón que nombra la página en la que ya estás no navega a
+# ningún lado"). La regla es GENERAL: el botón que apunta a la página actual se transforma
+# en "Provincia" y vuelve al tablero conservando la selección vigente. Anotado por
+# constructor-dashboards el 10-ago-2026 a pedido del coordinador (mismo defecto que Facu
+# marcó en la departamental).
+cabecera:
+  boton_santiago_en_el_noa:
+    en_esta_vista: "se transforma en 'Provincia'"
+    destino: tablero-cultivos-extensivos
+    conserva_filtros: true
+    motivo: "misma regla que cabecera.boton_datos_por_departamento de 09-departamento-datos.yaml"
+
+# publicada-a-ratificar: pública por orden de Facu (10-ago-2026), a la espera de la
+# ratificación de Francisco. Si Francisco la baja, vuelve a "pendiente de Francisco".
+estado: publicada-a-ratificar
+
+origen: {tipo: modelo-analisis, detalle: "hoja 'Modelo  Analisis' base 9, GRAF 5 (filas 124 a 144) y cálculo e (fila 31)", fecha: 2026-07-30}

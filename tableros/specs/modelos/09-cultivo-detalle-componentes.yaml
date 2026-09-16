@@ -1,0 +1,96 @@
+# El boton "ver detalle" que JC pide en f24: "en soja hay que poner un boton de ver detalle y a
+# traves de GRAF 3 ver cuanto de soja de 1a y de 2da hay para cada caso (o poroto o trigo)".
+# Es la UNICA vista de toda la base donde se muestran cultivos con rol `componente`.
+base: 9
+slug: cultivo-detalle-componentes
+comunes: _comunes-base-9
+titulo: "Detalle por variedad"
+subtitulo: "Composición del cultivo por variedad, en toneladas y en porcentaje"
+
+# --- Titulo del cuadro: lo arma _protocolo-presentacion, no se escribe a mano ---
+protocolo: _protocolo-presentacion
+titulo_componentes:
+  area: {desde_filtro: geo}
+  sujeto: {desde_filtro: cultivo_grupo}  # "Soja" -> "soja"
+  variable: {desde_filtro: variable}
+  apertura: variedad
+  periodo: {ventana: ventana_campanias}
+titulo_protocolo_ejemplo: "Evolución de la producción de soja por variedad - Santiago del Estero - campañas 2015/16 a 2024/25"
+titulo_nota:
+  periodo_recortado: >
+    Con poroto, la serie arranca en 2021/22 (filtro de calidad `apertura-poroto-desde-2021`), asi que
+    el periodo del titulo tiene que decir "campañas 2021/22 a 2024/25" y no el rango de la ventana.
+    Es la verificacion "el periodo del titulo coincide con las campañas efectivamente graficadas".
+
+tipo: serie
+grafico: barras-apiladas
+
+variables: [produccion_tn, sup_sembrada_ha]
+dimensiones: [campania, cultivo]
+filtros: [cultivo_grupo, geo, variable]     # 3 filtros, el maximo permitido
+orden: {por: campania, dir: asc}
+
+defaults:
+  cultivo_grupo: Soja
+  geo: provincia
+  variable: produccion_tn
+
+universo:
+  ambito: sde
+  nivel_geo: [provincia, departamento]
+  cultivo_rol: [componente]                 # acá y solo acá
+  cultivo_grupo_habilitados: [Soja, Poroto]
+  campanias: ventana_campanias
+
+grupos_habilitados:
+  - grupo: Soja
+    componentes: ["Soja 1ra", "Soja 2da"]
+    desde_campania: null
+  - grupo: Poroto
+    componentes: ["Poroto negro", "Poroto otros"]
+    desde_campania: "2021/22"
+    nota_en_pantalla: "El detalle por variedad de poroto está disponible desde la campaña 2021/22."
+
+grupos_no_habilitados:
+  - grupo: Trigo
+    motivo_legible: >
+      De trigo la fuente informa "trigo total" y "trigo candeal", pero no informa "trigo pan". El
+      candeal es el 0,7% del trigo de la provincia y aparece recién desde 2020/21. Mostrar ese
+      detalle daría a entender que en Santiago casi no se hace trigo pan, cuando lo que pasa es que
+      el dato no vino separado. Por eso trigo no tiene botón "ver detalle": se publica solo como
+      "Trigo total".
+    decide: JC (pregunta 7 del backlog)
+  - grupo: Cebada
+    motivo_legible: "La fuente no abre cebada cervecera y forrajera por separado: no hay detalle que mostrar."
+  - grupo: Poroto (variedad alubia)
+    motivo_legible: "El poroto alubia aparece en el NOA y en el país, pero no en Santiago del Estero."
+
+transformaciones:
+  - participacion_pct                        # participación de cada variedad dentro del grupo
+
+mouseover: "campaña + variedad + valor + participación dentro del cultivo"
+
+notas_metodologicas: [total-no-suma-componentes, poroto-desde-2021, trigo-sin-pan]
+notas_metodologicas_si_departamento: [estimacion-departamental]
+filtros_calidad: [excluir-campanias-sin-departamento, apertura-poroto-desde-2021, trigo-sin-apertura]
+
+fuente:                                  # _protocolo-presentacion.pie_de_fuente
+  pie: "Fuente: MAGyP"                   # lo arma el protocolo, no se escribe en el template
+  organismo_esperado: "MAGyP"            # tiene que coincidir con la columna `fuente` del mart
+  publicacion: null                      # JC declara la cita como "Fuente: MAGyP" en su indice.
+                                         # Si quiere "MAGyP, Estimaciones Agrícolas", se completa
+                                         # aca y cambia en las 16 vistas. Backlog pregunta 14.
+sensibilidad: normal
+# Despublicada el 10-ago-2026 (tercera tanda, Facu con JC: "OLVIDATE DEL ANALISIS COMPLETO,
+# ESO YA NO EXISTE MAS... NECESITO QUE LO SAQUES Y TE QUEDES CON LOS TABLEROS"). El spec queda
+# como REGISTRO de la regla: no se construye pagina propia ni se linkea desde ningun lado.
+# Las unicas paginas publicadas de cultivos son el tablero (index), 09-departamento-datos y
+# 09-noa-participacion-provincia. Regla: _protocolo-presentacion.formato_v1.tercera_tanda.solo_tableros.
+estado: no-publicada
+
+origen: {tipo: modelo-analisis, detalle: "hoja 'Modelo  Analisis' base 9, filas 22 a 24 y GRAF 3", fecha: 2026-07-30}
+nota_interpretacion: >
+  Acá la participación porcentual se calcula DENTRO del grupo de cultivo (soja 1ra + soja 2da = 100%),
+  no contra el total de la campaña. Es el único caso donde los componentes se suman entre sí, y es
+  correcto: son las partes de un mismo total. La regla de JC de no sumar componentes aplica a los
+  totales generales, no a la apertura de un cultivo contra sí mismo.

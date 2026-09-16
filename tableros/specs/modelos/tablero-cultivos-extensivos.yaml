@@ -1,0 +1,304 @@
+# Tablero de la base 9 (cultivos extensivos). Es la UNICA puerta de la sección: desde la
+# tercera tanda del 10-ago-2026 el esquema tablero+análisis NO EXISTE MAS en cultivos
+# ("OLVIDATE DEL ANALISIS COMPLETO, ESO YA NO EXISTE MAS... TE QUEDES CON LOS TABLEROS").
+#
+# REESCRITO DE CERO el 10-ago-2026 (tercera tanda). JC RECHAZO el rediseño publicado en el
+# commit 41df326 ("Todo deformado Facu") y Facu ordenó: "arrancar de cero y no mezclar con lo
+# anterior. Hay que hacer lo que dice JC, respetá". La regla madre es
+# _protocolo-presentacion.formato_v1.tercera_tanda: el mockup Modelo 2
+# (specs/fuentes/WhatsApp Image 2026-08-10 at 11.08.41.jpeg) es LITERAL, formato Y diseño.
+# La página tiene que quedar COMO ESA CAPTURA. Quedan derogados el "diseño moderno", el menú
+# lateral discreto y la tabla en una sola serie (segunda tanda).
+#
+# Lo que sobrevive de las tandas anteriores: alcance solo-cultivos, botones de cabecera
+# habilitados ("Datos por Departamento" funcionando; "Santiago en el NOA" funcionando con la
+# ratificación de Francisco PENDIENTE), íconos habilitados, universo de chips = catálogo de JC,
+# reglas de agregación (rendimiento nunca mezclado, superficies no se suman entre estaciones).
+#
+# CUARTA TANDA (Facu, mismo 10-ago-2026, revisando la reconstrucción literal): NO deroga la
+# literalidad; son ajustes (_protocolo-presentacion.formato_v1.cuarta_tanda): puesta del logo,
+# escala legible en el gráfico de líneas, "Información relacionada" SE DIBUJA deshabilitada,
+# home sin menú lateral, hover del mapa con nombre + datos (nunca IDs), botón "Provincia" en la
+# vista departamental, anillo sin cifra central, y la regla general de proporciones sin huecos.
+
+id: tablero-cultivos-extensivos
+tipo: tablero
+base: 9
+seccion: cultivos-extensivos
+comunes: _comunes-base-9
+protocolo: _protocolo-presentacion
+
+# `titulo` se usa SOLO en el menú, el catálogo y la pestaña del navegador. NO se dibuja en la
+# cabecera: JC marcó que ahí estaba duplicado y que ese lugar es de las banderas de idioma
+# (tercera_tanda.cabecera). La identificación en pantalla la da la barra verde del breadcrumb.
+titulo: "Producción agrícola"
+subtitulo: "Provincia de Santiago del Estero · cultivos extensivos"   # solo para catálogo/menú
+
+# ---------------------------------------------------------------------------
+# CABECERA (calcada del mockup; regla: formato_v1.tercera_tanda.cabecera)
+# ---------------------------------------------------------------------------
+cabecera:
+  logo: "logo provincial arriba a la izquierda (site/theme.yaml, backlog 35 cerrada)"
+  logo_puesta: >
+    corregir la PUESTA del asset actual (cuarta tanda: "está mal puesto... se ve horrible"):
+    tamaño, alineación y respiro acordes al mockup, sin deformar ni recortar. Si se busca un
+    asset mejor lo deciden Francisco/marketing (backlog 41); no bloquea.
+  botones:
+    # Las DOS únicas navegaciones de cabecera. Viajan con el cultivo y la campaña vigentes
+    # (formato_v1.navegacion.persistencia_de_filtros).
+    - {id: santiago-en-el-noa, etiqueta: "Santiago en el NOA", destino: 09-noa-participacion-provincia,
+       nota: "habilitado por orden de Facu (10-ago, segunda tanda); ratificación de Francisco PENDIENTE: si la baja, el botón no se dibuja"}
+    - {id: datos-por-departamento, etiqueta: "Datos por Departamento", destino: 09-departamento-datos}
+  banderas_idioma:
+    # Donde estaba el título duplicado ("ahí iban las banderas de idiomas"). Backlog 33, RESUELTA.
+    posicion: "arriba a la derecha, como el mockup"
+    idiomas:
+      - {codigo: es, estado: activa}
+      - {codigo: en, estado: deshabilitada, rotulo: "Próximamente"}
+      - {codigo: pt, estado: deshabilitada, rotulo: "Próximamente"}
+    nota: "misma excepción acotada a la regla de botones muertos que las utilidades"
+  sin_titulo_duplicado: true
+
+# El breadcrumb del mockup: barra VERDE bajo la cabecera, cada nivel linkea a SU nivel.
+breadcrumb: "Agricultura - Cultivos Extensivos - {cultivo} - Provincia"
+
+# ---------------------------------------------------------------------------
+# SELECTORES (los dos que dibujó JC, en su misma posición)
+# ---------------------------------------------------------------------------
+selectores:
+  campania:
+    zona: periodo                  # tira de pestañitas verdes a la derecha de la barra verde
+    rotulo: "Campaña"
+    valores: ventana_campanias
+    default: parametros.ventana_campanias.campania_por_defecto
+  cultivo:
+    # La grilla de cajitas del mockup: borde, ícono + nombre, "Todos" en caja grande a la
+    # derecha, dibujada dentro del contenido a la derecha del mapa. B&W en reposo, color y
+    # fondo verde en el seleccionado, como la captura.
+    zona: selector
+    con_icono: true                # decisión de Facu 10-ago; licencia flaticon en paralelo (backlog 26)
+    universo: catalogo-de-jc       # catálogo de JC ∩ con datos en la ventana (backlog 37);
+                                   # regla en _protocolo-presentacion.formato_v1.selectores.cultivo.universo_visible
+    incluye_todos: true
+    default: "Soja total"          # el mockup abre en Soja
+
+# ---------------------------------------------------------------------------
+# TARJETA DE CONTEXTO + INDICADORES DE CABECERA
+# ---------------------------------------------------------------------------
+tarjeta_contexto:
+  muestra: [icono_cultivo, cultivo, campania]
+  ejemplo: "Soja · Campaña 2024/25"
+
+# KPIs SIN variación contra la campaña anterior (JC: "NO había que poner la diferencia con la
+# campaña anterior"; regla formato_v1.tercera_tanda.kpis_sin_variacion). Solo el valor con su
+# unidad, con los títulos LITERALES del mockup y la secuencia fija de variables de JC.
+indicadores:
+  sin_variacion: true
+  items:
+    - {medida: sup_sembrada_ha,   etiqueta: "Superficie sembrada",  unidad: "ha"}
+    - {medida: sup_cosechada_ha,  etiqueta: "Superficie cosechada", unidad: "ha"}
+    - {medida: produccion_tn,     etiqueta: "Producción",           unidad: "tn"}
+    - {medida: rendimiento_kg_ha, etiqueta: "Rendimiento promedio", unidad: "kg/ha"}
+
+# Con cultivo = "Todos" mandan las reglas de agregación (formato_v1.agregacion): el
+# rendimiento no se promedia entre cultivos y las superficies no se suman entre estaciones.
+con_cultivo_todos:
+  produccion_tn: "se muestra, rotulada '(fina y gruesa)' como la rotula JC"
+  sup_sembrada_ha: "no se muestra"
+  sup_cosechada_ha: "no se muestra"
+  rendimiento_kg_ha: "no se muestra"
+  nota_interpretacion: "qué va en el lugar de los 3 indicadores caídos sigue abierto (backlog 29)"
+
+# ---------------------------------------------------------------------------
+# PANELES (los del mockup, LITERALES)
+# ---------------------------------------------------------------------------
+# Sin badges de tipo de gráfico (formato_v1.sin_leyendas_de_tipo_de_grafico) y SIN links
+# "ver detalle": ningún panel navega a otra página (tercera_tanda.solo_tableros). Los specs
+# de detalle que alimentan cada panel quedan como registro de las transformaciones.
+paneles:
+  mapa:
+    # Columna izquierda ENTERA, grande, proporción geográfica CORRECTA (JC: "El mapa es una
+    # miniatura y está deformado"; regla formato_v1.tercera_tanda.mapa_grande). La caja se
+    # adapta al mapa, nunca al revés.
+    rotulo_accion: "Seleccione departamento"   # arriba del mapa, como el mockup; el panel no lleva otro título
+    variables: [sup_sembrada_ha, sup_cosechada_ha, produccion_tn, rendimiento_kg_ha]   # secuencia fija de JC
+    fuente_al_pie: "Fuente: MAGyP (Ministerio de Agricultura, Ganadería y Pesca)"
+    # (forma literal del mockup; pie_de_fuente.aclaracion_base_9. Backlog 14, respondida)
+    click_departamento: 09-departamento-datos
+    # ÚNICA navegación de contenido permitida: "NO debe llevar NADA a otra página salvo el
+    # dato departamental". Viaja con el cultivo y la campaña vigentes.
+    mouseover:
+      # Cuarta tanda (regla general cuarta_tanda.tooltips_con_nombre_y_datos). Bug corregido:
+      # el tooltip mostraba el geo_id.
+      muestra: "NOMBRE del departamento (dim_geo, nunca códigos internos) + sus datos para el cultivo y la campaña activos"
+      datos: [sup_sembrada_ha, sup_cosechada_ha, produccion_tn, rendimiento_kg_ha]   # la secuencia fija de JC
+      nota: "la lectura rápida es por hover; el click al dato departamental se mantiene pero no es la única forma de ver el número"
+    transformaciones_de: 09-cultivo-mapa-sup-sembrada   # quintiles, sin-dato, leyenda: ese spec es el registro
+
+  tendencia:
+    # El gráfico de líneas del mockup, con su título LITERAL y su eje VISIBLE.
+    titulo_protocolo: "{Cultivo} - Sgo del Estero - Total - Evolución de la superficie cosechada y producción - Campañas {desde} a {hasta}"
+    titulo_protocolo_ejemplo: "Soja - Sgo del Estero - Total - Evolución de la superficie cosechada y producción - Campañas 2015/16 a 2024/25"
+    # Plantilla literal del mockup (tercera_tanda.titulos_del_tablero_literales; backlog 31
+    # RESUELTA). El período sale de las campañas realmente graficadas: el mockup dice
+    # "2013/14 a 2024/25" pero la ventana sigue en 10 mientras JC no la amplíe (backlog 32).
+    nota_interpretacion: "'Total' se lee como el recorte total (soja total, agregado provincial). Backlog 39."
+    medidas: [sup_cosechada_ha, produccion_tn]
+    grafico: lineas
+    eje_vertical:
+      visible: true                # JC: "no está el eje vertical y tampoco la escala"
+      escala: millones             # rotulado "Millones", valores con dos decimales (0,00 a 4,00 en la captura)
+      unico: true                  # UN solo eje para ha y tn, como lo dibuja JC; sin eje secundario
+      legible: >
+        cuarta tanda ("está mal la escala, no se distinguen las variaciones"): la construcción
+        usó paso 1,00 y aplastó las curvas; JC dibujó paso 0,50. Paso más fino (0,50 de
+        referencia) y/o rango ajustado al dato, manteniendo el eje único en Millones. Regla:
+        formato_v1.cuarta_tanda.escala_legible.
+      aclaracion_unidades: "asterisco al pie si la unidad va abreviada (formato_v1.unidades_abreviadas)"
+    transformaciones_de: 09-cultivo-evolucion-cosecha-produccion
+
+  anillo:
+    # Participación por cultivo en la producción provincial de la campaña, top 5 + Resto.
+    # NO sigue el selector de cultivo (muestra todos por diseño). El cálculo va sobre TODOS
+    # los cultivos de la fuente, también los fuera del catálogo de chips: visible ≠ incluido
+    # en agregados. Números validados por JC: Soja 48,1%, total 6.016.454 tn.
+    titulo_protocolo: "Sgo del Estero - Campaña {campania} - Participación porcentual por cultivo en el total de la producción (fina y gruesa)"
+    titulo_protocolo_ejemplo: "Sgo del Estero - Campaña 2024/25 - Participación porcentual por cultivo en el total de la producción (fina y gruesa)"
+    medida: produccion_tn
+    top_n: 5
+    resto: "Resto"
+    sin_cifra_central: true
+    # Cuarta tanda ("queda muy chico por el número en el medio; prefiero sacarlo y que quede
+    # bien"): el anillo va SIN el total en el centro y usa el espacio del panel. El total
+    # "(fina y gruesa)" se muestra fuera del centro (subtítulo o pie del panel). Es una
+    # EXCEPCIÓN a la literalidad del mockup decidida por Facu; JC valida en la próxima
+    # revisión. Regla: formato_v1.cuarta_tanda.anillo_sin_cifra_central.
+    transformaciones_de: 09-cartera-participacion-produccion
+
+  tabla-datos:
+    # La tabla de datos crudos bajo el gráfico de evolución, LITERAL al mockup: DOS bloques
+    # de campañas lado a lado, sin título de panel (el mockup no le dibuja uno). Deroga la
+    # regla "una sola serie" de la segunda tanda (mockup literal es posterior y manda;
+    # interpretación anotada en backlog 38). Con 10 campañas los bloques cierran 5 y 5.
+    sin_titulo: true
+    formato: dos-bloques-de-campanias
+    columnas_por_bloque: ["Campaña", "Superficie Cos. (Ha)", "Producción (Tn)", "Rendimiento Kg/ha"]
+    medidas: [sup_cosechada_ha, produccion_tn, rendimiento_kg_ha]
+    sin_huecos: >
+      cuarta tanda: la tabla se dimensiona para llenar su panel, sin espacio en blanco (con
+      10 campañas los bloques cierran 5 y 5). Regla general:
+      formato_v1.cuarta_tanda.proporciones_sin_huecos. Facu revisó la tabla en dos bloques y
+      no la objetó: la interpretación del backlog 38 queda confirmada.
+    transformaciones_de: 09-cultivo-evolucion-cosecha-produccion   # los mismos números que el gráfico
+
+  top:
+    # La tabla de ranking del mockup, con su título literal y sus columnas tal cual.
+    titulo_protocolo: "Ranking de sup. Sembrada sobre el total provincial"
+    columnas: ["Puesto", "Departamento", "Superficie Semb. (ha)", "% sobre Total prov."]
+    medida: sup_sembrada_ha
+    cuantos: 10
+    transformaciones_de: 09-ranking-cultivo-sup-sembrada
+
+  utilidades:
+    # Panel estático bajo el mapa, como el mockup. Íconos DESHABILITADOS con "Próximamente"
+    # (excepción acotada a la regla de botones muertos, backlog 33).
+    titulo: "UTILIDADES"
+    items:
+      - {id: asistente-ia, etiqueta: "Asistente IA", icono: ia}
+      - {id: exportar-pdf, etiqueta: "Exportar como PDF", icono: exportar-como-pdf}
+
+  informacion-relacionada:
+    # DESBLOQUEADO por la cuarta tanda ("tiene que estar aunque no lleve a ningún lado"):
+    # el panel del mockup SE DIBUJA, con los links deshabilitados y "Próximamente". Misma
+    # excepción acotada a la regla de botones muertos que utilidades y banderas. Regla:
+    # formato_v1.cuarta_tanda.informacion_relacionada_se_dibuja.
+    estado: dibujado-deshabilitado
+    titulo: "Información relacionada (abre en nueva ventana)"
+    items:
+      - {id: costos-margenes, etiqueta: "Costos y márgenes", estado: deshabilitado, rotulo: "Próximamente"}
+      - {id: precios, etiqueta: "Precios", estado: deshabilitado, rotulo: "Próximamente"}
+      - {id: exportaciones, etiqueta: "Exportaciones", estado: deshabilitado, rotulo: "Próximamente"}
+      - {id: vbp, etiqueta: "VBP del cultivo", estado: deshabilitado, rotulo: "Próximamente"}
+      - {id: calendario, etiqueta: "Calendario de siembra y cosecha", estado: deshabilitado, rotulo: "Próximamente"}
+    destinos_bloqueados_por: "faltan las bases de precios, costos y exportaciones (backlog 8); cada link se activa cuando entre su base"
+
+  # Disposición calcada de la captura: columna izquierda = mapa (a lo alto) + UTILIDADES +
+  # pie de tecnología; columna derecha = chips de cultivo, tarjeta + KPIs, fila de gráficos
+  # (tendencia | anillo), fila de tablas (tabla-datos + informacion-relacionada | top).
+  # SIN campo `detalle` en ningún panel: no existen páginas de detalle.
+  orden:
+    - {id: mapa,        columna: izquierda}
+    - {id: utilidades,  columna: izquierda, debajo_de: mapa}
+    - {id: tendencia,   columna: derecha, fila: graficos}
+    - {id: anillo,      columna: derecha, fila: graficos}
+    - {id: tabla-datos, columna: derecha, fila: tablas}
+    - {id: informacion-relacionada, columna: derecha, fila: tablas, debajo_de: tabla-datos}
+    - {id: top,         columna: derecha, fila: tablas}
+
+pie: "Tecnología Pivotal: B3, Minibox y ∞ Prompt"   # con logos de partners (backlog 35, aprobada)
+
+# ---------------------------------------------------------------------------
+# TRABAJO PARA CONSTRUCTOR-DASHBOARDS (tercera tanda, 10-ago-2026)
+# ---------------------------------------------------------------------------
+# ARRANCAR DE CERO: no mezclar con la construcción anterior (orden de Facu). La página tiene
+# que quedar COMO LA CAPTURA. Alcance: SOLO cultivos (hacienda y stock no se tocan).
+pendientes_constructor_dashboards:
+  - id: reconstruccion-literal
+    que: >
+      reconstruir la página de cultivos calcada del mockup Modelo 2: menú lateral VERDE como
+      la captura (el "menú discreto" quedó derogado), paneles en cajas con borde, chips con
+      ícono, proporciones de la captura ("Todo deformado" no puede repetirse).
+  - id: mapa-grande
+    que: "mapa en la columna izquierda entera, grande, proporción geográfica correcta, 'Seleccione departamento' arriba y 'Fuente: MAGyP (Ministerio de Agricultura, Ganadería y Pesca)' al pie."
+  - id: kpis-sin-variacion
+    que: "sacar la variación contra campaña anterior de los 4 KPIs: solo valor + unidad."
+  - id: titulos-literales
+    que: "títulos de KPI y de gráficos calcados del mockup (ver titulo_protocolo de cada panel). Sin reescrituras."
+  - id: eje-vertical-visible
+    que: "gráfico de líneas con eje vertical visible y escala en 'Millones', un solo eje, como el mockup."
+  - id: cabecera-banderas
+    que: "sacar el título duplicado de la cabecera y poner las banderas es/en/pt (es activa, en/pt 'Próximamente')."
+  - id: eliminar-analisis
+    que: >
+      eliminar analisis.html de cultivos y TODOS los links 'ver detalle' del tablero. Únicas
+      salidas: los dos botones de cabecera y el click del mapa hacia 09-departamento-datos.
+      Las páginas de las vistas despublicadas se dejan de generar (specs en estado no-publicada).
+  - id: tabla-dos-bloques
+    que: "tabla de datos en dos bloques de campañas lado a lado, columnas del mockup, sin título de panel (deroga 'una sola serie'; backlog 38)."
+  # --- Cuarta tanda (Facu, mismo 10-ago, sobre la reconstrucción literal ya hecha) ---
+  - id: logo-bien-puesto
+    que: "corregir la puesta del logo provincial en la cabecera: tamaño, alineación y respiro acordes al mockup, sin deformar ni recortar (cuarta_tanda.logo_provincial_bien_puesto). El asset es el mismo; uno mejor lo decide Francisco/marketing (backlog 41)."
+  - id: escala-legible
+    que: "ajustar la escala del gráfico de líneas: paso más fino (0,50 de referencia, como dibujó JC) y/o rango ajustado al dato, manteniendo el eje único en 'Millones'. Las variaciones se tienen que poder leer (cuarta_tanda.escala_legible)."
+  - id: informacion-relacionada-dibujada
+    que: "dibujar el panel 'Información relacionada' con los links del mockup deshabilitados y 'Próximamente' (cuarta_tanda.informacion_relacionada_se_dibuja)."
+  - id: home-sin-sidebar
+    que: "sacar el menú lateral de la home raíz del sitio (index.html): aparece recién dentro de las secciones (cuarta_tanda.home_sin_menu_lateral)."
+  - id: tooltip-mapa-nombre-y-datos
+    que: "corregir el tooltip del mapa: NUNCA el geo_id; nombre del departamento + sus datos (secuencia fija) para el cultivo y la campaña activos. La lectura rápida es por hover; el click al dato departamental se mantiene (cuarta_tanda.tooltips_con_nombre_y_datos)."
+  - id: boton-provincia
+    que: "en 09-departamento-datos, el botón de cabecera 'Datos por Departamento' pasa a decir 'Provincia' y vuelve al tablero conservando cultivo y campaña (cuarta_tanda.boton_volver_provincia)."
+  - id: anillo-sin-cifra-central
+    que: "sacar la cifra central del anillo; el gráfico usa el espacio del panel y el total '(fina y gruesa)' va fuera del centro (cuarta_tanda.anillo_sin_cifra_central; excepción a la literalidad, JC valida)."
+  - id: proporciones-sin-huecos
+    que: "dimensionar todos los paneles para llenar su espacio, sin huecos en blanco (ej. la tabla de campañas). Regla GENERAL: cuarta_tanda.proporciones_sin_huecos. Sin deformar: el mapa mantiene su proporción geográfica."
+
+fuente:
+  pie: "Fuente: MAGyP (Ministerio de Agricultura, Ganadería y Pesca)"
+  organismo_esperado: "MAGyP"
+
+sensibilidad: normal
+estado: publicada-a-confirmar     # JC valida la reconstrucción literal en la próxima revisión
+
+origen:
+  tipo: feedback-verbal-de-jc + mockup
+  detalle: >
+    Tercera tanda del 10-ago-2026: JC rechazó el rediseño del commit 41df326 y Facu ordenó
+    arrancar de cero ("Hay que hacer lo que dice JC, respetá"). Mockup LITERAL:
+    specs/fuentes/WhatsApp Image 2026-08-10 at 11.08.41.jpeg (Modelo 2), con el protocolo de
+    títulos de specs/fuentes/000 PROTOCOLO PARA GRAFICOS Y MAPAS ELABORADOS.docx. Comentarios
+    textuales de JC en _protocolo-presentacion.origen_tercera_tanda.
+    Cuarta tanda del mismo día (Facu, revisando la reconstrucción literal): 9 ajustes sin
+    derogar la literalidad; comentarios textuales en
+    _protocolo-presentacion.origen_cuarta_tanda y reglas en formato_v1.cuarta_tanda.
+  fecha: 2026-08-10

@@ -1,0 +1,111 @@
+# Calculo e) de JC (f31): "participaciones porcentuales 2: Sgo del Estero en el NOA Y EN EL PAIS".
+# La parte del NOA esta en 09-noa-participacion-provincia. Esta es la del pais.
+#
+# ############################################################################
+# NO PUBLICABLE por ahora. El config de la base marca la hoja del pais como
+# "SENSIBLE por prudencia". Requiere decision escrita de Francisco.
+# ############################################################################
+base: 9
+slug: pais-participacion-sde
+comunes: _comunes-base-9
+titulo: "En qué cultivos Santiago del Estero pesa más en el país"
+subtitulo: "Participación de la provincia en el total nacional, en porcentaje"
+
+# --- Titulo del cuadro: lo arma _protocolo-presentacion, no se escribe a mano ---
+protocolo: _protocolo-presentacion
+titulo_componentes:
+  area: {comparacion: [provincia, pais]} # "Santiago del Estero/País", en ese orden. Es el mismo
+                                         # formato de area que usa JC en su grafico de ejemplo.
+  sujeto: null                           # sin sujeto: la plantilla usa la variante "{variable} por {apertura}"
+  variable:
+    desde_filtro: variable
+    override: "participación en el total del país {art} {frase}"
+    motivo: >
+      El prefijo mecanico de `ranking` daria "ranking de superficie sembrada", que no dice lo que
+      la vista muestra: no ordena cultivos por superficie sino por cuanto pesa Santiago en el total
+      nacional de cada uno. La variable real es una participacion.
+  apertura: cultivo
+  periodo: {fijo: "2024/25"}             # la hoja del pais trae una sola campaña
+titulo_protocolo_ejemplo: "Participación en el total del país de la superficie sembrada por cultivo - Santiago del Estero/País - campaña 2024/25"
+
+tipo: ranking
+grafico: barras-horizontales
+
+variables: [participacion_pais_pct]
+variables_apoyo: [sup_sembrada_ha, produccion_tn]
+dimensiones: [cultivo]
+filtros: [campania, variable]
+orden: {por: participacion_pais_pct, dir: desc}
+top_n: null
+
+defaults:
+  campania: "2024/25"
+  variable: sup_sembrada_ha
+
+universo:
+  ambito: [sde, pais]
+  nivel_geo: [provincia, pais]
+  cultivo_rol: [agregado, simple, componente]
+  campanias: ["2024/25"]
+  nota_rol: >
+    Acá sí entran componentes (poroto negro, poroto otros) porque la hoja del país informa las
+    variedades y no el total. Cada cultivo se compara contra su equivalente exacto del país, nunca
+    un total contra una variedad. No se mezclan niveles.
+
+columnas_tabla:
+  - {campo: cultivo, etiqueta: "Cultivo"}
+  - {campo: "valor SDE", etiqueta: "Santiago del Estero"}
+  - {campo: "valor país", etiqueta: "Total país"}
+  - {campo: participacion_pais_pct, etiqueta: "% del país"}
+
+transformaciones:
+  - participacion_geografica_pct:
+      numerador: "fila 'Total provincia' de Santiago del Estero"
+      denominador: "fila del total país del MISMO cultivo"
+      join: "cultivo + campania + medida"
+      calculado_en: marts
+      regla_dura: "Si no existe la fila del país para ese cultivo exacto, la fila NO se muestra. Nunca se arma un total nacional sumando variedades."
+
+cobertura_verificada:
+  texto: >
+    La hoja del país (9 PB 3 - C) trae 23 filas, todas de la campaña 2024/25. Como Santiago tiene
+    serie larga y el país no, esta vista es una foto de una campaña, no una evolución.
+  ejemplos_que_si_salen:
+    - "Poroto negro: Santiago es el 40,3% de la superficie nacional en 2024/25"
+    - "Algodón: 33,9% de la superficie nacional en 2024/25"
+
+filtros_calidad: [sin-participacion-pais-poroto-mani]
+
+exclusiones_visibles:
+  regla: "Los dos cultivos aparecen igual en la lista, con la leyenda en lugar del porcentaje. No se los borra en silencio."
+  cultivos:
+    - cultivo: "Poroto total"
+      leyenda_en_pantalla: "La fuente no informa un total nacional de poroto, solo las variedades por separado. No calculamos la participación para no inventar el total."
+    - cultivo: "Maní"
+      leyenda_en_pantalla: "La fuente no informa maní en el total del país. No se puede calcular la participación."
+
+notas_metodologicas: [total-no-suma-componentes, clasificacion-provisoria]
+
+fuente:                                  # _protocolo-presentacion.pie_de_fuente
+  pie: "Fuente: MAGyP"                   # lo arma el protocolo, no se escribe en el template
+  organismo_esperado: "MAGyP"            # tiene que coincidir con la columna `fuente` del mart
+  publicacion: null                      # JC declara la cita como "Fuente: MAGyP" en su indice.
+                                         # Si quiere "MAGyP, Estimaciones Agrícolas", se completa
+                                         # aca y cambia en las 16 vistas. Backlog pregunta 14.
+sensibilidad: comparativo
+publicable: false
+aprobado_por: null
+requiere_decision:
+  quien: Francisco
+  que: "Si la comparación de Santiago contra el total del país sale al sitio y con qué gate."
+  motivo: >
+    No es una comparación entre provincias, pero configs/bases/9-cultivos-extensivos.yaml marca el
+    ámbito `pais` como sensible por prudencia y sale de la misma hoja que la comparación del NOA.
+    Se trata igual hasta que Francisco decida.
+estado: pendiente-decision-francisco
+
+origen: {tipo: modelo-analisis, detalle: "hoja 'Modelo  Analisis' base 9, cálculo e (fila 31)", fecha: 2026-07-30}
+nota_interpretacion: >
+  JC no dice como quiere ver la participacion en el pais (no hay maqueta para esto). Se elige un
+  ranking de cultivos ordenado por participacion, que responde directo "en que somos importantes",
+  y es la forma mas simple posible con una sola campaña de datos del pais.

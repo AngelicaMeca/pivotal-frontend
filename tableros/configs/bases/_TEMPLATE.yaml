@@ -1,0 +1,38 @@
+# Config de base. Copiar como NN-slug.yaml. Todo lo específico de la base vive acá:
+# el adapter de la familia lee este archivo y no sabe nada más.
+base: 0                      # nro de base según el índice de JC
+slug: ejemplo
+familia: tidy                # tidy | dtv | dte | wide-mes | cuadro-indec | registro | clima-diario | clima-normal
+estado: activa               # activa | pendiente (ej. cuadros INDEC diferidos)
+
+archivo:
+  patron: "^0 - Ejemplo"     # regex para encontrar el archivo en raw/entrega-NN/
+
+hojas:
+  datos:                      # hojas que SÍ se parsean
+    - nombre: "Data SDE"
+      header_fila: 1          # fila donde está el header (1-indexed)
+      ambito: sde             # sde | comparativo (otras provincias, sensible)
+  ignorar: ["Modelo Analisis", "Modelo Análisis", "Calculos Ranking", "Hoja1", "Hoja2"]
+
+columnas:                     # origen → canónico snake_case
+  "Departamento": departamento
+  "Sup. Sembrada (Ha)": sup_sembrada_ha
+
+tiempo:
+  grano: campania             # campania | anio_mes | fecha
+  columna: "Campaña"
+
+geo:
+  nivel: departamento
+  usa_ids_indec: true         # si false, resolver por configs/dims/geo-alias.yaml
+
+unidades:                     # conversiones y dominios
+  # peso: {origen: ["Kg.", "Tn.", "Kg-Tn"], canonico: tn}
+
+indice:                       # heredado de configs/manifiesto-indice.yaml (lo llena ingestor-bases)
+  fuente: ""
+  frecuencia: ""
+  rango_declarado: ""
+
+notas: []                     # decisiones y drift documentado, con fecha

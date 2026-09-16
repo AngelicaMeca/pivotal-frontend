@@ -1,0 +1,68 @@
+# Segunda mitad de JC f21: "ranking de departamentos por cultivo (produccion y RENDIMIENTO)".
+base: 9
+slug: ranking-cultivo-rendimiento
+comunes: _comunes-base-9
+igual_que: 09-ranking-cultivo-produccion    # misma vista, cambia lo que sigue
+
+titulo: "Ranking de departamentos por rendimiento"
+subtitulo: "Rendimiento de la campaña, en kilos por hectárea"
+
+# --- Titulo del cuadro: lo arma _protocolo-presentacion, no se escribe a mano ---
+protocolo: _protocolo-presentacion
+titulo_componentes:                      # el resto se hereda de 09-ranking-cultivo-produccion
+  variable: {fijo: rendimiento_kg_ha}
+titulo_protocolo_ejemplo: "Ranking de rendimiento de soja por departamento - Santiago del Estero - campaña 2024/25"
+protocolo_tablas:
+  fila_total_arriba: true
+  que_fila: "el rendimiento provincial que informa la fuente, NO el promedio de los departamentos"
+  advertencia: "La fila de arriba es el rendimiento de la provincia, no el promedio de la columna. Va aclarado al pie."
+
+tipo: ranking
+
+variables: [rendimiento_kg_ha]
+orden: {por: rendimiento_kg_ha, dir: desc}
+
+columnas_tabla:
+  - {campo: puesto, etiqueta: "Puesto", formato: "1°"}
+  - {campo: departamento, etiqueta: "Departamento"}
+  - {campo: rendimiento_kg_ha, etiqueta: "Rendimiento (kg/ha)"}
+  - {campo: sup_cosechada_ha, etiqueta: "Sup. cosechada (ha)", nota: "contexto: un rendimiento alto sobre 100 ha no pesa lo mismo que sobre 50.000"}
+
+transformaciones:
+  - ranking:
+      particion: "cultivo + campania"
+      ordenado_por: rendimiento_kg_ha
+      direccion: desc
+      empates: "mismo puesto, el siguiente salta"
+      calculado_en: marts
+
+exclusiones:
+  - regla: "no entran los departamentos con superficie cosechada en cero"
+    motivo_legible: >
+      Si no se cosechó, no hay rendimiento que rankear. Aparecerían con cero y quedarían últimos
+      como si les hubiera ido mal, cuando en varios casos (avena, centeno, cebada) el cultivo
+      probablemente se sembró para que lo coma la hacienda y nunca se pensó cosecharlo.
+  - regla: "no entran los departamentos con producción no informada"
+    motivo_legible: "Son 5 filas con superficie cosechada y producción en cero. No se cuentan como cero."
+
+notas_metodologicas: [estimacion-departamental, rendimiento-no-se-suma, salavina-sin-datos, total-no-suma-componentes]
+
+fuente:                                  # _protocolo-presentacion.pie_de_fuente
+  pie: "Fuente: MAGyP"                   # lo arma el protocolo, no se escribe en el template
+  organismo_esperado: "MAGyP"            # tiene que coincidir con la columna `fuente` del mart
+  publicacion: null                      # JC declara la cita como "Fuente: MAGyP" en su indice.
+                                         # Si quiere "MAGyP, Estimaciones Agrícolas", se completa
+                                         # aca y cambia en las 16 vistas. Backlog pregunta 14.
+# Despublicada el 10-ago-2026 (tercera tanda, Facu con JC: "OLVIDATE DEL ANALISIS COMPLETO,
+# ESO YA NO EXISTE MAS... NECESITO QUE LO SAQUES Y TE QUEDES CON LOS TABLEROS"). El spec queda
+# como REGISTRO de la regla: no se construye pagina propia ni se linkea desde ningun lado.
+# Las unicas paginas publicadas de cultivos son el tablero (index), 09-departamento-datos y
+# 09-noa-participacion-provincia. Regla: _protocolo-presentacion.formato_v1.tercera_tanda.solo_tableros.
+estado: no-publicada
+
+origen: {tipo: modelo-analisis, detalle: "hoja 'Modelo  Analisis' base 9, fila 21", fecha: 2026-07-30}
+nota_interpretacion: >
+  En la campaña 2022/23 hay 11 departamentos con rendimiento de soja de exactamente 1.500 kg/ha
+  (se ve en el propio ejemplo de JC, filas 178 a 194). El desempate se resuelve por orden
+  alfabetico del departamento y los 11 comparten el mismo puesto: no se simula una diferencia que
+  el dato no tiene. Va con la llamada `estimacion-departamental` bien visible.

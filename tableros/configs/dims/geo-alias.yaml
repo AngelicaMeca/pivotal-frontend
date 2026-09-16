@@ -1,0 +1,133 @@
+# Tabla de alias de nombres geográficos → código INDEC.
+# La mantiene ingestor-bases: cada nombre nuevo entra con verificar: true hasta confirmarse.
+# Los 27 departamentos de Santiago del Estero (código provincia INDEC: 86).
+# Los códigos de depto salen de las bases que ya traen ids (base 9 y base 30: depto_id = 86000 + código).
+#
+# Estructura: departamentos está anidado por código de provincia porque los nombres se
+# repiten entre provincias (CAPITAL existe en Salta 66028 y en Tucumán 90084; RIVADAVIA
+# en Santiago 86154 y en Salta 66133). Los valores son el código INDEC de 5 dígitos.
+#
+# Los nombres se escriben en MAYÚSCULAS y SIN TILDES, que es como los trae la fuente que dio
+# los códigos. Una base cuyo Excel los escriba de otra forma ("Río Hondo", "Guasayán") declara
+# `geo.normalizar_nombre: true` en su config y el adapter busca normalizado. Eso es para las
+# ERRATAS de tipeo (la base 48 escribe "Ojo De Agua", "Ojo de Agua" y "Ojo de agua" para el
+# mismo departamento): no se agrega una entrada por cada variante, porque no son nombres
+# alternativos. Un nombre realmente distinto (LA BANDA vs BANDA) sí va como alias acá abajo.
+provincia:
+  "SANTIAGO DEL ESTERO": 86
+  "Santiago del Estero": 86
+  "CATAMARCA": 10
+  "JUJUY": 38
+  "SALTA": 66
+  "TUCUMAN": 90
+  "TUCUMÁN": 90
+  # Sumadas el 2026-07-31 al ingerir la base 85 (DTE bovinos): son las provincias que
+  # aparecen como contraparte de un movimiento de hacienda santiagueño. Los códigos son
+  # los de provincia del INDEC. De estas NO se cargan departamentos: la base las trae por
+  # nombre de partido y alcanza con agregar los flujos a nivel provincia.
+  "BUENOS AIRES": 6
+  "CORDOBA": 14
+  "CORRIENTES": 18
+  "CHACO": 22
+  "ENTRE RIOS": 30
+  "FORMOSA": 34
+  "LA PAMPA": 42
+  "LA RIOJA": 46
+  "MISIONES": 54
+  "SAN LUIS": 74
+  "SANTA FE": 82
+
+# Sembrado el 2026-07-30 desde la base 9 (cultivos extensivos), que trae idProvincia e
+# idDepartamento del propio MAGyP. Nombres tal cual vienen en la fuente: en mayúsculas y
+# sin tildes ("GUASAYAN", "LA VINA", "ORAN", "TAFI VIEJO"). No necesitan verificación
+# porque el código viene en el archivo, no lo propuso el agente.
+departamentos:
+  86:   # Santiago del Estero, los 27 departamentos (SALAVINA y el alias LA BANDA los
+        # aportó la base 85 el 2026-07-31; la base 9 sola llegaba a 26)
+    "AGUIRRE": 86007
+    "ALBERDI": 86014
+    "ATAMISQUI": 86021
+    "AVELLANEDA": 86028
+    "BANDA": 86035
+    "LA BANDA": 86035          # así lo nombra SENASA en la base 85; la base 9 dice "BANDA"
+    "BELGRANO": 86042
+    "CAPITAL": 86049
+    "COPO": 86056
+    "CHOYA": 86063
+    "FIGUEROA": 86070
+    "GENERAL TABOADA": 86077
+    "GUASAYAN": 86084
+    "JIMENEZ": 86091
+    "JUAN F. IBARRA": 86098
+    "LORETO": 86105
+    "MITRE": 86112
+    "MORENO": 86119
+    "OJO DE AGUA": 86126
+    "PELLEGRINI": 86133
+    "QUEBRACHOS": 86140
+    "RIO HONDO": 86147
+    "RIVADAVIA": 86154
+    "ROBLES": 86161
+    "SALAVINA": 86168          # aportado por la base 85; encaja en la serie 86161-86175
+    "SAN MARTIN": 86175
+    "SARMIENTO": 86182
+    "SILIPICA": 86189
+  10:   # Catamarca (solo los deptos con cultivos extensivos en la base 9)
+    "CAPAYAN": 10042
+    "EL ALTO": 10056
+    "LA PAZ": 10070
+    "SANTA ROSA": 10098
+    "VALLE VIEJO": 10112
+  38:   # Jujuy
+    "DR. MANUEL BELGRANO": 38021
+    "EL CARMEN": 38014
+    "LEDESMA": 38035
+    "PALPALA": 38042
+    "SAN ANTONIO": 38056
+    "SAN PEDRO": 38063
+    "SANTA BARBARA": 38070
+    "VALLE GRANDE": 38105
+  66:   # Salta
+    "ANTA": 66007
+    "CACHI": 66014
+    "CAPITAL": 66028
+    "CERRILLOS": 66035
+    "CHICOANA": 66042
+    "GENERAL GUEMES": 66049
+    "GENERAL JOSE DE SAN MARTIN": 66056
+    "GUACHIPAS": 66063
+    "LA CALDERA": 66077
+    "LA CANDELARIA": 66084
+    "LA VINA": 66098
+    "METAN": 66112
+    "ORAN": 66126
+    "RIVADAVIA": 66133
+    "ROSARIO DE LA FRONTERA": 66140
+    "ROSARIO DE LERMA": 66147
+  90:   # Tucumán
+    "BURRUYACU": 90007
+    "CAPITAL": 90084
+    "CHICLIGASTA": 90021
+    "CRUZ ALTA": 90014
+    "FAMAILLA": 90028
+    "GRANEROS": 90035
+    "JUAN B. ALBERDI": 90042
+    "LA COCHA": 90049
+    "LEALES": 90056
+    "LULES": 90063
+    "MONTEROS": 90070
+    "RIO CHICO": 90077
+    "SIMOCA": 90091
+    "TAFI DEL VALLE": 90098
+    "TAFI VIEJO": 90105
+    "TRANCAS": 90112
+    "YERBA BUENA": 90119
+
+# Etiquetas que la fuente usa para filas de agregado, no son departamentos.
+# El adapter las marca como nivel_geo=provincia / pais y nunca las dropea.
+agregados:
+  "Total provincia": provincia
+  "Total pais": pais
+
+alias_pendientes: []  # nombres vistos sin match, con propuesta y verificar: true
+                      # (la base 9 no genero ninguno: trae los ids INDEC en el archivo)

@@ -1,0 +1,344 @@
+# Parametros comunes a TODAS las vistas de la base 85 (movimientos de hacienda bovina, DTE).
+#
+# Traduce la hoja "Modelo Analisis" del propio Excel de JC, que es donde el escribio que
+# quiere ver. Cada vista referencia la fila de esa hoja de la que sale.
+#
+# Cada spec de vista trae `comunes: _comunes-base-85`. constructor-dashboards debe aplicar
+# este archivo ANTES de la herencia por `igual_que`.
+#
+# Escrito por constructor-reglas el 2026-07-31.
+
+id: _comunes-base-85
+base: 85
+slug_base: dte-bovinos
+fuente_datos:
+  staging: "staging/base-85-dte-bovinos.parquet"
+  mart: "marts/hecho_movimientos_hacienda.parquet"
+  dims: ["marts/dim_geo.parquet", "marts/dim_tiempo_mes.parquet"]
+
+# ---------------------------------------------------------------------------
+# PARAMETROS
+# ---------------------------------------------------------------------------
+parametros:
+  provincia: sde                 # provincia es parametro, nunca hardcodeada (CLAUDE.md)
+  ambito_publicable: sde
+  cita_pie: "Fuente: SENASA"     # lo que declara el indice de JC para esta base
+
+presentacion:
+  protocolo: _protocolo-presentacion
+  sujeto_de_la_base: "hacienda bovina"      # el "sector/subsector" de JC
+  frase_en_titulo: "la hacienda bovina"
+  # Que rampa de color usa cada medida. Los nombres son los de `colores.rampas` del protocolo,
+  # que es donde estan definidas: contar animales y contar papeles son dos tipos de variable
+  # distintos y por eso no comparten escala.
+  tipos_de_variable:
+    cabezas: cabezas
+    documentos: documentos
+    ingreso_establecimiento: cabezas
+    egreso_establecimiento: cabezas
+    balance_cabezas: cabezas
+
+# ---------------------------------------------------------------------------
+# LOS CUATRO UNIVERSOS DE ESTA BASE (la definicion mas importante del archivo)
+# ---------------------------------------------------------------------------
+# JC arma sus cuadros sobre cuatro recortes distintos y les pone nombre en su hoja. Si se
+# confunde uno con otro, los numeros dejan de ser los suyos. Cada recorte esta VERIFICADO
+# contra la tabla que el ya tenia calculada a mano (ver `verificacion` al final).
+#
+# Ojo con el mas traicionero: "movimientos totales" NO es todo el archivo. Para JC es todo
+# lo que SALE de un establecimiento santiaguenio, o sea la hoja de origen entera, que ya
+# incluye los movimientos internos. La introduccion (lo que entra desde otra provincia) va
+# siempre por separado y nunca se suma a los totales.
+#
+# `etiqueta`      = como se rotula el universo en un selector de la pagina.
+# `etiqueta_corta`= el parentesis que va en el TITULO de protocolo (slot `recorte`). Se escribe
+#                   una sola vez aca; ninguna vista lo repite.
+universos:
+  totales_sin_introduccion:
+    etiqueta: "Movimientos totales (sin introducción)"
+    etiqueta_corta: "(sin introducción)"
+    filtro: "sentido = 'salida'"
+    contiene: "los movimientos internos + la extracción"
+    texto_jc: "Movimientos totales (sin introducción)"
+    referencia: "Modelo Analisis f2"
+
+  internos:
+    etiqueta: "Movimientos internos (dentro de Santiago)"
+    etiqueta_corta: "(movimientos internos)"
+    filtro: "alcance = 'interno'"
+    texto_jc: "Movimientos internos (dentro SDE)"
+    referencia: "Modelo Analisis f10"
+
+  extraccion:
+    etiqueta: "Extracción (sale de la provincia)"
+    etiqueta_corta: "(extracción)"
+    filtro: "alcance = 'egreso'"
+    texto_jc: "Movimientos cabezas salidas (extracción)"
+    referencia: "Modelo Analisis f18"
+
+  introduccion:
+    etiqueta: "Introducción (entra a la provincia)"
+    etiqueta_corta: "(introducción)"
+    filtro: "sentido = 'entrada'"
+    texto_jc: "Movimientos cabezas entradas (introdcción) - Hoja Data DESTINO SDE"
+    referencia: "Modelo Analisis f27"
+
+  identidad: >
+    totales_sin_introduccion = internos + extraccion. Verificado en 2025: 391.248 + 574.913
+    = 966.161 cabezas, y 13.176 + 14.668 = 27.844 documentos. Si alguna vista rompe esta
+    identidad, la vista esta mal.
+
+# ---------------------------------------------------------------------------
+# REGLA DURA: EL TOTAL NO SE SUMA CON SUS CATEGORIAS
+# ---------------------------------------------------------------------------
+# Misma logica que "soja total" vs "soja 1ra/2da" en la base 9. Aca el agregado es la
+# columna TOTAL BOVINOS y los componentes son las ocho categorias.
+agregados:
+  columna_rol: categoria_rol
+  agregado: "Total"
+  componentes: [Terneros, Terneras, Novillitos, Novillos, "Toritos / mejoradores",
+                Toros, Vacas, Vaquillonas]
+  regla: "Para totales y participaciones se usa SOLO la categoria 'Total'."
+  excepcion_conocida: >
+    En 5 de los 46.032 movimientos el total no da la suma de las ocho categorias (diferencias
+    de 1,1% a 2,8%). Se publica el total igual, que es lo que la fuente informa. Ver el punto
+    16 del reporte de la entrega.
+
+# Los movimientos de tambo y de engorde a corral NO son una categoria mas: son un recorte
+# de los mismos animales ya contados. JC lo escribio en mayuscula en su hoja.
+subconjuntos_no_sumables:
+  columnas: [ingreso_establecimiento, egreso_establecimiento]
+  texto_jc: "Están incluidos en los totales anteriores, NO implica sumatoria"
+  referencia: "Modelo Analisis f214, f223, f232, f241"
+  regla: >
+    Nunca se suman al total de cabezas ni entran en una participacion porcentual junto con
+    las categorias. Se muestran en su propia vista.
+
+# ---------------------------------------------------------------------------
+# VENTANA TEMPORAL
+# ---------------------------------------------------------------------------
+ventana_anios:
+  cantidad: 5
+  resueltos_2026_07_31: [2022, 2023, 2024, 2025, 2026]
+  anio_por_defecto: 2025          # ultimo año COMPLETO, ver `anio_en_curso`
+  texto_jc: "HACER LOS 5 AÑOS POR DEPARTAMENTO"
+  referencia: "Modelo Analisis f80"
+
+anio_en_curso:
+  anio: 2026
+  cobertura: "enero a mayo de 2026"
+  visible_en:
+    - series mensuales de estacionalidad, rotulado como año incompleto
+  oculta_en:
+    - totales anuales, rankings, participaciones y variaciones interanuales
+  motivo: >
+    2026 llega hasta mayo. En un total anual apareceria como una caida del 70% que no existe.
+    El propio JC lo marca "2026*" con asterisco en todas sus tablas.
+
+# ---------------------------------------------------------------------------
+# FILTROS DE CALIDAD (salen de validations/reportes/entrega-01.md)
+# ---------------------------------------------------------------------------
+filtros_calidad:
+  - id: excluir-fila-total-al-pie
+    aplica_a: todas
+    regla: "es_agregado_fila = false"
+    motivo_legible: >
+      Las dos hojas cierran con una fila de totales que no es un movimiento. Ademas ninguna
+      de las dos cierra: la de destino en realidad muestra el subtotal de 2025 y la de origen
+      quedo 60 cabezas corta. Todos los totales del sitio se calculan sumando el detalle.
+    referencia: "validations/reportes/entrega-01.md, puntos 14 y 15"
+
+  - id: motivos-ajenos-a-bovinos
+    aplica_a: [85-movimientos-por-motivo]
+    regla: "ninguno todavia: se muestran todos"
+    motivo_legible: >
+      La hoja de introduccion trae 15 motivos que no aparecen en la de origen y varios no
+      parecen de hacienda bovina ("Traslado de Aves Ornamentales", "Deportes",
+      "Vareo/Competencia"). No se excluye ninguno por nuestra cuenta. Si JC confirma que son
+      residuo de la clasificacion general de SENASA, se escribe la regla aca.
+    referencia: "validations/reportes/entrega-01.md, punto 17"
+    decide: JC (pregunta 14 del reporte)
+
+  - id: bubalinos-fuera-de-las-vistas
+    aplica_a: todas
+    regla: "especie = 'bovinos'"
+    motivo_legible: >
+      El archivo trae ademas 845 cabezas de bufalos, todas entrando a la provincia. Es una
+      especie distinta y no se mezcla con bovinos ni en los totales ni en las participaciones.
+      No se publica vista de bubalinos hasta que JC diga que le interesa.
+    referencia: "validations/reportes/entrega-01.md, punto 18"
+    decide: JC (pregunta 15 del reporte)
+
+# ---------------------------------------------------------------------------
+# SENSIBILIDAD (esto lo decide Francisco, no JC)
+# ---------------------------------------------------------------------------
+sensibilidad:
+  criterio: >
+    CLAUDE.md marca como sensibles las COMPARACIONES entre provincias (del tipo "Santiago
+    faena mas que Tucuman"). Un flujo no es una comparacion: es de donde sale y a donde va la
+    hacienda santiaguenia, que es justamente lo que la demo tiene que contar. Pero el dato
+    deja ver que provincias le compran hacienda a Santiago y en que volumen, que es
+    informacion comercial.
+  decision_por_defecto: >
+    Las dos vistas que abren por provincia de contraparte salen marcadas
+    `sensibilidad: comparativo` y sin `aprobado_por`, con lo cual el build las manda a
+    _privado/ y no las enlaza. Es el default seguro: se publican cambiando UN campo del spec
+    cuando Francisco lo decida.
+  afecta_a: [85-extraccion-por-provincia-destino, 85-introduccion-por-provincia-origen]
+  decide: Francisco
+
+# ---------------------------------------------------------------------------
+# NOTAS METODOLOGICAS REUTILIZABLES
+# ---------------------------------------------------------------------------
+notas_metodologicas:
+  que-es-un-dte:
+    titulo: "¿Qué es un DTE y qué se está contando acá?"
+    texto: >
+      El DTE es el documento de tránsito electrónico que exige SENASA para mover hacienda de
+      un establecimiento a otro. Cada movimiento de este tablero es un traslado autorizado, no
+      una cabeza de stock: si el mismo animal se movió tres veces en el año, aparece tres
+      veces. Sirve para ver cómo circula la hacienda, no cuánta hay.
+    aplica_a: todas
+
+  sin-introduccion:
+    titulo: "¿Por qué los totales no incluyen la introducción?"
+    texto: >
+      Los movimientos totales son los que salen de un establecimiento de Santiago, ya sea
+      hacia otro departamento de la provincia o hacia afuera. Lo que entra desde otra
+      provincia se cuenta aparte, porque son animales que no estaban en Santiago. Sumar las
+      dos cosas mezclaría lo que la provincia mueve con lo que recibe.
+    aplica_a: "vistas de totales, rankings y participaciones"
+
+  total-no-suma-categorias:
+    titulo: "¿Por qué el total no es la suma de las categorías?"
+    texto: >
+      La fuente informa el total de cabezas del movimiento y además lo abre por categoría
+      (terneros, vacas, novillos...). Los cuadros usan siempre el total. En 5 movimientos de
+      46.032 el total quedó un poco por encima de la suma de las categorías: puede haber
+      animales que el documento no clasifica. Está preguntado a la fuente.
+    aplica_a: "vistas con apertura por categoría"
+
+  tambo-y-corral-no-se-suman:
+    titulo: "Los movimientos de tambo y de engorde a corral ya están contados"
+    texto: >
+      Estas columnas marcan cuáles de los movimientos que ya viste corresponden a un tambo o a
+      un engorde a corral. No son movimientos adicionales: si los sumaras a los totales,
+      estarías contando los mismos animales dos veces.
+    aplica_a: "vista de tambos y engorde a corral"
+
+  anio-en-curso:
+    titulo: "¿Por qué 2026 no aparece en este cuadro?"
+    texto: >
+      El archivo llega hasta mayo de 2026, o sea menos de la mitad del año. En una comparación
+      anual aparecería como un derrumbe que no existe. Se muestra solamente en los cuadros
+      mensuales, donde cada mes se compara contra el mismo mes de otros años.
+    aplica_a: "totales anuales, rankings y variaciones"
+
+  balance-lectura:
+    titulo: "Cómo se lee el balance"
+    texto: >
+      El balance es lo que entra menos lo que sale. Un número negativo significa que la
+      provincia entregó más hacienda de la que recibió en esa categoría, que es lo habitual en
+      una provincia criadora: salen novillos y vacas terminados, entran terneros para recriar.
+    aplica_a: "vista de balance"
+
+  datos-al-mes-de-emision:
+    titulo: "La fecha es la de emisión del documento"
+    texto: >
+      Cada movimiento se imputa al mes en que se emitió el documento de tránsito, que es lo que
+      informa la fuente. Puede haber diferencias de días con la fecha real del traslado.
+    aplica_a: "series mensuales"
+
+# ---------------------------------------------------------------------------
+# TRANSFORMACIONES (se computan en marts, NUNCA se leen del Excel)
+# ---------------------------------------------------------------------------
+# JC f1: "AGREGAR TODAS LAS OPERACIONES DE VARIACIONES COMO EN AGRICOLA". O sea que valen las
+# mismas que en la base 9. Se referencian por nombre para no duplicar las formulas.
+transformaciones_disponibles:
+  hereda_de: _comunes-base-9.transformaciones_disponibles
+  aplican: [variacion_interanual, variacion_decadica, variacion_promedio_anual,
+            participacion_pct]
+  adaptaciones:
+    variacion_interanual:
+      aplica_solo_a: [cabezas, documentos]
+      nota: "El grano temporal es el año, no la campaña."
+    variacion_decadica:
+      etiqueta: "Variación del período (2022 a 2025)"
+      nota: "Con 4 años cerrados no es una década: se la llama variación del período."
+    participacion_pct:
+      universo: "categoria_rol = 'componente', dentro del mismo universo y año"
+      nota: >
+        JC f2 y f17: "Participación por categoría sobre total". El denominador es la categoria
+        Total, no la suma de las componentes, porque las dos no coinciden exactamente.
+
+  balance:
+    formula: "introduccion - extraccion, por año y categoría"
+    referencia: "Modelo Analisis f36"
+    verificacion: "2025 total bovinos: 489.284 - 574.913 = -85.629, coincide con JC f41."
+
+  estacionalidad:
+    formula: "participación de cada mes sobre el total del año"
+    referencia: "Modelo Analisis f45 y f195"
+    texto_jc: "MENSUALIZAR LOS MISMOS CUADROS PARA ESTABLECER ESTACIONALIDAD"
+
+# ---------------------------------------------------------------------------
+# PRECISION DE DISPLAY
+# ---------------------------------------------------------------------------
+# A diferencia de la base 9, aca el dato NO es una estimacion: es el conteo de documentos
+# emitidos. Se muestra exacto, sin redondear.
+precision_display:
+  regla_general: "Cabezas y documentos son conteos exactos: se muestran completos, sin redondeo."
+  cabezas: {formato: entero, redondeo: ninguno}
+  documentos: {formato: entero, redondeo: ninguno}
+  porcentajes: {formato: "1 decimal", sufijo: "%"}
+  separador_miles: "."
+  separador_decimal: ","
+
+# ---------------------------------------------------------------------------
+# UNIFORMIDAD VISUAL
+# ---------------------------------------------------------------------------
+uniformidad:
+  hereda_de: _comunes-base-9.uniformidad
+  convenciones_propias:
+    evolucion_anual: "barras verticales, una serie por año"
+    composicion_por_categoria: "barras apiladas al 100%"
+    estacionalidad: "líneas, una por año, meses en el eje X"
+    balance: "barras divergentes desde el cero, negativo para un lado y positivo para el otro"
+    matriz_od: "matriz de origen y destino con intensidad de color, no diagrama de flujos"
+  regla_color_categoria: >
+    Cada categoría de hacienda (terneros, vacas, novillos...) tiene un color fijo asignado una
+    sola vez y se respeta en todas las vistas, igual que los cultivos en la base 9.
+
+# ---------------------------------------------------------------------------
+# VERIFICACION CONTRA LA PLANILLA DE JC
+# ---------------------------------------------------------------------------
+# Los universos y filtros de arriba se corrieron contra el mart y se compararon con las tablas
+# que JC ya tenia calculadas a mano en su hoja. Las cinco dan EXACTO. Si alguna deja de dar,
+# es que alguien cambio un filtro sin querer.
+verificacion:
+  fecha: "2026-07-31"
+  cuadros:
+    - {cuadro: "totales por año 2022-2025", referencia: "f4-f7", resultado: exacto}
+    - {cuadro: "internos, extracción e introducción 2025", referencia: "f15, f23, f32", resultado: exacto}
+    - {cuadro: "ranking de departamentos de origen 2025", referencia: "f50-f76", resultado: exacto}
+    - {cuadro: "extracción por provincia de destino 2025", referencia: "f117-f130", resultado: exacto}
+    - {cuadro: "movimientos por motivo 2025", referencia: "f158-f173", resultado: exacto}
+    - {cuadro: "movimientos por mes 2025", referencia: "f198-f209", resultado: exacto}
+  unica_diferencia: >
+    2026, por 4 documentos y 60 cabezas. No es de criterio: el resumen de JC quedo viejo
+    respecto del detalle. Ver el punto 15 del reporte de la entrega.
+
+# ---------------------------------------------------------------------------
+# LO QUE JC PIDIO Y NO SE ESPECIFICA TODAVIA
+# ---------------------------------------------------------------------------
+fuera_de_alcance:
+  - item: "Integrar la ficha departamental de ganadería con la de agricultura"
+    referencia: "Modelo Analisis base 9, f158"
+    estado: "pendiente: se puede encarar recien cuando entre la base 48 (stock bovino)."
+  - item: "Movimientos de tambo y engorde a corral abiertos por provincia de origen y destino"
+    referencia: "Modelo Analisis f252-f254"
+    texto_jc: "> Por departamento / > Por provincia origen / > Por provincia destino"
+    estado: >
+      La apertura por departamento si se especifica (85-tambos-engorde-corral). La de
+      provincia queda atada a la misma decision de sensibilidad que las otras dos vistas
+      provinciales: la define Francisco.

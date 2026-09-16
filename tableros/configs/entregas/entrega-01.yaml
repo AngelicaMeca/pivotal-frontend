@@ -1,0 +1,380 @@
+descripcion: 'Manifiesto de la entrega: que archivos llegaron, con que hash, y que dejo cada uno en staging.
+  GENERADO por pipeline/ingest.py, no editar a mano. Vive en configs/ y no en raw/ porque raw/ es de solo
+  lectura.'
+entrega: entrega-01
+archivos_recibidos: 27
+bases_ingeridas:
+- 9
+- 48
+- 85
+bases_sin_config:
+- 30
+- 33
+- 38
+- 53
+- 56
+- 57
+- 75
+- 92
+- 93
+- 100
+- 101
+- 110
+- 111
+- 132
+- 134
+- 135
+- 136
+- 137
+- 144
+- 145
+- 151
+- 196
+- 197
+- 198
+bases_diferidas: []
+archivos_ignorados:
+- ~$85 - DTE Bovinos SDE.xlsx
+archivos:
+- archivo: 9 - Cultivos extensivos SDE.xlsx
+  base: 9
+  sha256: cf2930c59f6013bb8e76684e2f2b61396cc923817cb27704da4620f12bab5612
+  bytes: 220990
+  fecha_archivo: '2026-07-16'
+  familia: tidy
+  config: configs/bases/9-cultivos-extensivos.yaml
+  estado: ingerida
+  staging: staging/base-09-cultivos-extensivos.parquet
+  filas_staging: 11728
+  hojas:
+    9 PB 3 - A:
+      filas_staging: 10128
+      filas_excel: 2532
+    9 PB 3 - B:
+      filas_staging: 1508
+      filas_excel: 377
+    9 PB 3 - C:
+      filas_staging: 92
+      filas_excel: 23
+  valores_nulos: 0
+- archivo: 30 - Apiarios y colmenas SDE.xlsx
+  base: 30
+  sha256: cc1a2a6b2890208b313da8971b3c8cdea1ef0f67e5d8fcee47a0598a6d5c72ef
+  bytes: 11898
+  fecha_archivo: '2026-07-16'
+  familia: null
+  config: null
+  estado: sin-config
+  staging: null
+  filas_staging: null
+  hojas: null
+  valores_nulos: null
+- archivo: 33 - Registrados SISA - SDE.xlsx
+  base: 33
+  sha256: 1f2ffd0ec30a4febc8b7503f6a11fcafab12ce1abda294b06c4aa9da37b873b2
+  bytes: 15247
+  fecha_archivo: '2026-07-19'
+  familia: null
+  config: null
+  estado: sin-config
+  staging: null
+  filas_staging: null
+  hojas: null
+  valores_nulos: null
+- archivo: 38 - Empresas registradas com semillas SDE.xlsx
+  base: 38
+  sha256: 5d97487f458f11459d77c51902813d5b79436e2e8def230ce28d45da25aa31a8
+  bytes: 685615
+  fecha_archivo: '2026-07-16'
+  familia: null
+  config: null
+  estado: sin-config
+  staging: null
+  filas_staging: null
+  hojas: null
+  valores_nulos: null
+- archivo: 48 - Stocks bovinos por depto y categ - SDE.xlsx
+  base: 48
+  sha256: d1d7da168cac3118df0118c793b98cd8bf224cc974e56c1e88cdd31712501bf2
+  bytes: 140311
+  fecha_archivo: '2026-07-17'
+  familia: stock
+  config: configs/bases/48-stocks-bovinos.yaml
+  estado: ingerida
+  staging: staging/base-48-stocks-bovinos.parquet
+  filas_staging: 4312
+  hojas:
+    Data stock SDE:
+      filas_staging: 4312
+      filas_excel: 392
+  valores_nulos: 280
+- archivo: 53 - DTV Algodon SDE.xlsx
+  base: 53
+  sha256: 090eb5921741a7d1f1ed39ba7afe31a7eebe3a5262236eb9a755fac6c8202408
+  bytes: 8102189
+  fecha_archivo: '2026-07-17'
+  familia: null
+  config: null
+  estado: sin-config
+  staging: null
+  filas_staging: null
+  hojas: null
+  valores_nulos: null
+- archivo: 56 - DTV Batata Sgo.xlsx
+  base: 56
+  sha256: f67036392f0a81f4d99dbb9faf1ba1b75870aae669d0c7eea6aad155e5ff3ac9
+  bytes: 60879
+  fecha_archivo: '2026-07-17'
+  familia: null
+  config: null
+  estado: sin-config
+  staging: null
+  filas_staging: null
+  hojas: null
+  valores_nulos: null
+- archivo: 57 - DTV Cebolla Sgo.xlsx
+  base: 57
+  sha256: 0287edae3500a0e0001a68e4118ae28087457b8d61c6a03d6517d78a81c8f778
+  bytes: 1033363
+  fecha_archivo: '2026-07-17'
+  familia: null
+  config: null
+  estado: sin-config
+  staging: null
+  filas_staging: null
+  hojas: null
+  valores_nulos: null
+- archivo: 75 - DTV Papa SDE.xlsx
+  base: 75
+  sha256: 9618da6e380725a72f96aca17a4d9ea126754e958b284e34ea6715769e3db427
+  bytes: 25010
+  fecha_archivo: '2026-07-17'
+  familia: null
+  config: null
+  estado: sin-config
+  staging: null
+  filas_staging: null
+  hojas: null
+  valores_nulos: null
+- archivo: 85 - DTE Bovinos SDE.xlsx
+  base: 85
+  sha256: 34e7d7702dfff0abb33dde3bfdf52b37b1c00ddcf29516d758e9c07119265343
+  bytes: 6794319
+  fecha_archivo: '2026-07-20'
+  familia: dte
+  config: configs/bases/85-dte-bovinos.yaml
+  estado: ingerida
+  staging: staging/base-85-dte-bovinos.parquet
+  filas_staging: 1104768
+  hojas:
+    Data ORIGEN SDE:
+      filas_staging: 674688
+      filas_excel: 28112
+    Data DESTINO SDE:
+      filas_staging: 430080
+      filas_excel: 17920
+  valores_nulos: 0
+- archivo: 92 - Faena porcina mensual SDE.xlsx
+  base: 92
+  sha256: 61e63e449ad08229dc2b869a39aa804d978c3d1e271afc4f1efa6cde44bd552a
+  bytes: 10788
+  fecha_archivo: '2026-07-19'
+  familia: null
+  config: null
+  estado: sin-config
+  staging: null
+  filas_staging: null
+  hojas: null
+  valores_nulos: null
+- archivo: 93 - Faena por Establecimiento SDE.xlsx
+  base: 93
+  sha256: e7bbb504459596725415151d929b46db484fac05ee0692995fd3babf78555e01
+  bytes: 11588
+  fecha_archivo: '2026-07-19'
+  familia: null
+  config: null
+  estado: sin-config
+  staging: null
+  filas_staging: null
+  hojas: null
+  valores_nulos: null
+- archivo: 100 - Faena mensual por provincia.xlsx
+  base: 100
+  sha256: a973d7a16d80037c2ec21f12c9e5a4f6331e3c2c0c05855c36b4f2a6614b06f8
+  bytes: 10773
+  fecha_archivo: '2026-07-17'
+  familia: null
+  config: null
+  estado: sin-config
+  staging: null
+  filas_staging: null
+  hojas: null
+  valores_nulos: null
+- archivo: 101 - Faena por establecimiento SDE.xlsx
+  base: 101
+  sha256: e585da49e1e91e73a96a4b6f600a930d7f90b3dc0bfae64b3fbbde6d85724a49
+  bytes: 18703
+  fecha_archivo: '2026-07-18'
+  familia: null
+  config: null
+  estado: sin-config
+  staging: null
+  filas_staging: null
+  hojas: null
+  valores_nulos: null
+- archivo: 110 - Estadisticas climat normales promedio SDE aerop.xlsx
+  base: 110
+  sha256: 9dcc3e049a142c69bcbc46639bb1e3baded7bb1d02c78fc8d2733d804a7967ff
+  bytes: 10124
+  fecha_archivo: '2026-07-19'
+  familia: null
+  config: null
+  estado: sin-config
+  staging: null
+  filas_staging: null
+  hojas: null
+  valores_nulos: null
+- archivo: 111 - Detalle estaciones SDE del INTA.xlsx
+  base: 111
+  sha256: ddd410f3af1ff267df038809786baec238d59cb80346722d874b8e54acd26382
+  bytes: 5235037
+  fecha_archivo: '2026-07-19'
+  familia: null
+  config: null
+  estado: sin-config
+  staging: null
+  filas_staging: null
+  hojas: null
+  valores_nulos: null
+- archivo: 132 - Composicion parque autom SDE.xlsx
+  base: 132
+  sha256: fbe3fe33b0560a6d070da885988a603229489e9e8842514ef8f897c434d952eb
+  bytes: 10175
+  fecha_archivo: '2026-07-19'
+  familia: null
+  config: null
+  estado: sin-config
+  staging: null
+  filas_staging: null
+  hojas: null
+  valores_nulos: null
+- archivo: 134 - patentamientos SDE.xlsx
+  base: 134
+  sha256: afc6131cab85f49cfb3e78718f5944db5f5672a466ec33a23d8e29afdec65c8b
+  bytes: 15056
+  fecha_archivo: '2026-07-19'
+  familia: null
+  config: null
+  estado: sin-config
+  staging: null
+  filas_staging: null
+  hojas: null
+  valores_nulos: null
+- archivo: 135 - Patentamientos unidades transporte carga SDE.xlsx
+  base: 135
+  sha256: b89c28c81c79c82a3e9b848358aec0761c1352d38a33ecf1190fefef900a4f93
+  bytes: 24495
+  fecha_archivo: '2026-07-19'
+  familia: null
+  config: null
+  estado: sin-config
+  staging: null
+  filas_staging: null
+  hojas: null
+  valores_nulos: null
+- archivo: 136 - Patent Acopl SDE.xlsx
+  base: 136
+  sha256: 4a77299d6a898ae408f1dfcd775054f5386cd408799d57ae0a481361f6bdf444
+  bytes: 14226
+  fecha_archivo: '2026-07-19'
+  familia: null
+  config: null
+  estado: sin-config
+  staging: null
+  filas_staging: null
+  hojas: null
+  valores_nulos: null
+- archivo: 137 - Patent MAVI SDE.xlsx
+  base: 137
+  sha256: b706148422eb4cfc4fac1bdc146aa6f5db981e546088828c4ad50970b70be9a4
+  bytes: 14128
+  fecha_archivo: '2026-07-19'
+  familia: null
+  config: null
+  estado: sin-config
+  staging: null
+  filas_staging: null
+  hojas: null
+  valores_nulos: null
+- archivo: 144 - DTE porcinos SDE.xlsx
+  base: 144
+  sha256: 0dd3e83443b11a7489a03e4e4e54a7829220fd5a2976ab3198e1e21565813e8d
+  bytes: 91083
+  fecha_archivo: '2026-07-19'
+  familia: null
+  config: null
+  estado: sin-config
+  staging: null
+  filas_staging: null
+  hojas: null
+  valores_nulos: null
+- archivo: 145 - DTE Ovinos - Origen y Destino SDE.xlsx
+  base: 145
+  sha256: af569e66cdb5accb4e7570942e575fe854bc0f1ab755d17ce574a108c8a4c732
+  bytes: 17017
+  fecha_archivo: '2026-07-19'
+  familia: null
+  config: null
+  estado: sin-config
+  staging: null
+  filas_staging: null
+  hojas: null
+  valores_nulos: null
+- archivo: 151 - Stocks y establ Engorde A Corral (EAC) - SDE.xlsx
+  base: 151
+  sha256: 5e3034bc6a4de1c2efec1cb8336e2258e97d50947dfc8e3a4cab2f5f3c1d8423
+  bytes: 12350
+  fecha_archivo: '2026-07-19'
+  familia: null
+  config: null
+  estado: sin-config
+  staging: null
+  filas_staging: null
+  hojas: null
+  valores_nulos: null
+- archivo: 196 - Lista productos RNPA - SDE.xlsx
+  base: 196
+  sha256: 1275c57b9ab3dc26e27037d8daa3d1e415816f0790fae47dc3c6ff261c444b13
+  bytes: 96759
+  fecha_archivo: '2026-07-18'
+  familia: null
+  config: null
+  estado: sin-config
+  staging: null
+  filas_staging: null
+  hojas: null
+  valores_nulos: null
+- archivo: 197 - Base Estaciones Servicio SDE.xlsx
+  base: 197
+  sha256: 9ee30e03de020737737ba0443c4da379629a37280a785d80c43c09611e379247
+  bytes: 24293
+  fecha_archivo: '2026-07-18'
+  familia: null
+  config: null
+  estado: sin-config
+  staging: null
+  filas_staging: null
+  hojas: null
+  valores_nulos: null
+- archivo: 198 - Agroindustrias inscriptas en SISA - SDE.xlsx
+  base: 198
+  sha256: 0dc4a1ab87378fa30fe5eb741f334c7b1e48c099ba2549e8f65d490ee8955e13
+  bytes: 10738
+  fecha_archivo: '2026-07-19'
+  familia: null
+  config: null
+  estado: sin-config
+  staging: null
+  filas_staging: null
+  hojas: null
+  valores_nulos: null

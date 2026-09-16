@@ -1,0 +1,19 @@
+# Inventario de versiones del indice de JC (raw/indice/*.xlsx).
+# GENERADO por pipeline/indice.py. NO editar a mano.
+# Vive en configs/ y no en raw/ porque raw/ es de solo lectura.
+descripcion: 'Versiones del indice de JC guardadas en raw/indice/. raw/ es inmutable: cada version nueva
+  se agrega, ninguna se pisa.'
+version_vigente: 2
+versiones:
+- version: 1
+  archivo: Bases para Beta - 1.xlsx
+  fecha_version: '2026-06-29'
+  sha256: 5f41a2c8755f4d4872f8d5782b18450eb3790fa38ef0c86a5443edb65e013643
+  bytes: 810407
+  vigente: false
+- version: 2
+  archivo: Bases para Beta - 2.xlsx
+  fecha_version: '2026-07-27'
+  sha256: 4da8de3debdb9fac51b41ec12c46c8899b66b36bc997cd625f1bb097115c364a
+  bytes: 42561
+  vigente: true

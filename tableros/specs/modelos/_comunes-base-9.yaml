@@ -1,0 +1,350 @@
+# Parametros comunes a TODAS las vistas de la base 9 (cultivos extensivos).
+#
+# Existe por dos motivos de JC:
+#   1. f39-f41: "van los mismos tipos de graficos para TODOS LOS CULTIVOS Y PARA LAS OPCIONES
+#      GEOGRAFICAS", "los formatos se mantienen SIEMPRE, asi como la uniformidad de colores y
+#      estilos (sino seria un carnaval)". Lo que se repite se define una vez, aca.
+#   2. f154: "hay que prever agregar llamadas con icono de pregunta para aclaraciones tecnicas o
+#      metodologicas". Esas llamadas se definen aca y las vistas las referencian por nombre.
+#
+# Cada spec de vista trae `comunes: _comunes-base-9`. constructor-dashboards debe aplicar este
+# archivo ANTES de la herencia por `igual_que`.
+#
+# Escrito por constructor-reglas el 2026-07-30.
+
+id: _comunes-base-9
+base: 9
+slug_base: cultivos-extensivos
+fuente_datos:
+  staging: "staging/base-09-cultivos-extensivos.parquet"
+  mart: "marts/hecho_cultivos.parquet"
+  dims: ["marts/dim_geo.parquet", "marts/dim_tiempo_campania.parquet"]
+
+# ---------------------------------------------------------------------------
+# PARAMETROS
+# ---------------------------------------------------------------------------
+parametros:
+  provincia: sde                 # provincia es parametro, nunca hardcodeada (CLAUDE.md)
+  ambito_publicable: sde         # `comparativo` y `pais` solo en specs marcados como sensibles
+  cita_pie: "Fuente: MAGyP"      # la arma _protocolo-presentacion.pie_de_fuente con la columna
+                                 # `fuente` del mart (unico valor: 'MAGyP'). Coincide con lo que
+                                 # declara el indice de JC. Antes decia "MAGyP, Estimaciones
+                                 # Agrícolas", que el nunca escribio: ver backlog pregunta 14.
+
+# ---------------------------------------------------------------------------
+# PRESENTACION
+# ---------------------------------------------------------------------------
+# Titulos, separadores, escalas de mapa, colores por tipo de variable, marcas del eje vertical,
+# pie de fuente y numeracion salen de specs/modelos/_protocolo-presentacion.yaml, que es la
+# traduccion del docx de JC "PROTOCOLO PARA GRAFICOS, MAPAS Y TABLAS". No se repiten aca.
+presentacion:
+  protocolo: _protocolo-presentacion
+  sujeto_de_la_base: "cultivos extensivos"      # el "sector/subsector" de JC, tomado de su indice
+  frase_en_titulo: "los cultivos extensivos"
+  tipos_de_variable:                            # define que rampa de color usa cada medida
+    sup_sembrada_ha: superficie
+    sup_cosechada_ha: superficie
+    produccion_tn: produccion
+    rendimiento_kg_ha: rendimiento
+
+# ---------------------------------------------------------------------------
+# VENTANA TEMPORAL (JC f7: "a efectos del demo solo tomaremos 10 campañas")
+# ---------------------------------------------------------------------------
+# Parametrizado, no hardcodeado: se resuelve en cada build tomando las N ultimas campañas
+# CERRADAS que sobrevivan a los filtros de calidad de abajo.
+ventana_campanias:
+  cantidad: 10
+  ancla: ultima_campania_cerrada
+  incluye_campania_en_curso: false
+  # Resuelto contra staging el 2026-07-30, se deja escrito para que sea auditable:
+  #   campañas presentes en la base ................ 14 (2000/01, 2013/14, 2014/15 .. 2025/26)
+  #   menos las 2 excluidas por calidad ............ 12
+  #   menos la campaña en curso (2025/26) .......... 11 cerradas y con respaldo departamental
+  #   ventana efectiva (las 10 ultimas) ............ 2015/16 a 2024/25
+  resueltas_2026_07_30:
+    ["2015/16", "2016/17", "2017/18", "2018/19", "2019/20", "2020/21",
+     "2021/22", "2022/23", "2023/24", "2024/25"]
+  campania_por_defecto: "2024/25"   # JC f12: "SIEMPRE ULTIMA CAMPAÑA". Resuelto = ultima cerrada.
+  sobrante_fuera_de_ventana: ["2014/15"]   # queda disponible, no se muestra en el demo
+
+campania_en_curso:
+  campania: "2025/26"
+  visible_en:
+    - vistas de un solo cultivo, cuando el cultivo elegido es de invierno
+  oculta_en:
+    - totales por campaña, carteras, tortas, rankings por total producido
+  motivo: >
+    La campaña 2025/26 trae solamente los 8 cultivos de invierno (lo de verano todavia esta en el
+    lote). Si entrara en un total por campaña apareceria como un derrumbe de la produccion
+    provincial que no existe. Cuando se muestra, va rotulada "campaña en curso" y no se compara
+    contra campañas cerradas.
+
+# ---------------------------------------------------------------------------
+# FILTROS DE CALIDAD (salen del reporte validations/reportes/entrega-01.md)
+# ---------------------------------------------------------------------------
+# Son filtros del SPEC, no reglas escondidas en el codigo: si JC decide otra cosa, se cambia aca.
+filtros_calidad:
+  - id: excluir-campanias-sin-departamento
+    aplica_a: todas
+    regla: "campania NOT IN ('2000/01', '2013/14')"
+    motivo_legible: >
+      Esas dos campañas traen el total de la provincia pero ni un solo departamento. Si las
+      publicaramos, el mapa quedaria en blanco con un total provincial arriba y cualquiera diria
+      que perdimos datos. Ademas quedan fuera del periodo que JC declaro para la entrega.
+    referencia: "validations/reportes/entrega-01.md, punto 1"
+    decide: JC (pregunta 1 del reporte)
+
+  - id: sin-participacion-pais-poroto-mani
+    aplica_a: [09-pais-participacion-sde]
+    regla: "cultivo NOT IN ('Poroto total', 'Maní')"
+    motivo_legible: >
+      La hoja de totales del pais no trae la fila "Poroto total" (trae las tres variedades
+      sueltas) ni trae mani. Sin el total nacional, el porcentaje no se puede calcular sin
+      inventarlo, y no inventamos totales que la fuente no trajo.
+    referencia: "validations/reportes/entrega-01.md, punto 4"
+    decide: JC (pregunta 4 del reporte)
+
+  - id: apertura-poroto-desde-2021
+    aplica_a: [09-cultivo-detalle-componentes]
+    regla: "si cultivo_grupo = 'Poroto', campania >= '2021/22'"
+    motivo_legible: >
+      Las variedades de poroto arrancan recien en 2021/22. Antes solo hay "Poroto total". La serie
+      de detalle empieza ahi, con la aclaracion en pantalla.
+    referencia: "validations/reportes/entrega-01.md, punto 3"
+
+  - id: trigo-sin-apertura
+    aplica_a: [09-cultivo-detalle-componentes]
+    regla: "cultivo_grupo <> 'Trigo'"
+    motivo_legible: >
+      De trigo solo llego "Trigo candeal" (0,7% del total provincial, desde 2020/21) y falta
+      "Trigo pan". El boton "ver detalle" no se ofrece para trigo: mostrar solo el candeal daria
+      a entender que en Santiago casi no se hace trigo pan, cuando lo que pasa es que el dato no
+      vino separado.
+    referencia: "validations/reportes/entrega-01.md, punto 2"
+    decide: JC (pregunta 2 del reporte)
+
+# ---------------------------------------------------------------------------
+# COMO SE MUESTRA UN DEPARTAMENTO SIN DATO (no todo cero es cero)
+# ---------------------------------------------------------------------------
+estados_sin_dato:
+  regla: "Ninguno de estos tres estados se pinta como cero en el mapa ni entra en los promedios."
+  estados:
+    - estado: sin_datos
+      cuando: "el departamento no tiene ninguna fila del cultivo en esa campaña"
+      display: "Sin datos"
+      ejemplo: "SALAVINA no aparece en ninguna campaña de la base"
+    - estado: sembrado_sin_cosechar
+      cuando: "sup_sembrada_ha > 0 y sup_cosechada_ha = 0"
+      display: "Sembrado sin cosechar"
+      ejemplo: "avena, centeno y cebada, probables verdeos de invierno para pastoreo"
+    - estado: produccion_no_informada
+      cuando: "sup_cosechada_ha > 0 y produccion_tn = 0"
+      display: "Sin dato"
+      nota: "Son 5 filas. No entran en promedios de rendimiento: no se cuentan como cero."
+
+# ---------------------------------------------------------------------------
+# PRECISION DE DISPLAY (aplica a TODAS las vistas departamentales)
+# ---------------------------------------------------------------------------
+# El dato departamental es una estimacion de la fuente, no una medicion. Mostrarlo al kilo o a la
+# tonelada exacta le da una precision que no tiene. La regla es de PRESENTACION unicamente.
+precision_display:
+  regla_general: "Los calculos (rankings, variaciones, participaciones) usan SIEMPRE el valor sin redondear. El redondeo es solo de pantalla."
+  nivel_departamento:
+    sup_sembrada_ha:   {formato: entero, redondeo: "a la centena si el valor es >= 1.000; entero exacto si es menor"}
+    sup_cosechada_ha:  {formato: entero, redondeo: "a la centena si el valor es >= 1.000; entero exacto si es menor"}
+    produccion_tn:     {formato: entero, redondeo: "a la centena si el valor es >= 1.000; entero exacto si es menor"}
+    rendimiento_kg_ha: {formato: entero, redondeo: "a la decena"}
+  nivel_provincia_y_pais:
+    todas: {formato: entero, redondeo: ninguno}
+  porcentajes: {formato: "1 decimal", sufijo: "%"}
+  separador_miles: "."
+  separador_decimal: ","
+  ejemplos:
+    - "4.000 ha (SILIPICA, algodon) se muestra 4.000 ha"
+    - "1.234 tn se muestra 1.200 tn"
+    - "70 ha se muestra 70 ha, nunca 100 ha ni 0 ha"
+    - "2.743 kg/ha se muestra 2.740 kg/ha"
+  motivo: >
+    El 61,9% de los valores departamentales de Santiago son multiplos exactos de 100, contra 0%
+    en la hoja del pais. Hay 81 casos de superficie identica repetida 5 campañas o mas seguidas.
+    El propio ranking de ejemplo de JC tiene 11 departamentos con rendimiento de soja de
+    exactamente 1.500 kg/ha en 2022/23. El dato no se corrige: se muestra con la precision que tiene.
+
+# ---------------------------------------------------------------------------
+# NOTAS METODOLOGICAS REUTILIZABLES (JC f154: "llamadas con icono de pregunta")
+# ---------------------------------------------------------------------------
+# Cada vista referencia las que le tocan con `notas_metodologicas: [id, id]`.
+# constructor-dashboards las renderiza como un icono de pregunta al lado del titulo del cuadro,
+# que despliega el texto. El texto va en castellano llano: lo lee un ministro, no un analista.
+notas_metodologicas:
+  estimacion-departamental:
+    titulo: "¿De dónde sale el dato por departamento?"
+    texto: >
+      El total de la provincia lo mide el Ministerio de Agricultura de la Nación. La apertura por
+      departamento es una estimación de la propia fuente, no una medición campo por campo. Por eso
+      vas a ver superficies redondas y valores que se repiten iguales varias campañas seguidas.
+      Los números se publican tal como vinieron: acá no se corrigió nada. Sirven para comparar
+      departamentos entre sí y para ver tendencias, no para tomarlos al detalle.
+    aplica_a: "toda vista con grano departamento"
+
+  total-no-suma-componentes:
+    titulo: "¿Por qué la soja de 1ra y la de 2da no se suman al total?"
+    texto: >
+      Cuando un cultivo tiene partes, la fuente informa el total y además las partes. Sumar las dos
+      cosas contaría la misma superficie dos veces. Los cuadros y los totales usan siempre la fila
+      "total"; las partes se ven aparte, en "ver detalle".
+    aplica_a: "vistas que muestran soja, poroto, trigo o cebada"
+
+  verano-invierno:
+    titulo: "¿Por qué se separan los cultivos de verano y los de invierno?"
+    texto: >
+      En un mismo lote se puede hacer un cultivo de invierno y después uno de verano en el mismo
+      año. Si se sumaran las dos superficies, el resultado daría más hectáreas que las que tiene el
+      departamento. Por eso las participaciones porcentuales se calculan por separado: verano por
+      un lado, invierno por el otro.
+    aplica_a: "toda vista con participaciones o carteras"
+
+  clasificacion-provisoria:
+    titulo: "Hay cultivos con la temporada todavía sin confirmar"
+    texto: >
+      La clasificación de verano e invierno la definió Juan Carlos Antuña cultivo por cultivo.
+      Quedaron cinco sin clasificar (lenteja, alpiste, arveja, lino y mijo). Están mostrados con una
+      clasificación propuesta, marcada como provisoria, hasta que la confirme. En Santiago del
+      Estero el único con datos es la lenteja, con 70 hectáreas en Jiménez en la campaña 2020/21.
+    aplica_a: "vistas que separan verano de invierno"
+
+  campania-en-curso:
+    titulo: "¿Por qué falta la campaña 2025/26 en este cuadro?"
+    texto: >
+      La campaña 2025/26 está a medio camino: ya se cosechó lo de invierno (trigo, cebada, avena,
+      centeno, garbanzo, colza y cártamo) pero lo de verano todavía está en el lote. Si la
+      comparáramos contra las campañas cerradas aparecería como una caída enorme que no existe.
+      Se muestra solamente en los cultivos de invierno, rotulada como campaña en curso.
+    aplica_a: "series y totales por campaña"
+
+  poroto-desde-2021:
+    titulo: "El detalle por variedad de poroto empieza en 2021/22"
+    texto: >
+      De la campaña 2014/15 a la 2020/21 la fuente informó solamente "poroto total", sin abrir por
+      variedad. El detalle de poroto negro y poroto otros existe recién desde 2021/22. El total sí
+      está para toda la serie.
+    aplica_a: "vista de detalle de poroto"
+
+  trigo-sin-pan:
+    titulo: "El trigo se muestra solo como total"
+    texto: >
+      La fuente informa "trigo total" y "trigo candeal", pero no informa "trigo pan" para Santiago.
+      Como el candeal es apenas el 0,7% del trigo provincial y arranca en 2020/21, abrir el detalle
+      daría a entender que casi no se hace trigo pan, cuando en realidad el dato no vino separado.
+    aplica_a: "vistas de trigo"
+
+  salavina-sin-datos:
+    titulo: "¿Por qué Salavina aparece sin datos?"
+    texto: >
+      La base cubre 26 de los 27 departamentos de la provincia: Salavina no figura en ninguna
+      campaña, ni siquiera con ceros. Se pinta como "sin datos" y no como cero, porque no es lo
+      mismo. Está preguntado a la fuente.
+    aplica_a: "mapas y rankings departamentales"
+
+  rendimiento-no-se-suma:
+    titulo: "El rendimiento no se suma ni se promedia como los demás números"
+    texto: >
+      El rendimiento es una división: kilos cosechados sobre hectáreas cosechadas. Sumar
+      rendimientos de departamentos distintos no significa nada. Cuando este sitio muestra un
+      promedio de rendimiento entre campañas, es el promedio simple de las campañas, tal como lo
+      calcula Juan Carlos Antuña en su planilla.
+    aplica_a: "rankings y series de rendimiento"
+
+# ---------------------------------------------------------------------------
+# CATALOGO DE TRANSFORMACIONES (se computan en marts, NUNCA se leen del Excel)
+# ---------------------------------------------------------------------------
+# La hoja "Calculos Ranking" del Excel no se lee, ni siquiera para verificar (CLAUDE.md).
+transformaciones_disponibles:
+  variacion_interanual:
+    formula: "valor[t] / valor[t-1] - 1"
+    aplica_solo_a: [sup_sembrada_ha, produccion_tn]   # JC f27, explicito
+    display: "porcentaje, 1 decimal"
+
+  variacion_decadica:
+    formula: "valor[ultima campaña de la ventana] / valor[primera campaña de la ventana] - 1"
+    aplica_solo_a: [sup_sembrada_ha, produccion_tn]   # JC f28, explicito
+    etiqueta: "Variación del período"
+    nota: "JC la llama decádica; con la ventana de 10 campañas del demo el nombre cierra."
+
+  variacion_promedio_anual:
+    formula: "(valor[ultima] / valor[primera]) ^ (1 / (cantidad_campanias - 1)) - 1"
+    tipo: "tasa geométrica anual (equivale al CAGR)"
+    verificacion: >
+      Replicado contra la propia planilla de JC (hoja Modelo Analisis, celdas I61-I62 y I81-J81):
+      superficie sembrada de soja, variación total 45,83% en 11 intervalos, promedio anual 3,489%;
+      producción 5,745% total y 0,509% anual; rendimiento -18,25% total y -1,815% anual. Las tres
+      dan exacto con la fórmula geométrica, no con el promedio simple de las variaciones anuales.
+    etiqueta: "Var. anual promedio"
+
+  variacion_rendimiento_extremos:
+    formula: "rendimiento[ultima] / rendimiento[primera] - 1"
+    nota: "JC f29 la marca como la más importante junto con la variación promedio."
+
+  promedio_simple_n_campanias:
+    formula: "suma(valor de las ultimas n campañas) / n"
+    aplica_a: [rendimiento_kg_ha]
+    n_por_defecto: 3
+    nota_interpretacion: >
+      Promedio simple, no ponderado por superficie. Es como lo calcula JC en su ejemplo
+      (BELGRANO: (2743 + 2886 + 3283) / 3 = 2970,67). Un promedio ponderado por superficie
+      cosechada seria mas correcto tecnicamente, pero daria numeros distintos a los de su
+      planilla y el ranking dejaria de coincidir con el que el ya validó. Se sigue a JC.
+
+  participacion_pct:
+    formula: "valor / total del universo * 100"
+    universo: "cultivos con rol agregado o simple, separados por estacion (verano | invierno)"
+    nota: "JC f8: si no se separan verano e invierno, la suma da mas que el todo."
+
+  participacion_geografica_pct:
+    formula: "valor de Santiago / valor del agregado geografico * 100"
+    agregados: [noa, pais]
+    join: "cultivo + campania + medida"
+    sensibilidad: comparativo
+
+# ---------------------------------------------------------------------------
+# UNIFORMIDAD VISUAL (JC f39-f41: "sino seria un carnaval")
+# ---------------------------------------------------------------------------
+uniformidad:
+  regla: >
+    Un tipo de dato = un tipo de grafico = una paleta, en todas las vistas y para todos los
+    cultivos. Si cambia, cambia en este archivo y cambia en todas.
+  convenciones:
+    evolucion_superficie: "barras verticales, una serie, valores con mouseover (JC K52)"
+    evolucion_produccion_rendimiento: "barras para producción + línea para rendimiento en eje secundario"
+    composicion_absoluta: "barras apiladas"
+    composicion_porcentual: "barras apiladas al 100%, porcentajes con mouseover (JC K110)"
+    participacion_una_campania: "torta"
+    mapa: "coropleta de un solo color, escala de intensidad, mouseover con las 4 variables"
+    ranking: "barras horizontales ordenadas de mayor a menor"
+  paleta:
+    escalas_de_intensidad: >
+      Las define _protocolo-presentacion.colores.rampas, por TIPO DE VARIABLE (superficie verde,
+      producción ocre, rendimiento azul). Es la regla mas fuerte del docx de JC: "SIEMPRE SE
+      CONSERVARA LA MISMA ESCALA DE COLORES PARA EL MISMO TIPO DE VARIABLE".
+    fuente: "site/theme.yaml"
+    regla_color_cultivo: >
+      Cuando el color distingue categorías (un cultivo por serie) y no magnitudes, cada cultivo
+      tiene un color fijo asignado una sola vez y se respeta en todas las vistas. La asignación la
+      define constructor-dashboards a partir de la paleta del theme y la deja escrita, en orden
+      alfabético de cultivo, para que sea determinística entre builds.
+  mouseover_obligatorio: true    # JC lo pidio en K52, K72, K94 y K110
+
+# ---------------------------------------------------------------------------
+# LO QUE JC PIDIO Y NO SE ESPECIFICA TODAVIA
+# ---------------------------------------------------------------------------
+fuera_de_alcance:
+  - item: "VBP (Valor Bruto de la Producción) = precio x producción"
+    referencia: "hoja Modelo Analisis f32"
+    texto_jc: "LO VAMOS A COLOCAR LUEGO DE QUE ARME LA BASE DE PRECIOS Y FLETES"
+    estado: "bloqueada: falta la base de precios y fletes. Backlog pregunta 8."
+  - item: "Series de precios"
+    referencia: "hoja Modelo Analisis f41"
+    estado: "bloqueada: falta la base de precios. Backlog pregunta 8."
+  - item: "Integración de la ficha departamental con ganadería, datos generales y económicos"
+    referencia: "hoja Modelo Analisis f158"
+    estado: "pendiente: requiere las bases 48, 85 y siguientes ingeridas. Backlog pregunta 9."

@@ -1,0 +1,21 @@
+# Procedencia de las librerias de terceros de los tableros.
+#
+# ECharts ya no se copia a mano en el repo: es una dependencia npm del sitio, con version FIJA
+# en el package.json de la raiz y el hash de integridad en package-lock.json. Vercel la instala
+# con `npm ci` y el navegador la recibe dentro del bundle del sitio, sin CDN: si un CDN se cae,
+# el tablero de JC sigue andando igual.
+#
+# Regla: NO se agregan librerias nuevas sin decision explicita de Francisco (ver CLAUDE.md).
+
+librerias:
+  - paquete: echarts
+    nombre: Apache ECharts
+    version: 5.5.1          # la misma que estaba vendoreada desde el 2026-07-30
+    licencia: Apache License 2.0
+    donde: package.json (raiz del sitio)
+    notas: >
+      Se importa completo (`import * as echarts from "echarts"`), incluido el modulo de mapas
+      que usa el mapa de departamentos. Si el peso molesta en celular, el paso siguiente es
+      importar solo los tipos que usamos (map, line, bar, pie), no cambiar de libreria.
+      npm audit marca un XSS moderado (GHSA-fgmj-fm8m-jvvx) que se corrige en ECharts 6: los
+      textos de los tooltips los compone el pipeline, no el usuario.

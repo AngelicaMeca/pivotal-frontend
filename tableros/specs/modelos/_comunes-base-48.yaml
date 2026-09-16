@@ -1,0 +1,165 @@
+# Parametros comunes de la base 48 (stock bovino por departamento y categoria).
+# Lo que este escrito aca no se repite en cada vista: los specs de la base lo heredan.
+#
+# Escrito por constructor-reglas el 2026-08-05, leyendo la hoja "Modelo An 01" del propio
+# Excel de la base (raw/entrega-01/48 - Stocks bovinos por depto y categ - SDE.xlsx), que es
+# donde JC dejo escrito que quiere ver.
+
+id: _comunes-base-48
+base: 48
+seccion: stock-bovino
+
+presentacion:
+  subsector: "ganado bovino"
+  frase_en_titulo: "el stock bovino"
+
+  # Que rampa de color le toca a cada medida. El color lo decide el TIPO DE VARIABLE, nunca la
+  # vista ni la base (protocolo, bloque 9: "SIEMPRE SE CONSERVARA LA MISMA ESCALA DE COLORES
+  # PARA EL MISMO TIPO DE VARIABLE"). `cabezas` ya existe como tipo desde la base 85, asi que
+  # el mapa de stock usa la misma rampa marron que el de movimientos: son la misma variable
+  # contada de dos formas, y que compartan escala es exactamente lo que pide la regla.
+  tipos_de_variable:
+    cabezas: cabezas
+    unidades_productivas: documentos
+
+# ---------------------------------------------------------------------------
+# STOCK NO ES MOVIMIENTO
+# ---------------------------------------------------------------------------
+# La 48 y la 85 son las dos de bovinos y las dos cuentan cabezas, pero no son lo mismo y no
+# se suman ni se comparan sin decirlo. Va escrito aca para que ninguna vista las mezcle.
+naturaleza_del_dato:
+  tipo: stock
+  que_es: >
+    Cuantos animales HAY en la provincia al cierre de cada anio. Es una foto, no un acumulado.
+  contra_la_base_85: >
+    En la 85 las cabezas son un FLUJO: cuantas se movieron en el anio. Un animal que se movio
+    tres veces cuenta tres. Sumar stock con movimientos no significa nada.
+  fuente_del_dato: >
+    El stock se releva con la vacunacion antiaftosa. Por eso el numero es un censo y no una
+    estimacion, y por eso estan los 27 departamentos todos los anios.
+
+# ---------------------------------------------------------------------------
+# CATEGORIAS
+# ---------------------------------------------------------------------------
+# El orden es el del ciclo productivo, no el alfabetico: es como las lee JC en su hoja y como
+# tienen que aparecer en la leyenda del anillo y en las tablas.
+categorias:
+  orden: [Vacas, Vaquillonas, Novillos, Novillitos, Terneros, Terneras, Toros, Toritos, Bueyes]
+  agregado: "Total"
+  # Las nueve suman el Total, verificado en las 392 filas por qa-datos. No hay categoria
+  # "otros" ni resto sin clasificar.
+  cierra_con_el_total: true
+  nota_bueyes: >
+    Bueyes es residual (2 animales en algun departamento) y en varios anios da cero. Se ingiere
+    y se muestra en las tablas, pero no merece un lugar propio en un grafico.
+
+# ---------------------------------------------------------------------------
+# ZONIFICACION DE JC
+# ---------------------------------------------------------------------------
+# JC agrupa los 27 departamentos en 6 zonas productivas. Lo escribio en la columna ZONA de su
+# hoja "Modelo An 01" y ahi mismo aclara "ZONIFICADO ABAJO - VA AL TEXTO": la zonificacion no
+# es una curiosidad, es como el quiere leer la provincia.
+#
+# No existe en ninguna otra parte del repo ni en ninguna fuente oficial: sale de su criterio de
+# experto. Por eso vive en specs/ (regla de negocio) y no en configs/dims/ (dato de la fuente).
+#
+# Los nombres van como los escribe dim_geo (mayusculas, sin tildes).
+zonas:
+  orden: [Este, Sudeste, Sur, Centro, Noroeste, Oeste]
+  departamentos:
+    Este:     [ALBERDI, COPO, "JUAN F. IBARRA", MORENO]
+    Sudeste:  [AGUIRRE, AVELLANEDA, BELGRANO, "GENERAL TABOADA", MITRE, RIVADAVIA]
+    Sur:      [ATAMISQUI, "OJO DE AGUA", QUEBRACHOS, SALAVINA]
+    # "BANDA" y no "LA BANDA": los nombres van como los canoniza dim_geo, que es contra lo que
+    # se verifica esta lista. JC escribe "LA BANDA" en su hoja y SENASA tambien; el alias esta
+    # resuelto en configs/dims/geo-alias.yaml y las dos formas apuntan al mismo 86035.
+    Centro:   [CAPITAL, FIGUEROA, BANDA, LORETO, ROBLES, "SAN MARTIN", SARMIENTO, SILIPICA]
+    Noroeste: [JIMENEZ, PELLEGRINI]
+    Oeste:    [CHOYA, GUASAYAN, "RIO HONDO"]
+  verificacion:
+    total_departamentos: 27
+    regla: >
+      Cada departamento pertenece a UNA zona y las seis juntas tienen que dar los 27. El build
+      falla si sobra o falta alguno: una zonificacion incompleta haria que el anillo no cierre
+      en 100% y nadie se daria cuenta mirando el grafico.
+
+# ---------------------------------------------------------------------------
+# RELACIONES ENTRE CATEGORIAS (bloque "RELACIONES ENTRE CATEGORIAS" de JC, r120-r157)
+# ---------------------------------------------------------------------------
+# Son los indicadores con los que un tecnico ganadero lee un rodeo. JC los calcula en su hoja
+# para 2008 y 2014; aca quedan definidos como formula para que salgan de cualquier anio.
+#
+# `densidad` (cabezas por hectarea) NO se puede calcular todavia: necesita la superficie de
+# cada departamento, que JC trae en su hoja pero que no es un dato de esta base. Queda
+# declarada y sin implementar, a proposito: cuando entre la superficie como dimension, se
+# activa sin discutir de nuevo que significa.
+relaciones:
+  destete:
+    etiqueta: "Terneros por vaca"
+    formula: "(Terneros + Terneras) / Vacas"
+    que_dice: >
+      Cuantos terneros logra cada vaca. Es el indicador de eficiencia mas usado del rodeo de
+      cria: si baja, el rodeo esta pariendo o destetando menos.
+    formato: "2 decimales"
+  participacion_vientres:
+    etiqueta: "Vacas sobre el stock"
+    formula: "Vacas / Total"
+    que_dice: >
+      Que parte del rodeo son vientres. Un valor alto habla de cria; uno bajo, de invernada o
+      engorde.
+    formato: "porcentaje"
+  reposicion:
+    etiqueta: "Vaquillonas por vaca"
+    formula: "Vaquillonas / Vacas"
+    que_dice: "Con cuanta hacienda joven se esta reponiendo el rodeo de vientres."
+    formato: "2 decimales"
+  invernada:
+    etiqueta: "Novillos por vaca"
+    formula: "(Novillos + Novillitos) / Vacas"
+    que_dice: "Cuanto del rodeo esta en engorde y no en cria."
+    formato: "2 decimales"
+  servicio:
+    etiqueta: "Toros por vaca"
+    formula: "(Toros + Toritos) / Vacas"
+    que_dice: "Relacion de servicio. Lo normal ronda 0,03 a 0,05 (un toro cada 20 a 30 vacas)."
+    formato: "3 decimales"
+  densidad:
+    etiqueta: "Cabezas por hectarea"
+    formula: "Total / superficie_ha"
+    estado: pendiente
+    falta: >
+      La superficie de cada departamento. JC la tiene en la columna B de su hoja (la provincia
+      da 13.635.100 ha), pero es un dato de referencia que no viene en esta base y no se carga
+      desde una hoja de analisis. Entra como dimension propia cuando se decida de donde sacarla.
+
+# ---------------------------------------------------------------------------
+# VENTANA TEMPORAL
+# ---------------------------------------------------------------------------
+tiempo:
+  grano: anio
+  ventana_anios:
+    desde: 2012
+    hasta: 2025
+    texto: >
+      El archivo cubre 2012 a 2025. El indice de JC declara desde 2007: los cinco anios que
+      faltan estan reportados en validations/reportes/entrega-01.md (punto 21) y esperan
+      respuesta. Cuando lleguen, esta ventana se corre y las vistas no cambian.
+  anio_en_curso: null   # el stock es una foto al cierre: no hay anio incompleto
+
+# ---------------------------------------------------------------------------
+# ADVERTENCIAS QUE VAN EN PANTALLA
+# ---------------------------------------------------------------------------
+advertencias:
+  - id: vacas-con-decimales-2021
+    texto_en_pantalla: >
+      En 2021 la fuente informa las vacas con decimales. Los valores se muestran redondeados.
+    cuando: "vistas que muestren el anio 2021"
+    origen: "validations/reportes/entrega-01.md, punto 19"
+  - id: stock-no-es-movimiento
+    texto_en_pantalla: >
+      Son existencias al cierre de cada anio, no movimientos de hacienda.
+    cuando: "siempre"
+
+fuente:
+  organismo_esperado: "MAGyP"
+  cita_al_pie: "Fuente: MAGyP"

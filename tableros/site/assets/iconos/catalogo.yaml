@@ -1,0 +1,511 @@
+# Catalogo de los iconos de JC. GENERADO por el script de extraccion del 10-ago-2026,
+# a partir de los Anexos I (B&W) y II (color) de
+# "specs/fuentes/0000 Protocolo de formato - Versión 1.docx" (word/media/).
+# No editar a mano: si llega un anexo nuevo se vuelve a extraer.
+# La ASIGNACION icono -> cultivo del sitio no vive aca: esta en site/iconos-cultivo.yaml.
+iconos:
+  aceites:
+    nombre: "Aceites"
+    categoria: "Derivados y procesados"
+    origen_bn: "image56.png"
+    origen_color: "image155.png"
+  agroquimicos:
+    nombre: "Agroquímicos"
+    categoria: "Insumos"
+    origen_bn: "image92.png"
+    origen_color: "image191.png"
+  ajo:
+    nombre: "Ajo"
+    categoria: "AGRICULTURA"
+    origen_bn: "image41.png"
+    origen_color: "image140.png"
+  alfalfa:
+    nombre: "Alfalfa"
+    categoria: "AGRICULTURA"
+    origen_bn: "image16.png"
+    origen_color: "image117.png"
+  algodon:
+    nombre: "Algodón"
+    categoria: "AGRICULTURA"
+    origen_bn: "image9.png"
+    origen_color: "image110.png"
+  alimentacion-animal:
+    nombre: "Alimentación animal"
+    categoria: "Derivados y procesados"
+    origen_bn: "image62.png"
+    origen_color: "image161.png"
+  alimentacion-y-nutricion:
+    nombre: "Alimentación y nutrición"
+    categoria: "Independientes (no agrupados)"
+    origen_bn: "image102.png"
+    origen_color: "image201.png"
+  analisis-de-datos:
+    nombre: "Análisis de datos"
+    categoria: "Sin definer categoría"
+    origen_bn: "image85.png"
+    origen_color: "image184.png"
+  apicolas:
+    nombre: "Apícolas"
+    categoria: "Ganadería"
+    origen_bn: "image47.png"
+    origen_color: "image146.png"
+  arroz:
+    nombre: "Arroz"
+    categoria: "AGRICULTURA"
+    origen_bn: "image21.png"
+    origen_color: "image122.png"
+  arvejas:
+    nombre: "Arvejas"
+    categoria: "AGRICULTURA"
+    origen_bn: "image22.png"
+    origen_color: "image123.png"
+  avena:
+    nombre: "Avena"
+    categoria: "AGRICULTURA"
+    origen_bn: "image24.png"
+    origen_color: "image125.png"
+  aves:
+    nombre: "Aves"
+    categoria: "Ganadería"
+    origen_bn: "image49.png"
+    origen_color: "image148.png"
+  azucar:
+    nombre: "Azúcar"
+    categoria: "Derivados y procesados"
+    origen_bn: "image57.png"
+    origen_color: "image156.png"
+  biocombustibles:
+    nombre: "Biocombustibles"
+    categoria: "Energía"
+    origen_bn: "image87.png"
+    origen_color: "image186.png"
+  bosques:
+    nombre: "Bosques"
+    categoria: "Forestal"
+    origen_bn: "image83.png"
+    origen_color: "image182.png"
+  bovinos:
+    nombre: "Bovinos"
+    categoria: "Ganadería"
+    origen_bn: "image43.png"
+    origen_color: "image142.png"
+  bubalinos:
+    nombre: "Bubalinos (Bueyes y Búfalos)"
+    categoria: "Ganadería"
+    origen_bn: "image46.png"
+    origen_color: "image145.png"
+  camelidos:
+    nombre: "Camélidos"
+    categoria: "Ganadería"
+    origen_bn: "image51.png"
+    origen_color: "image150.png"
+  cana-de-azucar:
+    nombre: "Caña de azúcar"
+    categoria: "AGRICULTURA"
+    origen_bn: "image25.png"
+    origen_color: "image126.png"
+  caprinos:
+    nombre: "Caprinos"
+    categoria: "Ganadería"
+    origen_bn: "image50.png"
+    origen_color: "image149.png"
+  carne-bovina:
+    nombre: "Carne Bovina"
+    categoria: "Derivados y procesados"
+    origen_bn: "image59.png"
+    origen_color: "image158.png"
+  carne-de-pollo:
+    nombre: "Carne de pollo"
+    categoria: "Derivados y procesados"
+    origen_bn: "image61.png"
+    origen_color: "image160.png"
+  carne-porcina:
+    nombre: "Carne porcina"
+    categoria: "Derivados y procesados"
+    origen_bn: "image60.png"
+    origen_color: "image159.png"
+  cartamo:
+    nombre: "Cártamo"
+    categoria: "AGRICULTURA"
+    origen_bn: "image26.png"
+    origen_color: "image127.png"
+  cebada:
+    nombre: "Cebada"
+    categoria: "AGRICULTURA"
+    origen_bn: "image13.png"
+    origen_color: "image114.png"
+  cebolla:
+    nombre: "Cebolla"
+    categoria: "AGRICULTURA"
+    origen_bn: "image18.png"
+    origen_color: "image119.png"
+  centeno:
+    nombre: "centeno"
+    categoria: "AGRICULTURA"
+    origen_bn: "image27.png"
+    origen_color: "image128.png"
+  clima:
+    nombre: "Clima"
+    categoria: "Independientes (no agrupados)"
+    origen_bn: "image103.png"
+    origen_color: "image202.png"
+  colza:
+    nombre: "Colza"
+    categoria: "AGRICULTURA"
+    origen_bn: "image8.png"
+    origen_color: "image109.png"
+  combustibles:
+    nombre: "Combustibles"
+    categoria: "Energía"
+    origen_bn: "image88.png"
+    origen_color: "image187.png"
+  comunicaciones:
+    nombre: "Comunicaciones"
+    categoria: "General"
+    origen_bn: "image96.png"
+    origen_color: "image195.png"
+  costos-y-margenes:
+    nombre: "Costos y márgenes"
+    categoria: "Sin definer categoría"
+    origen_bn: "image84.png"
+    origen_color: "image183.png"
+  cueros:
+    nombre: "Cueros"
+    categoria: "Derivados y procesados"
+    origen_bn: "image58.png"
+    origen_color: "image157.png"
+  educacion:
+    nombre: "Educación"
+    categoria: "General"
+    origen_bn: "image94.png"
+    origen_color: "image193.png"
+  empleo:
+    nombre: "Empleo"
+    categoria: "Económicos"
+    origen_bn: "image76.png"
+    origen_color: "image175.png"
+  energia-electrica:
+    nombre: "Energía Eléctrica"
+    categoria: "Energía"
+    origen_bn: "image89.png"
+    origen_color: "image188.png"
+  energia-eolica:
+    nombre: "Energía eólica"
+    categoria: "Energía"
+    origen_bn: "image90.png"
+    origen_color: "image189.png"
+  equinos:
+    nombre: "Equinos"
+    categoria: "Ganadería"
+    origen_bn: "image45.png"
+    origen_color: "image144.png"
+  escenarios-internacionales:
+    nombre: "Escenarios Internacionales"
+    categoria: "Sin definer categoría"
+    origen_bn: "image86.png"
+    origen_color: "image185.png"
+  espanol:
+    nombre: "Español"
+    categoria: "Banderas idiomas"
+    origen_bn: "image104.png"
+    origen_color: "image104.png"
+  exportaciones:
+    nombre: "Exportaciones"
+    categoria: "Económicos"
+    origen_bn: "image74.png"
+    origen_color: "image173.png"
+  exportar-como-excel:
+    nombre: "Exportar como Excel"
+    categoria: "Formato"
+    origen_bn: "image81.png"
+    origen_color: "image180.png"
+  exportar-como-jpg:
+    nombre: "Exportar como JPG"
+    categoria: "Formato"
+    origen_bn: "image80.png"
+    origen_color: "image179.png"
+  exportar-como-pdf:
+    nombre: "Exportar como PDF"
+    categoria: "Formato"
+    origen_bn: "image79.png"
+    origen_color: "image178.png"
+  fertilizantes:
+    nombre: "Fertilizantes"
+    categoria: "Insumos"
+    origen_bn: "image93.png"
+    origen_color: "image192.png"
+  forrajes:
+    nombre: "Forrajes"
+    categoria: "AGRICULTURA"
+    origen_bn: "image17.png"
+    origen_color: "image118.png"
+  frutas-y-hortalizas:
+    nombre: "Frutas y Hortalizas"
+    categoria: "AGRICULTURA"
+    origen_bn: "image20.png"
+    origen_color: "image121.png"
+  garbanzo:
+    nombre: "Garbanzo"
+    categoria: "AGRICULTURA"
+    origen_bn: "image15.png"
+    origen_color: "image116.png"
+  gas:
+    nombre: "Gas"
+    categoria: "Energía"
+    origen_bn: "image91.png"
+    origen_color: "image190.png"
+  girasol:
+    nombre: "Girasol"
+    categoria: "AGRICULTURA"
+    origen_bn: "image7.png"
+    origen_color: "image108.png"
+  graficos:
+    nombre: "Gráficos"
+    categoria: "Formato"
+    origen_bn: "image77.png"
+    origen_color: "image176.png"
+  harinas:
+    nombre: "Harinas"
+    categoria: "Derivados y procesados"
+    origen_bn: "image55.png"
+    origen_color: "image154.png"
+  huevos:
+    nombre: "Huevos"
+    categoria: "Derivados y procesados"
+    origen_bn: "image54.png"
+    origen_color: "image153.png"
+  ia:
+    nombre: "IA -1"
+    categoria: "Inteligencia artificial"
+    origen_bn: "image107.png"
+    origen_color: "image203.png"
+  importaciones:
+    nombre: "Importaciones"
+    categoria: "Económicos"
+    origen_bn: "image75.png"
+    origen_color: "image174.png"
+  industria:
+    nombre: "Industria"
+    categoria: "Independientes (no agrupados)"
+    origen_bn: "image101.png"
+    origen_color: "image200.png"
+  inflacion-ipc:
+    nombre: "Inflación - IPC"
+    categoria: "Económicos"
+    origen_bn: "image72.png"
+    origen_color: "image171.png"
+  info-economica:
+    nombre: "Info económica"
+    categoria: "Económicos"
+    origen_bn: "image73.png"
+    origen_color: "image172.png"
+  infraestructura:
+    nombre: "Infraestructura"
+    categoria: "General"
+    origen_bn: "image97.png"
+    origen_color: "image196.png"
+  ingles:
+    nombre: "Inglés"
+    categoria: "Banderas idiomas"
+    origen_bn: "image105.png"
+    origen_color: "image105.png"
+  lacteos:
+    nombre: "Lácteos"
+    categoria: "Derivados y procesados"
+    origen_bn: "image52.png"
+    origen_color: "image151.png"
+  limon:
+    nombre: "Limón"
+    categoria: "AGRICULTURA"
+    origen_bn: "image39.png"
+    origen_color: "image138.png"
+  lino:
+    nombre: "Lino"
+    categoria: "AGRICULTURA"
+    origen_bn: "image28.png"
+    origen_color: "image129.png"
+  maderas-y-subproductos:
+    nombre: "Maderas y subproductos"
+    categoria: "Forestal"
+    origen_bn: "image82.png"
+    origen_color: "image181.png"
+  maiz:
+    nombre: "Maiz"
+    categoria: "AGRICULTURA"
+    origen_bn: "image11.png"
+    origen_color: "image112.png"
+  mani:
+    nombre: "Maní"
+    categoria: "AGRICULTURA"
+    origen_bn: "image29.png"
+    origen_color: "image130.png"
+  maquinaria-agricola:
+    nombre: "Maquinaria agrícola"
+    categoria: "Independientes (no agrupados)"
+    origen_bn: "image98.png"
+    origen_color: "image197.png"
+  mijo:
+    nombre: "Mijo"
+    categoria: "AGRICULTURA"
+    origen_bn: "image30.png"
+    origen_color: "image131.png"
+  moneda:
+    nombre: "Moneda"
+    categoria: "Económicos"
+    origen_bn: "image69.png"
+    origen_color: "image168.png"
+  naranja:
+    nombre: "Naranja"
+    categoria: "AGRICULTURA"
+    origen_bn: "image19.png"
+    origen_color: "image120.png"
+  nuez:
+    nombre: "Nuez"
+    categoria: "AGRICULTURA"
+    origen_bn: "image38.png"
+    origen_color: "image137.png"
+  olivo-aceituna:
+    nombre: "Olivo - Aceituna"
+    categoria: "AGRICULTURA"
+    origen_bn: "image37.png"
+    origen_color: "image136.png"
+  ovinos:
+    nombre: "Ovinos"
+    categoria: "Ganadería"
+    origen_bn: "image48.png"
+    origen_color: "image147.png"
+  papa:
+    nombre: "Papa"
+    categoria: "AGRICULTURA"
+    origen_bn: "image31.png"
+    origen_color: "image132.png"
+  poblacion:
+    nombre: "Población"
+    categoria: "General"
+    origen_bn: "image95.png"
+    origen_color: "image194.png"
+  pomelo:
+    nombre: "Pomelo"
+    categoria: "AGRICULTURA"
+    origen_bn: "image40.png"
+    origen_color: "image139.png"
+  porcinos:
+    nombre: "Porcinos"
+    categoria: "Ganadería"
+    origen_bn: "image44.png"
+    origen_color: "image143.png"
+  poroto-alubia:
+    nombre: "Poroto Alubia"
+    categoria: "AGRICULTURA"
+    origen_bn: "image32.png"
+    origen_color: "image32.png"
+  poroto-negro:
+    nombre: "Poroto Negro"
+    categoria: "AGRICULTURA"
+    origen_bn: "image33.png"
+    origen_color: "image33.png"
+  portugues:
+    nombre: "Portugués"
+    categoria: "Banderas idiomas"
+    origen_bn: "image106.png"
+    origen_color: "image106.png"
+  puertos:
+    nombre: "Puertos"
+    categoria: "Logística"
+    origen_bn: "image67.png"
+    origen_color: "image166.png"
+  rutas:
+    nombre: "Rutas"
+    categoria: "Logística"
+    origen_bn: "image68.png"
+    origen_color: "image167.png"
+  sanidad-animal:
+    nombre: "Sanidad animal"
+    categoria: "Independientes (no agrupados)"
+    origen_bn: "image100.png"
+    origen_color: "image199.png"
+  serie-de-precios:
+    nombre: "Serie de precios"
+    categoria: "Económicos"
+    origen_bn: "image71.png"
+    origen_color: "image170.png"
+  silos-y-stocks:
+    nombre: "Silos y stocks"
+    categoria: "Independientes (no agrupados)"
+    origen_bn: "image99.png"
+    origen_color: "image198.png"
+  soja:
+    nombre: "Soja"
+    categoria: "AGRICULTURA"
+    origen_bn: "image12.png"
+    origen_color: "image113.png"
+  sorgo:
+    nombre: "Sorgo"
+    categoria: "AGRICULTURA"
+    origen_bn: "image14.png"
+    origen_color: "image115.png"
+  tabaco:
+    nombre: "Tabaco"
+    categoria: "AGRICULTURA"
+    origen_bn: "image42.png"
+    origen_color: "image141.png"
+  tablas-datos:
+    nombre: "Tablas datos"
+    categoria: "Formato"
+    origen_bn: "image78.png"
+    origen_color: "image177.png"
+  tambo:
+    nombre: "Tambo"
+    categoria: "Derivados y procesados"
+    origen_bn: "image53.png"
+    origen_color: "image152.png"
+  te:
+    nombre: "Té"
+    categoria: "AGRICULTURA"
+    origen_bn: "image34.png"
+    origen_color: "image133.png"
+  tipo-de-cambio:
+    nombre: "Tipo de cambio"
+    categoria: "Económicos"
+    origen_bn: "image70.png"
+    origen_color: "image169.png"
+  transporte-ferroviario:
+    nombre: "Transporte ferroviario"
+    categoria: "Logística"
+    origen_bn: "image65.png"
+    origen_color: "image164.png"
+  transporte-maritimo:
+    nombre: "Transporte marítimo"
+    categoria: "Logística"
+    origen_bn: "image66.png"
+    origen_color: "image165.png"
+  transporte-vial:
+    nombre: "Transporte vial"
+    categoria: "Logística"
+    origen_bn: "image64.png"
+    origen_color: "image163.png"
+  trigo:
+    nombre: "Trigo"
+    categoria: "AGRICULTURA"
+    origen_bn: "image10.png"
+    origen_color: "image111.png"
+  uvas:
+    nombre: "Uvas"
+    categoria: "AGRICULTURA"
+    origen_bn: "image23.png"
+    origen_color: "image124.png"
+  vid:
+    nombre: "Vid"
+    categoria: "AGRICULTURA"
+    origen_bn: "image36.png"
+    origen_color: "image135.png"
+  vinos:
+    nombre: "Vinos"
+    categoria: "Derivados y procesados"
+    origen_bn: "image63.png"
+    origen_color: "image162.png"
+  yerba-mate:
+    nombre: "Yerba Mate"
+    categoria: "AGRICULTURA"
+    origen_bn: "image35.png"
+    origen_color: "image134.png"

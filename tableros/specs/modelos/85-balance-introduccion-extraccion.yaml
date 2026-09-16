@@ -1,0 +1,68 @@
+# Quinto cuadro de JC (Modelo Analisis f36-f42): "Balance (introducción - extracción)".
+# Es el cuadro que mejor cuenta que tipo de provincia ganadera es Santiago.
+base: 85
+slug: balance-introduccion-extraccion
+comunes: _comunes-base-85
+
+titulo: "Balance de hacienda: lo que entra menos lo que sale"
+subtitulo: "Diferencia entre introducción y extracción, por categoría y por año"
+
+protocolo: _protocolo-presentacion
+titulo_componentes:
+  variable:
+    fijo: balance_cabezas
+    override: "{frase}"
+    motivo: >
+      El prefijo mecanico del tipo `serie` es "evolución de", y aca diria algo falso: el cuadro
+      no es una serie temporal, es la foto de un año abierta por categoria (el año se elige con
+      un filtro). Se usa la frase pelada.
+  sujeto: {desde: subsector}
+  apertura: categoria
+  area: provincia
+  periodo: {desde_filtro: anio}
+titulo_protocolo_ejemplo: "Balance de cabezas de la hacienda bovina por categoría - Santiago del Estero - año 2025"
+
+tipo: serie
+grafico: barras-divergentes        # ver _comunes-base-85.uniformidad.convenciones_propias
+
+variables: [balance_cabezas]
+dimensiones: [anio, categoria]
+filtros: [anio]
+orden: {por: categoria, dir: fija}          # el orden de categorias lo fija _comunes
+
+defaults:
+  anio: parametros.ventana_anios.anio_por_defecto
+
+universo:
+  ambito: sde
+  especie: bovinos
+  categoria_rol: [agregado, componente]     # el balance se muestra para el total Y por categoria
+  anios: ventana_anios
+  excluye_anio_en_curso: true
+
+columnas_tabla:
+  - {campo: categoria, etiqueta: "Categoría"}
+  - {campo: introduccion_cabezas, etiqueta: "Entran"}
+  - {campo: extraccion_cabezas, etiqueta: "Salen"}
+  - {campo: balance_cabezas, etiqueta: "Balance"}
+
+transformaciones:
+  - balance:
+      formula: "introduccion - extraccion"
+      particion: "anio + categoria"
+      calculado_en: marts
+
+filtros_calidad: [excluir-fila-total-al-pie, bubalinos-fuera-de-las-vistas]
+notas_metodologicas: [que-es-un-dte, balance-lectura, total-no-suma-categorias, anio-en-curso]
+
+fuente:
+  pie: "Fuente: SENASA"
+  organismo_esperado: "SENASA"
+estado: publicada
+
+origen: {tipo: modelo-analisis, detalle: "hoja 'Modelo Analisis' base 85, filas 36 a 42", fecha: 2026-07-31}
+nota_interpretacion: >
+  Verificado contra JC: 2025 da -85.629 cabezas en el total, exacto. El signo cuenta la
+  historia: entran terneros y terneras (+81.038 y +28.669 en 2025) y salen novillitos, novillos
+  y vaquillonas. Es el perfil de una provincia que recibe animales para recriar y entrega
+  hacienda terminada. Vale la pena que la vista lo diga con palabras, no solo con barras.

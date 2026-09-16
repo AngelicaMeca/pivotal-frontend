@@ -1,0 +1,41 @@
+# Asignación ícono -> cultivo. La escribe constructor-dashboards y la lee pipeline/site_build.py.
+#
+# Los archivos viven en site/assets/iconos/{bn,color}/<icono>.png, extraídos de los Anexos I
+# (B&W) y II (color) del "Protocolo de formato - Versión 1" de JC (specs/fuentes/, 10-ago-2026).
+# La procedencia de cada archivo está en site/assets/iconos/catalogo.yaml.
+#
+# Habilitado por Facu el 10-ago-2026, con JC presente ("mandale los íconos por el momento").
+# La licencia de flaticon se verifica en paralelo y no bloquea (backlog pregunta 26).
+#
+# Variantes, según la captura del 10-ago (tema_visual): los chips del selector usan la variante
+# B&W; el cultivo SELECCIONADO y la tarjeta de contexto usan la variante color. Eso no se
+# declara acá: lo resuelve el CSS del sitio. Acá solo se dice QUÉ ícono le toca a cada cultivo.
+#
+# La clave es el nombre canónico del cultivo en marts (el valor del filtro), no la etiqueta
+# del chip: "Soja total" se muestra "Soja" pero el dato se llama "Soja total".
+cultivos:
+  "Algodón": algodon
+  # Sin ícono en el catálogo de JC (no hay "Alpiste" en los anexos): chip sin ícono.
+  "Alpiste": null
+  # El catálogo dice "Arvejas"; el mart dice "Arveja". Mismo cultivo.
+  "Arveja": arvejas
+  "Avena": avena
+  "Cártamo": cartamo
+  "Cebada total": cebada
+  "Centeno": centeno
+  "Colza": colza
+  "Garbanzo": garbanzo
+  "Girasol": girasol
+  # El catálogo de JC no trae ícono de lenteja (su propio protocolo la usa de ejemplo de
+  # cultivo casi sin datos). El chip sale sin ícono; si JC manda uno, se agrega acá.
+  "Lenteja": null
+  "Lino": lino
+  "Maíz": maiz
+  "Maní": mani
+  "Mijo": mijo
+  # El catálogo trae "Poroto Alubia" y "Poroto Negro" pero no un poroto genérico. Se usa el
+  # negro: es el que dibuja JC en su mockup (frijoles oscuros) y el dominante en la provincia.
+  "Poroto total": poroto-negro
+  "Soja total": soja
+  "Sorgo": sorgo
+  "Trigo total": trigo

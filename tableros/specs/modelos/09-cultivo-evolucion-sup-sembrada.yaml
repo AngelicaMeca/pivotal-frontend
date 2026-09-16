@@ -1,0 +1,66 @@
+# GRAF 1 de la hoja Modelo Analisis. Titulo original del grafico de JC:
+# "Soja, evolucion de la sup. Sembrada (Ha)".
+base: 9
+slug: cultivo-evolucion-sup-sembrada
+comunes: _comunes-base-9
+titulo: "Cómo evolucionó la superficie sembrada"
+subtitulo: "Superficie sembrada por campaña, en hectáreas"
+
+# --- Titulo del cuadro: lo arma _protocolo-presentacion, no se escribe a mano ---
+protocolo: _protocolo-presentacion
+titulo_componentes:
+  area: {desde_filtro: geo}              # provincia o el departamento elegido
+  sujeto: {desde_filtro: cultivo}
+  variable: {fijo: sup_sembrada_ha}
+  apertura: null                         # la serie no abre por ninguna dimension: es una sola linea
+  periodo: {ventana: ventana_campanias}
+titulo_protocolo_ejemplo: "Evolución de la superficie sembrada de soja - Santiago del Estero - campañas 2015/16 a 2024/25"
+
+tipo: serie
+grafico: barras
+
+variables: [sup_sembrada_ha]
+dimensiones: [campania]
+filtros: [cultivo, geo]             # geo = provincia (por defecto) o un departamento
+orden: {por: campania, dir: asc}
+
+defaults:
+  cultivo: "Soja total"
+  geo: provincia
+
+universo:
+  ambito: sde
+  nivel_geo: [provincia, departamento]
+  cultivo_rol: [agregado, simple]
+  campanias: ventana_campanias
+
+transformaciones:
+  - variacion_interanual            # JC f27: solo sup. sembrada y produccion
+  - variacion_decadica              # JC f28: primera contra ultima campaña de la ventana
+  - variacion_promedio_anual        # tasa geometrica, verificada contra la planilla de JC
+
+resumen_al_pie:                     # las dos celdas que JC pone debajo de su grafico (I61-I62)
+  - {etiqueta: "Variación del período", valor: variacion_decadica}
+  - {etiqueta: "Var. anual promedio", valor: variacion_promedio_anual}
+
+mouseover: "campaña + hectáreas + variación contra la campaña anterior"
+
+notas_metodologicas: [total-no-suma-componentes, campania-en-curso]
+notas_metodologicas_si_departamento: [estimacion-departamental]
+filtros_calidad: [excluir-campanias-sin-departamento]
+
+fuente:                                  # _protocolo-presentacion.pie_de_fuente
+  pie: "Fuente: MAGyP"                   # lo arma el protocolo, no se escribe en el template
+  organismo_esperado: "MAGyP"            # tiene que coincidir con la columna `fuente` del mart
+  publicacion: null                      # JC declara la cita como "Fuente: MAGyP" en su indice.
+                                         # Si quiere "MAGyP, Estimaciones Agrícolas", se completa
+                                         # aca y cambia en las 16 vistas. Backlog pregunta 14.
+sensibilidad: normal
+# Despublicada el 10-ago-2026 (tercera tanda, Facu con JC: "OLVIDATE DEL ANALISIS COMPLETO,
+# ESO YA NO EXISTE MAS... NECESITO QUE LO SAQUES Y TE QUEDES CON LOS TABLEROS"). El spec queda
+# como REGISTRO de la regla: no se construye pagina propia ni se linkea desde ningun lado.
+# Las unicas paginas publicadas de cultivos son el tablero (index), 09-departamento-datos y
+# 09-noa-participacion-provincia. Regla: _protocolo-presentacion.formato_v1.tercera_tanda.solo_tableros.
+estado: no-publicada
+
+origen: {tipo: modelo-analisis, detalle: "hoja 'Modelo  Analisis' base 9, GRAF 1 (filas 43 a 63) y cálculos a/b/c (filas 27 a 29)", fecha: 2026-07-30}

@@ -1,0 +1,45 @@
+# GRAF 4 de la hoja Modelo Analisis. Titulo original del grafico de JC:
+# "Evolucion de la produccion por cartera de cultivos de VERANO - Campañas 2014/15 a 2024/25 - En %".
+# Es el mismo grafico que GRAF 3 pero apilado al 100%: mismas series, mismo rango de celdas, solo
+# cambia el `grouping` de `stacked` a `percentStacked` (verificado en la definicion del grafico).
+base: 9
+slug: cartera-evolucion-porcentual
+comunes: _comunes-base-9
+igual_que: 09-cartera-evolucion-absoluta      # misma vista, cambia lo que sigue
+
+titulo: "Cartera de cultivos: cómo cambió su composición"
+subtitulo: "Participación de cada cultivo en el total, por campaña, en porcentaje"
+
+# --- Titulo del cuadro: lo arma _protocolo-presentacion, no se escribe a mano ---
+protocolo: _protocolo-presentacion
+# No declara `titulo_componentes`: los hereda enteros de 09-cartera-evolucion-absoluta. Lo unico
+# que cambia lo resuelve el protocolo solo, porque esta vista declara `grafico: barras-apiladas-100`
+# y eso activa `prefijo_por_grafico`, que reemplaza "evolución de" por "distribución porcentual de".
+titulo_protocolo_ejemplo: "Distribución porcentual de la producción de los cultivos de verano por cultivo - Santiago del Estero - campañas 2015/16 a 2024/25"
+
+grafico: barras-apiladas-100
+
+transformaciones:
+  - participacion_pct                         # JC f30: "participaciones porcentuales, generadas en los graficos"
+
+eje_y: {unidad: "%", maximo: 100}
+mouseover: "campaña + cultivo + porcentaje"   # JC K110: "QUE SE MUESTREN LOS % CON MOUSEOVER"
+
+fuente:                                  # _protocolo-presentacion.pie_de_fuente
+  pie: "Fuente: MAGyP"                   # lo arma el protocolo, no se escribe en el template
+  organismo_esperado: "MAGyP"            # tiene que coincidir con la columna `fuente` del mart
+  publicacion: null                      # JC declara la cita como "Fuente: MAGyP" en su indice.
+                                         # Si quiere "MAGyP, Estimaciones Agrícolas", se completa
+                                         # aca y cambia en las 16 vistas. Backlog pregunta 14.
+# Despublicada el 10-ago-2026 (tercera tanda, Facu con JC: "OLVIDATE DEL ANALISIS COMPLETO,
+# ESO YA NO EXISTE MAS... NECESITO QUE LO SAQUES Y TE QUEDES CON LOS TABLEROS"). El spec queda
+# como REGISTRO de la regla: no se construye pagina propia ni se linkea desde ningun lado.
+# Las unicas paginas publicadas de cultivos son el tablero (index), 09-departamento-datos y
+# 09-noa-participacion-provincia. Regla: _protocolo-presentacion.formato_v1.tercera_tanda.solo_tableros.
+estado: no-publicada
+
+origen: {tipo: modelo-analisis, detalle: "hoja 'Modelo  Analisis' base 9, GRAF 4 (filas 103 a 122) y f30", fecha: 2026-07-30}
+nota_interpretacion: >
+  La hoja no trae titulo escrito ni tabla de datos propia para GRAF 4: el titulo y las series se
+  leyeron de la definicion del grafico embebido en el Excel. Apunta a las mismas celdas que GRAF 3.
+  Por eso este spec hereda de GRAF 3 y solo cambia el apilado y la unidad.

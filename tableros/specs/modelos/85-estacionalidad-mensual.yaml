@@ -1,0 +1,75 @@
+# JC f45: "MENSUALIZAR LOS MISMOS CUADROS PARA ESTABLECER ESTACIONALIDAD (totales y por
+# categoría)", y f195: el cuadro de movimientos por mes del año 2025.
+base: 85
+slug: estacionalidad-mensual
+comunes: _comunes-base-85
+
+titulo: "En qué meses se mueve la hacienda"
+subtitulo: "Cabezas movidas mes a mes, un año por línea"
+
+protocolo: _protocolo-presentacion
+titulo_componentes:
+  variable: {desde_filtro: medida}
+  sujeto: {desde: subsector}
+  recorte: {desde_filtro: recorte}
+  apertura: mes
+  area: provincia
+  periodo: {ventana: ventana_anios}
+titulo_protocolo_ejemplo: "Evolución de las cabezas movidas de la hacienda bovina (sin introducción) por mes - Santiago del Estero - años 2022 a 2026"
+
+tipo: serie
+
+variables: [cabezas, documentos]
+dimensiones: [mes, anio]
+filtros: [medida, recorte, categoria]
+orden: {por: mes, dir: asc}
+
+defaults:
+  medida: cabezas
+  recorte: totales_sin_introduccion
+  categoria: Total
+
+opciones_medida: [cabezas, documentos]
+opciones_recorte: [totales_sin_introduccion, internos, extraccion, introduccion]
+opciones_categoria: [Total, Terneros, Terneras, Novillitos, Novillos,
+                     "Toritos / mejoradores", Toros, Vacas, Vaquillonas]
+
+universo:
+  ambito: sde
+  especie: bovinos
+  anios: ventana_anios
+  excluye_anio_en_curso: false    # aca 2026 SI entra: cada mes se compara contra el mismo
+                                  # mes de otros años, no contra el año entero
+
+columnas_tabla:
+  - {campo: mes_etiqueta, etiqueta: "Mes"}
+  - {campo: cabezas, etiqueta: "Cabezas movidas"}
+  - {campo: participacion_mes_pct, etiqueta: "% del año"}
+
+transformaciones:
+  - participacion_pct:
+      denominador: "total del mismo año y mismo recorte"
+      etiqueta: "% del año"
+
+advertencias:
+  - id: anio-2026-parcial
+    texto_en_pantalla: >
+      El año 2026 llega hasta mayo. Su línea se corta ahí a propósito: no es una caída, es que
+      todavía no hay datos de los meses siguientes.
+    obligatoria: true
+
+filtros_calidad: [excluir-fila-total-al-pie, bubalinos-fuera-de-las-vistas]
+notas_metodologicas: [que-es-un-dte, datos-al-mes-de-emision, sin-introduccion]
+
+fuente:
+  pie: "Fuente: SENASA"
+  organismo_esperado: "SENASA"
+estado: publicada
+
+origen: {tipo: modelo-analisis, detalle: "hoja 'Modelo Analisis' base 85, filas 45 y 195 a 210", fecha: 2026-07-31}
+nota_interpretacion: >
+  Verificado contra JC (f198-f209): enero 2025 da 55.375 cabezas, febrero 56.992, marzo 69.780,
+  exactos. El filtro de recorte permite mensualizar los cuatro cuadros con una sola vista, que
+  es lo que pide "mensualizar los mismos cuadros" sin multiplicar por cuatro las paginas.
+  Una linea por año es lo que deja ver la estacionalidad: si se apilaran los 53 meses en una
+  sola linea corrida, el patron estacional se pierde en la tendencia.

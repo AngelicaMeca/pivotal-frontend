@@ -1,0 +1,545 @@
+descripcion: Hallazgos de las validaciones. GENERADO por pipeline/validations.py, no editar a mano. El
+  reporte para JC se escribe a partir de esto en validations/reportes/entrega-01.md
+entrega: entrega-01
+resumen:
+  bases_ingeridas:
+  - 9
+  - 48
+  - 85
+  filas_revisadas: 1120808
+  checks_corridos: 71
+  bloqueantes: 2
+  observaciones: 19
+  informativos: 16
+hallazgos:
+- check: totales-embebidos
+  severidad: bloqueante
+  base: 9
+  titulo: Totales de la provincia sin ningun departamento que los respalde
+  casos: 7
+  detalle: Hay filas de 'Total provincia' para periodos en los que el archivo no trae ni un solo departamento.
+    Si esos periodos se publican, el mapa queda vacio y el total de la provincia igual muestra un numero.
+  ejemplos:
+  - '9 PB 3 - A / sde / 2013/14 / Trigo total: total 12.700 y detalle departamental 0'
+  - '9 PB 3 - A / sde / 2013/14 / Soja 2da: total 46.997 y detalle departamental 0'
+  - '9 PB 3 - A / sde / 2013/14 / Trigo total: total 17.880 y detalle departamental 0'
+  - '9 PB 3 - A / sde / 2000/01 / Soja 2da: total 100.700 y detalle departamental 0'
+  - '9 PB 3 - A / sde / 2013/14 / Soja 2da: total 130.968 y detalle departamental 0'
+  - '9 PB 3 - A / sde / 2013/14 / Soja 1ra: total 923.353 y detalle departamental 0'
+  - '9 PB 3 - A / sde / 2013/14 / Maíz: total 607.990 y detalle departamental 0'
+  - '9 PB 3 - A / sde / 2013/14 / Sorgo: total 111.225 y detalle departamental 0'
+  - '9 PB 3 - A / sde / 2013/14 / Soja 1ra: total 2.606.977 y detalle departamental 0'
+  - '9 PB 3 - A / sde / 2013/14 / Maíz: total 4.634.110 y detalle departamental 0'
+  - '9 PB 3 - A / sde / 2013/14 / Soja total: total 970.350 y detalle departamental 0'
+  - '9 PB 3 - A / sde / 2000/01 / Soja 2da: total 85.018 y detalle departamental 0'
+  propuesta: Dejar esos periodos afuera del sitio hasta que JC confirme.
+  pregunta_jc: Hay totales de provincia para periodos sin detalle por departamento. Los sacamos o conseguis
+    el detalle?
+- check: valores-imposibles
+  severidad: bloqueante
+  base: 48
+  titulo: Cantidades con decimales donde solo puede haber numeros enteros
+  casos: 54
+  detalle: Media cabeza de ganado no existe. Suele pasar cuando la planilla trae un promedio en la columna
+    de cantidad.
+  ejemplos:
+  - 'Data stock SDE / AGUIRRE / Aguirre / cabezas / fila 259 del Excel: 89.636,20'
+  - 'Data stock SDE / AGUIRRE / Aguirre / cabezas / fila 259 del Excel: 44.954,20'
+  - 'Data stock SDE / ALBERDI / Alberdi / cabezas / fila 257 del Excel: 52.131,01'
+  - 'Data stock SDE / ALBERDI / Alberdi / cabezas / fila 257 del Excel: 139.955,00'
+  - 'Data stock SDE / AVELLANEDA / Avellaneda / cabezas / fila 276 del Excel: 5.005,64'
+  - 'Data stock SDE / AVELLANEDA / Avellaneda / cabezas / fila 276 del Excel: 10.199,63'
+  - 'Data stock SDE / BELGRANO / Belgrano / cabezas / fila 267 del Excel: 51.180,97'
+  - 'Data stock SDE / BELGRANO / Belgrano / cabezas / fila 267 del Excel: 22.737,97'
+  - 'Data stock SDE / CAPITAL / Capital / cabezas / fila 278 del Excel: 2.837,53'
+  - 'Data stock SDE / CAPITAL / Capital / cabezas / fila 278 del Excel: 7.721,53'
+  - 'Data stock SDE / CHOYA / Choya / cabezas / fila 270 del Excel: 17.195,24'
+  - 'Data stock SDE / CHOYA / Choya / cabezas / fila 270 del Excel: 41.989,24'
+  propuesta: No publicar esa columna hasta saber que significa.
+  pregunta_jc: Hay cantidades de cabezas con decimales. Es un promedio o un error?
+- check: agregado-vs-partes
+  severidad: observacion
+  base: 9
+  titulo: El detalle de Poroto no suma el total de Poroto
+  casos: 52
+  detalle: De 136 combinaciones de lugar y periodo, 52 no cierran. En 52 de ellas el archivo no trae ninguna
+    de las partes; en 0 trae algunas y falta tipicamente el ?% del total.
+  propuesta: Usar siempre el 'total' para sumas y participaciones (regla de JC) y mostrar el detalle solo
+    donde exista.
+  pregunta_jc: En Poroto, el total no da la suma de las partes que trae el archivo. Falta alguna categoria
+    en la planilla?
+- check: agregado-vs-partes
+  severidad: observacion
+  base: 9
+  titulo: El detalle de Trigo no suma el total de Trigo
+  casos: 279
+  detalle: De 279 combinaciones de lugar y periodo, 279 no cierran. En 243 de ellas el archivo no trae
+    ninguna de las partes; en 36 trae algunas y falta tipicamente el 91,10% del total.
+  ejemplos:
+  - '9 PB 3 - A / 86077 / 2021/22 / Trigo: falta el 99,90% del total'
+  - '9 PB 3 - A / 86042 / 2021/22 / Trigo: falta el 99,80% del total'
+  - '9 PB 3 - A / 86 / 2025/26 / Trigo: falta el 99,70% del total'
+  - '9 PB 3 - A / 86133 / 2025/26 / Trigo: falta el 99,50% del total'
+  - '9 PB 3 - A / 86133 / 2022/23 / Trigo: falta el 99,50% del total'
+  - '9 PB 3 - A / 86133 / 2024/25 / Trigo: falta el 99,30% del total'
+  propuesta: Usar siempre el 'total' para sumas y participaciones (regla de JC) y mostrar el detalle solo
+    donde exista.
+  pregunta_jc: En Trigo, el total no da la suma de las partes que trae el archivo. Falta alguna categoria
+    en la planilla?
+- check: cobertura-productos
+  severidad: observacion
+  base: 9
+  titulo: Productos que estan en '9 PB 3 - A' y no en '9 PB 3 - C'
+  casos: 2
+  detalle: Sin el mismo producto en las dos hojas no se puede calcular cuanto pesa la provincia sobre
+    ese total.
+  ejemplos:
+  - Maní
+  - Poroto total
+  propuesta: Dejar afuera la comparacion de esos productos, o armar el total sumando las categorias que
+    si estan, con una regla escrita.
+  pregunta_jc: En la hoja '9 PB 3 - C' no figura Maní, Poroto total, que si esta en la hoja de la provincia.
+    Lo armamos sumando las variedades o nos mandas la fila del total?
+- check: cobertura-temporal
+  severidad: observacion
+  base: 9
+  titulo: El archivo cubre mucho menos que lo que declara el indice
+  casos: 1
+  detalle: El indice dice que la fuente tiene datos desde 1969 hasta 2025. El archivo que llego arranca
+    en 2000/01 y termina en 2025/26.
+  propuesta: Publicar lo que llego y aclarar el periodo cubierto al pie.
+  pregunta_jc: El indice dice que esta base va desde 1969, pero el archivo arranca en 2000/01. Nos mandas
+    la serie larga o trabajamos con este recorte?
+- check: cobertura-temporal
+  severidad: observacion
+  base: 9
+  titulo: Periodos que aparecen fuera de lo que se habia declarado
+  casos: 2
+  detalle: 'Se esperaba de 2014/15 a 2025/26 y el archivo trae ademas: 2000/01, 2013/14.'
+  ejemplos:
+  - '2000/01: 4 filas'
+  - '2013/14: 24 filas'
+  propuesta: Dejarlos afuera del sitio salvo que JC los quiera.
+  pregunta_jc: El archivo trae ademas los periodos 2000/01, 2013/14, fuera de lo acordado. Los mostramos
+    o los sacamos?
+- check: coherencia
+  severidad: observacion
+  base: 9
+  titulo: Hay filas donde no se cumple que si se cosecho superficie tiene que haber produccion
+  casos: 5
+  ejemplos:
+  - '9 PB 3 - A / 2021/22 / QUEBRACHOS / Maíz / fila 886 del Excel: sup_cosechada_ha = 2.000 pero produccion_tn
+    = 0'
+  - '9 PB 3 - A / 2021/22 / OJO DE AGUA / Maíz / fila 873 del Excel: sup_cosechada_ha = 1.500 pero produccion_tn
+    = 0'
+  - '9 PB 3 - B / 2024/25 / ANTA / Maní / fila 169 del Excel: sup_cosechada_ha = 260 pero produccion_tn
+    = 0'
+  - '9 PB 3 - A / 2021/22 / BANDA / Avena / fila 232 del Excel: sup_cosechada_ha = 200 pero produccion_tn
+    = 0'
+  - '9 PB 3 - A / 2020/21 / MORENO / Avena / fila 306 del Excel: sup_cosechada_ha = 180 pero produccion_tn
+    = 0'
+  propuesta: Mostrarlas como 'sin dato' en vez de como cero.
+  pregunta_jc: Estas filas tienen superficie cosechada pero produccion cero. Se perdio la cosecha o falta
+    el dato?
+- check: coherencia
+  severidad: observacion
+  base: 9
+  titulo: La columna rendimiento_kg_ha no da la cuenta que deberia
+  casos: 1
+  detalle: Se esperaba rendimiento = produccion (tn) / superficie cosechada (ha) x 1.000 (tolerancia 1%).
+    Sobre 2.785 filas comparadas.
+  ejemplos:
+  - '9 PB 3 - B / 2024/25 / TAFI DEL VALLE / Poroto otros / fila 41 del Excel: dice 1.420 y la cuenta
+    da 1.400'
+  pregunta_jc: El rendimiento_kg_ha de estas filas no coincide con la cuenta de produccion sobre superficie.
+    Cual es el bueno?
+- check: coherencia
+  severidad: observacion
+  base: 9
+  titulo: Superficie sembrada que nunca se cosecho
+  casos: 141
+  detalle: Son filas con superficie sembrada y cero superficie cosechada. Se concentran en Avena, Centeno,
+    Cebada total. En un mapa de produccion estas filas aparecen en cero, que no es lo mismo que 'no se
+    sembro'.
+  ejemplos:
+  - 'Avena: 84 casos, 70.940 ha sembradas sin cosechar'
+  - 'Centeno: 37 casos, 117.080 ha sembradas sin cosechar'
+  - 'Cebada total: 11 casos, 20.232 ha sembradas sin cosechar'
+  - 'Lenteja: 2 casos, 140 ha sembradas sin cosechar'
+  - 'Maíz: 2 casos, 1.080 ha sembradas sin cosechar'
+  - 'Sorgo: 2 casos, 850 ha sembradas sin cosechar'
+  - 'Algodón: 1 casos, 500 ha sembradas sin cosechar'
+  - 'Poroto otros: 1 casos, 300 ha sembradas sin cosechar'
+  - 'Trigo total: 1 casos, 1.000 ha sembradas sin cosechar'
+  propuesta: Distinguir en el sitio 'sembrado sin cosechar' de 'sin datos'.
+  pregunta_jc: Estos cultivos aparecen sembrados y con cero cosechado. Entiendo que es porque se destinan
+    a pastoreo y no se cosechan para grano. Confirmas?
+- check: drift
+  severidad: observacion
+  base: 9
+  titulo: Cambio de formato respecto de lo declarado en el indice
+  casos: 1
+  detalle: 'El indice declara la hoja "CR" y el archivo la trae como "Calculos Ranking". Ademas el archivo
+    trae dos hojas no declaradas en el indice: "Modelo Analisis" (con dos espacios entre las palabras)
+    y "Hoja1" (vacia). No se corrige nada: queda registrado aca.'
+  propuesta: 'No se corrige el archivo: el pipeline ya sabe leerlo como viene.'
+- check: geo
+  severidad: observacion
+  base: 9
+  titulo: Faltan departamentos respecto del total de la provincia
+  casos: 1
+  detalle: Santiago del Estero tiene 27 departamentos y el archivo trae 26. Los que faltan no aparecen
+    en ninguna campania, ni siquiera en cero.
+  ejemplos:
+  - 'en el archivo aparecen: AGUIRRE, ALBERDI, ATAMISQUI, AVELLANEDA, BANDA, BELGRANO, CAPITAL, CHOYA,
+    COPO, FIGUEROA, GENERAL TABOADA, GUASAYAN, JIMENEZ, JUAN F. IBARRA, LORETO, MITRE, MORENO, OJO DE
+    AGUA, PELLEGRINI, QUEBRACHOS, RIO HONDO, RIVADAVIA, ROBLES, SAN MARTIN, SARMIENTO, SILIPICA'
+  - en la tabla de departamentos conocidos hay 28 nombres
+  propuesta: Pintar el departamento faltante como 'sin datos' en el mapa, nunca como cero.
+  pregunta_jc: En esta base falta 1 departamento(s) de Santiago del Estero. Es porque ahi no se siembra
+    este tipo de cultivo, o falta el dato en la fuente?
+- check: serie
+  severidad: observacion
+  base: 9
+  titulo: El mismo numero repetido en 5 o mas periodos seguidos
+  casos: 81
+  detalle: Para un mismo lugar y una misma categoria, el valor no cambia nunca en varios periodos seguidos.
+    Suele indicar una estimacion fija mas que una medicion.
+  ejemplos:
+  - 'SILIPICA, Algodón: sup_sembrada_ha = 4.000 en 10 periodos (2015/16, 2016/17, 2017/18, 2018/19, 2019/20,
+    2020/21, 2021/22, 2022/23, 2023/24, 2024/25)'
+  - 'ROBLES, Algodón: sup_sembrada_ha = 20.000 en 9 periodos (2014/15, 2015/16, 2018/19, 2019/20, 2020/21,
+    2021/22, 2022/23, 2023/24, 2024/25)'
+  - 'CAPITAL, Algodón: sup_sembrada_ha = 5.000 en 9 periodos (2015/16, 2017/18, 2018/19, 2019/20, 2020/21,
+    2021/22, 2022/23, 2023/24, 2024/25)'
+  - 'ROBLES, Avena: sup_sembrada_ha = 500 en 9 periodos (2017/18, 2018/19, 2019/20, 2020/21, 2021/22,
+    2022/23, 2023/24, 2024/25, 2025/26)'
+  - 'FIGUEROA, Algodón: sup_sembrada_ha = 6.000 en 8 periodos (2014/15, 2018/19, 2019/20, 2020/21, 2021/22,
+    2022/23, 2023/24, 2024/25)'
+  - 'CAPITAL, Algodón: sup_cosechada_ha = 5.000 en 8 periodos (2015/16, 2017/18, 2018/19, 2019/20, 2020/21,
+    2021/22, 2022/23, 2023/24)'
+  - 'LORETO, Algodón: sup_sembrada_ha = 4.000 en 8 periodos (2017/18, 2018/19, 2019/20, 2020/21, 2021/22,
+    2022/23, 2023/24, 2024/25)'
+  - 'SILIPICA, Algodón: sup_cosechada_ha = 4.000 en 8 periodos (2015/16, 2016/17, 2017/18, 2018/19, 2019/20,
+    2020/21, 2021/22, 2022/23)'
+  - 'LORETO, Trigo total: sup_sembrada_ha = 1.000 en 8 periodos (2017/18, 2019/20, 2020/21, 2021/22, 2022/23,
+    2023/24, 2024/25, 2025/26)'
+  - 'BANDA, Algodón: sup_sembrada_ha = 15.000 en 7 periodos (2014/15, 2015/16, 2018/19, 2019/20, 2020/21,
+    2021/22, 2024/25)'
+  - 'MITRE, Algodón: sup_sembrada_ha = 5.000 en 7 periodos (2018/19, 2019/20, 2020/21, 2021/22, 2022/23,
+    2023/24, 2024/25)'
+  - 'SILIPICA, Soja total: sup_sembrada_ha = 4.000 en 7 periodos (2017/18, 2018/19, 2019/20, 2020/21,
+    2021/22, 2022/23, 2023/24)'
+  propuesta: Publicar igual, con nota al pie de que hay valores estimados.
+  pregunta_jc: Hay lugares donde el mismo valor se repite exactamente todos los anos. Son estimaciones
+    de la fuente?
+- check: serie
+  severidad: observacion
+  base: 9
+  titulo: Una parte del archivo esta cargada con numeros redondos y otra no
+  casos: 3
+  detalle: Los numeros redondos (multiplos exactos de 100) suelen ser estimaciones. La diferencia entre
+    hojas indica que no se armaron con el mismo criterio.
+  ejemplos:
+  - '9 PB 3 - A: 61,90% de los valores son numeros redondos (9.705 valores)'
+  - '9 PB 3 - B: 40,80% de los valores son numeros redondos (1.494 valores)'
+  - '9 PB 3 - C: 0% de los valores son numeros redondos (92 valores)'
+  propuesta: Aclarar al pie que el dato departamental es estimado.
+  pregunta_jc: El dato por departamento viene con muchos numeros redondos y el total pais no. Entiendo
+    que lo departamental es una estimacion de la fuente. Lo aclaramos al pie del cuadro?
+- check: cobertura-temporal
+  severidad: observacion
+  base: 48
+  titulo: El archivo cubre mucho menos que lo que declara el indice
+  casos: 1
+  detalle: El indice dice que la fuente tiene datos desde 2007 hasta 2025. El archivo que llego arranca
+    en 2012 y termina en 2025.
+  propuesta: Publicar lo que llego y aclarar el periodo cubierto al pie.
+  pregunta_jc: El indice dice que esta base va desde 2007, pero el archivo arranca en 2012. Nos mandas
+    la serie larga o trabajamos con este recorte?
+- check: cobertura-temporal
+  severidad: observacion
+  base: 48
+  titulo: La columna unidades_productivas viene cargada solo en algunos periodos
+  casos: 10
+  detalle: De 14 periodos del archivo, unidades_productivas tiene dato en 4. En los otros la celda viene
+    vacia, que no es lo mismo que cero.
+  ejemplos:
+  - 'con dato: 2022, 2023, 2024, 2025'
+  propuesta: Mostrar esa medida solo en los periodos que la tienen, nunca como cero en los demas.
+  pregunta_jc: La columna unidades_productivas esta cargada solo en 2022, 2023, 2024, 2025. La fuente
+    empezo a informarla ahi o se puede conseguir para los anios anteriores?
+- check: drift
+  severidad: observacion
+  base: 48
+  titulo: Cambio de formato respecto de lo declarado en el indice
+  casos: 1
+  detalle: 'El indice declara la hoja "Data SDE" y el archivo la trae como "Data stock SDE". Ademas el
+    archivo suma dos hojas no declaradas: "Modelo An 01" y "Estratificación".'
+  propuesta: 'No se corrige el archivo: el pipeline ya sabe leerlo como viene.'
+- check: serie
+  severidad: observacion
+  base: 48
+  titulo: El mismo numero repetido en 5 o mas periodos seguidos
+  casos: 1
+  detalle: Para un mismo lugar y una misma categoria, el valor no cambia nunca en varios periodos seguidos.
+    Suele indicar una estimacion fija mas que una medicion.
+  ejemplos:
+  - 'QUEBRACHOS, Bueyes: cabezas = 2 en 6 periodos (2018, 2019, 2021, 2022, 2024, 2025)'
+  propuesta: Publicar igual, con nota al pie de que hay valores estimados.
+  pregunta_jc: Hay lugares donde el mismo valor se repite exactamente todos los anos. Son estimaciones
+    de la fuente?
+- check: agregado-vs-partes
+  severidad: observacion
+  base: 85
+  titulo: El detalle de bovinos no suma el total de bovinos
+  casos: 5
+  detalle: De 46.032 combinaciones de lugar y periodo, 5 no cierran. En 2 de ellas el archivo no trae
+    ninguna de las partes; en 3 trae algunas y falta tipicamente el 1,80% del total.
+  ejemplos:
+  - 'Data ORIGEN SDE / 6476 / 2023-03 / bovinos: falta el 2,80% del total'
+  - 'Data ORIGEN SDE / 237 / 2022-05 / bovinos: falta el 1,80% del total'
+  - 'Data ORIGEN SDE / 113 / 2022-12 / bovinos: falta el 1,10% del total'
+  propuesta: Usar siempre el 'total' para sumas y participaciones (regla de JC) y mostrar el detalle solo
+    donde exista.
+  pregunta_jc: En bovinos, el total no da la suma de las partes que trae el archivo. Falta alguna categoria
+    en la planilla?
+- check: total-al-pie
+  severidad: observacion
+  base: 85
+  titulo: En Data DESTINO SDE la fila de totales del pie no coincide con el detalle
+  casos: 24
+  detalle: Esa hoja cierra con una fila de totales. Comparada contra la suma de todas sus filas, no da
+    en 24 de las 24 columnas. La diferencia es tan grande que esa fila no parece ser el total de la hoja
+    sino el subtotal de una parte (por ejemplo, un solo ano).
+  ejemplos:
+  - 'egresos_tambo: el pie dice 4.015 y el detalle suma 21.629 (diferencia de 17.614)'
+  - 'toritos: el pie dice 7.265 y el detalle suma 38.134 (diferencia de 30.869)'
+  - 'vaquillonas: el pie dice 46.648 y el detalle suma 223.639 (diferencia de 176.991)'
+  - 'novillitos: el pie dice 68.337 y el detalle suma 319.780 (diferencia de 251.443)'
+  - 'ingresos_tambo: el pie dice 1.387 y el detalle suma 6.397 (diferencia de 5.010)'
+  - 'egresos_ec: el pie dice 15.206 y el detalle suma 68.783 (diferencia de 53.577)'
+  - 'total_bovinos: el pie dice 489.284 y el detalle suma 2.016.657 (diferencia de 1.527.373)'
+  - 'novillos: el pie dice 45.727 y el detalle suma 186.446 (diferencia de 140.719)'
+  - 'dte_bovinos: el pie dice 11.763 y el detalle suma 47.943 (diferencia de 36.180)'
+  - 'terneros: el pie dice 156.311 y el detalle suma 624.661 (diferencia de 468.350)'
+  - 'terneras: el pie dice 82.400 y el detalle suma 325.343 (diferencia de 242.943)'
+  - 'ingresos_ec: el pie dice 203.543 y el detalle suma 784.636 (diferencia de 581.093)'
+  propuesta: Usar siempre la suma del detalle, nunca la fila del pie. Queda marcada en los datos para
+    no confundirla con un movimiento real.
+  pregunta_jc: La fila de totales que esta al pie de la hoja Data DESTINO SDE no coincide con la suma
+    del detalle. Nos guiamos por el detalle, que es lo que esta fila por fila. Confirmas?
+- check: total-al-pie
+  severidad: observacion
+  base: 85
+  titulo: En Data ORIGEN SDE la fila de totales del pie no coincide con el detalle
+  casos: 8
+  detalle: 'Esa hoja cierra con una fila de totales. Comparada contra la suma de todas sus filas, no da
+    en 8 de las 24 columnas. Las diferencias son chicas y siempre para el mismo lado: el detalle tiene
+    mas que el total. Es lo que pasa cuando se agregan filas al final y no se vuelve a calcular la suma
+    de arriba.'
+  ejemplos:
+  - 'vacas: el pie dice 629.220 y el detalle suma 629.260 (diferencia de 40)'
+  - 'toritos: el pie dice 98.245 y el detalle suma 98.250 (diferencia de 5)'
+  - 'toros: el pie dice 43.341 y el detalle suma 43.343 (diferencia de 2)'
+  - 'dte_bovinos: el pie dice 120.438 y el detalle suma 120.442 (diferencia de 4)'
+  - 'ingresos_ec: el pie dice 681.456 y el detalle suma 681.476 (diferencia de 20)'
+  - 'total_bovinos: el pie dice 4.192.293 y el detalle suma 4.192.353 (diferencia de 60)'
+  - 'terneros: el pie dice 611.038 y el detalle suma 611.046 (diferencia de 8)'
+  - 'terneras: el pie dice 398.983 y el detalle suma 398.988 (diferencia de 5)'
+  propuesta: Usar siempre la suma del detalle, nunca la fila del pie. Queda marcada en los datos para
+    no confundirla con un movimiento real.
+  pregunta_jc: La fila de totales que esta al pie de la hoja Data ORIGEN SDE no coincide con la suma del
+    detalle. Nos guiamos por el detalle, que es lo que esta fila por fila. Confirmas?
+- check: cobertura-entrega
+  severidad: informativo
+  base: null
+  titulo: Archivos de la carpeta que no se contaron como base
+  casos: 1
+  detalle: Son archivos temporales o de bloqueo que deja Excel cuando una planilla queda abierta. No son
+    datos.
+  ejemplos:
+  - ~$85 - DTE Bovinos SDE.xlsx
+  propuesta: Ninguna. Se ignoran solos en cada corrida.
+- check: cobertura-entrega
+  severidad: informativo
+  base: null
+  titulo: Bases recibidas que todavia no se procesaron
+  casos: 24
+  detalle: 'Llegaron completas y estan guardadas, pero todavia no se leyeron. Numeros de base: 30, 33,
+    38, 53, 56, 57, 75, 92, 93, 100, 101, 110, 111, 132, 134, 135, 136, 137, 144, 145, 151, 196, 197,
+    198'
+  propuesta: Se procesan en las proximas tandas. No es un problema del archivo.
+- check: agregado-vs-partes
+  severidad: informativo
+  base: 9
+  titulo: '''Soja total'' coincide con la suma de sus partes'
+  casos: 314
+  detalle: Verificado en 314 combinaciones de lugar y periodo.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 9
+  titulo: Hojas del archivo que no se leyeron
+  casos: 3
+  ejemplos:
+  - 'Calculos Ranking: Hoja de calculo del propio Excel: replica las filas de "Soja total" de la hoja
+    A y arma rankings de departamentos con tablas lado a lado. Los rankings y variaciones se computan
+    en marts, nunca se ingieren de la planilla (CLAUDE.md). Verificado el 2026-07-30.'
+  - 'Modelo  Analisis: Especificacion de negocio escrita por JC (que graficos, que rankings, que variaciones,
+    y la clasificacion verano/invierno de cada cultivo). No son datos: va a constructor-reglas para convertirse
+    en specs/modelos/base-9-*.yaml.'
+  - 'Hoja1: Hoja vacia (dims A1:A1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-temporal
+  severidad: informativo
+  base: 9
+  titulo: Periodos que trae el archivo
+  casos: 14
+  detalle: De 2000/01 a 2025/26.
+  ejemplos:
+  - '2000/01: 4 filas'
+  - '2013/14: 24 filas'
+  - '2014/15: 672 filas'
+  - '2015/16: 664 filas'
+  - '2016/17: 660 filas'
+  - '2017/18: 764 filas'
+  - '2018/19: 776 filas'
+  - '2019/20: 832 filas'
+  - '2020/21: 940 filas'
+  - '2021/22: 1.024 filas'
+  - '2022/23: 1.112 filas'
+  - '2023/24: 1.148 filas'
+- check: serie
+  severidad: informativo
+  base: 9
+  titulo: Saltos grandes de un periodo al siguiente (mas de 5x)
+  casos: 229
+  detalle: 'Saltos asi suelen ser reales: en agricultura se cambia de cultivo segun el precio y la lluvia,
+    y en ganaderia se mueve o se recategoriza la hacienda. Se listan para que JC confirme los mas grandes.'
+  ejemplos:
+  - 'MORENO, Trigo total: produccion_tn pasa de 275.600 en 2019/20 a 6.840 en 2020/21'
+  - 'BELGRANO, Soja 1ra: produccion_tn pasa de 27.118 en 2017/18 a 228.525 en 2018/19'
+  - 'GENERAL TABOADA, Soja 2da: produccion_tn pasa de 29.699 en 2014/15 a 204.002 en 2015/16'
+  - 'JIMENEZ, Soja 1ra: produccion_tn pasa de 38.022 en 2017/18 a 208.800 en 2018/19'
+  - 'GENERAL TABOADA, Trigo total: produccion_tn pasa de 12.840 en 2014/15 a 166.680 en 2015/16'
+  - 'BELGRANO, Soja 2da: produccion_tn pasa de 18.077 en 2014/15 a 162.771 en 2015/16'
+  - 'BELGRANO, Trigo total: produccion_tn pasa de 11.570 en 2014/15 a 140.710 en 2015/16'
+  - 'BELGRANO, Trigo total: produccion_tn pasa de 144.860 en 2021/22 a 26.640 en 2022/23'
+  - 'RIO HONDO, Soja 1ra: produccion_tn pasa de 15.740 en 2023/24 a 130.915 en 2024/25'
+  - 'ALBERDI, Trigo total: produccion_tn pasa de 119.000 en 2019/20 a 5.460 en 2020/21'
+  - 'AGUIRRE, Soja 1ra: produccion_tn pasa de 126.528 en 2015/16 a 15.264 en 2016/17'
+  - 'MORENO, Trigo total: sup_cosechada_ha pasa de 106.000 en 2019/20 a 11.400 en 2020/21'
+  propuesta: Publicar sin tocar. Es informacion de contexto para leer los graficos.
+- check: totales-embebidos
+  severidad: informativo
+  base: 9
+  titulo: Totales de provincia que si cierran contra la suma de departamentos
+  casos: 450
+  detalle: De 471 comparaciones, 450 cierran dentro del 0,50%.
+- check: agregado-vs-partes
+  severidad: informativo
+  base: 48
+  titulo: '''bovinos total'' coincide con la suma de sus partes'
+  casos: 392
+  detalle: Verificado en 392 combinaciones de lugar y periodo.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 48
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo An 01: Especificacion de negocio escrita por JC: la tabla de composicion del stock por categoria
+    comparando dos anios, con participaciones, y una columna ZONA que agrupa los departamentos en zonas
+    productivas. No son datos: va a constructor-reglas para convertirse en specs/modelos/48-*.yaml. La
+    zonificacion NO existe en ninguna otra parte del repo y hay que levantarla de ahi.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-temporal
+  severidad: informativo
+  base: 48
+  titulo: Periodos que trae el archivo
+  casos: 14
+  detalle: De 2012 a 2025.
+  ejemplos:
+  - '2012: 308 filas'
+  - '2013: 308 filas'
+  - '2014: 308 filas'
+  - '2015: 308 filas'
+  - '2016: 308 filas'
+  - '2017: 308 filas'
+  - '2018: 308 filas'
+  - '2019: 308 filas'
+  - '2020: 308 filas'
+  - '2021: 308 filas'
+  - '2022: 308 filas'
+  - '2023: 308 filas'
+- check: serie
+  severidad: informativo
+  base: 48
+  titulo: Saltos grandes de un periodo al siguiente (mas de 5x)
+  casos: 66
+  detalle: 'Saltos asi suelen ser reales: en agricultura se cambia de cultivo segun el precio y la lluvia,
+    y en ganaderia se mueve o se recategoriza la hacienda. Se listan para que JC confirme los mas grandes.'
+  ejemplos:
+  - 'JIMENEZ, Toritos: cabezas pasa de 635 en 2020 a 4.098 en 2021'
+  - 'JIMENEZ, Toritos: cabezas pasa de 4.098 en 2021 a 781 en 2022'
+  - 'GUASAYAN, Novillitos: cabezas pasa de 406 en 2013 a 2.779 en 2014'
+  - 'CAPITAL, Terneros: cabezas pasa de 259 en 2015 a 2.039 en 2016'
+  - 'GUASAYAN, Novillitos: cabezas pasa de 2.085 en 2012 a 406 en 2013'
+  - 'CAPITAL, Novillitos: cabezas pasa de 232 en 2014 a 1.700 en 2015'
+  - 'CAPITAL, Terneras: cabezas pasa de 1.703 en 2018 a 270 en 2019'
+  - 'LORETO, Terneros: cabezas pasa de 255 en 2014 a 1.645 en 2015'
+  - 'CHOYA, Toritos: cabezas pasa de 1.232 en 2024 a 121 en 2025'
+  - 'COPO, Toritos: cabezas pasa de 46 en 2020 a 945 en 2021'
+  - 'SALAVINA, Toritos: cabezas pasa de 828 en 2021 a 54 en 2022'
+  - 'GUASAYAN, Novillos: cabezas pasa de 916 en 2016 a 154 en 2017'
+  propuesta: Publicar sin tocar. Es informacion de contexto para leer los graficos.
+- check: totales-embebidos
+  severidad: informativo
+  base: 48
+  titulo: Totales de provincia que si cierran contra la suma de departamentos
+  casos: 154
+  detalle: De 154 comparaciones, 154 cierran dentro del 0,50%.
+- check: agregado-vs-partes
+  severidad: informativo
+  base: 85
+  titulo: '''bubalinos total'' coincide con la suma de sus partes'
+  casos: 46032
+  detalle: Verificado en 46.032 combinaciones de lugar y periodo.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 85
+  titulo: Hojas del archivo que no se leyeron
+  casos: 2
+  ejemplos:
+  - 'Modelo Analisis: Especificacion de negocio escrita por JC: que cortes quiere ver (movimientos totales
+    sin introduccion, movimientos internos, participacion por categoria sobre el total) y la instruccion
+    "AGREGAR TODAS LAS OPERACIONES DE VARIACIONES COMO EN AGRICOLA". No son datos: va a constructor-reglas
+    para convertirse en specs/modelos/base-85-*.yaml. Sus tablas ya estan calculadas a mano y sirven de
+    control: ver nota `control`.'
+  - 'Hoja2: Hoja vacia (1 fila x 1 columna).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-temporal
+  severidad: informativo
+  base: 85
+  titulo: Periodos que trae el archivo
+  casos: 53
+  detalle: De 2022-01 a 2026-05.
+  ejemplos:
+  - '2022-01: 13.104 filas'
+  - '2022-02: 18.264 filas'
+  - '2022-03: 19.032 filas'
+  - '2022-04: 21.912 filas'
+  - '2022-05: 23.232 filas'
+  - '2022-06: 21.960 filas'
+  - '2022-07: 21.096 filas'
+  - '2022-08: 24.672 filas'
+  - '2022-09: 26.448 filas'
+  - '2022-10: 18.696 filas'
+  - '2022-11: 18.384 filas'
+  - '2022-12: 17.712 filas'
+- check: total-al-pie
+  severidad: informativo
+  base: 85
+  titulo: Columnas donde la fila de totales del pie si cierra
+  casos: 16
+  detalle: De 48 columnas comparadas, 16 coinciden con la suma del detalle.

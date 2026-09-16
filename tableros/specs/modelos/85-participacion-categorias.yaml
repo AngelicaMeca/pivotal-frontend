@@ -1,0 +1,66 @@
+# JC f2 y f17: "Participación por categoría sobre total", la tabla que acompaña a cada uno de
+# sus cuadros anuales. Aca es una vista propia, con la composicion a lo largo de los años.
+base: 85
+slug: participacion-categorias
+comunes: _comunes-base-85
+
+titulo: "Qué categorías de hacienda se mueven"
+subtitulo: "Participación de cada categoría en el total de cabezas movidas, por año, en porcentaje"
+
+protocolo: _protocolo-presentacion
+titulo_componentes:
+  variable: {fijo: cabezas}
+  sujeto: {desde: subsector}
+  recorte: {desde_filtro: recorte}
+  apertura: categoria
+  area: provincia
+  periodo: {ventana: ventana_anios}
+titulo_protocolo_ejemplo: "Distribución porcentual de las cabezas movidas de la hacienda bovina (sin introducción) por categoría - Santiago del Estero - años 2022 a 2025"
+
+tipo: serie                        # barras apiladas al 100%, igual que 09-cartera-evolucion-porcentual
+grafico: barras-apiladas-100       # el prefijo "distribución porcentual" lo pone el protocolo
+
+variables: [participacion_pct]
+dimensiones: [anio, categoria]
+filtros: [recorte]
+orden: {por: categoria, dir: fija}
+
+defaults:
+  recorte: totales_sin_introduccion
+
+opciones_recorte: [totales_sin_introduccion, internos, extraccion, introduccion]
+
+universo:
+  ambito: sde
+  especie: bovinos
+  categoria_rol: [componente]      # las ocho categorias, NUNCA junto con el Total
+  anios: ventana_anios
+  excluye_anio_en_curso: true
+
+columnas_tabla:
+  - {campo: categoria, etiqueta: "Categoría"}
+  - {campo: cabezas, etiqueta: "Cabezas"}
+  - {campo: participacion_pct, etiqueta: "% del total"}
+
+transformaciones:
+  - participacion_pct:
+      denominador: "categoría 'Total' del mismo año y recorte"
+      nota: >
+        El denominador es la categoria Total que informa la fuente, no la suma de las ocho
+        componentes. Las dos difieren en 5 movimientos de 46.032, asi que la suma de los
+        porcentajes puede dar 99,9% en vez de 100% en algun año. Se muestra como viene.
+
+filtros_calidad: [excluir-fila-total-al-pie, bubalinos-fuera-de-las-vistas]
+notas_metodologicas: [que-es-un-dte, total-no-suma-categorias, sin-introduccion, anio-en-curso]
+
+fuente:
+  pie: "Fuente: SENASA"
+  organismo_esperado: "SENASA"
+estado: publicada
+
+origen: {tipo: modelo-analisis, detalle: "hoja 'Modelo Analisis' base 85, columnas N a W de cada cuadro anual", fecha: 2026-07-31}
+nota_interpretacion: >
+  JC pone esta tabla al costado de cada cuadro anual. Nosotros la separamos en una vista propia
+  con selector de recorte: es el mismo contenido, sin repetir la misma tabla cuatro veces.
+  El cambio de composicion entre recortes es justamente la lectura interesante: en lo que entra
+  a la provincia mandan terneros y terneras, y en lo que sale mandan novillitos y vaquillonas.

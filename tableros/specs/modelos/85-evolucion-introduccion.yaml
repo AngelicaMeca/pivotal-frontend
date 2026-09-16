@@ -1,0 +1,22 @@
+# Cuarto cuadro de JC (Modelo Analisis f27-f33): "Movimientos cabezas entradas (introdcción)".
+base: 85
+slug: evolucion-introduccion
+comunes: _comunes-base-85
+
+igual_que: 85-evolucion-movimientos
+
+titulo: "Hacienda que entra a la provincia"
+subtitulo: "Cabezas que ingresan desde otras provincias, por año"
+
+titulo_protocolo_ejemplo: "Evolución de las cabezas movidas de la hacienda bovina (introducción) - Santiago del Estero - años 2022 a 2025"
+
+universo:
+  recorte: introduccion
+
+notas_metodologicas: [que-es-un-dte, total-no-suma-categorias, anio-en-curso]
+
+origen: {tipo: modelo-analisis, detalle: "hoja 'Modelo Analisis' base 85, filas 27 a 33", fecha: 2026-07-31}
+nota_interpretacion: >
+  Lo que entra desde otra provincia. Nunca se suma a los totales: son animales que no estaban
+  en Santiago. Esta vista muestra el volumen; de que provincia viene cada cabeza esta en
+  85-introduccion-por-provincia-origen, que por ahora queda detras del gate.

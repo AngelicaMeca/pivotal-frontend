@@ -1,0 +1,59 @@
+# Procedencia del archivo sde-departamentos.geojson (polígonos de los 27 departamentos
+# de Santiago del Estero). Lo lee constructor-dashboards para dibujar el mapa.
+#
+# Esto NO es un dato de JC: lo bajamos nosotros de la fuente oficial de cartografía.
+# Queda documentado acá para poder responder de dónde salió el mapa y para poder
+# regenerarlo igual dentro de dos años.
+
+archivo: sde-departamentos.geojson
+
+fuente:
+  organismo: Instituto Geográfico Nacional (IGN), República Argentina
+  capa: "ign:departamento"
+  servicio: WFS de https://wms.ign.gob.ar/geoserver/ows
+  descargado: 2026-07-30
+  filtro: "in1 LIKE '86%'"   # 86 = código INDEC de Santiago del Estero
+  sha256_descarga_cruda: 40818660a61803bdd1bee3df166cf94faee9555e4d614305f5a341b083735a3d
+  bytes_descarga_cruda: 494833
+  comando: >
+    curl --get "https://wms.ign.gob.ar/geoserver/ows"
+    --data-urlencode "service=wfs" --data-urlencode "version=1.0.0"
+    --data-urlencode "request=GetFeature" --data-urlencode "typeName=ign:departamento"
+    --data-urlencode "outputFormat=application/json"
+    --data-urlencode "CQL_FILTER=in1 LIKE '86%'" -o sde-crudo.json
+
+transformacion:
+  script: pipeline/geojson_sde.py
+  uso: ".venv/bin/python pipeline/geojson_sde.py sde-crudo.json configs/dims/sde-departamentos.geojson"
+  que_hace:
+    - "Se queda solo con los departamentos de Santiago."
+    - "Renombra las propiedades del IGN a las nuestras: in1 -> geo_id, nam -> nombre.
+       El resto de los atributos se descarta porque no se usan y agrandan el archivo."
+    - "Redondea las coordenadas a 5 decimales (cerca de 1 metro). Los vértices compartidos
+       entre departamentos vecinos se redondean igual, así que las fronteras siguen cerrando."
+    - "Ordena los departamentos por código, para que el archivo sea siempre igual."
+  determinista: true
+  sha256_resultado: e2182c2bb216c1028a57c1a68ead098c0689d993e412338ac957560e0c8d6ded
+  bytes_resultado: 382505
+
+join:
+  clave: "properties.geo_id (5 dígitos INDEC) contra dim_geo.geo_id"
+  verificado: 2026-07-30
+  resultado: "Los 26 departamentos con datos de la base 9 pegan con su polígono. Cero huérfanos."
+
+advertencias:
+  - clave: salavina-sin-datos
+    texto: >
+      Salavina (86168) tiene polígono pero no tiene ni una fila de datos en la base 9 de
+      cultivos. En el mapa va dibujado y en gris, rotulado "sin datos". No se omite: un
+      hueco en el mapa se lee como un error de la provincia, no como ausencia de dato.
+  - clave: nombre-ibarra
+    texto: >
+      El IGN escribe "Juan Felipe Ibarra" y el MAGyP escribe "JUAN F. IBARRA". El join es
+      por código, así que no rompe nada, pero en pantalla mandan los nombres de dim_geo
+      para que coincidan con el resto del sitio.
+  - clave: peso-del-archivo
+    texto: >
+      382 KB sin comprimir (Vercel lo sirve comprimido, queda bastante menos). Si más
+      adelante molesta en celular, el paso siguiente es simplificar los polígonos, no
+      bajar más los decimales: las fronteras compartidas empiezan a abrirse.

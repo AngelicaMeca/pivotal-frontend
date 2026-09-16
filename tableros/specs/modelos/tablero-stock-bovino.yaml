@@ -1,0 +1,101 @@
+# Tablero de la base 48 (stock bovino). Es la PORTADA de la seccion Ganaderia > Stock bovino.
+#
+# Por ahora es lo UNICO que se construye de esta base: Francisco pidio el 5-ago-2026 hacer
+# solo el tablero y dejar las vistas de detalle en stand by. Por eso los paneles no llevan
+# `detalle`: no hay adonde ir todavia y un enlace que no lleva a ningun lado es peor que no
+# tenerlo. Cuando se construya "Analisis completo" se agrega el slug de cada vista y los
+# enlaces aparecen solos.
+#
+# Que cuenta este tablero, en el orden en que se lee: cuanta hacienda hay, de que esta hecho
+# el rodeo, donde esta y como viene evolucionando.
+
+id: tablero-stock-bovino
+tipo: tablero
+base: 48
+seccion: stock-bovino
+comunes: _comunes-base-48
+
+titulo: "Stock bovino"
+subtitulo: "Provincia de Santiago del Estero · existencias al cierre de cada año"
+
+# ---------------------------------------------------------------------------
+# INDICADORES DE CABECERA
+# ---------------------------------------------------------------------------
+# Los dos primeros son volumen (cuanta hacienda hay y cuantos vientres), el tercero es
+# eficiencia y el cuarto es estructura. Es la lectura que hace JC en su bloque "RELACIONES
+# ENTRE CATEGORIAS": el stock solo no dice si el rodeo esta bien o mal.
+#
+# Ninguno se promedia entre departamentos: los ratios se recalculan sobre los totales
+# provinciales, que es la unica forma correcta de agregarlos.
+indicadores:
+  - medida: cabezas
+    categoria: "Total"
+    etiqueta: "Stock total"
+  - medida: cabezas
+    categoria: "Vacas"
+    etiqueta: "Vientres"
+  - relacion: destete
+    etiqueta: "Terneros por vaca"
+  - relacion: participacion_vientres
+    etiqueta: "Vacas sobre el stock"
+
+# ---------------------------------------------------------------------------
+# PANELES
+# ---------------------------------------------------------------------------
+paneles:
+  anillo:
+    titulo: "Participación por zona"
+    # Las seis zonas productivas de JC (_comunes-base-48.zonas). Es la unica vista del sitio
+    # que usa su zonificacion, y es justamente lo que el pidio que "va al texto".
+    agrupar_por: zona
+
+  mapa:
+    titulo: "Stock por departamento"
+    # El color lo fija el protocolo por TIPO de variable: cabezas va en la rampa marron, la
+    # misma que usa la base 85. No se elige aca.
+    medida: cabezas
+
+  tendencia:
+    titulo: "Evolución del stock"
+    medida: cabezas
+    # 14 anios (2012-2025) dan una serie con forma propia, asi que va anual y no mensual como
+    # en el tablero de hacienda: ahi el problema era que la base tenia solo cuatro anios.
+    grano: anio
+
+  top:
+    titulo: "Top 5 departamentos"
+    medida: cabezas
+    cuantos: 5
+
+  # Misma disposicion que los otros dos tableros: la forma se mantiene entre bases (JC f39-f41,
+  # "los formatos se mantienen SIEMPRE, sino seria un carnaval"). Lo que cambia es que muestra
+  # cada panel, no como se ven.
+  # Los `badge` de tipo de gráfico se sacaron el 10-ago-2026 por regla de JC
+  # (_protocolo-presentacion.formato_v1.sin_leyendas_de_tipo_de_grafico).
+  orden:
+    - id: anillo
+      ancho: 4
+      alto: 2
+    - id: mapa
+      ancho: 5
+      alto: 2
+    - id: tendencia
+      ancho: 3
+      alto: 1
+    - id: top
+      ancho: 3
+      alto: 1
+
+# ---------------------------------------------------------------------------
+# FILTROS
+# ---------------------------------------------------------------------------
+# Dos, que es el maximo razonable para un tablero: el anio manda sobre todo y la categoria
+# permite mirar el rodeo por partes (ver solo las vacas, solo los terneros). Con la categoria
+# en "Total" el tablero muestra el rodeo entero, que es como abre.
+filtros:
+  - id: anio
+    zona: periodo        # barra verde de la cabecera
+  - id: categoria
+    zona: barra          # barra de chips
+    incluye_total: true
+    defecto: "Total"

@@ -1,0 +1,1627 @@
+# PROTOCOLO DE PRESENTACION. Reglas mecanicas de titulos, escalas, colores, ejes y citas.
+#
+# QUE ES ESTO
+# Es la traduccion a reglas ejecutables del documento de JC
+# `specs/fuentes/000 PROTOCOLO PARA GRAFICOS Y MAPAS ELABORADOS.docx`.
+# El documento NO es la regla: la regla es este archivo (specs/fuentes/README.md). Cada bloque de
+# abajo lleva `origen_docx` con el parrafo y la cita literal que lo motivo, para poder volver a la
+# fuente cuando alguien pregunte de donde salio un criterio.
+#
+# COMO SE USA
+# Lo lee `constructor-dashboards`. Ningun titulo, color, corte de escala, marca de eje ni pie de
+# fuente se escribe a mano en un template: todo sale de aca mas los `titulo_componentes` que
+# declara cada spec de vista. Si un titulo no se puede armar con estas reglas, el build FALLA;
+# no se publica un cuadro con el titulo a medias.
+#
+# ORDEN DE APLICACION en constructor-dashboards:
+#   1. este protocolo (mecanica de presentacion)
+#   2. `comunes: _comunes-base-N` (parametros de la base)
+#   3. `igual_que: NN-slug` (herencia entre vistas)
+#   4. el propio spec
+#
+# Escrito por constructor-reglas el 2026-07-30.
+
+id: _protocolo-presentacion
+version: 2
+aplica_a: todas las bases y todos los tipos de vista
+origen:
+  tipo: documento-de-jc
+  archivo: "specs/fuentes/000 PROTOCOLO PARA GRAFICOS Y MAPAS ELABORADOS.docx"
+  autor: Juan Carlos Antuña
+  fecha_registro: 2026-07-30
+  contiene: "3 secciones (mapas de calor, graficos, tablas), 1 mapa de ejemplo del Chaco, 1 grafico de barras embebido y 1 tabla de ejemplo del stock del Chaco 2009 vs 2008"
+
+# La version 2 (2026-08-10) incorpora el SEGUNDO documento de JC. No deroga nada de la v1:
+# las reglas nuevas viven en la seccion 13 (`formato_v1`) y cada una cita su parrafo. Donde el
+# documento nuevo pisa una regla vigente, la regla nueva lo dice explicitamente.
+origen_version_2:
+  tipo: documento-de-jc
+  archivo: "specs/fuentes/0000 Protocolo de formato - Versión 1.docx"
+  autor: Juan Carlos Antuña
+  fecha_registro: 2026-08-10
+  contiene: >
+    Dos partes: (1) observaciones al sitio actual, con 6 capturas de pantalla, que fijan reglas de
+    formato (secuencia de variables, periodos explicitos, agregacion, navegacion); (2) la propuesta
+    de formato nueva, con 2 anexos de iconografia (~100 iconos por categoria tematica, la misma
+    lista en blanco y negro y en color: 197 de las 203 imagenes del docx son iconos). El modelo
+    visual de referencia llego aparte en specs/fuentes/0000000000 Modelo 1.xlsx (hojas "Modelo 1"
+    y "Modelo 2": mockup de la pagina de un cultivo, con la hoja "Data" como datos de apoyo).
+
+# El TEMA VISUAL FINAL de la pagina de cultivos llego como tercera fuente, el mismo dia mas
+# tarde. Su traduccion a reglas es la subseccion `formato_v1.tema_visual`.
+origen_tema_visual:
+  tipo: captura-de-whatsapp
+  archivo: "specs/fuentes/WhatsApp Image 2026-08-10 at 11.08.41.jpeg"
+  fecha_registro: 2026-08-10
+  hora_llegada: "11:09"
+  contiene: >
+    El render final de la pagina de Soja: lienzo blanco, cromo verde institucional (cabecera con
+    logo SANTiAGO, banda de breadcrumb verde, menu lateral verde), paneles con borde, chips de
+    cultivo con icono en grilla, selector de campaña como pestañitas verdes, tarjeta KPI de
+    contexto, panel UTILIDADES, panel Informacion relacionada y pie de tecnologia Pivotal.
+  decision: "Facu, 10-ago-2026, en persona con JC presente: es como tiene que VERSE la pagina; el sitio actual 'no quedo NADA que ver' con esto."
+
+# La TERCERA TANDA de feedback del mismo 10-ago-2026: JC RECHAZO el rediseño publicado
+# (commit 41df326, el "diseño moderno" de la segunda tanda) y Facu ordeno arrancar de cero.
+# Su traduccion a reglas es la subseccion `formato_v1.tercera_tanda`.
+origen_tercera_tanda:
+  tipo: feedback-verbal-de-jc
+  fecha_registro: 2026-08-10
+  sobre: "el rediseño de cultivos publicado en el commit 41df326"
+  comentarios_de_jc_textuales:
+    - "Todo deformado Facu"
+    - "No son los mismos títulos. Los gráficos tampoco"
+    - "Tenemos que respetar el protocolo de títulos de gráficos"
+    - "NO había que poner la diferencia con la campaña anterior"
+    - "En el gráfico de líneas no está el eje vertical y tampoco la escala"
+    - >
+      "NO va con 'ver detalle'... NO debe llevar NADA a otra página salvo el dato
+      departamental. OLVIDATE DEL ANÁLISIS COMPLETO, ESO YA NO EXISTE MÁS, NECESITO QUE LO
+      SAQUES Y TE QUEDES CON LOS TABLEROS"
+    - "En la parte de producción agrícola eso está duplicado... ahí iban las banderas de idiomas"
+    - "El mapa es una miniatura y está deformado"
+  decision: >
+    Facu, 10-ago-2026, tercera tanda: "arrancar de cero y no mezclar con lo anterior. Hay que
+    hacer lo que dice JC, respetá". El mockup Modelo 2 (la captura de las 11:09) es LITERAL:
+    la pagina tiene que quedar como esa captura.
+
+# La CUARTA TANDA del mismo 10-ago-2026: Facu reviso la reconstruccion literal del mockup que
+# termino constructor-dashboards y dejo 9 puntos de ajuste. No es un rechazo como la tercera:
+# el mockup sigue siendo literal; estos son ajustes de puesta, escala y usabilidad, mas dos
+# reglas GENERALES nuevas (tooltips con nombre y datos, proporciones sin huecos). Su traduccion
+# a reglas es la subseccion `formato_v1.cuarta_tanda`.
+origen_cuarta_tanda:
+  tipo: feedback-verbal-de-facu
+  fecha_registro: 2026-08-10
+  sobre: "la reconstruccion literal del mockup Modelo 2 recien terminada por constructor-dashboards (working tree de dev, sin commitear)"
+  comentarios_de_facu_textuales:
+    - "El logo de Santiago está mal puesto, no sé si deberíamos usar otro, se ve horrible."
+    - "En el gráfico de líneas está mal la escala, no se distinguen las variaciones."
+    - "Falta Información relacionada, tiene que estar aunque no lleve a ningún lado."
+    - "El sidebar en la página principal no tiene que estar; tiene que aparecer recién cuando se entra a un dashboard."
+    - "En el mapa, el mouseover muestra el ID del departamento."
+    - "Cuando uno vaya al mapa, con mouseover que se vean los datos, no necesariamente tocar, dado que ya está el botón de Datos por Departamento."
+    - "Cuando uno va a Datos por Departamento, el botón sigue diciendo Datos por Departamento; debería volver a Provincia."
+    - "El gráfico de torta queda muy chico por el número en el medio; prefiero sacarlo y que quede bien."
+    - "Dejá anotado que tiene que haber proporciones en los cuadros que se usen: no puede ser que quede un espacio en blanco usando las campañas."
+  decision: >
+    Facu, 10-ago-2026, cuarta tanda: ajustes sobre la reconstruccion literal, sin derogar la
+    literalidad del mockup (tercera tanda). Donde un punto se aparta del mockup (anillo sin
+    cifra central), la excepcion queda anotada y JC valida en la proxima revision.
+
+# ===========================================================================
+# 1. SEPARADORES Y CARACTERES
+# ===========================================================================
+tipografia:
+  separador_titulo: " - "
+  separador_codepoint: "U+002D (guion medio ASCII) con UN espacio antes y UN espacio despues"
+  prohibidos:
+    - {caracter: "–", codepoint: "U+2013", nombre: "guion en"}
+    - {caracter: "—", codepoint: "U+2014", nombre: "raya / em dash"}
+  regla: >
+    UN solo separador en todo el sitio: " - ". JC en su docx alterna U+2013 y U+002D dentro del
+    mismo titulo ("Chaco – ganado bovino - Concentracion..."). Eso es tipeo de Word, no una regla.
+    CLAUDE.md prohibe los em dashes, asi que normalizamos todo a U+002D y queda escrito aca para
+    que nadie lo "arregle" de nuevo en un template.
+  separador_areas: "/"          # sin espacios: "Santiago del Estero/País" (asi lo escribe JC)
+  separador_lista: ", "
+  ultimo_de_lista: " y "
+  familia:
+    regla_de_jc: "Calibri, y como segunda opcion Arial"
+    origen_docx_v2: {seccion: GENERALES, texto: "TIPOGRAFIA: Usaremos Calibri y como segunda opción Arial. Está demostrado que es una tipografía equilibrada (si los chicos de marketing tienen otra opinión, los discutimos)"}
+    implementacion: >
+      Pila CSS "Calibri, Carlito, Arial, sans-serif", sin descargar ninguna fuente: Calibri donde
+      este instalada (Windows/Office), Carlito (su equivalente metrico libre) donde exista, Arial
+      como segunda opcion de JC. El sitio sigue siendo autonomo. El cambio concreto lo hace
+      constructor-dashboards en site/theme.yaml (`tipografia.familia`), que hoy trae la pila de
+      sistema del mockup del 27-jul y queda desactualizado frente a esta regla.
+    nota_interpretacion: >
+      Calibri no es una fuente libre para embeber en la web. JC mismo deja la puerta abierta a
+      marketing. Si marketing pide otra cosa, se cambia en theme.yaml y esta regla se versiona.
+      Backlog pregunta 27.
+  origen_docx:
+    - {parrafo: 5, texto: "Chaco – ganado bovino - Concentración de cabezas por departamento – año 2009"}
+    - {parrafo: 27, texto: "Distribución porcentual del stock bovino por estrato - Santiago del Estero/País - año 2010", nota: "titulo del grafico de barras embebido, leido de word/charts/chart1.xml"}
+
+# ===========================================================================
+# 2. TITULOS
+# ===========================================================================
+titulo:
+  # -------------------------------------------------------------------
+  # Los dos titulos de una vista, que NO son el mismo
+  # -------------------------------------------------------------------
+  roles:
+    titulo_protocolo:
+      que_es: "El titulo que va ARRIBA del cuadro, grafico o mapa. Se arma con las plantillas de este archivo."
+      obligatorio: true
+      se_escribe_a_mano: false
+      posicion: "parte superior, fuera del area de dibujo"
+      origen_docx: {parrafo: 9, texto: "Título: Parte SUPERIOR (dentro o fuera del gráfico)"}
+      nota: >
+        JC acepta adentro o afuera del grafico. Elegimos AFUERA siempre: es texto HTML, se puede
+        copiar, se lee en celular y no se deforma cuando ECharts redimensiona el canvas.
+    titulo:
+      que_es: >
+        El campo `titulo` que ya traen los specs ("Ranking de departamentos por cultivo"). NO se
+        muestra arriba del cuadro. Se usa en el menu, en el catalogo, en el breadcrumb, en la
+        pestaña del navegador y en los links entre vistas.
+      obligatorio: true
+      se_escribe_a_mano: true
+      motivo: >
+        El titulo de protocolo es descriptivo y largo (hasta 100 caracteres) porque tiene que
+        sobrevivir a una captura de pantalla pegada en un informe sin contexto. Un menu con seis
+        titulos de 100 caracteres no se puede navegar. Son dos necesidades distintas y por eso son
+        dos campos distintos. Ninguno reemplaza al otro.
+
+  # -------------------------------------------------------------------
+  # Los 4 componentes que JC exige
+  # -------------------------------------------------------------------
+  componentes_obligatorios:
+    - {slot: area, que_es: "Area geografica", origen_docx: {parrafo: 10, texto: "Area geográfica del mapa (Chaco en este caso)"}}
+    - {slot: sujeto, que_es: "Sector o subsector", origen_docx: {parrafo: 11, texto: "Descripción del sector o subsector (Ganado bovino)"}}
+    - {slot: variable, que_es: "Descripcion de la variable", origen_docx: {parrafo: 12, texto: "Descripción de la variable (“Concentración de cabezas por departamento)"}}
+    - {slot: periodo, que_es: "Año o periodo de referencia", origen_docx: {parrafo: 13, texto: "Año de referencia (2009)"}}
+  componentes_opcionales:
+    - {slot: apertura, que_es: "Por que dimension se abre el dato (por departamento, por cultivo, por estrato)"}
+    - {slot: recorte,  que_es: "Que parte del universo se esta mostrando, cuando el cuadro no muestra el total", origen_jc: "hoja 'Modelo Analisis' de la base 85, donde JC titula sus propios cuadros 'Movimientos totales (sin introducción)' y 'Movimientos cabezas salidas (extracción)'"}
+
+  # -------------------------------------------------------------------
+  # Como se compone (algoritmo, sin interpretacion)
+  # -------------------------------------------------------------------
+  composicion:
+    algoritmo:
+      - "1. Resolver cada slot contra el spec y contra el valor actual de los filtros (los titulos son dinamicos: si el usuario cambia de campaña, el titulo cambia)."
+      - "2. Tomar la plantilla del `tipo` de la vista (bloque `plantillas`). Es una lista ordenada de grupos."
+      - "3. Para cada grupo, recorrer sus `variantes` en orden y quedarse con la PRIMERA cuyos slots esten todos resueltos y no vacios."
+      - "4. Si ningun variante aplica: si el grupo es `opcional: true` se saltea; si no, el build FALLA con el nombre del spec y del slot."
+      - "5. Unir los fragmentos resultantes con `tipografia.separador_titulo`."
+      - "6. Mayusculas: se pone en mayuscula la primera letra del PRIMER fragmento y la primera letra del fragmento del grupo `variable`. Nada mas. Todo lo demas queda tal como lo declara cada slot."
+    por_que_asi_las_mayusculas: >
+      Es como escribe JC. En "Chaco - ganado bovino - Concentración de cabezas por departamento -
+      año 2009" el area va en mayuscula porque es un nombre propio, el sujeto va en minuscula, la
+      variable va en mayuscula y el periodo en minuscula. La regla reproduce ese patron sin tener
+      que decidir nada caso por caso.
+    determinismo: >
+      Sustitucion de strings y nada mas. Sin heuristicas, sin acortar, sin elegir sinonimos, sin
+      recortar por largo. Mismo spec + mismos filtros = mismo titulo, siempre.
+    largo:
+      maximo_duro: null
+      recomendado: 100
+      si_se_pasa: "Se publica igual y se deja envolver en dos lineas. NUNCA se trunca ni se abrevia automaticamente: un titulo cortado incumple el protocolo de JC."
+
+  # -------------------------------------------------------------------
+  # Como lo declara cada spec de vista
+  # -------------------------------------------------------------------
+  como_lo_declara_cada_spec:
+    campo: titulo_componentes
+    obligatorio_en: "todo spec de vista"
+    sintaxis:
+      area:
+        - "provincia                              -> el nombre de la provincia del parametro"
+        - "{desde_filtro: geo}                    -> provincia o departamento, segun el selector"
+        - "{desde_filtro: departamento}           -> siempre un departamento"
+        - "{fijo: \"NOA\"}                          -> texto fijo"
+        - "{comparacion: [provincia, pais]}       -> unidos con `separador_areas`, en ese orden"
+      sujeto:
+        - "{fijo: \"los cultivos extensivos\"}"
+        - "{desde_filtro: cultivo}                -> pasa por `nombre_de_cultivo_para_titulo`"
+        - "{desde_filtro: estacion}               -> pasa por `estacion_a_frase`"
+        - "{desde: subsector}                     -> el subsector de la base"
+        - "{desde_filtro: X, frases: {...}}       -> tabla explicita valor-del-filtro -> frase, escrita en el spec"
+      variable:
+        - "{fijo: sup_sembrada_ha}"
+        - "{desde_filtro: variable}"
+        - "{multiple: [a, b, c]}"
+        - "{override: \"...\", motivo: \"...\"}       -> plantilla, admite {art} y {frase}"
+      apertura: "un id de `slots.apertura.frases`, o null si la vista no abre por ninguna dimension"
+      recorte:
+        - "{fijo: \"(extracción)\"}                 -> texto fijo, ya con los parentesis"
+        - "{desde_universo: true}                 -> la `etiqueta_corta` del universo que declara `universo.recorte`"
+        - "{desde_filtro: recorte}                -> cuando el recorte es un selector de la pagina"
+      periodo:
+        - "{desde_filtro: campania}"
+        - "{desde_filtro: anio}"
+        - "{ventana: ventana_campanias}           -> el rango resuelto de la ventana de la base"
+        - "{ventana: ventana_anios}               -> idem para las bases de grano anual"
+        - "{ventana: ventana_propia}              -> si la vista define su propia ventana"
+        - "{fijo: \"2024/25\"}"
+    campo_de_control:
+      titulo_protocolo_ejemplo: >
+        Cada spec deja escrito el titulo que sale con sus valores por defecto. No lo usa el sitio:
+        es para que un humano (JC) pueda leer el spec y ver el titulo sin correr el pipeline, y para
+        que el build compare lo que genera contra lo que el spec dice que tiene que generar.
+
+  # -------------------------------------------------------------------
+  # Plantillas por tipo de vista
+  # -------------------------------------------------------------------
+  # Sintaxis: cada tipo trae `grupos`, una lista ordenada. Cada grupo tiene `variantes` (strings
+  # con slots entre llaves) y, si puede faltar, `opcional: true`.
+  # JC escribe los mapas con el area PRIMERO y los graficos con el area anteultima. Se respetan sus
+  # dos ordenes porque los dos figuran en el documento, cada uno con su ejemplo.
+  #
+  # Las variantes con {recorte} van SIEMPRE primero dentro de su grupo. El compositor se queda con
+  # la primera variante cuyos slots esten todos resueltos, asi que una vista que no declara recorte
+  # (las 16 de la base 9) las saltea sin que haya que escribir ninguna condicion.
+  plantillas:
+
+    mapa:
+      # Calcado del ejemplo de JC: "Chaco - ganado bovino - Concentracion de cabezas por departamento - año 2009"
+      origen_docx: {parrafo: 5}
+      grupos:
+        - {grupo: area,     variantes: ["{area}"]}
+        - {grupo: sujeto,   variantes: ["{sujeto}"]}
+        - {grupo: variable, variantes: ["{variable} {recorte} por {apertura}", "{variable} {recorte}", "{variable} por {apertura}", "{variable}"]}
+        - {grupo: periodo,  variantes: ["{periodo}"]}
+
+    torta:
+      # Calcado del grafico embebido: "Distribucion porcentual del stock bovino por estrato - Sgo. del Estero/Pais - año 2010"
+      origen_docx: {parrafo: 27}
+      grupos:
+        - {grupo: variable, variantes: ["{variable} de {sujeto} {recorte} por {apertura}", "{variable} de {sujeto} {recorte}", "{variable} de {sujeto} por {apertura}", "{variable} de {sujeto}", "{variable} por {apertura}"]}
+        - {grupo: area,     variantes: ["{area}"]}
+        - {grupo: periodo,  variantes: ["{periodo}"]}
+
+    ranking:
+      grupos:
+        - {grupo: variable, variantes: ["{variable} de {sujeto} {recorte} por {apertura}", "{variable} de {sujeto} {recorte}", "{variable} de {sujeto} por {apertura}", "{variable} por {apertura}", "{variable} de {sujeto}"]}
+        - {grupo: area,     variantes: ["{area}"]}
+        - {grupo: periodo,  variantes: ["{periodo}"]}
+
+    serie:
+      grupos:
+        - {grupo: variable, variantes: ["{variable} de {sujeto} {recorte} por {apertura}", "{variable} de {sujeto} {recorte}", "{variable} de {sujeto} por {apertura}", "{variable} de {sujeto}", "{variable}"]}
+        - {grupo: area,     variantes: ["{area}"]}
+        - {grupo: periodo,  variantes: ["{periodo}"]}
+
+    tabla-variaciones:
+      origen_docx: {parrafo: 75, texto: "Tabla 2 – Diferencias y variaciones por categorías del stock entre 2009 y 2008 (parte I)"}
+      grupos:
+        - {grupo: variable, variantes: ["{variable} de {sujeto} {recorte} por {apertura}", "{variable} de {sujeto} {recorte}", "{variable} de {sujeto} por {apertura}", "{variable} por {apertura}", "{variable} de {sujeto}"]}
+        - {grupo: area,     variantes: ["{area}"]}
+        - {grupo: periodo,  variantes: ["{periodo}"]}
+
+    lista:
+      grupos:
+        - {grupo: variable, variantes: ["{variable} de {sujeto} por {apertura}", "{variable} de {sujeto}", "{sujeto}"]}
+        - {grupo: area,     variantes: ["{area}"]}
+        - {grupo: periodo,  variantes: ["{periodo}"]}
+
+    flujo-od:
+      # Confirmada con la primera vista del tipo: 85-matriz-od-interna (la matriz origen-destino de
+      # 27x27 que JC dejo dibujada y vacia en su hoja, con la instruccion "COMPLETAR TODA LA MATRIZ").
+      # El documento de JC no trae ejemplo de flujos, asi que la plantilla sigue el mismo orden que
+      # `ranking` y la apertura la escribe el spec ("por departamento de origen y de destino").
+      estado: confirmada
+      confirmada_con: 85-matriz-od-interna
+      grupos:
+        - {grupo: variable, variantes: ["{variable} de {sujeto} {recorte} por {apertura}", "{variable} de {sujeto} {recorte}", "{variable} de {sujeto} por {apertura}", "{variable} de {sujeto}"]}
+        - {grupo: area,     variantes: ["{area}"]}
+        - {grupo: periodo,  variantes: ["{periodo}"]}
+
+  # -------------------------------------------------------------------
+  # Ejemplos resueltos (sirven de prueba de aceptacion del compositor)
+  # -------------------------------------------------------------------
+  ejemplos:
+    - spec: 09-cultivo-mapa-sup-sembrada
+      con_filtros: {cultivo: "Soja total", campania: "2024/25"}
+      resultado: "Santiago del Estero - soja - Superficie sembrada por departamento - campaña 2024/25"
+    - spec: 09-ranking-cultivo-produccion
+      con_filtros: {cultivo: "Algodón", campania: "2024/25"}
+      resultado: "Ranking de producción de algodón por departamento - Santiago del Estero - campaña 2024/25"
+    - spec: 09-cultivo-evolucion-sup-sembrada
+      con_filtros: {cultivo: "Soja total", geo: provincia}
+      resultado: "Evolución de la superficie sembrada de soja - Santiago del Estero - campañas 2015/16 a 2024/25"
+    - spec: 09-departamento-cartera
+      con_filtros: {departamento: MORENO, campania: "2024/25", variable: produccion_tn, estacion: verano}
+      resultado: "Distribución porcentual de la producción de los cultivos de verano por cultivo - MORENO (Santiago del Estero) - campaña 2024/25"
+    - reproduccion_del_docx_mapa:
+        nota: "El titulo del mapa de ejemplo de JC tiene que salir de la plantilla `mapa` sin tocar nada."
+        slots: {area: "Chaco", sujeto: "ganado bovino", variable: "concentración de cabezas", apertura: "departamento", periodo: "año 2009"}
+        resultado: "Chaco - ganado bovino - Concentración de cabezas por departamento - año 2009"
+        diferencia_con_el_docx: "JC escribe dos de los tres separadores con U+2013. Nosotros usamos U+002D en los tres. Es la unica diferencia."
+    - reproduccion_del_docx_grafico:
+        nota: >
+          El titulo del grafico de barras embebido sale de la plantilla `torta` (que es la de las
+          distribuciones porcentuales), usando la tercera variante del grupo `variable`, porque JC
+          mete el sujeto adentro de la frase de la variable ("del stock bovino").
+        slots: {variable: "distribución porcentual del stock bovino", sujeto: null, apertura: "estrato", area: "Santiago del Estero/País", periodo: "año 2010"}
+        resultado: "Distribución porcentual del stock bovino por estrato - Santiago del Estero/País - año 2010"
+        ojo: >
+          El titulo cierra, pero el TIPO de grafico no: son barras de una distribucion por categoria
+          (estrato) comparando dos areas, y eso no es exactamente ninguno de los 7 tipos permitidos
+          en CLAUDE.md (`ranking` esta ordenado por magnitud, `serie` es temporal, `torta` es una
+          sola area). Con la base 9 no hace falta; con la base 48 si. Propuesta de tipo nuevo
+          `distribucion` elevada a Francisco, no se inventa por las nuestras.
+
+# ===========================================================================
+# 3. SLOTS: como se resuelve cada uno
+# ===========================================================================
+slots:
+
+  # --- area ----------------------------------------------------------
+  area:
+    resolucion:
+      provincia: "Santiago del Estero"                 # nombre completo, nunca "SDE" ni "Sgo. del Estero"
+      departamento: "{nombre} (Santiago del Estero)"   # nombre = dim_geo.nombre, tal cual
+      pais: "País"
+      region: "{nombre de la region}"                  # ej. "NOA"
+      comparacion: "lista de areas unida con `tipografia.separador_areas`, en el orden declarado en el spec"
+    orden_en_comparaciones: "Santiago del Estero SIEMPRE primero, despues el agregado mayor. Ej: Santiago del Estero/País."
+    nombres_de_departamento:
+      regla: "Se muestran EXACTAMENTE como vienen en dim_geo.nombre: mayusculas y sin tildes (MORENO, RIO HONDO, JUAN F. IBARRA)."
+      motivo: >
+        Es como los escribe la fuente. Pasarlos a "Río Hondo" obliga a inventar tildes y a decidir
+        caso por caso (JUAN F. IBARRA, OJO DE AGUA). No inventamos: si JC prefiere capitalizacion
+        normal, se agrega una columna de nombre para mostrar en configs/dims/geo-alias.yaml y se
+        cambia esta linea. Preguntado en el backlog (pregunta 18).
+    provincia_es_parametro: true   # CLAUDE.md: nada hardcodeado a SDE fuera de configs
+
+  # --- sujeto: el "sector o subsector" de JC ---------------------------
+  sujeto:
+    de_donde_sale: >
+      Del arbol tematico que JC arma en su propio indice (configs/manifiesto-indice.yaml,
+      `tema.ruta`). No lo inventamos nosotros: es su vocabulario.
+    nivel_que_se_usa: >
+      El SUBSECTOR, no el sector. En su ejemplo JC escribe "ganado bovino" (la base 48 cuelga de
+      Ganadería > Bovinos > Carne), no escribe "ganadería". Se usa el mismo nivel para todas las bases.
+    por_base:
+      9:
+        sector: "Agricultura"
+        subsector: "cultivos extensivos"
+        frase_en_titulo: "los cultivos extensivos"
+        arbol_jc: "Agricultura > Cultivos extensivos > [Granos, Oleaginosas, Algodón, Legumbres]"
+        justificacion: >
+          Es literalmente la rama que JC le puso a la base 9 en su indice, y coincide con el nombre
+          que ya usa todo el repo (configs/bases/9-cultivos-extensivos.yaml, slug_base
+          `cultivos-extensivos`, la seccion del catalogo). "Agricultura extensiva" describiria la
+          ACTIVIDAD; "cultivos extensivos" describe la COSA que se cuenta, que es lo que hace JC
+          cuando escribe "ganado bovino" en vez de "ganadería". Se elige el paralelo exacto.
+      48:
+        sector: "Ganadería"
+        subsector: "ganado bovino"
+        frase_en_titulo: "el ganado bovino"
+        arbol_jc: "Ganadería > Bovinos > Carne"
+        estado: provisorio
+        nota: "Se adopta la frase literal del docx de JC ('Ganado bovino'), que es mas legible que 'bovinos'. Se confirma cuando entre la base 48."
+      85:
+        sector: "Ganadería"
+        subsector: "ganado bovino"
+        frase_en_titulo: "la hacienda bovina"
+        arbol_jc: "Ganadería > Bovinos"
+        estado: confirmado
+        por_que_dos_frases_distintas: >
+          El subsector es el literal de JC ("Chaco - ganado bovino - ...") y se usa donde el sujeto
+          va suelto, o sea en la plantilla `mapa`. Detras de "de" no se puede usar: "de el ganado
+          bovino" no es castellano y el compositor no contrae articulos (no hace heuristicas, ver
+          `composicion.determinismo`). La frase para esa posicion es "la hacienda bovina", que es
+          ademas la que ya declara _comunes-base-85.presentacion.frase_en_titulo.
+    dos_frases_por_que:
+      subsector: "va solo, sin articulo. Lo usa la plantilla `mapa`, donde el sujeto es un fragmento aparte ('Chaco - ganado bovino - ...')."
+      frase_en_titulo: "va detras de 'de'. La usan todas las demas plantillas ('evolución del rendimiento de los cultivos extensivos')."
+      regla: "`{desde: subsector}` resuelve a una o a otra segun donde caiga el sujeto en la plantilla. No lo decide el spec."
+    afinado_por_vista:
+      regla: >
+        El spec puede afinar el sujeto a algo mas especifico que el subsector, si la vista habla de
+        una sola cosa. Es lo que hace JC: la base es de bovinos pero el grafico dice "stock bovino".
+      opciones:
+        - {valor: "subsector", da: "cultivos extensivos"}
+        - {valor: "{desde_filtro: cultivo}", da: "soja, algodón, maíz..."}
+        - {valor: "{desde_filtro: estacion}", da: "cultivos de verano | cultivos de invierno | cultivos extensivos"}
+      articulo: >
+        El sujeto se declara CON su articulo cuando la frase lo pide ("los cultivos de verano"), y
+        sin el cuando es un nombre suelto ("soja"). Lo decide la tabla, no el compositor.
+      si_hay_varios_valores:
+        regla: "Si el filtro admite varios valores a la vez (ej. 3 cultivos en una serie), con 1 valor se usa ese valor y con 2 o mas se usa el `subsector` de la base."
+        ejemplo: "3 cultivos elegidos -> 'los cultivos extensivos'"
+    nombre_de_cultivo_para_titulo:
+      regla:
+        - "rol `agregado`  -> se usa `cultivo_grupo` ('Soja total' -> 'soja', 'Trigo total' -> 'trigo')"
+        - "rol `simple`    -> se usa `cultivo` ('Algodón' -> 'algodón', 'Maní' -> 'maní')"
+        - "rol `componente`-> se usa `cultivo` completo ('Soja 1ra' -> 'soja 1ra')"
+        - "minusculas: se baja SOLO la primera letra, el resto queda tal cual (no rompe siglas ni tildes)"
+      motivo: >
+        "Santiago del Estero - soja total - ..." se lee mal y ademas "total" no es parte del nombre
+        del cultivo: es la marca de que la fila es el agregado. En el titulo va el cultivo; que la
+        cifra sea el total y no la suma de partes se explica en la nota `total-no-suma-componentes`.
+      tabla_fuente: "specs/modelos/dim-cultivos.yaml (columnas cultivo, grupo, rol)"
+    estacion_a_frase:
+      verano: "los cultivos de verano"
+      invierno: "los cultivos de invierno"
+      todos: "los cultivos extensivos"
+
+  # --- variable -------------------------------------------------------
+  variable:
+    frase_base:
+      # medida del mart -> frase para el titulo. Siempre en minuscula: la mayuscula la pone el paso 6.
+      # `genero` resuelve la contraccion del articulo sin que nadie tenga que pensarla.
+      sup_sembrada_ha:   {frase: "superficie sembrada",  genero: f}
+      sup_cosechada_ha:  {frase: "superficie cosechada", genero: f}
+      produccion_tn:     {frase: "producción",           genero: f}
+      rendimiento_kg_ha: {frase: "rendimiento",          genero: m}
+      # --- base 85 (movimientos de hacienda). La medida se llama `cabezas` en el mart, pero la
+      # frase dice "cabezas movidas" porque el dato es un FLUJO: un animal que se movio tres veces
+      # cuenta tres. "Cabezas" a secas es el stock, y esa es la base 48, que todavia no entro; su
+      # medida se va a llamar distinto (existencias) justamente para que las dos no se pisen.
+      cabezas:                 {frase: "cabezas movidas",        genero: f_plural}
+      documentos:              {frase: "documentos de tránsito", genero: m_plural}
+      ingreso_establecimiento: {frase: "ingresos",               genero: m_plural}
+      egreso_establecimiento:  {frase: "egresos",                genero: m_plural}
+      balance_cabezas:         {frase: "balance de cabezas",     genero: m}
+    articulo:
+      f:        "de la"
+      m:        "del"
+      f_plural: "de las"
+      m_plural: "de los"
+      multiple: "de"       # cuando la frase junta varias medidas
+    frase_multiple:
+      regla: "Si la vista muestra varias medidas a la vez, se unen con `separador_lista` y `ultimo_de_lista`, en el orden en que estan declaradas en `variables`, y el genero pasa a `multiple`."
+      ejemplo: "superficie sembrada, superficie cosechada, producción y rendimiento"
+      si_queda_muy_largo: "el spec usa `override` con motivo (ej. 'superficie, producción y rendimiento')"
+    prefijo_por_tipo:
+      # Da el "tipo de grafico y variable" que pide JC (parrafo 21).
+      # {art} se reemplaza por `articulo[genero]`.
+      mapa:              "{frase}"                                # el mapa ya es la distribucion: no lleva prefijo
+      serie:             "evolución {art} {frase}"                # "evolución de la superficie sembrada" / "evolución del rendimiento"
+      ranking:           "ranking de {frase}"                     # sin articulo: "ranking de producción"
+      torta:             "distribución porcentual {art} {frase}"  # calcado de JC (parrafo 21)
+      tabla-variaciones: "diferencias y variaciones {art} {frase}"
+      lista:             "{frase}"
+      flujo-od:          "{frase}"                              # la matriz YA es el flujo: no lleva prefijo, igual que el mapa
+      origen_docx: {parrafo: 21, texto: "Tipo de gráfico y variable (distribución porcentual)"}
+    prefijo_por_grafico:
+      # Tiene PRIORIDAD sobre `prefijo_por_tipo` cuando el spec declara `grafico`. Existe porque el
+      # `tipo` dice de que va la vista y el `grafico` dice que esta viendo el ojo: unas barras
+      # apiladas al 100% son una distribucion porcentual aunque el tipo de la vista sea `serie`.
+      barras-apiladas-100: "distribución porcentual {art} {frase}"
+    override:
+      permitido: true
+      campo_en_el_spec: "titulo_componentes.variable.override"
+      que_reemplaza: "el fragmento COMPLETO del grupo variable (prefijo + frase). Los otros slots se siguen resolviendo normalmente."
+      es_una_plantilla: "puede usar {frase} y {art}, asi que sigue reaccionando al filtro de variable"
+      exige: "un `motivo` escrito al lado. Sin motivo, el build falla."
+      cuando: "solo cuando la composicion mecanica dice algo falso o incomprensible (una tabla de puestos no muestra 'diferencias y variaciones'). No para gustos de redaccion."
+      usos_actuales: "4 de las 16 vistas de la base 9, cada uno con su motivo escrito en el spec."
+    unidades_en_el_titulo:
+      regla: "NO van. La unidad va en el subtitulo, en el rotulo del eje y en la leyenda del mapa."
+      motivo: "Los dos ejemplos de JC (mapa y grafico) tienen el titulo sin unidad."
+
+  # --- apertura -------------------------------------------------------
+  apertura:
+    de_donde_sale: "la primera dimension de `dimensiones` que NO sea el eje temporal"
+    frases:
+      departamento: "departamento"
+      provincia:    "provincia"
+      cultivo:      "cultivo"
+      variedad:     "variedad"
+      categoria:    "categoría"
+      estrato:      "estrato"
+      campania:     "campaña"
+      motivo:       "motivo"
+      # --- base 85 ---
+      mes:                 "mes"
+      origen-destino:      "departamento de origen y de destino"
+      provincia-destino:   "provincia de destino"
+      provincia-origen:    "provincia de origen"
+    dinamica:
+      como: "{desde_filtro: apertura} -> el VALOR del filtro es un id de `frases`"
+      cuando: "vistas con un selector de apertura (ej. la evolucion anual, que se puede ver total o abierta por categoria)"
+    sin_apertura:
+      valores: [total]
+      que_significa: >
+        El filtro de apertura esta en "total": la vista no abre por ninguna dimension y el titulo
+        cae en la variante sin {apertura}. Esta escrito como una lista y no como un `if` en el
+        codigo para que el vocabulario de los filtros quede en el protocolo y no en el build.
+    si_no_hay: "el grupo `variable` usa la variante sin apertura. No se inventa una."
+    origen_docx: {parrafo: 12, texto: "Concentración de cabezas por departamento"}
+
+  # --- recorte --------------------------------------------------------
+  recorte:
+    que_es: >
+      El universo del que sale el numero, cuando la vista muestra una PARTE del total y el titulo
+      tiene que decirlo para que el numero se entienda. Va entre parentesis, pegado al fragmento
+      de la variable.
+    de_donde_sale: >
+      De JC. En la hoja "Modelo Analisis" de la base 85 el titula sus propios cuadros
+      "Movimientos totales (sin introducción)", "Movimientos internos (dentro SDE)" y
+      "Movimientos cabezas salidas (extracción)". El parentesis es suyo, no nuestro.
+    por_que_es_un_slot_aparte: >
+      Podria escribirse dentro del texto de la variable, pero entonces cada vista tendria que
+      repetir la frase completa y el recorte dejaria de reaccionar al selector. Son cuatro
+      universos que se combinan con cada medida: como slot, se declaran una sola vez en
+      `_comunes-base-85.universos` y el titulo cambia solo cuando el usuario cambia de recorte.
+    como_se_declara:
+      - "{fijo: \"(extracción)\"}      -> texto fijo, con los parentesis incluidos"
+      - "{desde_universo: true}       -> la `etiqueta_corta` del universo que declara `universo.recorte`"
+      - "{desde_filtro: recorte}      -> la `etiqueta_corta` del universo elegido en el selector"
+    formato: "el texto se escribe YA con los parentesis. El compositor no los agrega ni los saca."
+    si_no_hay: >
+      El grupo `variable` cae en su primera variante sin {recorte}. Ninguna vista de la base 9 lo
+      declara, asi que ninguno de sus 16 titulos cambia.
+
+  # --- periodo --------------------------------------------------------
+  periodo:
+    principio: >
+      La palabra "año" se reserva para las bases cuyo grano REALMENTE es el año calendario (SENASA,
+      bases 48 y 85, que es de donde salen los ejemplos de JC). La base 9 tiene grano CAMPAÑA y una
+      campaña no es un año: 2024/25 arranca en 2024 y termina en 2025. Escribir "año 2024" sobre un
+      dato de campaña seria decir algo falso. Se dice "campaña".
+    plantillas:
+      anio_simple:        "año {anio}"                          # "año 2009"
+      anio_rango:         "años {desde} a {hasta}"              # "años 2009 a 2015"
+      anio_lista:         "años {lista}"                        # hasta 3 no contiguos
+      anio_muchas:        "{n} años hasta {hasta}"              # 4 o mas no contiguos
+      campania_simple:    "campaña {campania}"                  # "campaña 2024/25"
+      campania_rango:     "campañas {desde} a {hasta}"          # "campañas 2015/16 a 2024/25"
+      campania_lista:     "campañas {lista}"                    # hasta 3, unidas con separador_lista y ultimo_de_lista
+      campania_muchas:    "{n} campañas hasta {hasta}"          # 4 o mas no contiguas
+      mes_simple:         "{mes} de {anio}"
+      mes_rango:          "{mes_desde} de {anio_desde} a {mes_hasta} de {anio_hasta}"
+    grano_por_base:
+      # Cual de las dos familias de plantillas usa cada base. Lo decide el GRANO del dato, no la
+      # vista: es la aplicacion del `principio` de arriba.
+      9:  campania
+      48: anio
+      85: anio
+    como_se_elige:
+      - "1 solo valor -> `*_simple`"
+      - "2 o mas valores CONTIGUOS segun dim_tiempo_campania.orden -> `*_rango`, con el primero y el ultimo"
+      - "2 o 3 valores no contiguos -> `campania_lista`"
+      - "4 o mas no contiguos -> `campania_muchas`"
+    fuente_del_orden: "marts/dim_tiempo_campania.parquet, columna `orden` (la contiguidad se evalua ahi, no comparando strings)"
+    grano_anual:
+      contiguidad: "los años son enteros: contiguos = consecutivos de a uno. No hace falta tabla de orden."
+      lista_y_muchas: >
+        Con grano anual se usan las mismas dos plantillas de cierre que con campañas, cambiando la
+        palabra: `anio_lista` ("años 2022, 2024 y 2025") y `anio_muchas` ("6 años hasta 2025").
+      anio_en_curso: >
+        El año incompleto NO se rotula con sufijo en el titulo. Se decide antes: o la vista lo
+        excluye (`excluye_anio_en_curso: true`, que es lo que hacen los totales y los rankings) o
+        lo muestra y lo explica con una advertencia en pantalla, como la serie mensual. Un titulo
+        que dijera "años 2022 a 2026" sobre un cuadro que llega hasta mayo seria enganioso, y por
+        eso la ventana efectiva del titulo sale de los años realmente graficados, no de la ventana
+        declarada.
+    campania_en_curso:
+      sufijo: " (en curso)"
+      cuando: "la campaña mostrada es la que `_comunes-base-N.campania_en_curso` marca como abierta"
+      ejemplo: "campaña 2025/26 (en curso)"
+    ventana_del_demo:
+      nota: "Si la vista usa la ventana completa, el periodo se resuelve contra `ventana_campanias.resueltas_*`, no contra un string escrito a mano. Hoy da: campañas 2015/16 a 2024/25."
+    origen_docx:
+      - {parrafo: 13, texto: "Año de referencia (2009)"}
+      - {parrafo: 24, texto: "Año o período de referencia. (en este caso NO hay un rango de períodos)"}
+
+# ===========================================================================
+# 4. SUBTITULO
+# ===========================================================================
+subtitulo:
+  obligatorio: true
+  que_lleva: "la unidad de medida, y cualquier recorte del universo que cambie como se lee el numero"
+  plantilla_por_defecto: "En {unidad_larga}"
+  unidad_larga:
+    ha:    "hectáreas"
+    tn:    "toneladas"
+    kg/ha: "kilos por hectárea"
+    "%":   "porcentaje"
+    cabezas: "cabezas"
+    dte:   "documentos"
+  se_puede_escribir_a_mano: true
+  regla: "Si el spec trae `subtitulo`, manda el del spec, pero TIENE que nombrar la unidad. El build lo verifica buscando la unidad larga en el texto."
+  motivo: "JC no pide subtitulo en el docx, pero tampoco quiere la unidad en el titulo, y un numero sin unidad no se publica. Los 16 specs de la base 9 ya lo traen escrito."
+
+# ===========================================================================
+# 5. PIE DE FUENTE
+# ===========================================================================
+pie_de_fuente:
+  obligatorio: true
+  origen_docx: {parrafo: 7, texto: "Fuente: SENASA"}
+  tambien_lo_pide: "CLAUDE.md (fuente citada al pie de cada cuadro/grafico)"
+  plantilla: "Fuente: {organismo}"
+  plantilla_con_publicacion: "Fuente: {organismo}, {publicacion}"
+  de_donde_sale_el_organismo:
+    columna: "fuente"
+    tabla: "el mart que alimenta la vista (ej. marts/hecho_cultivos.parquet)"
+    regla: >
+      Valor unico de la columna `fuente` de las filas que efectivamente se estan mostrando. No se
+      escribe a mano en el spec: asi la cita nunca puede contradecir al dato que esta arriba.
+    varias_fuentes: "si el conjunto trae mas de un valor, se listan con `separador_lista` y `ultimo_de_lista`, en orden alfabetico"
+  publicacion:
+    por_defecto: null
+    regla: "Solo se agrega si esta declarada en el config de la base. No se completa de memoria."
+    base_9: null
+    aclaracion_base_9:
+      texto: "(Ministerio de Agricultura, Ganadería y Pesca)"
+      plantilla: "Fuente: {organismo} {aclaracion}"   # sin coma, calcado del mockup
+      resultado: "Fuente: MAGyP (Ministerio de Agricultura, Ganadería y Pesca)"
+      origen: "mockup Modelo 2, pie del mapa (tercera tanda 10-ago-2026). Backlog 14, respondida."
+    nota_base_9: >
+      JC declara la cita en su propio indice como "Fuente: MAGyP" (configs/bases/9-cultivos-extensivos.yaml,
+      `indice.cita_fuente_al_pie`), y el mart trae `fuente = 'MAGyP'` en las 11.728 filas. Los 16 specs
+      venian citando "MAGyP, Estimaciones Agrícolas", que es el nombre real de la serie del ministerio
+      pero NO es lo que JC declaro. La pregunta 14 del backlog quedo respondida por el mockup
+      LITERAL de la tercera tanda (10-ago-2026): JC escribe de su puño
+      "Fuente: MAGyP (Ministerio de Agricultura, Ganadería y Pesca)" bajo el mapa. Se adopta
+      esa forma en cultivos: organismo del mart ("MAGyP") + la aclaracion entre parentesis como
+      publicacion declarada aca. "Estimaciones Agrícolas" queda descartada.
+  verificacion_en_el_build:
+    - "el spec declara `fuente.organismo_esperado`; si el mart trae otro valor, el build FALLA"
+    - "ninguna vista se renderiza sin pie"
+  posicion: "debajo del grafico, alineado a la izquierda, tipografia menor que el cuerpo"
+  pie_del_sitio: "El pie general del sitio (site/theme.yaml, campo `pie`) es OTRA cosa y no reemplaza a este. Van los dos."
+
+# ===========================================================================
+# 6. NUMERACION DE TABLAS Y GRAFICOS
+# ===========================================================================
+numeracion:
+  origen_docx: {parrafo: 75, texto: "Tabla 2 – Diferencias y variaciones por categorías del stock entre 2009 y 2008 (parte I)"}
+  se_adopta: parcialmente
+  decision:
+    numeracion_global_entre_paginas: NO
+    motivo: >
+      "Tabla 2" viene de un informe impreso, donde las tablas van en un orden fijo y el lector tiene
+      todo el documento. El sitio son paginas separadas con navegacion libre: no hay un orden. Una
+      numeracion global seria ademas fragil (agregar una vista renumera todo lo que viene despues,
+      y JC quedaria citando "la tabla 7" que paso a ser la 8) y no deterministica salvo que
+      inventemos un orden artificial y lo mantengamos a mano para siempre.
+    numeracion_dentro_de_una_pagina: SI
+    como:
+      formato_tabla: "Tabla {n}"
+      formato_grafico: "Gráfico {n}"
+      formato_mapa: "Mapa {n}"
+      donde_va: "antepuesto al titulo de protocolo, separado con `tipografia.separador_titulo`"
+      contador: "por pagina y por tipo de elemento, arrancando en 1"
+      orden: "el orden en que la pagina lista sus vistas en el layout (un dato explicito del layout, no el orden de lectura del disco)"
+      cuando_se_aplica: "solo si la pagina tiene 2 o mas elementos DEL MISMO TIPO. Un unico grafico en la pagina no se numera."
+      determinismo: "el layout de cada pagina es un archivo versionado; mismo layout, misma numeracion"
+    parte_i_parte_ii:
+      que_es: "JC parte una tabla ancha en 'parte I' y 'parte II' porque no le entra en la hoja."
+      se_adopta: NO
+      en_su_lugar: "scroll horizontal con la primera columna fija. En pantalla no hay borde de hoja; partir la tabla obliga a comparar dos cuadros que podrian ser uno."
+  ejemplo_resuelto: "Gráfico 2 - Evolución de la producción de soja - Santiago del Estero - campañas 2015/16 a 2024/25"
+
+# ===========================================================================
+# 7. EJE VERTICAL
+# ===========================================================================
+eje_vertical:
+  origen_docx: {parrafo: 25, texto: "Las escalas verticales deben tener UN MÍNIMO DE 5 ESCALAS (los intervalos, en este caso 5% los elige cada uno: 0%; 5%; 10%, etc)"}
+  regla_de_jc: "minimo 5 marcas rotuladas"
+  lo_que_no_hacemos: >
+    "los elige cada uno" no puede quedar asi: en un sitio generado no hay un "cada uno". Se define
+    una funcion y todos los graficos del sitio la usan. La funcion esta calibrada para reproducir el
+    intervalo que eligio JC en su propio grafico.
+  funcion:
+    nombre: marcas_eje
+    entrada: [minimo_de_la_serie, maximo_de_la_serie]
+    objetivo_intervalos: 7
+    mantisas_permitidas: [1, 2, 2.5, 5, 10]
+    pasos:
+      - "1. piso_bruto = min(0, minimo_de_la_serie); techo_bruto = max(0, maximo_de_la_serie). El eje SIEMPRE incluye el cero (son barras: si no, la comparacion visual miente)."
+      - "2. rango = techo_bruto - piso_bruto. Si rango = 0, marcas = [0, 1] y se termina."
+      - "3. crudo = rango / objetivo_intervalos"
+      - "4. exponente = floor(log10(crudo)); mantisa = crudo / 10^exponente"
+      - "5. paso = 10^exponente * (primera mantisa permitida >= mantisa)"
+      - "6. piso = floor(piso_bruto / paso) * paso; techo = ceil(techo_bruto / paso) * paso"
+      - "7. marcas = (techo - piso) / paso + 1"
+      - "8. mientras marcas < 5: paso = paso / 2 y volver al 6 (a lo sumo 2 veces)"
+    se_calcula_en: "la unidad de display (puntos porcentuales para ejes en %, no fracciones)"
+  eje_secundario:
+    cuando: "grafico `barras-y-linea` (produccion en barras + rendimiento en linea)"
+    regla: "se calcula el eje izquierdo con la funcion, y el derecho se fuerza a la MISMA cantidad de intervalos, con `paso_derecho = nice(rango_derecho / intervalos_izquierdos)` usando las mismas mantisas permitidas"
+    motivo: "si los dos ejes tienen distinta cantidad de marcas, las lineas de grilla no coinciden y el grafico se lee sucio"
+  pruebas_de_aceptacion:
+    - caso: "grafico embebido de JC: distribucion porcentual del stock bovino por estrato, maximo 31,84%"
+      esperado: "paso 5, marcas 0% 5% 10% 15% 20% 25% 30% 35% (8 marcas)"
+      verificado: "coincide exactamente con el eje del grafico del docx (leido de word/charts/chart1.xml)"
+    - caso: "barras apiladas al 100%"
+      esperado: "paso 20, marcas 0% 20% 40% 60% 80% 100% (6 marcas)"
+      nota: "sale de la misma funcion, no hace falta un caso especial"
+  eje_horizontal:
+    campanias: "se rotulan TODAS las campañas de la ventana. Con 10 no hace falta saltear ninguna."
+    rotacion: "0 grados si entran; si no entran, 45 grados. Nunca se ocultan etiquetas."
+
+# ===========================================================================
+# 8. MAPAS DE CALOR
+# ===========================================================================
+mapa:
+  origen_docx:
+    - {parrafo: 14, texto: "Departamentos: con nombre (para el caso de mapas nacionales NO será necesario agregar nombres)."}
+    - {parrafo: 15, texto: "Escala de referencia: En quintiles proporcionales con detalle de color, mínimo y máximo de cada subescala."}
+
+  rotulos:
+    departamentos_con_nombre: true
+    fuente_del_nombre: "dim_geo.nombre (mismo criterio que `slots.area.nombres_de_departamento`)"
+    mapas_nacionales: "sin nombres"
+    si_no_entra_el_nombre: "se dibuja igual el nombre del departamento en los que entran y el resto se ve con el mouseover. Nunca se rotula solo a algunos por criterio estetico: el corte es por espacio y es el mismo en cada build."
+
+  escala:
+    tipo: quintiles_proporcionales
+    clases: 5
+    interpretacion: >
+      "Quintiles proporcionales" = clasificacion por CANTIDAD de departamentos (5 grupos de tamaño
+      parecido), no por partes iguales del rango de valores. Es lo unico que funciona con estos
+      datos: en soja 2024/25 el mayor departamento tiene 355.400 ha y el menor 575. Cortando el
+      rango en 5 partes iguales, 24 de los 26 departamentos caerian en la clase mas baja y el mapa
+      quedaria todo del mismo color.
+    algoritmo:
+      - "1. Universo = departamentos CON DATO para la combinacion de filtros de la vista. Ver `sin_dato` mas abajo."
+      - "2. Ordenar los valores de menor a mayor. n = cantidad."
+      - "3. Para k = 1..4: i_k = redondeo comercial (half-up) de n * k / 5. corte_k = el valor que esta en la posicion i_k (contando desde 1)."
+      - "4. Clases: C1 = [minimo, corte_1]; C2 = (corte_1, corte_2]; C3 = (corte_2, corte_3]; C4 = (corte_3, corte_4]; C5 = (corte_4, maximo]."
+      - "5. Empates: como los cortes SON valores del propio conjunto y los intervalos son semiabiertos, dos departamentos con el mismo valor caen siempre en la misma clase. Por eso las clases no salen todas del mismo tamaño, y esta bien que asi sea."
+      - "6. Si dos cortes consecutivos coinciden, la clase del medio queda vacia: NO se dibuja en la leyenda y queda anotada en el log del build."
+      - "7. Si n < 5, no hay quintiles: una clase por valor distinto, hasta 5, usando los colores mas oscuros de la rampa. Se rotula 'menos de 5 departamentos con dato'."
+    se_recalcula: "por cada combinacion de filtros (cultivo x campaña x variable)"
+    advertencia_obligatoria_en_pantalla:
+      id: cortes-propios-de-cada-mapa
+      texto: >
+        Los cortes de la escala se calculan con los datos de este mapa. Dos mapas de campañas
+        distintas usan los mismos colores pero no necesariamente los mismos cortes: para comparar
+        entre campañas hay que mirar los valores de la referencia, no el color.
+      nota_para_jc: "Si prefiere cortes fijos para toda la serie, se cambia aca y los mapas pasan a ser comparables entre si. Backlog pregunta 16."
+
+  leyenda:
+    muestra: "el color, el minimo y el maximo de cada subescala"
+    plantilla_de_clase: "{minimo} a {maximo}"
+    valores_que_se_muestran: "el menor y el mayor de los departamentos QUE ESTAN en la clase (no los puntos de corte)"
+    formato: "el de `precision_display` de la base (para superficie: entero, redondeado a la centena si es >= 1.000)"
+    redondeo: "comercial (half-up). NO el redondeo bancario que Python trae por defecto en round()."
+    si_el_redondeo_solapa_dos_clases: "se muestran las dos clases sin redondear. Una leyenda donde una clase termina en 26.200 y la siguiente empieza en 26.200 se lee como un error."
+    orden: "de la clase mas alta a la mas baja, de arriba hacia abajo"
+    ultima_entrada: "'Sin datos', con el color `sin_dato.color`, siempre al final y siempre presente si hay al menos un departamento sin dato"
+    unidad: "va en el encabezado de la leyenda, una sola vez (ej. 'Hectáreas sembradas')"
+
+  sin_dato:
+    entran_al_calculo_de_quintiles: false
+    motivo: >
+      Un departamento sin dato no es un departamento con cero. Si entrara al calculo, correria los
+      cortes de las 5 clases y ademas pintaria de color claro (que se lee como "poco") algo de lo
+      que no sabemos nada.
+    se_dibuja: true
+    motivo_de_dibujarlo: >
+      Un hueco en el mapa se lee como un error de la provincia, no como ausencia de dato
+      (configs/dims/sde-departamentos.yaml, advertencia `salavina-sin-datos`).
+    color: "#bdbdbd"
+    borde: "#9e9e9e"
+    etiqueta_en_leyenda: "Sin datos"
+    caso_conocido:
+      departamento: "SALAVINA"
+      geo_id: "86168"
+      base: 9
+      detalle: "Tiene poligono en el GeoJSON pero no tiene ni una fila en la base 9, en ninguna campaña. El mapa dibuja 27 departamentos y el calculo de quintiles corre sobre 26."
+      nota_metodologica: "salavina-sin-datos (definida en _comunes-base-9.yaml)"
+    otros_estados_sin_dato: "los tres estados de `_comunes-base-9.estados_sin_dato` (sin_datos, sembrado_sin_cosechar, produccion_no_informada) se pintan igual y se distinguen en el mouseover"
+
+  geometria:
+    archivo: "configs/dims/sde-departamentos.geojson"
+    clave_de_join: "properties.geo_id contra dim_geo.geo_id (5 digitos INDEC)"
+    procedencia: "configs/dims/sde-departamentos.yaml"
+
+  prueba_de_aceptacion:
+    caso: "09-cultivo-mapa-sup-sembrada con cultivo = Soja total, campaña 2024/25, variable = sup_sembrada_ha"
+    n: 26
+    cortes: {corte_1: 4400, corte_2: 5850, corte_3: 26150, corte_4: 93500}
+    clases:
+      - {clase: 5, deptos: 5, leyenda: "95.500 a 355.400", color: "#1b5e20"}
+      - {clase: 4, deptos: 5, leyenda: "26.700 a 93.500",  color: "#388e3c"}
+      - {clase: 3, deptos: 6, leyenda: "7.200 a 26.200",   color: "#66bb6a"}
+      - {clase: 2, deptos: 5, leyenda: "5.000 a 5.900",    color: "#a5d6a7"}
+      - {clase: 1, deptos: 5, leyenda: "575 a 4.400",      color: "#e8f5e9"}
+      - {clase: null, deptos: 1, leyenda: "Sin datos", color: "#bdbdbd", detalle: "SALAVINA"}
+    verificado_contra: "marts/hecho_cultivos.parquet el 2026-07-30"
+    nota: "La clase 3 tiene 6 departamentos y no 5 por el redondeo de las posiciones de corte. Es el comportamiento esperado del algoritmo, no un error."
+
+# ===========================================================================
+# 9. COLORES
+# ===========================================================================
+# LA REGLA MAS FUERTE DEL DOCUMENTO.
+colores:
+  origen_docx: {parrafo: 17, texto: "COLORES: SIEMPRE SE CONSERVARÁ LA MISMA ESCALA DE COLORES PARA EL MISMO TIPO DE VARIABLE."}
+  tambien_lo_pide: "_comunes-base-9.uniformidad (JC f39-f41: 'sino seria un carnaval')"
+
+  regla: >
+    El color lo decide el TIPO DE VARIABLE, no la vista, no la base, no el cultivo y no quien
+    construye la pagina. Superficie es verde en todos lados y siempre; produccion es ocre en todos
+    lados y siempre. Si una vista necesita otro color, se cambia ACA y cambia en todo el sitio.
+
+  como_se_hereda: >
+    Cada nueva base declara a que tipo de variable pertenece cada una de sus medidas. Si el tipo ya
+    existe, usa su rampa sin discutir. Si es un tipo nuevo (cabezas, milimetros de lluvia, pesos),
+    se agrega una rampa nueva aca, una sola vez, y queda fija para siempre.
+
+  rampas:
+    superficie:
+      medidas: [sup_sembrada_ha, sup_cosechada_ha]
+      unidad: ha
+      hex: ["#e5f1db", "#b7d3a8", "#7fae7a", "#4c8352", "#22502c"]
+      color_solido: "#22502c"
+      justificacion: >
+        Termina exactamente en el verde institucional de site/theme.yaml (#22502c), asi que la
+        variable principal del sitio y la identidad visual son el mismo color. Cinco pasos con
+        diferencia de luminosidad pareja entre si.
+        Actualizada el 2026-08-03: la regla no cambio, cambio el verde institucional al que la
+        regla la ata. Los dos extremos se muestrearon del mapa del mockup aprobado por Francisco
+        (specs/fuentes/WhatsApp Image 2026-07-27 at 20.24.16.jpeg).
+    produccion:
+      medidas: [produccion_tn]
+      unidad: tn
+      hex: ["#fff3e0", "#ffcc80", "#ffa726", "#f57c00", "#e65100"]
+      color_solido: "#e65100"
+      justificacion: "Ocre/naranja de grano cosechado. Un solo tono, sin choque con el verde institucional: en un tablero con las dos variables al lado se distinguen de un vistazo y tambien en escala de grises."
+    rendimiento:
+      medidas: [rendimiento_kg_ha]
+      unidad: kg/ha
+      hex: ["#e3f2fd", "#90caf9", "#42a5f5", "#1976d2", "#0d47a1"]
+      color_solido: "#0d47a1"
+      justificacion: >
+        El rendimiento es un cociente, no un volumen: no se suma ni se acumula. Merece un tono
+        claramente distinto de los dos anteriores para que nadie lo lea como "mas superficie" o
+        "mas produccion". El azul no se confunde con el verde ni con el ocre en las formas de
+        daltonismo mas frecuentes.
+    cabezas:
+      medidas: [cabezas, ingreso_establecimiento, egreso_establecimiento, balance_cabezas]
+      unidad: cabezas
+      hex: ["#efebe9", "#bcaaa4", "#8d6e63", "#5d4037", "#3e2723"]
+      color_solido: "#5d4037"
+      estado: confirmada
+      confirmada_con: "las 15 vistas de la base 85 (movimientos de hacienda), 2026-07-31"
+      justificacion: "Ganaderia (bases 48 y 85). Tipo de variable distinto de todo lo agricola, rampa propia desde el dia uno, tal como pide JC."
+    documentos:
+      medidas: [documentos]
+      unidad: dte
+      hex: ["#eceff1", "#b0bec5", "#78909c", "#455a64", "#263238"]
+      color_solido: "#455a64"
+      estado: confirmada
+      justificacion: >
+        Un DTE no es una cabeza: es un papel. Contar documentos y contar animales son dos
+        variables distintas y el protocolo manda que dos tipos de variable no compartan escala.
+        Gris azulado porque es el color de lo administrativo y porque, puesto al lado del marron
+        de la hacienda, deja claro de un vistazo cual de los dos cuadros esta mirando el ojo.
+
+  sin_dato:
+    hex: "#bdbdbd"
+    regla: "No pertenece a ninguna rampa y no se usa nunca para representar un valor."
+
+  no_choca_con_el_theme:
+    verificado: 2026-07-30
+    detalle: >
+      site/theme.yaml define primario #1b5e20 (verde), secundario #37474f (gris azulado), fondo
+      #fafafa y texto #212121. La rampa de superficie TERMINA en el primario (a proposito). El resto
+      de las rampas no toca ninguno de los cuatro colores del theme. El secundario #37474f queda
+      libre para cromo de interfaz (bordes, ejes, tipografia de apoyo) y no se usa para datos.
+
+  series_de_un_grafico:
+    aclaracion: >
+      Las rampas de arriba son para ESCALAS DE INTENSIDAD (mapas y todo lo que pinte por magnitud).
+      Cuando el color distingue categorias (un cultivo por serie, una provincia por serie), manda
+      la regla `uniformidad.regla_color_cultivo` de _comunes-base-9: un color fijo por cultivo,
+      asignado una sola vez y respetado en todas las vistas.
+    comparaciones_geograficas:
+      regla: "En un grafico que compara areas (Santiago contra el pais, o contra el NOA), Santiago del Estero va SIEMPRE con el primario #1b5e20 y el agregado de comparacion con el secundario #37474f."
+      motivo: "Es el caso del grafico de ejemplo de JC (Sgo. del Estero vs Total Pais). El sujeto del sitio es la provincia: siempre se lee primero y con el color de la casa."
+
+# ===========================================================================
+# 10. TABLAS
+# ===========================================================================
+tablas:
+  origen_docx:
+    - {parrafo: 75, texto: "Tabla 2 – Diferencias y variaciones por categorías del stock entre 2009 y 2008 (parte I)"}
+    - {parrafo: "77-156", texto: "cuerpo de la tabla de ejemplo: por categoria, valor absoluto y Var % al lado; CHACO (total provincial) en la primera fila y los departamentos debajo"}
+  estructura:
+    total_arriba: true
+    regla: "La fila del total (provincia o agregado) va PRIMERO, arriba de los departamentos, y visualmente diferenciada (fondo gris claro y negrita). No va al pie."
+    origen: "en la tabla de ejemplo, CHACO es la primera fila y despues vienen 2 DE ABRIL, ALMIRANTE BROWN, BERMEJO..."
+    orden_de_los_departamentos: "el que declare `orden` en el spec. Si el spec no declara nada, alfabetico por dim_geo.nombre."
+    variacion_al_lado_del_valor: true
+    regla_variacion: "Cada columna de valor lleva su columna de Var % INMEDIATAMENTE a la derecha, no todas las variaciones agrupadas al final."
+    formato_variacion: "un decimal y signo siempre visible (+7,1% / -1,2%), separador decimal coma"
+    valor_absoluto: "con separador de miles punto, sin decimales, signo visible cuando es una diferencia"
+  colores_de_variacion:
+    positivo: "#1b5e20"
+    negativo: "#b71c1c"
+    cero: "#212121"
+    regla: "solo se pinta el TEXTO del porcentaje, nunca el fondo de la celda: un mar de celdas rojas y verdes tapa los numeros"
+  celda_sin_dato: "S/D"
+  alineacion: {texto: izquierda, numeros: derecha, encabezados: "igual que su columna"}
+
+# ===========================================================================
+# 11. QUE VERIFICA EL BUILD (si algo de esto falla, la vista no se publica)
+# ===========================================================================
+verificaciones:
+  - "todo cuadro, grafico o mapa tiene titulo de protocolo completo (los 4 componentes de JC resueltos)"
+  - "ningun titulo contiene U+2013 ni U+2014"
+  - "todo cuadro, grafico o mapa tiene pie de fuente, y el organismo coincide con la columna `fuente` del mart"
+  - "todo grafico con eje vertical tiene 5 marcas rotuladas o mas"
+  - "toda escala de intensidad usa una rampa declarada en `colores.rampas` y ninguna otra"
+  - "todo mapa tiene leyenda con minimo y maximo por clase, y la entrada 'Sin datos' si corresponde"
+  - "todo subtitulo nombra la unidad"
+  - "el periodo del titulo coincide con las campañas efectivamente graficadas"
+
+verificado:
+  fecha: 2026-07-30
+  que_se_probo: >
+    Se implemento el compositor tal como esta descripto aca y se corrio sobre los 16 specs de la
+    base 9. Los 16 titulos salen exactamente iguales a los `titulo_protocolo_ejemplo` que declara
+    cada spec, y los dos titulos del propio docx de JC (el mapa del Chaco y el grafico de barras)
+    se reproducen con las plantillas `mapa` y `torta` sin ningun caso especial.
+  quintiles: "la prueba de aceptacion del mapa se calculo contra marts/hecho_cultivos.parquet"
+  ejes: "el intervalo de 5% del grafico de JC sale de la funcion `marcas_eje` sin tocar constantes"
+
+# ===========================================================================
+# 12. LO QUE QUEDO ABIERTO CON JC
+# ===========================================================================
+# Se resolvio por la interpretacion mas simple y quedo anotado. Ninguna de estas decisiones frena
+# la construccion. Ver specs/preguntas/backlog.md, preguntas 14 a 19.
+abierto_con_jc:
+  - id: quintiles-literales
+    backlog: 15
+    decidido: "5 clases, siempre, con clases de tamaño desparejo cuando hay empates."
+    a_confirmar: "Si 'quintiles' es literal o si acepta otra cantidad de clases cuando hay muchos empates."
+  - id: cortes-fijos-entre-campanias
+    backlog: 16
+    decidido: "los cortes se recalculan en cada mapa, con la advertencia en pantalla"
+    a_confirmar: "Si prefiere cortes fijos para toda la serie, para que dos mapas de campañas distintas sean comparables por color."
+  - id: numeracion-de-cuadros
+    backlog: 17
+    decidido: "numeracion por pagina, no global entre paginas"
+    a_confirmar: "Si le sirve o si prefiere que no haya numeros."
+  - id: nombres-de-departamento-en-mayuscula
+    backlog: 18
+    decidido: "tal cual vienen de la fuente (MORENO, RIO HONDO)"
+    a_confirmar: "Si los quiere capitalizados y con tildes."
+  - id: sector-cultivos-extensivos
+    backlog: 19
+    decidido: "'cultivos extensivos', tomado de su propio arbol tematico"
+    a_confirmar: "Si es el nombre que el usa cuando habla, o si prefiere otro."
+  - id: cita-de-fuente-base-9
+    backlog: 14
+    decidido: "'Fuente: MAGyP', que es lo que declara su indice"
+    a_confirmar: "Si quiere la serie completa: 'Fuente: MAGyP, Estimaciones Agrícolas'."
+
+# ===========================================================================
+# 13. PROTOCOLO DE FORMATO V1 (docx de JC del 10-ago-2026)
+# ===========================================================================
+# Traduccion del segundo documento (`origen_version_2`). Todas las citas `origen_docx_v2` son de
+# ese archivo. El modelo visual que estas reglas acompañan es specs/fuentes/0000000000 Modelo 1.xlsx
+# y su traduccion ejecutable es specs/modelos/tablero-cultivos-extensivos.yaml.
+formato_v1:
+
+  alcance:
+    interfaz: "La version 1 cubre SOLO la interfaz publica. La intranet tendra la misma estructura, mas amplia, despues."
+    orden_de_trabajo: "Se empieza por Agricultura (cultivos extensivos); ganaderia se revisa despues."
+    pagina_de_inicio: "Queda para el final, se hace con marketing. No condiciona los contenidos."
+    origen_docx_v2: {seccion: "GENERALES + LA PROPUESTA DE FORMATO", texto: "En esta versión 1 vamos a concentrarnos en la interfaz pública... Siempre comenzaremos por agricultura"}
+    solo_cultivos_desde_el_10_ago:
+      decidido_por: "Facu, 10-ago-2026, con JC presente (segunda tanda de decisiones del dia)"
+      cita: "DE AHORA EN MAS TRABAJO SOLO EN CULTIVOS, NO TRABAJES CON LOS OTROS DE BOVINOS."
+      regla: >
+        Todo el trabajo de diseño y formato es EXCLUSIVAMENTE sobre la seccion de cultivos
+        extensivos. Las otras secciones (movimientos de hacienda, stock bovino) NO se tocan
+        hasta nueva orden: quedan con el tema anterior tal como estan hoy y se migran despues.
+        constructor-dashboards no las modifica en ninguna pasada hasta que se levante esta regla.
+
+  # -------------------------------------------------------------------
+  # TERCERA TANDA del 10-ago-2026: EL MOCKUP MODELO 2 ES LITERAL
+  # (ver `origen_tercera_tanda` al principio del archivo; JC rechazo el rediseño del
+  # commit 41df326 y Facu ordeno "arrancar de cero y no mezclar con lo anterior. Hay que
+  # hacer lo que dice JC, respetá"). Estas reglas MANDAN sobre cualquier otra de formato_v1
+  # que las contradiga; cada derogacion queda dicha explicitamente.
+  # -------------------------------------------------------------------
+  tercera_tanda:
+    decidido_por: "Facu, 10-ago-2026, tercera tanda, tras el rechazo de JC al rediseño publicado"
+    alcance: "la seccion de cultivos extensivos (el alcance solo-cultivos de la segunda tanda sigue vigente)"
+
+    mockup_literal:
+      regla: >
+        La pagina de cultivos tiene que quedar COMO LA CAPTURA
+        (specs/fuentes/WhatsApp Image 2026-08-10 at 11.08.41.jpeg): misma estructura, mismos
+        titulos, mismas proporciones, misma disposicion. Sin reescrituras propias, sin
+        "modernizaciones", sin mezclar con lo construido antes ("Todo deformado Facu").
+        La regla_de_oro del tema_visual queda RESTAURADA SIN MATICES.
+      deroga:
+        - "tema_visual.principio_formato_no_diseno (segunda tanda): 'formato si, diseño literal no' ya no corre; el diseño TAMBIEN es literal"
+        - "tema_visual.menu_lateral_discreto (segunda tanda): el menu lateral vuelve al verde de la captura"
+        - "bloques_del_mockup.tabla_datos.una_sola_serie (segunda tanda): la tabla vuelve a los dos bloques que dibuja JC (interpretacion anotada, backlog 38)"
+      no_deroga:
+        - "alcance.solo_cultivos_desde_el_10_ago: el trabajo sigue siendo SOLO cultivos"
+        - "navegacion.dos_areas_de_inicio (Datos por Departamento habilitado) ni navegacion.comparacion_noa (habilitada, ratificacion de Francisco pendiente)"
+        - "las verificaciones de datos y de pie de fuente: el mockup manda la presentacion, no los numeros"
+
+    titulos_del_tablero_literales:
+      cita_jc: "No son los mismos títulos. Los gráficos tampoco. Tenemos que respetar el protocolo de títulos de gráficos."
+      regla: >
+        Los titulos de KPI y de graficos del tablero de cultivos se calcan del mockup y del
+        protocolo de titulos de JC (specs/fuentes/000 PROTOCOLO PARA GRAFICOS Y MAPAS
+        ELABORADOS.docx), SIN reescrituras propias. Dinamicos SOLO en los slots {cultivo},
+        {campaña} y {ventana}; el resto del texto es literal, incluida la abreviatura
+        "Sgo del Estero" que usa JC en sus titulos de grafico.
+      plantillas_literales_del_mockup:
+        tendencia: "{Cultivo} - Sgo del Estero - Total - Evolución de la superficie cosechada y producción - Campañas {desde} a {hasta}"
+        anillo: "Sgo del Estero - Campaña {campania} - Participación porcentual por cultivo en el total de la producción (fina y gruesa)"
+        top: "Ranking de sup. Sembrada sobre el total provincial"
+        kpis: ["Superficie sembrada", "Superficie cosechada", "Producción", "Rendimiento promedio"]
+      resuelve: "backlog 31 (RESUELTA). El punto en revision orden-y-abreviatura-en-titulos-del-mockup queda cerrado: el orden y la abreviatura del mockup SON intencionales."
+      alcance_de_la_regla: >
+        Aplica a los paneles del tablero de cultivos (y por interpretacion a las otras dos
+        paginas publicadas de la seccion, backlog 40). Las plantillas de la seccion 2 siguen
+        vigentes para el resto de las bases y para los specs que quedan como registro.
+      nota_interpretacion: >
+        El componente "Total" del titulo de tendencia se lee como el recorte "total" (soja
+        total, agregado provincial, sin abrir por variedad ni departamento). Backlog 39.
+        El slot de periodo se resuelve con las campañas realmente graficadas: el mockup dice
+        "2013/14 a 2024/25" pero la ventana sigue en 10 campañas mientras JC no la amplie
+        (backlog 32); la plantilla es literal, el periodo es el real.
+
+    kpis_sin_variacion:
+      cita_jc: "NO había que poner la diferencia con la campaña anterior"
+      regla: >
+        Los 4 indicadores de cabecera muestran SOLO el valor con su unidad (Superficie
+        sembrada ha, Superficie cosechada ha, Producción tn, Rendimiento promedio kg/ha),
+        como el mockup. PROHIBIDA la variacion contra la campaña anterior, la flechita, el
+        porcentaje o cualquier otro adorno comparativo en los KPI.
+
+    eje_vertical_visible:
+      cita_jc: "En el gráfico de líneas no está el eje vertical y tampoco la escala"
+      regla: >
+        El grafico de lineas lleva eje vertical VISIBLE con su escala rotulada, en "Millones"
+        como lo dibuja JC (rotulo "Millones" y marcas 0,00 a 4,00 en la captura). Un solo eje
+        para las dos series (superficie cosechada en ha y produccion en tn sobre el mismo eje
+        de millones), tal cual el mockup: sin eje secundario. La funcion `marcas_eje` de la
+        seccion 7 sigue decidiendo las marcas (minimo 5); lo que esta regla prohibe es
+        ocultar el eje o su escala.
+
+    solo_tableros:
+      cita_jc: >
+        "NO va con 'ver detalle'... NO debe llevar NADA a otra página salvo el dato
+        departamental. OLVIDATE DEL ANÁLISIS COMPLETO, ESO YA NO EXISTE MÁS, NECESITO QUE LO
+        SAQUES Y TE QUEDES CON LOS TABLEROS"
+      regla: >
+        En cultivos desaparece TODO el esquema tablero+analisis: analisis.html NO EXISTE MAS
+        y no se genera. Ningun panel lleva link "ver detalle" ni ninguna otra navegacion de
+        salida. Las UNICAS salidas del tablero son: (1) los dos botones de cabecera del
+        mockup ("Santiago en el NOA" y "Datos por Departamento") y (2) el click en un
+        departamento del mapa, que lleva al dato departamental (09-departamento-datos).
+        Nada mas.
+      consecuencia_en_specs: >
+        Las vistas de detalle de la base 9 pasan a estado `no-publicada`: los specs quedan
+        como registro de las reglas (y cuatro de ellos siguen alimentando paneles del
+        tablero), pero no se construye pagina propia para ninguno. Paginas publicadas de
+        cultivos: tablero-cultivos-extensivos (index), 09-departamento-datos y
+        09-noa-participacion-provincia. Ninguna otra.
+      persistencia_de_filtros: >
+        La regla navegacion.persistencia_de_filtros sigue vigente para las salidas que
+        quedan: los dos botones de cabecera y el click del mapa viajan con el cultivo y la
+        campaña seleccionados.
+      amplia: "estructura_de_seccion (backlog 28) y deroga en cultivos la regla del 3-ago de CLAUDE.md (tablero + analisis.html)"
+
+    cabecera:
+      cita_jc: "En la parte de producción agrícola eso está duplicado... ahí iban las banderas de idiomas"
+      regla: >
+        La cabecera queda como el mockup: logo provincial a la izquierda, los dos botones
+        ("Santiago en el NOA", "Datos por Departamento"), y ARRIBA A LA DERECHA las banderas
+        de idioma es/en/pt. SIN titulo de pagina duplicado: el titulo "Producción agrícola"
+        no se dibuja en la cabecera (el lugar es de las banderas); la identificacion de la
+        pagina la da la barra verde del breadcrumb ("Agricultura - Cultivos Extensivos -
+        {Cultivo} - Provincia").
+      banderas_idioma:
+        regla: >
+          Banderas es/en/pt dibujadas como el mockup: ESPAÑOL ACTIVA; ingles y portugues
+          DESHABILITADAS con rotulo "Próximamente". Misma excepcion explicita y ACOTADA a la
+          regla "no se dibujan botones que no hacen nada" que ya cubre a las utilidades.
+        resuelve: "backlog 33 (RESUELTA). Deroga el estado anterior de bloques_del_mockup.idiomas ('NO entran todavia')."
+
+    mapa_grande:
+      cita_jc: "El mapa es una miniatura y está deformado"
+      regla: >
+        El mapa ocupa la COLUMNA IZQUIERDA ENTERA del contenido, grande, con la proporcion
+        geografica CORRECTA de la provincia (nunca estirado ni comprimido para llenar la
+        caja: la caja se adapta al mapa). Arriba el rotulo "Seleccione departamento" y al
+        pie "Fuente: MAGyP (Ministerio de Agricultura, Ganadería y Pesca)", como el mockup.
+        Prohibido dibujarlo como miniatura o panel chico.
+
+  # -------------------------------------------------------------------
+  # CUARTA TANDA del 10-ago-2026: ajustes de Facu sobre la reconstruccion
+  # literal (ver `origen_cuarta_tanda` al principio del archivo). NO deroga
+  # la literalidad del mockup (tercera_tanda sigue vigente): son ajustes de
+  # puesta, escala y usabilidad, mas dos reglas GENERALES nuevas
+  # (tooltips_con_nombre_y_datos y proporciones_sin_huecos, que valen para
+  # todo el sitio, no solo para cultivos).
+  # -------------------------------------------------------------------
+  cuarta_tanda:
+    decidido_por: "Facu, 10-ago-2026, cuarta tanda, revisando la reconstruccion literal del mockup"
+    alcance: >
+      La seccion de cultivos extensivos (sigue el alcance solo-cultivos), SALVO
+      tooltips_con_nombre_y_datos y proporciones_sin_huecos, que son reglas generales de
+      presentacion para todo el sitio, y home_sin_menu_lateral, que es de la home raiz.
+
+    logo_provincial_bien_puesto:
+      cita_facu: "El logo de Santiago está mal puesto, no sé si deberíamos usar otro, se ve horrible."
+      regla: >
+        Se corrige la PUESTA del asset actual (site/assets/logo-provincia.png) en la cabecera:
+        tamaño, alineacion y respiro acordes al mockup, sin deformarlo ni recortarlo. El asset
+        en si NO cambia en esta pasada: si se consigue uno mejor lo deciden Francisco y
+        marketing (backlog pregunta 41) y no bloquea nada.
+
+    escala_legible:
+      cita_facu: "En el gráfico de líneas está mal la escala, no se distinguen las variaciones."
+      regla: >
+        La escala del grafico de lineas tiene que dejar LEER las variaciones entre campañas.
+        El eje unico en "Millones" de la tercera tanda (eje_vertical_visible) SIGUE: lo que
+        cambia es el paso y el rango. La construccion actual usa paso 1,00 y aplasta las
+        curvas; JC dibujo paso 0,50 en su mockup. Paso mas fino (0,50 de referencia) y/o
+        rango ajustado al dato, lo que haga falta para que las variaciones se distingan.
+        La regla de "minimo 5 marcas" de la seccion 7 sigue valiendo; el criterio nuevo es
+        que el paso no puede ser tan grueso que las series se lean planas.
+
+    informacion_relacionada_se_dibuja:
+      cita_facu: "Falta Información relacionada, tiene que estar aunque no lleve a ningún lado."
+      regla: >
+        El panel "Información relacionada (abre en nueva ventana)" del mockup SE DIBUJA, con
+        los links del mockup (costos y margenes, exportaciones, calendario de siembra y
+        cosecha, precios, VBP) DESHABILITADOS con rotulo "Próximamente". Misma excepcion
+        explicita y ACOTADA a la regla "no se dibujan botones que no hacen nada" que las
+        utilidades y las banderas. Resuelve la pregunta que dejo abierta constructor-dashboards
+        y deroga el estado anterior ("no se dibuja porque sus destinos no existen"). Los
+        DESTINOS siguen sin existir: las vistas de precios/costos/exportaciones siguen
+        bloqueadas por falta de bases (backlog 8); los links se activan cuando entren.
+
+    home_sin_menu_lateral:
+      cita_facu: "El sidebar en la página principal no tiene que estar; tiene que aparecer recién cuando se entra a un dashboard."
+      regla: >
+        La home raiz del sitio (index.html) va SIN menu lateral. El menu tematico lateral
+        aparece recien DENTRO de las secciones/dashboards. Matiza
+        navegacion.menu_tematico_lateral: la regla del menu describe las paginas de seccion,
+        no la home.
+
+    tooltips_con_nombre_y_datos:
+      # REGLA GENERAL (todo el sitio), sale de dos comentarios de Facu (puntos 5 y 6).
+      cita_facu:
+        - "En el mapa, el mouseover muestra el ID del departamento."
+        - "Cuando uno vaya al mapa, con mouseover que se vean los datos, no necesariamente tocar, dado que ya está el botón de Datos por Departamento."
+      regla: >
+        Un tooltip NUNCA muestra codigos internos (geo_id, ids de spec, claves de mart):
+        siempre el NOMBRE legible de la entidad, como lo resuelve dim_geo. Y en los mapas el
+        mouseover muestra el nombre del departamento MAS sus datos para la seleccion vigente
+        (en cultivos: las variables de la secuencia fija para el cultivo y la campaña
+        activos): la lectura rapida es por hover, sin obligar al click. El click hacia el
+        dato departamental se mantiene (es la salida que dejo JC), pero no puede ser la unica
+        forma de ver el numero.
+      bug_que_la_dispara: "el tooltip del mapa de cultivos mostraba el geo_id del departamento en vez del nombre"
+
+    boton_volver_provincia:
+      cita_facu: "Cuando uno va a Datos por Departamento, el botón sigue diciendo Datos por Departamento; debería volver a Provincia."
+      regla: >
+        En la vista departamental (09-departamento-datos), el boton de cabecera que en el
+        tablero dice "Datos por Departamento" se transforma en "Provincia" y VUELVE al
+        tablero (conservando cultivo y campaña, persistencia_de_filtros). Un boton que nombra
+        la pagina en la que ya estas no navega a ningun lado.
+
+    anillo_sin_cifra_central:
+      cita_facu: "El gráfico de torta queda muy chico por el número en el medio; prefiero sacarlo y que quede bien."
+      regla: >
+        El anillo de participacion va SIN la cifra central (el total en el medio): el grafico
+        usa el espacio del panel. El total "(fina y gruesa)" se sigue mostrando fuera del
+        centro (subtitulo o pie del panel), porque un numero sin universo no se publica.
+      excepcion_a_la_literalidad: >
+        Es un desvio del mockup decidido por Facu (cuarta tanda); queda anotado para que JC
+        lo valide en la proxima revision, igual que el resto de la reconstruccion.
+
+    proporciones_sin_huecos:
+      # REGLA GENERAL (todo el sitio), pedida explicitamente como regla ("dejá anotado").
+      cita_facu: "Dejá anotado que tiene que haber proporciones en los cuadros que se usen: no puede ser que quede un espacio en blanco usando las campañas."
+      regla: >
+        Los paneles y cuadros mantienen sus proporciones y se dimensionan para LLENAR su
+        espacio: no se admiten huecos en blanco dentro de un panel. Caso que la dispara: la
+        tabla de campañas en dos bloques dejaba espacio vacio. Si el contenido no llena el
+        panel, se ajusta el dimensionado del panel o la disposicion del contenido; el hueco
+        nunca se publica. NO habilita a deformar (mapa_grande sigue: la proporcion geografica
+        es correcta y la caja se adapta al mapa); llenar el espacio se resuelve dimensionando,
+        no estirando.
+
+  # -------------------------------------------------------------------
+  # Secuencia fija de variables (regla dura, aplica a toda la base 9 y a
+  # cualquier base con mas de una medida)
+  # -------------------------------------------------------------------
+  secuencia_de_variables:
+    regla: >
+      El orden de las variables es SIEMPRE el mismo en todos los componentes de una pagina:
+      indicadores, selectores del mapa, columnas de tabla y series. Para la base 9:
+      superficie sembrada, superficie cosechada, produccion, rendimiento.
+    origen_docx_v2: {texto: "La SECUENCIA DE VARIABLES DEBE SER SIEMPRE LA MISMA... En los recuadros de totales provinciales, está perfecto el orden, PERO NO EN EL MAPA POR DEPARTAMENTO (primero está 'prod')"}
+    correccion_que_dispara: "El panel mapa del tablero de cultivos tenia produccion primero. Corregido en tablero-cultivos-extensivos.yaml."
+
+  titulo_de_panel_inalterable:
+    regla: >
+      El titulo de un panel con selector de variable NO cambia con la variable elegida: queda un
+      titulo generico ("Datos por departamento") y la variable se lee en el selector y en la
+      leyenda. Vale para los paneles de tablero; las vistas de detalle siguen con el titulo
+      dinamico de la seccion 2, que si nombra la variable porque ES la vista de una variable.
+    origen_docx_v2: {texto: "el título no debería decir 'producción por departamento' sea cual sea la variable que miremos... al apretar 'sembrada' igual el titulo se mantiene inalterable"}
+    nota_interpretacion: "JC lo dice sobre el mapa del tablero. Se aplica a todo panel con selector de variable, que es la lectura mas simple y consistente."
+
+  # -------------------------------------------------------------------
+  # Reglas de agregacion (que esta prohibido sumar o promediar)
+  # -------------------------------------------------------------------
+  agregacion:
+    rendimiento_nunca_mezclado:
+      regla: "PROHIBIDO promediar o mostrar rendimiento agregado de cultivos distintos. El rendimiento es una variable unica de cada cultivo."
+      origen_docx_v2: {texto: "NO SE PUEDE HACER UN PROMEDIO DE RENDIMIENTOS DE TODOS LOS CULTIVOS MEZCLADOS. SIEMPRE el rendimiento es una variable ÚNICA PARA CADA CULTIVO."}
+      consecuencia: "El indicador 'Rendimiento' solo se muestra con un cultivo seleccionado. Con 'Todos' no existe."
+    superficies_no_se_suman_entre_estaciones:
+      regla: >
+        Superficie sembrada y cosechada NO se agregan mezclando cultivos de invierno y de verano:
+        comparten lote y la suma daria mas hectareas que las que hay. Los agregados de superficie
+        van por estacion (fina/invierno y gruesa/verano) o por cultivo, nunca "todos juntos".
+      origen_docx_v2: {texto: "ESTAN MEZCLADOS CULTIVOS DE INVIERNO Y VERANO QUE SE HACEN EN LA MISMA SUPERFICIE, por ende los ítems 'Sup Sembrada y cosechada' NO serían correctos"}
+      ya_existia: "_comunes-base-9.notas_metodologicas.verano-invierno lo decia para las participaciones; JC lo extiende a los indicadores de cabecera."
+    produccion_total_rotulada:
+      regla: "La produccion total de todos los cultivos SI se puede mostrar (las toneladas se suman), pero rotulada '(fina y gruesa)', como la rotula JC en su propio anillo."
+      origen_docx_v2: {archivo_modelo: "0000000000 Modelo 1.xlsx", texto: "Participación porcentual por cultivo en el total de la producción (fina y gruesa)"}
+
+  # -------------------------------------------------------------------
+  # Todo explicito, nada tacito
+  # -------------------------------------------------------------------
+  parametros_explicitos:
+    regla: "SIEMPRE y por defecto se muestran los parametros del dato y el periodo al que corresponde. La campaña se escribe, no se deduce."
+    origen_docx_v2: {texto: "TIENE QUE SER EXPLÍCITO Y NO TÁCITO"}
+    universo_explicito: "Cuando el dato es la totalidad, se dice ('Todos los cultivos', 'totales provinciales'): el selector arriba no alcanza como aclaracion."
+    en_el_tablero: "El mockup lo resuelve con la tarjeta de contexto (icono + cultivo + campaña) pegada a los indicadores, y con el nivel 'Provincia' al final del breadcrumb."
+  unidades_abreviadas:
+    regla: "Si una cifra usa unidad abreviada ('M ha', 'M tn'), lleva asterisco y la aclaracion al pie ('* M ha = millones de hectáreas'). La unidad completa no lleva nada."
+    origen_docx_v2: {texto: "lo mejor sería poner un asterisco y lo aclaramos debajo"}
+
+  # -------------------------------------------------------------------
+  # Selectores
+  # -------------------------------------------------------------------
+  selectores:
+    campania:
+      rotulo: "Campaña"
+      origen_docx_v2: {texto: "habría que ponerle el título 'campaña' o 'seleccione campaña'"}
+      nota_interpretacion: "Se adopta 'Campaña' (la corta), que es la que JC dibujo en el mockup."
+    cultivo:
+      forma: "chips con icono + nombre del cultivo, y el boton 'Todos' al final"
+      universo_visible:
+        regla: >
+          El universo de cultivos VISIBLES (chips del selector, series individuales, cualquier
+          lugar donde el cultivo sea una opcion elegible o una serie propia de un grafico) lo
+          define el CATALOGO de JC: los cultivos de su mockup Modelo 2, que son exactamente los
+          que tienen icono asignado en site/iconos-cultivo.yaml. NO lo define la existencia de
+          datos: un cultivo con datos en la fuente pero fuera del catalogo (hoy Lenteja y
+          Alpiste, en null en esa asignacion) no se dibuja como chip ni como serie individual.
+        criterio: >
+          visible = catalogo de JC ∩ con datos en la ventana. Las dos condiciones a la vez:
+          estar en el catalogo no alcanza si no hay datos (sigue la regla solo_con_datos de
+          abajo), y tener datos no alcanza si JC no lo puso en su catalogo.
+        visible_no_es_incluido_en_agregados: >
+          IMPORTANTE, la distincion que sostiene todo: visible NO es lo mismo que incluido en
+          los agregados. Los AGREGADOS no cambian: el total de produccion "(fina y gruesa)", el
+          anillo de participacion y su "Resto" se siguen calculando sobre TODOS los cultivos de
+          la fuente, esten o no en el catalogo. No se ocultan datos del calculo ni se tocan los
+          numeros que JC ya valido contra su mockup (Soja 48,1%, total 6.016.454 tn). Lo que se
+          filtra es que cultivos se OFRECEN como seleccion, no que cultivos ENTRAN en la cuenta.
+        alta_de_un_cultivo: >
+          Si JC quiere sumar un cultivo (ej. Lenteja), manda su icono y se agrega a la
+          asignacion de site/iconos-cultivo.yaml: el cultivo aparece solo en la proxima
+          construccion. No hay otro camino de alta.
+        origen: >
+          correccion de Facu, 10-ago-2026 (continuacion de las decisiones del dia, con JC):
+          "Los datos que NO ESTAN no se ponen en los graficos, ej. la lenteja". La lenteja
+          tiene datos en la fuente MAGyP (70 ha en Jimenez, 2020/21) pero no esta entre los 14
+          cultivos del mockup Modelo 2 ni tiene icono en el catalogo de JC: aparecia en los
+          chips porque el criterio anterior era solo la existencia de datos. Backlog pregunta 37.
+      solo_con_datos:
+        regla: "Un cultivo sin datos NO aparece en el selector. Nada de entrar y encontrar 'sin datos'."
+        origen_docx_v2: {texto: "SI NO HAY DATOS QUE NO SE INCLUYA EN EL LISTADO (por ejemplo Lenteja)... sólo cuando haya datos"}
+        nota: >
+          Desde el 10-ago-2026 esta regla es la MITAD "con datos en la ventana" del criterio de
+          universo_visible: se aplica junto con el catalogo de JC, no en su lugar. Sola ya no
+          define el selector.
+      del_mockup: "Algodón, Avena, Cártamo, Cebada, Centeno, Colza, Garbanzo, Girasol, Maíz, Maní, Poroto, Soja, Sorgo, Trigo (orden alfabetico) + Todos"
+
+  # -------------------------------------------------------------------
+  # Navegacion
+  # -------------------------------------------------------------------
+  navegacion:
+    breadcrumb:
+      regla: >
+        Cada pagina lleva la ruta completa y cada nivel linkea a SU nivel, sin cruces:
+        "Inicio - Agricultura - Cultivos Extensivos - {cultivo} - {ambito}". El nivel intermedio
+        que se nombra tiene que existir como pagina navegable.
+      origen_docx_v2: {texto: "si aprieto allí me lleva a Agricultura, pero si aprieto 'Agricultura' me lleva a la página de inicio... en ninguna parte está esa posibilidad de selección"}
+    menu_tematico_lateral:
+      regla: "Menu lateral con los sectores (en el mockup: Inicio, Agricultura, Ganadería, Clima, Industria, Economía, General), desplegables. La organizacion tematica base es la del documento inicial de JC; no es definitiva."
+      origen_mockup: "0000000000 Modelo 1.xlsx, hojas Modelo 1 y 2, columna izquierda"
+      donde_aparece: >
+        SOLO dentro de las secciones/dashboards. La home raiz del sitio va SIN menu lateral
+        (cuarta tanda del 10-ago-2026, cuarta_tanda.home_sin_menu_lateral).
+    persistencia_de_filtros:
+      regla: "Los links 'ver detalle' y toda navegacion interna CONSERVAN la seleccion vigente (cultivo y campaña). Jamas resetear a otro cultivo u otra campaña."
+      origen_docx_v2: {texto: "estoy en la misma selección: 'Algodón' 'campaña 2020/21'... aprieto abajo 'ver detalle'... ME LLEVA A SOJA DE LA 2024/25"}
+    volver:
+      regla: "Si hay un control de deshacer/volver ('borrar'), tiene que funcionar: regresa al estado anterior. Si no hace nada, no se dibuja."
+      origen_docx_v2: {texto: "Dice 'borrar' pero no hace nada… yo podría 'regresar' al punto anterior"}
+    dos_areas_de_inicio:
+      regla: >
+        Dos grandes areas: TEMATICA (por temas, la actual) y TERRITORIAL (por departamento). Un
+        solo boton lleva al area territorial ("Datos por Departamento" en la cabecera del mockup);
+        una vez ahi, mapa y listado, y la navegacion tematica es la del departamento.
+      origen_docx_v2: {seccion: "Areas iniciales", texto: "Existirán 2 grandes áreas de inicio: Temática (por temas) y territorial (por departamentos)"}
+      estado: >
+        HABILITADO (Facu, 10-ago-2026, segunda tanda, con JC presente: "Habilita tambien los
+        datos de deparamentos"). El boton de cabecera "Datos por Departamento" deja de ser
+        "Proximamente" y pasa a FUNCIONAR: vista departamental de cultivos, donde se elige un
+        departamento y se ven sus datos (KPIs, evolucion, tabla por campaña) con el mismo
+        selector de cultivo del catalogo de JC. Los datos existen en marts a grano
+        departamental. Sustituye al estado anterior del mismo dia (deshabilitado con
+        "Proximamente"). Backlog pregunta 34, actualizada.
+    comparacion_noa:
+      regla: "La comparacion Santiago vs NOA sale de las paginas tematicas y va como tema puntual accesible desde el inicio (boton 'Santiago en el NOA' en la cabecera del mockup), para que no se confunda con el dato provincial. Solo hay datos de la campaña 2024/25."
+      origen_docx_v2: {texto: "Lo de la comparación Santiago Vs NOA, ya veremos dónde incorporarla para que no haya confusiones, probablemente desde la página de inicio y como tema puntual"}
+      habilitacion_10_ago: >
+        HABILITADA por orden de Facu (10-ago-2026, segunda tanda, con JC presente: "Habilita
+        tambien los datos de... santiago en el NOA"). La vista de _privado/ (participacion de
+        Santiago en el NOA, spec 09-noa-participacion-provincia) pasa a ser PUBLICA dentro de
+        cultivos y el boton de cabecera "Santiago en el NOA" pasa a funcionar. Sustituye a la
+        ratificacion de esa misma mañana ("sigue afuera").
+      ratificacion_pendiente: >
+        La regla dura de CLAUDE.md dice que las comparaciones interprovinciales las habilita
+        Francisco. La habilitacion queda registrada con atribucion a Facu y fecha; queda
+        PENDIENTE la ratificacion de Francisco. Si Francisco lo baja, se vuelve atras: la vista
+        regresa a _privado/ y el boton no se dibuja. Backlog pregunta 11, actualizada.
+
+  sin_leyendas_de_tipo_de_grafico:
+    regla: "Los rotulos que dicen QUE TIPO de grafico es un panel ('Anillo', 'Mapa', 'Líneas', 'Barras') se sacan. Al usuario no le importa el tipo; le importa el dato."
+    origen_docx_v2: {texto: "Por favor sacarle las leyendas del tipo de gráfico."}
+    correccion_que_dispara: "Los badges del template de tablero. Se sacan del template una sola vez y desaparecen de todas las secciones."
+
+  estructura_de_seccion:
+    regla_de_jc: >
+      No plantear la seccion como "Tablero" + "análisis completo" sino por subdivision tematica,
+      porque cultivos extensivos es solo la primera base de Agricultura y el formato debe
+      mantenerse inalterable para todas las provincias (incluidas producciones regionales:
+      olivo, caña, tabaco, vid, etc.).
+    origen_docx_v2: {texto: "Por regla, no lo plantearemos como 'Tablero' y 'análisis completo', sino por la subdivisión temática... NO OLVIDEMOS QUE ESTE FORMATO DEBE MANTENERSE INALTERABLE PARA TODAS LAS PROVINCIAS"}
+    estado: aprobada y AMPLIADA (tercera tanda del 10-ago-2026)
+    decision: >
+      Subdivision tematica APROBADA por Facu el 10-ago-2026, en persona con JC presente ("haz la
+      subdivision"; JC tiene prioridad en como tiene que quedar). La estructura del Modelo 2
+      MANDA: menu lateral verde por sector y breadcrumb jerarquico (Agricultura - Cultivos
+      Extensivos - Soja - Provincia), aun donde reemplace el esquema tablero+analisis. El
+      conflicto con la regla del 3-ago quedo resuelto por la actualizacion del 10-ago-2026 en
+      CLAUDE.md. Backlog pregunta 28, resuelta.
+    ampliacion_tercera_tanda: >
+      El esquema tablero+analisis desaparece POR COMPLETO en cultivos: analisis.html no existe
+      mas, sin links "ver detalle" ni navegacion de salida salvo los dos botones de cabecera y
+      el dato departamental. Regla completa: tercera_tanda.solo_tableros. Backlog 28, ampliada.
+    alcance: >
+      Esta pasada aplica SOLO a cultivos extensivos; el resto de las secciones migra despues.
+
+  # -------------------------------------------------------------------
+  # Iconografia (Anexos I y II del docx)
+  # -------------------------------------------------------------------
+  iconografia:
+    fuente: "flaticon.es (JC dejo el link: https://www.flaticon.es/resultados?word=soja)"
+    licencia: >
+      Los iconos ENTRAN al sitio; la licencia se verifica en paralelo (decision de Facu,
+      10-ago-2026, en persona con JC presente: "mandale los iconos por el momento"). La
+      verificacion de la licencia de flaticon (JC avisa que es freeware salvo uso comercial)
+      queda como tarea administrativa ABIERTA en el backlog pregunta 26, pero DEJA DE BLOQUEAR
+      la publicacion. La regla anterior ("hasta resolver la licencia, ningun icono de los anexos
+      entra al sitio") quedo derogada el 10-ago-2026.
+    origen_docx_v2: {texto: "si tiene un fin comercial habría que pagar, según entendí, pero por favor revisen esto"}
+    variantes: "cada icono existe en B&W y en color. JC se inclina por B&W; marketing puede opinar. Backlog pregunta 26."
+    combinables: "JC propone combinar iconos (ej. icono de soja + icono de precios para 'precios de soja')."
+    donde_van: "en los chips del selector de cultivo, en la tarjeta de contexto del cultivo y en el menu tematico. La ubicacion final la define marketing segun JC."
+    catalogo_de_anexos:
+      agricultura: [Girasol, Colza, Algodón, Trigo, Maíz, Soja, Cebada, Sorgo, Garbanzo, Alfalfa, Forrajes, Cebolla, Naranja, Frutas y Hortalizas, Arroz, Arvejas, Uvas, Avena, Caña de azúcar, Cártamo, Centeno, Lino, Maní, Mijo, Papa, Poroto Alubia, Poroto Negro, Té, Yerba Mate, Vid, Olivo-Aceituna, Nuez, Limón, Pomelo, Ajo, Tabaco]
+      ganaderia: [Bovinos, Porcinos, Equinos, Bubalinos, Apícolas, Ovinos, Aves, Caprinos, Camélidos]
+      derivados: [Lácteos, Tambo, Huevos, Harinas, Aceites, Azúcar, Cueros, Carne Bovina, Carne porcina, Carne de pollo, Alimentación animal, Vinos]
+      logistica: [Transporte vial, Transporte ferroviario, Transporte marítimo, Puertos, Rutas]
+      economicos: [Moneda, Tipo de cambio, Serie de precios, Inflación-IPC, Info económica, Exportaciones, Importaciones, Empleo]
+      formato: [Gráficos, Tablas datos, Exportar como PDF, Exportar como JPG, Exportar como Excel]
+      forestal: [Maderas y subproductos, Bosques]
+      energia: [Biocombustibles, Combustibles, Energía Eléctrica, Energía eólica, Gas]
+      insumos: [Agroquímicos, Fertilizantes]
+      general: [Educación, Población, Comunicaciones, Infraestructura]
+      independientes: [Maquinaria agrícola, Silos y stocks, Sanidad animal, Industria, Alimentación y nutrición, Clima]
+      otros: [Costos y márgenes, Análisis de datos, Escenarios Internacionales, Banderas es/en/pt, IA]
+
+  # -------------------------------------------------------------------
+  # Bloques nuevos de pagina que trae el mockup (formas que HOY no existen
+  # en el template de tablero: las agrega constructor-dashboards, no este spec)
+  # -------------------------------------------------------------------
+  bloques_del_mockup:
+    tabla_datos:
+      que_es: "la tabla de datos crudos debajo del grafico de evolucion (campaña, sup. cosechada, produccion, rendimiento)"
+      estado: >
+        a reconstruir segun el mockup LITERAL (tercera tanda del 10-ago-2026): vuelve a los DOS
+        bloques de campañas lado a lado que dibuja JC en su Modelo 2, con las columnas Campaña,
+        Superficie Cos. (Ha), Producción (Tn) y Rendimiento Kg/ha en cada bloque, y sin titulo
+        de panel (el mockup no le dibuja titulo). Detalle en tablero-cultivos-extensivos.yaml,
+        paneles.tabla-datos.
+      una_sola_serie:
+        estado: DEROGADA (tercera tanda del 10-ago-2026)
+        decidido_por: "Facu, 10-ago-2026, con JC presente (segunda tanda de decisiones del dia)"
+        cita: >
+          "En los datos por campaña se vea una sola cosa, no que quede un espacio de blanco en
+          la tabla."
+        derogacion: >
+          La tercera tanda del mismo dia ("el mockup es LITERAL, hay que hacer lo que dice JC")
+          es posterior y manda: la tabla vuelve a los dos bloques del dibujo de JC. Con la
+          ventana de 10 campañas los bloques cierran 5 y 5, sin hueco. Interpretacion anotada
+          para confirmar con Facu: backlog pregunta 38.
+    utilidades:
+      que_es: "panel 'UTILIDADES': Asistente IA y Exportar como PDF (los anexos traen tambien JPG y Excel)"
+      estado: >
+        habilitado (Facu, 10-ago-2026): entra como iconos DESHABILITADOS con rotulo
+        "Proximamente" (Asistente IA y Exportar PDF). Es una excepcion explicita y ACOTADA a la
+        regla "no se dibujan botones que no hacen nada", que sigue vigente para todo lo demas.
+        Backlog pregunta 33, resuelta en parte.
+    informacion_relacionada:
+      que_es: "'Información relacionada (abre en nueva ventana)': costos y margenes, exportaciones, calendario de siembra y cosecha, precios, VBP del cultivo elegido"
+      estado: >
+        SE DIBUJA con los links deshabilitados y rotulo "Próximamente" (cuarta tanda del
+        10-ago-2026: "tiene que estar aunque no lleve a ningún lado"; deroga el "no se dibuja"
+        anterior). Misma excepcion acotada a la regla de botones muertos que utilidades y
+        banderas. Los destinos siguen bloqueados por falta de bases (backlog 8): cada link se
+        activa cuando entre su base. Regla completa: cuarta_tanda.informacion_relacionada_se_dibuja.
+    idiomas:
+      que_es: "banderas español/ingles/portugues en la cabecera"
+      estado: >
+        ENTRAN (tercera tanda del 10-ago-2026; deroga el "NO entran todavia" de esa misma
+        mañana). Van en la cabecera arriba a la derecha, donde estaba el titulo duplicado
+        ("ahi iban las banderas de idiomas"): español ACTIVA, ingles y portugues deshabilitadas
+        con "Próximamente", misma excepcion acotada a la regla de botones muertos que las
+        utilidades. El sitio sigue siendo solo en español. Regla completa:
+        tercera_tanda.cabecera.banderas_idioma. Backlog pregunta 33, RESUELTA.
+    pie_tecnologia:
+      que_es: "pie 'Tecnología Pivotal: B3, Minibox y Prompt' con logos de partners"
+      estado: >
+        aprobado (Facu, 10-ago-2026): el branding del Modelo 2 va en la beta. Logo provincial en
+        cabecera y pie, parametrizado en site/theme.yaml. No hay asset del logo provincial en el
+        repo: va un placeholder sobrio y queda anotado que falta el archivo. Backlog pregunta 35,
+        resuelta.
+
+  # -------------------------------------------------------------------
+  # Lo que el docx v2 pone en duda de la v1 (no se toca hasta que se responda)
+  # -------------------------------------------------------------------
+  puntos_en_revision:
+    - id: escala-unica-por-variable-en-mapas
+      texto_jc: "Superficie sembrada SIEMPRE tendrá la misma escala, al igual que rendimientos, producción, etc."
+      lectura: >
+        Si "escala" significa CORTES fijos para toda la serie, es la respuesta a la pregunta 16 del
+        backlog (hoy los cortes se recalculan por mapa). Si significa GAMA de colores, ya se cumple.
+        Es ambiguo y no se cambia el algoritmo de quintiles hasta que JC confirme. Backlog 16 (actualizada).
+    - id: rampa-marron-ganaderia
+      texto_jc: "en algunos casos no se ve la data (por ejemplo el marrón del mapa de ganadería)"
+      lectura: "JC objeta la rampa `cabezas` (marrones). Cambiarla es tocar colores.rampas, que es regla de este protocolo: se propone una rampa nueva y se cambia SOLO ahi cuando se acuerde. Backlog pregunta 30."
+    - id: orden-y-abreviatura-en-titulos-del-mockup
+      estado: RESUELTO (tercera tanda, 10-ago-2026)
+      texto_jc: "titulos de los graficos del mockup: 'Soja - Sgo del Estero - Total - Evolución de la superficie cosechada y producción - Campañas 2013/14 a 2024/25'"
+      resolucion: >
+        JC lo cerro el mismo dia ("No son los mismos títulos. Los gráficos tampoco. Tenemos que
+        respetar el protocolo de títulos de gráficos"): el orden y la abreviatura del mockup SON
+        intencionales y los titulos del tablero de cultivos se calcan literales
+        (tercera_tanda.titulos_del_tablero_literales). Las plantillas de la seccion 2 siguen
+        vigentes para las otras bases y para los specs que quedan como registro. Backlog 31, RESUELTA.
+    - id: ventana-de-campanias
+      texto_jc: "el grafico del mockup cubre 2013/14 a 2024/25 (12 campañas); la hoja Modelo Analisis decia 10"
+      lectura: >
+        La ventana sigue en 10 (parametrizada en _comunes-base-9.ventana_campanias). Ademas
+        2013/14 esta excluida por calidad (total sin departamentos). Backlog pregunta 32,
+        agravada por la tercera tanda: el titulo literal del mockup dice "2013/14 a 2024/25",
+        pero el slot de periodo se resuelve con las campañas realmente graficadas mientras JC
+        no confirme ampliar (tercera_tanda.titulos_del_tablero_literales.nota_interpretacion).
+
+  # -------------------------------------------------------------------
+  # TEMA VISUAL FINAL de la pagina de cultivos (captura del 10-ago-2026)
+  # -------------------------------------------------------------------
+  # Traduccion a reglas de `origen_tema_visual` (la captura de WhatsApp del 10-ago-2026, 11:09).
+  # La lee constructor-dashboards junto con tablero-cultivos-extensivos.yaml.
+  tema_visual:
+    fuente: "specs/fuentes/WhatsApp Image 2026-08-10 at 11.08.41.jpeg (llego el 10-ago-2026 a las 11:09)"
+    decidido_por: "Facu, 10-ago-2026, en persona con JC presente"
+    regla_de_oro: >
+      El resultado tiene que VERSE como la captura. Los colores, el logo y la tipografia se
+      parametrizan en site/theme.yaml (F3: un theme por cliente), pero el parametro esta al
+      servicio de la regla y no al reves: si el theme no alcanza, se ajustan las plantillas de
+      site/templates/ hasta que la pagina construida y la captura se lean como la misma pagina.
+      RESTAURADA SIN MATICES por la tercera tanda del 10-ago-2026 (formato_v1.tercera_tanda):
+      el mockup es LITERAL, tambien en el diseño.
+    principio_formato_no_diseno:
+      estado: DEROGADO (tercera tanda del 10-ago-2026)
+      decidido_por: "Facu, 10-ago-2026, con JC presente (segunda tanda de decisiones del dia)"
+      cita: >
+        "O sea respeta el formato pero no el diseño como tal, tiene que ser moderno esa es la idea."
+      derogacion: >
+        JC RECHAZO el resultado del "diseño moderno" ("Todo deformado Facu") y Facu ordeno
+        arrancar de cero y hacer lo que dice JC: la captura vuelve a mandar de forma LITERAL,
+        formato Y diseño (tercera_tanda.mockup_literal). Este bloque queda como registro de la
+        decision intermedia; no se aplica.
+    alcance: >
+      Esta pasada aplica SOLO a la seccion de cultivos extensivos. El resto de las secciones
+      migra despues, igual que la subdivision tematica (estructura_de_seccion.alcance).
+    deroga: >
+      Para cultivos queda derogado el lienzo greige (#e8e5de) con paneles blancos flotantes del
+      tema del 3-ago: el lienzo pasa a ser BLANCO y el cromo institucional VERDE. Donde otro
+      documento describa el lienzo greige, esta hablando del tema anterior.
+    elementos:
+      lienzo: "blanco, cromo institucional verde"
+      cabecera:
+        logo: >
+          logo provincial ('SANTiAGO - Gobierno de la Provincia de Santiago del Estero') arriba a
+          la izquierda, parametrizado en site/theme.yaml. El asset llego el 10-ago-2026 (Facu):
+          site/assets/logo-provincia.png, referenciado desde theme.logo_provincia; el wordmark
+          de texto queda solo como fallback F3 (backlog 35, cerrado).
+        boton_datos_por_departamento: >
+          presente y HABILITADO desde el 10-ago (segunda tanda, Facu con JC presente): lleva a
+          la vista departamental de cultivos (formato_v1.navegacion.dos_areas_de_inicio.estado).
+          Backlog pregunta 34, actualizada.
+        boton_santiago_en_el_noa: >
+          presente y HABILITADO por orden de Facu (10-ago-2026, segunda tanda, con JC presente):
+          lleva a la comparacion NOA, que pasa a ser publica dentro de cultivos. PENDIENTE la
+          ratificacion de Francisco (regla dura de CLAUDE.md): si la baja, se vuelve atras
+          (formato_v1.navegacion.comparacion_noa). Backlog pregunta 11.
+        banderas_idioma: >
+          banderas es/en/pt arriba a la derecha, donde JC marco que estaba el titulo duplicado
+          ("ahi iban las banderas de idiomas"). ENTRAN desde la tercera tanda del 10-ago:
+          español activa, ingles y portugues deshabilitadas con "Próximamente"
+          (tercera_tanda.cabecera.banderas_idioma). Backlog 33, RESUELTA.
+        sin_titulo_duplicado: >
+          la cabecera NO repite el titulo de la pagina ("Producción agrícola"): ese lugar es
+          de las banderas. La identificacion de la pagina la da la barra verde del breadcrumb
+          (tercera_tanda.cabecera).
+      breadcrumb: >
+        banda VERDE bajo la cabecera con la ruta jerarquica 'Agricultura - Cultivos Extensivos -
+        {cultivo} - Provincia'. Cada nivel linkea a su nivel (formato_v1.navegacion.breadcrumb).
+      menu_lateral: >
+        columna izquierda con 'Inicio' arriba y los sectores desplegables: Agricultura,
+        Ganadería, Clima, Industria, Economía, General
+        (formato_v1.navegacion.menu_tematico_lateral + estructura_de_seccion, ya aprobados).
+        VERDE como la captura: la derogacion "menu discreto" de la segunda tanda quedo a su
+        vez derogada por la tercera (mockup literal); la estructura y el contenido no cambian.
+      menu_lateral_discreto:
+        estado: DEROGADO (tercera tanda del 10-ago-2026)
+        decidido_por: "Facu, 10-ago-2026, con JC presente (segunda tanda de decisiones del dia)"
+        cita: >
+          "El tema es que por ejemplo el panel izquierdo compite con la visualizacion en cuadros."
+        derogacion: >
+          La tercera tanda restauro el mockup LITERAL (tercera_tanda.mockup_literal): el menu
+          lateral vuelve al verde de la captura, con su ancho y su tipografia. Este bloque
+          queda como registro de la decision intermedia; no se aplica.
+      paneles: "cajas rectangulares con borde fino visible, no paneles flotantes con sombra sobre greige"
+      chips_cultivo: >
+        cajitas con borde, icono a la izquierda + nombre del cultivo, dispuestas en grilla de
+        varias filas; el cultivo seleccionado se pinta de VERDE; 'Todos' va en una caja grande a
+        la derecha de la grilla.
+      selector_campania: >
+        arriba a la derecha, tira de pestañitas verdes con el rotulo 'Campaña' y la campaña
+        activa resaltada.
+      tarjeta_contexto: "tarjeta KPI con el icono del cultivo + nombre + campaña, pegada a la izquierda de los 4 indicadores"
+      utilidades: >
+        panel 'UTILIDADES' con los iconos Asistente IA y Exportar como PDF, DESHABILITADOS con
+        rotulo 'Proximamente' (backlog 33).
+      informacion_relacionada: >
+        panel 'Información relacionada (abre en nueva ventana)'. SE DIBUJA con los links
+        deshabilitados y "Próximamente" (cuarta tanda del 10-ago-2026); los destinos siguen
+        bloqueados por falta de bases (backlog 8) y cada link se activa cuando entre su base
+        (cuarta_tanda.informacion_relacionada_se_dibuja).
+      pie: "'Tecnología Pivotal: B3, Minibox y ∞ Prompt' con logos de partners (backlog 35, aprobado)"

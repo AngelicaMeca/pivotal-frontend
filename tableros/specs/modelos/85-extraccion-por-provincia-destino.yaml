@@ -1,0 +1,80 @@
+# JC f115-f133: "Movimientos cabezas salidas (extracción) por provincia de destino - 2025",
+# con participacion por categoria. Y f133: "CONSULTAR TODOS LOS AÑOS".
+#
+# SENSIBILIDAD: sale detras del gate. No porque compare a Santiago con otra provincia (no lo
+# hace: muestra a donde va la hacienda santiaguenia), sino porque deja ver a que provincias
+# les vende y en que volumen, que es informacion comercial. Es el default seguro: se publica
+# cambiando el campo `aprobado_por` cuando Francisco lo decida. Ver _comunes-base-85.sensibilidad.
+base: 85
+slug: extraccion-por-provincia-destino
+comunes: _comunes-base-85
+
+titulo: "A qué provincias va la hacienda santiagueña"
+subtitulo: "Cabezas que salen de Santiago del Estero, por provincia de destino"
+
+sensibilidad: comparativo
+aprobado_por: null                 # <- Francisco escribe aca su nombre y la vista se publica
+
+protocolo: _protocolo-presentacion
+titulo_componentes:
+  variable: {desde_filtro: medida}
+  sujeto: {desde: subsector}
+  recorte: {desde_universo: true}
+  apertura: provincia-destino
+  area: provincia
+  periodo: {desde_filtro: anio}
+titulo_protocolo_ejemplo: "Ranking de cabezas movidas de la hacienda bovina (extracción) por provincia de destino - Santiago del Estero - año 2025"
+
+tipo: ranking
+
+variables: [cabezas, documentos]
+dimensiones: [provincia_destino]
+filtros: [anio, medida, categoria]
+orden: {por: cabezas, dir: desc}
+
+defaults:
+  anio: parametros.ventana_anios.anio_por_defecto
+  medida: cabezas
+  categoria: Total
+
+opciones_medida: [cabezas, documentos]
+opciones_categoria: [Total, Terneros, Terneras, Novillitos, Novillos,
+                     "Toritos / mejoradores", Toros, Vacas, Vaquillonas]
+
+universo:
+  ambito: sde
+  recorte: extraccion
+  especie: bovinos
+  geo: destino
+  nivel_geo: provincia
+  anios: ventana_anios             # JC f133: "CONSULTAR TODOS LOS AÑOS", no solo 2025
+  excluye_anio_en_curso: true
+
+columnas_tabla:
+  - {campo: puesto, etiqueta: "Puesto", formato: "1°"}
+  - {campo: provincia_destino, etiqueta: "Provincia de destino"}
+  - {campo: documentos, etiqueta: "DTE emitidos"}
+  - {campo: cabezas, etiqueta: "Cabezas"}
+  - {campo: participacion_pct, etiqueta: "% del total"}
+  - {campo: variacion_interanual_pct, etiqueta: "Var. vs año anterior"}
+
+transformaciones:
+  - ranking: {particion: "anio + medida + categoria", ordenado_por: cabezas, direccion: desc}
+  - participacion_pct: {denominador: "total de la extracción del mismo año y categoría"}
+  - variacion_interanual: {sobre: [cabezas, documentos]}
+
+filtros_calidad: [excluir-fila-total-al-pie, bubalinos-fuera-de-las-vistas]
+notas_metodologicas: [que-es-un-dte, anio-en-curso]
+
+fuente:
+  pie: "Fuente: SENASA"
+  organismo_esperado: "SENASA"
+estado: pendiente-decision-francisco
+
+origen: {tipo: modelo-analisis, detalle: "hoja 'Modelo Analisis' base 85, filas 115 a 133", fecha: 2026-07-31}
+nota_interpretacion: >
+  Verificado contra JC (f117-f130): Santa Fe 157.595, Cordoba 135.421, Tucuman 127.815,
+  Catamarca 43.650. Exactos. Aparecen 15 provincias de destino.
+  Los partidos de destino de fuera de Santiago NO se resuelven a codigo INDEC (son 122 y no
+  tenemos padron cargado), asi que esta vista llega hasta el grano provincia. Si alguna vez se
+  quiere abrir por partido, hay que cargar el padron nacional en configs/dims/.

@@ -1,0 +1,22 @@
+# Segundo cuadro de JC (Modelo Analisis f10-f16): "Movimientos internos (dentro SDE)".
+# Misma vista que la madre, cambia el universo.
+base: 85
+slug: evolucion-internos
+comunes: _comunes-base-85
+
+igual_que: 85-evolucion-movimientos
+
+titulo: "Movimientos de hacienda dentro de la provincia"
+subtitulo: "Traslados entre departamentos de Santiago del Estero, por año"
+
+titulo_protocolo_ejemplo: "Evolución de las cabezas movidas de la hacienda bovina (movimientos internos) - Santiago del Estero - años 2022 a 2025"
+
+universo:
+  recorte: internos
+
+notas_metodologicas: [que-es-un-dte, total-no-suma-categorias, anio-en-curso]
+
+origen: {tipo: modelo-analisis, detalle: "hoja 'Modelo Analisis' base 85, filas 10 a 16", fecha: 2026-07-31}
+nota_interpretacion: >
+  Son los traslados que arrancan y terminan en Santiago. En 2025 fueron 391.248 cabezas, o sea
+  el 40% de todo lo que la provincia movio. Junto con la extraccion suman el cuadro madre.

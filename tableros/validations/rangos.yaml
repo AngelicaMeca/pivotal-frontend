@@ -1,0 +1,84 @@
+# Rangos razonables por variable. Los usa el check "valores imposibles" de
+# pipeline/validations.py. Un valor fuera de rango NO se corrige ni se dropea:
+# se reporta en validations/reportes/entrega-NN.md y decide JC.
+#
+# Criterio para fijar los rangos: se toma el minimo y el maximo agronomicamente
+# defendibles para Santiago del Estero y el NOA, con margen holgado hacia arriba
+# (mejor un falso negativo que 200 falsos positivos). Cuando el rango se armo
+# mirando lo que trajo un archivo concreto queda anotado en `visto`.
+#
+# Ampliar con criterio: si JC confirma que un valor raro es real, se ensancha el
+# rango aca y se anota la fecha, nunca se toca el dato.
+
+# ---------------------------------------------------------------------------
+# Rendimiento de cultivos extensivos, en kg/ha sobre superficie COSECHADA.
+# Se aplica solo a filas con rendimiento > 0 (rendimiento 0 con superficie
+# cosechada 0 es "no se cosecho", lo mira otro check).
+# ---------------------------------------------------------------------------
+rendimiento_kg_ha:
+  _default:              # cultivo que todavia no tiene rango propio
+    min: 100
+    max: 12000
+    nota: "Rango amplio de contencion. Si el cultivo se vuelve importante, darle rango propio."
+  Algodón:      {min: 300,  max: 5000,  visto: "1.000 a 4.000 en la entrega-01"}
+  Alpiste:      {min: 200,  max: 3000,  visto: "800 a 1.287"}
+  Arveja:       {min: 300,  max: 4500,  visto: "2.565 (unico dato, hoja pais)"}
+  Avena:        {min: 200,  max: 5000,  visto: "495 a 2.000. Mucha avena va a pastoreo y no se cosecha."}
+  Cebada total: {min: 200,  max: 7000,  visto: "500 a 3.670 (el 3.670 es el total pais)"}
+  Centeno:      {min: 200,  max: 4000,  visto: "600 a 2.000"}
+  Colza:        {min: 200,  max: 4000,  visto: "800 a 1.675"}
+  Cártamo:      {min: 200,  max: 3500,  visto: "800 a 2.000"}
+  Garbanzo:     {min: 200,  max: 4000,  visto: "600 a 2.000"}
+  Girasol:      {min: 300,  max: 4500,  visto: "700 a 2.530"}
+  Lenteja:      {min: 200,  max: 3000,  visto: "600 a 1.105"}
+  Lino:         {min: 200,  max: 3000,  visto: "982 (unico dato, hoja pais)"}
+  Maní:         {min: 300,  max: 6000,  visto: "1.000 a 2.500"}
+  Maíz:         {min: 400,  max: 14000, visto: "639 a 8.500. El piso bajo es de campania seca."}
+  Mijo:         {min: 200,  max: 4000,  visto: "1.000 a 1.379"}
+  Poroto alubia: {min: 200, max: 4000,  visto: "600 a 1.300"}
+  Poroto negro: {min: 200,  max: 4000,  visto: "600 a 2.500"}
+  Poroto otros: {min: 200,  max: 4000,  visto: "800 a 2.500"}
+  Poroto total: {min: 200,  max: 4000,  visto: "600 a 2.469"}
+  Soja 1ra:     {min: 300,  max: 6000,  visto: "700 a 4.000"}
+  Soja 2da:     {min: 300,  max: 6000,  visto: "700 a 3.900"}
+  Soja total:   {min: 300,  max: 6000,  visto: "700 a 3.900"}
+  Sorgo:        {min: 400,  max: 10000, visto: "1.200 a 5.500"}
+  Trigo candeal: {min: 300, max: 7000,  visto: "800 a 2.756"}
+  Trigo total:  {min: 300,  max: 8000,  visto: "600 a 3.100"}
+
+# ---------------------------------------------------------------------------
+# Superficies, en hectareas. Tope pensado como control de dedo: ningun
+# departamento de SDE tiene 3 millones de ha sembradas de un solo cultivo,
+# pero el total pais si (soja: 17,9 millones), por eso el tope va por nivel.
+# ---------------------------------------------------------------------------
+superficie_ha:
+  departamento: {min: 0, max: 1500000}
+  provincia:    {min: 0, max: 6000000}
+  pais:         {min: 0, max: 40000000}
+
+produccion_tn:
+  departamento: {min: 0, max: 5000000}
+  provincia:    {min: 0, max: 20000000}
+  pais:         {min: 0, max: 120000000}
+
+# ---------------------------------------------------------------------------
+# Ganaderia. Todavia no hay base ingerida que lo use (48, 85, 144, 145, 151
+# llegan en la proxima tanda), pero el check ya esta escrito y lee de aca.
+# ---------------------------------------------------------------------------
+cabezas:
+  entero_obligatorio: true       # media vaca no existe
+  min: 0
+  max: 5000000
+  nota: "Stock bovino de SDE ronda 1,3 millones de cabezas; el tope es de contencion."
+
+peso_kg:
+  min: 0
+  max: 1500
+  nota: "Peso por cabeza. Bovino adulto pesado ~700 kg; el tope deja lugar a bubalinos."
+
+# ---------------------------------------------------------------------------
+# Clima. Para las bases 110 y 111.
+# ---------------------------------------------------------------------------
+temperatura_c:      {min: -15, max: 50}
+precipitacion_mm:   {min: 0,   max: 500,  nota: "Por dia. Un mensual va a otro rango cuando se ingiera la base."}
+humedad_pct:        {min: 0,   max: 100}

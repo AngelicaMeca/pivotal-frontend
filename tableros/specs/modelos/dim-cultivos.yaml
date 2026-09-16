@@ -1,0 +1,230 @@
+# Dimension de cultivos de la base 9: estacion (verano/invierno) + rol (agregado/componente/simple).
+#
+# POR QUE VIVE ACA Y NO EN configs/dims/
+# La clasificacion verano/invierno es una REGLA DE NEGOCIO de JC, no una propiedad de lectura
+# del archivo: la escribio a mano en la hoja "Modelo  Analisis" (filas 238-300) y su unico uso
+# es evitar que las participaciones porcentuales sumen mas que el todo ("DEBEN SER SEPARADAS,
+# sino la suma sera mayor al todo", r8). El propio config de la base
+# (configs/bases/9-cultivos-extensivos.yaml, nota "pendiente") la derivo explicitamente a
+# specs/modelos/. El rol agregado/componente SI vive en el config (lo aplica el adapter) y se
+# repite aca solo como referencia legible, no se redefine.
+#
+# Escrito por constructor-reglas el 2026-07-30.
+
+id: dim-cultivos
+base: 9
+origen:
+  tipo: modelo-analisis
+  detalle: "hoja 'Modelo  Analisis' base 9, filas 238-300 (JC listo los de invierno uno por uno)"
+  fecha: 2026-07-30
+
+# ---------------------------------------------------------------------------
+# COMO SE LEE ESTA TABLA
+# ---------------------------------------------------------------------------
+# estacion: verano | invierno | a_confirmar   -> particiona las participaciones porcentuales
+# rol:      agregado | componente | simple    -> viene de staging (columna cultivo_rol)
+#           agregado + simple = universo sumable. componente = solo vistas de detalle.
+# datos_en: donde hay filas en staging (sde | noa | pais). Sirve para saber que vistas afecta.
+# a_confirmar: si esta presente, JC todavia no clasifico el cultivo. Ver `sin_clasificar` abajo.
+
+cultivos:
+  # --- INVIERNO: los 8 que JC listo explicitamente (filas 238-300) ---
+  - cultivo: "Trigo total"
+    grupo: Trigo
+    rol: agregado
+    estacion: invierno
+    datos_en: [sde, noa, pais]
+  - cultivo: "Trigo candeal"
+    grupo: Trigo
+    rol: componente
+    estacion: invierno
+    datos_en: [sde, noa, pais]
+  - cultivo: "Cebada total"
+    grupo: Cebada
+    rol: agregado
+    estacion: invierno
+    datos_en: [sde, noa, pais]
+  - cultivo: "Avena"
+    grupo: Avena
+    rol: simple
+    estacion: invierno
+    datos_en: [sde, noa, pais]
+  - cultivo: "Centeno"
+    grupo: Centeno
+    rol: simple
+    estacion: invierno
+    datos_en: [sde, noa, pais]
+  - cultivo: "Cártamo"
+    grupo: Cártamo
+    rol: simple
+    estacion: invierno
+    datos_en: [sde, noa, pais]
+  - cultivo: "Colza"
+    grupo: Colza
+    rol: simple
+    estacion: invierno
+    datos_en: [sde, noa, pais]
+  - cultivo: "Garbanzo"
+    grupo: Garbanzo
+    rol: simple
+    estacion: invierno
+    datos_en: [sde, noa, pais]
+
+  # --- VERANO: por descarte de la lista de invierno de JC (r8: solo hay dos estaciones) ---
+  - cultivo: "Soja total"
+    grupo: Soja
+    rol: agregado
+    estacion: verano
+    datos_en: [sde, noa, pais]
+  - cultivo: "Soja 1ra"
+    grupo: Soja
+    rol: componente
+    estacion: verano
+    datos_en: [sde, noa, pais]
+  - cultivo: "Soja 2da"
+    grupo: Soja
+    rol: componente
+    estacion: verano
+    datos_en: [sde, noa, pais]
+  - cultivo: "Maíz"
+    grupo: Maíz
+    rol: simple
+    estacion: verano
+    datos_en: [sde, noa, pais]
+  - cultivo: "Sorgo"
+    grupo: Sorgo
+    rol: simple
+    estacion: verano
+    datos_en: [sde, noa, pais]
+  - cultivo: "Algodón"
+    grupo: Algodón
+    rol: simple
+    estacion: verano
+    datos_en: [sde, noa, pais]
+  - cultivo: "Girasol"
+    grupo: Girasol
+    rol: simple
+    estacion: verano
+    datos_en: [sde, noa, pais]
+  - cultivo: "Maní"
+    grupo: Maní
+    rol: simple
+    estacion: verano
+    datos_en: [sde, noa]        # el pais NO trae mani: bloquea participacion pais (ver _comunes)
+  - cultivo: "Poroto total"
+    grupo: Poroto
+    rol: agregado
+    estacion: verano
+    datos_en: [sde, noa]        # el pais NO trae la fila "Poroto total": bloquea participacion pais
+  - cultivo: "Poroto negro"
+    grupo: Poroto
+    rol: componente
+    estacion: verano
+    datos_en: [sde, noa, pais]
+  - cultivo: "Poroto otros"
+    grupo: Poroto
+    rol: componente
+    estacion: verano
+    datos_en: [sde, noa, pais]
+  - cultivo: "Poroto alubia"
+    grupo: Poroto
+    rol: componente
+    estacion: verano
+    datos_en: [noa, pais]       # no existe en Santiago del Estero (ver reporte QA, punto 3)
+
+  # --- SIN CLASIFICAR POR JC: 5 cultivos con datos que no estan en su lista de invierno ---
+  # No se los manda a verano "por descarte" en silencio: se muestran con la estacion propuesta
+  # y una llamada visible hasta que JC confirme. Ver `sin_clasificar` abajo.
+  - cultivo: "Lenteja"
+    grupo: Lenteja
+    rol: simple
+    estacion: invierno
+    a_confirmar: JC
+    propuesta: "invierno: legumbre de cosecha fina, se siembra en otoño y se cosecha en primavera"
+    datos_en: [sde, noa, pais]
+  - cultivo: "Alpiste"
+    grupo: Alpiste
+    rol: simple
+    estacion: invierno
+    a_confirmar: JC
+    propuesta: "invierno: cereal de invierno, ciclo equivalente al del trigo"
+    datos_en: [noa, pais]
+  - cultivo: "Arveja"
+    grupo: Arveja
+    rol: simple
+    estacion: invierno
+    a_confirmar: JC
+    propuesta: "invierno: legumbre de cosecha fina"
+    datos_en: [pais]
+  - cultivo: "Lino"
+    grupo: Lino
+    rol: simple
+    estacion: invierno
+    a_confirmar: JC
+    propuesta: "invierno: oleaginosa de siembra otoño-invernal"
+    datos_en: [pais]
+  - cultivo: "Mijo"
+    grupo: Mijo
+    rol: simple
+    estacion: verano
+    a_confirmar: JC
+    propuesta: "verano: gramínea estival de ciclo corto"
+    datos_en: [noa, pais]
+
+# ---------------------------------------------------------------------------
+# SIN CLASIFICAR: alcance real del problema (verificado contra staging el 2026-07-30)
+# ---------------------------------------------------------------------------
+sin_clasificar:
+  pregunta_backlog: 6
+  tratamiento_mientras_tanto: >
+    Se usa la estacion propuesta, y toda vista que separe verano de invierno muestra la llamada
+    metodologica `clasificacion-provisoria` con el listado de los cultivos afectados en pantalla.
+    Nunca se los asigna en silencio.
+  alcance_verificado:
+    santiago_del_estero: >
+      Solo Lenteja tiene datos en Santiago: 70 ha sembradas en JIMENEZ, campaña 2020/21, con
+      cosecha y produccion cero. No aparece en la ultima campaña. El impacto sobre las tortas
+      y las carteras de la vista por defecto (2024/25) es NULO.
+    noa_y_pais: >
+      Alpiste, Lenteja y Mijo aparecen en la hoja del NOA y Arveja y Lino en la del pais, todos
+      en la campaña 2024/25. Ahi si entran en las participaciones, y esas son justamente las
+      vistas comparativas que no se publican sin decision de Francisco.
+  nota: >
+    El pedido que origino este archivo daba por hecho que los 5 aparecian en Santiago en la
+    ultima campaña. Se verifico contra staging y no es asi: 4 de los 5 no tienen ni una fila
+    de Santiago. Queda dicho para que nadie lo asuma al reves mas adelante.
+
+# ---------------------------------------------------------------------------
+# REGLA DE SUMA (JC, filas 22 a 24, en mayusculas y con signos de admiracion)
+# ---------------------------------------------------------------------------
+regla_suma:
+  universo_sumable: [agregado, simple]
+  nunca_sumar: [componente]
+  texto_jc: >
+    "PARA LOS GRAFICOS Y TOTALES DEBEN TOMARSE SOLAMENTE EL QUE DICE TOTAL. Ejemplo: esta soja
+    de 1a y soja de 2da, DEBE TOMARSE SOJA TOTAL Y NO SUMAR TODO, porque sino estarias
+    duplicando las cantidades. Lo mismo para poroto y trigo, o la cebada."
+  aperturas_publicables:
+    - grupo: Soja
+      componentes: ["Soja 1ra", "Soja 2da"]
+      publicable: true
+      motivo: "Soja total cierra exacto con 1ra + 2da en las 314 combinaciones verificadas (QA, entrega-01)."
+    - grupo: Poroto
+      componentes: ["Poroto negro", "Poroto otros"]
+      publicable: true
+      desde_campania: "2021/22"
+      motivo: >
+        Antes de 2021/22 el archivo solo trae "Poroto total". Si se graficara la serie completa
+        por variedad, 2021/22 pareceria un boom del poroto negro que no existio.
+    - grupo: Trigo
+      componentes: ["Trigo candeal"]
+      publicable: false
+      motivo: >
+        Falta "Trigo pan" en las tres hojas. El candeal es el 0,7% del trigo provincial y arranca
+        recien en 2020/21. Abrir el detalle daria a entender que en Santiago casi no se hace trigo
+        pan, cuando lo que pasa es que el dato no vino separado. Trigo se publica solo como
+        "Trigo total". Pregunta 2 del reporte de QA de la entrega-01 y pregunta 7 del backlog.
+    - grupo: Cebada
+      componentes: []
+      publicable: false
+      motivo: "El archivo no trae cervecera ni forrajera por separado, no hay detalle que abrir."

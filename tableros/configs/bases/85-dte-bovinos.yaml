@@ -1,0 +1,405 @@
+# Base 85 - DTE Bovinos (SENASA). Movimientos de hacienda bovina desde y hacia
+# Santiago del Estero, agregados por documento de transito electronico (DTE).
+# Escrito sobre raw/entrega-01/85 - DTE Bovinos SDE.xlsx el 2026-07-31.
+# El adapter de la familia (adapters/dte.py) lee este archivo y no sabe nada mas de la base.
+base: 85
+slug: dte-bovinos
+familia: dte
+estado: activa
+demo_prioritaria: true
+
+archivo:
+  patron: "^85 - DTE Bovinos"     # regex sobre el nombre del archivo en raw/entrega-NN/
+
+# ---------------------------------------------------------------------------
+# HOJAS
+# ---------------------------------------------------------------------------
+# Las dos hojas de datos tienen exactamente el mismo schema de 34 columnas, pero el
+# header esta en filas distintas: la de destino lleva arriba un rotulo "INTRODUCCION"
+# en la fila 1 y recien en la 2 empiezan los encabezados.
+#
+# Las dos hojas NO se pisan: ORIGEN es todo lo que sale de un departamento santiaguenio
+# (incluidos los movimientos internos SDE -> SDE) y DESTINO es todo lo que entra a
+# Santiago desde otra provincia. Verificado al perfilar: en DESTINO no hay una sola fila
+# con provincia de origen Santiago del Estero. Se pueden unir sin duplicar cabezas.
+hojas:
+  datos:
+    - nombre: "Data ORIGEN SDE"
+      header_fila: 1
+      sentido: salida               # el movimiento arranca en Santiago
+      ambito: sde                   # publicable, ver nota `sensibilidad`
+      contenido: >
+        28.112 movimientos con origen en Santiago del Estero, 2022 a 2026 (2026 parcial).
+        Incluye los internos (10.505 filas con destino en la propia provincia).
+    - nombre: "Data DESTINO SDE"
+      header_fila: 2
+      sentido: entrada              # introduccion: el movimiento termina en Santiago
+      ambito: sde
+      contenido: >
+        17.920 movimientos con destino en Santiago del Estero y origen en otra provincia,
+        2022 a 2026 (2026 parcial).
+
+  ignorar:
+    - nombre: "Modelo Analisis"
+      motivo: >
+        Especificacion de negocio escrita por JC: que cortes quiere ver (movimientos totales
+        sin introduccion, movimientos internos, participacion por categoria sobre el total) y
+        la instruccion "AGREGAR TODAS LAS OPERACIONES DE VARIACIONES COMO EN AGRICOLA".
+        No son datos: va a constructor-reglas para convertirse en specs/modelos/base-85-*.yaml.
+        Sus tablas ya estan calculadas a mano y sirven de control: ver nota `control`.
+    - nombre: "Hoja2"
+      motivo: "Hoja vacia (1 fila x 1 columna)."
+
+# ---------------------------------------------------------------------------
+# COLUMNAS: origen -> canonico snake_case (identicas en las dos hojas de datos)
+# ---------------------------------------------------------------------------
+columnas:
+  "MOTIVO": motivo
+  "TIPO ORIGEN": tipo_origen
+  "TIPO DESTINO": tipo_destino
+  "AÑO": anio
+  "MES": mes
+  "MES_INICIO": mes_inicio            # fecha del primer dia del mes; redundante con anio+mes,
+                                      # se mapea para no romper el chequeo de columnas y no se usa
+  "PROVINCIA ORIGEN": origen_provincia
+  "PARTIDO ORIGEN": origen_departamento
+  "PROVINCIA DESTINO": destino_provincia
+  "PARTIDO DESTINO": destino_departamento
+  "DTE BOVINOS": dte_bovinos
+  "TOTAL BOVINOS": total_bovinos
+  "TERNEROS": terneros
+  "TERNERAS": terneras
+  "NOVILLITOS": novillitos
+  "NOVILLOS": novillos
+  "TORITOS / MEJ": toritos
+  "TOROS": toros
+  "VACAS": vacas
+  "VAQUILLONAS": vaquillonas
+  "DTE BUBALINOS": dte_bubalinos
+  "TOTAL BUBALINOS": total_bubalinos
+  "TERNEROS BUB": terneros_bub
+  "TERNERAS BUB": terneras_bub
+  "NOVILLITOS BUB": novillitos_bub
+  "NOVILLOS BUB": novillos_bub
+  "TORITOS / MEJ BUB": toritos_bub
+  "TOROS BUB": toros_bub
+  "VACAS BUB": vacas_bub
+  "VAQUILLONAS BUB": vaquillonas_bub
+  "BOVINOS INGRESOS A TAMBOS ACTUALES": ingresos_tambo
+  "BOVINOS EGRESOS DE TAMBOS ACTUALES": egresos_tambo
+  "BOVINOS INGRESOS A EC ACTUALES": ingresos_ec
+  "BOVINOS EGRESOS DE EC ACTUALES": egresos_ec
+
+# ---------------------------------------------------------------------------
+# VALORES: el adapter despivotea estas columnas a filas.
+# `rol: agregado` es el total de la especie; `rol: componente` son las categorias que
+# lo componen. Nunca se suman juntos (misma regla que soja total vs soja 1ra/2da en la
+# base 9). `rol: simple` es una medida aparte que no entra en esa cuenta.
+# ---------------------------------------------------------------------------
+valores:
+  dte_bovinos:
+    etiqueta: "DTE emitidos"
+    medida: documentos
+    especie: bovinos
+    categoria: "Total"
+    rol: simple
+    unidad: dte
+    agregable: true
+  total_bovinos:
+    etiqueta: "Cabezas movidas"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Total"
+    rol: agregado
+    unidad: cabezas
+    agregable: true
+  terneros:
+    etiqueta: "Terneros"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Terneros"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  terneras:
+    etiqueta: "Terneras"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Terneras"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  novillitos:
+    etiqueta: "Novillitos"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Novillitos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  novillos:
+    etiqueta: "Novillos"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Novillos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  toritos:
+    etiqueta: "Toritos / mejoradores"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Toritos / mejoradores"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  toros:
+    etiqueta: "Toros"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Toros"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  vacas:
+    etiqueta: "Vacas"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Vacas"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  vaquillonas:
+    etiqueta: "Vaquillonas"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Vaquillonas"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  dte_bubalinos:
+    etiqueta: "DTE emitidos"
+    medida: documentos
+    especie: bubalinos
+    categoria: "Total"
+    rol: simple
+    unidad: dte
+    agregable: true
+  total_bubalinos:
+    etiqueta: "Cabezas movidas"
+    medida: cabezas
+    especie: bubalinos
+    categoria: "Total"
+    rol: agregado
+    unidad: cabezas
+    agregable: true
+  terneros_bub:
+    etiqueta: "Terneros"
+    medida: cabezas
+    especie: bubalinos
+    categoria: "Terneros"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  terneras_bub:
+    etiqueta: "Terneras"
+    medida: cabezas
+    especie: bubalinos
+    categoria: "Terneras"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  novillitos_bub:
+    etiqueta: "Novillitos"
+    medida: cabezas
+    especie: bubalinos
+    categoria: "Novillitos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  novillos_bub:
+    etiqueta: "Novillos"
+    medida: cabezas
+    especie: bubalinos
+    categoria: "Novillos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  toritos_bub:
+    etiqueta: "Toritos / mejoradores"
+    medida: cabezas
+    especie: bubalinos
+    categoria: "Toritos / mejoradores"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  toros_bub:
+    etiqueta: "Toros"
+    medida: cabezas
+    especie: bubalinos
+    categoria: "Toros"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  vacas_bub:
+    etiqueta: "Vacas"
+    medida: cabezas
+    especie: bubalinos
+    categoria: "Vacas"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  vaquillonas_bub:
+    etiqueta: "Vaquillonas"
+    medida: cabezas
+    especie: bubalinos
+    categoria: "Vaquillonas"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  # Ingreso y egreso son medidas DISTINTAS a proposito. Si compartieran una sola medida
+  # ("movimiento"), un group by por categoria las sumaria entre si y el numero no
+  # significaria nada: estaria sumando lo que entro con lo que salio.
+  ingresos_tambo:
+    etiqueta: "Ingresos a tambos"
+    medida: ingreso_establecimiento
+    especie: bovinos
+    categoria: "Tambo"
+    rol: simple
+    unidad: cabezas
+    agregable: true
+  egresos_tambo:
+    etiqueta: "Egresos de tambos"
+    medida: egreso_establecimiento
+    especie: bovinos
+    categoria: "Tambo"
+    rol: simple
+    unidad: cabezas
+    agregable: true
+  ingresos_ec:
+    etiqueta: "Ingresos a engorde a corral"
+    medida: ingreso_establecimiento
+    especie: bovinos
+    categoria: "Engorde a corral"
+    rol: simple
+    unidad: cabezas
+    agregable: true
+  egresos_ec:
+    etiqueta: "Egresos de engorde a corral"
+    medida: egreso_establecimiento
+    especie: bovinos
+    categoria: "Engorde a corral"
+    rol: simple
+    unidad: cabezas
+    agregable: true
+
+# ---------------------------------------------------------------------------
+# TIEMPO
+# ---------------------------------------------------------------------------
+tiempo:
+  grano: anio_mes
+  columnas: [anio, mes]
+  cobertura_real: "2022-01 a 2026-06"   # 2026 esta incompleto, ver nota `anomalia`
+
+# ---------------------------------------------------------------------------
+# GEOGRAFIA (dos puntas: origen y destino)
+# ---------------------------------------------------------------------------
+# El archivo trae la geografia por NOMBRE, no con ids INDEC (al reves que la base 9),
+# asi que se resuelve contra configs/dims/geo-alias.yaml.
+#
+# `resolver` = provincias a las que se les asigna codigo INDEC de departamento. Solo
+# Santiago, que es la unica con dim_geo cargada. Las otras 15 provincias que aparecen
+# como contraparte se guardan con nombre de provincia y de partido, provincia_id INDEC
+# y geo_id nulo: alcanza para agregar flujos por provincia sin tener que cargar los 395
+# partidos del resto del pais.
+geo:
+  particion: sde
+  provincia_propia: 86
+  resolver: [86]
+  nivel: departamento
+  agregados:
+    fila_total_al_pie: true    # las dos hojas cierran con una fila de totales sin motivo
+                               # ni anio. El adapter la marca es_agregado_fila=true.
+
+# ---------------------------------------------------------------------------
+# SALIDA
+# ---------------------------------------------------------------------------
+salida:
+  staging: "staging/base-85-dte-bovinos.parquet"
+  mart: hecho_movimientos_hacienda
+  particiones: [provincia, anio]
+
+# ---------------------------------------------------------------------------
+# METADATA HEREDADA DEL INDICE (configs/manifiesto-indice.yaml, base nro 85)
+# ---------------------------------------------------------------------------
+indice:
+  fuente: "SENASA"
+  cita_fuente_al_pie: "Fuente: SENASA"
+
+# ---------------------------------------------------------------------------
+notas:
+  - fecha: "2026-07-31"
+    tipo: familia
+    texto: >
+      Familia `dte`: movimientos agregados por documento de transito, con las categorias
+      WIDE (una columna por categoria). Las bases 144 (porcinos) y 145 (ovinos) son de la
+      misma familia pero traen la categoria LONG; cuando entren hay que agregarle al adapter
+      el modo `categoria_long`, no escribir un adapter nuevo.
+  - fecha: "2026-07-31"
+    tipo: sensibilidad
+    texto: >
+      Las dos hojas quedan con ambito `sde` y por lo tanto publicables. El criterio: CLAUDE.md
+      marca como sensibles las COMPARACIONES entre provincias (del tipo "SDE produce mas que
+      Tucuman"). Esto no es una comparacion sino un flujo: de donde sale y a donde va la
+      hacienda santiaguenia, que es justamente lo que la demo tiene que contar. Igual conviene
+      que Francisco lo confirme antes de publicar la vista, porque el dato deja ver que
+      provincias le compran hacienda a Santiago.
+  - fecha: "2026-07-31"
+    tipo: control
+    texto: >
+      La hoja Modelo Analisis de JC trae los totales por anio ya calculados a mano. Sirven de
+      control de la ingesta: 2022 a 2025 coinciden EXACTO con la suma de la hoja ORIGEN
+      (2022: 29.209 DTE y 1.030.999 cabezas; 2023: 27.778 y 959.102; 2024: 27.058 y 953.831;
+      2025: 27.844 y 966.161). El unico anio que no cierra es 2026, ver nota `anomalia`.
+  - fecha: "2026-07-31"
+    tipo: anomalia
+    texto: >
+      Las dos hojas traen al pie una fila con totales y sin motivo ni anio (r28115 en ORIGEN,
+      r17924 en DESTINO). Se marcan con es_agregado_fila=true, no se borran. Ojo con las dos:
+      en ORIGEN el total dice 4.192.293 cabezas y el detalle suma 4.192.353 (60 de diferencia);
+      en DESTINO el "total" dice 489.284, que no es el total de nada sino exactamente el
+      subtotal de 2025. Ninguna de las dos se puede usar como control. Para qa-datos.
+  - fecha: "2026-07-31"
+    tipo: anomalia
+    texto: >
+      Las cifras de 2026 de la hoja Modelo Analisis quedaron viejas respecto del detalle:
+      JC tiene 8.549 DTE y 282.200 cabezas, y el detalle suma 8.553 y 282.260. La diferencia
+      de 60 cabezas es la misma que la de la fila de total al pie, asi que la lectura probable
+      es que se agregaron filas al detalle y no se refrescaron ni el resumen ni el total.
+      No se corrige nada: manda el detalle. Para qa-datos y para preguntarle a JC.
+  - fecha: "2026-07-31"
+    tipo: anomalia
+    texto: >
+      La hoja DESTINO trae 30 motivos distintos contra 18 de ORIGEN, y entre los que solo
+      aparecen ahi hay varios ajenos a la hacienda bovina: "Traslado de Aves Ornamentales",
+      "Vareo/Competencia", "Venta a forrajerias, agropecuarias y veterinarias", "Deportes",
+      "Traspatio o autoconsumo". Se ingieren igual. Para qa-datos: preguntarle a JC si son
+      residuo de la clasificacion general de SENASA y si hay que excluirlos de los totales.
+  - fecha: "2026-07-31"
+    tipo: anomalia
+    texto: >
+      3 filas de la hoja ORIGEN tienen TOTAL BOVINOS distinto de la suma de sus 8 categorias
+      (ej. r con AGUIRRE -> NUEVE DE JULIO 2022-12: total 182 contra 180 sumando categorias).
+      En DESTINO no pasa en ninguna. Para qa-datos.
+  - fecha: "2026-07-31"
+    tipo: cobertura
+    texto: >
+      Esta base si cubre los 27 departamentos de Santiago, incluido SALAVINA, que era el unico
+      que faltaba en la base 9. Ademas nombra "LA BANDA" al departamento que la base 9 llama
+      "BANDA" (86035): los dos nombres quedaron cargados en geo-alias.yaml.
+  - fecha: "2026-07-31"
+    tipo: dato
+    texto: >
+      Los bubalinos (bufalos) estan en cero en toda la hoja ORIGEN y suman 845 cabezas en
+      DESTINO. Las columnas se ingieren igual, marcadas con especie=bubalinos, para no
+      esconder que la fuente las trae. Ninguna vista deberia mezclarlas con bovinos.

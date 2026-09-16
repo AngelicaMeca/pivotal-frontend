@@ -1,0 +1,71 @@
+# Primer cuadro de JC (Modelo Analisis f2-f8): "Movimientos totales (sin introducción)"
+# por año, con el total y la apertura por categoría. Es la vista madre de la familia:
+# las de internos, extracción e introducción heredan de esta y solo cambian el universo.
+base: 85
+slug: evolucion-movimientos
+comunes: _comunes-base-85
+
+titulo: "Cómo evolucionaron los movimientos de hacienda"
+subtitulo: "Cabezas movidas y documentos emitidos por año"
+
+protocolo: _protocolo-presentacion
+titulo_componentes:
+  variable: {desde_filtro: medida}          # cabezas | documentos
+  sujeto: {desde: subsector}                # "la hacienda bovina"
+  recorte: {desde_universo: true}           # "(sin introducción)"
+  apertura: {desde_filtro: apertura}        # sin apertura, o "por categoría"
+  area: provincia
+  periodo: {ventana: ventana_anios}
+titulo_protocolo_ejemplo:
+  - "Evolución de las cabezas movidas de la hacienda bovina (sin introducción) - Santiago del Estero - años 2022 a 2025"
+  - "Evolución de las cabezas movidas de la hacienda bovina (sin introducción) por categoría - Santiago del Estero - años 2022 a 2025"
+  - "Evolución de los documentos de tránsito de la hacienda bovina (sin introducción) - Santiago del Estero - años 2022 a 2025"
+
+tipo: serie
+
+variables: [cabezas, documentos]
+dimensiones: [anio]
+filtros: [medida, apertura]
+orden: {por: anio, dir: asc}
+
+defaults:
+  medida: cabezas
+  apertura: total                           # "total" = una sola barra por año
+
+opciones_medida: [cabezas, documentos]
+opciones_apertura: [total, categoria]      # los valores son ids de apertura del protocolo
+
+universo:
+  ambito: sde
+  recorte: totales_sin_introduccion         # _comunes-base-85.universos
+  especie: bovinos
+  categoria_rol: [agregado]                 # solo la fila Total; con `apertura: por_categoria`
+                                            # el build cambia a [componente]
+  anios: ventana_anios
+  excluye_anio_en_curso: true
+
+columnas_tabla:
+  - {campo: anio, etiqueta: "Año"}
+  - {campo: documentos, etiqueta: "DTE emitidos"}
+  - {campo: cabezas, etiqueta: "Cabezas movidas"}
+  - {campo: variacion_interanual_pct, etiqueta: "Var. interanual"}
+
+transformaciones:
+  - variacion_interanual: {sobre: [cabezas, documentos]}
+  - variacion_decadica: {sobre: [cabezas, documentos]}
+  - variacion_promedio_anual: {sobre: [cabezas, documentos]}
+
+filtros_calidad: [excluir-fila-total-al-pie, bubalinos-fuera-de-las-vistas]
+notas_metodologicas: [que-es-un-dte, sin-introduccion, total-no-suma-categorias, anio-en-curso]
+
+fuente:
+  pie: "Fuente: SENASA"
+  organismo_esperado: "SENASA"
+estado: publicada
+
+origen: {tipo: modelo-analisis, detalle: "hoja 'Modelo Analisis' base 85, filas 2 a 8", fecha: 2026-07-31}
+nota_interpretacion: >
+  Los cuatro años cerrados (2022 a 2025) dan exacto contra la tabla que JC ya tenia calculada
+  a mano. 2026 queda afuera porque llega hasta mayo; el propio JC lo marca con asterisco.
+  La instruccion "AGREGAR TODAS LAS OPERACIONES DE VARIACIONES COMO EN AGRICOLA" (f1) se
+  cumple con las tres transformaciones de variacion, las mismas de la base 9.

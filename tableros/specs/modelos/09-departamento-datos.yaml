@@ -1,0 +1,129 @@
+# La puerta del AREA TERRITORIAL de cultivos: la pagina a la que lleva el boton de cabecera
+# "Datos por Departamento", habilitado el 10-ago-2026 (segunda tanda, Facu con JC presente:
+# "Habilita tambien los datos de deparamentos"). Regla:
+# _protocolo-presentacion.formato_v1.navegacion.dos_areas_de_inicio + backlog pregunta 34.
+#
+# Que es: se elige un departamento y se ven sus datos (KPIs de la ultima campaña, evolucion de
+# cosecha y produccion, tabla por campaña), con el mismo selector de cultivo del catalogo de JC
+# que usa el tablero. Las cuatro vistas departamentales existentes (ficha, cartera, evolucion
+# de rendimientos, posicion en el ranking) son sus destinos naturales y quedan enlazadas abajo.
+#
+# Escrito por constructor-dashboards el 10-ago-2026 (la construccion la habilito la segunda
+# tanda; el detalle de la pagina lo decide este agente segun el pendiente
+# `boton-datos-por-departamento` de tablero-cultivos-extensivos.yaml).
+base: 9
+slug: departamento-datos
+comunes: _comunes-base-9
+titulo: "Datos por departamento"
+subtitulo: "Los números del cultivo elegido en el departamento: última campaña, evolución y serie completa"
+
+# --- Titulo del cuadro: lo arma _protocolo-presentacion, no se escribe a mano ---
+protocolo: _protocolo-presentacion
+titulo_componentes:
+  area: {desde_filtro: departamento}
+  sujeto: {desde_filtro: cultivo}
+  variable:
+    override: "evolución de la superficie cosechada y producción"
+    motivo: >
+      Literal del titulo que JC escribio en su propio grafico del mockup (mismo override y
+      mismo motivo que 09-cultivo-evolucion-cosecha-produccion, que es este grafico a nivel
+      provincia). La composicion mecanica daria "evolución de superficie cosechada y
+      producción" (articulo `multiple`), que no es como lo escribe el.
+  apertura: null
+  periodo: {ventana: ventana_campanias}
+
+# La pagina tiene DOS cuadros y cada uno lleva su titulo de protocolo (mismo esquema que el
+# tipo `mapa`, que compone el del ranking vinculado con otra plantilla). El segundo se compone
+# con `tabla_por_campania.titulo_componentes` y la plantilla del tipo `lista`.
+tabla_por_campania:
+  titulo_componentes:
+    area: {desde_filtro: departamento}
+    sujeto: {desde_filtro: cultivo}
+    variable: {multiple: [sup_cosechada_ha, produccion_tn, rendimiento_kg_ha]}
+    apertura: null
+    periodo: {ventana: ventana_campanias}
+  columnas:
+    - {campo: campania, etiqueta: "Campaña"}
+    - {campo: sup_cosechada_ha, etiqueta: "Sup. cosechada (ha)"}
+    - {campo: produccion_tn, etiqueta: "Producción (tn)"}
+    - {campo: rendimiento_kg_ha, etiqueta: "Rendimiento (kg/ha)"}
+
+# El build verifica que el compositor produzca EXACTAMENTE estos titulos. El ejemplo usa
+# MORENO, como los demas specs departamentales; no es el default de la pagina (ese se calcula).
+titulo_protocolo_ejemplo:
+  - "Evolución de la superficie cosechada y producción de soja - MORENO (Santiago del Estero) - campañas 2015/16 a 2024/25"
+  - "Superficie cosechada, producción y rendimiento de soja - MORENO (Santiago del Estero) - campañas 2015/16 a 2024/25"
+
+tipo: serie
+grafico: lineas            # las mismas dos lineas del grafico del mockup, a grano departamento
+
+variables: [sup_cosechada_ha, produccion_tn, rendimiento_kg_ha]
+dimensiones: [campania]
+filtros: [departamento, cultivo]
+orden: {por: campania, dir: asc}
+
+defaults:
+  departamento: departamento_de_mayor_produccion    # calculado, no hardcodeado (mismo default
+                                                    # que las otras vistas departamentales;
+                                                    # hoy resuelve a GENERAL TABOADA)
+  cultivo: "Soja total"
+
+universo:
+  ambito: sde
+  nivel_geo: departamento
+  cultivo_rol: [agregado, simple]
+  cultivos_visibles: catalogo-de-jc    # mismo selector del catalogo que el tablero
+                                       # (formato_v1.selectores.cultivo.universo_visible)
+  campanias: ventana_campanias
+
+# KPIs de cabecera del cuadro (el `resumen` del tipo serie): la secuencia FIJA de JC
+# (sembrada, cosechada, produccion, rendimiento), con la campaña ESCRITA en cada rotulo
+# porque el dato es de la ultima campaña y no de toda la serie (parametros_explicitos).
+indicadores:
+  campania: ultima_de_la_ventana
+  medidas: [sup_sembrada_ha, sup_cosechada_ha, produccion_tn, rendimiento_kg_ha]
+
+# El boton de cabecera en ESTA vista (cuarta tanda del 10-ago-2026, Facu: "Cuando uno va a
+# Datos por Departamento, el botón sigue diciendo Datos por Departamento; debería volver a
+# Provincia"). Regla: _protocolo-presentacion.formato_v1.cuarta_tanda.boton_volver_provincia.
+cabecera:
+  boton_datos_por_departamento:
+    en_esta_vista: "se transforma en 'Provincia'"
+    destino: tablero-cultivos-extensivos
+    conserva_filtros: true    # vuelve con el cultivo y la campaña vigentes (persistencia_de_filtros)
+    motivo: "un botón que nombra la página en la que ya estás no navega a ningún lado"
+
+navegacion:
+  - accion: "Qué se produce en el departamento"
+    va_a: 09-departamento-ficha-cultivos
+  - accion: "Cartera de cultivos"
+    va_a: 09-departamento-cartera
+  - accion: "Evolución de rendimientos"
+    va_a: 09-departamento-evolucion-rendimientos
+  - accion: "Posición en el ranking"
+    va_a: 09-departamento-posicion-ranking
+
+notas_metodologicas: [estimacion-departamental, total-no-suma-componentes, campania-en-curso]
+filtros_calidad: [excluir-campanias-sin-departamento]
+
+fuente:
+  pie: "Fuente: MAGyP"
+  organismo_esperado: "MAGyP"
+  publicacion: null
+
+sensibilidad: normal        # es dato provincial por departamento, no comparacion entre provincias
+# Ratificada por la tercera tanda del 10-ago-2026: el dato departamental es la UNICA
+# salida de contenido que JC dejo en pie ("NO debe llevar NADA a otra pagina salvo el
+# dato departamental") y el boton de cabecera "Datos por Departamento" funciona. Las
+# reglas del mockup aplican tambien aca (KPIs sin variacion, titulos literales, eje
+# visible): interpretacion anotada en backlog 40.
+estado: publicada
+
+origen:
+  tipo: decision-de-facu
+  detalle: >
+    Segunda tanda del 10-ago-2026 (Facu, con JC presente): "Habilita tambien los datos de
+    deparamentos". Sustituye el "Proximamente" del boton de cabecera de esa misma mañana.
+    Backlog pregunta 34, actualizada; pendiente boton-datos-por-departamento del spec del
+    tablero de cultivos.
+  fecha: 2026-08-10

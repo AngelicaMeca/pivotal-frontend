@@ -1,0 +1,172 @@
+# Layout del sitio: que ramas tiene la home, en que orden, y como se agrupan las vistas
+# dentro de cada seccion publicada.
+#
+# El ARBOL de la home no se escribe aca: sale de configs/manifiesto-indice.yaml, que es el
+# indice de JC. Aca solo va el ORDEN de las ramas y como se rotula cada una, porque el indice
+# no declara un orden y el sitio necesita uno estable (si no, la home cambia entre builds).
+#
+# El orden de los grupos y de las vistas de una seccion tambien vive aca: el protocolo de
+# numeracion de cuadros exige "un dato explicito del layout, no el orden de lectura del disco".
+#
+# Lo lee pipeline/site_build.py.
+
+# --- Ramas de la home, en orden. `bloque` y `rama` matchean tema.bloque/tema.ruta[0] ---
+ramas:
+  - id: agricultura
+    bloque: acceso-por-tema
+    rama: Agricultura
+    titulo: Agricultura
+    bajada: "Qué se siembra, dónde y con qué resultado."
+  - id: ganaderia
+    bloque: acceso-por-tema
+    rama: Ganadería
+    titulo: Ganadería
+    bajada: "Existencias, movimientos y faena por departamento."
+  - id: clima
+    bloque: acceso-por-tema
+    rama: Clima
+    titulo: Clima
+    bajada: "Estaciones meteorológicas y normales climatológicas."
+  - id: economia
+    bloque: acceso-por-tema
+    rama: Economía
+    titulo: Economía
+    bajada: "Combustibles, patentamientos, consumo y warrants."
+  - id: empleo
+    bloque: acceso-por-tema
+    rama: Empleo
+    titulo: Empleo
+    bajada: "Empleo registrado y remuneraciones por departamento y por rama."
+  - id: industria
+    bloque: acceso-por-tema
+    rama: Industria
+    titulo: Industria
+    bajada: "Establecimientos e insumos de la cadena agroalimentaria."
+  - id: general
+    bloque: acceso-por-tema
+    rama: General
+    titulo: Datos generales
+    bajada: "Población, educación y contexto de la provincia."
+  - id: registros
+    bloque: acceso-por-territorio
+    rama: Departamento
+    titulo: Registros
+    bajada: "Padrones de empresas y establecimientos con domicilio en la provincia."
+
+# --- Menu lateral (Modelo 2 de JC, aprobado el 10-ago-2026) ---
+# Los seis sectores del menu lateral verde, en el orden y con los rotulos en que JC los dibujo
+# en su mockup (y en la captura del tema visual): Inicio arriba y despues estos, desplegables.
+# Cada sector despliega sus secciones publicadas; un sector sin secciones se muestra igual,
+# rotulado "Próximamente", sin ningun link muerto. Empleo y Registros no estan en el mockup de
+# JC y quedan afuera del menu hasta que JC los ubique (siguen accesibles desde la home).
+# El rotulo del menu puede diferir del titulo de la rama en la home ("General" vs "Datos
+# generales"): en el menu manda el mockup.
+menu_lateral:
+  - {rama: agricultura, titulo: "Agricultura"}
+  - {rama: ganaderia, titulo: "Ganadería"}
+  - {rama: clima, titulo: "Clima"}
+  - {rama: industria, titulo: "Industria"}
+  - {rama: economia, titulo: "Economía"}
+  - {rama: general, titulo: "General"}
+
+# --- Secciones publicadas (las que tienen vistas construidas) ---
+secciones:
+  - id: cultivos-extensivos
+    base: 9
+    rama: agricultura
+    ruta: [Agricultura, Cultivos extensivos]
+    url: agricultura/cultivos-extensivos
+    titulo: "Cultivos extensivos"
+    bajada: >
+      Superficie sembrada y cosechada, producción y rendimiento de los cultivos extensivos de
+      Santiago del Estero, por departamento y por campaña. Datos del Ministerio de Agricultura,
+      Ganadería y Pesca de la Nación.
+    # --- Tercera tanda del 10-ago-2026 (JC): en cultivos el esquema tablero+analisis NO
+    # EXISTE MAS ("OLVIDATE DEL ANÁLISIS COMPLETO... TE QUEDES CON LOS TABLEROS"). La seccion
+    # queda en TRES paginas: el tablero (index, calcado del mockup Modelo 2), el dato
+    # departamental y la comparacion NOA. Sin analisis.html, sin pestañas, sin listado de
+    # vistas: las 16 vistas de detalle pasaron a `estado: no-publicada` en sus specs y no se
+    # generan. Regla: _protocolo-presentacion.formato_v1.tercera_tanda.solo_tableros.
+    sin_pestanias: true
+    # Banderas de idioma es/en/pt en la cabecera, donde estaba el titulo duplicado (JC: "ahí
+    # iban las banderas de idiomas"; backlog 33, resuelta).
+    cabecera_banderas: true
+    # Botones de cabecera del mockup, HABILITADOS el 10-ago (segunda tanda), en el orden en
+    # que JC los dibujo. El build los resuelve a URLs y los deja viajar con la seleccion
+    # vigente (persistencia_de_filtros). Si la vista destino no esta publicada (ej. si
+    # Francisco baja la comparacion NOA, backlog 11), el boton no se dibuja.
+    botones_cabecera:
+      - {texto: "Santiago en el NOA", vista: 09-noa-participacion-provincia}
+      - {texto: "Datos por Departamento", vista: 09-departamento-datos}
+    # Las dos unicas paginas ademas del tablero, SUELTAS: se generan en la seccion pero no
+    # hay listado que las agrupe. Se llega por los botones de cabecera y el click del mapa.
+    vistas_sueltas:
+      - 09-departamento-datos
+      - 09-noa-participacion-provincia
+    grupos: []
+
+  - id: movimientos-hacienda
+    base: 85
+    rama: ganaderia
+    ruta: [Ganadería, Movimientos de hacienda]
+    url: ganaderia/movimientos-hacienda
+    titulo: "Movimientos de hacienda"
+    bajada: >
+      Cómo circula la hacienda bovina de Santiago del Estero: cuánta se mueve, desde y hacia qué
+      departamentos, hacia qué provincias sale y desde cuáles entra, en qué meses y para qué.
+      Cada movimiento es un documento de tránsito electrónico (DTE) emitido por SENASA.
+    grupos:
+      - titulo: "Cuánto se mueve"
+        vistas:
+          - 85-evolucion-movimientos
+          - 85-evolucion-internos
+          - 85-evolucion-extraccion
+          - 85-evolucion-introduccion
+          - 85-balance-introduccion-extraccion
+      - titulo: "Dónde y para qué"
+        vistas:
+          - 85-mapa-movimientos-departamento
+          - 85-ranking-departamento-origen
+          - 85-departamento-evolucion
+          - 85-matriz-od-interna
+          - 85-movimientos-por-motivo
+      - titulo: "Qué y cuándo"
+        vistas:
+          - 85-participacion-categorias
+          - 85-estacionalidad-mensual
+          - 85-tambos-engorde-corral
+
+  # Seccion SOLO TABLERO. Francisco pidio el 5-ago-2026 construir el tablero de la base 48 y
+  # dejar las vistas de detalle en stand by, asi que `grupos` va vacio: no hay "Analisis
+  # completo" todavia y la pestaña no se dibuja. Cuando se construyan las vistas se listan aca
+  # y la seccion pasa a tener las dos pestañas, como las otras dos.
+  - id: stock-bovino
+    base: 48
+    rama: ganaderia
+    ruta: [Ganadería, Stock bovino]
+    url: ganaderia/stock-bovino
+    titulo: "Stock bovino"
+    bajada: >
+      Cuánta hacienda bovina hay en Santiago del Estero y cómo está compuesto el rodeo: por
+      departamento, por categoría y por zona productiva, al cierre de cada año. El stock se
+      releva con la vacunación antiaftosa.
+    grupos: []
+
+# --- Vistas que quedan fuera de la navegacion hasta que Francisco decida ---
+# No se listan en ningun menu. Se generan en /plataforma/_privado/
+# (src/tableros/contenido/paginas/_privado/ del sitio, gitignoreado: no viaja al deploy).
+privadas:
+  titulo: "Material comparativo (sin publicar)"
+  bajada: >
+    Estas vistas comparan a Santiago del Estero con otras provincias y con el total del país.
+    CLAUDE.md las trata como material sensible: no salen al sitio sin decisión escrita de
+    Francisco registrada en el spec. Quedan generadas acá para poder verlas.
+  vistas:
+    # 09-noa-participacion-provincia salio de esta lista el 3-ago-2026: Francisco la aprobo y
+    # ahora vive en Agricultura > Cultivos extensivos > Comparación regional.
+    - 09-pais-participacion-sde
+    # Las dos de abajo no comparan a Santiago con nadie: muestran a que provincias les vende
+    # hacienda y de cuales la recibe. Es informacion comercial, asi que salen por el default
+    # seguro. Se publican escribiendo `aprobado_por` en el spec y moviendolas a la seccion.
+    - 85-extraccion-por-provincia-destino
+    - 85-introduccion-por-provincia-origen

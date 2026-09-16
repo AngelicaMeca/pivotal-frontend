@@ -1,0 +1,6987 @@
+# Manifiesto del indice de JC ("Bases para Beta").
+# GENERADO por pipeline/indice.py a partir de raw/indice/Bases para Beta - 2.xlsx.
+# NO editar a mano: se regenera con `.venv/bin/python -m pipeline.indice`.
+#
+# Que es: el catalogo de bases que JC declara que existen, con su fuente,
+# frecuencia, cobertura y en que entrega vienen. Es intencion, no datos.
+# Lo consumen: ingestor-bases (hereda fuente/frecuencia/rango a cada config),
+# qa-datos (cobertura temporal declarada) y constructor-reglas (estatus del
+# modelo de analisis de cada base).
+indice:
+  version: 2
+  archivo: Bases para Beta - 2.xlsx
+  fecha_version: '2026-07-27'
+  sha256: 4da8de3debdb9fac51b41ec12c46c8899b66b36bc997cd625f1bb097115c364a
+  baseline: true
+  version_anterior: null
+  hojas:
+  - GENERAL
+  - Org tematica
+  - Informes coyunturales
+  - Lista de bases y notas
+  hojas_leidas:
+  - GENERAL
+  - Org tematica
+  - Informes coyunturales
+  - Lista de bases y notas
+  hojas_ignoradas: []
+  hojas_nuevas_no_previstas:
+  - Informes coyunturales
+  bases_en_general: 220
+  numeros_reservados_sin_contenido:
+  - 221
+  - 222
+  - 223
+  - 224
+  notas_de_encabezado:
+  - LISTA DE BASES Y NOTAS 2da ENTREGA
+  - MA= Modelo de Análisis
+  - EN TODOS LOS CASOS DE CUADROS, GRÁFICOS Y MAPAS, DEBE CITARSE EN LA PARTE INFERIR LA FUENTE (la misma
+    figura en la hoja "GENERAL" de este libro
+  marcas_de_navegacion:
+  - ACCESO
+  - POR
+  - TEMA
+  - Bases SDE
+  - BASES
+  - DATOS
+  - Informes
+  - coyunturales
+  informes_coyunturales: ver corpus/indice-corpus.yaml
+convenciones:
+  fuente_de_verdad: El indice declara INTENCION (que bases habra), nunca datos.
+  registros_declarados: 'Conteo de la base nacional completa. El recorte de Santiago del Estero siempre
+    es menor: usar solo como orden de magnitud, nunca como validacion dura.'
+  rango_declarado: Cobertura que promete la fuente, no la del archivo recibido.
+  unidades_y_geografia: Copia literal de las columnas 'Var unit' y 'Var geog' de JC. A veces traen la
+    unidad ('tn', 'depart') y a veces un conteo ('7' = siete provincias). Son una pista para el config
+    de la base, no un contrato.
+  alias_historicos: Si JC renumera o renombra una base, se anota aca el numero o nombre viejo para no
+    romper configs ni specs.
+demo_prioritaria:
+- 9
+- 48
+- 53
+- 85
+- 111
+entregas:
+  entrega-01:
+    marca_en_indice: 1ra entrega
+    declaradas: 27
+    bases_declaradas:
+    - 9
+    - 30
+    - 33
+    - 38
+    - 48
+    - 53
+    - 56
+    - 57
+    - 75
+    - 85
+    - 92
+    - 93
+    - 100
+    - 101
+    - 110
+    - 111
+    - 132
+    - 134
+    - 135
+    - 136
+    - 137
+    - 144
+    - 145
+    - 151
+    - 196
+    - 197
+    - 198
+    archivos_recibidos: 27
+    bases_recibidas:
+    - 9
+    - 30
+    - 33
+    - 38
+    - 48
+    - 53
+    - 56
+    - 57
+    - 75
+    - 85
+    - 92
+    - 93
+    - 100
+    - 101
+    - 110
+    - 111
+    - 132
+    - 134
+    - 135
+    - 136
+    - 137
+    - 144
+    - 145
+    - 151
+    - 196
+    - 197
+    - 198
+    declaradas_sin_recibir: []
+    recibidas_sin_declarar: []
+    en_staging:
+    - 9
+    - 48
+    - 85
+    publicadas: []
+  entrega-02:
+    marca_en_indice: 2da entrega
+    declaradas: 21
+    bases_declaradas:
+    - 8
+    - 12
+    - 13
+    - 14
+    - 24
+    - 25
+    - 31
+    - 40
+    - 199
+    - 203
+    - 207
+    - 208
+    - 209
+    - 210
+    - 211
+    - 213
+    - 214
+    - 215
+    - 216
+    - 217
+    - 218
+    archivos_recibidos: 0
+    bases_recibidas: []
+    declaradas_sin_recibir:
+    - 8
+    - 12
+    - 13
+    - 14
+    - 24
+    - 25
+    - 31
+    - 40
+    - 199
+    - 203
+    - 207
+    - 208
+    - 209
+    - 210
+    - 211
+    - 213
+    - 214
+    - 215
+    - 216
+    - 217
+    - 218
+    recibidas_sin_declarar: []
+    en_staging: []
+    publicadas: []
+anomalias_del_indice:
+- tipo: numeros-reservados
+  detalle: 'Numeros de base sin descripcion ni datos: 221, 222, 223, 224. Quedan reservados, todavia sin
+    contenido.'
+- tipo: fila-total-embebida
+  detalle: Fila 232 sin numero de base con un total de 45413288 registros. Es un subtotal de la planilla,
+    no una base.
+- tipo: rango-invertido
+  base: 13
+  detalle: 'Empieza en 2029-01-01 y termina en 2025-06-30: el inicio es posterior al final.'
+- tipo: rango-invertido
+  base: 14
+  detalle: 'Empieza en 2029-01-01 y termina en 2025-06-30: el inicio es posterior al final.'
+- tipo: fecha-invalida
+  base: 89
+  detalle: '''ultimo'' dice ''31/6/2026'', que no es una fecha valida.'
+- tipo: rango-invertido
+  base: 90
+  detalle: 'Empieza en 2029-01-01 y termina en 2026-05-31: el inicio es posterior al final.'
+- tipo: fecha-invalida
+  base: 122
+  detalle: '''ultimo'' dice ''31/4/2026'', que no es una fecha valida.'
+- tipo: rango-invertido
+  base: 200
+  detalle: 'Empieza en 2026-12-01 y termina en 2025-12-31: el inicio es posterior al final.'
+- tipo: frecuencia-desconocida
+  base: 203
+  detalle: Frecuencia 'Internacional' fuera de la lista conocida.
+- tipo: frecuencia-desconocida
+  base: 204
+  detalle: Frecuencia 'Internacional' fuera de la lista conocida.
+- tipo: frecuencia-desconocida
+  base: 205
+  detalle: Frecuencia 'Internacional' fuera de la lista conocida.
+- tipo: frecuencia-desconocida
+  base: 206
+  detalle: Frecuencia 'Internacional' fuera de la lista conocida.
+- tipo: frecuencia-desconocida
+  base: 207
+  detalle: Frecuencia 'Internacional' fuera de la lista conocida.
+- tipo: frecuencia-desconocida
+  base: 208
+  detalle: Frecuencia 'Internacional' fuera de la lista conocida.
+- tipo: frecuencia-desconocida
+  base: 209
+  detalle: Frecuencia 'Internacional' fuera de la lista conocida.
+- tipo: frecuencia-desconocida
+  base: 210
+  detalle: Frecuencia 'Internacional' fuera de la lista conocida.
+- tipo: frecuencia-desconocida
+  base: 211
+  detalle: Frecuencia 'Internacional' fuera de la lista conocida.
+- tipo: frecuencia-desconocida
+  base: 212
+  detalle: Frecuencia 'Internacional' fuera de la lista conocida.
+- tipo: frecuencia-desconocida
+  base: 213
+  detalle: Frecuencia 'Internacional' fuera de la lista conocida.
+- tipo: fecha-invalida
+  base: 215
+  detalle: '''ultimo'' dice ''31/6/2026'', que no es una fecha valida.'
+- tipo: fecha-invalida
+  base: 216
+  detalle: '''ultimo'' dice ''31/6/2026'', que no es una fecha valida.'
+- tipo: fecha-invalida
+  base: 217
+  detalle: '''ultimo'' dice ''31/6/2026'', que no es una fecha valida.'
+- tipo: base-sin-ficha
+  base: 2001
+  detalle: La base 2001 aparece en 'Org tematica' pero no tiene fila en GENERAL.
+- tipo: base-sin-ficha
+  base: 2002
+  detalle: La base 2002 aparece en 'Org tematica' pero no tiene fila en GENERAL.
+- tipo: base-sin-ficha
+  base: 2003
+  detalle: La base 2003 aparece en 'Org tematica' pero no tiene fila en GENERAL.
+- tipo: base-sin-ficha
+  base: 2004
+  detalle: La base 2004 aparece en 'Org tematica' pero no tiene fila en GENERAL.
+- tipo: base-sin-ficha
+  base: 2005
+  detalle: La base 2005 aparece en 'Org tematica' pero no tiene fila en GENERAL.
+- tipo: base-sin-ficha
+  base: 2006
+  detalle: La base 2006 aparece en 'Org tematica' pero no tiene fila en GENERAL.
+- tipo: sin-tema
+  detalle: 137 bases de GENERAL no figuran en el arbol tematico todavia.
+- tipo: prometida-no-recibida
+  base: 8
+  detalle: Marcada para entrega-02 y sin archivo en raw/.
+- tipo: prometida-no-recibida
+  base: 12
+  detalle: Marcada para entrega-02 y sin archivo en raw/.
+- tipo: prometida-no-recibida
+  base: 13
+  detalle: Marcada para entrega-02 y sin archivo en raw/.
+- tipo: prometida-no-recibida
+  base: 14
+  detalle: Marcada para entrega-02 y sin archivo en raw/.
+- tipo: prometida-no-recibida
+  base: 24
+  detalle: Marcada para entrega-02 y sin archivo en raw/.
+- tipo: prometida-no-recibida
+  base: 25
+  detalle: Marcada para entrega-02 y sin archivo en raw/.
+- tipo: prometida-no-recibida
+  base: 31
+  detalle: Marcada para entrega-02 y sin archivo en raw/.
+- tipo: prometida-no-recibida
+  base: 40
+  detalle: Marcada para entrega-02 y sin archivo en raw/.
+- tipo: prometida-no-recibida
+  base: 199
+  detalle: Marcada para entrega-02 y sin archivo en raw/.
+- tipo: prometida-no-recibida
+  base: 203
+  detalle: Marcada para entrega-02 y sin archivo en raw/.
+- tipo: prometida-no-recibida
+  base: 207
+  detalle: Marcada para entrega-02 y sin archivo en raw/.
+- tipo: prometida-no-recibida
+  base: 208
+  detalle: Marcada para entrega-02 y sin archivo en raw/.
+- tipo: prometida-no-recibida
+  base: 209
+  detalle: Marcada para entrega-02 y sin archivo en raw/.
+- tipo: prometida-no-recibida
+  base: 210
+  detalle: Marcada para entrega-02 y sin archivo en raw/.
+- tipo: prometida-no-recibida
+  base: 211
+  detalle: Marcada para entrega-02 y sin archivo en raw/.
+- tipo: prometida-no-recibida
+  base: 213
+  detalle: Marcada para entrega-02 y sin archivo en raw/.
+- tipo: prometida-no-recibida
+  base: 214
+  detalle: Marcada para entrega-02 y sin archivo en raw/.
+- tipo: prometida-no-recibida
+  base: 215
+  detalle: Marcada para entrega-02 y sin archivo en raw/.
+- tipo: prometida-no-recibida
+  base: 216
+  detalle: Marcada para entrega-02 y sin archivo en raw/.
+- tipo: prometida-no-recibida
+  base: 217
+  detalle: Marcada para entrega-02 y sin archivo en raw/.
+- tipo: prometida-no-recibida
+  base: 218
+  detalle: Marcada para entrega-02 y sin archivo en raw/.
+referencias_cruzadas: []
+bases:
+- nro: 1
+  slug: existencias-granos-y-procesados-por-provincia
+  descripcion: Existencias granos y procesados por provincia
+  ubicacion: PB 1
+  fuente: MAGyP
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2015-01-01'
+    ultimo: '2026-04-30'
+  registros_declarados: 3263
+  productos: 21
+  unidades:
+  - volumen
+  - tn
+  geografia:
+  - prov
+  - '7'
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 2
+  slug: molienda-de-arroz-por-provincia
+  descripcion: Molienda de arroz por provincia
+  ubicacion: PB 1
+  fuente: MAGyP
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '1994-01-01'
+    ultimo: '2026-03-30'
+  registros_declarados: 386
+  productos: 1
+  unidades:
+  - volumen
+  - tn
+  geografia:
+  - prov
+  - '6'
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 3
+  slug: molienda-de-cereales
+  descripcion: Molienda de cereales
+  ubicacion: PB 1
+  fuente: MAGyP
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2001-01-01'
+    ultimo: '2026-03-30'
+  registros_declarados: 309
+  productos: 23
+  unidades:
+  - volumen
+  - tn
+  geografia:
+  - pais
+  - '1'
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 4
+  slug: molienda-de-oleaginosas-y-produccion
+  descripcion: Molienda de oleaginosas y producción
+  ubicacion: PB 1
+  fuente: MAGyP
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '1965-01-01'
+    ultimo: '2026-03-30'
+  registros_declarados: 740
+  productos: 27
+  unidades:
+  - volumen
+  - tn
+  geografia:
+  - pais
+  - '1'
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 5
+  slug: molienda-de-oleaginosas-y-produccion-por-provincia
+  descripcion: Molienda de oleaginosas y producción por provincia
+  ubicacion: PB 1
+  fuente: MAGyP
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2000-01-01'
+    ultimo: '2026-03-30'
+  registros_declarados: 7563
+  productos: 28
+  unidades:
+  - volumen
+  - tn
+  geografia:
+  - prov
+  - '6'
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 6
+  slug: molienda-de-trigo-pan-por-provincia
+  descripcion: Molienda de trigo pan por provincia
+  ubicacion: PB 1
+  fuente: MAGyP
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '1998-01-01'
+    ultimo: '2026-03-30'
+  registros_declarados: 343
+  productos: 1
+  unidades:
+  - volumen
+  - tn
+  geografia:
+  - prov
+  - '6'
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 7
+  slug: stocks-granos-en-acopios-e-industria
+  descripcion: Stocks granos en acopios e industria
+  ubicacion: PB 1
+  fuente: MAGyP
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2015-01-01'
+    ultimo: '2026-04-30'
+  registros_declarados: 143
+  productos: 24
+  unidades:
+  - volumen
+  - tn
+  geografia:
+  - pais
+  - '1'
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 8
+  slug: precios-frutas-y-hortalizas-mcba-por-variedad-calidad-y
+  descripcion: Precios frutas y hortalizas MCBA por variedad, calidad y origen
+  ubicacion: PB 2
+  fuente: MAGyP
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2017-01-01'
+    ultimo: '2026-04-30'
+  registros_declarados: 732383
+  productos: 82
+  unidades:
+  - precio
+  - $/kg
+  geografia:
+  - MCBA
+  - '1'
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Agricultura
+    - Cultivos intensivos
+    - Frutas y hortalizas
+    subtemas_del_bloque: []
+  entrega: entrega-02
+  observaciones: Las variantes variedad, calidad y envase multiplican las variables
+  notas_jc: []
+  denominaciones:
+  - Precios frutas y hortalizas MCBA por variedad, calidad y origen - SDE
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: null
+  estado:
+    prometida_en: entrega-02
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 9
+  slug: superficies-produccion-y-rendimientos-por-provincia-y
+  descripcion: Superficies, producción y rendimientos por provincia y departamento
+  ubicacion: PB 3
+  fuente: MAGyP
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '1969-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 147184
+  productos: 18
+  unidades:
+  - ha
+  - tn
+  - kg/ha
+  geografia:
+  - prov
+  - depart
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Agricultura
+    - Cultivos extensivos
+    subtemas_del_bloque:
+    - Granos
+    - Oleaginosas
+    - Algodón
+    - Legumbres
+  entrega: entrega-01
+  observaciones: Por la cantidad de campañas, hay productos no homogéneos
+  notas_jc: []
+  denominaciones:
+  - Superficies, producción y rendimientos por provincia y departamento extensivos - SDE y NOA
+  alias_historicos: []
+  demo_prioritaria: true
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: 9 - Cultivos extensivos SDE.xlsx
+  estado:
+    prometida_en: entrega-01
+    recibida: true
+    en_staging: true
+    publicada: false
+- nro: 10
+  slug: produccion-consumo-expo-impo-e-industralizacion-mundial
+  descripcion: Produccion, consumo, expo, impo e industralizacion mundial
+  ubicacion: PB 4
+  fuente: USDA
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '1964-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 51723
+  productos: 60
+  unidades:
+  - tn
+  - stock
+  - lts
+  geografia:
+  - pais
+  - '140'
+  tema: null
+  entrega: null
+  observaciones: Mapa Agroalimentario mundial
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 11
+  slug: precios-locales-algodon-caa
+  descripcion: Precios locales algodón (CAA)
+  ubicacion: PB 5
+  fuente: CAA
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2015-01-01'
+    ultimo: '2026-04-30'
+  registros_declarados: 2760
+  productos: 17
+  unidades:
+  - U$D/kg
+  - U$D/tn
+  - c/U$D/libra
+  geografia:
+  - Pais
+  - export
+  tema: null
+  entrega: null
+  observaciones: Variantes calidad fibra y semilla
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 12
+  slug: precios-fob-oficiales-vigentes
+  descripcion: Precios FOB Oficiales vigentes
+  ubicacion: PB 5
+  fuente: MAGyP
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2015-01-01'
+    ultimo: '2026-04-30'
+  registros_declarados: 361836
+  productos: 138
+  unidades:
+  - U$D/tn
+  geografia:
+  - pais
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Intranet
+    subtemas_del_bloque: []
+  entrega: entrega-02
+  observaciones: Precios vigentes y no vigentes
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: null
+  estado:
+    prometida_en: entrega-02
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 13
+  slug: empleo-y-remuneraciones-por-prov-y-depto-sector-agropecuario
+  descripcion: Empleo y remuneraciones por prov y depto - Sector agropecuario
+  ubicacion: PB 7
+  fuente: Min. Cap Humano
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2029-01-01'
+    ultimo: '2025-06-30'
+  registros_declarados: 54289
+  productos: 0
+  unidades:
+  - $/mes
+  - Cantid empleados
+  geografia:
+  - prov
+  - depart
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Empleo
+    subtemas_del_bloque: []
+  entrega: entrega-02
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Empleo y remuneraciones por prov y depto - Sector agropecuario - SDE por departamento
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: null
+  estado:
+    prometida_en: entrega-02
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 14
+  slug: empleo-y-remuneraciones-por-prov-y-depto-todos-los-sectores
+  descripcion: Empleo y remuneraciones por prov y depto - Todos los sectores
+  ubicacion: PB 7
+  fuente: Min. Cap Humano
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2029-01-01'
+    ultimo: '2025-06-30'
+  registros_declarados: 250147
+  productos: 0
+  unidades:
+  - $/mes
+  - Cantid empleados
+  geografia:
+  - prov
+  - depart
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Empleo
+    subtemas_del_bloque: []
+  entrega: entrega-02
+  observaciones: Permite comparar partiipacion entre seectores y diferencias en el ingreso
+  notas_jc: []
+  denominaciones:
+  - Empleo y remuneraciones por prov y depto - Todos los sectores - SDE
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: null
+  estado:
+    prometida_en: entrega-02
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 15
+  slug: tipos-de-cambio-bna-mae-y-bcra-3500
+  descripcion: Tipos de cambio - BNA, MAE y BCRA 3500
+  ubicacion: PB 8
+  fuente: MECON
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2002-02-05'
+    ultimo: '2026-03-17'
+  registros_declarados: 8778
+  productos: 0
+  unidades:
+  - $/U$D
+  geografia:
+  - pais
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 16
+  slug: produccion-y-ventas-de-bioetanol-totales-y-por-insumo-maiz
+  descripcion: Producción y ventas de bioetanol totales y por insumo (maiz y caña)
+  ubicacion: PB 9
+  fuente: Secret Energia
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2009-11-01'
+    ultimo: '2026-03-30'
+  registros_declarados: 220
+  productos: 3
+  unidades:
+  - volumen
+  - m3
+  geografia:
+  - pais
+  tema: null
+  entrega: null
+  observaciones: 12 variables total
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 17
+  slug: produccion-y-ventas-bioetanol-por-provincia
+  descripcion: Producción y ventas bioetanol por provincia
+  ubicacion: PB 9
+  fuente: Secret Energia
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2012-01-01'
+    ultimo: '2026-03-30'
+  registros_declarados: 171
+  productos: 1
+  unidades:
+  - volumen
+  - m3
+  geografia:
+  - prov
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 18
+  slug: produccion-y-ventas-a-petroleras-de-bioetanol-totales-por
+  descripcion: Producción y ventas (a petroleras) de bioetanol totales por provincia
+  ubicacion: PB 9
+  fuente: Secret Energia
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2012-01-01'
+    ultimo: '2026-03-30'
+  registros_declarados: 2693
+  productos: 2
+  unidades:
+  - volumen
+  - m3
+  - prov
+  geografia:
+  - loc
+  - '32'
+  tema: null
+  entrega: null
+  observaciones: 220 variables combinadas
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 19
+  slug: produccion-ventas-al-corte-y-exportaciones-de-biodiesel
+  descripcion: Producción, Ventas al corte y Exportaciones de Biodiesel
+  ubicacion: PB 9
+  fuente: Secret Energia
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2008-01-01'
+    ultimo: '2026-03-30'
+  registros_declarados: 240
+  productos: 1
+  unidades:
+  - volumen
+  - m3
+  geografia:
+  - pais
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 20
+  slug: produccion-y-ventas-al-cortey-exportaciones-de-biodiesel
+  descripcion: Producción, y ventas al cortey Exportaciones de Biodiesel por provincia
+  ubicacion: PB 9
+  fuente: Secret Energia
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2010-01-01'
+    ultimo: '2026-03-30'
+  registros_declarados: 195
+  productos: 1
+  unidades:
+  - volumen
+  - tn
+  - prov
+  geografia:
+  - '7'
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 21
+  slug: biodiesel-produccion-y-ventas-al-mercado-interno-por-empresa
+  descripcion: Biodiesel- producción y ventas al mercado interno por empresa
+  ubicacion: PB 9
+  fuente: Secret Energia
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2010-01-01'
+    ultimo: '2026-03-30'
+  registros_declarados: 6815
+  productos: 1
+  unidades:
+  - volumen
+  - tn
+  - prov
+  geografia:
+  - loc
+  - '56'
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 22
+  slug: exportaciones-de-biodiesel-por-destino
+  descripcion: Exportaciones de biodiesel por destino
+  ubicacion: PB 9
+  fuente: Secret Energia
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2012-01-01'
+    ultimo: '2026-03-30'
+  registros_declarados: 340
+  productos: 1
+  unidades:
+  - volumen
+  - tn
+  - pais origen
+  geografia:
+  - pais dest
+  - '38'
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 23
+  slug: emae-estimador-mensual-actividad-economica-por-rama
+  descripcion: EMAE (Estimador Mensual Actividad Económica) por rama
+  ubicacion: PB 8
+  fuente: MECON
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2004-01-01'
+    ultimo: '2026-02-28'
+  registros_declarados: 268
+  productos: 0
+  unidades:
+  - indice
+  geografia:
+  - pais
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 24
+  slug: empleo-con-asalariados-registrados-por-cod-activ-4-digitos
+  descripcion: Empleo con asalariados registrados por cod activ (4 digitos) por prov
+  ubicacion: PB 7
+  fuente: MECON
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '1996-01-01'
+    ultimo: '2025-08-31'
+  registros_declarados: 300
+  productos: 0
+  unidades:
+  - cantidad
+  - personas
+  geografia:
+  - prov
+  - '23'
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Empleo
+    subtemas_del_bloque: []
+  entrega: entrega-02
+  observaciones: 38 actividades sectoriales agroalimentarias
+  notas_jc:
+  - Apertura de la base 25
+  denominaciones:
+  - Empleo con asalariados registrados por cod activ (4 digitos) por prov - SDE
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: null
+  estado:
+    prometida_en: entrega-02
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 25
+  slug: empleo-con-asalariados-registrados-por-sector-y-subsector
+  descripcion: Empleo con asalariados registrados por sector y subsector por prov
+  ubicacion: PB 7
+  fuente: MECON
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '1996-01-01'
+    ultimo: '2025-08-31'
+  registros_declarados: 70
+  productos: 0
+  unidades:
+  - cantidad
+  - personas
+  geografia:
+  - prov
+  - '24'
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Empleo
+    subtemas_del_bloque: []
+  entrega: entrega-02
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Empleo con asalariados registrados por sector y subsector por prov - SDE
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: null
+  estado:
+    prometida_en: entrega-02
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 26
+  slug: indice-de-productividad-agricola-internacional-por-pais
+  descripcion: Indice de productividad agrícola internacional por pais
+  ubicacion: PB 10
+  fuente: USDA
+  frecuencia: anual
+  rango_declarado:
+    inicio: '1961-01-01'
+    ultimo: '2023-12-31'
+  registros_declarados: 279567
+  productos: 0
+  unidades:
+  - indices
+  - cantidades
+  - ha
+  geografia:
+  - pais
+  - '150'
+  tema: null
+  entrega: null
+  observaciones: 20 variables, 62 años
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 27
+  slug: oferta-y-demanda-mundial-de-fibra-de-algodon
+  descripcion: Oferta y demanda mundial de fibra de algodón
+  ubicacion: PB 10
+  fuente: USDA
+  frecuencia: anual
+  rango_declarado:
+    inicio: '1975-01-01'
+    ultimo: '2026-04-30'
+  registros_declarados: 570
+  productos: 1
+  unidades:
+  - cantidad
+  - ha
+  - fardos
+  geografia:
+  - pais
+  - '7'
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 28
+  slug: venta-de-maquinaria-agricola-nacional-e-importada
+  descripcion: Venta de maquinaria agricola nacional e importada
+  ubicacion: PB 8
+  fuente: INDEC
+  frecuencia: trimestral
+  rango_declarado:
+    inicio: '2016-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 520
+  productos: 10
+  unidades:
+  - cantidad
+  - monto
+  geografia:
+  - pais
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 29
+  slug: salario-peon-rural
+  descripcion: Salario Peon Rural
+  ubicacion: PB 8
+  fuente: Min. Cap Humano
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2003-06-01'
+    ultimo: '2026-02-28'
+  registros_declarados: 81
+  productos: 0
+  unidades:
+  - cantidad
+  - monto
+  geografia:
+  - pais
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 30
+  slug: cantidad-de-apiarios-y-colmenas-por-provincia-y
+  descripcion: Cantidad de apiarios y colmenas por provincia y departamento RENAPA
+  ubicacion: PB 31
+  fuente: MAGyP
+  frecuencia: permanente
+  rango_declarado:
+    inicio: S/D
+    ultimo: '2026-03-17'
+  registros_declarados: 486
+  productos: 2
+  unidades:
+  - cantidad
+  geografia:
+  - prov
+  - depart
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Apicola
+    subtemas_del_bloque: []
+  entrega: entrega-01
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Existencias de apiarios y colmenas por provincia y departamento - SDE
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: 30 - Apiarios y colmenas SDE.xlsx
+  estado:
+    prometida_en: entrega-01
+    recibida: true
+    en_staging: false
+    publicada: false
+- nro: 31
+  slug: poblacion-argentina-desde-2010-y-proyecciones-a-2040-por
+  descripcion: Población argentina desde 2010 y proyecciones a 2040- por Provincia
+  ubicacion: PB 8
+  fuente: INDEC
+  frecuencia: anual
+  rango_declarado:
+    inicio: '2010-01-01'
+    ultimo: '2040-12-31'
+  registros_declarados: 4032
+  productos: 0
+  unidades:
+  - sexo
+  - rango etario
+  geografia:
+  - prov
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - General
+    subtemas_del_bloque: []
+  entrega: entrega-02
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Población provincial 2010 y proyecciones a 2040 - Datos SDE
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: null
+  estado:
+    prometida_en: entrega-02
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 32
+  slug: tipo-real-de-cambio-en-paises-del-mundo
+  descripcion: Tipo real de cambio en países del mundo
+  ubicacion: PB 10
+  fuente: USDA
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '1970-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 689
+  productos: 0
+  unidades:
+  - $local/U$D
+  geografia:
+  - mundial
+  - '120'
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 33
+  slug: sisa-registro-actividades-por-tipo-y-empresa
+  descripcion: SISA - Registro actividades por tipo y empresa
+  ubicacion: PB 1
+  fuente: ARCA
+  frecuencia: permanente
+  rango_declarado:
+    inicio: S/D
+    ultimo: '2026-03-17'
+  registros_declarados: 88010
+  productos: 0
+  unidades:
+  - empresa
+  geografia:
+  - prov
+  - localidad
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Intranet
+    subtemas_del_bloque: []
+  entrega: entrega-01
+  observaciones: 48 tipificaciones
+  notas_jc: []
+  denominaciones:
+  - SISA - Registro actividades por tipo y empresa SDE
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: 33 - Registrados SISA - SDE.xlsx
+  estado:
+    prometida_en: entrega-01
+    recibida: true
+    en_staging: false
+    publicada: false
+- nro: 34
+  slug: sisa-registro-actividades-bovinas
+  descripcion: SISA - Registro actividades bovinas
+  ubicacion: PB 11
+  fuente: ARCA
+  frecuencia: permanente
+  rango_declarado:
+    inicio: S/D
+    ultimo: '2026-03-17'
+  registros_declarados: 113098
+  productos: 0
+  unidades:
+  - empresa
+  geografia:
+  - prov
+  - localidad
+  tema: null
+  entrega: null
+  observaciones: Activos, suspendidos y de baja
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 35
+  slug: sisa-registro-actividades-porcinas
+  descripcion: SISA - Registro actividades porcinas
+  ubicacion: PB 17
+  fuente: ARCA
+  frecuencia: permanente
+  rango_declarado:
+    inicio: S/D
+    ultimo: '2026-03-17'
+  registros_declarados: 5973
+  productos: 0
+  unidades:
+  - empresa
+  geografia:
+  - prov
+  - localidad
+  tema: null
+  entrega: null
+  observaciones: Activos, suspendidos y de baja
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 36
+  slug: siocal-registro-carnes
+  descripcion: SIOCAL - Registro carnes
+  ubicacion: PB 11
+  fuente: MAGyP
+  frecuencia: permanente
+  rango_declarado:
+    inicio: S/D
+    ultimo: '2026-03-17'
+  registros_declarados: 12818
+  productos: 0
+  unidades:
+  - empresa
+  - pais
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 37
+  slug: siocal-registro-lacteos
+  descripcion: SIOCAL - Registro lácteos
+  ubicacion: PB 12
+  fuente: MAGyP
+  frecuencia: permanente
+  rango_declarado:
+    inicio: S/D
+    ultimo: '2026-03-17'
+  registros_declarados: 467
+  productos: 0
+  unidades:
+  - empresa
+  - pais
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 38
+  slug: empresas-registradas-en-el-registro-nac-de-com-y-fiscaliz
+  descripcion: Empresas registradas en el Registro Nac de Com y Fiscaliz de Semillas
+  ubicacion: PB 1
+  fuente: INASE
+  frecuencia: permanente
+  rango_declarado:
+    inicio: S/D
+    ultimo: '2026-03-17'
+  registros_declarados: 3426
+  productos: 0
+  unidades:
+  - empresa
+  - pais
+  geografia:
+  - prov
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Intranet
+    subtemas_del_bloque: []
+  entrega: entrega-01
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Empresas registradas en el Registro Nac de Com y Fiscaliz de Semillas - SDE
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: 38 - Empresas registradas com semillas SDE.xlsx
+  estado:
+    prometida_en: entrega-01
+    recibida: true
+    en_staging: false
+    publicada: false
+- nro: 39
+  slug: catalogo-de-cultivares-y-semillas-inase
+  descripcion: Catálogo de cultivares y semillas INASE
+  ubicacion: PB 1
+  fuente: INASE
+  frecuencia: permanente
+  rango_declarado:
+    inicio: S/D
+    ultimo: '2026-03-17'
+  registros_declarados: 14247
+  productos: 220
+  unidades:
+  - especies
+  - pais
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 40
+  slug: base-ingresos-hacienda-a-liniers-mag
+  descripcion: Base ingresos hacienda a Liniers-MAG
+  ubicacion: PB 11
+  fuente: MAG
+  frecuencia: null
+  rango_declarado:
+    inicio: '2010-12-01'
+    ultimo: '2026-06-30'
+  registros_declarados: 5610
+  productos: 216
+  unidades:
+  - indicadores
+  - Pais
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Intranet
+    subtemas_del_bloque: []
+  entrega: entrega-02
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Ingresos hacienda a MAG (Mercado Agro Ganadero - Ex Liniers)
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: null
+  estado:
+    prometida_en: entrega-02
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 41
+  slug: produccion-semanal-etanol-usa
+  descripcion: Producción semanal Etanol USA
+  ubicacion: PB 10
+  fuente: EIA
+  frecuencia: semanal
+  rango_declarado:
+    inicio: '2010-06-04'
+    ultimo: '2026-05-15'
+  registros_declarados: 836
+  productos: 1
+  unidades:
+  - volumen
+  - miles barriles
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: Energy Information Agency
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 42
+  slug: cantidad-de-plantas-de-produccion-etanol-usa-capacidad-por
+  descripcion: Cantidad de plantas de producción etanol USA - capacidad, por Estado
+  ubicacion: PB 10
+  fuente: EIA
+  frecuencia: permanente
+  rango_declarado:
+    inicio: S/D
+    ultimo: '2026-05-16'
+  registros_declarados: 215
+  productos: 1
+  unidades:
+  - volumen
+  - miles barriles
+  - Millones galones
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 43
+  slug: produccion-materia-seca-forraje-por-provincia-y-dto-y
+  descripcion: Producción materia seca forraje por provincia y dto y promedio
+  ubicacion: PB 11
+  fuente: IPCVA
+  frecuencia: quincenal
+  rango_declarado:
+    inicio: '2020-01-01'
+    ultimo: '2025-12-20'
+  registros_declarados: 72920
+  productos: 1
+  unidades:
+  - superficie
+  - ha
+  - '%'
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Agricultura
+    - Pasturas y forrajes
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Producción materia seca forraje por provincia y dto y promedio - SDE
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 44
+  slug: indicadores-bovinos-historicos-111-anos
+  descripcion: Indicadores bovinos históricos 111 años
+  ubicacion: PB 11
+  fuente: MAGyP
+  frecuencia: anual
+  rango_declarado:
+    inicio: '1914-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 120
+  productos: 1
+  unidades:
+  - indicadores
+  - '9'
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 45
+  slug: precios-comparativos-novillo-mercosur
+  descripcion: Precios comparativos Novillo Mercosur
+  ubicacion: PB 11
+  fuente: MAGyP
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2015-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 130
+  productos: 1
+  unidades:
+  - precio
+  - U$D/kg
+  geografia:
+  - mercados
+  - '6'
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 46
+  slug: precios-comparativos-novillo-usa-australia-canada
+  descripcion: Precios comparativos Novillo USA, Australia, Canada
+  ubicacion: PB 11
+  fuente: MAGyP
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2015-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 130
+  productos: 1
+  unidades:
+  - precio
+  - U$D/kg
+  geografia:
+  - mercados
+  - '6'
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 47
+  slug: indicadores-bovinos-1990-a-2026
+  descripcion: Indicadores bovinos 1990 a 2026
+  ubicacion: PB 11
+  fuente: MAGyP
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '1990-01-01'
+    ultimo: '2026-03-30'
+  registros_declarados: 435
+  productos: 1
+  unidades:
+  - indicadores
+  - '14'
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 48
+  slug: stocks-por-categoria-provincia-y-departamento-estratos
+  descripcion: Stocks por categoría, provincia y departamento. Estratos productivos
+  ubicacion: PB 11
+  fuente: MAGyP
+  frecuencia: anual
+  rango_declarado:
+    inicio: '2007-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 7633
+  productos: 1
+  unidades:
+  - cabezas
+  - categorias
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Bovinos
+    - Carne
+    subtemas_del_bloque: []
+  entrega: entrega-01
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Stocks por categoría provincia y departamento. Estratos productivos - SDE
+  alias_historicos: []
+  demo_prioritaria: true
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: 48 - Stocks bovinos por depto y categ - SDE.xlsx
+  estado:
+    prometida_en: entrega-01
+    recibida: true
+    en_staging: true
+    publicada: false
+- nro: 49
+  slug: faena-produccion-y-peso-promedio-por-provincia
+  descripcion: Faena, producción y peso promedio por provincia
+  ubicacion: PB 11
+  fuente: MAGyP
+  frecuencia: anual
+  rango_declarado:
+    inicio: '2008-01-01'
+    ultimo: '2024-12-31'
+  registros_declarados: 150
+  productos: 1
+  unidades:
+  - cabezas
+  - kg
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Bovinos
+    - Carne
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Faena, producción y peso promedio por provincia - SDE
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 50
+  slug: faena-mensual-por-categoria-peso-promedio-matriz-od-fletes
+  descripcion: Faena mensual por categoría, peso promedio. Matriz OD fletes
+  ubicacion: PB 11
+  fuente: MAGyP
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2019-04-30'
+    ultimo: '2026-04-30'
+  registros_declarados: 310
+  productos: 1
+  unidades:
+  - cabezas
+  - kg
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 51
+  slug: dtv-aceitumas
+  descripcion: DTV - Aceitumas
+  ubicacion: PB 13
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 25013
+  productos: 1
+  unidades:
+  - Movimientos
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 52
+  slug: dtv-ajo
+  descripcion: DTV - Ajo
+  ubicacion: PB 13
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 520782
+  productos: 1
+  unidades:
+  - Movimientos
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 53
+  slug: dtv-algodon-semilla-fibra-fibrilla-desperrdicio
+  descripcion: DTV - Algodón, semilla fibra, fibrilla, desperrdicio
+  ubicacion: PB 13
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 279323
+  productos: 5
+  unidades:
+  - Movimientos
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Agricultura
+    - Cultivos extensivos
+    subtemas_del_bloque:
+    - Granos
+    - Oleaginosas
+    - Algodón
+    - Legumbres
+  entrega: entrega-01
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - DTV - Algodón, semilla fibra, fibrilla, desperrdicio - SDE
+  alias_historicos: []
+  demo_prioritaria: true
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: 53 - DTV Algodon SDE.xlsx
+  estado:
+    prometida_en: entrega-01
+    recibida: true
+    en_staging: false
+    publicada: false
+- nro: 54
+  slug: dtv-almendra
+  descripcion: DTV - Almendra
+  ubicacion: PB 13
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 641
+  productos: 1
+  unidades:
+  - Movimientos
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 55
+  slug: dtv-arandano
+  descripcion: DTV - Arandano
+  ubicacion: PB 13
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 75836
+  productos: 1
+  unidades:
+  - Movimientos
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 56
+  slug: dtv-batata
+  descripcion: DTV - Batata
+  ubicacion: PB 13
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 538862
+  productos: 1
+  unidades:
+  - Movimientos
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Agricultura
+    - Cultivos intensivos
+    - Frutas y hortalizas
+    subtemas_del_bloque: []
+  entrega: entrega-01
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - DTV - Batata - SDE
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: 56 - DTV Batata Sgo.xlsx
+  estado:
+    prometida_en: entrega-01
+    recibida: true
+    en_staging: false
+    publicada: false
+- nro: 57
+  slug: dtv-cebolla
+  descripcion: DTV - Cebolla
+  ubicacion: PB 13
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 887019
+  productos: 1
+  unidades:
+  - Movimientos
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Agricultura
+    - Cultivos intensivos
+    - Frutas y hortalizas
+    subtemas_del_bloque: []
+  entrega: entrega-01
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - DTV - Cebolla - SDE
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: 57 - DTV Cebolla Sgo.xlsx
+  estado:
+    prometida_en: entrega-01
+    recibida: true
+    en_staging: false
+    publicada: false
+- nro: 58
+  slug: dtv-cerezas
+  descripcion: DTV - Cerezas
+  ubicacion: PB 13
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 66930
+  productos: 1
+  unidades:
+  - Movimientos
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 59
+  slug: dtv-ciruelas
+  descripcion: DTV - Ciruelas
+  ubicacion: PB 13
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 220285
+  productos: 1
+  unidades:
+  - Movimientos
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 60
+  slug: dtv-ciruelas-desecadas
+  descripcion: DTV - Ciruelas desecadas
+  ubicacion: PB 13
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 6583
+  productos: 1
+  unidades:
+  - Movimientos
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 61
+  slug: dtv-damasco
+  descripcion: DTV - Damasco
+  ubicacion: PB 13
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 27441
+  productos: 1
+  unidades:
+  - Movimientos
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 62
+  slug: dtv-durazno
+  descripcion: DTV - Durazno
+  ubicacion: PB 13
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 345351
+  productos: 1
+  unidades:
+  - Movimientos
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 63
+  slug: dtv-frambuesa
+  descripcion: DTV - Frambuesa
+  ubicacion: PB 13
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 12020
+  productos: 3
+  unidades:
+  - Movimientos
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 64
+  slug: dtv-higo-fresco-y-disecado
+  descripcion: DTV - Higo fresco y disecado
+  ubicacion: PB 13
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 7157
+  productos: 2
+  unidades:
+  - Movimientos
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 65
+  slug: dtv-kiwi
+  descripcion: DTV - Kiwi
+  ubicacion: PB 13
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 10273
+  productos: 1
+  unidades:
+  - Movimientos
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 66
+  slug: dtv-kumquat
+  descripcion: DTV - Kumquat
+  ubicacion: PB 13
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 15310
+  productos: 1
+  unidades:
+  - Movimientos
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 67
+  slug: dtv-lima
+  descripcion: DTV - Lima
+  ubicacion: PB 13
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 59712
+  productos: 1
+  unidades:
+  - Movimientos
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 68
+  slug: dtv-limon
+  descripcion: DTV - Limon
+  ubicacion: PB 13
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 1515173
+  productos: 1
+  unidades:
+  - Movimientos
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 69
+  slug: dtv-mandarina
+  descripcion: DTV - Mandarina
+  ubicacion: PB 13
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 1161631
+  productos: 1
+  unidades:
+  - Movimientos
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 70
+  slug: dtv-mango
+  descripcion: DTV - Mango
+  ubicacion: PB 13
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 138720
+  productos: 1
+  unidades:
+  - Movimientos
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 71
+  slug: dtv-manzana
+  descripcion: DTV - Manzana
+  ubicacion: PB 13
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 1219502
+  productos: 1
+  unidades:
+  - Movimientos
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 72
+  slug: dtv-naranja-octubre-a-diciembre
+  descripcion: DTV - Naranja (octubre a diciembre)
+  ubicacion: PB 13
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 1523424
+  productos: 1
+  unidades:
+  - Movimientos
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 73
+  slug: dtv-nuez
+  descripcion: DTV - Nuez
+  ubicacion: PB 13
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 1007
+  productos: 1
+  unidades:
+  - Movimientos
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 74
+  slug: dtv-palta
+  descripcion: DTV - Palta
+  ubicacion: PB 13
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 208028
+  productos: 1
+  unidades:
+  - Movimientos
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 75
+  slug: dtv-papa-septiembre-a-diciembre
+  descripcion: DTV - Papa (septiembre a diciembre)
+  ubicacion: PB 13
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 1253863
+  productos: 1
+  unidades:
+  - Movimientos
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Agricultura
+    - Cultivos intensivos
+    - Frutas y hortalizas
+    subtemas_del_bloque: []
+  entrega: entrega-01
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - DTV - Papa (septiembre a diciembre) - SDE
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: 75 - DTV Papa SDE.xlsx
+  estado:
+    prometida_en: entrega-01
+    recibida: true
+    en_staging: false
+    publicada: false
+- nro: 76
+  slug: dtv-papa-otras-andina-lisa-y-oca
+  descripcion: DTV - Papa otras (Andina, Lisa y Oca)
+  ubicacion: PB 13
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 31597
+  productos: 1
+  unidades:
+  - Movimientos
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 77
+  slug: dtv-papaya
+  descripcion: DTV - Papaya
+  ubicacion: PB 13
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 18082
+  productos: 1
+  unidades:
+  - Movimientos
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 78
+  slug: dtv-pelon
+  descripcion: DTV - Pelon
+  ubicacion: PB 13
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 146183
+  productos: 1
+  unidades:
+  - Movimientos
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 79
+  slug: dtv-pera
+  descripcion: DTV - Pera
+  ubicacion: PB 13
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 764264
+  productos: 1
+  unidades:
+  - Movimientos
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 80
+  slug: dtv-pimiento
+  descripcion: DTV - Pimiento
+  ubicacion: PB 13
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 823686
+  productos: 1
+  unidades:
+  - Movimientos
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 81
+  slug: dtv-pomelo
+  descripcion: DTV - Pomelo
+  ubicacion: PB 13
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 317174
+  productos: 1
+  unidades:
+  - Movimientos
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 82
+  slug: dtv-tuna
+  descripcion: DTV - Tuna
+  ubicacion: PB 13
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 1742
+  productos: 1
+  unidades:
+  - Movimientos
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 83
+  slug: dtv-uva
+  descripcion: DTV - Uva
+  ubicacion: PB 13
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 321302
+  productos: 1
+  unidades:
+  - Movimientos
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 84
+  slug: dtv-uva-pasa
+  descripcion: DTV - Uva Pasa
+  ubicacion: PB 13
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 14589
+  productos: 1
+  unidades:
+  - Movimientos
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 85
+  slug: dte-movimientos-bovinos-por-provincia-dto-y-categoria
+  descripcion: DTE - Movimientos bovinos por provincia, dto y categoria
+  ubicacion: PB 14
+  fuente: SENASA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2022-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 1184014
+  productos: 22
+  unidades:
+  - Movimientos
+  - '6759192'
+  - DTE
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Bovinos
+    - Carne
+    subtemas_del_bloque: []
+  entrega: entrega-01
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - DTE - Movimientos bovinos por dto, categoria, OD, Motivo - SDE
+  alias_historicos: []
+  demo_prioritaria: true
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: 85 - DTE Bovinos SDE.xlsx
+  estado:
+    prometida_en: entrega-01
+    recibida: true
+    en_staging: true
+    publicada: false
+- nro: 86
+  slug: precios-combustibles-por-tipo-bandera-y-provincia-al-publico
+  descripcion: Precios combustibles por tipo, bandera y provincia - al público
+  ubicacion: PB 15
+  fuente: Secret Energia
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2004-12-01'
+    ultimo: '2025-08-31'
+  registros_declarados: 152118
+  productos: 6
+  unidades:
+  - precio
+  - $/lt
+  - promedio mensual
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Economía
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Precios combustibles por tipo, bandera y tipo cliente -SDE
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 87
+  slug: volumenes-vendidos-combustibles-por-tipo-bandera-y-prov-x
+  descripcion: Volúmenes vendidos combustibles por tipo, bandera y prov - x tipo cliente
+  ubicacion: PB 15
+  fuente: Secret Energia
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2004-12-01'
+    ultimo: '2025-08-31'
+  registros_declarados: 332336
+  productos: 6
+  unidades:
+  - Volumen
+  - m3
+  - Total mensual
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Economía
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Volúmenes vendidos combustibles por tipo, bandera y prov - x tipo cliente - SDE
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 88
+  slug: volumenes-y-precios-de-combustibles-en-ess-del-pais-unitaria
+  descripcion: Volúmenes y precios de combustibles en ESS del pais, unitaria.
+  ubicacion: PB 15
+  fuente: Secret Energia
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2012-12-01'
+    ultimo: '2026-04-30'
+  registros_declarados: 3582684
+  productos: 6
+  unidades:
+  - Volumen
+  - m3
+  - PENDIENTE
+  geografia:
+  - $/lt
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Economía
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Volúmenes y precios de combustibles en ESS por tipo comb - SDE
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 89
+  slug: operaciones-siocarnes-bovinos-categoria-origen-precio-vol
+  descripcion: Operaciones SIOCARNES BOVINOS - Categoria, origen, precio vol
+  ubicacion: PB 16
+  fuente: MAGyP
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2018-01-01'
+    ultimo: 31/6/2026
+  registros_declarados: 16802313
+  productos: 38
+  unidades:
+  - Cabezas, Kg y precio
+  - PENDIENTE (SDE 2)
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Bovinos
+    - Carne
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Operaciones SIOCARNES BOVINOS - Categoria, origen, precio vol - SDE
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 90
+  slug: operaciones-siocarnes-porcinos-categoria-origen-precio-vol
+  descripcion: Operaciones SIOCARNES PORCINOS - Categoria, origen, precio vol
+  ubicacion: PB 16
+  fuente: MAGyP
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2029-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 1264461
+  productos: 12
+  unidades:
+  - Cabezas, Kg y precio
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Porcinos
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Operaciones SIOCARNES PORCINOS - Categoria, origen, precio vol - SDE
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 91
+  slug: existencias-porcinos-por-estrato-categoria-provincia-y
+  descripcion: Existencias porcinos por estrato, categoria, provincia y departamento
+  ubicacion: PB 17
+  fuente: SENASA
+  frecuencia: estacional
+  rango_declarado:
+    inicio: null
+    ultimo: '2026-03-31'
+  registros_declarados: 1296
+  productos: 13
+  unidades:
+  - Cabezas
+  - UP
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Porcinos
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Existencias porcinos por estrato, categoria y departamento - SDE
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 92
+  slug: faena-porcina-por-provincia
+  descripcion: Faena porcina por provincia
+  ubicacion: PB 17
+  fuente: MAGyP
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2018-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 205
+  productos: 1
+  unidades:
+  - Cabezas
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Porcinos
+    subtemas_del_bloque: []
+  entrega: entrega-01
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Faena porcina mensual SDE
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: 92 - Faena porcina mensual SDE.xlsx
+  estado:
+    prometida_en: entrega-01
+    recibida: true
+    en_staging: false
+    publicada: false
+- nro: 93
+  slug: faena-porcina-por-establecimiento-faenador-por-provincia
+  descripcion: Faena porcina por establecimiento faenador por provincia
+  ubicacion: PB 17
+  fuente: MAGyP
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2018-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 1620
+  productos: 1
+  unidades:
+  - Cabezas
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Porcinos
+    subtemas_del_bloque: []
+  entrega: entrega-01
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Faena porcina por establecimiento faenador mensual - SDE
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: 93 - Faena por Establecimiento SDE.xlsx
+  estado:
+    prometida_en: entrega-01
+    recibida: true
+    en_staging: false
+    publicada: false
+- nro: 94
+  slug: faena-porcina-por-usuario-matarife-frigorifico-etc
+  descripcion: Faena porcina por usuario (matarife, frigorifico, etc.)
+  ubicacion: PB 17
+  fuente: MAGyP
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2018-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 10800
+  productos: 1
+  unidades:
+  - Cabezas
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 95
+  slug: faena-porcina-por-categoria
+  descripcion: Faena porcina por categoría
+  ubicacion: PB 17
+  fuente: MAGyP
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2018-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 90
+  productos: 7
+  unidades:
+  - cabezas
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 96
+  slug: faena-porcina-por-categoria-peso-promedio-y-produccion-carne
+  descripcion: Faena porcina por categoria, peso promedio y producción carne
+  ubicacion: PB 17
+  fuente: MAGyP
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2015-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 520
+  productos: 6
+  unidades:
+  - cabezas
+  - tn
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 97
+  slug: existencias-de-aves-reproductoras-y-pollitos-bb
+  descripcion: Existencias de aves reproductoras y Pollitos BB
+  ubicacion: PB 18
+  fuente: MAGyP
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2009-01-01'
+    ultimo: '2026-03-30'
+  registros_declarados: 68
+  productos: 3
+  unidades:
+  - cabezas
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 98
+  slug: cantidad-de-establecimientos-produccion-avicola-por
+  descripcion: Cantidad de establecimientos produccion avícola por provincia
+  ubicacion: PB 18
+  fuente: null
+  frecuencia: mensual
+  rango_declarado:
+    inicio: null
+    ultimo: null
+  registros_declarados: null
+  productos: 3
+  unidades:
+  - Plantas
+  - Totales y por tipo
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 99
+  slug: faena-bovina-por-categoria
+  descripcion: Faena bovina por categoría
+  ubicacion: PB 11
+  fuente: MAGyP
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2018-01-01'
+    ultimo: '2026-05-30'
+  registros_declarados: 135
+  productos: 9
+  unidades:
+  - cabezas
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 100
+  slug: faena-bovina-por-provincia
+  descripcion: Faena bovina por provincia
+  ubicacion: PB 11
+  fuente: MAGyP
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2018-01-01'
+    ultimo: '2026-05-30'
+  registros_declarados: 200
+  productos: 1
+  unidades:
+  - cabezas
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Bovinos
+    - Carne
+    subtemas_del_bloque: []
+  entrega: entrega-01
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Faena bovina mensual por provincia - SDE
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: 100 - Faena mensual por provincia.xlsx
+  estado:
+    prometida_en: entrega-01
+    recibida: true
+    en_staging: false
+    publicada: false
+- nro: 101
+  slug: faena-bovina-por-establecimiento-faenador-por-provincia
+  descripcion: Faena bovina por establecimiento faenador por provincia
+  ubicacion: PB 11
+  fuente: MAGyP
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2018-01-01'
+    ultimo: '2026-05-30'
+  registros_declarados: 3420
+  productos: 1
+  unidades:
+  - cabezas
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Bovinos
+    - Carne
+    subtemas_del_bloque: []
+  entrega: entrega-01
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Faena bovina por establecimiento faenador por provincia - SDE
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: 101 - Faena por establecimiento SDE.xlsx
+  estado:
+    prometida_en: entrega-01
+    recibida: true
+    en_staging: false
+    publicada: false
+- nro: 102
+  slug: faena-bovina-por-usuario-matarife-frigorifico-etc
+  descripcion: Faena bovina por usuario (matarife, frigorifico, etc.)
+  ubicacion: PB 11
+  fuente: MAGyP
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2018-01-01'
+    ultimo: '2026-05-30'
+  registros_declarados: 33600
+  productos: 1
+  unidades:
+  - cabezas
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 103
+  slug: indice-compuesto-de-actividad-economica-ica
+  descripcion: Indice Compuesto de Actividad Económica - ICA
+  ubicacion: PB 8
+  fuente: BCR
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '1994-01-01'
+    ultimo: '2026-05-30'
+  registros_declarados: 395
+  productos: 1
+  unidades:
+  - indice
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 104
+  slug: pbi-a-precios-de-mercado-y-productor-por-sector
+  descripcion: PBI a precios de mercado y productor - por sector
+  ubicacion: PB 8
+  fuente: BCR - INDEC
+  frecuencia: trimestral
+  rango_declarado:
+    inicio: '2004-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 98
+  productos: 21
+  unidades:
+  - sectores
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 105
+  slug: pbi-a-precios-dcorrientes-por-sector
+  descripcion: PBI a precios dcorrientes - por sector
+  ubicacion: PB 8
+  fuente: BCR - INDEC
+  frecuencia: trimestral
+  rango_declarado:
+    inicio: '2004-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 98
+  productos: 21
+  unidades:
+  - sectores
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 106
+  slug: oferta-y-demanda-globales-a-precios-corrientes
+  descripcion: Oferta y demanda globales a precios corrientes
+  ubicacion: PB 8
+  fuente: BCR - INDEC
+  frecuencia: trimestral
+  rango_declarado:
+    inicio: '2004-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 98
+  productos: 8
+  unidades:
+  - sectores
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 107
+  slug: indice-de-precios-implicitos-pbi-por-sector
+  descripcion: Indice de precios implícitos PBI por sector
+  ubicacion: PB 8
+  fuente: BCR - INDEC
+  frecuencia: trimestral
+  rango_declarado:
+    inicio: '2004-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 98
+  productos: 21
+  unidades:
+  - sectores
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 108
+  slug: ipim-indice-produccion-industrial-manufacturero-por-sector
+  descripcion: IPIM (Indice Produccion Industrial Manufacturero) por sector
+  ubicacion: PB 8
+  fuente: BCR - INDEC
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '1994-01-01'
+    ultimo: '2026-02-28'
+  registros_declarados: 396
+  productos: 42
+  unidades:
+  - indicadores
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 109
+  slug: datos-horarios-estaciones-smn
+  descripcion: Datos horarios estaciones SMN
+  ubicacion: PB 20
+  fuente: SMN
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2018-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 5751680
+  productos: 48
+  unidades:
+  - Estaciones
+  - provincia
+  - departamento
+  geografia:
+  - localidad
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 110
+  slug: estadisticas-climatologicas-normales-periodo-1991-2020
+  descripcion: Estadísticas Climatológicas Normales - período 1991-2020
+  ubicacion: PB 20
+  fuente: SMN
+  frecuencia: promedio
+  rango_declarado:
+    inicio: '1991-01-01'
+    ultimo: '2020-12-31'
+  registros_declarados: 789
+  productos: 48
+  unidades:
+  - Estaciones
+  - provincia
+  - departamento
+  geografia:
+  - localidad
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Clima
+    subtemas_del_bloque: []
+  entrega: entrega-01
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Estadísticas Climatológicas Normales - período 1991-2020 - Aerop SDE
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: 110 - Estadisticas climat normales promedio SDE aerop.xlsx
+  estado:
+    prometida_en: entrega-01
+    recibida: true
+    en_staging: false
+    publicada: false
+- nro: 111
+  slug: datos-114-estaciones-meteorologicas-inta
+  descripcion: Datos 114 estaciones meteorológicas INTA
+  ubicacion: PB 20
+  fuente: INTA
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2008-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 642097
+  productos: 114
+  unidades:
+  - Estaciones
+  - provincia
+  - departamento
+  geografia:
+  - localidad
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Clima
+    subtemas_del_bloque: []
+  entrega: entrega-01
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Datos historicos diarios de las 8 estaciones meteorológicas INTA SDE
+  alias_historicos: []
+  demo_prioritaria: true
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: 111 - Detalle estaciones SDE del INTA.xlsx
+  estado:
+    prometida_en: entrega-01
+    recibida: true
+    en_staging: false
+    publicada: false
+- nro: 112
+  slug: utilizacion-de-la-capacidad-instalada-nivel-gral-y
+  descripcion: Utilización de la capacidad instalada - Nivel gral y sectoriales
+  ubicacion: PB 8
+  fuente: BCR - INDEC
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2016-01-01'
+    ultimo: '2026-03-31'
+  registros_declarados: 140
+  productos: 12
+  unidades:
+  - sectores
+  - pais
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 113
+  slug: indice-de-expectativas-industriales-iei
+  descripcion: Indice de Expectativas Industriales - IEI
+  ubicacion: PB 8
+  fuente: BCR - UADE
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2010-12-01'
+    ultimo: '2026-03-31'
+  registros_declarados: 200
+  productos: 5
+  unidades:
+  - indicadores
+  - pais
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 114
+  slug: agregados-monetarios
+  descripcion: Agregados monetarios
+  ubicacion: PB 8
+  fuente: BCRA
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '1993-01-01'
+    ultimo: '2026-03-31'
+  registros_declarados: 405
+  productos: 53
+  unidades:
+  - indicadores
+  - pais
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 115
+  slug: encuesta-supermercados-y-mayoristas
+  descripcion: Encuesta supermercados y mayoristas
+  ubicacion: PB 8
+  fuente: INDEC
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '1996-01-01'
+    ultimo: '2026-02-28'
+  registros_declarados: 370
+  productos: 4
+  unidades:
+  - indicadores
+  - pais
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 116
+  slug: icc-indice-confianza-del-consumidor
+  descripcion: ICC - Indice Confianza del Consumidor
+  ubicacion: PB 8
+  fuente: UTDT
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2001-04-30'
+    ultimo: '2026-04-30'
+  registros_declarados: 312
+  productos: 10
+  unidades:
+  - indicadores
+  - pais
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: Universidad Torcuato Di Tella
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 117
+  slug: issp-indicador-sintetico-de-servicios-publicos-inc
+  descripcion: ISSP - Indicador Sintético de Servicios Públicos (inc transporte carga)
+  ubicacion: PB 8
+  fuente: INDEC
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2012-01-01'
+    ultimo: '2026-01-01'
+  registros_declarados: 179
+  productos: 13
+  unidades:
+  - indicadores
+  - pais
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 118
+  slug: ventas-de-combustibles
+  descripcion: Ventas de combustibles
+  ubicacion: PB 15
+  fuente: Secret Energia
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '1994-01-01'
+    ultimo: '2026-02-28'
+  registros_declarados: 394
+  productos: 15
+  unidades:
+  - indicadores
+  - pais
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 119
+  slug: indices-tipo-de-cambio-multilaterales
+  descripcion: Indices tipo de cambio multilaterales
+  ubicacion: PB 8
+  fuente: BCRA
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '1997-01-01'
+    ultimo: '2026-02-28'
+  registros_declarados: 360
+  productos: 29
+  unidades:
+  - indicadores
+  - pais
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 120
+  slug: indices-de-precios-de-materias-primas-en-u-d
+  descripcion: Indices de precios de materias primas en U$D
+  ubicacion: PB 8
+  fuente: BCRA
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '1997-01-01'
+    ultimo: '2026-02-28'
+  registros_declarados: 360
+  productos: 7
+  unidades:
+  - productos agroalimentarios
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 121
+  slug: recaudacion-impositiva-incluye-derechos-exportacion
+  descripcion: Recaudacion impositiva, incluye derechos exportacion
+  ubicacion: PB 8
+  fuente: MECON - DNIAF
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '1993-01-01'
+    ultimo: '2026-02-28'
+  registros_declarados: 408
+  productos: 7
+  unidades:
+  - indicadores
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 122
+  slug: djve-aprobadas
+  descripcion: DJVE aprobadas
+  ubicacion: PB 21
+  fuente: MAGyP
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2011-01-01'
+    ultimo: 31/4/2026
+  registros_declarados: 332590
+  productos: 32
+  unidades:
+  - tns
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 123
+  slug: balance-alimentario-por-pais-y-productos
+  descripcion: Balance alimentario por país y productos
+  ubicacion: PB 22
+  fuente: FAO
+  frecuencia: anual
+  rango_declarado:
+    inicio: '2013-01-01'
+    ultimo: '2023-01-01'
+  registros_declarados: 169850
+  productos: 80
+  unidades:
+  - '16'
+  - paises
+  - '12'
+  geografia:
+  - Latam
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 124
+  slug: encuesta-supermercados-indice-ventas-a-precios-constantes
+  descripcion: Encuesta supermercados - Indice ventas a precios constantes
+  ubicacion: PB 8
+  fuente: INDEC
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2017-01-01'
+    ultimo: '2026-02-28'
+  registros_declarados: 115
+  productos: 7
+  unidades:
+  - indices
+  - pais
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 125
+  slug: encuesta-supermercados-indice-ventas-a-precios-corrientes
+  descripcion: Encuesta supermercados - Indice ventas a precios corrientes
+  ubicacion: PB 8
+  fuente: INDEC
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2017-01-01'
+    ultimo: '2026-02-28'
+  registros_declarados: 115
+  productos: 7
+  unidades:
+  - indices
+  - pais
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 126
+  slug: encuesta-supermercados-ventas-a-precios-corrientes-y
+  descripcion: Encuesta supermercados - Ventas a precios corrientes y constantes
+  ubicacion: PB 8
+  fuente: INDEC
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2017-01-01'
+    ultimo: '2026-02-28'
+  registros_declarados: 115
+  productos: 7
+  unidades:
+  - indices
+  - pais
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 127
+  slug: encuesta-supermercados-ventas-totales-por-canal-y-medio-pago
+  descripcion: Encuesta supermercados - Ventas totales por canal y medio pago
+  ubicacion: PB 8
+  fuente: INDEC
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2017-01-01'
+    ultimo: '2026-02-28'
+  registros_declarados: 115
+  productos: 7
+  unidades:
+  - indices
+  - pais
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 128
+  slug: encuesta-supermercados-ventas-totales-por-grupo-art-por
+  descripcion: Encuesta supermercados - Ventas totales por grupo art. Por provincia
+  ubicacion: PB 8
+  fuente: INDEC
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2017-01-01'
+    ultimo: '2026-02-28'
+  registros_declarados: 115
+  productos: 12
+  unidades:
+  - indicadores
+  - '24'
+  - provincias
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Economía
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Encuesta supermercados - Ventas totales por grupo art. En $ corrientes - SDE
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 129
+  slug: encuesta-superm-ventas-totales-por-grupo-operac-por
+  descripcion: Encuesta superm. - Ventas totales por grupo operac. Por provincia
+  ubicacion: PB 8
+  fuente: INDEC
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2017-01-01'
+    ultimo: '2026-02-28'
+  registros_declarados: 115
+  productos: 7
+  unidades:
+  - indicadores
+  - '24'
+  - provincias
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Economía
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Encuesta superm. - Ventas totales por grupo operac. En $ corrientes - SDE
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 130
+  slug: calendario-cosecha-por-provincia-y-mes-todos-los-cultivos-en
+  descripcion: Calendario cosecha por provincia y mes - todos los cultivos (en %)
+  ubicacion: PB 1
+  fuente: MAGyP
+  frecuencia: permanente
+  rango_declarado:
+    inicio: null
+    ultimo: null
+  registros_declarados: 1200
+  productos: 22
+  unidades:
+  - indicadores
+  - '20'
+  - provincias
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Agricultura
+    - Cultivos intensivos
+    - Frutas y hortalizas
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc:
+  - CAMBIAR A LAS NUEVAS
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 131
+  slug: remuneracion-empleo-por-provincia-por-rama-actividad-4
+  descripcion: Remuneracion empleo por provincia por rama actividad 4 digitos
+  ubicacion: PB 7
+  fuente: Min. Cap Humano
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '1995-01-01'
+    ultimo: '2026-12-31'
+  registros_declarados: 7392
+  productos: 56
+  unidades:
+  - indicadores
+  - '24'
+  - provincias
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Empleo
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Remuneracion empleo por provincia por rama actividad 4 digitos - SDE
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 132
+  slug: parque-automotor-por-tipo-por-provincia
+  descripcion: Parque automotor por tipo por provincia
+  ubicacion: PB 23
+  fuente: ADEFA
+  frecuencia: anual
+  rango_declarado:
+    inicio: '2006-01-01'
+    ultimo: '2024-12-31'
+  registros_declarados: 475
+  productos: 4
+  unidades:
+  - indicadores
+  - '24'
+  - provincias
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Economía
+    subtemas_del_bloque: []
+  entrega: entrega-01
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Parque automotor por tipo - SDE
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: 132 - Composicion parque autom SDE.xlsx
+  estado:
+    prometida_en: entrega-01
+    recibida: true
+    en_staging: false
+    publicada: false
+- nro: 133
+  slug: patentamientos-por-categorias-en-unidades
+  descripcion: Patentamientos por categorias, en unidades
+  ubicacion: PB 23
+  fuente: INDEC
+  frecuencia: anual
+  rango_declarado:
+    inicio: '2014-01-01'
+    ultimo: '2026-03-31'
+  registros_declarados: 150
+  productos: 5
+  unidades:
+  - categorias
+  - pais
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 134
+  slug: patentamientos-en-unidades-totales-por-provincia
+  descripcion: Patentamientos en unidades totales por provincia
+  ubicacion: PB 23
+  fuente: INDEC
+  frecuencia: anual
+  rango_declarado:
+    inicio: '2014-01-01'
+    ultimo: '2026-03-31'
+  registros_declarados: 150
+  productos: 1
+  unidades:
+  - indicador
+  - provincias
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Economía
+    subtemas_del_bloque: []
+  entrega: entrega-01
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Patentamientos en unidades totales - SDE
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: 134 - patentamientos SDE.xlsx
+  estado:
+    prometida_en: entrega-01
+    recibida: true
+    en_staging: false
+    publicada: false
+- nro: 135
+  slug: patentamientos-en-unidades-transporte-carga-por-provincia
+  descripcion: Patentamientos en unidades transporte carga por provincia
+  ubicacion: PB 23
+  fuente: INDEC
+  frecuencia: anual
+  rango_declarado:
+    inicio: '2014-01-01'
+    ultimo: '2026-03-31'
+  registros_declarados: 150
+  productos: 1
+  unidades:
+  - indicador
+  - provincias
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Economía
+    subtemas_del_bloque: []
+  entrega: entrega-01
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Patentamientos en unidades transporte carga - SDE
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: 135 - Patentamientos unidades transporte carga SDE.xlsx
+  estado:
+    prometida_en: entrega-01
+    recibida: true
+    en_staging: false
+    publicada: false
+- nro: 136
+  slug: patentamientos-acoplados-por-provincia
+  descripcion: Patentamientos acoplados por provincia
+  ubicacion: PB 23
+  fuente: INDEC
+  frecuencia: anual
+  rango_declarado:
+    inicio: '2014-01-01'
+    ultimo: '2026-03-31'
+  registros_declarados: 150
+  productos: 1
+  unidades:
+  - indicador
+  - provincias
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Economía
+    subtemas_del_bloque: []
+  entrega: entrega-01
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Patentamientos acoplados - SDE
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: 136 - Patent Acopl SDE.xlsx
+  estado:
+    prometida_en: entrega-01
+    recibida: true
+    en_staging: false
+    publicada: false
+- nro: 137
+  slug: patentamientos-mavi-por-provincia
+  descripcion: Patentamientos MAVI por provincia
+  ubicacion: PB 24
+  fuente: INDEC
+  frecuencia: anual
+  rango_declarado:
+    inicio: '2014-01-01'
+    ultimo: '2026-03-31'
+  registros_declarados: 150
+  productos: 1
+  unidades:
+  - indicador
+  - provincias
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Economía
+    subtemas_del_bloque: []
+  entrega: entrega-01
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Patentamientos MAVI - SDE (Maquinaria Agrícola, Vial e Industrial)
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: 137 - Patent MAVI SDE.xlsx
+  estado:
+    prometida_en: entrega-01
+    recibida: true
+    en_staging: false
+    publicada: false
+- nro: 138
+  slug: producto-interno-bruto-por-categoria-a-precios-2004-1-3-1
+  descripcion: Producto Interno Bruto, por categoría a precios 2004 (1.3.1)
+  ubicacion: PB 8
+  fuente: MECON
+  frecuencia: trimestral
+  rango_declarado:
+    inicio: '2004-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 120
+  productos: 23
+  unidades:
+  - indicadores
+  - pais
+  geografia:
+  - anual
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 139
+  slug: vab-precios-basicos-por-rama-actividad-economica-1-3-2
+  descripcion: VAB precios basicos por rama actividad economica (1.3.2.)
+  ubicacion: PB 8
+  fuente: MECON
+  frecuencia: trimestral
+  rango_declarado:
+    inicio: '2004-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 180
+  productos: 68
+  unidades:
+  - indicadores
+  - pais
+  geografia:
+  - anual
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 140
+  slug: vbp-precios-basicos-por-rama-actividad-economica-1-6-2
+  descripcion: VBP precios basicos por rama actividad economica (1.6.2.)
+  ubicacion: PB 8
+  fuente: MECON
+  frecuencia: trimestral
+  rango_declarado:
+    inicio: '2004-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 180
+  productos: 68
+  unidades:
+  - indicadores
+  - pais
+  geografia:
+  - anual
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 141
+  slug: ipc-por-productos-canasta-regiones-y-pais
+  descripcion: IPC por productos canasta - Regiones y pais
+  ubicacion: PB 8
+  fuente: INDEC
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2017-06-01'
+    ultimo: '2026-04-30'
+  registros_declarados: 82
+  productos: 14
+  unidades:
+  - productos
+  - 5 regiones
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 142
+  slug: warrants-emitidos-por-producto-y-provincia
+  descripcion: Warrants emitidos por producto y provincia
+  ubicacion: PB 24
+  fuente: MAGyP
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2016-01-01'
+    ultimo: '2026-04-30'
+  registros_declarados: 1550
+  productos: 56
+  unidades:
+  - productos
+  - '24'
+  - provincias
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Economía
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Warrants emitidos por producto- SDE
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 143
+  slug: ingreso-camiones-a-puertos-por-producto-incluye-vagones
+  descripcion: Ingreso camiones a puertos, por producto. Incluye vagones
+  ubicacion: PB 23
+  fuente: MAGyP
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2018-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 3030
+  productos: 6
+  unidades:
+  - productos
+  - '4'
+  - puertos
+  geografia:
+  - diario
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 144
+  slug: dte-movimientos-porcinos-por-provincia-dto-y-categoria
+  descripcion: DTE - Movimientos porcinos por provincia, dto y categoria
+  ubicacion: PB 14
+  fuente: SENASA
+  frecuencia: null
+  rango_declarado:
+    inicio: '2022-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 117594
+  productos: 7
+  unidades:
+  - categorias
+  - provincias
+  geografia:
+  - departam
+  - diario
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Porcinos
+    subtemas_del_bloque: []
+  entrega: entrega-01
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - DTE - Movimientos porcinos dto y categoria - SDE
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: 144 - DTE porcinos SDE.xlsx
+  estado:
+    prometida_en: entrega-01
+    recibida: true
+    en_staging: false
+    publicada: false
+- nro: 145
+  slug: dte-movimientos-ovinos-por-provincia-y-departamento
+  descripcion: DTE - Movimientos ovinos por provincia y departamento
+  ubicacion: PB 14
+  fuente: SENASA
+  frecuencia: null
+  rango_declarado:
+    inicio: '2022-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 11496
+  productos: 1
+  unidades:
+  - categorias
+  - provincias
+  geografia:
+  - departam
+  - diario
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Ovinos
+    subtemas_del_bloque: []
+  entrega: entrega-01
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - DTE - Movimientos ovinos por departamento y categoria - SDE
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: 145 - DTE Ovinos - Origen y Destino SDE.xlsx
+  estado:
+    prometida_en: entrega-01
+    recibida: true
+    en_staging: false
+    publicada: false
+- nro: 146
+  slug: dte-movimientos-cama-de-pollos-por-provincia-y-departamento
+  descripcion: DTE - Movimientos cama de pollos por provincia y departamento
+  ubicacion: PB 25
+  fuente: SENASA
+  frecuencia: null
+  rango_declarado:
+    inicio: '2022-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 123
+  productos: 1
+  unidades:
+  - categorias
+  - provincias
+  geografia:
+  - departam
+  - diario
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 147
+  slug: dte-movimientos-cueros-y-pieles-por-provincia-y-departamento
+  descripcion: DTE - Movimientos cueros y pieles por provincia y departamento
+  ubicacion: PB 25
+  fuente: SENASA
+  frecuencia: null
+  rango_declarado:
+    inicio: '2022-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 3587
+  productos: 1
+  unidades:
+  - categorias
+  - provincias
+  geografia:
+  - departam
+  - diario
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 148
+  slug: dte-movimientos-guano-aviar-por-provincia-y-departamento
+  descripcion: DTE - Movimientos guano aviar por provincia y departamento
+  ubicacion: PB 25
+  fuente: SENASA
+  frecuencia: null
+  rango_declarado:
+    inicio: '2022-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 164
+  productos: 1
+  unidades:
+  - categorias
+  - provincias
+  geografia:
+  - departam
+  - diario
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 149
+  slug: dte-movimientos-lana-sucia-vellon-por-provincia-y
+  descripcion: DTE - Movimientos lana sucia Vellón por provincia y departamento
+  ubicacion: PB 25
+  fuente: SENASA
+  frecuencia: null
+  rango_declarado:
+    inicio: '2022-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 2163
+  productos: 1
+  unidades:
+  - categorias
+  - provincias
+  geografia:
+  - departam
+  - diario
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 150
+  slug: dte-movimientos-lana-sucia-no-vellon-por-provincia-y
+  descripcion: DTE - Movimientos lana sucia NO Vellón por provincia y departamento
+  ubicacion: PB 25
+  fuente: SENASA
+  frecuencia: null
+  rango_declarado:
+    inicio: '2022-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 944
+  productos: 1
+  unidades:
+  - categorias
+  - provincias
+  geografia:
+  - departam
+  - diario
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 151
+  slug: existiencias-eac-engorde-a-corral-por-provincia-dto-y
+  descripcion: Existiencias EAC (Engorde A Corral) por provincia, dto y categoria
+  ubicacion: PB 11
+  fuente: SENASA
+  frecuencia: anual
+  rango_declarado:
+    inicio: '2025-01-01'
+    ultimo: '2025-03-31'
+  registros_declarados: 257
+  productos: 12
+  unidades:
+  - categorias
+  - provincias
+  geografia:
+  - departam
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Bovinos
+    - Carne
+    subtemas_del_bloque: []
+  entrega: entrega-01
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Existiencias EAC (Engorde A Corral) por departamento y categoría - SDE
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: 151 - Stocks y establ Engorde A Corral (EAC) - SDE.xlsx
+  estado:
+    prometida_en: entrega-01
+    recibida: true
+    en_staging: false
+    publicada: false
+- nro: 152
+  slug: existencias-en-tambos-por-provincia-dto-y-categoria
+  descripcion: Existencias en tambos por provincia, dto y categoria - Establecimientos
+  ubicacion: PB 12
+  fuente: SENASA
+  frecuencia: anual
+  rango_declarado:
+    inicio: '2025-01-01'
+    ultimo: '2025-03-31'
+  registros_declarados: 237
+  productos: 12
+  unidades:
+  - categorias
+  - provincias
+  geografia:
+  - departam
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Bovinos
+    - Leche
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Existencias en tambos por dto y categoria - Establecimientos - SDE
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 153
+  slug: existencias-bubalinos-por-provincia-dto-y-categoria-renspas
+  descripcion: Existencias bubalinos por provincia, dto y categoria - RENSPAs
+  ubicacion: PB 30
+  fuente: SENASA
+  frecuencia: anual
+  rango_declarado:
+    inicio: '2025-01-01'
+    ultimo: '2025-03-31'
+  registros_declarados: 515
+  productos: 12
+  unidades:
+  - categorias
+  - provincias
+  geografia:
+  - departam
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Bubalinos
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Existencias bubalinos por dto y categoria - RENSPAs - SDE
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 154
+  slug: existencias-bovinos-campos-cuota-hilton-por-provincia-dto-y
+  descripcion: Existencias bovinos campos cuota Hilton por provincia, dto y cat.
+  ubicacion: PB 11
+  fuente: SENASA
+  frecuencia: anual
+  rango_declarado:
+    inicio: '2025-01-01'
+    ultimo: '2025-03-31'
+  registros_declarados: 247
+  productos: 12
+  unidades:
+  - categorias
+  - provincias
+  geografia:
+  - departam
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Bovinos
+    - Carne
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Existencias bovinos campos cuota Hilton por dto y cat. - SDE
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 155
+  slug: dte-movimientos-aviares-por-provincia-dto-y-categoria
+  descripcion: DTE - Movimientos aviares por provincia, dto y categoria
+  ubicacion: PB 14
+  fuente: SENASA
+  frecuencia: null
+  rango_declarado:
+    inicio: '2022-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 28733
+  productos: 12
+  unidades:
+  - categorias
+  - provincias
+  geografia:
+  - departam
+  - diario
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 156
+  slug: existencias-ovinas-totales-y-por-categoria-por-provincia
+  descripcion: Existencias ovinas totales y por categoría por provincia
+  ubicacion: PB 26
+  fuente: MAGyP
+  frecuencia: null
+  rango_declarado:
+    inicio: '2008-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 456
+  productos: 6
+  unidades:
+  - categorias
+  - provincias
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Ovinos
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Existencias ovinas totales y por categoría - SDE
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 157
+  slug: existencias-ovinas-por-categoria-por-departamento-2025
+  descripcion: Existencias ovinas por categoría por departamento - 2025
+  ubicacion: PB 26
+  fuente: MAGyP
+  frecuencia: null
+  rango_declarado:
+    inicio: null
+    ultimo: '2025-03-31'
+  registros_declarados: 518
+  productos: 7
+  unidades:
+  - categorias
+  - provincias
+  geografia:
+  - departam
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Ovinos
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc:
+  - SE UNIFICARÁN LAS BASES
+  denominaciones:
+  - Existencias ovinas por categoría por departamento - 2025 - SDE
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 158
+  slug: existencias-ovinas-por-estrato-categoria-por-departamento
+  descripcion: Existencias ovinas por estrato, categoria por departamento - 2025
+  ubicacion: PB 26
+  fuente: SENASA
+  frecuencia: null
+  rango_declarado:
+    inicio: null
+    ultimo: '2025-03-31'
+  registros_declarados: 2266
+  productos: 5
+  unidades:
+  - categorias
+  - provincias
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Ovinos
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc:
+  - LA UNICA DIFERENCIA SON LOS ESTRATOS
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 159
+  slug: existencias-bovinas-por-categoria-estrato-y-departamento
+  descripcion: Existencias bovinas por categoria, estrato y departamento 2014 a 2022
+  ubicacion: PB 11
+  fuente: SENASA
+  frecuencia: null
+  rango_declarado:
+    inicio: '2014-01-01'
+    ultimo: '2022-12-31'
+  registros_declarados: 5733
+  productos: 8
+  unidades:
+  - categorias
+  - provincias
+  geografia:
+  - departam
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 160
+  slug: establecimientos-educativos-por-prov-dto-y-localidad-tipo
+  descripcion: Establecimientos educativos por prov, dto y localidad - tipo enseñanza
+  ubicacion: PB 27
+  fuente: Min. Cap Humano
+  frecuencia: null
+  rango_declarado:
+    inicio: null
+    ultimo: '2025-03-31'
+  registros_declarados: 64619
+  productos: 22
+  unidades:
+  - categorias
+  - provincias
+  geografia:
+  - departam
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - General
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Establecimientos educativos por dto y localidad - tipo enseñanza - SDE
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 161
+  slug: precio-huevos-3-provincias
+  descripcion: Precio huevos 3 provincias
+  ubicacion: PB 18
+  fuente: null
+  frecuencia: null
+  rango_declarado:
+    inicio: null
+    ultimo: null
+  registros_declarados: null
+  productos: 6
+  unidades:
+  - categorias
+  - provincias
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 162
+  slug: indicadores-avicolas
+  descripcion: Indicadores avícolas
+  ubicacion: PB 18
+  fuente: Magyp
+  frecuencia: null
+  rango_declarado:
+    inicio: '2016-01-01'
+    ultimo: '2026-04-30'
+  registros_declarados: 1147
+  productos: 8
+  unidades:
+  - indicadores
+  - pais
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 163
+  slug: existencias-de-aves-por-tipo-renavi
+  descripcion: Existencias de aves por tipo RENAVI
+  ubicacion: PB 18
+  fuente: Magyp
+  frecuencia: null
+  rango_declarado:
+    inicio: '2009-01-01'
+    ultimo: '2026-04-30'
+  registros_declarados: 938
+  productos: 4
+  unidades:
+  - categorías
+  - pais
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 164
+  slug: indice-de-costro-produccion-pollos-parrileros-bs-as-y-entre
+  descripcion: Indice de costro produccion pollos parrileros Bs As y Entre Ríos
+  ubicacion: PB 18
+  fuente: Magyp
+  frecuencia: null
+  rango_declarado:
+    inicio: '2015-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 867
+  productos: 6
+  unidades:
+  - indicadores
+  - '2'
+  - provincias
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 165
+  slug: cantidad-de-plantas-de-faena-por-provincia-nacionales-y
+  descripcion: Cantidad de Plantas de Faena por Provincia, nacionales y provinciales
+  ubicacion: PB 18
+  fuente: Magyp
+  frecuencia: anual
+  rango_declarado:
+    inicio: '2015-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 308
+  productos: 2
+  unidades:
+  - indicadores
+  - '17'
+  - provincias
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 166
+  slug: faena-mensual-de-aves-totales-pais
+  descripcion: Faena mensual de aves, totales país
+  ubicacion: PB 18
+  fuente: Magyp
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2015-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 144
+  productos: 1
+  unidades:
+  - indicador
+  - pais
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 167
+  slug: faena-mensual-de-aves-por-provincia
+  descripcion: Faena mensual de aves, por provincia
+  ubicacion: PB 18
+  fuente: Magyp
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2016-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 1287
+  productos: 1
+  unidades:
+  - indicador
+  - '9'
+  - provincias
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 168
+  slug: exportaciones-mensuales-pollo-entero-trozado-etc-pais-cant
+  descripcion: Exportaciones mensuales pollo (entero, trozado, etc.) país. Cant y monto
+  ubicacion: PB 18
+  fuente: Magyp
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2015-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 144
+  productos: 2
+  unidades:
+  - indicadores
+  - Pais
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 169
+  slug: importaciones-mensuales-pollo-entero-trozado-etc-pais-cant
+  descripcion: Importaciones mensuales pollo (entero, trozado, etc.) país. Cant y monto
+  ubicacion: PB 18
+  fuente: Magyp
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2015-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 144
+  productos: 2
+  unidades:
+  - indicadores
+  - Pais
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 170
+  slug: consumo-mensual-per-capita-carne-aviar-argentina
+  descripcion: Consumo mensual per cápita carne aviar - Argentina
+  ubicacion: PB 18
+  fuente: Magyp
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2015-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 144
+  productos: 1
+  unidades:
+  - indicador
+  - Pais
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 171
+  slug: precio-mensual-pollo-eviscerado-mayorista-y-consumidor
+  descripcion: Precio mensual pollo eviscerado mayorista y consumidor.
+  ubicacion: PB 18
+  fuente: Magyp
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2015-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 288
+  productos: 2
+  unidades:
+  - indicadores
+  - Pais
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 172
+  slug: relacion-maiz-pollo
+  descripcion: Relación máiz-pollo
+  ubicacion: PB 18
+  fuente: Magyp
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2015-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 144
+  productos: 1
+  unidades:
+  - indicador
+  - Pais
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 173
+  slug: industrializacion-mensual-de-huevos
+  descripcion: Industrialización mensual de huevos
+  ubicacion: PB 18
+  fuente: Magyp
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2015-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 145
+  productos: 2
+  unidades:
+  - indicador
+  - Pais
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 174
+  slug: precio-del-huevo-mayorista-y-monorista
+  descripcion: Precio del huevo - Mayorista y monorista
+  ubicacion: PB 18
+  fuente: Magyp
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2015-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 288
+  productos: 2
+  unidades:
+  - indicadores
+  - Pais
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 175
+  slug: relacion-maiz-huevo
+  descripcion: Relación máiz-huevo
+  ubicacion: PB 18
+  fuente: Magyp
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2015-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 144
+  productos: 1
+  unidades:
+  - indicador
+  - Pais
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 176
+  slug: existencias-de-equidos-por-provincia-dto-estrato-y-categoria
+  descripcion: Existencias de equidos por provincia, dto, estrato y categoría
+  ubicacion: PB 28
+  fuente: SENASA
+  frecuencia: anual
+  rango_declarado:
+    inicio: null
+    ultimo: '2025-03-31'
+  registros_declarados: 2840
+  productos: 16
+  unidades:
+  - indicadores
+  - provincias
+  geografia:
+  - departam
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Equidos
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 177
+  slug: existencias-de-caprinos-por-provincia-departamento-y
+  descripcion: Existencias de caprinos por provincia, departamento y categoría - 2025
+  ubicacion: PB 29
+  fuente: Magyp
+  frecuencia: anual
+  rango_declarado:
+    inicio: null
+    ultimo: '2025-03-31'
+  registros_declarados: 512
+  productos: 9
+  unidades:
+  - indicadores
+  - provincias
+  geografia:
+  - departam
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Caprinos
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Existencias de caprinos por departamento y categoría - 2025 - SDE
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 178
+  slug: existencias-caprinos-por-provincia-por-categoria-2009-a-2025
+  descripcion: Existencias caprinos por provincia por categoría - 2009 a 2025
+  ubicacion: PB 29
+  fuente: Magyp
+  frecuencia: anual
+  rango_declarado:
+    inicio: '2009-03-31'
+    ultimo: '2025-03-31'
+  registros_declarados: 308
+  productos: 6
+  unidades:
+  - indicadores
+  - provincias
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Caprinos
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Existencias caprinos por categoría - 2009 a 2025 - SDE
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 179
+  slug: estratificacion-por-provincia-stock-establecimientos-y-up
+  descripcion: Estratificación por provincia stock, establecimientos y UP
+  ubicacion: PB 29
+  fuente: Magyp
+  frecuencia: anual
+  rango_declarado:
+    inicio: null
+    ultimo: '2025-03-31'
+  registros_declarados: 25
+  productos: 4
+  unidades:
+  - indicadores
+  - provincias
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Caprinos
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Estratificación por stock, establecimientos y UP - 2025 - SDE
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 180
+  slug: faena-y-produccion-mensual-caprina
+  descripcion: Faena y producción mensual caprina
+  ubicacion: PB 29
+  fuente: Magyp
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2019-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 91
+  productos: 4
+  unidades:
+  - indicadores
+  - Pais
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 181
+  slug: faena-mensual-caprina-por-categoria
+  descripcion: Faena mensual caprina por categoría
+  ubicacion: PB 29
+  fuente: Magyp
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2019-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 91
+  productos: 6
+  unidades:
+  - indicadores
+  - Pais
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 182
+  slug: faena-anual-caprina-por-provincia
+  descripcion: Faena anual caprina por provincia
+  ubicacion: PB 29
+  fuente: Magyp
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2019-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 114
+  productos: 1
+  unidades:
+  - indicador
+  - provincias
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Caprinos
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Faena mensual caprina SDE
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 183
+  slug: existencias-bubalinos-por-provincia-y-categoria-serie-2015
+  descripcion: Existencias bubalinos por provincia y categoria - serie 2015 a 2025
+  ubicacion: PB 30
+  fuente: Magyp
+  frecuencia: anual
+  rango_declarado:
+    inicio: '2015-03-31'
+    ultimo: '2025-03-31'
+  registros_declarados: 242
+  productos: 6
+  unidades:
+  - indicadores
+  - provincias
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Bubalinos
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Existencias bubalinos por categoria - serie 2015 a 2025 - SDE
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 184
+  slug: datos-de-cuencas-lecheras-por-provincia
+  descripcion: Datos de cuencas lecheras por provincia
+  ubicacion: PB 12
+  fuente: Magyp
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2021-01-01'
+    ultimo: '2026-03-31'
+  registros_declarados: 865
+  productos: 10
+  unidades:
+  - indicadores
+  - provincias
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Bovinos
+    - Leche
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Datos de cuencas lecheras SDE
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 185
+  slug: precio-por-lt-leche-pagado-al-productor-por-provincia
+  descripcion: Precio por lt leche pagado al productor por provincia
+  ubicacion: PB 12
+  fuente: Magyp
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2016-11-01'
+    ultimo: '2026-03-31'
+  registros_declarados: 117
+  productos: 1
+  unidades:
+  - indicador
+  - provincias
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Bovinos
+    - Leche
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Precio por lt leche pagado al productor - SDE
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 186
+  slug: precio-prom-pagado-al-prod-kg-solidos-utiles-en-leche-x-prov
+  descripcion: Precio prom pagado al prod ($/Kg Sólidos útiles) en leche x prov
+  ubicacion: PB 12
+  fuente: Magyp
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2016-11-01'
+    ultimo: '2026-03-31'
+  registros_declarados: 117
+  productos: 1
+  unidades:
+  - indicador
+  - provincias
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Bovinos
+    - Leche
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Precio prom pagado al prod ($/Kg Sólidos útiles) en leche - SDE
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 187
+  slug: precio-prom-pagado-al-prod-de-grasa-butirosa-kg-en-leche-x
+  descripcion: Precio prom pagado al prod de grasa butirosa ($/kg) en leche x prov
+  ubicacion: PB 12
+  fuente: Magyp
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2016-11-01'
+    ultimo: '2026-03-31'
+  registros_declarados: 117
+  productos: 1
+  unidades:
+  - indicador
+  - provincias
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Bovinos
+    - Leche
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Precio prom pagado al prod de grasa butirosa ($/kg) en leche - SDE
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 188
+  slug: contenido-en-de-grasa-butirosa-por-provincia-y-nacional
+  descripcion: Contenido en % de grasa butirosa por provincia y nacional - leche
+  ubicacion: PB 12
+  fuente: Magyp
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2014-01-01'
+    ultimo: '2026-03-31'
+  registros_declarados: 296
+  productos: 1
+  unidades:
+  - indicador
+  - provincias
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Bovinos
+    - Leche
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Contenido en % de grasa butirosa SDE y nacional - leche
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 189
+  slug: variacion-intermensual-e-interanual-de-la-producc-de-leche
+  descripcion: Variación intermensual e interanual de la producc de leche por prov.
+  ubicacion: PB 12
+  fuente: Magyp
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2016-11-01'
+    ultimo: '2026-03-31'
+  registros_declarados: 256
+  productos: 2
+  unidades:
+  - indicadores
+  - provincias
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Bovinos
+    - Leche
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Variación intermensual e interanual de la producc de leche - SDE
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 190
+  slug: faena-y-produccion-mensual-ovina
+  descripcion: Faena y producción mensual ovina
+  ubicacion: PB 26
+  fuente: Magyp
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2018-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 104
+  productos: 4
+  unidades:
+  - indicadores
+  - Pais
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 191
+  slug: faena-mensual-ovina-por-categoria
+  descripcion: Faena mensual ovina por categoría
+  ubicacion: PB 26
+  fuente: Magyp
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2018-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 104
+  productos: 6
+  unidades:
+  - indicadores
+  - Pais
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 192
+  slug: faena-mensual-ovina-por-provincia
+  descripcion: Faena mensual ovina por provincia
+  ubicacion: PB 26
+  fuente: Magyp
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2018-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 157
+  productos: 1
+  unidades:
+  - indicador
+  - provincias
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Ovinos
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Faena mensual ovina SDE
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 193
+  slug: resgistros-operaciones-inv-vinos-y-subproductos
+  descripcion: Resgistros operaciones INV vinos y subproductos
+  ubicacion: PB 32
+  fuente: INV
+  frecuencia: diaria
+  rango_declarado:
+    inicio: '2024-01-01'
+    ultimo: '2025-04-30'
+  registros_declarados: 33502
+  productos: 5
+  unidades:
+  - indicadores
+  - provincias
+  geografia:
+  - departam
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 194
+  slug: precio-prom-pagado-al-prod-de-proteina-kg-en-leche-x-prov
+  descripcion: Precio prom pagado al prod de proteína ($/kg) en leche x prov
+  ubicacion: PB 12
+  fuente: Magyp
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2016-11-01'
+    ultimo: '2026-03-31'
+  registros_declarados: 117
+  productos: 1
+  unidades:
+  - indicador
+  - provincias
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Bovinos
+    - Leche
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Precio prom pagado al prod de proteína ($/kg) en leche - SDE
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 195
+  slug: contenido-en-proteina-por-provincia-y-nacional-leche
+  descripcion: Contenido en % proteina por provincia y nacional - leche
+  ubicacion: PB 12
+  fuente: Magyp
+  frecuencia: mensual
+  rango_declarado:
+    inicio: '2014-01-01'
+    ultimo: '2026-03-31'
+  registros_declarados: 296
+  productos: 1
+  unidades:
+  - indicador
+  - provincias
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Ganadería
+    - Bovinos
+    - Leche
+    subtemas_del_bloque: []
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Contenido en % proteina SDE y nacional - leche
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 196
+  slug: lista-de-productos-registrados-con-rnpa-e-industria
+  descripcion: Lista de productos registrados con RNPA e industria productora
+  ubicacion: PB 1
+  fuente: ANMAT
+  frecuencia: permanente
+  rango_declarado:
+    inicio: null
+    ultimo: '2026-03-31'
+  registros_declarados: 1000
+  productos: 3
+  unidades:
+  - indicadores
+  - provincias
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Industria
+    - Alimentario
+    subtemas_del_bloque: []
+  entrega: entrega-01
+  observaciones: null
+  notas_jc:
+  - Acá con links a fichas de productos
+  denominaciones:
+  - Lista de productos registrados con RNPA e industria productora - SDE
+  alias_historicos: []
+  tema_secundario:
+  - bloque: acceso-por-tema
+    ruta:
+    - Intranet
+    marca: null
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: 196 - Lista productos RNPA - SDE.xlsx
+  estado:
+    prometida_en: entrega-01
+    recibida: true
+    en_staging: false
+    publicada: false
+- nro: 197
+  slug: base-de-estaciones-de-servicio-por-prov-loc-y-bandera
+  descripcion: Base de Estaciones de servicio por prov, loc y bandera
+  ubicacion: PB 15
+  fuente: Secret Energia
+  frecuencia: permanente
+  rango_declarado:
+    inicio: null
+    ultimo: '2026-04-01'
+  registros_declarados: 10433
+  productos: 5
+  unidades:
+  - indicadores
+  - provincias
+  geografia:
+  - localidad
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Intranet
+    subtemas_del_bloque: []
+  entrega: entrega-01
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Base de Estaciones de servicio por localidad y bandera - SDE
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: 197 - Base Estaciones Servicio SDE.xlsx
+  estado:
+    prometida_en: entrega-01
+    recibida: true
+    en_staging: false
+    publicada: false
+- nro: 198
+  slug: agroindustrias-registradas-en-el-sisa-sist-de-informacion
+  descripcion: Agroindustrias registradas en el SISA (Sist de Información Simplif Agrícola)
+  ubicacion: PB 1
+  fuente: ARCA
+  frecuencia: permanente
+  rango_declarado:
+    inicio: null
+    ultimo: '2026-07-01'
+  registros_declarados: 24
+  productos: 1
+  unidades:
+  - indicador
+  - provincias
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Industria
+    - Insumo agricola
+    subtemas_del_bloque: []
+  entrega: entrega-01
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: 198 - Agroindustrias inscriptas en SISA - SDE.xlsx
+  estado:
+    prometida_en: entrega-01
+    recibida: true
+    en_staging: false
+    publicada: false
+- nro: 199
+  slug: tarifas-transporte-de-granos-fetra
+  descripcion: Tarifas transporte de granos - FETRA
+  ubicacion: PB 23
+  fuente: FETRA
+  frecuencia: null
+  rango_declarado:
+    inicio: '2023-09-01'
+    ultimo: '2026-03-01'
+  registros_declarados: 1198
+  productos: 1
+  unidades:
+  - indicador
+  - Pais
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Intranet
+    subtemas_del_bloque: []
+  entrega: entrega-02
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: null
+  estado:
+    prometida_en: entrega-02
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 200
+  slug: accesos-a-internet-por-provincia-y-tipo
+  descripcion: Accesos a Internet por provincia y tipo
+  ubicacion: PB 27
+  fuente: INDEC
+  frecuencia: null
+  rango_declarado:
+    inicio: '2026-12-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 465
+  productos: 4
+  unidades:
+  - indicadores
+  - Pais
+  geografia:
+  - Provincias
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 201
+  slug: censo-nacional-economico-2020-21
+  descripcion: Censo Nacional Económico 2020-21
+  ubicacion: PB 8
+  fuente: INDEC
+  frecuencia: null
+  rango_declarado:
+    inicio: null
+    ultimo: '2021-12-31'
+  registros_declarados: 690
+  productos: 33
+  unidades:
+  - indicadores
+  - Pais
+  geografia:
+  - Provincias
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 202
+  slug: opex-origen-provincial-de-las-exportaciones
+  descripcion: OPEX - Origen provincial de las exportaciones
+  ubicacion: PB 8
+  fuente: INDEC
+  frecuencia: null
+  rango_declarado:
+    inicio: '1993-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 1620
+  productos: 40
+  unidades:
+  - indicadores
+  - Pais
+  geografia:
+  - Provincias
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 203
+  slug: precios-internacionales-fertilizantes
+  descripcion: Precios internacionales Fertilizantes
+  ubicacion: PB 6
+  fuente: FMI
+  frecuencia: Internacional
+  rango_declarado:
+    inicio: '2003-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 280
+  productos: 3
+  unidades:
+  - indicadores
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Intranet
+    subtemas_del_bloque: []
+  entrega: entrega-02
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: null
+  estado:
+    prometida_en: entrega-02
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 204
+  slug: precios-internacionales-lana
+  descripcion: Precios internacionales Lana
+  ubicacion: PB 6
+  fuente: FMI
+  frecuencia: Internacional
+  rango_declarado:
+    inicio: '2003-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 280
+  productos: 2
+  unidades:
+  - indicadores
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 205
+  slug: precios-internacionales-azucar
+  descripcion: Precios internacionales Azúcar
+  ubicacion: PB 6
+  fuente: FMI
+  frecuencia: Internacional
+  rango_declarado:
+    inicio: '2003-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 280
+  productos: 2
+  unidades:
+  - indicadores
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 206
+  slug: precios-internacionales-maderas
+  descripcion: Precios internacionales Maderas
+  ubicacion: PB 6
+  fuente: FMI
+  frecuencia: Internacional
+  rango_declarado:
+    inicio: '2003-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 280
+  productos: 2
+  unidades:
+  - indicadores
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 207
+  slug: precios-internacionales-granos-y-oleaginosas
+  descripcion: Precios internacionales granos y oleaginosas
+  ubicacion: PB 6
+  fuente: FMI
+  frecuencia: Internacional
+  rango_declarado:
+    inicio: '2003-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 280
+  productos: 7
+  unidades:
+  - indicadores
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Intranet
+    subtemas_del_bloque: []
+  entrega: entrega-02
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: null
+  estado:
+    prometida_en: entrega-02
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 208
+  slug: precios-internacional-aceites-y-subproductos
+  descripcion: Precios internacional aceites y subproductos
+  ubicacion: PB 6
+  fuente: FMI
+  frecuencia: Internacional
+  rango_declarado:
+    inicio: '2003-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 280
+  productos: 6
+  unidades:
+  - indicadores
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Intranet
+    subtemas_del_bloque: []
+  entrega: entrega-02
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: null
+  estado:
+    prometida_en: entrega-02
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 209
+  slug: precios-internacionales-carnes
+  descripcion: Precios internacionales carnes
+  ubicacion: PB 6
+  fuente: FMI
+  frecuencia: Internacional
+  rango_declarado:
+    inicio: '2003-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 280
+  productos: 8
+  unidades:
+  - indicadores
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Intranet
+    subtemas_del_bloque: []
+  entrega: entrega-02
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: null
+  estado:
+    prometida_en: entrega-02
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 210
+  slug: precio-internacional-algodon-indice-a-cotlook
+  descripcion: Precio internacional Algodón Indice "A" cotlook
+  ubicacion: PB 6
+  fuente: FMI
+  frecuencia: Internacional
+  rango_declarado:
+    inicio: '2003-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 280
+  productos: 1
+  unidades:
+  - indicador
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Intranet
+    subtemas_del_bloque: []
+  entrega: entrega-02
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: null
+  estado:
+    prometida_en: entrega-02
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 211
+  slug: precios-internacionales-cuero-novillo-53-libras
+  descripcion: Precios internacionales cuero novillo 53 libras
+  ubicacion: PB 6
+  fuente: FMI
+  frecuencia: Internacional
+  rango_declarado:
+    inicio: '2003-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 280
+  productos: 1
+  unidades:
+  - indicador
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Intranet
+    subtemas_del_bloque: []
+  entrega: entrega-02
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Precios internacionales cuerno novillo 53 libras
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: null
+  estado:
+    prometida_en: entrega-02
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 212
+  slug: precio-internacional-gas-natural
+  descripcion: Precio internacional Gas natural
+  ubicacion: PB 6
+  fuente: FMI
+  frecuencia: Internacional
+  rango_declarado:
+    inicio: '2003-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 280
+  productos: 3
+  unidades:
+  - indicadores
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 213
+  slug: precio-internacional-petroleo
+  descripcion: Precio internacional petróleo
+  ubicacion: PB 6
+  fuente: FMI
+  frecuencia: Internacional
+  rango_declarado:
+    inicio: '2003-01-01'
+    ultimo: '2026-05-31'
+  registros_declarados: 280
+  productos: 3
+  unidades:
+  - indicadores
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Intranet
+    subtemas_del_bloque: []
+  entrega: entrega-02
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: null
+  estado:
+    prometida_en: entrega-02
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 214
+  slug: base-renspa-por-departamento
+  descripcion: Base RENSPA por departamento
+  ubicacion: PB 33
+  fuente: SENASA
+  frecuencia: null
+  rango_declarado:
+    inicio: null
+    ultimo: '2026-05-31'
+  registros_declarados: 2800
+  productos: 5
+  unidades:
+  - indicadores
+  - PARCIAL PARA MUESTRA
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Intranet
+    subtemas_del_bloque: []
+  entrega: entrega-02
+  observaciones: null
+  notas_jc: []
+  denominaciones:
+  - Base RENSPA por departamento (Aguirre y Alberdi de muestra) - SDE
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: null
+  estado:
+    prometida_en: entrega-02
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 215
+  slug: precios-algodon-fibra-y-semilla-mercado-interno-y-fob
+  descripcion: Precios Algodón fibra y semilla - Mercado interno y FOB exportación
+  ubicacion: PB 5
+  fuente: CAA
+  frecuencia: null
+  rango_declarado:
+    inicio: '2018-01-01'
+    ultimo: 31/6/2026
+  registros_declarados: 6960
+  productos: 16
+  unidades:
+  - indicadores
+  - Pais
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Intranet
+    subtemas_del_bloque: []
+  entrega: entrega-02
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: null
+  estado:
+    prometida_en: entrega-02
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 216
+  slug: precios-disponibles-rosario-trigo-maiz-girasol-soja-sorgo
+  descripcion: Precios disponibles $ Rosario (trigo, maiz, girasol, soja, sorgo)
+  ubicacion: PB 5
+  fuente: BCR
+  frecuencia: null
+  rango_declarado:
+    inicio: '2015-01-01'
+    ultimo: 31/6/2026
+  registros_declarados: 2880
+  productos: 5
+  unidades:
+  - indicadores
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Intranet
+    subtemas_del_bloque: []
+  entrega: entrega-02
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: null
+  estado:
+    prometida_en: entrega-02
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 217
+  slug: precios-disp-en-y-u-d-bs-as-y-rosario-trigo-maiz-y-soja
+  descripcion: Precios disp en $ y U$D Bs As y Rosario (trigo, maiz y soja) completa base 216
+  ubicacion: PB 5
+  fuente: BCBA
+  frecuencia: null
+  rango_declarado:
+    inicio: '2015-01-01'
+    ultimo: 31/6/2026
+  registros_declarados: 2720
+  productos: 5
+  unidades:
+  - indicadores
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Intranet
+    subtemas_del_bloque: []
+  entrega: entrega-02
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: null
+  estado:
+    prometida_en: entrega-02
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 218
+  slug: proyecciones-agricolas-hasta-2034-usda-2025
+  descripcion: Proyecciones agrícolas hasta 2034 - USDA (2025)
+  ubicacion: PB 34
+  fuente: USDA
+  frecuencia: permanente
+  rango_declarado:
+    inicio: '2015-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 1940
+  productos: 65
+  unidades:
+  - indicadores
+  geografia: []
+  tema:
+    bloque: acceso-por-tema
+    ruta:
+    - Intranet
+    subtemas_del_bloque: []
+  entrega: entrega-02
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  detalle_entrega:
+    orden_en_lista: null
+    referencia_jc: null
+    hojas_declaradas: []
+    contenido: null
+    estatus_modelo: null
+    observaciones_jc: []
+    archivo_recibido: null
+  estado:
+    prometida_en: entrega-02
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 219
+  slug: produccion-de-azucar-por-ingenio-provincia-y-tipo
+  descripcion: Producción de azúcar por ingenio, provincia y tipo
+  ubicacion: PB 1
+  fuente: Centro Azucarero
+  frecuencia: anual
+  rango_declarado:
+    inicio: '2016-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 240
+  productos: 8
+  unidades:
+  - indicadores
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
+- nro: 220
+  slug: produccion-de-alcohol-por-ingenio-y-provincia
+  descripcion: Producción de alcohol por ingenio y provincia
+  ubicacion: PB 9
+  fuente: Centro Azucarero
+  frecuencia: anual
+  rango_declarado:
+    inicio: '2016-01-01'
+    ultimo: '2025-12-31'
+  registros_declarados: 200
+  productos: 4
+  unidades:
+  - indicadores
+  geografia: []
+  tema: null
+  entrega: null
+  observaciones: null
+  notas_jc: []
+  denominaciones: []
+  alias_historicos: []
+  estado:
+    prometida_en: null
+    recibida: false
+    en_staging: false
+    publicada: false
