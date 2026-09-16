@@ -9,6 +9,7 @@ const columns = [
       { label: "B³ AgriFood", href: "/#producto" },
       { label: "B³ AgriFood Provincia", href: "/#provincia" },
       { label: "Tecnología", href: "/#tecnologia" },
+      { label: "Plataforma", href: "/plataforma" },
     ],
   },
   {

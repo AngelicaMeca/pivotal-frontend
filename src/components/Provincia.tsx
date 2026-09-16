@@ -1,5 +1,6 @@
 import { GLASS_PANEL as PANEL } from "@/lib/expand";
 import { provinciaProducts } from "@/lib/content";
+import Button from "./Button";
 import ExpandSection from "./ExpandSection";
 
 const IMAGE_SRC = "/b3-provincia.webp";
@@ -34,6 +35,11 @@ function ProvinciaCopy() {
             provincia conserva el control sobre qué información publica, cuál
             usa internamente y con quién la comparte.
           </p>
+          <div className="mt-6">
+            <Button href="/plataforma" variant="solid-light" withArrow>
+              Ver el tablero de Santiago del Estero
+            </Button>
+          </div>
         </div>
 
         {provinciaProducts.map((item) => (

@@ -4,8 +4,23 @@
     {
       "name": "pivotal-dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "port": 3000
+    },
+    {
+      "name": "pivotal-dashboard",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8000",
+        "--directory",
+        "D:/pivotal-dashboard/pivotal/web/out"
+      ],
+      "port": 8000
     }
   ]
 }

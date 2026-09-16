@@ -54,11 +54,12 @@ export default function Nav() {
       className="fixed inset-x-4 z-50 mx-auto max-w-[1400px] rounded-[28px] border border-cream/10 bg-cocoa/95 shadow-[0_10px_40px_-12px_rgba(43,28,24,0.55)] backdrop-blur-xl sm:inset-x-6 lg:inset-x-10"
     >
       {/* The bar is as wide as the page content and ends right after its last
-          control: the demo button from md up, the menu toggle below */}
+          control: the demo button from lg up, the menu toggle below. The full
+          link row (with Ingresar) needs lg; below it everything is in the menu. */}
       <motion.div
         animate={{ height: scrolled ? 56 : 68 }}
         transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-        className="flex w-full items-center justify-between pl-5 pr-3.5 sm:pl-7 md:pr-2"
+        className="flex w-full items-center justify-between pl-5 pr-3.5 sm:pl-7 lg:pr-2"
       >
         <Link
           href="/"
@@ -68,7 +69,7 @@ export default function Nav() {
           Pivotal
         </Link>
 
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden items-center gap-1 lg:flex">
           <div
             className="relative"
             onMouseEnter={openProducts}
@@ -78,7 +79,7 @@ export default function Nav() {
               type="button"
               aria-expanded={productsOpen}
               onClick={() => setProductsOpen((v) => !v)}
-              className="flex items-center gap-1.5 rounded-full px-4 py-2 font-mono text-xs uppercase tracking-[0.15em] text-cream/70 transition-colors duration-150 hover:bg-cream/10 hover:text-cream"
+              className="flex items-center gap-1.5 rounded-full px-3 py-2 xl:px-4 font-mono text-xs uppercase tracking-[0.15em] text-cream/70 transition-colors duration-150 hover:bg-cream/10 hover:text-cream"
             >
               Producto
               <ChevronIcon
@@ -121,7 +122,7 @@ export default function Nav() {
             <Link
               key={link.href}
               href={link.href}
-              className="rounded-full px-4 py-2 font-mono text-xs uppercase tracking-[0.15em] text-cream/70 transition-colors duration-150 hover:bg-cream/10 hover:text-cream"
+              className="rounded-full px-3 py-2 xl:px-4 font-mono text-xs uppercase tracking-[0.15em] text-cream/70 transition-colors duration-150 hover:bg-cream/10 hover:text-cream"
             >
               {link.label}
             </Link>
@@ -129,6 +130,14 @@ export default function Nav() {
         </nav>
 
         <div className="flex items-center gap-3">
+          {/* Direct access to the dashboards */}
+          <Link
+            href="/plataforma"
+            className="hidden items-center gap-2 rounded-full border border-cream/25 px-5 py-3 font-mono text-xs uppercase tracking-[0.15em] text-cream transition-colors duration-150 hover:border-cream/60 hover:bg-cream/10 lg:flex"
+          >
+            <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-olive-soft" />
+            Ingresar
+          </Link>
           <div className="hidden sm:block">
             <Button href="/#contacto" variant="solid-light" withArrow>
               Solicitar demo
@@ -140,7 +149,7 @@ export default function Nav() {
             aria-label={open ? "Cerrar menú" : "Abrir menú"}
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
-            className="relative h-10 w-10 shrink-0 rounded-full border border-cream/20 md:hidden"
+            className="relative h-10 w-10 shrink-0 rounded-full border border-cream/20 lg:hidden"
           >
             <span
               className={`absolute left-1/2 top-1/2 h-px w-5 -translate-x-1/2 bg-cream transition-transform duration-200 ${
@@ -158,7 +167,7 @@ export default function Nav() {
 
       <AnimatePresence initial={false}>
         {open ? (
-          <motion.nav key="mobile-menu" className="overflow-hidden md:hidden">
+          <motion.nav key="mobile-menu" className="overflow-hidden lg:hidden">
             <motion.div
               initial="hidden"
               animate="show"
@@ -169,7 +178,11 @@ export default function Nav() {
               }}
               className="flex flex-col gap-1 px-5 pb-6 pt-2"
             >
-              {[{ href: "/#producto", label: "Producto" }, ...links].map((link) => (
+              {[
+                { href: "/#producto", label: "Producto" },
+                ...links,
+                { href: "/plataforma", label: "Ingresar a la plataforma" },
+              ].map((link) => (
                 <motion.a
                   key={link.href}
                   variants={{
