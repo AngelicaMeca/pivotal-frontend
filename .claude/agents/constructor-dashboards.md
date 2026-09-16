@@ -58,7 +58,7 @@ make dev &   # el sitio completo en :3000
 
 Para medir (no estimes sobre una captura: se pierde tiempo y se corrigen cosas que no eran):
 escribí un HTML temporal en `public/` (raíz del sitio) con la página en un `<iframe>`, medí con
-`getBoundingClientRect()` y leelo con `--dump-dom`. Borralo al terminar: `public/` se commitea.
+`getBoundingClientRect()` y leelo con `--dump-dom`. Borralo al terminar: el resto de `public/` se commitea.
 
 Tres cosas que ya rompieron y conviene mirar primero:
 

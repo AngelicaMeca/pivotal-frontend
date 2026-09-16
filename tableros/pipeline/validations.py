@@ -39,7 +39,7 @@ RUTA_REGLAS = os.path.join(DIR_VALIDATIONS, "reglas.yaml")
 RUTA_RANGOS = os.path.join(DIR_VALIDATIONS, "rangos.yaml")
 RUTA_MANIFIESTO = os.path.join(RAIZ, "configs", "manifiesto-indice.yaml")
 RUTA_GEO_ALIAS = os.path.join(RAIZ, "configs", "dims", "geo-alias.yaml")
-DIR_RAW = os.path.join(RAIZ, "raw")
+from pipeline.rutas import DIR_RAW  # noqa: E402  (la carpeta de OneDrive, ver rutas.py)
 
 # Cuantos ejemplos concretos se guardan por hallazgo. Son para que JC los pueda ir a
 # mirar en su propio Excel, no para listar el universo.
@@ -767,7 +767,9 @@ def valores_fraccionarios(ctx, base):
         SELECT %s, valor FROM %s WHERE medida IN (%s) AND valor IS NOT NULL
           AND valor <> floor(valor) ORDER BY %s
     """ % (", ".join(cols + ["valor"]), base.tabla, ", ".join(lit(m) for m in medidas),
-           ", ".join(cols) if cols else "valor"))
+           # `valor` al final desempata: una misma ubicacion puede tener varios valores (una
+           # categoria por columna) y sin desempate el orden de los ejemplos variaba entre corridas
+           ", ".join(cols + ["valor"])))
     if not total:
         return []
     return [hallazgo(

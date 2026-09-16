@@ -33,8 +33,7 @@ bases_sin_config:
 - 197
 - 198
 bases_diferidas: []
-archivos_ignorados:
-- ~$85 - DTE Bovinos SDE.xlsx
+archivos_ignorados: []
 archivos:
 - archivo: 9 - Cultivos extensivos SDE.xlsx
   base: 9

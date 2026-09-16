@@ -1,0 +1,24 @@
+# De donde salen los Excels de los tableros.
+#
+# Los Excels de JC viven en el OneDrive de AUTOScraping, carpeta "Pivotal Repositorio/Bases de
+# datos". En cada publicacion de Vercel, pipeline/sharepoint.py los baja con la API de Microsoft
+# Graph, los ordena con la forma de raw/ (entrega-NN/, indice/) y el pipeline arma los tableros.
+# La tarea de GitHub usa esta misma lista para saber si cambiaron. Ver
+# docs/actualizacion-automatica.md para las credenciales.
+#
+# Para sumar una entrega nueva: agregar una linea en `entregas` con el nombre de su carpeta en
+# SharePoint. Una carpeta que ya se llame "entrega-NN" no hace falta declararla.
+
+# Sitio de OneDrive (sale de la URL: autoscraping-my.sharepoint.com/personal/<usuario>)
+sitio: "autoscraping-my.sharepoint.com:/personal/fbattan_autoscraping_com"
+
+# Carpeta dentro de "Documentos" de ese OneDrive
+carpeta: "Pivotal Repositorio/Bases de datos"
+
+# entrega del pipeline -> carpeta en SharePoint (dentro de `carpeta`)
+entregas:
+  entrega-01: "00000 1ra entrega bases"
+
+# Carpeta con las versiones del indice de JC ("Bases para Beta - N.xlsx"), dentro de `carpeta`.
+# Opcional: el build no la usa (solo la etapa `indice`). null = no se baja.
+indice: null

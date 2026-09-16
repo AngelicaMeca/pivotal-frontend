@@ -16,6 +16,7 @@ npm ci               # el sitio (Next.js); necesita Node 20 o más
 cd tableros
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
+# los Excels se bajan de SharePoint: ver docs/actualizacion-automatica.md
 claude   # Claude Code, que lee CLAUDE.md solo
 ```
 
@@ -23,7 +24,8 @@ claude   # Claude Code, que lee CLAUDE.md solo
 
 **1. Llegó una entrega de bases (Excels de JC):**
 ```
-cp <archivos> raw/entrega-NN/
+# subir los Excels a una carpeta nueva en SharePoint (Pivotal Repositorio/Bases de datos)
+# y declararla en configs/origen-sharepoint.yaml
 claude> usa el agente ingestor-bases para procesar raw/entrega-NN
 claude> usa el agente qa-datos para validar la entrega NN
 # leer validations/reportes/entrega-NN.md → pegar preguntas a JC en WhatsApp
@@ -32,7 +34,7 @@ claude> usa el agente constructor-dashboards para actualizar el sitio
 
 **2. Llegó un "Bases para Beta - N.xlsx" nuevo (índice de JC):**
 ```
-cp <archivo> raw/indice/
+# subirlo a la carpeta del indice en SharePoint (configs/origen-sharepoint.yaml)
 claude> usa el agente indexador-contexto con el índice nuevo
 ```
 
@@ -44,6 +46,8 @@ claude> usa el agente constructor-dashboards
 ```
 
 ### Ramas y deploy
+
+- Los tableros se arman en cada publicación de Vercel desde los Excels de SharePoint. Cuando cambia un Excel, una tarea de GitHub Actions pide una publicación nueva (revisa cada hora). Ver `docs/actualizacion-automatica.md`.
 
 - Trabajamos SIEMPRE en `dev`. Commits chicos, en español.
 - `main` es lo que ve JC: auto-deploya a Vercel el sitio entero, tableros incluidos.
@@ -70,5 +74,5 @@ Ver `CLAUDE.md` (la referencia completa) y `docs/arquitectura.md`. Resumen: `raw
 1. `raw/` nunca se edita. Jamás.
 2. Ninguna anomalía de datos se arregla en silencio: todo pasa por el reporte a JC.
 3. Si se puede resolver editando un YAML, no se toca código.
-4. Lo que `make site` genera en el sitio se commitea (Vercel compila el sitio pero no corre Python).
+4. Lo que `make site` genera en el sitio NO se commitea: Vercel lo regenera desde SharePoint en cada publicación.
 5. Es "Pivotal", no "El Pivotal".

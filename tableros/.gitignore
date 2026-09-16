@@ -13,3 +13,11 @@ __pycache__/
 # comparativas entre provincias, que CLAUDE.md trata como sensibles. No estar enlazado no
 # alcanza: la URL directa abriria igual. make build las regenera local en cada corrida.
 .vercel
+
+# Los Excels viven en la carpeta de OneDrive (ver pipeline/rutas.py). raw.local.txt dice donde
+# esta esa carpeta en cada maquina; raw/ queda solo con su README, por si alguien copia un
+# Excel ahi por costumbre, no se sube.
+raw.local.txt
+raw/**
+!raw/README.md
+.venv-build/

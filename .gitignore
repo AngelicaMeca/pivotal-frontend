@@ -44,3 +44,12 @@ next-env.d.ts
 # make build y NO viaja al deploy (tableros/CLAUDE.md)
 /src/tableros/contenido/paginas/_privado/
 /public/plataforma/_privado/
+
+# Excels bajados de SharePoint por la actualizacion automatica o a mano (tableros/docs)
+/.excels/
+
+# Contenido de los tableros: lo genera `npm run build` (scripts/tableros.mjs) desde SharePoint en
+# cada publicacion, o `make build` en tableros/ en una computadora. No se guarda en git.
+/src/tableros/contenido/
+/src/tableros/estilos/
+/public/plataforma/

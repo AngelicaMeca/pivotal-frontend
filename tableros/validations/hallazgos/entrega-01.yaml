@@ -10,7 +10,7 @@ resumen:
   checks_corridos: 71
   bloqueantes: 2
   observaciones: 19
-  informativos: 16
+  informativos: 15
 hallazgos:
 - check: totales-embebidos
   severidad: bloqueante
@@ -43,14 +43,14 @@ hallazgos:
   detalle: Media cabeza de ganado no existe. Suele pasar cuando la planilla trae un promedio en la columna
     de cantidad.
   ejemplos:
-  - 'Data stock SDE / AGUIRRE / Aguirre / cabezas / fila 259 del Excel: 89.636,20'
   - 'Data stock SDE / AGUIRRE / Aguirre / cabezas / fila 259 del Excel: 44.954,20'
+  - 'Data stock SDE / AGUIRRE / Aguirre / cabezas / fila 259 del Excel: 89.636,20'
   - 'Data stock SDE / ALBERDI / Alberdi / cabezas / fila 257 del Excel: 52.131,01'
   - 'Data stock SDE / ALBERDI / Alberdi / cabezas / fila 257 del Excel: 139.955,00'
   - 'Data stock SDE / AVELLANEDA / Avellaneda / cabezas / fila 276 del Excel: 5.005,64'
   - 'Data stock SDE / AVELLANEDA / Avellaneda / cabezas / fila 276 del Excel: 10.199,63'
-  - 'Data stock SDE / BELGRANO / Belgrano / cabezas / fila 267 del Excel: 51.180,97'
   - 'Data stock SDE / BELGRANO / Belgrano / cabezas / fila 267 del Excel: 22.737,97'
+  - 'Data stock SDE / BELGRANO / Belgrano / cabezas / fila 267 del Excel: 51.180,97'
   - 'Data stock SDE / CAPITAL / Capital / cabezas / fila 278 del Excel: 2.837,53'
   - 'Data stock SDE / CAPITAL / Capital / cabezas / fila 278 del Excel: 7.721,53'
   - 'Data stock SDE / CHOYA / Choya / cabezas / fila 270 del Excel: 17.195,24'
@@ -351,16 +351,6 @@ hallazgos:
     no confundirla con un movimiento real.
   pregunta_jc: La fila de totales que esta al pie de la hoja Data ORIGEN SDE no coincide con la suma del
     detalle. Nos guiamos por el detalle, que es lo que esta fila por fila. Confirmas?
-- check: cobertura-entrega
-  severidad: informativo
-  base: null
-  titulo: Archivos de la carpeta que no se contaron como base
-  casos: 1
-  detalle: Son archivos temporales o de bloqueo que deja Excel cuando una planilla queda abierta. No son
-    datos.
-  ejemplos:
-  - ~$85 - DTE Bovinos SDE.xlsx
-  propuesta: Ninguna. Se ignoran solos en cada corrida.
 - check: cobertura-entrega
   severidad: informativo
   base: null

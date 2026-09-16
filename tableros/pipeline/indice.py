@@ -30,8 +30,10 @@ import openpyxl
 import yaml
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DIR_INDICE = os.path.join(RAIZ, "raw", "indice")
 DIR_CONFIGS = os.path.join(RAIZ, "configs")
+
+# Los Excels (y las versiones del indice) viven en la carpeta de OneDrive: ver rutas.py
+from pipeline.rutas import DIR_INDICE, DIR_RAW  # noqa: E402
 
 # Version vigente del indice. Cambiar cuando JC manda una nueva.
 VERSION_VIGENTE = 2
@@ -363,7 +365,7 @@ def anomalias_general(bases, placeholders, sueltas):
 def leer_entregas():
     """Archivos efectivamente recibidos por carpeta raw/entrega-NN/."""
     recibidos, ignorados = {}, []
-    raw = os.path.join(RAIZ, "raw")
+    raw = DIR_RAW
     for carpeta in sorted(os.listdir(raw)):
         if not carpeta.startswith("entrega-"):
             continue

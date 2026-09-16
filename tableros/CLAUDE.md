@@ -16,8 +16,8 @@
 
 ## Los 3 inputs que dispara un humano
 
-1. **Nueva entrega de bases** (Excels de JC): copiar a `raw/entrega-NN/` → invocar agente `ingestor-bases`.
-2. **Nuevo archivo "Bases para Beta - N.xlsx"** (índice/contexto de JC): copiar a `raw/indice/` → invocar agente `indexador-contexto`.
+1. **Nueva entrega de bases** (Excels de JC): subirlos a una carpeta nueva dentro de `Pivotal Repositorio/Bases de datos` en SharePoint y declararla en `configs/origen-sharepoint.yaml` → invocar agente `ingestor-bases` (las bases sin config no aparecen en los tableros hasta que ese agente las configure). Si solo se actualiza un Excel de una base ya configurada, la tarea automática lo publica sola.
+2. **Nuevo archivo "Bases para Beta - N.xlsx"** (índice/contexto de JC): subirlo a la carpeta del índice en SharePoint (declarada en `indice:` de `configs/origen-sharepoint.yaml`) → invocar agente `indexador-contexto`.
 3. **Nueva regla de negocio o pregunta que el dashboard debe responder** (texto de JC/Fran, foto de WhatsApp, docx de criterios, hoja "Modelo Análisis"): si es un archivo, copiarlo a `specs/fuentes/` (ver su README) → registrar en `specs/preguntas/backlog.md` → invocar agente `constructor-reglas`.
 
 Cadena típica completa: `ingestor-bases` → `qa-datos` → `constructor-dashboards` → merge a `main` → Vercel.
@@ -25,7 +25,10 @@ Cadena típica completa: `ingestor-bases` → `qa-datos` → `constructor-dashbo
 ## Arquitectura
 
 ```
-raw/            Excels tal cual llegan (INMUTABLE, versionado por entrega) + indice/
+raw/            Excels tal cual llegan (INMUTABLE, versionado por entrega) + indice/. Viven en
+                SharePoint (OneDrive de AUTOScraping), no en el repo: una tarea de GitHub
+                Actions los baja cada hora, corre el pipeline y publica
+                (docs/actualizacion-automatica.md, raw/README.md, pipeline/rutas.py)
 configs/        1 YAML por base (hoja, header, familia, unidades, columnas→canon)
                 + dims compartidas (geo-alias)
 adapters/       8 parsers por FAMILIA de schema (no por base)
@@ -89,8 +92,9 @@ Eran 8 al auditar la 1ra entrega. La 9 (`stock`) apareció al ingerir la base 48
 
 - `dev` = rama de trabajo diaria (Facu + agentes). `main` = lo que ve JC.
 - Merge `dev` → `main` SOLO con: `make build` verde + reporte de anomalías generado + ok de Francisco o Facu.
+- Los tableros se arman en cada publicación de Vercel, directo desde los Excels de SharePoint (`scripts/tableros.mjs` en la raíz). La tarea `.github/workflows/tableros-datos.yml` compara cada hora SharePoint con la huella publicada (`/plataforma/estado-origen.json`) y, si cambió, pide una publicación nueva. Decisión de Francisco (septiembre de 2026): una actualización de Excels se publica sin ok humano, pero solo si el pipeline y el build terminan bien; si fallan, Vercel deja la versión anterior.
 - `main` auto-deploya a Vercel el sitio entero (proyecto `pivotal-frontend`), tableros incluidos. El link se comparte en el grupo de WhatsApp "Pivotal".
-- Lo que genera `make site` (`src/tableros/contenido/`, `src/tableros/estilos/` y `public/plataforma/`, en la raíz del sitio) SÍ se commitea: Vercel compila el sitio pero no corre Python.
+- Lo que genera `make site` (`src/tableros/contenido/`, `src/tableros/estilos/` y `public/plataforma/`, en la raíz del sitio) NO se commitea: se regenera en cada publicación. Las comparaciones reservadas (`_privado`) nunca llegan al sitio publicado (las borra `scripts/tableros.mjs`). Detalle en `docs/actualizacion-automatica.md`.
 - Antes de mergear, además de `make build`: `make web` (build y lint del sitio) sin errores. Un cambio en los tableros publica el sitio institucional entero: no se mergea nada que rompa el build.
 - Mensajes de commit en español, formato: `entrega-02: ingesta + validaciones (3 anomalías a JC)` o `specs: nueva vista flujo-od bovinos por depto`.
 

@@ -33,8 +33,8 @@ if RAIZ not in sys.path:
     sys.path.insert(0, RAIZ)  # para importar el paquete adapters/ de la raiz del repo
 
 from pipeline.indice import fecha_modificacion, sha256  # noqa: E402
+from pipeline.rutas import DIR_RAW  # noqa: E402  (la carpeta de OneDrive, ver rutas.py)
 
-DIR_RAW = os.path.join(RAIZ, "raw")
 DIR_CONFIGS_BASES = os.path.join(RAIZ, "configs", "bases")
 DIR_MANIFIESTOS = os.path.join(RAIZ, "configs", "entregas")
 
@@ -51,6 +51,11 @@ ADAPTERS = {
 
 
 # ------------------------------------------------------------------ inventario
+
+def ruta_repo(ruta):
+    """Ruta relativa a tableros/ con barras normales: el manifiesto sale igual en Windows."""
+    return os.path.relpath(ruta, RAIZ).replace(os.sep, "/")
+
 
 def listar_entregas():
     return sorted(
@@ -161,7 +166,7 @@ def procesar_entrega(entrega, configs):
             cfg = next((c for c in configs if _matchea(c[1], nro, nombre)), None)
             if cfg is not None:
                 ruta_cfg, config = cfg
-                entrada["config"] = os.path.relpath(ruta_cfg, RAIZ)
+                entrada["config"] = ruta_repo(ruta_cfg)
                 entrada["familia"] = config["familia"]
                 if config.get("estado", "activa") != "activa":
                     entrada["estado"] = "diferida"
@@ -171,7 +176,7 @@ def procesar_entrega(entrega, configs):
                     os.makedirs(os.path.dirname(destino), exist_ok=True)
                     df.write_parquet(destino, compression="zstd", statistics=False)
                     entrada["estado"] = "ingerida"
-                    entrada["staging"] = os.path.relpath(destino, RAIZ)
+                    entrada["staging"] = ruta_repo(destino)
                     entrada["filas_staging"] = df.height
                     entrada["hojas"] = resumen_por_hoja(df)
                     entrada["valores_nulos"] = int(df["valor"].null_count())
