@@ -37,19 +37,21 @@ const valueItems: AccordionItem[] = values.map((value, i) => {
   };
 });
 
-export default function Mission() {
+// Mission, vision and values. Lives on /nosotros.
+// index: the section number on the page that hosts it
+export default function Mission({ index }: { index: string }) {
   return (
     <section
       id="nosotros"
-      className="swiss-grid-bg-dark border-b border-cocoa/10 bg-cocoa py-24 md:py-32"
+      className="border-b border-cocoa/10 bg-cream py-24 md:py-32"
     >
       <Container>
         <Reveal>
           <SectionHeading
-            index="07"
+            index={index}
             eyebrow="Misión, visión y valores"
             title="El estándar de inteligencia confiable de los sectores especializados."
-            tone="dark"
+            description="Vivimos el mismo desorden de fuentes, planillas y versiones que el resto del sector. En lugar de sumar otra herramienta, nos hicimos cargo del problema: operamos la inteligencia del cliente de forma permanente y respondemos por su calidad."
           />
         </Reveal>
 
@@ -58,20 +60,20 @@ export default function Mission() {
             <div className="col-span-12 md:col-span-2" />
 
             <div className="col-span-12 md:col-span-4">
-              <span className="font-mono text-xs uppercase tracking-[0.2em] text-clay">
+              <span className="font-mono text-xs uppercase tracking-[0.2em] text-brown">
                 Misión
               </span>
-              <p className="mt-5 text-2xl font-medium leading-snug text-cream">
+              <p className="mt-5 text-2xl font-medium leading-snug text-cocoa">
                 Garantizar que las organizaciones decidan sobre información
                 confiable.
               </p>
             </div>
 
             <div className="col-span-12 md:col-span-4">
-              <span className="font-mono text-xs uppercase tracking-[0.2em] text-clay">
+              <span className="font-mono text-xs uppercase tracking-[0.2em] text-brown">
                 Visión
               </span>
-              <p className="mt-5 text-2xl font-medium leading-snug text-cream">
+              <p className="mt-5 text-2xl font-medium leading-snug text-cocoa">
                 Ser el estándar de inteligencia confiable de los sectores
                 especializados, primero en Latinoamérica y luego en el mundo.
               </p>
@@ -80,8 +82,8 @@ export default function Mission() {
         </Reveal>
 
         <Reveal delay={0.15}>
-          <div className="mt-16 border-t border-cream/10 pt-14">
-            <span className="font-mono text-xs uppercase tracking-[0.2em] text-cream/50">
+          <div className="mt-16 border-t border-cocoa/15 pt-14">
+            <span className="font-mono text-xs uppercase tracking-[0.2em] text-cocoa/70">
               Valores
             </span>
             {/* The open panel takes 40% of the row so the four closed ones stay

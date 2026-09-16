@@ -560,6 +560,10 @@ body {
   justify-content: flex-start;
 }
 
+.depth-carousel__controls--end {
+  justify-content: flex-end;
+}
+
 .depth-carousel__arrow {
   flex: 0 0 auto;
   width: 44px;

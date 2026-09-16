@@ -4,13 +4,13 @@ import MetaBalls from "./MetaBalls";
 import Reveal from "./Reveal";
 import SectionHeading from "./SectionHeading";
 
-export default function Contact() {
+// index: the section number on the page that hosts it
+export default function Contact({ index = "07" }: { index?: string }) {
   return (
     <section id="contacto" className="relative isolate overflow-hidden bg-cocoa py-24 md:py-32">
-      {/* The hero metaballs, sharp, spread around the card. They only soften
-          where they pass behind it, through its backdrop blur. The layer sits
-          inside the section and contain keeps every blob off its edges, so
-          none is cut off. */}
+      {/* The hero metaballs, sharp, spread around the card and seen through
+          its translucent fill. The layer sits inside the section and contain
+          keeps every blob off its edges, so none is cut off. */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-4 -z-10 opacity-80 sm:inset-8">
         <MetaBalls
           color="#c18477"
@@ -31,9 +31,9 @@ export default function Contact() {
           {/* Frosted cocoa panel, dense enough that the copy keeps at least
               4.5:1 even with the cream cursor blob directly behind it; the
               bubbles still show through it and all around it */}
-          <div className="rounded-[32px] border border-cream/15 bg-cocoa/70 px-6 py-12 backdrop-blur-xl sm:px-12 sm:py-16">
+          <div className="rounded-[32px] border border-cream/15 bg-cocoa/70 px-6 py-12 sm:px-12 sm:py-16">
             <SectionHeading
-              index="08"
+              index={index}
               eyebrow="Hablemos"
               title="Pida una demo de B³ AgriFood y vea el sistema en operación."
               tone="glass"

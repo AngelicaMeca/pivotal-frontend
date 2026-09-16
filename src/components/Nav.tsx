@@ -9,7 +9,7 @@ import { ChevronIcon } from "./icons";
 const links = [
   { href: "/#tecnologia", label: "Tecnología" },
   { href: "/#provincia", label: "Provincia" },
-  { href: "/#nosotros", label: "Nosotros" },
+  { href: "/nosotros", label: "Nosotros" },
 ];
 
 const productItems = [

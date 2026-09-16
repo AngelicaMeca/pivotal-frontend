@@ -9,7 +9,6 @@ import Provincia from "@/components/Provincia";
 import Technologies from "@/components/Technologies";
 import ValueProp from "@/components/ValueProp";
 import Market from "@/components/Market";
-import Mission from "@/components/Mission";
 import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
 
@@ -41,7 +40,6 @@ export default function Home() {
         <Technologies />
         <ValueProp />
         <Market />
-        <Mission />
         <Contact />
       </main>
       <Footer />

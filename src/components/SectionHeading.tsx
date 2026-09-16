@@ -19,7 +19,8 @@ export default function SectionHeading({
       eyebrow: "text-olive",
       rule: "bg-olive",
       title: "text-cocoa",
-      description: "text-olive",
+      // Body copy: olive on cream stays under 3:1
+      description: "text-cocoa/80",
     },
     dark: {
       index: "text-cream/50",

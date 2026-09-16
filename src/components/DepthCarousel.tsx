@@ -44,7 +44,7 @@ type Config = {
   loop: boolean;
   cardWidth: number;
   autoplayDelay: number;
-  align: "center" | "start";
+  align: "center" | "start" | "end";
 };
 
 type Drag = {
@@ -97,8 +97,9 @@ export default function DepthCarousel({
   tilt?: number;
   tiltDirection?: "left" | "right";
   // "start" pins the front card to the left edge and lets the stack fan out
-  // to its right, instead of centring it.
-  align?: "center" | "start";
+  // to its right, instead of centring it; "end" mirrors that on the right
+  // edge (pair it with tiltDirection "left").
+  align?: "center" | "start" | "end";
   perspective?: number;
   visibleCards?: number;
   falloff?: number;
@@ -203,7 +204,13 @@ export default function DepthCarousel({
         cfg.blur > 0 ? Math.min(cfg.blur, (back / Math.max(1, cfg.visibleCards)) * cfg.blur) : 0;
 
       // Anchor point of every card: the centre of the front card
-      el.style.left = cfg.align === "start" ? `${(cfg.cardWidth * sc) / 2}px` : "50%";
+      const half = (cfg.cardWidth * sc) / 2;
+      el.style.left =
+        cfg.align === "start"
+          ? `${half}px`
+          : cfg.align === "end"
+            ? `calc(100% - ${half}px)`
+            : "50%";
       el.style.transform = `translate(-50%, -50%) scale(${sc}) translateX(${tx.toFixed(2)}px) translateZ(${tz.toFixed(2)}px) rotateY(${ry.toFixed(3)}deg)`;
       el.style.opacity = opacity.toFixed(3);
       el.style.filter = `brightness(${brightness.toFixed(3)}) blur(${blurPx.toFixed(2)}px)`;
