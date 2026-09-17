@@ -1,6 +1,18 @@
 // Tableros públicos de B³ AgriFood Provincia. Viven en este mismo sitio, bajo /plataforma: el
 // pipeline de tableros/ genera su contenido y src/app/(tableros)/ los dibuja.
+// Server-only: reads the generated content at build time.
+import fs from "node:fs";
+import path from "node:path";
+
 export const DASHBOARD_HOME = "/plataforma/tableros";
+
+// False when this build had no dashboard content (e.g. Vercel before the SharePoint
+// credentials are set): the platform page then shows them as "en preparación".
+export function hasDashboards(): boolean {
+  return fs.existsSync(
+    path.join(process.cwd(), "src", "tableros", "contenido", "paginas", "tableros.json"),
+  );
+}
 
 // Vistas publicadas, agrupadas como en la home de los tableros
 export const dashboardSections = [

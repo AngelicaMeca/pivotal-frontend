@@ -6,9 +6,9 @@
 // se regenera en cada publicacion. Ver tableros/docs/actualizacion-automatica.md.
 //
 // Sin credenciales (una computadora de desarrollo) usa lo que ya haya generado `make build` en
-// tableros/, y si no hay nada, corta con las instrucciones.
+// tableros/, y si no hay nada, compila el sitio sin tableros y lo avisa.
 import { spawnSync } from "node:child_process";
-import { copyFileSync, existsSync, mkdirSync, rmSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
@@ -17,6 +17,7 @@ const TABLEROS = path.join(RAIZ, "tableros");
 const GENERADO = path.join(RAIZ, "src", "tableros", "contenido", "paginas");
 const EXCELS = path.join(RAIZ, ".excels");
 const HUELLA = path.join(RAIZ, "public", "plataforma", "estado-origen.json");
+const CSS = path.join(RAIZ, "src", "tableros", "estilos", "pivotal.css");
 const WINDOWS = process.platform === "win32";
 
 function correr(comando, args, opciones = {}) {
@@ -47,13 +48,19 @@ if (!hayCredenciales) {
     console.log("[tableros] sin credenciales de SharePoint: se usa el contenido ya generado.");
     process.exit(0);
   }
-  console.error(
-    "[tableros] No hay contenido de tableros ni credenciales de SharePoint.\n" +
-      "  - Para compilar con los datos de SharePoint: definir MS_TENANT_ID, MS_CLIENT_ID y\n" +
-      "    MS_CLIENT_SECRET (ver tableros/docs/actualizacion-automatica.md).\n" +
-      "  - O generar el contenido a mano: cd tableros && make build",
+  // Sin credenciales ni contenido (por ejemplo, Vercel antes de cargar las credenciales): el sitio
+  // institucional se publica igual, SIN tableros, y /plataforma los muestra "en preparacion".
+  // Queda un CSS vacio porque el layout de los tableros lo importa.
+  console.warn(
+    "[tableros] AVISO: no hay credenciales de SharePoint ni contenido generado.\n" +
+      "  El sitio se compila SIN tableros. Para incluirlos: definir MS_TENANT_ID, MS_CLIENT_ID y\n" +
+      "  MS_CLIENT_SECRET (ver tableros/docs/actualizacion-automatica.md), o generar el contenido\n" +
+      "  a mano con: cd tableros && make build",
   );
-  process.exit(1);
+  mkdirSync(GENERADO, { recursive: true });
+  mkdirSync(path.dirname(CSS), { recursive: true });
+  writeFileSync(CSS, "/* Sin tableros en esta compilacion (ver scripts/tableros.mjs) */\n");
+  process.exit(0);
 }
 
 // Entorno de Python propio, fuera de git

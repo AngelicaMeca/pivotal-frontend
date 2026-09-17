@@ -88,6 +88,12 @@ Después: **Actions** → "Tableros · datos desde SharePoint" → **Run workflo
 
 ## Cosas a tener en cuenta
 
+- **Sin credenciales en Vercel, el sitio se publica sin tableros.** La compilación avisa en el
+  log (`[tableros] AVISO`), `/plataforma` muestra las vistas "En preparación" y el botón pasa a
+  "Solicitar una demo". Apenas se cargan las credenciales y se vuelve a publicar, aparecen.
+  En cambio, si las credenciales están cargadas pero SharePoint falla, la compilación falla y
+  queda en línea la versión anterior (para no publicar tableros vacíos por un error pasajero).
+
 - **El secreto de Microsoft vence.** Renovarlo antes de la fecha y actualizarlo en Vercel y en
   GitHub. Si vence, las publicaciones fallan (el sitio publicado sigue andando) y la tarea de
   GitHub marca error.

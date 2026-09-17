@@ -6,7 +6,7 @@ import Button from "@/components/Button";
 import Reveal from "@/components/Reveal";
 import SectionHeading from "@/components/SectionHeading";
 import { ArrowIcon } from "@/components/icons";
-import { DASHBOARD_HOME, dashboardSections } from "@/lib/dashboard";
+import { DASHBOARD_HOME, dashboardSections, hasDashboards } from "@/lib/dashboard";
 
 export const metadata: Metadata = {
   title: "Plataforma · Pivotal",
@@ -23,6 +23,8 @@ const facts = [
 // Direct access to the B³ AgriFood Provincia dashboards, served by this same
 // site under /plataforma (see src/app/(tableros)/).
 export default function PlataformaPage() {
+  const disponibles = hasDashboards();
+
   return (
     <>
       <Nav />
@@ -48,9 +50,15 @@ export default function PlataformaPage() {
                     consultar por área, por departamento y por campaña.
                   </p>
                   <div className="mt-10 flex flex-wrap gap-3">
-                    <Button href={DASHBOARD_HOME} variant="solid-light" withArrow>
-                      Ingresar al tablero
-                    </Button>
+                    {disponibles ? (
+                      <Button href={DASHBOARD_HOME} variant="solid-light" withArrow>
+                        Ingresar al tablero
+                      </Button>
+                    ) : (
+                      <Button href="/#contacto" variant="solid-light" withArrow>
+                        Solicitar una demo
+                      </Button>
+                    )}
                     <Button href="/#provincia" variant="outline-light">
                       Qué es B³ AgriFood Provincia
                     </Button>
@@ -86,7 +94,11 @@ export default function PlataformaPage() {
                 index="01"
                 eyebrow="Acceso directo"
                 title="Entrá directo a la vista que necesitás."
-                description="Cada enlace abre el tablero en esa sección. Las demás áreas se suman a medida que se incorporan sus bases."
+                description={
+                  disponibles
+                    ? "Cada enlace abre el tablero en esa sección. Las demás áreas se suman a medida que se incorporan sus bases."
+                    : "Los tableros se están actualizando con los datos más recientes y vuelven a estar disponibles en breve."
+                }
               />
             </Reveal>
 
@@ -102,31 +114,45 @@ export default function PlataformaPage() {
                         {section.area}
                       </span>
                       <ul className="col-span-12 md:col-span-9">
-                        {section.views.map((view) => (
-                          <li key={view.href}>
-                            {/* Plain <a>: the dashboards have their own root layout, so
-                                the jump is a full page load either way */}
-                            <a
-                              href={view.href}
-                              className="group flex items-center justify-between gap-6 rounded-2xl px-4 py-4 transition-colors duration-200 hover:bg-cocoa/[0.06] md:-mx-4"
-                            >
-                              <span className="min-w-0">
-                                <span className="block text-xl font-semibold tracking-tight text-cocoa">
-                                  {view.name}
-                                </span>
-                                <span className="mt-1 block text-sm leading-relaxed text-cocoa/80">
-                                  {view.detail}
-                                </span>
+                        {section.views.map((view) => {
+                          const body = (
+                            <span className="min-w-0">
+                              <span className="block text-xl font-semibold tracking-tight text-cocoa">
+                                {view.name}
                               </span>
-                              <span
-                                aria-hidden="true"
-                                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-cocoa text-cream transition-transform duration-300 group-hover:rotate-45"
-                              >
-                                <ArrowIcon className="h-4 w-4" />
+                              <span className="mt-1 block text-sm leading-relaxed text-cocoa/80">
+                                {view.detail}
                               </span>
-                            </a>
-                          </li>
-                        ))}
+                            </span>
+                          );
+                          return (
+                            <li key={view.href}>
+                              {disponibles ? (
+                                // Plain <a>: the dashboards have their own root layout, so
+                                // the jump is a full page load either way
+                                <a
+                                  href={view.href}
+                                  className="group flex items-center justify-between gap-6 rounded-2xl px-4 py-4 transition-colors duration-200 hover:bg-cocoa/[0.06] md:-mx-4"
+                                >
+                                  {body}
+                                  <span
+                                    aria-hidden="true"
+                                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-cocoa text-cream transition-transform duration-300 group-hover:rotate-45"
+                                  >
+                                    <ArrowIcon className="h-4 w-4" />
+                                  </span>
+                                </a>
+                              ) : (
+                                <div className="flex items-center justify-between gap-6 px-4 py-4 md:-mx-4">
+                                  {body}
+                                  <span className="shrink-0 rounded-full border border-cocoa/20 px-3 py-1 font-mono text-[0.65rem] uppercase tracking-[0.15em] text-cocoa/80">
+                                    En preparación
+                                  </span>
+                                </div>
+                              )}
+                            </li>
+                          );
+                        })}
                       </ul>
                     </div>
                   ))}
