@@ -18,7 +18,8 @@ import * as echarts from "echarts";
 
 export default function crearPivotal() {
 
-  var estado = { datos: null, pintar: null, graficos: [], bajadas: {}, historial: [] };
+  var estado = { datos: null, pintar: null, graficos: [], bajadas: {}, historial: [],
+                 colores: {} };
 
   /* -------- controles de filtro -------- */
   function controles() {
@@ -66,6 +67,17 @@ export default function crearPivotal() {
   }
 
   function vaciar(nodo) { while (nodo.firstChild) { nodo.removeChild(nodo.firstChild); } }
+
+  /* Un contenedor de GRAFICO no se vacia nunca: adentro vive el canvas de ECharts, y la
+     instancia queda registrada contra ese nodo. Si se le borran los hijos, la instancia
+     sobrevive apuntando a un nodo sin canvas y los dibujos siguientes no se ven mas.
+     Es lo que pasaba al pasar por un cultivo sin datos en el departamento elegido: desde ahi
+     el cuadro quedaba en blanco para TODOS los cultivos hasta recargar la pagina.
+     Lo que se limpia es el dibujo (`clear`), no el nodo. */
+  function limpiarGrafico(nodo) {
+    var instancia = echarts.getInstanceByDom(nodo);
+    if (instancia) { instancia.clear(); } else { vaciar(nodo); }
+  }
 
   /* Vistas grandes: el JSON viene partido por el valor de un filtro (ej. el cultivo del mapa).
      Se baja el indice y despues, a demanda, la particion que corresponde. */
@@ -119,6 +131,16 @@ export default function crearPivotal() {
       var nodo = control(tramo.dataset.migaDinamica);
       if (nodo) { tramo.textContent = etiquetaDe(nodo); }
     });
+  }
+
+  /* Repinta cuando la pagina se quedo quieta. Hay dibujos que se calculan con el tamaño de su
+     caja (el mapa pide el tamaño exacto que entra en el panel, para llenarlo sin deformarse):
+     redimensionar el grafico no alcanza, hay que volver a pintarlo con la medida nueva. */
+  var esperaRepintar = null;
+  function repintarPronto() {
+    if (!estado.datos || !estado.pintar) { return; }
+    if (esperaRepintar) { clearTimeout(esperaRepintar); }
+    esperaRepintar = setTimeout(refrescar, 200);
   }
 
   function refrescar() {
@@ -192,6 +214,17 @@ export default function crearPivotal() {
     mostrarVolver();
   }
 
+  /* Tamaño con el que hay que pedirle el mapa a ECharts para que ocupe TODO el panel sin
+     deformarse. `relacion` (ancho/alto real del mapa) la manda el build desde el GeoJSON.
+     ECharts toma layoutSize como el lado mayor del dibujo: se le pasa el alto que entra. */
+  function tamanioMapa(nodo, relacion) {
+    var rel = relacion || 0.75;
+    var alto = nodo.clientHeight || 0;
+    var ancho = nodo.clientWidth || 0;
+    if (!alto || !ancho) { return "100%"; }
+    return Math.max(40, Math.min(alto, ancho / rel));
+  }
+
   /* -------- dibujado de las vistas de detalle -------- */
   function figuras() {
     return Array.prototype.slice.call(
@@ -210,10 +243,18 @@ export default function crearPivotal() {
         cajas.forEach(function (caja) {
           texto(caja, "[data-titulo]", datos.sin_combinacion);
           texto(caja, "[data-subtitulo]", "");
-          ["[data-grafico]", "[data-tabla]", "[data-leyenda]"].forEach(function (sel) {
+          /* El RESUMEN (los indicadores del cuadro) se limpia como todo lo demas: si no,
+             quedaban a la vista los numeros del cultivo anterior justo al lado del cartel de
+             "no hay datos", que es el peor error posible: un dato que no es el que se pidio. */
+          ["[data-tabla]", "[data-leyenda]", "[data-resumen]"].forEach(function (sel) {
             var nodo = caja.querySelector(sel);
             if (nodo) { vaciar(nodo); }
           });
+          /* El recuadro del grafico se limpia y se PLIEGA: sin datos no hay nada que dibujar,
+             y un rectangulo vacio de 360px se lee como un cuadro roto. El cartel queda en el
+             titulo, donde el lector ya esta mirando. */
+          var grafico = caja.querySelector("[data-grafico]");
+          if (grafico) { limpiarGrafico(grafico); grafico.hidden = true; }
           texto(caja, "[data-total]", "");
           texto(caja, "[data-nota]", "");
         });
@@ -222,6 +263,9 @@ export default function crearPivotal() {
       combo.elementos.forEach(function (elemento, i) {
         var caja = cajas[i];
         if (!caja) { return; }
+        // Vuelve el grafico que se habia plegado por falta de datos
+        var grafico = caja.querySelector("[data-grafico]");
+        if (grafico) { grafico.hidden = false; }
         texto(caja, "[data-titulo]", elemento.titulo);
         texto(caja, "[data-subtitulo]", elemento.subtitulo);
         texto(caja, "[data-nota]", elemento.nota);
@@ -230,8 +274,124 @@ export default function crearPivotal() {
     };
   }
 
+  /* -------- exportar como PDF (panel UTILIDADES) --------
+     El PDF lo arma el NAVEGADOR: el boton imprime la pagina y el usuario elige "Guardar como
+     PDF". Asi no entra ninguna libreria nueva, el PDF sale con la seleccion que el usuario
+     tiene puesta y las tablas siguen siendo texto (se pueden copiar y buscar). Que entra y
+     que no en la hoja impresa lo decide el bloque @media print del CSS, no este archivo.
+
+     Lo unico que hay que resolver aca son los graficos: son canvas, y el canvas se imprime
+     con la resolucion que tiene en pantalla, o sea mordido en papel. Antes de imprimir se le
+     pide a ECharts el mismo dibujo a triple resolucion y se cuelga como <img> al lado del
+     canvas; la hoja de impresion muestra la imagen y esconde el canvas. Al terminar se
+     sacan las imagenes y la pagina queda como estaba. */
+  var RESOLUCION_IMPRESION = 3;
+
+  function imagenesDeGraficos() {
+    var cargas = [];
+    estado.graficos.forEach(function (instancia) {
+      var nodo = instancia.getDom();
+      if (!nodo || !nodo.clientWidth || !nodo.clientHeight) { return; }
+      var img = document.createElement("img");
+      img.className = "grafico-impreso";
+      img.alt = "";
+      nodo.classList.add("grafico-en-pantalla");
+      nodo.parentNode.insertBefore(img, nodo.nextSibling);
+      cargas.push(new Promise(function (listo) {
+        /* Se espera la carga: si se imprime antes de que la imagen este decodificada, el
+           navegador imprime el hueco en blanco. */
+        img.onload = listo;
+        img.onerror = listo;
+        img.src = instancia.getDataURL({ pixelRatio: RESOLUCION_IMPRESION });
+      }));
+    });
+    return Promise.all(cargas);
+  }
+
+  function sacarImagenes() {
+    Array.prototype.forEach.call(document.querySelectorAll(".grafico-impreso"), function (img) {
+      img.parentNode.removeChild(img);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll(".grafico-en-pantalla"), function (n) {
+      n.classList.remove("grafico-en-pantalla");
+    });
+  }
+
+  /* ECharts avisa con "finished" cuando termino de dibujar, animacion incluida. Se espera
+     ese aviso y no un tiempo fijo: una foto sacada a mitad de la animacion sale a medias.
+     Hay que suscribirse ANTES de mandar a redibujar. */
+  function redibujarYEsperar() {
+    var esperas = estado.graficos.map(function (instancia) {
+      return new Promise(function (listo) {
+        var fin = function () { instancia.off("finished", fin); listo(); };
+        instancia.on("finished", fin);
+        setTimeout(fin, 1500);   /* red de seguridad: si no avisa, se sigue igual */
+      });
+    });
+    estado.graficos.forEach(function (instancia) { instancia.resize(); });
+    /* Redimensionar no alcanza: el mapa se calcula con el tamaño de su caja (tamanioMapa),
+       asi que en la caja de la hoja hay que volver a pintarlo. */
+    refrescar();
+    return Promise.all(esperas);
+  }
+
+  function exportarPdf(boton) {
+    if (boton.dataset.ocupado) { return; }
+    boton.dataset.ocupado = "1";
+    /* La pagina se pone con el formato de la HOJA (CSS, .imprimiendo) y recien ahi se sacan
+       las fotos: asi salen con las proporciones de lo que se va a imprimir y no con las de la
+       ventana. La clase queda puesta durante la impresion, asi que lo que se ve un instante
+       en pantalla es exactamente lo que sale en el PDF. */
+    document.documentElement.classList.add("imprimiendo");
+    /* El tablero se reparte el alto de la hoja con las mismas reglas con que se reparte el de
+       la ventana (`alto-fijo`). En pantalla esa clase la pone tablero.js solo si la ventana es
+       ancha; la hoja mide siempre lo mismo, asi que si no esta, aca se pone. */
+    var tablero = document.getElementById("tablero");
+    var altoPuesto = tablero && !tablero.classList.contains("alto-fijo");
+    if (altoPuesto) { tablero.classList.add("alto-fijo"); }
+    redibujarYEsperar().then(imagenesDeGraficos).then(function () {
+      var limpiar = function () {
+        window.removeEventListener("afterprint", limpiar);
+        document.documentElement.classList.remove("imprimiendo");
+        if (altoPuesto) { tablero.classList.remove("alto-fijo"); }
+        sacarImagenes();
+        delete boton.dataset.ocupado;
+        redibujarYEsperar();
+      };
+      window.addEventListener("afterprint", limpiar);
+      window.print();
+      /* Red de seguridad: no todos los navegadores avisan el fin de la impresion. */
+      setTimeout(limpiar, 60000);
+    });
+  }
+
+  var ACCIONES = { "exportar-pdf": exportarPdf };
+
+  /* Los botones del panel UTILIDADES. El build solo deja pasar acciones que existan aca
+     (site_build.ACCIONES_UTILIDAD), asi que no hay botones sin dueño. El atributo es
+     `data-utilidad` y no `data-accion` porque ese ya es el hueco de texto de la ayuda del
+     mapa ("Seleccione departamento"). */
+  function engancharUtilidades() {
+    Array.prototype.forEach.call(document.querySelectorAll("[data-utilidad]"), function (boton) {
+      var hacer = ACCIONES[boton.dataset.utilidad];
+      if (hacer) { boton.addEventListener("click", function () { hacer(boton); }); }
+    });
+  }
+
   var PIVOTAL = {
     vaciar: vaciar,
+    tamanioMapa: tamanioMapa,
+
+    /* Color del tema, por su variable CSS. El cromo de los graficos (ejes, guias, bordes de
+       las porciones) sale del mismo lugar que el del resto de la pagina: theme.yaml. Los
+       colores de los DATOS siguen viniendo resueltos del build, no de aca. */
+    color: function (variable) {
+      if (!estado.colores[variable]) {
+        estado.colores[variable] =
+          getComputedStyle(document.documentElement).getPropertyValue(variable).trim();
+      }
+      return estado.colores[variable];
+    },
 
     /* La seleccion vigente como query string ("cultivo=Soja+total&campania=2024%2F25").
        La usan los saltos programaticos (el clic en un departamento del mapa) para conservar
@@ -264,7 +424,7 @@ export default function crearPivotal() {
            arriba y el total, que va en HTML centrado sobre la caja, aparecia abajo.
            Escuchar el resize de la VENTANA no alcanza: el alto tambien cambia al pintar. */
         if (window.ResizeObserver) {
-          new ResizeObserver(function () { instancia.resize(); }).observe(nodo);
+          new ResizeObserver(function () { instancia.resize(); repintarPronto(); }).observe(nodo);
         }
       }
       return instancia;
@@ -317,8 +477,10 @@ export default function crearPivotal() {
         estado.datos = datos;
         preseleccionar();
         escuchar();
+        engancharUtilidades();
         window.addEventListener("resize", function () {
           estado.graficos.forEach(function (g) { g.resize(); });
+          repintarPronto();
         });
         return refrescar();
       });

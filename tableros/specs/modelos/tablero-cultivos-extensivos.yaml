@@ -76,7 +76,7 @@ selectores:
     # derecha, dibujada dentro del contenido a la derecha del mapa. B&W en reposo, color y
     # fondo verde en el seleccionado, como la captura.
     zona: selector
-    con_icono: true                # decisión de Facu 10-ago; licencia flaticon en paralelo (backlog 26)
+    con_icono: true                # decisión de Facu 10-ago; desde el 22-sep los íconos son dibujos propios (backlog 26 resuelta)
     universo: catalogo-de-jc       # catálogo de JC ∩ con datos en la ventana (backlog 37);
                                    # regla en _protocolo-presentacion.formato_v1.selectores.cultivo.universo_visible
     incluye_todos: true
@@ -200,12 +200,18 @@ paneles:
     transformaciones_de: 09-ranking-cultivo-sup-sembrada
 
   utilidades:
-    # Panel estático bajo el mapa, como el mockup. Íconos DESHABILITADOS con "Próximamente"
-    # (excepción acotada a la regla de botones muertos, backlog 33).
+    # Panel estático bajo el mapa, como el mockup. El ítem que declara `accion` es un botón
+    # de verdad; el que no la declara sigue deshabilitado con "Próximamente" (excepción
+    # acotada a la regla de botones muertos, backlog 33).
     titulo: "UTILIDADES"
     items:
       - {id: asistente-ia, etiqueta: "Asistente IA", icono: ia}
-      - {id: exportar-pdf, etiqueta: "Exportar como PDF", icono: exportar-como-pdf}
+      # Exportar como PDF: ACTIVO desde el 22-sep-2026. Imprime el tablero con la selección
+      # vigente y el PDF lo arma el navegador ("Guardar como PDF"), así que no entra ninguna
+      # librería nueva y en el PDF las tablas siguen siendo texto. Qué entra y qué queda
+      # afuera lo decide la hoja de impresión (site/templates/pivotal.css.j2, @media print).
+      - {id: exportar-pdf, etiqueta: "Exportar como PDF", icono: exportar-como-pdf,
+         accion: exportar-pdf}
 
   informacion-relacionada:
     # DESBLOQUEADO por la cuarta tanda ("tiene que estar aunque no lleve a ningún lado"):

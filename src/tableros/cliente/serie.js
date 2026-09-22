@@ -9,12 +9,13 @@ export default function iniciar(PIVOTAL) {
       name: eje.nombre,
       nameLocation: "end",
       nameGap: 12,
-      nameTextStyle: { align: posicion === "right" ? "right" : "left", color: "#5f6368" },
+      nameTextStyle: { align: posicion === "right" ? "right" : "left",
+                       color: PIVOTAL.color("--texto-apoyo") },
       min: eje.min,
       max: eje.max,
       interval: eje.paso,
       axisLabel: { formatter: function (v) { return PIVOTAL.etiquetaEje(eje, v); } },
-      splitLine: { lineStyle: { color: "#e6e6e6" } }
+      splitLine: { lineStyle: { color: PIVOTAL.color("--borde") } }
     };
   }
 

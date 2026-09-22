@@ -107,20 +107,28 @@ export default function iniciar(PIVOTAL) {
           type: "map",
           map: "provincia",
           nameProperty: "geo_id",
+          /* Misma proporcion geografica que el mapa del tablero: la manda el build (coseno de
+             la latitud media). Sin esto quedaba el default de ECharts, que ensancha. */
+          aspectScale: mapa.aspecto || 0.75,
+          /* Lo mas grande que entre en la caja, sin deformar (ver tablero.js); el 96% deja
+             aire para los nombres de los departamentos del borde. */
+          layoutCenter: ["50%", "50%"],
+          layoutSize: PIVOTAL.tamanioMapa(cajaMapa.querySelector("[data-grafico]"), mapa.relacion),
           roam: false,
           selectedMode: false,
           label: {
-            show: true, fontSize: 9, color: "#212121",
+            show: true, fontSize: 9, color: PIVOTAL.color("--texto"),
             formatter: function (p) { return porId[p.name] ? porId[p.name].nombre : ""; }
           },
           labelLayout: { hideOverlap: true },
-          itemStyle: { borderColor: "#ffffff", borderWidth: 0.8 },
+          itemStyle: { borderColor: PIVOTAL.color("--fondo-cuadro"), borderWidth: 0.8 },
           data: mapa.deptos.map(function (d) {
             return {
               name: d.id,
               value: d.v,
-              itemStyle: { areaColor: d.color, borderColor: d.borde || "#ffffff" },
-              emphasis: { itemStyle: { areaColor: d.color, borderColor: "#212121", borderWidth: 1.6 } }
+              itemStyle: { areaColor: d.color, borderColor: d.borde || PIVOTAL.color("--fondo-cuadro") },
+              emphasis: { itemStyle: { areaColor: d.color, borderColor: PIVOTAL.color("--texto"),
+                                       borderWidth: 1.6 } }
             };
           })
         }]

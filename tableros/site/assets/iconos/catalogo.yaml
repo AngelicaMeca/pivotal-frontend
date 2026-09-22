@@ -1,7 +1,10 @@
-# Catalogo de los iconos de JC. GENERADO por el script de extraccion del 10-ago-2026,
-# a partir de los Anexos I (B&W) y II (color) de
+# Catalogo HISTORICO de los iconos de JC (PNG de bn/ y color/). GENERADO por el script de
+# extraccion del 10-ago-2026 a partir de los Anexos I (B&W) y II (color) de
 # "specs/fuentes/0000 Protocolo de formato - Versión 1.docx" (word/media/).
-# No editar a mano: si llega un anexo nuevo se vuelve a extraer.
+#
+# DESDE EL 22-sep-2026 EL SITIO NO USA ESTOS ARCHIVOS: los iconos son dibujos propios en
+# site/assets/iconos/trazo/*.svg (ver site/iconos-cultivo.yaml). Este catalogo queda como
+# registro de que pidio JC y con que nombre, que es lo que conserva la nomenclatura.
 # La ASIGNACION icono -> cultivo del sitio no vive aca: esta en site/iconos-cultivo.yaml.
 iconos:
   aceites:

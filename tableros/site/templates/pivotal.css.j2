@@ -2,13 +2,15 @@
    GENERADA por pipeline/site_build.py desde site/templates/pivotal.css.j2 + site/theme.yaml.
    No editar a mano: se pisa en el proximo `make site`. Para re-brandear, se edita theme.yaml.
 
-   Lenguaje visual: TEMA del 10-ago-2026 (Facu, en persona con JC presente), regla en
-   _protocolo-presentacion.formato_v1.tema_visual. La vara es la captura archivada en
-   specs/fuentes/WhatsApp Image 2026-08-10 at 11.08.41.jpeg. Lo que lo define:
-     1. Lienzo BLANCO y cromo institucional VERDE (cabecera, menu lateral, banda de
-        breadcrumb). El greige del 3-ago quedo derogado para este tema.
-     2. Paneles en cajas con borde fino visible (var --borde-panel), no paneles flotantes.
-     3. Densidad: alturas de grafico chicas, padding corto, nada de aire decorativo.
+   Lenguaje visual: el del SITIO INSTITUCIONAL (decision de Francisco, 22-sep-2026), que
+   deroga el cromo verde del 10-ago. Lo que lo define:
+     1. Lienzo CREMA y cromo COCOA (cabecera, menu lateral, banda de breadcrumb), con la
+        crema como color de texto sobre el cocoa.
+     2. Paneles en cajas de crema aclarada, borde fino y esquinas redondeadas, planas: sin
+        sombras ni degradados, como las tarjetas del sitio.
+     3. Rotulos chicos en monoespaciada versalita y titulos en la serif de la marca.
+     4. Densidad: alturas de grafico chicas, padding corto, nada de aire decorativo. El
+        tablero sigue entrando en una pantalla.
    Los colores de DATOS (rampas, series) no cambian con el tema: los manda el protocolo. */
 
 :root {
@@ -25,12 +27,21 @@
   --cromo-oscuro: {{ c.cromo_oscuro }};
   --seleccion: {{ c.seleccion }};
   --borde-panel: {{ c.borde_panel }};
+  --sobre-cromo: {{ c.sobre_cromo }};
+  --sobre-seleccion: {{ c.sobre_seleccion }};
+  --enlace: {{ c.enlace }};
   --positivo: {{ variacion.positivo }};
   --negativo: {{ variacion.negativo }};
   --neutro: {{ variacion.cero }};
   --sin-dato: {{ sin_dato }};
   --rotulos: {{ theme.tipografia.familia_rotulos }};
-  --radio: 3px;
+  --titulos: {{ theme.tipografia.familia_titulos }};
+  /* Esquinas del sitio: cajas redondeadas, controles en pildora */
+  --radio: 16px;
+  --radio-chico: 8px;
+  --radio-pildora: 999px;
+  /* Fila marcada de una tabla: el rosa de seleccion, apenas insinuado sobre la caja */
+  --resaltado: color-mix(in srgb, {{ c.seleccion }} 22%, {{ c.fondo_cuadro }});
 }
 
 * { box-sizing: border-box; }
@@ -56,15 +67,22 @@ body {
 }
 
 /* ---------- cabecera ----------
-   Blanca con el logo provincial a la izquierda y una franja verde con el boton del area
-   territorial (deshabilitado, "Proximamente") y el titulo de la pagina. Sin "Santiago en el
-   NOA" (gate de Francisco) y sin banderas de idioma (decision del 10-ago). */
-.cabecera { display: flex; align-items: stretch; background: #fff; }
+   Una sola franja COCOA de lado a lado: el logo provincial a la izquierda y, a la derecha,
+   los botones que declara la seccion en site/navegacion.yaml y las banderas de idioma.
+
+   El bloque del logo era claro (Facu, 10-ago) porque el PNG de la provincia esta armado
+   para fondo claro. Desde el 22-sep-2026 la cabecera es marron entera (Francisco): el logo
+   usa la variante negativa del isologotipo (theme.yaml, logo_provincia) y ya no necesita su
+   propio recuadro. TODO lo que va sobre la cabecera se escribe en --sobre-cromo. */
+.cabecera {
+  display: flex; align-items: stretch;
+  background: var(--cromo); color: var(--sobre-cromo);
+}
 /* PUESTA del logo (cuarta tanda, logo_provincial_bien_puesto: "esta mal puesto... se ve
-   horrible"): el bloque blanco mide lo que mide el logo (sin la plancha vacia del min-width
-   que habia antes), el isologotipo va GRANDE como en el mockup (la cabecera del mockup es
-   alta: el logo manda su alto) y centrado sobre la leyenda de gobierno. Sin deformar ni
-   recortar: alto fijo y ancho auto del PNG. El asset es el mismo (backlog 41). */
+   horrible"): el bloque mide lo que mide el logo (sin la plancha vacia del min-width que
+   habia antes), el isologotipo va GRANDE como en el mockup (la cabecera del mockup es alta:
+   el logo manda su alto) y centrado sobre la leyenda de gobierno. Sin deformar ni recortar:
+   alto fijo y ancho auto del PNG. El asset es el mismo (backlog 41). */
 .cabecera-logo {
   flex: 0 0 auto; display: flex; align-items: center;
   padding: .55rem 1.3rem .55rem 1.1rem;
@@ -77,17 +95,19 @@ body {
 /* Wordmark sobrio de texto: fallback cuando el cliente no trae asset de logo (F3). */
 .logo-wordmark { text-decoration: none; display: block; }
 .logo-nombre {
-  display: block; color: var(--cromo); font-weight: 800; font-size: 1.45rem;
+  display: block; color: var(--sobre-cromo); font-weight: 800; font-size: 1.45rem;
   letter-spacing: -.01em; line-height: 1.1; text-transform: uppercase;
 }
-.logo-bajada { display: block; font-size: .66rem; color: var(--texto-apoyo); margin-top: .1rem; }
+/* La leyenda de gobierno va sobre el cocoa como el resto de la cabecera. */
+.logo-bajada { display: block; font-size: .66rem; color: var(--sobre-cromo); margin-top: .1rem; }
 .cabecera-franja {
-  flex: 1 1 auto; min-width: 0; background: var(--cromo); color: #fff;
+  flex: 1 1 auto; min-width: 0;
   display: flex; align-items: center; gap: 1rem; padding: .5rem 1rem;
 }
 .boton-cabecera {
-  font: inherit; font-size: .84rem; font-weight: 650; color: #fff;
-  background: transparent; border: 1px solid #fff; border-radius: var(--radio);
+  font: inherit; font-size: .84rem; font-weight: 650; color: var(--sobre-cromo);
+  background: transparent; border: 1px solid var(--sobre-cromo);
+  border-radius: var(--radio-pildora);
   padding: .3rem .7rem; flex: 0 0 auto;
 }
 .boton-cabecera[disabled] { cursor: not-allowed; opacity: .75; }
@@ -95,10 +115,10 @@ body {
    territorial y la comparacion NOA. Solo los dibujan las secciones que los declaran en
    site/navegacion.yaml (`botones_cabecera`); el resto sigue con el boton deshabilitado. */
 a.boton-cabecera { text-decoration: none; display: inline-block; }
-a.boton-cabecera:hover { background: rgba(255,255,255,.16); }
+a.boton-cabecera:hover { background: color-mix(in srgb, var(--sobre-cromo) 16%, transparent); }
 .prox {
   font-family: var(--rotulos); font-size: .52rem; text-transform: uppercase;
-  letter-spacing: .08em; border: 1px solid currentColor; border-radius: 2px;
+  letter-spacing: .08em; border: 1px solid currentColor; border-radius: var(--radio-chico);
   padding: .05rem .25rem; opacity: .85; vertical-align: 2px;
 }
 /* Banderas de idioma es/en/pt, arriba a la derecha, donde estaba el titulo duplicado
@@ -106,56 +126,71 @@ a.boton-cabecera:hover { background: rgba(255,255,255,.16); }
    activa; ingles y portugues deshabilitadas con "Próximamente" (tooltip): excepcion
    acotada a la regla de botones muertos. */
 .cabecera-banderas { margin-left: auto; display: flex; align-items: center; gap: .5rem; }
-.cabecera-banderas .bandera { display: inline-flex; border-radius: 2px; }
-.cabecera-banderas img { height: 1.2rem; width: auto; display: block; }
-.cabecera-banderas .bandera.activa { outline: 2px solid #fff; outline-offset: 1px; }
-.cabecera-banderas .bandera.deshabilitada { opacity: .45; cursor: not-allowed; }
+/* Siglas ES / EN / PT: a este tamaño tres banderitas no se distinguen, y el rotulo chico en
+   monoespaciada versalita es como escribe estas cosas el sitio. */
+.cabecera-banderas .bandera {
+  display: inline-flex; border-radius: var(--radio-pildora);
+  font-family: var(--rotulos); font-size: .62rem; letter-spacing: .1em;
+  padding: .12rem .4rem; border: 1px solid color-mix(in srgb, var(--sobre-cromo) 45%, transparent);
+}
+.cabecera-banderas .bandera.activa {
+  background: var(--sobre-cromo); color: var(--cromo); border-color: var(--sobre-cromo);
+  font-weight: 600;
+}
+.cabecera-banderas .bandera.deshabilitada { opacity: .6; cursor: not-allowed; }
+/* Texto solo para lectores de pantalla (el nombre completo del idioma). */
+.sr-solo {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap; border: 0;
+}
 
 .cabecera-titulo { margin-left: auto; text-align: right; min-width: 0; }
 .cabecera-titulo h1 {
-  margin: 0; font-size: 1rem; font-weight: 650; letter-spacing: -.005em; color: #fff;
+  margin: 0; font-family: var(--titulos); font-size: 1.15rem; font-weight: 400;
+  letter-spacing: -.005em; color: var(--sobre-cromo);
 }
 .cabecera-titulo p {
-  margin: .05rem 0 0; font-size: .74rem; color: rgba(255,255,255,.75);
+  margin: .05rem 0 0; font-size: .74rem; color: color-mix(in srgb, var(--sobre-cromo) 75%, transparent);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .marca-estado {
   font-family: var(--rotulos); font-size: .6rem; text-transform: uppercase;
-  letter-spacing: .12em; border: 1px solid rgba(255,255,255,.6); border-radius: 2px;
-  padding: .1rem .35rem; color: rgba(255,255,255,.9); flex: 0 0 auto;
+  letter-spacing: .12em; border: 1px solid color-mix(in srgb, var(--sobre-cromo) 60%, transparent); border-radius: var(--radio-chico);
+  padding: .1rem .35rem; color: color-mix(in srgb, var(--sobre-cromo) 90%, transparent); flex: 0 0 auto;
 }
 
 /* ---------- marco: menu lateral verde + contenido ---------- */
 .marco { display: flex; align-items: stretch; flex: 1 1 auto; min-height: 0; }
 .menu-lateral {
-  flex: 0 0 10.5rem; background: var(--cromo); color: #fff; padding: .8rem .6rem 1.2rem;
+  flex: 0 0 10.5rem; background: var(--cromo); color: var(--sobre-cromo); padding: .8rem .6rem 1.2rem;
 }
 .menu-inicio {
-  display: block; text-align: center; border: 1px solid #fff; border-radius: var(--radio);
-  color: #fff; font-weight: 700; font-size: .95rem; padding: .25rem .4rem;
+  display: block; text-align: center; border: 1px solid var(--sobre-cromo);
+  border-radius: var(--radio-pildora);
+  color: var(--sobre-cromo); font-weight: 700; font-size: .95rem; padding: .25rem .4rem;
   text-decoration: none; margin: 0 .15rem .9rem;
 }
-.menu-inicio:hover { background: rgba(255,255,255,.14); }
+.menu-inicio:hover { background: color-mix(in srgb, var(--sobre-cromo) 14%, transparent); }
 .menu-sector { margin: 0 0 .15rem; }
 .menu-sector summary {
   list-style: none; cursor: pointer; display: flex; align-items: center;
-  justify-content: space-between; gap: .4rem; color: #fff; font-weight: 650;
-  font-size: .9rem; padding: .3rem .35rem; border-radius: 2px;
+  justify-content: space-between; gap: .4rem; color: var(--sobre-cromo); font-weight: 650;
+  font-size: .9rem; padding: .3rem .35rem; border-radius: var(--radio-chico);
 }
 .menu-sector summary::-webkit-details-marker { display: none; }
 .menu-sector summary::after { content: "▾"; font-size: .7rem; opacity: .9; }
 .menu-sector[open] summary::after { content: "▴"; }
-.menu-sector summary:hover { background: rgba(255,255,255,.14); }
+.menu-sector summary:hover { background: color-mix(in srgb, var(--sobre-cromo) 14%, transparent); }
 .menu-sector ul { list-style: none; margin: 0 0 .3rem; padding: 0 0 0 .5rem; }
 .menu-sector li a {
-  display: block; color: rgba(255,255,255,.92); text-decoration: none; font-size: .8rem;
-  padding: .18rem .35rem; border-radius: 2px;
+  display: block; color: color-mix(in srgb, var(--sobre-cromo) 92%, transparent); text-decoration: none; font-size: .8rem;
+  padding: .18rem .35rem; border-radius: var(--radio-chico);
 }
-.menu-sector li a:hover { background: rgba(255,255,255,.14); }
+.menu-sector li a:hover { background: color-mix(in srgb, var(--sobre-cromo) 14%, transparent); }
 .menu-sector li a[aria-current] { background: var(--cromo-oscuro); font-weight: 650; }
 .menu-prox {
   margin: 0 0 .3rem; padding-left: .85rem; font-family: var(--rotulos); font-size: .58rem;
-  text-transform: uppercase; letter-spacing: .1em; color: rgba(255,255,255,.75);
+  text-transform: uppercase; letter-spacing: .1em; color: color-mix(in srgb, var(--sobre-cromo) 75%, transparent);
 }
 
 .contenido { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
@@ -164,46 +199,46 @@ a.boton-cabecera:hover { background: rgba(255,255,255,.16); }
    La ruta jerarquica a la izquierda (cada nivel linkea a SU nivel) y el selector de campaña
    como tira de pestañitas a la derecha, como en la captura. */
 .banda {
-  background: var(--cromo); color: #fff; display: flex; align-items: center;
+  background: var(--cromo); color: var(--sobre-cromo); display: flex; align-items: center;
   gap: .9rem; padding: .28rem .8rem; flex-wrap: wrap;
 }
 .miga { flex: 1 1 auto; min-width: 0; font-size: .92rem; }
-.miga a { color: rgba(255,255,255,.92); text-decoration: none; }
-.miga a:hover { text-decoration: underline; color: #fff; }
-.miga span[aria-current], .miga .miga-actual { color: #fff; font-weight: 700; }
-.miga-sep { color: rgba(255,255,255,.75); }
+.miga a { color: color-mix(in srgb, var(--sobre-cromo) 92%, transparent); text-decoration: none; }
+.miga a:hover { text-decoration: underline; color: var(--sobre-cromo); }
+.miga span[aria-current], .miga .miga-actual { color: var(--sobre-cromo); font-weight: 700; }
+.miga-sep { color: color-mix(in srgb, var(--sobre-cromo) 75%, transparent); }
 .banda-titulo { flex: 1 1 auto; font-weight: 700; font-size: .95rem; }
 
 /* Selector de periodo: rotulo obligatorio ("Campaña") en caja blanca + tira de pestañitas
    sobre verde oscuro; la activa se enciende en blanco. */
 .periodo { display: flex; align-items: center; gap: .4rem; flex: 0 0 auto; }
 .periodo-rotulo {
-  background: #fff; color: var(--texto); font-weight: 650; font-size: .8rem;
-  padding: .16rem .5rem; border-radius: 2px;
+  background: var(--fondo-cuadro); color: var(--texto); font-weight: 650; font-size: .8rem;
+  padding: .16rem .5rem; border-radius: var(--radio-chico);
 }
 .periodo-tira {
-  display: flex; gap: 1px; background: var(--cromo-oscuro); border-radius: 2px;
+  display: flex; gap: 1px; background: var(--cromo-oscuro); border-radius: var(--radio-chico);
   padding: .14rem .16rem;
 }
 .periodo-tira button {
   font: inherit; font-family: var(--rotulos); font-size: .62rem; letter-spacing: .03em;
-  padding: .14rem .3rem; cursor: pointer; border: 0; border-radius: 2px;
-  background: transparent; color: rgba(255,255,255,.82);
+  padding: .14rem .3rem; cursor: pointer; border: 0; border-radius: var(--radio-chico);
+  background: transparent; color: var(--sobre-cromo);
 }
-.periodo-tira button:hover { background: rgba(255,255,255,.16); color: #fff; }
+.periodo-tira button:hover { background: color-mix(in srgb, var(--sobre-cromo) 16%, transparent); color: var(--sobre-cromo); }
 .periodo-tira button[aria-pressed="true"] {
-  background: #fff; color: var(--cromo-oscuro); font-weight: 700;
+  background: var(--sobre-cromo); color: var(--cromo); font-weight: 700;
 }
 .borrar-filtros {
   font: inherit; font-family: var(--rotulos); font-size: .6rem; text-transform: uppercase;
-  letter-spacing: .12em; color: #fff; background: none; cursor: pointer;
-  border: 1px solid rgba(255,255,255,.7); border-radius: 2px; padding: .18rem .45rem;
+  letter-spacing: .12em; color: var(--sobre-cromo); background: none; cursor: pointer;
+  border: 1px solid color-mix(in srgb, var(--sobre-cromo) 70%, transparent); border-radius: var(--radio-chico); padding: .18rem .45rem;
 }
-.borrar-filtros:hover { background: rgba(255,255,255,.16); }
+.borrar-filtros:hover { background: color-mix(in srgb, var(--sobre-cromo) 16%, transparent); }
 
 /* ---------- barra de filtros (chips), en las vistas de detalle ---------- */
 .barra-filtros {
-  background: #fff; border-bottom: 1px solid var(--borde);
+  background: var(--fondo-cuadro); border-bottom: 1px solid var(--borde);
   position: sticky; top: 0; z-index: 20;
   display: flex; flex-wrap: wrap; align-items: center; gap: .35rem 1rem;
   padding: .45rem .8rem;
@@ -212,21 +247,21 @@ a.boton-cabecera:hover { background: rgba(255,255,255,.16); }
 .grupo-filtro > .rotulo { margin-right: .15rem; }
 .chips { display: flex; flex-wrap: wrap; gap: .25rem; }
 .chips button {
-  font: inherit; font-size: .78rem; font-weight: 600; padding: .14rem .5rem; cursor: pointer;
-  border-radius: var(--radio); border: 1px solid var(--borde-panel);
-  background: #fff; color: var(--texto);
+  font: inherit; font-size: .78rem; font-weight: 600; padding: .14rem .6rem; cursor: pointer;
+  border-radius: var(--radio-pildora); border: 1px solid var(--borde-panel);
+  background: var(--fondo-cuadro); color: var(--texto);
   display: inline-flex; align-items: center; gap: .3rem;
 }
 .chips button:hover { background: var(--fondo-apoyo); }
 .chips button[aria-pressed="true"] {
-  background: var(--seleccion); color: #fff; border-color: var(--seleccion);
+  background: var(--seleccion); color: var(--sobre-seleccion); border-color: var(--seleccion);
   font-weight: 700;
 }
-.chips .chip-ico { width: .95rem; height: .95rem; object-fit: contain; }
+.chips .chip-ico { width: 1.05rem; height: 1.05rem; object-fit: contain; }
 .filtro-select {
   font: inherit; font-size: .82rem; padding: .22rem 1.5rem .22rem .5rem;
-  border: 1px solid var(--borde-panel); border-radius: var(--radio); background: #fff;
-  color: var(--texto); max-width: 15rem;
+  border: 1px solid var(--borde-panel); border-radius: var(--radio-pildora);
+  background: var(--fondo-cuadro); color: var(--texto); max-width: 15rem;
 }
 
 /* Variantes de icono (asignacion en site/iconos-cultivo.yaml): B&W en reposo, COLOR en el
@@ -244,13 +279,16 @@ main { padding: .55rem .8rem 1rem; flex: 1 1 auto; }
 .pie-menor { font-size: .7rem; margin-top: .15rem; }
 
 /* ---------- tipografia general ---------- */
-h1 { font-size: 1.35rem; margin: 0 0 .3rem; font-weight: 650; letter-spacing: -.01em; }
+h1 {
+  font-family: var(--titulos); font-size: 1.5rem; margin: 0 0 .3rem; font-weight: 400;
+  letter-spacing: -.01em;
+}
 h2 { font-size: 1rem; margin: 0; font-weight: 650; }
 h3 {
   font-family: var(--rotulos); font-size: .7rem; margin: 1.75rem 0 .6rem; font-weight: 600;
   color: var(--texto-apoyo); text-transform: uppercase; letter-spacing: .12em;
 }
-a { color: var(--primario); }
+a { color: var(--enlace); }
 .bajada { color: var(--texto-apoyo); margin: 0 0 1.1rem; max-width: 68ch; font-size: .9rem; }
 
 /* ---------- fila de indicadores (KPIs) ----------
@@ -274,7 +312,7 @@ a { color: var(--primario); }
   font-size: 1.7rem; font-weight: 700; letter-spacing: -.02em; line-height: 1.05;
   font-variant-numeric: tabular-nums;
 }
-.kpi-unidad { font-size: .8rem; font-weight: 650; color: var(--seleccion); }
+.kpi-unidad { font-size: .8rem; font-weight: 650; color: var(--texto-apoyo); }
 .kpi-var { display: block; margin-top: .2rem; font-size: .74rem; color: var(--texto-apoyo); }
 .kpi-var b { font-weight: 650; }
 .kpi-var .var-pos { color: var(--positivo); }
@@ -399,8 +437,8 @@ a { color: var(--primario); }
   display: flex; flex-direction: column; align-items: center; gap: .3rem; margin: 0 0 .35rem;
 }
 .tablero.con-selector .mapa-cab .mapa-accion {
-  margin: 0; border: 1px solid var(--borde-panel); border-radius: var(--radio);
-  padding: .16rem .6rem; font-weight: 650;
+  margin: 0; border: 1px solid var(--borde-panel); border-radius: var(--radio-pildora);
+  padding: .16rem .7rem; font-weight: 650;
 }
 .tablero.con-selector.alto-fijo .panel > .panel-pie { margin-top: .3rem; padding-top: .3rem; }
 .panel-sub:empty { display: none; }
@@ -604,11 +642,11 @@ a { color: var(--primario); }
 .panel-toggle { display: flex; gap: .2rem; flex: 0 0 auto; }
 .panel-toggle button {
   font: inherit; font-family: var(--rotulos); font-size: .62rem; text-transform: uppercase;
-  letter-spacing: .08em; padding: .2rem .4rem; cursor: pointer; border-radius: 2px;
-  border: 1px solid var(--borde-panel); background: #fff; color: var(--texto-apoyo);
+  letter-spacing: .08em; padding: .2rem .4rem; cursor: pointer; border-radius: var(--radio-chico);
+  border: 1px solid var(--borde-panel); background: var(--fondo-cuadro); color: var(--texto-apoyo);
 }
 .panel-toggle button[aria-pressed="true"] {
-  background: var(--seleccion); border-color: var(--seleccion); color: #fff;
+  background: var(--seleccion); border-color: var(--seleccion); color: var(--sobre-seleccion);
 }
 .panel-pie {
   margin: .55rem 0 0; padding-top: .45rem; border-top: 1px solid var(--fondo-apoyo);
@@ -618,7 +656,7 @@ a { color: var(--primario); }
 .panel-fuente { flex: 1 1 auto; min-width: 0; }
 .panel-detalle {
   flex: 0 0 auto; font-family: var(--rotulos); font-size: .64rem; text-transform: uppercase;
-  letter-spacing: .1em; color: var(--primario); text-decoration: none; white-space: nowrap;
+  letter-spacing: .1em; color: var(--enlace); text-decoration: none; white-space: nowrap;
 }
 .panel-detalle:hover { text-decoration: underline; }
 
@@ -636,31 +674,32 @@ a { color: var(--primario); }
 }
 .selector-cultivo button { font: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
 .chip-cultivo { display: flex; align-items: center; gap: .25rem; min-width: 0; }
-.chip-ico-caja { flex: 0 0 auto; width: 1.3rem; height: 1.3rem; }
+.chip-ico-caja { flex: 0 0 auto; width: 1.45rem; height: 1.45rem; }
 .chip-ico-caja img { width: 100%; height: 100%; object-fit: contain; display: none; }
 .chip-ico-caja .ico-bn { display: block; }
 .chip-cultivo[aria-pressed="true"] .ico-bn { display: none; }
 .chip-cultivo[aria-pressed="true"] .ico-color { display: block; }
 .chip-nombre {
-  flex: 1 1 auto; min-width: 0; border: 1px solid var(--borde-panel); border-radius: var(--radio);
-  background: #fff; color: var(--texto); font-size: .7rem; font-weight: 650;
+  flex: 1 1 auto; min-width: 0; border: 1px solid var(--borde-panel);
+  border-radius: var(--radio-pildora);
+  background: var(--fondo-cuadro); color: var(--texto); font-size: .7rem; font-weight: 650;
   padding: .14rem .15rem; text-align: center;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .chip-cultivo:hover .chip-nombre { background: var(--fondo-apoyo); }
 .chip-cultivo[aria-pressed="true"] .chip-nombre {
-  background: var(--seleccion); border-color: var(--seleccion); color: #fff;
+  background: var(--seleccion); border-color: var(--seleccion); color: var(--sobre-seleccion);
 }
 .chip-grande {
   grid-column: 8; grid-row: 1 / span 2; align-self: stretch;
   border: 1px solid var(--borde-panel) !important; border-radius: var(--radio);
-  background: #fff !important; color: var(--texto) !important;
+  background: var(--fondo-cuadro) !important; color: var(--texto) !important;
   font-size: 1.05rem !important; font-weight: 650;
 }
 .chip-grande:hover { background: var(--fondo-apoyo) !important; }
 .chip-grande[aria-pressed="true"] {
   background: var(--seleccion) !important; border-color: var(--seleccion) !important;
-  color: #fff !important;
+  color: var(--sobre-seleccion) !important;
 }
 /* En angosto la grilla del selector se relaja a cajitas fluidas. */
 @media (max-width: 1000px) {
@@ -676,7 +715,7 @@ a { color: var(--primario); }
 }
 .utilidades-titulo {
   text-align: center; font-size: .88rem; font-weight: 700; letter-spacing: .06em;
-  color: var(--seleccion); margin: 0 0 .35rem;
+  color: var(--texto-apoyo); margin: 0 0 .35rem;
 }
 .utilidades-items {
   flex: 1 1 auto; display: flex; flex-direction: row; align-items: center;
@@ -686,7 +725,19 @@ a { color: var(--primario); }
   display: flex; align-items: center; gap: .25rem; font-weight: 650; font-size: .7rem;
   opacity: .6; cursor: not-allowed; white-space: nowrap; min-width: 0;
 }
-.utilidad img { width: 1.5rem; height: 1.5rem; object-fit: contain; }
+.utilidad img { width: 1.4rem; height: 1.4rem; object-fit: contain; }
+/* El item ACTIVO del panel (hoy solo "Exportar como PDF"): es un <button> de verdad, asi que
+   hay que sacarle el cromo que le pone el navegador. Va sin el apagado ni el cursor tachado
+   del resto y sin rotulo "Proximamente": se ve como lo que es, algo en lo que se hace clic. */
+.utilidad-activa {
+  font: inherit; font-size: .7rem; font-weight: 650; color: inherit;
+  background: none; border: 0; padding: 0; opacity: 1; cursor: pointer;
+}
+.utilidad-activa:hover .utilidad-nombre { text-decoration: underline; }
+.utilidad-activa:focus-visible { outline: 2px solid var(--enlace); outline-offset: 2px; }
+/* Copia del grafico a alta resolucion para imprimir: vive escondida hasta que se imprime
+   (la cuelga comun.js al lado del canvas). */
+.grafico-impreso { display: none; }
 .utilidad .prox {
   color: var(--texto-apoyo); font-size: .48rem; padding: .04rem .18rem;
   letter-spacing: .02em;
@@ -740,7 +791,7 @@ a { color: var(--primario); }
 }
 .anillo-leyenda li { display: flex; align-items: center; gap: .4rem; }
 .anillo-leyenda .muestra {
-  width: .6rem; height: .6rem; border-radius: 2px; flex: 0 0 auto;
+  width: .6rem; height: .6rem; border-radius: var(--radio-chico); flex: 0 0 auto;
 }
 .anillo-leyenda .nombre {
   flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -791,11 +842,11 @@ a { color: var(--primario); }
 }
 .lb-fila { display: flex; align-items: center; gap: .6rem; }
 .lb-riel {
-  flex: 1 1 auto; height: .5rem; background: var(--fondo-apoyo); border-radius: 2px;
+  flex: 1 1 auto; height: .5rem; background: var(--fondo-apoyo); border-radius: var(--radio-chico);
   overflow: hidden;
 }
 /* display:block es obligatorio: un <span> inline ignora width y height y la barra no se ve. */
-.lb-barra { display: block; height: 100%; background: var(--primario-medio); border-radius: 2px; }
+.lb-barra { display: block; height: 100%; background: var(--primario-medio); border-radius: var(--radio-chico); }
 .lb-valor {
   flex: 0 0 auto; font-size: .82rem; font-variant-numeric: tabular-nums; font-weight: 650;
 }
@@ -805,7 +856,7 @@ a { color: var(--primario); }
 .escala-min, .escala-max {
   font-family: var(--rotulos); font-size: .62rem; color: var(--texto-apoyo); flex: 0 0 auto;
 }
-.escala-rampa { flex: 1 1 auto; height: .45rem; border-radius: 2px; }
+.escala-rampa { flex: 1 1 auto; height: .45rem; border-radius: var(--radio-chico); }
 
 /* ---------- cuadros de las vistas de detalle ----------
    Misma piel que los paneles del tablero: una vista de detalle es un panel grande. */
@@ -815,7 +866,9 @@ a { color: var(--primario); }
 }
 .cuadro-cab { display: flex; align-items: baseline; gap: .75rem; margin: 0 0 .75rem; padding: 0; }
 .cuadro-cab > div { flex: 1 1 auto; min-width: 0; }
-.titulo-protocolo { font-size: .98rem; line-height: 1.3; font-weight: 650; }
+.titulo-protocolo {
+  font-family: var(--titulos); font-size: 1.1rem; line-height: 1.3; font-weight: 400;
+}
 .subtitulo { margin: .15rem 0 0; font-size: .78rem; color: var(--texto-apoyo); }
 .grafico { width: 100%; height: 360px; }
 .grafico.alto { height: 480px; }
@@ -841,11 +894,11 @@ a { color: var(--primario); }
                       letter-spacing: .1em; color: var(--texto-apoyo); margin: 0 0 .3rem; }
 .leyenda ul { list-style: none; margin: 0; padding: 0; }
 .leyenda li { display: flex; align-items: center; gap: .45rem; margin: .1rem 0; }
-.leyenda .muestra { width: 1rem; height: .7rem; border-radius: 2px; flex: 0 0 auto; }
+.leyenda .muestra { width: 1rem; height: .7rem; border-radius: var(--radio-chico); flex: 0 0 auto; }
 .leyenda .conteo { color: var(--texto-apoyo); }
 .total-provincial {
   margin: .6rem 0 0; padding: .5rem .65rem; background: var(--fondo-apoyo);
-  border-radius: 3px; font-size: .85rem; font-weight: 600;
+  border-radius: var(--radio-chico); font-size: .85rem; font-weight: 600;
 }
 .advertencia-escala { margin: .5rem 0 0; font-size: .72rem; color: var(--texto-apoyo);
                       max-width: 58ch; }
@@ -861,13 +914,13 @@ table.datos thead th {
   letter-spacing: .08em; color: var(--texto-apoyo); font-weight: 600;
 }
 table.datos td.num, table.datos th.num { text-align: right; font-variant-numeric: tabular-nums; }
-table.datos tbody tr.resaltada { background: #fdf6e3; }
+table.datos tbody tr.resaltada { background: var(--resaltado); }
 table.datos tr.fila-total td { background: var(--fondo-apoyo); font-weight: 650; }
 table.datos td.primera-col, table.datos th.primera-col {
   position: sticky; left: 0; background: var(--fondo-cuadro);
 }
 table.datos tr.fila-total td.primera-col { background: var(--fondo-apoyo); }
-table.datos td.destacada { font-weight: 700; color: var(--primario); }
+table.datos td.destacada { font-weight: 700; color: var(--enlace); }
 
 /* ---------- matriz origen-destino (tipo flujo-od) ---------- */
 /* 27 x 27 celdas. La primera columna y el encabezado quedan fijos al hacer scroll: sin eso,
@@ -879,7 +932,7 @@ table.matriz-od thead th { position: sticky; top: 0; z-index: 2; }
 table.matriz-od thead th.primera-col { z-index: 3; }
 table.matriz-od th.vertical { writing-mode: vertical-rl; transform: rotate(180deg);
                               text-align: left; font-weight: 500; }
-table.matriz-od td.sobre-oscuro { color: #fff; }
+table.matriz-od td.sobre-oscuro { color: var(--sobre-cromo); }
 table.matriz-od td.diagonal { outline: 2px solid var(--secundario); outline-offset: -2px; }
 table.matriz-od td.total-fila { font-weight: 650; background: var(--fondo-apoyo); }
 table.matriz-od tfoot td { font-weight: 650; background: var(--fondo-apoyo);
@@ -895,7 +948,7 @@ table.matriz-od th.esquina { font-weight: 500; color: var(--texto-apoyo); }
 .resumen { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0 0 .8rem; }
 .resumen:empty { display: none; }
 .resumen div {
-  min-width: 9rem; background: var(--fondo-apoyo); border-radius: 3px; padding: .45rem .7rem;
+  min-width: 9rem; background: var(--fondo-apoyo); border-radius: var(--radio-chico); padding: .45rem .7rem;
 }
 .resumen .etiqueta {
   display: block; font-family: var(--rotulos); font-size: .62rem; text-transform: uppercase;
@@ -917,9 +970,9 @@ table.matriz-od th.esquina { font-weight: 500; color: var(--texto-apoyo); }
 .rama-bajada { color: var(--texto-apoyo); font-size: .84rem; margin: .3rem 0 .6rem; }
 .rama-estado {
   display: inline-block; font-family: var(--rotulos); font-size: .62rem; text-transform: uppercase;
-  letter-spacing: .12em; padding: .1rem .4rem; border-radius: 2px; margin-bottom: .5rem;
+  letter-spacing: .12em; padding: .1rem .4rem; border-radius: var(--radio-chico); margin-bottom: .5rem;
 }
-.rama-estado.con-datos { background: var(--seleccion); color: #fff; }
+.rama-estado.con-datos { background: var(--seleccion); color: var(--sobre-seleccion); }
 .rama-estado.sin-datos { background: var(--fondo-apoyo); color: var(--texto-apoyo); }
 .rama ul { margin: .4rem 0 0; padding-left: 1rem; font-size: .84rem; }
 .rama li { margin: .12rem 0; }
@@ -935,7 +988,7 @@ table.matriz-od th.esquina { font-weight: 500; color: var(--texto-apoyo); }
   display: block; width: 100%; background: var(--fondo-cuadro); border: 1px solid var(--borde-panel);
   border-radius: var(--radio); padding: .7rem .85rem; text-decoration: none; color: var(--texto);
 }
-.tarjeta:hover { border-color: var(--primario); background: var(--fondo-apoyo); }
+.tarjeta:hover { border-color: var(--enlace); background: var(--fondo-apoyo); }
 .tarjeta-titulo { font-weight: 650; display: block; font-size: .92rem; }
 .tarjeta-sub { color: var(--texto-apoyo); font-size: .8rem; display: block; margin-top: .2rem; }
 .tarjeta-tipo {
@@ -951,7 +1004,7 @@ table.matriz-od th.esquina { font-weight: 500; color: var(--texto-apoyo); }
   border-bottom: 2px solid transparent; margin-bottom: -1px;
 }
 .pestanias a:hover { color: var(--texto); }
-.pestanias a[aria-current] { color: var(--seleccion); border-bottom-color: var(--seleccion); }
+.pestanias a[aria-current] { color: var(--texto); border-bottom-color: var(--seleccion); }
 
 /* ---------- notas metodologicas y avisos ---------- */
 .notas { margin: 1.25rem 0 0; }
@@ -963,7 +1016,7 @@ table.matriz-od th.esquina { font-weight: 500; color: var(--texto-apoyo); }
 .notas p { margin: .5rem 0 0; font-size: .84rem; color: var(--texto-apoyo); max-width: 70ch; }
 .aviso {
   border-left: 3px solid var(--cromo); background: var(--fondo-apoyo);
-  border-radius: 0 3px 3px 0; padding: .6rem .8rem; margin: 0 0 .75rem; font-size: .84rem;
+  border-radius: 0 var(--radio-chico) var(--radio-chico) 0; padding: .6rem .8rem; margin: 0 0 .75rem; font-size: .84rem;
   max-width: 78ch;
 }
 .aviso.reservado { border-left-color: var(--negativo); }
@@ -990,3 +1043,94 @@ table.matriz-od th.esquina { font-weight: 500; color: var(--texto-apoyo); }
    rediseño ("Todo deformado Facu") y el mockup Modelo 2 volvio a mandar de forma literal,
    diseño incluido (formato_v1.tercera_tanda.mockup_literal). El cromo verde de arriba ES el
    de la captura; no hay tema alternativo. */
+
+/* ---------- impresion: "Exportar como PDF" del panel UTILIDADES ----------
+   El boton imprime la pagina y el PDF lo arma el navegador, asi que ESTE bloque es el
+   formato del PDF. Se imprime el INFORME: la cabecera con el logo, la banda con la ruta (que
+   dice el cultivo elegido), los indicadores y los cuadros con sus fuentes, y el pie con la
+   fecha de los datos. NO se imprimen los CONTROLES (menu, pestañitas de campaña, chips de
+   cultivo, barra de filtros, "Volver", botones de cabecera) ni los bloques que en pantalla
+   estan deshabilitados (el propio panel de UTILIDADES e "Información relacionada"): en papel
+   no se puede hacer clic y solo ocupan lugar. El tablero entra en UNA hoja apaisada, que es
+   la misma idea que en pantalla: cuatro paneles de un vistazo, no un informe largo.
+
+   Por que `body.imprimiendo` y no `@media print`: los graficos son canvas y hay que sacarles
+   una foto ANTES de imprimir (ver comun.js). Para que la foto salga con las proporciones de
+   la HOJA y no con las de la ventana, comun.js pone esta clase, deja que los graficos se
+   redibujen en la caja de la hoja, saca la foto e imprime con la clase todavia puesta. Una
+   sola descripcion del formato sirve para la foto, para lo que se ve un instante en pantalla
+   y para lo que sale impreso; con @media print habria dos y podrian discrepar. */
+@media print { @page { size: A4 landscape; margin: 8mm; } }
+
+/* La clase va en <html> y no en <body> para poder tocar el tamaño de la raiz: TODO el sitio
+   mide en rem, asi que bajar la raiz achica de una sola vez tipografias, aires y altos
+   minimos, en la misma proporcion. Es lo que hace entrar el tablero en la hoja: en A4
+   apaisado hay bastante menos alto util que en una pantalla, y a tamaño de pantalla el
+   ranking salia cortado y los graficos quedaban en una tirita. 87,5% = 14px de raiz. */
+.imprimiendo { font-size: 87.5%; }
+
+/* La caja de la hoja: A4 apaisado (297x210mm) menos los 8mm de margen de @page. Es el unico
+   numero de esta hoja de estilo que sale del papel y no del contenido. */
+.imprimiendo body {
+  width: 281mm; height: 194mm; min-height: 0; overflow: hidden;
+  font-size: .95rem;   /* el cuerpo mide en px: se vuelve a poner en rem para que escale */
+  /* Sin esto el navegador no imprime los FONDOS: la cabecera cocoa saldria blanca con el
+     logo crema encima (o sea invisible), y los totales y los chips perderian su lectura. */
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+.imprimiendo .menu-lateral, .imprimiendo .pestanias, .imprimiendo .barra-filtros,
+.imprimiendo .periodo, .imprimiendo .borrar-filtros, .imprimiendo .boton-cabecera,
+.imprimiendo .cabecera-banderas, .imprimiendo .panel-selector,
+.imprimiendo .panel-utilidades, .imprimiendo .panel-info,
+.imprimiendo .noscript { display: none; }
+
+/* El alto de una PANTALLA lo fija tablero.js en el estilo del nodo (.alto-fijo); en papel lo
+   manda la hoja. El tablero se queda con lo que sobra despues de la cabecera, la banda y el
+   pie: el mismo reparto que en pantalla y sin un segundo numero magico. */
+.imprimiendo main { display: flex; flex-direction: column; min-height: 0; }
+.imprimiendo #tablero { height: auto !important; flex: 1 1 auto; min-height: 0; }
+
+/* La hoja mide 281mm de ancho aunque la VENTANA sea angosta, asi que aca no puede mandar el
+   corte de 1000px: sin esto, exportar desde una ventana chica sacaria la foto con las dos
+   columnas apiladas y el PDF saldria distinto de lo que se imprime. */
+.imprimiendo .marco { flex-direction: row; }
+.imprimiendo .cabecera { flex-wrap: nowrap; }
+.imprimiendo .tablero.con-selector { flex-direction: row; }
+.imprimiendo .tablero.con-selector .fila-tablero {
+  grid-template-columns: minmax(0, 11fr) minmax(0, 9fr);
+}
+.imprimiendo .tablero.con-selector .fila-tablas {
+  grid-template-columns: minmax(0, 12fr) minmax(0, 8fr);
+}
+.imprimiendo .kpis-grilla {
+  grid-template-columns: minmax(9rem, 1.1fr) repeat(4, minmax(0, 1fr));
+}
+
+/* El que reparte el alto entre las filas y hace que cada panel se acomode adentro del suyo es
+   el juego de reglas de `alto-fijo`, que en pantalla pone tablero.js solo si la ventana es
+   ancha (en una angosta la pagina scrollea y cada panel mide lo suyo). La hoja mide siempre
+   lo mismo, asi que comun.js le pone esa clase al tablero mientras imprime y se la saca al
+   terminar: una sola definicion del comportamiento, no dos. Sin eso, exportar desde una
+   ventana chica desbordaba la hoja y los paneles se montaban sobre el pie. */
+
+/* En la hoja hay menos alto que en una pantalla, asi que la cromada se achica para que el
+   alto se lo lleven los cuadros: el logo un poco mas chico y menos aire en el pie y en el
+   cuerpo. Es lo unico que se dibuja distinto de la pantalla, y se gana casi 1cm de cuadros. */
+.imprimiendo .logo-imagen { height: 3rem; }
+.imprimiendo .cabecera-logo { padding: .35rem 1.1rem; }
+.imprimiendo main { padding: .35rem .6rem .4rem; }
+.imprimiendo .pie-sitio { padding: .35rem .8rem .4rem; }
+
+/* En pantalla las dos filas parten el alto en partes iguales; en la hoja la de TABLAS se
+   lleva algo mas. Una tabla cortada al medio en un PDF no sirve de nada (el ranking tiene que
+   salir entero), y un grafico se lee igual en una caja mas baja. Es un REPARTO y no un alto
+   libre: con `flex: 0 0 auto` la fila de tablas se quedaba con todo y la de graficos bajaba a
+   tres pixeles. El 1,4 sale de medir: es lo que hace entrar las diez posiciones del ranking
+   dejando a los graficos una caja todavia comoda. */
+.imprimiendo .tablero.con-selector .fila-tablas { flex: 1.4 1 0; min-height: 0; }
+
+/* Los graficos son canvas y en papel saldrian con la resolucion de la pantalla: se imprime
+   en su lugar la foto a triple resolucion que cuelga comun.js. `contain` la deja del mismo
+   tamaño que tenia el canvas en su caja, sin deformarla. */
+.imprimiendo .grafico-en-pantalla { display: none; }
+.imprimiendo .grafico-impreso { display: block; width: 100%; height: 100%; object-fit: contain; }

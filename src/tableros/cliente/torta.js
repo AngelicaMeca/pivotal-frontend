@@ -15,7 +15,7 @@ export default function iniciar(PIVOTAL) {
           animation: false,
           title: {
             text: elemento.leyenda_vacia, left: "center", top: "middle",
-            textStyle: { fontSize: 13, fontWeight: "normal", color: "#5f6368" }
+            textStyle: { fontSize: 13, fontWeight: "normal", color: PIVOTAL.color("--texto-apoyo") }
           }
         }, true);
         return;

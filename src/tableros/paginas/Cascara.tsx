@@ -146,8 +146,8 @@ export default function Cascara({ pagina, children }: { pagina: Comun; children:
               {pagina.banderas_idioma.map((bandera) =>
                 bandera.activa ? (
                   <span key={bandera.codigo} className="bandera activa" title={bandera.nombre}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={bandera.icono} alt={bandera.nombre} />
+                    <span className="sr-solo">{bandera.nombre}</span>
+                    <span aria-hidden="true">{bandera.codigo.toUpperCase()}</span>
                   </span>
                 ) : (
                   <span
@@ -155,8 +155,8 @@ export default function Cascara({ pagina, children }: { pagina: Comun; children:
                     className="bandera deshabilitada"
                     title={`${bandera.nombre} · Próximamente`}
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={bandera.icono} alt={`${bandera.nombre} · Próximamente`} />
+                    <span className="sr-solo">{bandera.nombre} · Próximamente</span>
+                    <span aria-hidden="true">{bandera.codigo.toUpperCase()}</span>
                   </span>
                 ),
               )}

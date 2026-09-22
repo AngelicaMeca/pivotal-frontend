@@ -217,8 +217,10 @@ function PanelInformacion({ panel }: { panel: Panel }) {
   );
 }
 
-/* Panel ESTATICO del Modelo 2 (backlog 33): iconos deshabilitados con "Proximamente". En el
-   mockup los paneles no declaran ancho/alto; en la grilla generica los declara el spec. */
+/* Panel del Modelo 2 (backlog 33). Cada item se dibuja segun lo que declare el spec: con
+   `accion` es un boton de verdad, que engancha comun.js por su data-utilidad (hoy solo
+   "Exportar como PDF"); sin `accion` queda deshabilitado con "Proximamente" (Asistente IA).
+   En el mockup los paneles no declaran ancho/alto; en la grilla generica los declara el spec. */
 function PanelUtilidades({ panel }: { panel: Panel }) {
   return (
     <section
@@ -228,14 +230,27 @@ function PanelUtilidades({ panel }: { panel: Panel }) {
     >
       <h2 className="utilidades-titulo">{panel.titulo}</h2>
       <div className="utilidades-items">
-        {(panel.items || []).map((item) => (
-          <span key={item.etiqueta} className="utilidad" title="Próximamente">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={item.icono} alt="" />
-            <span className="utilidad-nombre">{item.etiqueta}</span>
-            <span className="prox">Próximamente</span>
-          </span>
-        ))}
+        {(panel.items || []).map((item) =>
+          item.accion ? (
+            <button
+              key={item.etiqueta}
+              type="button"
+              className="utilidad utilidad-activa"
+              data-utilidad={item.accion}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={item.icono} alt="" />
+              <span className="utilidad-nombre">{item.etiqueta}</span>
+            </button>
+          ) : (
+            <span key={item.etiqueta} className="utilidad" title="Próximamente">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={item.icono} alt="" />
+              <span className="utilidad-nombre">{item.etiqueta}</span>
+              <span className="prox">Próximamente</span>
+            </span>
+          ),
+        )}
       </div>
     </section>
   );

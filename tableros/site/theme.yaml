@@ -15,6 +15,14 @@
 # specs/fuentes/WhatsApp Image 2026-07-27 at 20.24.16.jpeg. Los hex se muestrearon del propio
 # archivo, no se eligieron a ojo.
 #
+# --- Revision 2026-09-22 -----------------------------------------------------------------
+# DISEÑO DEL SITIO INSTITUCIONAL (decision de Francisco): los tableros pasan a verse como
+# pivotal.ai. Cambia SOLO el cromo (lienzo, cabecera, menu, paneles, chips, tablas) y la
+# tipografia; los colores de DATOS (paleta_categorica, rampas de los mapas, series) NO se
+# tocan: los manda specs/modelos/_protocolo-presentacion.yaml, que es regla de JC.
+# La paleta es la del sitio: cocoa #2b1c18, marron #7d5545, rosa #c18477, crema #f1dccb,
+# oliva #7c8465. Deroga el cromo verde institucional de la revision del 10-ago.
+#
 # --- Revision 2026-08-10 -----------------------------------------------------------------
 # TEMA VISUAL FINAL (Facu, en persona con JC): la pagina tiene que verse como la captura de
 # specs/fuentes/WhatsApp Image 2026-08-10 at 11.08.41.jpeg
@@ -34,44 +42,63 @@ colores:
   primario: "#22502c"        # verde profundo: series, chips activos de detalle, links
   primario_medio: "#407a47"  # verde medio: barras, lineas de tendencia, segunda categoria
   secundario: "#3f5343"      # verde grisado: rotulos de seccion y bordes de encabezado de tabla
-  fondo: "#ffffff"           # el lienzo es BLANCO desde el 10-ago (tema_visual; greige derogado)
-  texto: "#23241c"           # casi negro, calido
-  texto_apoyo: "#7c786f"     # gris calido para rotulos y pies
-  borde: "#dcd7cc"
-  fondo_cuadro: "#ffffff"
-  fondo_apoyo: "#f2f1ec"     # relleno de rieles, filas de total, chips inactivos
+  fondo: "#f1dccb"           # crema del sitio: el lienzo (derogado el blanco del 10-ago)
+  texto: "#2b1c18"           # cocoa del sitio
+  texto_apoyo: "#7d5545"     # marron del sitio: rotulos, pies y texto secundario
+  borde: "#d8c7b8"           # cocoa al 18% sobre la crema
+  fondo_cuadro: "#fbf4ec"    # crema aclarada: las cajas se despegan del lienzo
+  fondo_apoyo: "#e8d6c6"     # relleno de rieles, filas de total, chips inactivos
   # Cromo institucional de la captura del 10-ago. Muestreado de la captura misma.
-  cromo: "#00af50"           # verde institucional: cabecera, menu lateral, banda de breadcrumb
-  cromo_oscuro: "#24502d"    # tira de pestañitas de campaña y estados activos sobre el cromo
-  seleccion: "#538235"       # chip de cultivo SELECCIONADO (el verde del mockup de JC)
-  borde_panel: "#00af50"     # borde fino de las cajas de panel, KPI y chips (asi esta en la captura)
+  cromo: "#2b1c18"           # cocoa: cabecera, menu lateral, banda de breadcrumb
+  cromo_oscuro: "#7d5545"    # marron: tira de pestañitas de campaña y estados sobre el cromo
+  seleccion: "#c18477"       # rosa del sitio: chip de cultivo SELECCIONADO y acentos
+  borde_panel: "#dbc9ba"     # borde fino de las cajas de panel, KPI y chips
+  # Texto y bordes SOBRE el cromo (cabecera, menu, banda) y sobre el color de seleccion
+  sobre_cromo: "#f1dccb"     # crema sobre cocoa: 12,4:1
+  sobre_seleccion: "#2b1c18" # cocoa sobre rosa: 5,1:1
+  enlace: "#7d5545"          # marron: links y acciones de texto (los datos siguen en --primario)
   # Los tokens del "tema moderno" de la segunda tanda (borde_suave, menu_fondo, sombra_panel)
   # se sacaron el 10-ago-2026, tercera tanda: JC rechazo ese rediseño ("Todo deformado Facu")
   # y el mockup Modelo 2 volvio a mandar de forma LITERAL, diseño incluido
   # (formato_v1.tercera_tanda.mockup_literal). No hay tema alternativo en cultivos.
 # Logo provincial (cabecera). El asset llego el 10-ago-2026 (Facu): es el isologotipo
-# multicolor "SANTiAGO del Estero / ARGENTINA" en PNG con fondo transparente, guardado en
+# multicolor "SANTiAGO del Estero / ARGENTINA" en PNG, guardado en
 # site/assets/logo-provincia.png. `archivo` es la ruta PUBLICA; el build lo copia a
 # public/plataforma/ del sitio (y le antepone el prefijo /plataforma). La `bajada` se dibuja chica debajo del logo, como en la captura del 10-ago.
 # El wordmark de texto queda como fallback si otro cliente no trae asset (F3).
+#
+# VARIANTE NEGATIVA (22-sep-2026, cabecera marron). El PNG de Facu esta armado para fondo
+# claro: tiene un contorno BLANCO OPACO tipo sticker alrededor de las letras (45% de la
+# imagen), que sobre el cocoa se ve como un parche. site/assets/logo-provincia-cromo.png es
+# ese mismo isologotipo DERIVADO para fondo oscuro, pixel a pixel:
+#   - blanco del sticker -> transparente;
+#   - tinta (el marron casi negro de "SANTiAGO", "DeL EsTeRo" y "ARGENTINA") -> crema
+#     (sobre_cromo), que es la puesta habitual de este isologotipo sobre fondo oscuro;
+#   - rojo, azul y amarillo de la marca -> intactos.
+# Un pixel es color de marca si es saturado (>0,35) Y claro (max RGB >= 130): la tinta
+# tambien da saturacion 0,33 y la saturacion sola la confundiria con el rojo. Lo demas sale
+# de la luminancia entre 238 (sticker) y 36 (tinta), asi el antialias queda en el alfa.
+# El original NO se toca: si la provincia manda su version negativa oficial, se reemplaza
+# este archivo y no hay nada mas que cambiar.
 logo_provincia:
   nombre: "Santiago del Estero"
   bajada: "Gobierno de la Provincia de Santiago del Estero"
-  archivo: "/logo-provincia.png"
+  archivo: "/logo-provincia-cromo.png"
 logo: null                   # logo Pivotal: sigue pendiente (semana 3-ago)
 pie: "Pivotal · Elaboración propia en base a fuentes oficiales citadas en cada cuadro"
 # Pie de tecnologia del Modelo 2 de JC (aprobado el 10-ago, backlog 35).
 pie_tecnologia: "Tecnología Pivotal: B3, Minibox y ∞ Prompt"
 
 tipografia:
-  # Regla de JC (Protocolo de formato V1, 10-ago-2026): "Calibri, y como segunda opcion Arial".
-  # Sin descargar fuentes: Calibri donde este instalada (Windows/Office), Carlito (su
-  # equivalente metrico libre) donde exista, Arial como segunda opcion de JC. Si marketing
-  # propone otra, se cambia aca (backlog pregunta 27).
-  familia: "Calibri, Carlito, Arial, sans-serif"
-  # Los rotulos chicos en versalita espaciada son lo que le da caracter al mockup. Van en
-  # monoespaciada de sistema: no se descarga ninguna fuente, el sitio sigue siendo autonomo.
-  familia_rotulos: "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace"
+  # Las mismas del sitio institucional (decision de Francisco, 22-sep-2026; deroga el
+  # "Calibri, y como segunda opcion Arial" de JC del 10-ago). Las carga Next.js en
+  # src/app/(tableros)/layout.tsx y las expone como variables CSS: no se descarga nada a mano.
+  familia: "var(--font-archivo), system-ui, -apple-system, 'Segoe UI', sans-serif"
+  # Los rotulos chicos en versalita espaciada son lo que le da caracter al tablero, igual que
+  # en el sitio: van en la monoespaciada de la marca (IBM Plex Mono).
+  familia_rotulos: "var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
+  # Titulos editoriales, como el hero del sitio
+  familia_titulos: "var(--font-newsreader), Georgia, 'Times New Roman', serif"
   base_px: 15
 ancho_maximo_px: 1280
 

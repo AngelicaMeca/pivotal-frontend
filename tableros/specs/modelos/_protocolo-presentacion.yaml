@@ -1471,10 +1471,19 @@ formato_v1:
     utilidades:
       que_es: "panel 'UTILIDADES': Asistente IA y Exportar como PDF (los anexos traen tambien JPG y Excel)"
       estado: >
-        habilitado (Facu, 10-ago-2026): entra como iconos DESHABILITADOS con rotulo
-        "Proximamente" (Asistente IA y Exportar PDF). Es una excepcion explicita y ACOTADA a la
-        regla "no se dibujan botones que no hacen nada", que sigue vigente para todo lo demas.
-        Backlog pregunta 33, resuelta en parte.
+        habilitado (Facu, 10-ago-2026): entro como iconos DESHABILITADOS con rotulo
+        "Proximamente" (Asistente IA y Exportar PDF). Era una excepcion explicita y ACOTADA a
+        la regla "no se dibujan botones que no hacen nada", que sigue vigente para todo lo
+        demas. Backlog pregunta 33, resuelta en parte.
+        EXPORTAR COMO PDF ES UN BOTON DE VERDAD desde el 22-sep-2026 (Francisco): imprime el
+        tablero con la seleccion vigente y el PDF lo arma el navegador. La excepcion ahora
+        cubre solo al Asistente IA. Un item de utilidades se activa declarando su `accion` en
+        el spec del tablero; sin `accion` sigue deshabilitado.
+        Que entra en el PDF: cabecera con el logo, la ruta (que dice el cultivo elegido), los
+        indicadores, los cuadros con sus fuentes y el pie con la fecha de los datos. Que NO
+        entra: los CONTROLES (menu, pestañitas de campaña, chips de cultivo, filtros,
+        "Volver") ni los bloques deshabilitados (las propias UTILIDADES e "Información
+        relacionada"), porque en un PDF no se puede hacer clic y solo ocupan lugar.
     informacion_relacionada:
       que_es: "'Información relacionada (abre en nueva ventana)': costos y margenes, exportaciones, calendario de siembra y cosecha, precios, VBP del cultivo elegido"
       estado: >
@@ -1617,8 +1626,9 @@ formato_v1:
         activa resaltada.
       tarjeta_contexto: "tarjeta KPI con el icono del cultivo + nombre + campaña, pegada a la izquierda de los 4 indicadores"
       utilidades: >
-        panel 'UTILIDADES' con los iconos Asistente IA y Exportar como PDF, DESHABILITADOS con
-        rotulo 'Proximamente' (backlog 33).
+        panel 'UTILIDADES' con los iconos Asistente IA y Exportar como PDF. Asistente IA
+        DESHABILITADO con rotulo 'Proximamente' (backlog 33); Exportar como PDF es un boton
+        activo desde el 22-sep-2026 (ver formato_v1.tema_visual.utilidades).
       informacion_relacionada: >
         panel 'Información relacionada (abre en nueva ventana)'. SE DIBUJA con los links
         deshabilitados y "Próximamente" (cuarta tanda del 10-ago-2026); los destinos siguen

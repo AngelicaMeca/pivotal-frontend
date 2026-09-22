@@ -384,22 +384,49 @@ def opciones(valores, etiquetas=None):
     return [{"v": v, "t": (etiquetas or {}).get(v, v)} for v in valores]
 
 
-# Iconos que el sitio realmente usa: se llenan al armar los filtros y escribir_sitio copia
-# SOLO estos a public/plataforma/iconos/ del sitio (el catalogo completo queda en
-# site/assets/iconos/).
-# Es un set de rutas relativas ("iconos/bn/soja.png"); ordenado al copiar, para determinismo.
+# Iconos que el sitio realmente usa: se llenan al armar los filtros y escribir_sitio escribe
+# SOLO estos en public/plataforma/iconos/ del sitio.
+# Es un set de pares (variante, nombre); ordenado al escribir, para determinismo.
 _ICONOS_USADOS = set()
+
+# Que color toma el trazo del icono en cada variante. Sale del theme: el icono acompaña al
+# texto que tiene al lado (marron sobre la caja clara, cocoa sobre el chip elegido).
+COLOR_ICONO = {"bn": "texto_apoyo", "color": "texto"}
 
 
 def ruta_icono(variante, nombre):
-    """Ruta publica del icono, verificando que el archivo exista en site/assets/iconos/."""
-    relativa = "iconos/%s/%s.png" % (variante, nombre)
-    if not os.path.exists(os.path.join(DIR_ASSETS, relativa)):
+    """Ruta publica del icono, verificando que el dibujo exista en site/assets/iconos/trazo/."""
+    origen = os.path.join(DIR_ASSETS, "iconos", "trazo", nombre + ".svg")
+    if not os.path.exists(origen):
         raise pr.ErrorDeProtocolo(
-            "El icono %r no existe en site/assets/iconos/. Revisar site/iconos-cultivo.yaml "
-            "contra site/assets/iconos/catalogo.yaml." % relativa)
-    _ICONOS_USADOS.add(relativa)
-    return PREFIJO + "/" + relativa
+            "No hay dibujo para el icono %r (falta site/assets/iconos/trazo/%s.svg). "
+            "Revisar site/iconos-cultivo.yaml." % (nombre, nombre))
+    if variante not in COLOR_ICONO:
+        raise pr.ErrorDeProtocolo("Variante de icono desconocida: %r" % variante)
+    _ICONOS_USADOS.add((variante, nombre))
+    return "%s/iconos/%s/%s.svg" % (PREFIJO, variante, nombre)
+
+
+# Acciones que el sitio sabe hacer desde el panel de UTILIDADES (las engancha
+# src/tableros/cliente/comun.js). Un spec que declare otra cosa es un error de protocolo: la
+# regla es que no se dibujan botones que no hacen nada.
+ACCIONES_UTILIDAD = ("exportar-pdf",)
+
+
+def item_utilidad(item):
+    """Un item del panel UTILIDADES, con su icono resuelto.
+
+    El item que declara `accion` se dibuja como boton de verdad; el que no la declara sigue
+    deshabilitado con "Proximamente" (excepcion acotada del backlog 33, hoy solo el Asistente
+    IA). El nombre de la accion se valida aca para que un spec no pueda pedir un boton que el
+    cliente no sabe atender.
+    """
+    accion = item.get("accion")
+    if accion is not None and accion not in ACCIONES_UTILIDAD:
+        raise pr.ErrorDeProtocolo(
+            "La utilidad %r declara la accion %r, que el sitio no sabe hacer. "
+            "Acciones disponibles: %s" % (item["id"], accion, ", ".join(ACCIONES_UTILIDAD)))
+    return dict(item, icono=ruta_icono("color", item["icono"]))
 
 
 def iconos_de_cultivo(ctx, cultivo):
@@ -665,6 +692,7 @@ def construir_mapa(ctx, spec):
                     "unidad": UNIDAD[variable],
                     "pie": pie,
                     "geojson": geojson,
+                    "aspecto": aspecto_mapa(), "relacion": relacion_mapa(),
                     "advertencia": advertencia,
                     "deptos": [{"id": f["id"], "nombre": f["nombre"], "v": f["v"],
                                 "color": f["color"], "borde": f.get("borde"),
@@ -729,6 +757,31 @@ def sin_tildes_mayuscula(texto):
 
 
 _ASPECTO_MAPA = None
+_RELACION_MAPA = None
+_EXTREMOS_GEOJSON = None
+
+
+def _extremos_geojson():
+    """(min_lon, max_lon), (min_lat, max_lat) del GeoJSON de la provincia."""
+    global _EXTREMOS_GEOJSON
+    if _EXTREMOS_GEOJSON is None:
+        ruta = os.path.join(DIR_CONFIGS, "dims", "sde-departamentos.geojson")
+        with open(ruta, encoding="utf-8") as f:
+            geo = json.load(f)
+        lons, lats = [], []
+
+        def juntar(coordenadas):
+            if isinstance(coordenadas[0], (int, float)):
+                lons.append(coordenadas[0])
+                lats.append(coordenadas[1])
+            else:
+                for parte in coordenadas:
+                    juntar(parte)
+
+        for feature in geo["features"]:
+            juntar(feature["geometry"]["coordinates"])
+        _EXTREMOS_GEOJSON = ((min(lons), max(lons)), (min(lats), max(lats)))
+    return _EXTREMOS_GEOJSON
 
 
 def aspecto_mapa():
@@ -743,23 +796,25 @@ def aspecto_mapa():
     global _ASPECTO_MAPA
     if _ASPECTO_MAPA is None:
         import math
-        ruta = os.path.join(DIR_CONFIGS, "dims", "sde-departamentos.geojson")
-        with open(ruta, encoding="utf-8") as f:
-            geo = json.load(f)
-        latitudes = []
-
-        def juntar(coordenadas):
-            if isinstance(coordenadas[0], (int, float)):
-                latitudes.append(coordenadas[1])
-            else:
-                for parte in coordenadas:
-                    juntar(parte)
-
-        for feature in geo["features"]:
-            juntar(feature["geometry"]["coordinates"])
-        media = (min(latitudes) + max(latitudes)) / 2.0
-        _ASPECTO_MAPA = round(math.cos(math.radians(media)), 3)
+        _, (lat_min, lat_max) = _extremos_geojson()
+        _ASPECTO_MAPA = round(math.cos(math.radians((lat_min + lat_max) / 2.0)), 3)
     return _ASPECTO_MAPA
+
+
+def relacion_mapa():
+    """Relacion ancho/alto del mapa dibujado (km/km), para que ocupe todo el panel sin deformarse.
+
+    Es (delta de longitud x coseno de la latitud media) / delta de latitud, del propio GeoJSON.
+    La usa el JS para pedirle a ECharts el tamaño exacto que entra en la caja: con el default,
+    el mapa se dibujaba bastante mas chico que su panel.
+    """
+    global _RELACION_MAPA
+    if _RELACION_MAPA is None:
+        lons, lats = _extremos_geojson()
+        ancho = (lons[1] - lons[0]) * aspecto_mapa()
+        alto = lats[1] - lats[0]
+        _RELACION_MAPA = round(ancho / alto, 3)
+    return _RELACION_MAPA
 
 
 def nombres_mapa_solo_deptos(nombres):
@@ -2518,6 +2573,7 @@ def construir_hacienda_mapa(ctx, spec):
                     "unidad": unidad,
                     "pie": pie,
                     "geojson": GEOJSON,
+                    "aspecto": aspecto_mapa(), "relacion": relacion_mapa(),
                     "advertencia": advertencia,
                     "deptos": [{"id": f["id"], "nombre": f["nombre"], "v": f["v"],
                                 "color": f["color"], "borde": f.get("borde"),
@@ -3349,7 +3405,7 @@ def panel_mapa_cultivos(ctx, spec, campania, cultivos, variable, pie, todos=Fals
                               "?departamento="),
         # Proporcion geografica correcta (tercera_tanda.mapa_grande): la caja se adapta al
         # mapa, nunca al reves. Lo aplica tablero.js como aspectScale.
-        "aspecto": aspecto_mapa(),
+        "aspecto": aspecto_mapa(), "relacion": relacion_mapa(),
         "deptos": deptos,
         "unidad": UNIDAD[variable],
         "escala": {"min": "0",
@@ -3737,6 +3793,7 @@ def panel_mapa_hacienda(ctx, spec, recorte, anio, medida, pie):
         "subtitulo": ctx.subtitulo_unidad(hac.UNIDAD[medida]),
         "pie": pie,
         "geojson": GEOJSON,
+        "aspecto": aspecto_mapa(), "relacion": relacion_mapa(),
         "deptos": deptos,
         "unidad": hac.UNIDAD[medida],
         "escala": {"min": "0", "max": ctx.texto(max(con_dato)), "rampa": rampa},
@@ -4051,6 +4108,7 @@ def panel_mapa_stock(ctx, spec, anio, categoria, pie):
         "subtitulo": ctx.subtitulo_unidad("cabezas", categoria),
         "pie": pie,
         "geojson": GEOJSON,
+        "aspecto": aspecto_mapa(), "relacion": relacion_mapa(),
         "deptos": deptos,
         "unidad": "cabezas",
         "escala": {"min": "0", "max": ctx.texto(max(con_dato)), "rampa": rampa},
@@ -4672,13 +4730,13 @@ def escribir_sitio(ctx, vistas, tableros):
         # activa; ingles y portugues deshabilitadas con "Próximamente" (excepcion acotada a
         # la regla de botones muertos). Solo en las secciones que lo declaran (hoy cultivos).
         if seccion.get("cabecera_banderas"):
+            # Desde el 22-sep-2026 van como SIGLA en monoespaciada (ES / EN / PT) y no como
+            # banderita: a este tamaño las tres banderas no se distinguen, y la sigla es la
+            # forma en que el sitio institucional escribe los rotulos chicos.
             extras["banderas_idioma"] = [
-                {"codigo": "es", "nombre": "Español", "activa": True,
-                 "icono": ruta_icono("color", "espanol")},
-                {"codigo": "en", "nombre": "Inglés", "activa": False,
-                 "icono": ruta_icono("color", "ingles")},
-                {"codigo": "pt", "nombre": "Português", "activa": False,
-                 "icono": ruta_icono("color", "portugues")},
+                {"codigo": "es", "nombre": "Español", "activa": True},
+                {"codigo": "en", "nombre": "Inglés", "activa": False},
+                {"codigo": "pt", "nombre": "Português", "activa": False},
             ]
         botones = []
         for boton in seccion.get("botones_cabecera") or []:
@@ -4785,10 +4843,10 @@ def escribir_sitio(ctx, vistas, tableros):
             panel = dict(declarado, titulo=definicion.get("titulo", ""),
                          detalle=url_de[destino] if destino else None)
             if declarado["id"] == "utilidades":
-                # Panel estatico del Modelo 2 (backlog 33): iconos del catalogo de JC en
-                # variante color, deshabilitados con "Proximamente".
-                panel["items"] = [dict(item, icono=ruta_icono("color", item["icono"]))
-                                  for item in definicion["items"]]
+                # Panel del Modelo 2 (backlog 33): iconos en variante color. El item que
+                # declara `accion` es un boton de verdad (hoy "Exportar como PDF"); el que no
+                # la declara sigue deshabilitado con "Proximamente" (Asistente IA).
+                panel["items"] = [item_utilidad(item) for item in definicion["items"]]
             if declarado["id"] == "informacion-relacionada":
                 # Panel estatico del mockup, DIBUJADO con sus links deshabilitados y
                 # "Proximamente" (cuarta tanda, informacion_relacionada_se_dibuja: "tiene que
@@ -4880,8 +4938,14 @@ def escribir_sitio(ctx, vistas, tableros):
 
     # Iconos: al deploy van SOLO los que el sitio usa (los referencio algun filtro, la tarjeta
     # de contexto o el panel de utilidades). El catalogo completo queda en site/assets/iconos/.
-    for relativa in sorted(_ICONOS_USADOS):
-        escritor.copia(os.path.join(DIR_ASSETS, relativa), "public/plataforma/" + relativa)
+    for variante, nombre in sorted(_ICONOS_USADOS):
+        with open(os.path.join(DIR_ASSETS, "iconos", "trazo", nombre + ".svg"),
+                  encoding="utf-8") as f:
+            dibujo = f.read()
+        # El dibujo viene con `currentColor`: aca se fija el color de la variante, asi el SVG
+        # se puede usar como <img> (que no hereda el color del texto).
+        escritor.texto("public/plataforma/iconos/%s/%s.svg" % (variante, nombre),
+                       dibujo.replace("currentColor", theme["colores"][COLOR_ICONO[variante]]))
 
     return escritor
 

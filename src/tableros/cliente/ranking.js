@@ -26,7 +26,7 @@ export default function iniciar(PIVOTAL) {
           type: "value",
           name: elemento.eje.nombre,
           nameLocation: "end",
-          nameTextStyle: { color: "#5f6368" },
+          nameTextStyle: { color: PIVOTAL.color("--texto-apoyo") },
           min: elemento.eje.min,
           max: elemento.eje.max,
           interval: elemento.eje.paso,
@@ -34,7 +34,7 @@ export default function iniciar(PIVOTAL) {
             fontSize: 11,
             formatter: function (v) { return PIVOTAL.etiquetaEje(elemento.eje, v); }
           },
-          splitLine: { lineStyle: { color: "#e6e6e6" } }
+          splitLine: { lineStyle: { color: PIVOTAL.color("--borde") } }
         },
         yAxis: {
           type: "category",
@@ -49,7 +49,7 @@ export default function iniciar(PIVOTAL) {
           itemStyle: { color: elemento.color },
           barMaxWidth: 18,
           label: {
-            show: true, position: "right", fontSize: 11, color: "#5f6368",
+            show: true, position: "right", fontSize: 11, color: PIVOTAL.color("--texto-apoyo"),
             formatter: function (p) { return elemento.barras[p.dataIndex].t; }
           }
         }]

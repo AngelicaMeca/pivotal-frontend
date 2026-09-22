@@ -57,7 +57,7 @@ export type Comun = {
   filtros_barra: Filtro[];
   pestanias: { texto: string; href: string; actual: boolean }[];
   botones_cabecera: Enlace[];
-  banderas_idioma: { codigo: string; nombre: string; activa: boolean; icono: string }[];
+  banderas_idioma: { codigo: string; nombre: string; activa: boolean }[];
 };
 
 export type Elemento = {
@@ -88,7 +88,9 @@ export type Panel = {
   ancho?: string | number;
   alto?: string | number;
   detalle?: string | null;
-  items?: { etiqueta: string; icono?: string }[];
+  // `accion` solo la traen los items del panel UTILIDADES: con accion se dibujan como boton
+  // (la engancha comun.js), sin accion siguen deshabilitados con "Próximamente".
+  items?: { etiqueta: string; icono?: string; accion?: string }[];
 };
 
 export type PaginaVista = Comun & { vista: Vista };

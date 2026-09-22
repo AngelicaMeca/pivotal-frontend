@@ -12,10 +12,6 @@ export default function iniciar(PIVOTAL) {
   var contenedor = document.getElementById("tablero");
   var geoListo = null;
 
-  function panelNodo(id) {
-    return contenedor.querySelector('[data-panel="' + id + '"]');
-  }
-
   function texto(nodo, selector, valor) {
     var destino = nodo.querySelector(selector);
     if (destino) { destino.textContent = valor || ""; }
@@ -35,6 +31,11 @@ export default function iniciar(PIVOTAL) {
   var ANGOSTO = window.matchMedia("(max-width: 1000px)");   /* el mismo corte que el CSS */
 
   function ajustarAlto() {
+    /* Mientras se imprime manda la HOJA y no la ventana: comun.js ya dejo el tablero con el
+       reparto de alto que corresponde y es la hoja la que le da la altura. Sin esta guarda,
+       el repintado que hace falta antes de sacar las fotos le borraba ese reparto y en una
+       ventana angosta los paneles se montaban sobre el pie. */
+    if (document.documentElement.classList.contains("imprimiendo")) { return; }
     contenedor.classList.remove("alto-fijo");
     contenedor.style.removeProperty("height");
     if (ANGOSTO.matches) { return; }   /* en angosto los paneles se apilan y el alto lo pone el contenido */
@@ -168,12 +169,13 @@ export default function iniciar(PIVOTAL) {
           },
           fontSize: 10,
           lineHeight: 12,
-          color: "#3d3a33"
+          color: PIVOTAL.color("--texto")
         } : { show: false },
         labelLine: etiquetasAfuera
-          ? { show: true, length: 6, length2: 6, lineStyle: { color: "#b5b0a4" } }
+          ? { show: true, length: 6, length2: 6,
+             lineStyle: { color: PIVOTAL.color("--texto-apoyo") } }
           : { show: false },
-        itemStyle: { borderColor: "#ffffff", borderWidth: 2 },
+        itemStyle: { borderColor: PIVOTAL.color("--fondo-cuadro"), borderWidth: 2 },
         data: panel.porciones.map(function (porcion) {
           return { name: porcion.n, value: porcion.v, itemStyle: { color: porcion.color } };
         })
@@ -241,18 +243,25 @@ export default function iniciar(PIVOTAL) {
              de la provincia, calculado del propio GeoJSON. Sin el dato queda el default de
              ECharts, que es lo que ya mostraban las otras secciones. */
           aspectScale: panel.aspecto || 0.75,
+          /* El mapa se dibuja lo mas grande que entre en el panel, SIN deformarse (JC: "El
+             mapa es una miniatura y está deformado"). Con left/right/top/bottom ECharts estira
+             el dibujo hasta los bordes; con layoutCenter + layoutSize lo agranda conservando
+             la proporcion geografica y centrado. */
+          layoutCenter: ["50%", "50%"],
+          layoutSize: PIVOTAL.tamanioMapa(nodo.querySelector("[data-grafico]"), panel.relacion),
           roam: false,
           selectedMode: false,
           /* Sin rotulos: en un panel de 340px los 27 nombres no entran y lo unico que hacen es
              ensuciar. El nombre esta en el tooltip y en el Top 5 de al lado. */
           label: { show: false },
-          itemStyle: { borderColor: "#ffffff", borderWidth: 0.7 },
+          itemStyle: { borderColor: PIVOTAL.color("--fondo-cuadro"), borderWidth: 0.7 },
           data: panel.deptos.map(function (d) {
             return {
               name: d.id,
               value: d.v,
               itemStyle: { areaColor: d.color },
-              emphasis: { itemStyle: { areaColor: d.color, borderColor: "#23241c", borderWidth: 1.4 } }
+              emphasis: { itemStyle: { areaColor: d.color, borderColor: PIVOTAL.color("--texto"),
+                                       borderWidth: 1.4 } }
             };
           })
         }]
@@ -280,8 +289,8 @@ export default function iniciar(PIVOTAL) {
         symbol: "none",
         silent: true,
         z: 1,
-        lineStyle: { color: "#c9c4b8", width: 1.5, type: "dashed" },
-        itemStyle: { color: "#c9c4b8" }
+        lineStyle: { color: PIVOTAL.color("--borde"), width: 1.5, type: "dashed" },
+        itemStyle: { color: PIVOTAL.color("--borde") }
       });
     }
 
@@ -312,7 +321,7 @@ export default function iniciar(PIVOTAL) {
           symbol: "circle",
           symbolSize: 9,
           label: { show: false },
-          itemStyle: { color: linea.color, borderColor: "#ffffff", borderWidth: 2 },
+          itemStyle: { color: linea.color, borderColor: PIVOTAL.color("--fondo-cuadro"), borderWidth: 2 },
           data: [{ coord: [panel.actual, linea.puntos[panel.actual]] }]
         }
       });
@@ -349,11 +358,12 @@ export default function iniciar(PIVOTAL) {
       name: panel.eje_visible ? panel.eje.nombre : undefined,
       nameLocation: "end",
       nameGap: 8,
-      nameTextStyle: { fontSize: 10, color: "#7c786f", align: "left" },
+      nameTextStyle: { fontSize: 10, color: PIVOTAL.color("--texto-apoyo"), align: "left" },
       axisLabel: panel.eje_visible
-        ? { show: true, fontSize: 10, color: "#7c786f", formatter: etiquetaLegible }
+        ? { show: true, fontSize: 10, color: PIVOTAL.color("--texto-apoyo"),
+            formatter: etiquetaLegible }
         : { show: false },
-      splitLine: { lineStyle: { color: "#f2f1ec" } }
+      splitLine: { lineStyle: { color: PIVOTAL.color("--fondo-apoyo") } }
     }];
     if (panel.eje2) {
       ejes.push({
@@ -371,7 +381,8 @@ export default function iniciar(PIVOTAL) {
       grid: { left: 4, right: 8, top: (varias ? 26 : 12) + (panel.eje_visible ? 12 : 0),
               bottom: 4, containLabel: true },
       legend: varias
-        ? { top: 0, left: 0, itemWidth: 14, itemHeight: 8, textStyle: { fontSize: 10, color: "#7c786f" } }
+        ? { top: 0, left: 0, itemWidth: 14, itemHeight: 8,
+            textStyle: { fontSize: 10, color: PIVOTAL.color("--texto-apoyo") } }
         : { show: false },
       tooltip: {
         trigger: "axis",
@@ -383,7 +394,7 @@ export default function iniciar(PIVOTAL) {
             html += "<br>" + (linea.nombre ? linea.nombre + ": " : "") + linea.textos[i];
           });
           if (panel.referencia) {
-            html += "<br><span style=\"color:#7c786f\">" + panel.referencia.nombre + ": " +
+            html += "<br><span style=\"color:var(--texto-apoyo)\">" + panel.referencia.nombre + ": " +
                     panel.referencia.textos[i] + "</span>";
           }
           return html;
@@ -393,13 +404,13 @@ export default function iniciar(PIVOTAL) {
         type: "category",
         data: panel.x,
         axisTick: { show: false },
-        axisLine: { lineStyle: { color: "#dcd7cc" } },
+        axisLine: { lineStyle: { color: PIVOTAL.color("--borde") } },
         /* Con el eje visible (cultivos, mockup literal) se rotulan TODAS las campañas,
            rotadas a 45 grados como en el dibujo de JC (protocolo, eje_horizontal: nunca se
            ocultan etiquetas). En los otros tableros queda el salteo compacto de siempre. */
         axisLabel: panel.eje_visible
-          ? { fontSize: 9, color: "#7c786f", interval: 0, rotate: 45 }
-          : { fontSize: 10, color: "#7c786f", interval: 1 }
+          ? { fontSize: 9, color: PIVOTAL.color("--texto-apoyo"), interval: 0, rotate: 45 }
+          : { fontSize: 10, color: PIVOTAL.color("--texto-apoyo"), interval: 1 }
       },
       yAxis: ejes,
       series: series
