@@ -8,8 +8,11 @@ __pycache__/
 ~$*.xlsx
 .Rhistory
 # El contenido que genera make site (../src/tableros/contenido, ../src/tableros/estilos,
-# ../public/plataforma) SI se commitea: Vercel compila el sitio pero no corre Python.
-# Excepcion: _privado/ NO se commitea (ver el .gitignore de la raiz). Ahi estan las vistas
+# ../public/plataforma) NO se commitea: lo ignora el .gitignore de la raiz. Antes si se subia,
+# cuando Vercel compilaba el sitio sin correr Python; desde que el prebuild baja los Excels de
+# SharePoint y corre el pipeline (scripts/tableros.mjs), el contenido se regenera en cada
+# publicacion y subirlo solo serviria para que quedara viejo.
+# Ademas _privado/ NO se publica nunca (ver el .gitignore de la raiz). Ahi estan las vistas
 # comparativas entre provincias, que CLAUDE.md trata como sensibles. No estar enlazado no
 # alcanza: la URL directa abriria igual. make build las regenera local en cada corrida.
 .vercel

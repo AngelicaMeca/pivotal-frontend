@@ -46,7 +46,9 @@ EXTENSIONES = (".xlsx", ".xls", ".csv")
 ADAPTERS = {
     "tidy": "adapters.tidy",
     "dte": "adapters.dte",
+    "dtv": "adapters.dtv",
     "stock": "adapters.stock",
+    "precios": "adapters.precios",
 }
 
 

@@ -45,6 +45,11 @@ from pipeline.rutas import DIR_RAW  # noqa: E402  (la carpeta de OneDrive, ver r
 # mirar en su propio Excel, no para listar el universo.
 MAX_EJEMPLOS = 12
 
+# Margen relativo para comparaciones que tienen que dar EXACTO pero se hacen sobre
+# numeros con coma. Sumar cien mil decimales en distinto orden no da el mismo bit; esto
+# es mil veces mas chico que cualquier diferencia real que valga la pena reportar.
+RUIDO_FLOTANTE = 1e-9
+
 # Registro de checks. Se llena con el decorador @check de abajo, en orden de definicion.
 CHECKS_ENTREGA = []   # firma: (ctx) -> [hallazgo]
 CHECKS_BASE = []      # firma: (ctx, base) -> [hallazgo]
@@ -387,6 +392,50 @@ def filas_identicas(ctx, base):
 
 
 @check_base
+def documento_repetido(ctx, base):
+    """Un numero de documento oficial que aparece en mas de una fila.
+
+    Distinto de `clave_repetida`: aca no importa que el resto de la fila coincida. El
+    numero de una DTV lo emite SENASA y es unico por declaracion, asi que verlo dos
+    veces significa o que la declaracion entro dos veces (y el peso se cuenta doble) o
+    que una misma declaracion se cargo en varios renglones (y entonces "cantidad de
+    DTV" no se puede contar por fila).
+
+    Las filas sin numero no se miran: hay bases de la familia donde la columna
+    directamente no existe y todas vendrian nulas.
+    """
+    col = base.col("documento")
+    if not col:
+        return []
+    cargados = uno(ctx.con, "SELECT count(*) n FROM %s WHERE %s IS NOT NULL"
+                   % (base.tabla, col), "n") or 0
+    if not cargados:
+        return []
+    llaves = [c for c in ("hoja", "fila_origen") if c in base.columnas]
+    fila_unica = (" || '~' || ".join("CAST(%s AS VARCHAR)" % c for c in llaves)
+                  if llaves else "CAST(rowid AS VARCHAR)")
+    total, filas = q_contando(ctx.con, """
+        SELECT %(c)s AS documento, count(*) veces FROM (
+            SELECT DISTINCT %(c)s, %(u)s AS fila FROM %(tab)s
+            WHERE %(c)s IS NOT NULL AND NOT %(det)s)
+        GROUP BY 1 HAVING count(*) > 1 ORDER BY veces DESC, 1
+    """ % {"c": col, "u": fila_unica, "tab": base.tabla, "det": _no_agregado(base)})
+    if not total:
+        return []
+    return [hallazgo(
+        "duplicados", "observacion", base=base.nro,
+        titulo="Un mismo numero de documento aparece en mas de un renglon", casos=total,
+        detalle="El numero lo pone el organismo y tendria que identificar una sola "
+                "declaracion. Aparece repetido en %s numeros." % num(total),
+        ejemplos=["%s: %s renglones" % (f["documento"], num(f["veces"])) for f in filas],
+        propuesta="Contar los movimientos por renglon y no por numero de documento, y no "
+                  "borrar ninguno: si son dos partidas de un mismo envio, el peso de las dos "
+                  "es real.",
+        pregunta_jc="Hay numeros de declaracion que figuran en dos renglones, con cantidades "
+                    "distintas cada uno. Son dos partidas del mismo envio o esta repetido?")]
+
+
+@check_base
 def conteos_identicos_entre_periodos(ctx, base):
     """Copy/paste: dos periodos (o dos hojas) con exactamente el mismo CONTENIDO.
 
@@ -557,7 +606,11 @@ def fila_total_al_pie(ctx, base):
 
     filas = q(ctx.con, """
         WITH t AS (SELECT %(on)s, sum(valor) v_tot FROM %(tab)s
-                   WHERE es_agregado_fila GROUP BY %(on)s),
+                   WHERE es_agregado_fila GROUP BY %(on)s
+                   -- Una columna donde la fila del pie no trae NADA no se compara: no es
+                   -- que el total no cierre, es que ese total no existe. Pasa en las DTV,
+                   -- donde el =SUMA() del pie cubre una sola de las tres medidas.
+                   HAVING sum(valor) IS NOT NULL),
              d AS (SELECT %(on)s, sum(valor) v_det, count(*) n FROM %(tab)s
                    WHERE NOT es_agregado_fila GROUP BY %(on)s)
         SELECT %(on)s, v_tot, coalesce(v_det, 0) v_det, coalesce(n, 0) n_detalle,
@@ -569,11 +622,19 @@ def fila_total_al_pie(ctx, base):
     if not filas:
         return []
 
-    # Sin tolerancia: la fila del pie es un =SUMA() de la propia hoja, tiene que dar
-    # exacto. Una diferencia de 60 cabezas sobre 4 millones es 0,0014% y pasaria
+    # Sin tolerancia de negocio: la fila del pie es un =SUMA() de la propia hoja, tiene
+    # que dar exacto. Una diferencia de 60 cabezas sobre 4 millones es 0,0014% y pasaria
     # cualquier tolerancia porcentual, pero igual significa que alguien agrego filas y
     # no recalculo, que es justamente lo que hay que avisar.
-    malas = [f for f in filas if f["v_tot"] != f["v_det"]]
+    #
+    # Lo unico que se perdona es el ruido de punto flotante. Sumar 24.942 toneladas con
+    # decimales en un orden y en otro no da el mismo bit: en la base 53 el pie y el
+    # detalle se separaban 4 milmillonesimas de tonelada (4 nanogramos) y el check los
+    # daba por distintos, con un texto que se delataba solo porque decia "diferencia de
+    # 0". El margen es relativo y ridiculamente chico (una parte en mil millones), asi
+    # que sigue denunciando cualquier diferencia que exista de verdad.
+    malas = [f for f in filas
+             if abs(f["v_det"] - f["v_tot"]) > abs(f["v_tot"]) * RUIDO_FLOTANTE]
     salida = []
 
     # Un hallazgo por hoja, no uno solo con todo junto. Dos hojas pueden fallar por
@@ -732,6 +793,27 @@ def _cols_ubicacion(base):
     return [c for c in posibles if c in base.columnas]
 
 
+def _cols_crudas(base):
+    """Como `_cols_ubicacion` pero sin `medida`, para los checks que miran columnas crudas.
+
+    En una base larga cada fila del Excel esta repetida una vez por medida y las columnas
+    crudas (CANT., PESO UNITARIO, PESO TOTAL) valen lo mismo en las tres. Si `medida`
+    entra en la llave, un hallazgo de 160 filas se reporta como 480 y el numero que lee
+    JC es el triple del que tiene en la pantalla.
+    """
+    return [c for c in _cols_ubicacion(base) if c != "medida"]
+
+
+def _no_agregado(base):
+    """Condicion SQL para quedarse solo con el detalle, sin las filas de total.
+
+    Una fila de total al pie no es un dato: tiene su propio check. Si se la deja pasar a
+    los checks de valores imposibles, el =SUMA() de una hoja entera aparece siempre como
+    "un camion de 400.000 toneladas" y tapa los casos reales.
+    """
+    return "coalesce(es_agregado_fila, false)" if "es_agregado_fila" in base.columnas else "false"
+
+
 @check_base
 def valores_negativos(ctx, base):
     """Superficies, stocks y produccion no pueden ser negativos."""
@@ -795,15 +877,47 @@ def fuera_de_rango(ctx, base):
         if not tabla or por not in base.columnas:
             continue
         cols = _cols_ubicacion(base)
-        filas = q(ctx.con, "SELECT %s, %s AS grupo, valor FROM %s WHERE medida = %s AND valor > 0"
-                  % (", ".join(cols), por, base.tabla, lit(medida)))
-        fuera = []
+        filas = q(ctx.con, """
+            SELECT %s, %s AS grupo, valor FROM %s
+            WHERE medida = %s AND valor > 0 AND NOT %s
+        """ % (", ".join(cols), por, base.tabla, lit(medida), _no_agregado(base)))
+        # Dos niveles: `max` es "mirarlo" y `max_imposible` es "esto no puede pasar en el
+        # mundo fisico". El segundo bloquea, porque un solo valor de ese tamano se come
+        # el grafico entero y el numero que ve JC deja de ser el que es.
+        fuera, imposibles = [], []
         for f in filas:
             rango = tabla.get(f["grupo"]) or tabla.get("_default")
             if not rango:
                 continue
-            if f["valor"] < rango.get("min", float("-inf")) or f["valor"] > rango.get("max", float("inf")):
+            tope_duro = rango.get("max_imposible")
+            if tope_duro is not None and f["valor"] > tope_duro:
+                imposibles.append((f, rango))
+            elif (f["valor"] < rango.get("min", float("-inf"))
+                  or f["valor"] > rango.get("max", float("inf"))):
                 fuera.append((f, rango))
+
+        def _orden(par):
+            return (-par[0]["valor"], [str(v) for v in par[0].values()])
+
+        if imposibles:
+            suma = sum(f["valor"] for f, _ in imposibles)
+            total_medida = uno(ctx.con, "SELECT sum(valor) s FROM %s WHERE medida = %s AND NOT %s"
+                               % (base.tabla, lit(medida), _no_agregado(base)), "s") or 0
+            salida.append(hallazgo(
+                "valores-imposibles", "bloqueante", base=base.nro,
+                titulo="Valores de %s que no pueden existir" % medida, casos=len(imposibles),
+                detalle="Son %s, pero entre todas suman %s: el %s%% de la base. "
+                        "Rangos definidos en validations/rangos.yaml."
+                        % ("una sola fila" if len(imposibles) == 1
+                           else "%s filas" % num(len(imposibles)), num(round(suma, 2)),
+                           num(round(100 * suma / total_medida, 2)) if total_medida else "?"),
+                ejemplos=[_describir(base, f, "%s (el maximo posible es %s)"
+                                     % (num(f["valor"]), num(r.get("max_imposible"))))
+                          for f, r in sorted(imposibles, key=_orden)],
+                propuesta="Dejar afuera del sitio todo numero que las incluya hasta que JC "
+                          "diga como leerlas.",
+                pregunta_jc="Estas filas dan cantidades que no pueden existir. Como hay que "
+                            "leerlas?"))
         if not fuera:
             continue
         salida.append(hallazgo(
@@ -811,10 +925,11 @@ def fuera_de_rango(ctx, base):
             titulo="Valores de %s fuera del rango razonable" % medida, casos=len(fuera),
             detalle="Rangos definidos en validations/rangos.yaml. Un valor fuera de rango no "
                     "es necesariamente un error, pero conviene mirarlo.",
-            ejemplos=[_describir(base, f, "%s (rango esperado %s a %s)"
-                                 % (num(f["valor"]), num(r.get("min")), num(r.get("max"))))
-                      for f, r in sorted(fuera, key=lambda x: (-x[0]["valor"],
-                                         [str(v) for v in x[0].values()]))],
+            ejemplos=[_describir(base, f, "%s (%s)" % (
+                          num(f["valor"]),
+                          "el maximo razonable es %s" % num(r.get("max")) if r.get("min") is None
+                          else "rango esperado %s a %s" % (num(r.get("min")), num(r.get("max")))))
+                      for f, r in sorted(fuera, key=_orden)],
             pregunta_jc="Estos valores se van del rango habitual. Los das por buenos?"))
     return salida
 
@@ -979,11 +1094,19 @@ def unidades_declaradas(ctx, base):
 
     En las bases DTV la unidad viene fila por fila y tiene que ser Kg. o Tn.: cualquier
     otra cosa (bultos, cajones, unidades) rompe cualquier suma de peso.
+
+    Ojo con CUAL unidad se mira. Despues de pasar por el adapter, la columna `unidad` ya
+    es la de la medida canonica (toneladas, bultos, movimientos) y siempre esta bien por
+    construccion: mirarla ahi no valida nada. La que hay que controlar es la U.M. que
+    trae el ARCHIVO fila por fila, que en las DTV es `um_origen`. Se declara en
+    reglas.yaml como `columnas.unidad_origen`.
     """
-    if "unidad" not in base.columnas:
+    col = base.col("unidad_origen") or ("unidad" if "unidad" in base.columnas else None)
+    if not col:
         return []
-    vistas = [f["unidad"] for f in q(
-        ctx.con, "SELECT DISTINCT unidad FROM %s WHERE unidad IS NOT NULL ORDER BY 1" % base.tabla)]
+    vistas = [f["u"] for f in q(
+        ctx.con, "SELECT DISTINCT %s AS u FROM %s WHERE %s IS NOT NULL ORDER BY 1"
+        % (col, base.tabla, col))]
     admitidas = base.reglas.get("unidades_admitidas")
     if admitidas is None:
         # Si reglas.yaml no las declara, valen las que ya declaro el config de la base.
@@ -992,21 +1115,20 @@ def unidades_declaradas(ctx, base):
         declaradas = dict(base.config.get("medidas") or {})
         declaradas.update(base.config.get("valores") or {})
         admitidas = sorted({m.get("unidad") for m in declaradas.values() if m.get("unidad")})
+    # Una unidad rara que YA esta entendida no es lo mismo que una que nadie sabe que
+    # significa. `unidades_explicadas` en reglas.yaml lleva las que se verificaron y
+    # quedaron documentadas: se siguen contando y mostrando en cada entrega (si la fuente
+    # las saca, queremos enterarnos), pero no bloquean la publicacion. Las que no estan
+    # ahi si bloquean: sumar peso sin saber en que unidad esta no da un numero, da
+    # cualquier cosa.
+    explicadas = base.reglas.get("unidades_explicadas") or {}
     salida = []
-    raras = [u for u in vistas if u not in admitidas]
-    if raras:
-        conteos = q(ctx.con, """
-            SELECT unidad, count(*) n FROM %s WHERE unidad IN (%s) GROUP BY 1 ORDER BY n DESC
-        """ % (base.tabla, ", ".join(lit(u) for u in raras)))
-        salida.append(hallazgo(
-            "unidades", "bloqueante", base=base.nro,
-            titulo="Unidades de medida que no estaban previstas", casos=len(raras),
-            detalle="El archivo trae unidades distintas de las esperadas (%s). Si se suman "
-                    "sin convertir, el total no significa nada." % ", ".join(admitidas),
-            ejemplos=["%s: %s filas" % (f["unidad"], num(f["n"])) for f in conteos],
-            propuesta="No publicar totales de peso hasta definir la conversion.",
-            pregunta_jc="Aparecen estas unidades de medida: %s. A cuanto equivale cada una "
-                        "en kilos?" % ", ".join(raras)))
+    for grupo, sev in (([u for u in vistas if u not in admitidas and u not in explicadas],
+                        "bloqueante"),
+                       ([u for u in vistas if u not in admitidas and u in explicadas],
+                        "observacion")):
+        salida.extend(_hallazgo_unidades(ctx, base, col, grupo, sev, admitidas, explicadas))
+
     conversiones = ((base.config.get("unidades") or {}).get("conversiones")) or []
     if conversiones:
         salida.append(hallazgo(
@@ -1017,44 +1139,199 @@ def unidades_declaradas(ctx, base):
     return salida
 
 
+def _hallazgo_unidades(ctx, base, col, raras, severidad, admitidas, explicadas):
+    salida = []
+    if raras:
+        # El conteo se hace sobre FILAS DEL ARCHIVO, no sobre filas del parquet: en las
+        # bases largas cada fila del Excel se abre en una por medida y el numero que
+        # veria JC seria el triple del que tiene en la pantalla.
+        cuenta = ("count(DISTINCT hoja || '~' || CAST(fila_origen AS VARCHAR))"
+                  if base.tiene("hoja", "fila_origen") else "count(*)")
+        # Si la base declara con que factor convirtio cada unidad, se muestra: es
+        # exactamente lo que hay que poner sobre la mesa cuando se pregunta.
+        factor = base.col("factor_unidad")
+        extra = (", string_agg(DISTINCT CAST(%s AS VARCHAR), ' / ') factores" % factor
+                 if factor else ", NULL factores")
+        conteos = q(ctx.con, """
+            SELECT %(c)s AS u, %(cuenta)s n %(extra)s FROM %(tab)s
+            WHERE %(c)s IN (%(lista)s) GROUP BY 1 ORDER BY n DESC, 1
+        """ % {"c": col, "cuenta": cuenta, "extra": extra, "tab": base.tabla,
+               "lista": ", ".join(lit(u) for u in raras)})
+        salida.append(hallazgo(
+            "unidades", severidad, base=base.nro,
+            titulo="Unidades de medida que no estaban previstas" if severidad == "bloqueante"
+                   else "Unidades de medida fuera de lo previsto, pero ya entendidas",
+            casos=len(raras),
+            detalle=("El archivo trae unidades distintas de las esperadas (%s). Si se suman "
+                     "sin convertir, el total no significa nada." % ", ".join(admitidas))
+                    if severidad == "bloqueante" else
+                    "No son las unidades previstas (%s), pero ya se verifico que significan y "
+                    "con que factor se leen: %s." % (
+                        ", ".join(admitidas),
+                        "; ".join("%s = %s" % (u, " ".join(str(explicadas[u]).split()))
+                                  for u in raras)),
+            ejemplos=["%s: %s filas del archivo%s" % (
+                f["u"], num(f["n"]),
+                " (se leyeron con factor %s a toneladas)" % f["factores"]
+                if f.get("factores") else "") for f in conteos],
+            propuesta="No publicar totales de peso hasta definir la conversion."
+                      if severidad == "bloqueante" else
+                      "Se publica: la lectura de estas unidades ya esta verificada y escrita "
+                      "en el config de la base.",
+            pregunta_jc=("Aparecen estas unidades de medida: %s. A cuanto equivale cada una "
+                         "en kilos?" % ", ".join(raras)) if severidad == "bloqueante" else None))
+    return salida
+
+
 @check_base
 def producto_de_columnas(ctx, base):
     """CANT x PESO_UNITARIO = PESO_TOTAL, con tolerancia. Detecta columnas cambiadas.
 
     Pensado para las bases DTV, donde el peso total y el peso unitario a veces vienen
     en el orden invertido y la suma queda mil veces mas grande.
+
+    Dos formas de nombrar los tres terminos, segun como quedo la base en staging:
+
+    - `sobre: medidas` (por defecto): los tres son MEDIDAS del formato largo y hay que
+      volver a ponerlas una por columna antes de multiplicar.
+    - `sobre: columnas`: los tres ya son columnas sueltas del parquet. Es el caso de las
+      DTV, donde el adapter conserva CANT., PESO UNITARIO y PESO TOTAL crudos.
+
+    `factores_tolerados` es la lista de cambios de escala que SI estan entendidos y
+    documentados en el config de la base (tipico: el unitario viene en kilos y el total
+    en toneladas, o sea 0,001). Una fila que cierra aplicando uno de esos factores se
+    cuenta aparte, como informativo: no es un error, es una conversion conocida. Las que
+    no cierran de ninguna de las formas son las que hay que mirar, y son las unicas que
+    salen como hallazgo para preguntar.
     """
     reglas = base.reglas.get("producto") or []
-    if not reglas or not base.tiene("medida", "valor"):
+    if not reglas:
         return []
     tol = float(ctx.dflt("tolerancia_producto_pct", 1.0))
     salida = []
     for r in reglas:
         a, b, total = r["factor_a"], r["factor_b"], r["total"]
-        sub, llaves = _pivot(base, [a, b, total])
+        if r.get("sobre") == "columnas":
+            if not base.tiene(a, b, total):
+                continue
+            llaves = _cols_crudas(base)
+            # DISTINCT porque en formato largo la misma fila del Excel aparece repetida
+            # una vez por medida, y las tres columnas crudas valen lo mismo en todas.
+            sub = "(SELECT DISTINCT %s, %s, %s, %s FROM %s WHERE NOT %s)" % (
+                ", ".join(llaves), a, b, total, base.tabla, _no_agregado(base))
+        else:
+            if not base.tiene("medida", "valor"):
+                continue
+            sub, llaves = _pivot(base, [a, b, total])
+        base_where = ("%s > 0 AND %s > 0 AND %s > 0 AND "
+                      "abs(%s * %s - %s) > %s * %f / 100" % (a, b, total, a, b, total, total, tol))
+
+        # Lo que se explica con un factor de escala conocido no se pregunta: se cuenta.
+        explicadas = []
+        cond_explicada = []
+        for f in (r.get("factores_tolerados") or []):
+            cond = "abs(%s * %s * %.10f - %s) <= %s * %f / 100" % (a, b, float(f), total, total, tol)
+            cond_explicada.append(cond)
+            n = uno(ctx.con, "SELECT count(*) n FROM %s WHERE %s AND %s"
+                    % (sub, base_where, cond), "n") or 0
+            if n:
+                explicadas.append((f, n))
+        descarte = (" AND NOT (%s)" % " OR ".join(cond_explicada)) if cond_explicada else ""
+
         cuantas, filas = q_contando(ctx.con, """
             SELECT %(k)s, %(a)s AS fa, %(b)s AS fb, %(t)s AS tot FROM %(s)s
-            WHERE %(a)s > 0 AND %(b)s > 0 AND %(t)s > 0
-              AND abs(%(a)s * %(b)s - %(t)s) > %(t)s * %(tol)f / 100
-            ORDER BY abs(%(a)s * %(b)s - %(t)s) DESC, %(k)s
-        """ % {"k": ", ".join(llaves), "a": a, "b": b, "t": total, "tol": tol, "s": sub})
+            WHERE %(w)s %(d)s
+            ORDER BY abs(%(a)s * %(b)s / %(t)s - 1) DESC, %(k)s
+        """ % {"k": ", ".join(llaves), "a": a, "b": b, "t": total,
+               "s": sub, "w": base_where, "d": descarte})
+
+        for f, n in explicadas:
+            salida.append(hallazgo(
+                "unidades", "informativo", base=base.nro,
+                titulo="Filas donde la cuenta cierra recien al pasar de kilos a toneladas",
+                casos=n,
+                detalle="En %s filas del archivo la cantidad por el peso unitario da %s veces "
+                        "el peso total. Es la conversion que ya estaba prevista y documentada "
+                        "(el peso unitario viene en kilos y el total en toneladas), no un error."
+                        % (num(n), num(1 / float(f)) if float(f) else "?")))
         if not cuantas:
             continue
         salida.append(hallazgo(
-            "unidades", "bloqueante", base=base.nro,
+            "unidades", "observacion", base=base.nro,
             titulo="Cantidad por peso unitario no da el peso total", casos=cuantas,
-            detalle="Suele significar que dos columnas de la planilla estan intercambiadas.",
-            ejemplos=[_describir(base, f, "%s x %s deberia dar %s"
-                                 % (num(f["fa"]), num(f["fb"]), num(f["tot"]))) for f in filas],
-            propuesta="No publicar pesos de esta base hasta confirmar el orden de las columnas.",
+            detalle="Son filas donde la multiplicacion no cierra ni directo ni cambiando de "
+                    "kilos a toneladas. Suele significar que dos columnas de la planilla estan "
+                    "intercambiadas, o que el peso unitario quedo con el total copiado adentro.",
+            ejemplos=[_describir(base, f, "%s x %s = %s, y el archivo declara %s"
+                                 % (num(f["fa"]), num(f["fb"]), num(round(f["fa"] * f["fb"], 3)),
+                                    num(f["tot"]))) for f in filas],
+            propuesta="Guiarse siempre por la columna de peso total, que es la que usa JC en su "
+                      "propio analisis, y no recalcular nada.",
             pregunta_jc="En estas filas la cantidad por el peso unitario no da el peso total. "
-                        "Puede ser que las columnas esten cambiadas de lugar?"))
+                        "Vale siempre el peso total?"))
+    return salida
+
+
+@check_base
+def columnas_que_no_deberian_coincidir(ctx, base):
+    """Dos columnas que miden cosas distintas y traen exactamente el mismo numero.
+
+    Caso que lo motivo: en la base 53 hay filas con CANT. 15 y PESO UNITARIO 15, cuyo
+    PESO TOTAL queda en 225 tn. Quince bultos de quince toneladas cada uno es un
+    camion de 225 toneladas: lo que casi seguro pasó es que el peso total (15 tn) se
+    tipeo en las dos columnas y la planilla lo elevo al cuadrado.
+    """
+    salida = []
+    for r in (base.reglas.get("columnas_distintas") or []):
+        a, b = r["a"], r["b"]
+        if not base.tiene(a, b):
+            continue
+        llaves = _cols_crudas(base)
+        minimo = float(r.get("minimo", 0))
+        sub = "(SELECT DISTINCT %s, %s, %s%s FROM %s WHERE NOT %s)" % (
+            ", ".join(llaves), a, b,
+            ", " + r["consecuencia"] if base.tiene(r.get("consecuencia") or "") else "",
+            base.tabla, _no_agregado(base))
+        consec = r["consecuencia"] if base.tiene(r.get("consecuencia") or "") else None
+        cuantas, filas = q_contando(ctx.con, """
+            SELECT %s%s, %s AS va FROM %s WHERE %s = %s AND %s > %f ORDER BY %s DESC, %s
+        """ % (", ".join(llaves), (", %s AS cons" % consec) if consec else "",
+               a, sub, a, b, a, minimo, a, ", ".join(llaves)))
+        if not cuantas:
+            continue
+        salida.append(hallazgo(
+            "valores-imposibles", "observacion", base=base.nro,
+            titulo=r.get("titulo") or "Dos columnas distintas con el mismo numero",
+            casos=cuantas,
+            detalle=" ".join((r.get("texto") or "").split()),
+            ejemplos=[_describir(base, f, "%s en las dos columnas%s"
+                                 % (num(f["va"]),
+                                    ", y el total queda en %s" % num(f["cons"]) if consec else ""))
+                      for f in filas],
+            propuesta="Se publica sin tocar y se pregunta: cambiar el peso total seria "
+                      "corregir en silencio.",
+            pregunta_jc=r.get("pregunta") or "Estas filas traen el mismo numero en dos "
+                                             "columnas que miden cosas distintas. Es correcto?"))
     return salida
 
 
 # ---------------------------------------------------------------------------
 # CHECKS DE DATOS · cobertura temporal y geografica
 # ---------------------------------------------------------------------------
+def _etiqueta_de_orden(referencia, orden):
+    """Nombre del periodo que le toca a un mes corrido, a partir de uno conocido.
+
+    Solo sabe de periodos mensuales con etiqueta AAAA-MM, que es el unico formato donde
+    el orden es el mes corrido. Si la etiqueta no tiene esa forma devuelve el numero, que
+    es lo que se mostraba antes.
+    """
+    partes = str(referencia["periodo"]).split("-")
+    if len(partes) != 2 or not (partes[0].isdigit() and partes[1].isdigit()):
+        return str(orden)
+    corridos = int(partes[0]) * 12 + (int(partes[1]) - 1) + (orden - referencia["orden"])
+    return "%04d-%02d" % (corridos // 12, corridos % 12 + 1)
+
+
 @check_base
 def cobertura_temporal(ctx, base):
     """Periodos presentes vs los que JC declaro para la entrega, y huecos internos."""
@@ -1092,16 +1369,53 @@ def cobertura_temporal(ctx, base):
             ordenes = [f["orden"] for f in dentro if f["orden"] is not None]
             if ordenes:
                 faltan = [o for o in range(min(ordenes), max(ordenes) + 1) if o not in ordenes]
+                # Hay fuentes que por definicion solo informan parte del ano: la base 75
+                # (DTV de papa) va de septiembre a diciembre y el propio indice de JC la
+                # titula asi. Los meses que la fuente nunca informa no son un hueco, y si
+                # se reportaran como tales el check gritaria 32 veces al pedo y taparia un
+                # hueco de verdad. Se declaran en reglas.yaml como `meses_de_la_fuente`.
+                meses = base.reglas.get("meses_de_la_fuente")
+                if meses and faltan:
+                    # `orden` es el mes corrido: se recupera el mes del calendario de
+                    # cualquier periodo presente y se cuenta desde ahi.
+                    ref = dentro[0]
+                    mes_ref = int(str(ref["periodo"]).split("-")[-1])
+                    faltan = [o for o in faltan
+                              if ((o - ref["orden"] + mes_ref - 1) % 12) + 1 in meses]
                 if faltan:
-                    salida.append(hallazgo(
-                        "cobertura-temporal", "bloqueante", base=base.nro,
-                        titulo="Faltan periodos en el medio de la serie", casos=len(faltan),
-                        detalle="Entre el primero y el ultimo periodo del archivo hay saltos: "
-                                "un grafico de serie va a dibujar una linea recta sobre el hueco.",
-                        ejemplos=[str(o) for o in faltan],
-                        propuesta="Marcar el corte en el grafico en vez de unir los puntos.",
-                        pregunta_jc="Faltan estos periodos en el medio: %s. Los conseguis?"
-                                    % ", ".join(str(o) for o in faltan)))
+                    # Los huecos se nombran con la etiqueta del periodo, no con el numero
+                    # de mes corrido: "2024-06" se entiende, "24305" no.
+                    etiquetas = [_etiqueta_de_orden(dentro[0], o) for o in faltan]
+                    # En una base TRANSACCIONAL (una fila = un movimiento) un mes sin
+                    # filas no es un dato que falte: es un mes sin movimientos. Se sigue
+                    # reportando, porque el grafico igual tiene que dibujar el cero y no
+                    # unir los puntos de al lado, pero no bloquea la publicacion.
+                    sin_actividad = bool(base.reglas.get("periodos_vacios_son_cero"))
+                    if sin_actividad:
+                        salida.append(hallazgo(
+                            "cobertura-temporal", "observacion", base=base.nro,
+                            titulo="Meses sin ningun movimiento registrado",
+                            casos=len(faltan),
+                            detalle="En estos meses el archivo no trae ni una declaracion. En "
+                                    "una base de movimientos eso no es un dato faltante: es un "
+                                    "mes en el que no se movio nada. Lo importante es que el "
+                                    "grafico dibuje el cero y no una linea recta entre los "
+                                    "meses de al lado.",
+                            ejemplos=etiquetas,
+                            propuesta="Mostrarlos como cero, no como 'sin dato'.",
+                            pregunta_jc="En %s no figura ningun movimiento. Damos por bueno "
+                                        "que no hubo, o puede ser que falte la carga?"
+                                        % ", ".join(etiquetas[:6])))
+                    else:
+                        salida.append(hallazgo(
+                            "cobertura-temporal", "bloqueante", base=base.nro,
+                            titulo="Faltan periodos en el medio de la serie", casos=len(faltan),
+                            detalle="Entre el primero y el ultimo periodo del archivo hay saltos: "
+                                    "un grafico de serie va a dibujar una linea recta sobre el hueco.",
+                            ejemplos=etiquetas,
+                            propuesta="Marcar el corte en el grafico en vez de unir los puntos.",
+                            pregunta_jc="Faltan estos periodos en el medio: %s. Los conseguis?"
+                                        % ", ".join(etiquetas)))
 
     fuente = base.reglas.get("periodos_declarados_fuente") or {}
     if fuente.get("desde"):

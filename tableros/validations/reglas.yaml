@@ -194,3 +194,163 @@ bases:
     # Sin `rangos`: para acotar cabezas por departamento hace falta una referencia de stock
     # razonable que todavia no existe en validations/rangos.yaml. Queda para cuando haya
     # dos entregas y se pueda mirar la variacion interanual.
+
+  # -------------------------------------------------------------------------
+  # Familia DTV (Declaraciones de Transito Vegetal, SENASA). Bases 53, 56, 57 y 75.
+  # Agregadas el 2026-09-23. Las cuatro comparten schema, asi que comparten receta de
+  # control; lo unico que cambia entre ellas es la cobertura declarada y si la base
+  # trae o no el numero de DTV.
+  #
+  # Tres cosas que hay que saber para leer estos bloques:
+  #
+  # 1) `columnas.particion: hoja` NO es cosmetico. Cada hoja es un anio y trae su propia
+  #    fila de =SUMA() al pie. Sin declararlo, el check de total al pie compara el pie de
+  #    UNA hoja contra el detalle de las CINCO y reporta que no cierra cuando cierra
+  #    exacto. Era el falso positivo de las bases 53 y 57.
+  #
+  # 2) `columnas.unidad_origen: um_origen`. La columna `unidad` del parquet ya es la de
+  #    la medida canonica (tn, bultos, movimientos) y siempre esta bien por construccion.
+  #    La U.M. que hay que controlar contra {Kg., Tn.} es la que trae el archivo.
+  #
+  # 3) La base es transaccional: una fila = una declaracion. No hay agregados geograficos
+  #    embebidos ni columnas calculadas, asi que no llevan `derivadas`, `no_mayor_que`,
+  #    `grupo_categoria` ni `padron_geo`. La geografia esta en dos puntas (origen y
+  #    destino), igual que en la 85.
+  # -------------------------------------------------------------------------
+
+  53: &dtv
+    etiqueta: "DTV Algodon (movimientos de producto vegetal)"
+    columnas:
+      particion: hoja            # una hoja por anio, cada una con su total al pie
+      periodo: periodo           # 2021-01
+      orden_periodo: orden_periodo   # mes corrido y contiguo: detecta huecos de verdad
+      categoria: producto        # Algodon / grano / semilla / desperdicios
+      variable: variable         # columna de origen, para el check del total al pie
+      unidad_origen: um_origen   # la U.M. tal cual viene en el Excel (ver punto 2)
+      factor_unidad: factor_tn   # con que factor se la convirtio a toneladas
+      documento: nro_dtv         # numero de DTV: tendria que ser unico por declaracion
+
+    # Que la MISMA declaracion aparezca dos veces con todo igual seria contarla dos
+    # veces al sumar. `fecha_hora` entra en la clave a proposito: SENASA sella con hora
+    # y sin ella 125 declaraciones distintas del mismo dia parecerian la misma.
+    clave_unica: [hoja, fecha_hora, tipo_movimiento, origen_departamento,
+                  destino_provincia, destino_departamento, producto, acondicionamiento,
+                  um_origen, cantidad_origen, peso_unitario_origen, peso_total_origen,
+                  variable]
+
+    medidas_sumables: [peso, movimientos, cantidad]
+    medidas_no_negativas: [peso, movimientos, cantidad]
+    # `cantidad` son bultos (fardos, rollos, bolsas): se cuentan de a uno. `peso` NO va
+    # aca: las toneladas tienen decimales por definicion.
+    medidas_enteras: [movimientos]
+
+    # La U.M. que admite CLAUDE.md para esta familia. Todo lo demas se reporta.
+    unidades_admitidas: ["Kg.", "Tn."]
+
+    # Unidades raras que YA estan entendidas: se siguen reportando en cada entrega (si la
+    # fuente las saca queremos enterarnos) pero no bloquean. La que NO esta aca, bloquea.
+    # "U." no esta y no va a estar hasta que JC diga que significa: es la pregunta 1 de
+    # esta entrega.
+    unidades_explicadas:
+      "Kg-Tn": >
+        el PESO TOTAL ya viene en toneladas y el PESO UNITARIO en kilos; se lee con factor
+        1 y la identidad cantidad x unitario cierra dividiendo por 1.000 en 8.873 de las
+        9.012 filas donde aplica
+
+    # CANT. x PESO UNITARIO = PESO TOTAL, sobre las columnas crudas que conserva el
+    # adapter. `factores_tolerados: [0.001]` = "si cierra pasando el unitario de kilos a
+    # toneladas, esta entendido y no se pregunta"; es la convencion de las filas Kg-Tn.
+    producto:
+      - sobre: columnas
+        factor_a: cantidad_origen
+        factor_b: peso_unitario_origen
+        total: peso_total_origen
+        factores_tolerados: [0.001]
+
+    # Cantidad y peso unitario miden cosas distintas (bultos y toneladas por bulto). Que
+    # traigan el mismo numero y el total sea ese numero al cuadrado es un error de tipeo
+    # clasico. `minimo: 5` deja pasar los casos chicos, donde la coincidencia es normal
+    # (2 bultos de 2 tn pasa todos los dias).
+    columnas_distintas:
+      - a: cantidad_origen
+        b: peso_unitario_origen
+        consecuencia: peso_total_origen
+        minimo: 5
+        titulo: "Cantidad y peso unitario con el mismo numero, y el total elevado al cuadrado"
+        texto: >
+          Filas donde la columna de cantidad de bultos y la de peso por bulto traen
+          exactamente el mismo numero, y por eso el peso total queda en ese numero
+          multiplicado por si mismo: 15 y 15 dan 225 toneladas en un solo viaje.
+        pregunta: >
+          En estas filas la cantidad de bultos y el peso de cada bulto son el mismo
+          numero, y el peso total queda en ese numero al cuadrado (15 y 15 dan 225 tn).
+          Parece que el peso total se tipeo en las dos columnas. Vale el numero chico?
+
+    rangos:
+      peso: {tabla: peso_por_movimiento_tn, por: um_canonica}
+
+    # Base transaccional: una fila es un movimiento. Un mes sin filas no es un dato que
+    # falte, es un mes en el que no salio nada. Se reporta igual (el grafico tiene que
+    # dibujar el cero) pero no bloquea la publicacion.
+    periodos_vacios_son_cero: true
+
+    periodos_declarados:
+      desde: "2021-01"
+      hasta: "2025-12"
+      texto: >
+        El archivo cubre los cinco anios completos, mes a mes. La hoja Modelo analisis de
+        JC encabeza "Periodo: 2020 a 2026": se declara lo que trae el archivo y la
+        diferencia contra lo que JC escribio se reporta como cobertura.
+
+  56:
+    <<: *dtv
+    etiqueta: "DTV Batata (movimientos de producto vegetal)"
+    columnas:
+      particion: hoja
+      periodo: periodo
+      orden_periodo: orden_periodo
+      categoria: producto
+      variable: variable
+      unidad_origen: um_origen
+      factor_unidad: factor_tn
+      # Sin `documento`: esta base no trae el numero de DTV (en esa posicion el Excel
+      # trae "ANO"), asi que no se puede controlar si una declaracion vino repetida.
+
+  57:
+    <<: *dtv
+    etiqueta: "DTV Cebolla (movimientos de producto vegetal)"
+    columnas:
+      particion: hoja
+      periodo: periodo
+      orden_periodo: orden_periodo
+      categoria: producto
+      variable: variable
+      unidad_origen: um_origen
+      factor_unidad: factor_tn
+      documento: nro_dtv         # unica base de la familia que SI trae el numero
+
+  75:
+    <<: *dtv
+    etiqueta: "DTV Papa (movimientos de producto vegetal)"
+    columnas:
+      particion: hoja
+      periodo: periodo
+      orden_periodo: orden_periodo
+      categoria: producto
+      variable: variable
+      unidad_origen: um_origen
+      factor_unidad: factor_tn
+      documento: nro_dtv
+
+    # LO MAS IMPORTANTE DE ESTA BASE. La fuente solo informa de septiembre a diciembre:
+    # el propio indice de JC la titula "DTV - Papa (septiembre a diciembre)". Enero a
+    # agosto no son huecos, no existen. Sin esta linea el check de cobertura denunciaria
+    # 32 meses faltantes como bloqueantes y taparia cualquier hueco real.
+    meses_de_la_fuente: [9, 10, 11, 12]
+
+    periodos_declarados:
+      desde: "2021-09"
+      hasta: "2025-12"
+      texto: >
+        Cinco temporadas de septiembre a diciembre. Consecuencia para el tablero: ninguna
+        vista puede llamar "total del anio" a lo que suma esta base.

@@ -1,0 +1,178 @@
+# Base 75 - DTV Papa (SENASA). Declaraciones de Tránsito Vegetal emitidas para mover papa
+# desde Santiago del Estero. Alimenta el tablero de Agricultura > Cultivos intensivos
+# (frutas y hortalizas).
+# Escrito sobre raw/entrega-01/75 - DTV Papa SDE.xlsx el 2026-09-23.
+# El adapter de la familia (adapters/dtv.py) lee este archivo y no sabe nada más de la base.
+#
+# OJO con esta base: el propio índice de JC la titula "DTV - Papa (septiembre a diciembre)".
+# No es una base de todo el año recortada por error, es un recorte declarado. Ver nota
+# `cobertura`: ninguna vista puede presentarla como un total anual.
+base: 75
+slug: dtv-papa
+familia: dtv
+estado: activa
+
+archivo:
+  patron: "^75 - DTV Papa"
+
+# ---------------------------------------------------------------------------
+# HOJAS
+# ---------------------------------------------------------------------------
+hojas:
+  datos:
+    - nombre: "Data"
+      header_fila: 2          # DRIFT: la fila 1 está vacía, el header arranca en la 2
+      ambito: sde
+      contenido: >
+        177 movimientos de 2021 a 2025 (2021-09-01 a 2025-12-26), solo de septiembre a
+        diciembre. Sin fila de total al pie. Un solo producto ("Papa").
+
+  ignorar:
+    - nombre: "Modelo analisis"
+      motivo: >
+        Hoja de especificación de JC. Solo dice "MISMO MODELO QUE DTV DE ALGODÓN": la regla
+        completa está en la base 53. Va a constructor-reglas como herencia de spec.
+
+# ---------------------------------------------------------------------------
+# COLUMNAS: origen -> canónico snake_case
+# ---------------------------------------------------------------------------
+columnas:
+  "FECHA EMISIÓN": fecha_emision
+  "NRO. DTV": nro_dtv
+  "TIPO MOV.": tipo_movimiento
+  "PROVINCIA ORIGEN": origen_provincia
+  "PARTIDO ORIGEN": origen_departamento
+  "PROVINCIA DESTINO": destino_provincia
+  "PARTIDO DESTINO": destino_departamento
+  "PRODUCTO": producto
+  "ACONDIC.": acondicionamiento
+  "CANT.": cantidad
+  "PESO UNITARIO": peso_unitario
+  "U.M.": um
+  "PESO TOTAL": peso_total
+  "FECHA VENCIMIENTO": fecha_vencimiento   # se mapea y no se usa (igual que en la base 53)
+  "TIPO_ORIGEN_2": tipo_origen
+
+# ---------------------------------------------------------------------------
+# VALORES (idénticos a los de la base 53: es la misma familia)
+# ---------------------------------------------------------------------------
+valores:
+  movimientos:
+    etiqueta: "Movimientos (DTV emitidas)"
+    medida: movimientos
+    unidad: movimientos
+    agregable: true
+    origen: constante
+    valor: 1
+  peso_tn:
+    etiqueta: "Peso movilizado"
+    medida: peso
+    unidad: tn
+    agregable: true
+    origen: peso_tn
+  cantidad:
+    etiqueta: "Bultos declarados"
+    medida: cantidad
+    unidad: bultos
+    agregable: false
+    origen: columna
+    columna: cantidad
+
+# ---------------------------------------------------------------------------
+# UNIDADES: PESO TOTAL -> toneladas
+# ---------------------------------------------------------------------------
+# Verificado sobre las 177 filas: 102 con U.M. "Tn.", 51 con "Kg." y 24 con "U.". Las 177
+# cumplen CANT x PESO UNITARIO = PESO TOTAL. Es la base con la mezcla de unidades más
+# marcada de las cuatro, y las magnitudes no dejan lugar a dudas: las "Tn." van de 18 a 33
+# (camiones) y las "Kg." y "U." de 3.600 a 31.550 (los mismos camiones, en kilos).
+unidades:
+  peso:
+    columna_um: um
+    canonico: tn
+    um_a_tn:
+      "Tn.":   {canonica: tn, factor: 1}
+      "Kg.":   {canonica: kg, factor: 0.001}
+      "U.":    {canonica: kg, factor: 0.001}   # ver nota `anomalia` sobre U.M.
+      "Kg-Tn": {canonica: tn, factor: 1}       # no aparece; declarado para futuras entregas
+
+# ---------------------------------------------------------------------------
+# TIEMPO
+# ---------------------------------------------------------------------------
+tiempo:
+  grano: fecha
+  columna: fecha_emision
+  cobertura_real: "2021-09-01 a 2025-12-26, SOLO meses 9 a 12"
+  agregaciones: [anio, anio_mes]
+
+# ---------------------------------------------------------------------------
+# GEOGRAFÍA
+# ---------------------------------------------------------------------------
+geo:
+  particion: sde
+  provincia_propia: 86
+  resolver: [86]
+  nivel: departamento
+  sin_dato: ["S/D"]        # no aparece en esta base; se declara por uniformidad de familia
+  cobertura_real:
+    departamentos_origen: 4    # de 27, ver nota `cobertura`
+    provincias_destino: 12
+
+# ---------------------------------------------------------------------------
+# SALIDA
+# ---------------------------------------------------------------------------
+salida:
+  staging: "staging/base-75-dtv-papa.parquet"
+  mart: hecho_movimientos_vegetales
+  particiones: [provincia, anio]
+
+# ---------------------------------------------------------------------------
+# METADATA HEREDADA DEL ÍNDICE (configs/manifiesto-indice.yaml, base nro 75)
+# ---------------------------------------------------------------------------
+indice:
+  fuente: "SENASA"
+  frecuencia: "diaria"
+  rango_declarado: "2021-01-01 a 2026-05-31"
+  descripcion: "DTV - Papa (septiembre a diciembre)"
+  tema: "Agricultura > Cultivos intensivos > Frutas y hortalizas"
+  cita_fuente_al_pie: "Fuente: SENASA"
+
+# ---------------------------------------------------------------------------
+notas:
+  - fecha: "2026-09-23"
+    tipo: drift
+    texto: >
+      La hoja "Data" tiene la fila 1 completamente vacía y el header en la fila 2. El perfil
+      con el que se planificó la ingesta la daba con header en la fila 1. Se resuelve con
+      `header_fila: 2`; el Excel no se toca.
+  - fecha: "2026-09-23"
+    tipo: cobertura
+    texto: >
+      CRITERIO 5, y el más importante de esta base: las 177 filas caen TODAS entre septiembre
+      y diciembre (28 en septiembre, 8 en octubre, 14 en noviembre y 127 en diciembre). No
+      falta nada: el propio índice de JC la titula "DTV - Papa (septiembre a diciembre)", así
+      que el recorte es de la fuente. Consecuencia dura para el tablero: ninguna vista puede
+      llamar "total del año" a lo que suma esta base, y la comparación interanual solo vale
+      contra el mismo cuatrimestre. El pie de cada cuadro tiene que decirlo.
+  - fecha: "2026-09-23"
+    tipo: cobertura
+    texto: >
+      Solo 4 de los 27 departamentos aparecen como origen (Guasayán, La Banda, Robles y San
+      Martín) y hay 177 movimientos en 5 años. Es la base más chica de la familia: sirve
+      como dato de contexto del bloque de cultivos intensivos, no como tablero propio.
+  - fecha: "2026-09-23"
+    tipo: modelo
+    texto: >
+      La hoja "Modelo analisis" solo dice "MISMO MODELO QUE DTV DE ALGODÓN". Para el
+      operador: pasarle a constructor-reglas la hoja de la base 53 y heredar acá.
+  - fecha: "2026-09-23"
+    tipo: anomalia
+    texto: >
+      24 filas traen U.M. "U." en vez de "Kg.", fuera del dominio {Kg., Tn.}. Se leen como
+      kilos por magnitud (de 5.400 a 27.900, igual que las "Kg."). Para qa-datos.
+  - fecha: "2026-09-23"
+    tipo: dato
+    texto: >
+      Diciembre concentra 127 de los 177 movimientos, y el destino dominante es Balcarce
+      (Buenos Aires), que es zona papera: el dato probable es papa semilla o papa de
+      almacenamiento que vuelve al sur, no consumo. Vale preguntárselo a JC antes de titular
+      ninguna vista.

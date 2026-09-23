@@ -40,6 +40,14 @@ def cargar_protocolo():
 
 
 def cargar_comunes(base):
+    """Los comunes de una base (`_comunes-base-9`) o de una FAMILIA (`_comunes-dtv-hortalizas`).
+
+    La familia aparecio con las DTV de hortalizas: tres bases (56, 57 y 75) que comparten mart,
+    adapter y modelo de analisis, y que por lo tanto comparten un solo archivo de comunes. Un
+    archivo por base seria el mismo texto tres veces y se desincronizaria al primer cambio.
+    """
+    if isinstance(base, str):
+        return cargar_yaml(os.path.join(DIR_MODELOS, "_comunes-%s.yaml" % base))
     return cargar_yaml(os.path.join(DIR_MODELOS, "_comunes-base-%d.yaml" % base))
 
 

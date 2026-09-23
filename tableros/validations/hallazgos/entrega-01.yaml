@@ -3,14 +3,19 @@ descripcion: Hallazgos de las validaciones. GENERADO por pipeline/validations.py
 entrega: entrega-01
 resumen:
   bases_ingeridas:
+  - 8
   - 9
   - 48
+  - 53
+  - 56
+  - 57
+  - 75
   - 85
-  filas_revisadas: 1120808
-  checks_corridos: 71
-  bloqueantes: 2
-  observaciones: 19
-  informativos: 15
+  filas_revisadas: 1469333
+  checks_corridos: 197
+  bloqueantes: 8
+  observaciones: 36
+  informativos: 27
 hallazgos:
 - check: totales-embebidos
   severidad: bloqueante
@@ -57,6 +62,99 @@ hallazgos:
   - 'Data stock SDE / CHOYA / Choya / cabezas / fila 270 del Excel: 41.989,24'
   propuesta: No publicar esa columna hasta saber que significa.
   pregunta_jc: Hay cantidades de cabezas con decimales. Es un promedio o un error?
+- check: unidades
+  severidad: bloqueante
+  base: 53
+  titulo: Unidades de medida que no estaban previstas
+  casos: 1
+  detalle: El archivo trae unidades distintas de las esperadas (Kg., Tn.). Si se suman sin convertir,
+    el total no significa nada.
+  ejemplos:
+  - 'U.: 231 filas del archivo (se leyeron con factor 1.0 a toneladas)'
+  propuesta: No publicar totales de peso hasta definir la conversion.
+  pregunta_jc: 'Aparecen estas unidades de medida: U.. A cuanto equivale cada una en kilos?'
+- check: valores-imposibles
+  severidad: bloqueante
+  base: 53
+  titulo: Valores de peso que no pueden existir
+  casos: 8
+  detalle: 'Son 8 filas, pero entre todas suman 111.277,86: el 6,58% de la base. Rangos definidos en validations/rangos.yaml.'
+  ejemplos:
+  - '53 PB 13 Sgo 23 / peso / fila 9652 del Excel: 21.000 (el maximo posible es 1.000)'
+  - '53 PB 13 Sgo 22 / peso / fila 17025 del Excel: 20.982,60 (el maximo posible es 1.000)'
+  - '53 PB 13 Sgo 21 / peso / fila 1559 del Excel: 15.318 (el maximo posible es 1.000)'
+  - '53 PB 13 Sgo 21 / peso / fila 16185 del Excel: 14.120 (el maximo posible es 1.000)'
+  - '53 PB 13 Sgo 22 / peso / fila 460 del Excel: 13.000 (el maximo posible es 1.000)'
+  - '53 PB 13 Sgo 22 / peso / fila 461 del Excel: 13.000 (el maximo posible es 1.000)'
+  - '53 PB 13 Sgo 23 / peso / fila 9527 del Excel: 12.820 (el maximo posible es 1.000)'
+  - '53 PB 13 Sgo 21 / peso / fila 1124 del Excel: 1.037,26 (el maximo posible es 1.000)'
+  propuesta: Dejar afuera del sitio todo numero que las incluya hasta que JC diga como leerlas.
+  pregunta_jc: Estas filas dan cantidades que no pueden existir. Como hay que leerlas?
+- check: unidades
+  severidad: bloqueante
+  base: 56
+  titulo: Unidades de medida que no estaban previstas
+  casos: 1
+  detalle: El archivo trae unidades distintas de las esperadas (Kg., Tn.). Si se suman sin convertir,
+    el total no significa nada.
+  ejemplos:
+  - 'U.: 7 filas del archivo (se leyeron con factor 0.001 a toneladas)'
+  propuesta: No publicar totales de peso hasta definir la conversion.
+  pregunta_jc: 'Aparecen estas unidades de medida: U.. A cuanto equivale cada una en kilos?'
+- check: unidades
+  severidad: bloqueante
+  base: 57
+  titulo: Unidades de medida que no estaban previstas
+  casos: 1
+  detalle: El archivo trae unidades distintas de las esperadas (Kg., Tn.). Si se suman sin convertir,
+    el total no significa nada.
+  ejemplos:
+  - 'U.: 1.088 filas del archivo (se leyeron con factor 0.001 a toneladas)'
+  propuesta: No publicar totales de peso hasta definir la conversion.
+  pregunta_jc: 'Aparecen estas unidades de medida: U.. A cuanto equivale cada una en kilos?'
+- check: valores-imposibles
+  severidad: bloqueante
+  base: 57
+  titulo: Valores de peso que no pueden existir
+  casos: 1
+  detalle: 'Son una sola fila, pero entre todas suman 1.102,50: el 0,64% de la base. Rangos definidos
+    en validations/rangos.yaml.'
+  ejemplos:
+  - 'Sgo 22 / peso / fila 2456 del Excel: 1.102,50 (el maximo posible es 1.000)'
+  propuesta: Dejar afuera del sitio todo numero que las incluya hasta que JC diga como leerlas.
+  pregunta_jc: Estas filas dan cantidades que no pueden existir. Como hay que leerlas?
+- check: unidades
+  severidad: bloqueante
+  base: 75
+  titulo: Unidades de medida que no estaban previstas
+  casos: 1
+  detalle: El archivo trae unidades distintas de las esperadas (Kg., Tn.). Si se suman sin convertir,
+    el total no significa nada.
+  ejemplos:
+  - 'U.: 24 filas del archivo (se leyeron con factor 0.001 a toneladas)'
+  propuesta: No publicar totales de peso hasta definir la conversion.
+  pregunta_jc: 'Aparecen estas unidades de medida: U.. A cuanto equivale cada una en kilos?'
+- check: cobertura-entrega
+  severidad: observacion
+  base: null
+  titulo: Archivos que llegaron sin estar en la lista de la entrega
+  casos: 1
+  detalle: 'Numeros de base: 8'
+  propuesta: Confirmar con JC si entran en esta entrega o quedan para la siguiente.
+- check: drift
+  severidad: observacion
+  base: 8
+  titulo: Cambio de formato respecto de lo declarado en el indice
+  casos: 1
+  detalle: 'Dos diferencias contra el índice de JC (configs/manifiesto-indice.yaml, base 8), las dos registradas
+    y ninguna corregida. (1) El índice la da por PROMETIDA PARA LA ENTREGA-02 y sin archivo recibido;
+    el archivo llegó igual con la entrega-01 y el pipeline ya lo baja de SharePoint en cada publicación.
+    El manifiesto del índice va a seguir listándola como "prometida-no-recibida" hasta que indexador-contexto
+    lo regenere: NO es un problema de datos. (2) El índice declara frecuencia MENSUAL y el archivo trae
+    observaciones DIARIAS (5.655 fechas distintas entre 2017 y 2026). El grano bueno es el del archivo;
+    el mensual se calcula. El rango sí coincide: el índice promete 2017-01-01 a 2026-04-30 y el archivo
+    va de 2017-01-02 a 2026-04-09.'
+  propuesta: 'No se corrige el archivo: el pipeline ya sabe leerlo como viene.'
 - check: agregado-vs-partes
   severidad: observacion
   base: 9
@@ -289,6 +387,250 @@ hallazgos:
   propuesta: Publicar igual, con nota al pie de que hay valores estimados.
   pregunta_jc: Hay lugares donde el mismo valor se repite exactamente todos los anos. Son estimaciones
     de la fuente?
+- check: drift
+  severidad: observacion
+  base: 53
+  titulo: Cambio de formato respecto de lo declarado en el indice
+  casos: 1
+  detalle: 'El perfil con el que se planificó la ingesta decía 3 hojas de datos (Sgo 23, 24 y 25), 53.512
+    filas y "NRO. DTV" en la segunda columna. El archivo trae CINCO hojas (Sgo 21 a Sgo 25), 102.380 filas
+    de detalle y en la segunda columna "mes", no el número de DTV. Además las hojas Sgo 21 y Sgo 22 titulan
+    la primera columna "FECHA " (con espacio) y las otras tres "FECHA EMISIÓN". Todo se resuelve en este
+    config; el Excel no se toca. El número de DTV no existe en esta base: `nro_dtv` queda nulo en las
+    102.380 filas.'
+  propuesta: 'No se corrige el archivo: el pipeline ya sabe leerlo como viene.'
+- check: unidades
+  severidad: observacion
+  base: 53
+  titulo: Cantidad por peso unitario no da el peso total
+  casos: 160
+  detalle: Son filas donde la multiplicacion no cierra ni directo ni cambiando de kilos a toneladas. Suele
+    significar que dos columnas de la planilla estan intercambiadas, o que el peso unitario quedo con
+    el total copiado adentro.
+  ejemplos:
+  - '53 PB 13 Sgo 24 / fila 14693 del Excel: 500 x 1 = 500, y el archivo declara 1'
+  - '53 PB 13 Sgo 24 / fila 3522 del Excel: 1 x 990 = 990, y el archivo declara 9,90'
+  - '53 PB 13 Sgo 23 / fila 18039 del Excel: 99 x 21,28 = 2.106,72, y el archivo declara 21,28'
+  - '53 PB 13 Sgo 23 / fila 5435 del Excel: 98 x 21,18 = 2.075,64, y el archivo declara 21,18'
+  - '53 PB 13 Sgo 23 / fila 17997 del Excel: 96 x 22,46 = 2.156,16, y el archivo declara 22,46'
+  - '53 PB 13 Sgo 25 / fila 36 del Excel: 38 x 1 = 38, y el archivo declara 1'
+  - '53 PB 13 Sgo 21 / fila 24354 del Excel: 29 x 1 = 29, y el archivo declara 1'
+  - '53 PB 13 Sgo 25 / fila 4465 del Excel: 18 x 46,67 = 840,06, y el archivo declara 46,67'
+  - '53 PB 13 Sgo 23 / fila 14198 del Excel: 15 x 1 = 15, y el archivo declara 1'
+  - '53 PB 13 Sgo 24 / fila 15602 del Excel: 7 x 2,55 = 17,85, y el archivo declara 1,40'
+  - '53 PB 13 Sgo 24 / fila 15601 del Excel: 7 x 2,48 = 17,36, y el archivo declara 1,40'
+  - '53 PB 13 Sgo 24 / fila 15600 del Excel: 8 x 2,46 = 19,68, y el archivo declara 1,60'
+  propuesta: Guiarse siempre por la columna de peso total, que es la que usa JC en su propio analisis,
+    y no recalcular nada.
+  pregunta_jc: En estas filas la cantidad por el peso unitario no da el peso total. Vale siempre el peso
+    total?
+- check: unidades
+  severidad: observacion
+  base: 53
+  titulo: Unidades de medida fuera de lo previsto, pero ya entendidas
+  casos: 1
+  detalle: 'No son las unidades previstas (Kg., Tn.), pero ya se verifico que significan y con que factor
+    se leen: Kg-Tn = el PESO TOTAL ya viene en toneladas y el PESO UNITARIO en kilos; se lee con factor
+    1 y la identidad cantidad x unitario cierra dividiendo por 1.000 en 8.873 de las 9.012 filas donde
+    aplica.'
+  ejemplos:
+  - 'Kg-Tn: 9.762 filas del archivo (se leyeron con factor 1.0 a toneladas)'
+  propuesta: 'Se publica: la lectura de estas unidades ya esta verificada y escrita en el config de la
+    base.'
+- check: valores-imposibles
+  severidad: observacion
+  base: 53
+  titulo: Cantidad y peso unitario con el mismo numero, y el total elevado al cuadrado
+  casos: 21
+  detalle: 'Filas donde la columna de cantidad de bultos y la de peso por bulto traen exactamente el mismo
+    numero, y por eso el peso total queda en ese numero multiplicado por si mismo: 15 y 15 dan 225 toneladas
+    en un solo viaje.'
+  ejemplos:
+  - '53 PB 13 Sgo 22 / fila 406 del Excel: 25 en las dos columnas, y el total queda en 625'
+  - '53 PB 13 Sgo 23 / fila 563 del Excel: 17 en las dos columnas, y el total queda en 289'
+  - '53 PB 13 Sgo 24 / fila 15863 del Excel: 16 en las dos columnas, y el total queda en 256'
+  - '53 PB 13 Sgo 24 / fila 15876 del Excel: 16 en las dos columnas, y el total queda en 256'
+  - '53 PB 13 Sgo 21 / fila 16893 del Excel: 15 en las dos columnas, y el total queda en 225'
+  - '53 PB 13 Sgo 21 / fila 16895 del Excel: 15 en las dos columnas, y el total queda en 225'
+  - '53 PB 13 Sgo 21 / fila 16900 del Excel: 15 en las dos columnas, y el total queda en 225'
+  - '53 PB 13 Sgo 21 / fila 17763 del Excel: 15 en las dos columnas, y el total queda en 225'
+  - '53 PB 13 Sgo 21 / fila 17765 del Excel: 15 en las dos columnas, y el total queda en 225'
+  - '53 PB 13 Sgo 21 / fila 17946 del Excel: 15 en las dos columnas, y el total queda en 225'
+  - '53 PB 13 Sgo 22 / fila 286 del Excel: 15 en las dos columnas, y el total queda en 225'
+  - '53 PB 13 Sgo 23 / fila 565 del Excel: 15 en las dos columnas, y el total queda en 225'
+  propuesta: 'Se publica sin tocar y se pregunta: cambiar el peso total seria corregir en silencio.'
+  pregunta_jc: 'En estas filas la cantidad de bultos y el peso de cada bulto son el mismo numero, y el
+    peso total queda en ese numero al cuadrado (15 y 15 dan 225 tn). Parece que el peso total se tipeo
+    en las dos columnas. Vale el numero chico?
+
+    '
+- check: valores-imposibles
+  severidad: observacion
+  base: 53
+  titulo: Valores de peso fuera del rango razonable
+  casos: 67
+  detalle: Rangos definidos en validations/rangos.yaml. Un valor fuera de rango no es necesariamente un
+    error, pero conviene mirarlo.
+  ejemplos:
+  - '53 PB 13 Sgo 21 / peso / fila 17438 del Excel: 700 (el maximo razonable es 45)'
+  - '53 PB 13 Sgo 22 / peso / fila 406 del Excel: 625 (el maximo razonable es 45)'
+  - '53 PB 13 Sgo 21 / peso / fila 14092 del Excel: 600 (el maximo razonable es 45)'
+  - '53 PB 13 Sgo 25 / peso / fila 13420 del Excel: 600 (el maximo razonable es 45)'
+  - '53 PB 13 Sgo 22 / peso / fila 20914 del Excel: 504 (el maximo razonable es 45)'
+  - '53 PB 13 Sgo 25 / peso / fila 14814 del Excel: 500 (el maximo razonable es 45)'
+  - '53 PB 13 Sgo 25 / peso / fila 16073 del Excel: 420 (el maximo razonable es 45)'
+  - '53 PB 13 Sgo 24 / peso / fila 7273 del Excel: 410 (el maximo razonable es 45)'
+  - '53 PB 13 Sgo 25 / peso / fila 15480 del Excel: 400 (el maximo razonable es 45)'
+  - '53 PB 13 Sgo 23 / peso / fila 563 del Excel: 289 (el maximo razonable es 45)'
+  - '53 PB 13 Sgo 24 / peso / fila 15863 del Excel: 256 (el maximo razonable es 45)'
+  - '53 PB 13 Sgo 24 / peso / fila 15876 del Excel: 256 (el maximo razonable es 45)'
+  pregunta_jc: Estos valores se van del rango habitual. Los das por buenos?
+- check: cobertura-temporal
+  severidad: observacion
+  base: 56
+  titulo: Meses sin ningun movimiento registrado
+  casos: 9
+  detalle: 'En estos meses el archivo no trae ni una declaracion. En una base de movimientos eso no es
+    un dato faltante: es un mes en el que no se movio nada. Lo importante es que el grafico dibuje el
+    cero y no una linea recta entre los meses de al lado.'
+  ejemplos:
+  - 2022-10
+  - 2022-11
+  - 2022-12
+  - 2023-01
+  - 2023-02
+  - 2024-01
+  - 2024-06
+  - 2024-12
+  - 2025-01
+  propuesta: Mostrarlos como cero, no como 'sin dato'.
+  pregunta_jc: En 2022-10, 2022-11, 2022-12, 2023-01, 2023-02, 2024-01 no figura ningun movimiento. Damos
+    por bueno que no hubo, o puede ser que falte la carga?
+- check: drift
+  severidad: observacion
+  base: 56
+  titulo: Cambio de formato respecto de lo declarado en el indice
+  casos: 1
+  detalle: 'En la posición donde las otras DTV traen "NRO. DTV" esta base trae "AÑO". El número de DTV
+    no existe en el archivo: `nro_dtv` queda nulo en las 635 filas, así que en esta base no se puede chequear
+    si una misma declaración aparece repetida. Se resuelve en el config; el Excel no se toca.'
+  propuesta: 'No se corrige el archivo: el pipeline ya sabe leerlo como viene.'
+- check: valores-imposibles
+  severidad: observacion
+  base: 56
+  titulo: Valores de peso fuera del rango razonable
+  casos: 2
+  detalle: Rangos definidos en validations/rangos.yaml. Un valor fuera de rango no es necesariamente un
+    error, pero conviene mirarlo.
+  ejemplos:
+  - 'Batata / peso / fila 2 del Excel: 299,70 (el maximo razonable es 45)'
+  - 'Batata / peso / fila 3 del Excel: 51 (el maximo razonable es 45)'
+  pregunta_jc: Estos valores se van del rango habitual. Los das por buenos?
+- check: cobertura-temporal
+  severidad: observacion
+  base: 57
+  titulo: Meses sin ningun movimiento registrado
+  casos: 1
+  detalle: 'En estos meses el archivo no trae ni una declaracion. En una base de movimientos eso no es
+    un dato faltante: es un mes en el que no se movio nada. Lo importante es que el grafico dibuje el
+    cero y no una linea recta entre los meses de al lado.'
+  ejemplos:
+  - 2025-02
+  propuesta: Mostrarlos como cero, no como 'sin dato'.
+  pregunta_jc: En 2025-02 no figura ningun movimiento. Damos por bueno que no hubo, o puede ser que falte
+    la carga?
+- check: drift
+  severidad: observacion
+  base: 57
+  titulo: Cambio de formato respecto de lo declarado en el indice
+  casos: 1
+  detalle: 'El header no está en la misma fila en las cinco hojas. "Sgo 25" lleva en la fila 1 un rótulo
+    suelto ("Cebolla Santiago 2025", en la columna 7) y el header en la 2. "Sgo 21" tiene la fila 1 completamente
+    vacía y el header también en la 2: esto último NO estaba en el perfil con el que se planificó la ingesta
+    y se descubrió al perfilar el archivo. Las otras tres tienen el header en la fila 1. Cada hoja declara
+    su `header_fila`.'
+  propuesta: 'No se corrige el archivo: el pipeline ya sabe leerlo como viene.'
+- check: duplicados
+  severidad: observacion
+  base: 57
+  titulo: Un mismo numero de documento aparece en mas de un renglon
+  casos: 6
+  detalle: El numero lo pone el organismo y tendria que identificar una sola declaracion. Aparece repetido
+    en 6 numeros.
+  ejemplos:
+  - '0008264619: 2 renglones'
+  - '0008904250: 2 renglones'
+  - '0010652778: 2 renglones'
+  - '0012652174: 2 renglones'
+  - '0012659864: 2 renglones'
+  - '0012689492: 2 renglones'
+  propuesta: 'Contar los movimientos por renglon y no por numero de documento, y no borrar ninguno: si
+    son dos partidas de un mismo envio, el peso de las dos es real.'
+  pregunta_jc: Hay numeros de declaracion que figuran en dos renglones, con cantidades distintas cada
+    uno. Son dos partidas del mismo envio o esta repetido?
+- check: valores-imposibles
+  severidad: observacion
+  base: 57
+  titulo: Cantidad y peso unitario con el mismo numero, y el total elevado al cuadrado
+  casos: 1
+  detalle: 'Filas donde la columna de cantidad de bultos y la de peso por bulto traen exactamente el mismo
+    numero, y por eso el peso total queda en ese numero multiplicado por si mismo: 15 y 15 dan 225 toneladas
+    en un solo viaje.'
+  ejemplos:
+  - 'Sgo 22 / fila 2456 del Excel: 1.050 en las dos columnas, y el total queda en 1.102.500'
+  propuesta: 'Se publica sin tocar y se pregunta: cambiar el peso total seria corregir en silencio.'
+  pregunta_jc: 'En estas filas la cantidad de bultos y el peso de cada bulto son el mismo numero, y el
+    peso total queda en ese numero al cuadrado (15 y 15 dan 225 tn). Parece que el peso total se tipeo
+    en las dos columnas. Vale el numero chico?
+
+    '
+- check: valores-imposibles
+  severidad: observacion
+  base: 57
+  titulo: Valores de peso fuera del rango razonable
+  casos: 8
+  detalle: Rangos definidos en validations/rangos.yaml. Un valor fuera de rango no es necesariamente un
+    error, pero conviene mirarlo.
+  ejemplos:
+  - 'Sgo 23 / peso / fila 251 del Excel: 320 (el maximo razonable es 45)'
+  - 'Sgo 23 / peso / fila 252 del Excel: 320 (el maximo razonable es 45)'
+  - 'Sgo 23 / peso / fila 298 del Excel: 300 (el maximo razonable es 45)'
+  - 'Sgo 23 / peso / fila 299 del Excel: 300 (el maximo razonable es 45)'
+  - 'Sgo 24 / peso / fila 2 del Excel: 208,80 (el maximo razonable es 45)'
+  - 'Sgo 23 / peso / fila 253 del Excel: 160 (el maximo razonable es 45)'
+  - 'Sgo 24 / peso / fila 3 del Excel: 117 (el maximo razonable es 45)'
+  - 'Sgo 23 / peso / fila 300 del Excel: 100 (el maximo razonable es 45)'
+  pregunta_jc: Estos valores se van del rango habitual. Los das por buenos?
+- check: cobertura-temporal
+  severidad: observacion
+  base: 75
+  titulo: Meses sin ningun movimiento registrado
+  casos: 9
+  detalle: 'En estos meses el archivo no trae ni una declaracion. En una base de movimientos eso no es
+    un dato faltante: es un mes en el que no se movio nada. Lo importante es que el grafico dibuje el
+    cero y no una linea recta entre los meses de al lado.'
+  ejemplos:
+  - 2021-10
+  - 2021-11
+  - 2022-10
+  - 2022-11
+  - 2023-10
+  - 2024-11
+  - 2025-09
+  - 2025-10
+  - 2025-11
+  propuesta: Mostrarlos como cero, no como 'sin dato'.
+  pregunta_jc: En 2021-10, 2021-11, 2022-10, 2022-11, 2023-10, 2024-11 no figura ningun movimiento. Damos
+    por bueno que no hubo, o puede ser que falte la carga?
+- check: drift
+  severidad: observacion
+  base: 75
+  titulo: Cambio de formato respecto de lo declarado en el indice
+  casos: 1
+  detalle: 'La hoja "Data" tiene la fila 1 completamente vacía y el header en la fila 2. El perfil con
+    el que se planificó la ingesta la daba con header en la fila 1. Se resuelve con `header_fila: 2`;
+    el Excel no se toca.'
+  propuesta: 'No se corrige el archivo: el pipeline ya sabe leerlo como viene.'
 - check: agregado-vs-partes
   severidad: observacion
   base: 85
@@ -355,11 +697,26 @@ hallazgos:
   severidad: informativo
   base: null
   titulo: Bases recibidas que todavia no se procesaron
-  casos: 24
+  casos: 20
   detalle: 'Llegaron completas y estan guardadas, pero todavia no se leyeron. Numeros de base: 30, 33,
-    38, 53, 56, 57, 75, 92, 93, 100, 101, 110, 111, 132, 134, 135, 136, 137, 144, 145, 151, 196, 197,
-    198'
+    38, 92, 93, 100, 101, 110, 111, 132, 134, 135, 136, 137, 144, 145, 151, 196, 197, 198'
   propuesta: Se procesan en las proximas tandas. No es un problema del archivo.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 8
+  titulo: Hojas del archivo que no se leyeron
+  casos: 2
+  ejemplos:
+  - 'Modelo analisis: Especificación de negocio escrita por JC, 6 filas. Define los cuatro niveles de
+    filtrado del panel de precios (Hortalizas/Frutas, Especie, rango de meses "sólo donde aparece la especie
+    para evitar resultados vacíos", Variedad con opción "todas"), la salida ("Genera tabla y gráficos
+    de líneas") y el alcance diferenciado de la INTRANET (ahí también se consultan VARIEDAD y TAMAÑO).
+    No son datos: va a constructor-reglas para convertirse en specs/modelos/.'
+  - 'Zana Mes: Ejemplo trabajado por JC: 43 valores de precio/kg mensual de Zanahoria Chantenay agrupados
+    por año, de julio 2017 a noviembre 2025, tipeados a mano (las celdas no tienen fórmula ni tabla dinámica
+    detrás). NO es dato de la fuente y no se ingiere; se usó como control de la agregación. Ver la nota
+    `control` al pie: la verificación NO cerró y quedó una pregunta abierta para JC.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
 - check: agregado-vs-partes
   severidad: informativo
   base: 9
@@ -489,6 +846,145 @@ hallazgos:
   titulo: Totales de provincia que si cierran contra la suma de departamentos
   casos: 154
   detalle: De 154 comparaciones, 154 cierran dentro del 0,50%.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 53
+  titulo: Hojas del archivo que no se leyeron
+  casos: 2
+  ejemplos:
+  - 'Modelo analisis: Especificación de negocio escrita por JC, y la más completa de todo el repo para
+    esta familia: define el modelo de TODAS las DTV ("ESTO ES APLICABLE A TODOS LOS PRODUCTOS POR DTV").
+    Pide convertir los kg a toneladas, unidad temporal mes y año, unidades geográficas "a) Total provincia
+    (sumatoria) b) Total x departamento", visualización por producto con mapa y selección desde una lista,
+    total provincial abajo, selector de año y variaciones. Trae además tablas 2021 ya calculadas a mano
+    que sirven de control de la ingesta: ver nota `control`. No son datos: va a constructor-reglas para
+    convertirse en specs/modelos/base-53-*.yaml.'
+  - 'Hoja1: Hoja vacía (1 fila x 1 columna).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-temporal
+  severidad: informativo
+  base: 53
+  titulo: Periodos que trae el archivo
+  casos: 60
+  detalle: De 2021-01 a 2025-12.
+  ejemplos:
+  - '2021-01: 45 filas'
+  - '2021-02: 321 filas'
+  - '2021-03: 1.584 filas'
+  - '2021-04: 4.902 filas'
+  - '2021-05: 9.987 filas'
+  - '2021-06: 14.535 filas'
+  - '2021-07: 20.556 filas'
+  - '2021-08: 13.689 filas'
+  - '2021-09: 5.883 filas'
+  - '2021-10: 1.935 filas'
+  - '2021-11: 861 filas'
+  - '2021-12: 525 filas'
+- check: total-al-pie
+  severidad: informativo
+  base: 53
+  titulo: Columnas donde la fila de totales del pie si cierra
+  casos: 5
+  detalle: De 5 columnas comparadas, 5 coinciden con la suma del detalle.
+- check: unidades
+  severidad: informativo
+  base: 53
+  titulo: Filas donde la cuenta cierra recien al pasar de kilos a toneladas
+  casos: 8873
+  detalle: En 8.873 filas del archivo la cantidad por el peso unitario da 1.000 veces el peso total. Es
+    la conversion que ya estaba prevista y documentada (el peso unitario viene en kilos y el total en
+    toneladas), no un error.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 56
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo analisis: Hoja de especificación de JC. Acá solo dice "MISMO MODELO QUE DTV DE ALGODÓN": la
+    regla completa está en la hoja Modelo analisis de la base 53. Va a constructor-reglas como herencia
+    de spec (`igual_que: base-53`), no como datos.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-temporal
+  severidad: informativo
+  base: 56
+  titulo: Periodos que trae el archivo
+  casos: 51
+  detalle: De 2021-01 a 2025-12.
+  ejemplos:
+  - '2021-01: 12 filas'
+  - '2021-02: 48 filas'
+  - '2021-03: 27 filas'
+  - '2021-04: 48 filas'
+  - '2021-05: 48 filas'
+  - '2021-06: 42 filas'
+  - '2021-07: 48 filas'
+  - '2021-08: 57 filas'
+  - '2021-09: 90 filas'
+  - '2021-10: 15 filas'
+  - '2021-11: 45 filas'
+  - '2021-12: 15 filas'
+- check: cobertura-hojas
+  severidad: informativo
+  base: 57
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Analisis: Hoja de especificación de JC (acá escrita "Modelo Analisis", con A mayúscula y sin
+    tilde). Solo dice "MISMO MODELO QUE DTV DE ALGODÓN": la regla completa está en la base 53. Va a constructor-reglas
+    como herencia de spec, no como datos.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-temporal
+  severidad: informativo
+  base: 57
+  titulo: Periodos que trae el archivo
+  casos: 59
+  detalle: De 2021-01 a 2025-12.
+  ejemplos:
+  - '2021-01: 21 filas'
+  - '2021-02: 39 filas'
+  - '2021-03: 102 filas'
+  - '2021-04: 138 filas'
+  - '2021-05: 270 filas'
+  - '2021-06: 255 filas'
+  - '2021-07: 285 filas'
+  - '2021-08: 258 filas'
+  - '2021-09: 1.332 filas'
+  - '2021-10: 1.944 filas'
+  - '2021-11: 204 filas'
+  - '2021-12: 51 filas'
+- check: total-al-pie
+  severidad: informativo
+  base: 57
+  titulo: Columnas donde la fila de totales del pie si cierra
+  casos: 1
+  detalle: De 1 columnas comparadas, 1 coinciden con la suma del detalle.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 75
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo analisis: Hoja de especificación de JC. Solo dice "MISMO MODELO QUE DTV DE ALGODÓN": la regla
+    completa está en la base 53. Va a constructor-reglas como herencia de spec.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-temporal
+  severidad: informativo
+  base: 75
+  titulo: Periodos que trae el archivo
+  casos: 11
+  detalle: De 2021-09 a 2025-12.
+  ejemplos:
+  - '2021-09: 63 filas'
+  - '2021-12: 45 filas'
+  - '2022-09: 9 filas'
+  - '2022-12: 69 filas'
+  - '2023-09: 3 filas'
+  - '2023-11: 42 filas'
+  - '2023-12: 72 filas'
+  - '2024-09: 9 filas'
+  - '2024-10: 24 filas'
+  - '2024-12: 162 filas'
+  - '2025-12: 33 filas'
 - check: agregado-vs-partes
   severidad: informativo
   base: 85

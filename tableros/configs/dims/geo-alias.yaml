@@ -36,6 +36,25 @@ provincia:
   "MISIONES": 54
   "SAN LUIS": 74
   "SANTA FE": 82
+  # Sumadas el 2026-09-23 al ingerir la familia DTV (bases 53, 56, 57 y 75): son las
+  # provincias a las que viaja producto vegetal santiagueño y que todavía no aparecían
+  # como contraparte de ningún movimiento. Los códigos son los de provincia del INDEC
+  # (codificación oficial de 2 dígitos), no una propuesta del agente, así que no llevan
+  # verificar. De estas tampoco se cargan departamentos: la base las trae por nombre de
+  # partido y alcanza con agregar los flujos a nivel provincia.
+  "CIUDAD AUTONOMA DE BUENOS AIRES": 2
+  "CHUBUT": 26
+  "MENDOZA": 50
+  "NEUQUEN": 58
+  "RIO NEGRO": 62
+  "SAN JUAN": 70
+  "SANTA CRUZ": 78
+  "TIERRA DEL FUEGO": 94
+  # Sumada el 2026-09-23 al ingerir la base 8 (precios MCBA). No es una provincia nueva:
+  # es la abreviatura con la que el Mercado Central escribe la PROCEDENCIA de la
+  # mercadería ("SGO.EST."). El config de la base la traduce a este nombre canónico
+  # (`geo.procedencias`), así que acá no hace falta una entrada nueva; queda anotado
+  # dónde está esa traducción para no buscarla dos veces.
 
 # Sembrado el 2026-07-30 desde la base 9 (cultivos extensivos), que trae idProvincia e
 # idDepartamento del propio MAGyP. Nombres tal cual vienen en la fuente: en mayúsculas y
@@ -129,5 +148,14 @@ agregados:
   "Total provincia": provincia
   "Total pais": pais
 
+# Etiquetas con las que la fuente dice "no se el lugar". NO son departamentos y no se les
+# inventa un codigo: el adapter les deja geo_id nulo, marca la fila con geo_sin_dato=true
+# y la conserva entera (se agrega a nivel provincia). Cada base que las trae las declara
+# en `geo.sin_dato` de su config.
+sin_dato:
+  - "S/D"      # base 53 (DTV algodón): 2.013 movimientos sin departamento de origen
+
 alias_pendientes: []  # nombres vistos sin match, con propuesta y verificar: true
-                      # (la base 9 no genero ninguno: trae los ids INDEC en el archivo)
+                      # (la base 9 no genero ninguno: trae los ids INDEC en el archivo;
+                      #  la familia DTV tampoco: los 22 departamentos que nombra ya
+                      #  estaban cargados por las bases 9 y 85)

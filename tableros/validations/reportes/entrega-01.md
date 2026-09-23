@@ -1,10 +1,15 @@
 # Pivotal · Control de calidad de la 1ra entrega
 
-**Entrega:** entrega-01 · **Fecha del control:** 5 de agosto de 2026 · **Preparado para:** Juan Carlos Antuña
+**Entrega:** entrega-01 · **Preparado para:** Juan Carlos Antuña
+**Fechas del control:** 5 de agosto de 2026 (bases 9, 85 y 48) · **23 de septiembre de 2026** (bases 53, 56, 57 y 75, las cuatro de DTV)
+
+> **Lo nuevo de esta vuelta, en un párrafo.** Entraron las cuatro bases de DTV: algodón, cebolla, batata y papa. Son 114.284 movimientos y 1.876.827 toneladas de producto vegetal. La lectura del algodón está confirmada contra tus propios números de 2021, que dan idénticos hasta el quinto decimal y también departamento por departamento. Hay **una sola cosa que necesitamos que contestes antes de mostrar el dato**: siete declaraciones de algodón que dan camiones de 13.000 a 21.000 toneladas (punto 28). Por esas siete, **dejamos fuera del sitio el peso en toneladas de los años 2021, 2022 y 2023 del algodón**; todo lo demás de las cuatro bases se publica. Y volvimos a correr el control completo sobre las tres bases anteriores: dan exactamente lo mismo que en agosto, no cambió nada.
 
 ---
 
 ## Resumen en tres líneas
+
+*(De la primera vuelta, agosto de 2026.)*
 
 Llegaron las 27 bases prometidas, ninguna faltó. De esas 27 ya procesamos tres: **9 · Cultivos extensivos**, **85 · Movimientos de hacienda bovina (DTE)** y, la última en entrar, **48 · Stock bovino por departamento**. Las otras 24 llegaron completas y están guardadas, pero todavía no las leímos: van en las próximas tandas.
 
@@ -14,14 +19,20 @@ Las tres están **sanas en lo fundamental**. En la 9 los totales de provincia ci
 
 ## Estado por base
 
+*Actualizado al 23 de septiembre de 2026, con las cuatro bases de DTV ya procesadas.*
+
 | | Cantidad | Cuáles |
 |---|---|---|
 | Bases sin ninguna observación | 0 | — |
-| Bases con observaciones (se publican igual) | 3 | 9 · Cultivos extensivos · 85 · DTE bovinos · 48 · Stock bovino |
-| Bases bloqueadas (no salen al sitio) | 0 | — |
-| Bases recibidas todavía sin procesar | 24 | 30, 33, 38, 53, 56, 57, 75, 92, 93, 100, 101, 110, 111, 132, 134, 135, 136, 137, 144, 145, 151, 196, 197, 198 |
+| Bases con observaciones (se publican enteras) | 5 | 9 · Cultivos extensivos · 85 · DTE bovinos · 48 · Stock bovino · 57 · DTV cebolla · 56 · DTV batata |
+| Bases que se publican con un recorte afuera | 2 | 9 · Cultivos extensivos (campañas 2000/01 y 2013/14) · **53 · DTV algodón (el peso en toneladas de 2021, 2022 y 2023)** |
+| Bases bloqueadas enteras (no salen al sitio) | 0 | — |
+| Bases nuevas de esta vuelta | 4 | 53 · DTV algodón · 56 · DTV batata · 57 · DTV cebolla · 75 · DTV papa |
+| Bases recibidas todavía sin procesar | 20 | 30, 33, 38, 92, 93, 100, 101, 110, 111, 132, 134, 135, 136, 137, 144, 145, 151, 196, 197, 198 |
 
-Las 24 pendientes **no son un problema**: los archivos llegaron bien, simplemente todavía no les armamos la receta de lectura. No hace falta que mandes nada de nuevo.
+Las 20 pendientes **no son un problema**: los archivos llegaron bien, simplemente todavía no les armamos la receta de lectura. No hace falta que mandes nada de nuevo.
+
+Las tres listas cierran: las 27 bases que tu índice marcaba para esta entrega son las 27 que llegaron, y las 7 que ya tienen receta de lectura son exactamente las 7 que están publicadas. No falta ni sobra ningún archivo.
 
 ## Lo que sí dio bien (para que quede dicho)
 
@@ -384,6 +395,235 @@ Queda una decisión que no es nuestra: esas 18 bases de Intranet **hoy no se mue
 
 ---
 
+# Segunda tanda: las cuatro bases de DTV (algodón, batata, cebolla y papa)
+
+*Control hecho el 23 de septiembre de 2026 sobre las cuatro bases nuevas. Las tres anteriores (9, 48 y 85) se volvieron a correr enteras y dan **exactamente lo mismo** que en agosto: mismos totales, mismos hallazgos, ni uno más ni uno menos. No cambió nada en ellas.*
+
+Estas cuatro bases son todas lo mismo: cada fila es **una DTV**, o sea la declaración que SENASA emite cuando un camión saca producto de un campo o de una planta. Fecha, de qué departamento sale, a qué provincia y partido va, qué producto, cuántos bultos y cuánto pesa. No hay nada calculado ni resumido: es el movimiento crudo, uno por uno.
+
+| Base | Movimientos | Peso movido | Años | Departamentos de origen |
+|---|---|---|---|---|
+| 53 · Algodón | 102.380 | 1.690.821 tn | 2021 a 2025 | 21 de 27, más un "S/D" |
+| 57 · Cebolla | 11.092 | 173.050 tn | 2021 a 2025 | 7 de 27 |
+| 56 · Batata | 635 | 8.136 tn | 2021 a 2025 | 6 de 27 |
+| 75 · Papa | 177 | 4.820 tn | 2021 a 2025, solo de septiembre a diciembre | 4 de 27 |
+
+## El mejor control que tuvimos hasta ahora
+
+Antes de las anomalías, lo que dio bien, porque esta vez es lo más fuerte de toda la entrega:
+
+- **Tus números de 2021 y los nuestros son el mismo número, hasta el último decimal.** En tu hoja "Modelo analisis" de la base 53 tenías calculados los totales de 2021 por producto. Leímos las cinco hojas del Excel, convertimos las unidades y sumamos por nuestra cuenta. Da: **algodón en bruto 324.969,726 tn**, **grano 66.291,20479 tn**, **semilla 10.004,888 tn** y **desperdicios 5.472,80201 tn**. Idénticos a los tuyos, incluidos los cinco decimales del grano.
+- **Y también coincide departamento por departamento.** Tu ranking de algodón en bruto 2021 por departamento de origen tiene 18 filas. Las comparamos una por una contra lo que nos da a nosotros: **las 18 dan exacto**, incluida la fila "S/D" con 6.691 tn.
+- **Las filas de totales del pie cierran.** Las cinco hojas de la 53 traen abajo de todo un total del peso. Cada una da exactamente la suma del detalle de su propia hoja: 406.738,621 / 409.249,534 / 333.356,403 / 252.185,831 / 289.290,961 tn. Lo mismo la hoja "Sgo 25" de cebolla, que dice 1.427.941 bultos y el detalle suma 1.427.941.
+- **Se cayó la sospecha de copiar y pegar en cebolla.** En la auditoría de julio habíamos anotado que las hojas de 2022, 2023 y 2024 de cebolla parecían tener 2.865 filas exactas las tres, lo que olía a que una se había copiado sobre la otra. **No es así.** Esas 2.865 son un rastro de formato que el Excel arrastra, no datos. Las filas cargadas de verdad son distintas en cada hoja: 2021 tiene 1.633, 2022 tiene 2.576, 2023 tiene 2.248, 2024 tiene 2.864 y 2025 tiene 1.771. Además comparamos el contenido completo de cada año contra el de los otros, fila por fila, y no hay dos años iguales. **Queda cerrado.**
+- **No hay una sola declaración repetida** en las cuatro bases, ni valores negativos, ni un movimiento contado dos veces.
+
+## Lo que NO es un problema, para que no nos lo preguntes
+
+Tres cosas que a primera vista parecen faltantes y no lo son. Las dejamos escritas para que el control no las vuelva a levantar en cada entrega:
+
+- **La papa solo tiene de septiembre a diciembre.** Las 177 declaraciones caen todas en esos cuatro meses. Es así en la fuente: tu propio índice la titula "DTV - Papa (septiembre a diciembre)". La consecuencia para el tablero sí es dura y va al pie de cada cuadro: **ninguna vista puede llamar "total del año" a lo que suma esta base**.
+- **Que falten departamentos es el dato, no un error.** Solo hay DTV donde hubo movimiento registrado. El algodón sale de 21 departamentos, la cebolla de 7, la batata de 6 y la papa de 4. En el mapa, los que no aparecen van en gris con la leyenda "sin movimientos registrados", nunca en cero y nunca como si nos faltara el dato.
+- **El "S/D" del algodón se conserva tal cual.** Son 2.013 movimientos (21.433 tn, el 1,3% de la base) donde el campo "partido origen" dice "S/D". No le inventamos un departamento: suman al total de la provincia y no pintan ningún departamento del mapa. Es exactamente lo que hacés vos en tu hoja de análisis, donde "S/D" aparece como una fila más del ranking.
+
+---
+
+# Base 53 · DTV de algodón (SENASA)
+
+Archivo: `53 - DTV Algodon SDE.xlsx`. Leímos las cinco hojas de datos (Sgo 21 a Sgo 25), 102.380 movimientos. No leímos "Modelo analisis" (son tus instrucciones, van al armado de las vistas) ni "Hoja1" (está vacía).
+
+## 28. Siete camiones de 13.000 a 21.000 toneladas · LA MÁS IMPORTANTE
+
+**Qué se ve.** La planilla trae una columna de unidad de medida que casi siempre dice "Tn." o "Kg-Tn". En 231 filas dice **"U."**, que no sabemos qué significa. En la mayoría no molesta, porque son movimientos chicos. Pero hay **siete** que, leídas en toneladas, dan esto:
+
+| Hoja | Fila del Excel | Producto | Lo que dice la planilla | Peso que queda |
+|---|---|---|---|---|
+| Sgo 23 | 9.652 | Algodón | 1 × 21.000 | 21.000 tn |
+| Sgo 22 | 17.025 | Algodón, semilla | 700 × 29,98 | 20.982,6 tn |
+| Sgo 21 | 1.559 | Algodón | 6 × 2.553 | 15.318 tn |
+| Sgo 21 | 16.185 | Algodón | 1 × 14.120 | 14.120 tn |
+| Sgo 22 | 460 | Algodón | 1 × 13.000 | 13.000 tn |
+| Sgo 22 | 461 | Algodón | 1 × 13.000 | 13.000 tn |
+| Sgo 23 | 9.527 | Algodón | 12.820 × 1 | 12.820 tn |
+
+Un camión no lleva 21.000 toneladas: eso es carga de un buque de ultramar. Y no son siete casos perdidos en el montón: **entre los siete mueven 110.241 toneladas, el 6,5% de todo el peso de la base**.
+
+**Por qué llama la atención, y por qué es la pregunta número uno.** Hay una explicación que encaja perfecto: que en esas filas el peso esté anotado **en kilos y no en toneladas**. Fijate lo que queda si se dividen por mil:
+
+- 21.000 → **21 tn**: un camión lleno.
+- 700 bolsas de 29,98 kg → **20,98 tn**: setecientas bolsas de 30 kilos. Otro camión lleno.
+- 14.120 → **14,12 tn**. 13.000 → **13 tn**. 12.820 → **12,82 tn**: camiones a media carga.
+
+Las siete, sin excepción, pasan de "imposible" a "exactamente un camión". Y hay un dato más que refuerza la idea: en las otras tres bases de la familia (cebolla, batata y papa) **ese mismo código "U." ya se está leyendo como kilos**, porque ahí las cuentas cierran así. O sea que hoy el mismo código se está interpretando de dos maneras distintas según la base.
+
+Lo que frenó la corrección es que **corregir estas siete filas rompe el control contra tus totales calculados a mano**: el algodón en bruto de 2021 dejaría de dar 324.969,726 tn.
+
+**Nuestra recomendación, concreta.** Creemos que **ese control ya cumplió su función y no debería frenar la corrección**, por lo siguiente: tus totales salen de sumar la misma columna del mismo Excel. Lo que prueban es que **leemos tu archivo igual que vos**, y lo prueban muy bien (coinciden los cuatro productos y los 18 departamentos). Lo que no pueden probar, porque ninguna suma puede, es si **el archivo de SENASA trae un error de unidad adentro**. Son dos preguntas distintas y necesitan dos respuestas distintas.
+
+En concreto proponemos:
+
+1. **Leer las siete filas en kilos**, como ya se hace en cebolla, batata y papa, dejando escrito el criterio en la receta de lectura de la base. Es un cambio de una línea y es reversible.
+2. **Congelar tu control de 2021 tal como está**, contra la columna cruda del Excel, que queda guardada intacta. Así seguimos verificando en cada entrega que leemos bien el archivo, y ese número no se toca nunca más.
+3. **Mostrar el número corregido en el sitio**, con la aclaración al pie de que siete declaraciones vinieron con el peso en kilos y se convirtieron.
+
+**Por qué no podemos simplemente publicarlo y seguir.** Porque el error no está repartido parejo: cae en 2021, 2022 y 2023, y no toca 2024 ni 2025. Mirá lo que le hace a la historia que va a contar el tablero:
+
+| Año | Peso publicado hoy | Peso si las 7 son kilos | Cuánto cambia |
+|---|---|---|---|
+| 2021 | 406.739 tn | 377.330 tn | −7,2% |
+| 2022 | 409.250 tn | 362.314 tn | −11,5% |
+| 2023 | 333.356 tn | 299.570 tn | −10,1% |
+| 2024 | 252.186 tn | 252.186 tn | igual |
+| 2025 | 289.291 tn | 289.291 tn | igual |
+
+Con los números de hoy, **2022 aparece como un año que creció 0,6% sobre 2021**. Con las siete filas leídas en kilos, **2022 cayó 4%**. La flecha cambia de dirección. Eso ya no es un detalle técnico: es el titular del tablero.
+
+**Qué decidimos mientras tanto.** La base 53 **se publica**, con el mapa, los destinos, la cantidad de movimientos y la apertura por producto, que ninguna de las siete filas afecta. Pero **dejamos fuera del sitio los totales en toneladas de 2021, 2022 y 2023** y la comparación entre años, hasta que contestes. 2024 y 2025 salen completos, peso incluido. Si Francisco prefiere publicar los cinco años igual con la aclaración al pie, es una decisión suya y la implementamos.
+
+**Pregunta para vos.** En el archivo de SENASA hay siete declaraciones con unidad "U." que, leídas en toneladas, dan camiones de 13.000 a 21.000 toneladas. Leídas en kilos dan de 13 a 21 toneladas, o sea un camión normal. ¿Confirmás que en esas filas el peso está en kilos?
+
+## 29. La unidad de medida de SENASA no es confiable en ninguna de las cuatro bases
+
+**Qué se ve.** La columna de unidad de medida tendría que decir siempre "Kg." o "Tn.". No es lo que pasa:
+
+| Base | Unidad rara | Declaraciones | Cómo la estamos leyendo |
+|---|---|---|---|
+| 53 · Algodón | `Kg-Tn` | 9.762 | El peso total ya viene en toneladas. **Verificado y entendido.** |
+| 53 · Algodón | `U.` | 231 | Como toneladas. **Es lo del punto 28.** |
+| 57 · Cebolla | `U.` | 1.088 | Como kilos |
+| 75 · Papa | `U.` | 24 | Como kilos |
+| 56 · Batata | `U.` | 7 | Como kilos |
+
+En total son **1.350 declaraciones** con unidad "U.", repartidas en las cuatro bases. (En la anotación de la ingesta figuraban 1.326: se habían contado tres bases y faltaban las 24 de papa. El número bueno es 1.350.)
+
+**Por qué llama la atención.** `Kg-Tn` no es una unidad, es una etiqueta que alguien escribió para avisar "acá hay una mezcla". La tenemos entendida y verificada, así que no molesta. `U.` sí molesta, porque no dice nada: puede ser kilos, puede ser bultos, puede ser el campo que quedó sin completar.
+
+**Qué decidimos mientras tanto.** Dejamos cada base como está y lo escribimos acá. En cebolla, batata y papa la lectura en kilos da magnitudes normales y las cuentas cierran al 100%, así que **esas tres se publican sin recortes**. El único caso donde la duda mueve un número grande es el algodón (punto 28).
+
+**Pregunta para vos.** En las planillas de SENASA aparece la unidad "U." en 1.350 declaraciones. ¿Sabés qué significa? ¿Es "unidades" de bulto, o es lo que queda cuando el operador no completa el campo?
+
+## 30. Ciento sesenta filas donde cantidad por peso unitario no da el peso total
+
+**Qué se ve.** En la planilla hay tres columnas que tendrían que multiplicarse entre sí: CANT. (cuántos bultos), PESO UNITARIO (cuánto pesa cada uno) y PESO TOTAL. Revisamos las 102.380 filas:
+
+- En **93.347** la cuenta cierra directo.
+- En **8.873** cierra dividiendo por mil, porque el unitario viene en kilos y el total en toneladas. Está previsto y documentado: no es un error.
+- En **160** no cierra de ninguna de las dos formas.
+
+De esas 160, hay **139** con unidad `Kg-Tn` donde el peso unitario trae, en realidad, el peso total ya copiado adentro (por ejemplo, 99 fardos "de 21,28 tn cada uno" con un total de 21,28 tn: el unitario es el total). Y **21** con unidad `Tn.`, todas en la hoja de 2024.
+
+**Una corrección a lo que nos había quedado anotado**: esas 21 no son todas "redondeos de alrededor del 1%". Solo siete lo son. Las otras catorce se van bastante más: hay una de 6 × 2,48 declarada como 1,446 (se va nueve veces) y otra de 1 × 11,1 declarada como 1,446 (seis veces).
+
+**Por qué llama la atención.** Poco, la verdad: entre las 160 mueven **887 toneladas sobre 1.690.821**, o sea el 0,05% de la base. No mueven ningún número del tablero. Importa solo si alguien abre una declaración suelta y hace la cuenta a mano.
+
+**Qué decidimos mientras tanto.** **Manda siempre la columna PESO TOTAL**, que es la que usás vos en tu propio análisis y la única que reproduce tus totales de control. No recalculamos nada. **La base se publica sin recortes por este punto.**
+
+**Pregunta para vos.** Cuando la cantidad por el peso unitario no da el peso total, ¿confirmás que hay que quedarse siempre con el peso total?
+
+## 31. Filas donde la cantidad y el peso de cada bulto son el mismo número
+
+**Qué se ve.** Esto no venía anotado: lo encontramos nosotros. Hay **21 filas** en algodón y **1** en cebolla donde la columna de cantidad de bultos y la de peso por bulto traen exactamente el mismo número, y entonces el peso total queda en ese número multiplicado por sí mismo:
+
+- 25 bultos × 25 tn cada uno = **625 tn** en un viaje (hoja Sgo 22, fila 406).
+- 17 × 17 = **289 tn**. 16 × 16 = **256 tn**. Y quince filas más con 15 × 15 = **225 tn**.
+- En cebolla: 1.050 × 1.050 = **1.102 tn** en una sola declaración (hoja Sgo 22, fila 2.456).
+
+**Por qué llama la atención.** El patrón es demasiado prolijo para ser casualidad: parece que el peso total se tipeó en las dos columnas y la planilla lo elevó al cuadrado. Lo más probable es que el viaje real sean 15 toneladas, no 225. Entre las 21 del algodón suman **4.501 tn** (el 0,27% de la base) y la de cebolla sola es el **0,64%** de la suya.
+
+**Qué decidimos mientras tanto.** No tocamos nada: cambiar el peso sería corregir en silencio. **Las dos bases se publican.** Dejamos marcada la fila de cebolla, porque siendo una sola declaración de 1.102 tn va a asomar como una barra rara en cualquier ranking de esa base.
+
+**Pregunta para vos.** Hay filas donde la cantidad de bultos y el peso de cada bulto son el mismo número (15 y 15, 25 y 25) y el total queda en 225 o 625 toneladas. ¿Es un error de tipeo y vale el número chico?
+
+## 32. Movimientos más pesados de lo que entra en un camión
+
+**Qué se ve.** Dejando afuera los siete del punto 28, quedan **67 declaraciones de algodón** que superan las 45 toneladas, que es lo máximo que puede llevar un bitrén cargado. Van de 46 a 700 toneladas. También hay 8 en cebolla (de 100 a 320 tn) y 2 en batata (51 y 299,7 tn).
+
+**Por qué llama la atención.** Buena parte se explica por el punto 31. El resto pueden ser declaraciones que amparan varios viajes de la misma partida, que es una práctica habitual, o errores de tipeo sueltos.
+
+**Qué decidimos mientras tanto.** Se publican tal cual: son el 0,4% del peso de la base y no mueven ningún total. Lo anotamos para dejar el criterio escrito: de ahora en más el control avisa cuando una declaración pasa las 45 toneladas y bloquea cuando pasa las 1.000.
+
+**Pregunta para vos.** ¿Una DTV puede amparar más de un viaje de camión? Nos sirve para saber si 200 toneladas en una declaración es normal o es un error.
+
+## 33. La fecha de vencimiento llega mitad fecha y mitad número
+
+**Qué se ve.** En las hojas de 2021 y 2022 la columna FECHA VENCIMIENTO viene mezclada: **8.536 celdas** (4.775 en 2021 y 3.761 en 2022) llegan como un número suelto en vez de como una fecha. Es la forma en que Excel guarda las fechas por dentro: el 44434 es, en realidad, el 11 de agosto de 2021.
+
+**Por qué llama la atención.** Casi nada. Esa columna no se usa en ninguna vista de tu modelo, así que la dejamos mapeada y no la cargamos. La verificamos igual y podemos decir algo tranquilizador: los números **se decodifican perfecto**, cada uno cae en el año que le corresponde y el vencimiento queda entre 5 y 8 días después de la emisión, igual que en las fechas bien cargadas. Si algún día hace falta, se recupera sin problema.
+
+**Qué decidimos mientras tanto.** **La base se publica.** La columna no entra al sitio.
+
+**Pregunta para vos.** Ninguna. Te lo contamos para que sepas que está visto.
+
+## 34. El archivo trae más hojas y otras columnas de las que decía el índice
+
+**Qué se ve.** La planificación de la ingesta esperaba 3 hojas de datos y 53.512 filas, con el número de DTV en la segunda columna. El archivo trae **cinco hojas** (2021 a 2025), **102.380 filas** y en la segunda columna dice "mes". Además, las hojas de 2021 y 2022 titulan la primera columna "FECHA " (con un espacio al final) y las otras tres "FECHA EMISIÓN".
+
+**Por qué llama la atención.** No llama: cambió el formato del archivo respecto de lo que teníamos declarado, nada más. Llegó **el doble de dato del esperado**, que es una buena noticia.
+
+**Qué decidimos mientras tanto.** Está resuelto del lado nuestro: la receta de lectura contempla las cinco hojas y los dos nombres de columna. **El Excel no se tocó.** Lo único con consecuencia real es que **en esta base no existe el número de DTV**, así que acá no podemos controlar si una declaración vino cargada dos veces. En cebolla y papa sí podemos, y lo hicimos.
+
+**Pregunta para vos.** Ninguna.
+
+---
+
+# Base 57 · DTV de cebolla (SENASA)
+
+Archivo: `57 - DTV Cebolla Sgo.xlsx`. Cinco hojas, 11.092 movimientos, 173.050 toneladas, 2021 a 2025. La cebolla santiagueña es casi toda para afuera: el 99,5% de los movimientos sale de la provincia, con destino a 24 provincias distintas.
+
+## 35. Seis números de DTV que figuran en dos renglones
+
+**Qué se ve.** El número de la DTV lo emite SENASA y tendría que identificar una sola declaración. Hay **seis números que aparecen en dos renglones cada uno**. Los miramos uno por uno y **no son copias**: mismo número, misma fecha, mismo origen y mismo destino, pero **cantidades distintas**. Por ejemplo, la DTV 0008264619 del 25 de mayo de 2023, de San Martín a Río Grande: un renglón con 1.000 bolsas de 18 kg y otro con 400 bolsas de 18 kg.
+
+**Por qué llama la atención.** La lectura más probable es que sean **dos partidas del mismo envío** cargadas en dos renglones. Si es así, el peso de las dos es real y no hay nada que sacar. Lo que sí cambia es cómo se cuenta: si una vista dijera "cantidad de DTV emitidas" contando renglones, daría 11.092 cuando los documentos distintos son 11.086.
+
+**Qué decidimos mientras tanto.** **La base se publica sin recortes.** Contamos los movimientos por renglón, que es lo que refleja el peso movido, y no borramos ninguno.
+
+**Pregunta para vos.** Hay seis números de DTV que figuran en dos renglones, con cantidades distintas cada uno. ¿Son dos partidas del mismo envío o está repetido el documento?
+
+## 36. Un mes sin ningún movimiento y una hoja con el total al pie
+
+**Qué se ve.** Dos cosas chicas. En **febrero de 2025** no hay ni una declaración de cebolla; el resto de los 60 meses tiene al menos una. Y la hoja "Sgo 25" trae al pie una fila con los totales de cantidad y peso, sin fecha ni producto; las otras cuatro hojas no la traen.
+
+**Por qué llama la atención.** Poco. Un mes sin movimientos, en una base de movimientos, es un mes sin movimientos y no un dato faltante; lo importante es que el gráfico dibuje el cero y no una línea recta entre enero y marzo. Y la fila del pie **cierra exacto** contra el detalle de su hoja (1.427.941 bultos y 26.373,56 tn), así que confirma la lectura en vez de contradecirla.
+
+**Qué decidimos mientras tanto.** **La base se publica.** Febrero de 2025 se muestra en cero. La fila de totales queda marcada para que ninguna suma la cuente dos veces.
+
+**Pregunta para vos.** En febrero de 2025 no figura ningún movimiento de cebolla. ¿Damos por bueno que no hubo, o puede ser que falte la carga de ese mes?
+
+---
+
+# Base 56 · DTV de batata (SENASA)
+
+Archivo: `56 - DTV Batata Sgo.xlsx`. Una hoja, 635 movimientos, 8.136 toneladas, 2021 a 2025.
+
+## 37. Es una base chica, y eso condiciona cómo se dibuja
+
+**Qué se ve.** 635 movimientos en cinco años, contra 102.380 del algodón. Salen de **6 departamentos** (Capital, La Banda, Robles, San Martín, Sarmiento y Silípica) y hay **9 meses** de los 60 sin ninguna declaración. Además, en el lugar donde las otras DTV traen el número de documento, esta trae el año, así que acá tampoco podemos controlar declaraciones repetidas.
+
+**Por qué llama la atención.** No es un error de lectura: la batata es un cultivo muy concentrado. Pero tiene consecuencia de diseño: un mapa con 21 de 27 departamentos en gris cuenta poco. Conviene que el tablero cuente la batata con una lista o un ranking además del mapa.
+
+**Qué decidimos mientras tanto.** **La base se publica.** Los meses sin movimiento van en cero, no como "sin dato". Los 21 departamentos sin movimiento van en gris con la leyenda "sin movimientos registrados".
+
+**Pregunta para vos.** Hay nueve meses sin ninguna declaración de batata (octubre a diciembre de 2022, enero y febrero de 2023, y algunos sueltos más). ¿Es que no se movió nada, o puede faltar carga?
+
+---
+
+# Base 75 · DTV de papa (SENASA)
+
+Archivo: `75 - DTV Papa SDE.xlsx`. Una hoja, 177 movimientos, 4.820 toneladas.
+
+## 38. Solo hay papa de septiembre a diciembre, y eso hay que decirlo en cada cuadro
+
+**Qué se ve.** Las 177 declaraciones caen **todas** entre septiembre y diciembre: 28 en septiembre, 8 en octubre, 14 en noviembre y 127 en diciembre. De enero a agosto no hay ni una fila, ningún año. Sale de 4 departamentos.
+
+**Por qué llama la atención.** No llama: es así en la fuente y tu propio índice la titula "DTV - Papa (septiembre a diciembre)". Lo dejamos escrito en el control para que no vuelva a reportarse como un hueco. Pero la consecuencia para el tablero es la más dura de las cuatro bases: **ninguna vista puede llamar "total del año" a lo que suma esta base**, y comparar un año contra otro solo vale contra el mismo cuatrimestre. El pie de cada cuadro lo tiene que decir.
+
+**Qué decidimos mientras tanto.** **La base se publica**, con el período cubierto aclarado al pie de cada cuadro y sin ninguna etiqueta que diga "anual". Los meses de septiembre a diciembre que sí faltan en algún año (nueve en total, por ejemplo septiembre a noviembre de 2025) van en cero.
+
+**Pregunta para vos.** ¿Confirmás que SENASA solo emite DTV de papa entre septiembre y diciembre, o es que el recorte que nos pasaron es de esos meses?
+
+---
+
 # Preguntas para JC
 
 Listas para copiar y pegar:
@@ -419,6 +659,17 @@ Sobre el índice:
 
 21. Las bases que en tu índice cuelgan de INTRANET (SISA, semillas, estaciones de servicio, RENSPA, ingresos a Liniers) hoy no aparecen en la portada del sitio. ¿Las querés visibles ahí o quedan solo para la intranet del gobierno?
 
+**Sobre las cuatro bases de DTV (algodón, cebolla, batata y papa) · 23 de septiembre de 2026.** Estas son las nuevas. La 22 es la urgente: hasta que la contestes no mostramos el peso del algodón de 2021, 2022 y 2023.
+
+22. **La más importante.** En el archivo de algodón hay siete declaraciones con unidad "U." que, leídas en toneladas, dan camiones de 13.000 a 21.000 toneladas, imposible. Leídas en kilos dan de 13 a 21 toneladas, o sea un camión normal, y una de ellas son 700 bolsas de 30 kilos, que cierra perfecto. Entre las siete son el 6,5% del peso de toda la base y hacen que 2022 parezca un año que creció cuando en realidad cayó. ¿Confirmás que en esas filas el peso está en kilos y las convertimos?
+23. En las planillas de SENASA aparece la unidad "U." en 1.350 declaraciones de las cuatro bases. ¿Sabés qué significa? ¿Es "unidades" de bulto, o es lo que queda cuando el operador no completa el campo?
+24. Hay 160 filas de algodón donde la cantidad por el peso unitario no da el peso total. ¿Confirmás que en esos casos hay que quedarse siempre con el peso total, que es la columna que usás vos?
+25. Hay filas donde la cantidad de bultos y el peso de cada bulto son el mismo número (15 y 15, 25 y 25) y el peso total queda en 225 o 625 toneladas. Parece que el total se tipeó en las dos columnas. ¿Vale el número chico?
+26. ¿Una DTV puede amparar más de un viaje de camión? Hay 77 declaraciones que pasan las 45 toneladas, y nos sirve para saber si eso es normal o es un error de carga.
+27. Hay seis números de DTV de cebolla que figuran en dos renglones, con cantidades distintas cada uno. ¿Son dos partidas del mismo envío o está repetido el documento?
+28. ¿Confirmás que SENASA solo emite DTV de papa entre septiembre y diciembre, o el recorte que nos pasaron es de esos meses? Lo preguntamos porque condiciona todos los cuadros de esa base: no vamos a poder decir "total del año" en ninguno.
+29. Hay meses sin ninguna declaración: nueve en batata, nueve en papa y febrero de 2025 en cebolla. ¿Los damos por buenos como meses sin movimiento, o puede faltar carga?
+
 ---
 
-*Control hecho sobre 11.728 datos de la base 9, 46.032 movimientos de la base 85 y 392 filas de stock de la base 48. Detalle técnico completo en `validations/hallazgos/entrega-01.yaml`. Fuente de los datos: MAGyP (bases 9 y 48) y SENASA (base 85).*
+*Control hecho sobre 11.728 datos de la base 9, 46.032 movimientos de la base 85, 392 filas de stock de la base 48 y 114.284 declaraciones de tránsito vegetal de las bases 53, 56, 57 y 75. En total 1.463.678 datos revisados con 173 controles automáticos. Detalle completo en `validations/hallazgos/entrega-01.yaml`. Fuente de los datos: MAGyP (bases 9 y 48) y SENASA (bases 85, 53, 56, 57 y 75).*

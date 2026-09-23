@@ -42,3 +42,14 @@ cultivos:
   "Soja total": soja
   "Sorgo": sorgo
   "Trigo total": trigo
+
+# --- Familia DTV de hortalizas (bases 56 batata, 57 cebolla, 75 papa) ---------------------
+# Los tres productos de Agricultura > Cultivos intensivos. Los dibujos son propios, con el
+# mismo lenguaje visual que los de arriba (trazo de 1.6 sobre 24x24, puntas redondeadas, sin
+# relleno). La clave es el nombre canonico del producto en marts
+# (hecho_movimientos_vegetales.producto), que es el valor del filtro.
+# El algodon de la base 53 vive en el mismo mart pero NO es de esta familia: es cultivo
+# extensivo y ya tiene su icono arriba.
+  "Batata": batata
+  "Cebolla": cebolla
+  "Papa": papa

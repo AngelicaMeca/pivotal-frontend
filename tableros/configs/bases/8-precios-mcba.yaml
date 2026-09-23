@@ -1,0 +1,363 @@
+# Base 8 - Precios MCBA origen Santiago del Estero (MAGyP sobre el Mercado Central de
+# Buenos Aires). Precio promedio por kilo de frutas y hortalizas ingresadas al MCBA cuya
+# PROCEDENCIA declarada es Santiago del Estero, con el detalle de variedad, envase,
+# calidad y tamaño con el que se cotiza cada partida.
+# Escrito el 2026-09-23 sobre "8 - Precios MCBA origen Sgo.xlsx" de la entrega-01.
+# El adapter de la familia (adapters/precios.py) lee este archivo y no sabe nada más
+# de la base.
+#
+# Esta es la base de REFERENCIA de la familia `precios`, la primera del pipeline cuya
+# medida NO SE SUMA. Leer `valores` antes de escribir cualquier vista que la use.
+base: 8
+slug: precios-mcba
+familia: precios
+estado: activa
+
+archivo:
+  patron: "^8 - Precios MCBA"     # regex sobre el nombre del archivo en raw/entrega-NN/
+
+# ---------------------------------------------------------------------------
+# HOJAS
+# ---------------------------------------------------------------------------
+hojas:
+  datos:
+    - nombre: "Data SDE"
+      header_fila: 2          # la fila 1 está vacía: el header arranca en la 2
+      ambito: sde
+      contenido: >
+        5.655 cotizaciones diarias entre el 2017-01-02 y el 2026-04-09, 11 columnas,
+        todas con Procedencia SGO.EST. (el archivo ya viene filtrado a origen Santiago,
+        como dice su nombre). 16 especies: 4.305 filas de Hortalizas y 1.350 de Frutas.
+        No trae fila de totales al pie.
+
+  ignorar:
+    - nombre: "Modelo analisis"
+      motivo: >
+        Especificación de negocio escrita por JC, 6 filas. Define los cuatro niveles de
+        filtrado del panel de precios (Hortalizas/Frutas, Especie, rango de meses "sólo
+        donde aparece la especie para evitar resultados vacíos", Variedad con opción
+        "todas"), la salida ("Genera tabla y gráficos de líneas") y el alcance
+        diferenciado de la INTRANET (ahí también se consultan VARIEDAD y TAMAÑO). No son
+        datos: va a constructor-reglas para convertirse en specs/modelos/.
+    - nombre: "Zana Mes"
+      motivo: >
+        Ejemplo trabajado por JC: 43 valores de precio/kg mensual de Zanahoria Chantenay
+        agrupados por año, de julio 2017 a noviembre 2025, tipeados a mano (las celdas no
+        tienen fórmula ni tabla dinámica detrás). NO es dato de la fuente y no se ingiere;
+        se usó como control de la agregación. Ver la nota `control` al pie: la
+        verificación NO cerró y quedó una pregunta abierta para JC.
+
+# ---------------------------------------------------------------------------
+# COLUMNAS: origen -> canónico snake_case
+# ---------------------------------------------------------------------------
+# Los títulos se comparan sin espacios al borde. Las 11 columnas del Excel están mapeadas:
+# si la fuente agrega una, la ingesta falla en vez de descartarla en silencio.
+columnas:
+  "Fecha": fecha
+  "Año": anio_declarado             # redundante con Fecha; se conserva y se compara
+  "Mes": mes_declarado              # abreviatura castellana (ene, feb...); ídem
+  "Tipo": grupo                     # Hortalizas | Frutas = primer nivel de filtrado de JC
+  "Especie": especie
+  "Variedad": variedad
+  "Procedencia": procedencia        # constante SGO.EST. en las 5.655 filas
+  "Envase": envase
+  "Calidad": calidad
+  "Tamaño": tamanio
+  "Promedio x Kg.": precio
+
+# ---------------------------------------------------------------------------
+# DIMENSIONES DE PRODUCTO
+# ---------------------------------------------------------------------------
+# De cada dimensión salen tres columnas a staging: el valor canónico, el valor tal cual lo
+# escribe el Excel (`<dim>_origen`) y la clase que se le asigna acá (`<dim>_clase`).
+dimensiones:
+  grupo:
+    normalizar: ninguna
+    valores_vistos: ["Hortalizas (4.305)", "Frutas (1.350)"]
+  especie:
+    normalizar: ninguna             # la fuente ya las escribe en mayúsculas
+    valores_vistos: >
+      16: MELON 1.245, ZAPALLO 1.064, CEBOLLA 888, ZANAHORIA 786, LECHUGA 597,
+      REMOLACHA 419, CEB.VERDEO 351, PEREJIL 81, SANDIA 79, BATATA 62, ZAPALLITO 29,
+      ACELGA 28, POMELO 12, TUNA 12, LIMON 1, UVA 1.
+  variedad:
+    normalizar: ninguna             # 22 valores + 619 celdas vacías (ver nota `anomalia`)
+  envase:
+    # ÚNICA normalización de la base, y está acá por una inconsistencia real de la fuente:
+    # el mismo envase aparece como "BANDEJA" (689 filas, todos los años) y como "Bandeja"
+    # (309 filas, sólo 2017-2021, siempre MELON). Sin unificar, cualquier agrupación por
+    # envase parte el melón en dos. Se unifica a mayúsculas y el texto original queda en
+    # `envase_origen`, así que la anomalía sigue siendo auditable. Ver nota `anomalia`.
+    normalizar: mayusculas
+    valores_vistos: >
+      11 crudos / 10 canónicos: BOLSA 2.873, JAULA 944, BANDEJA 998 (689+309),
+      PERDIDO 561, ATADO 109, GRANEL 49, TORO 29, CAJA 12, ESQUELETO 1, vacío 79.
+  calidad:
+    normalizar: ninguna
+    valores_vistos: ["Primera 3.645", "Elegido 1.040", "Segunda 612", "Comercial 310", "vacío 48"]
+  tamanio:
+    # La columna mezcla tres cosas distintas y por eso lleva clase: tamaños comerciales,
+    # calibres de fruta (piezas por envase, sólo MELON, POMELO y LIMON) y etiquetas que no
+    # son tamaño. La clase permite que una vista ofrezca "Tamaño" sin mostrar calibres.
+    normalizar: ninguna
+    clase_por_defecto: null         # un valor nuevo queda sin clase y lo caza qa-datos
+    clases:
+      "MEDIANO": tamanio            # 4.595
+      "GRANDE": tamanio             # 547
+      "CHICO": tamanio              # 110
+      "MED/CHI": tamanio            # 99
+      "005/006": calibre            # 20
+      "006/008": calibre            # 16
+      "007/009": calibre            # 1
+      "008/012": calibre            # 33
+      "048/066": calibre            # 12
+      "100/120": calibre            # 1
+      "GRANEL": no-es-tamanio       # 95, es forma de venta
+      "SIN TAM": sin-dato-declarado # 21, la fuente dice explícitamente que no hay tamaño
+
+# ---------------------------------------------------------------------------
+# VALORES: la medida de esta base NO ES ADITIVA
+# ---------------------------------------------------------------------------
+# "Promedio x Kg." es un PRECIO y además ya viene promediado por la fuente. No se suma
+# nunca: se promedia. `agregacion` y `ponderacion` viajan en cada fila de staging para que
+# ninguna vista tenga que volver acá a averiguarlo, y el adapter falla si una medida no
+# aditiva no declara su regla.
+valores:
+  precio_kg:
+    etiqueta: "Precio promedio por kilo"
+    medida: precio
+    unidad: "$/kg"
+    agregable: false              # NO SUMAR. Sumar precios no significa nada.
+    agregacion: promedio
+    ponderacion: >
+      sin ponderar: la fuente no informa el volumen comercializado, así que el promedio de
+      cualquier período (mes, año, varias variedades juntas) es el promedio simple de los
+      promedios diarios. No es el precio medio de lo que se vendió: un día con una sola
+      operación pesa lo mismo que un día de plena zafra.
+    origen: columna
+    columna: precio
+    dominio_real: "3,79 a 4.500,00 $/kg; 5.655 valores, ninguno nulo, ninguno <= 0"
+
+# ---------------------------------------------------------------------------
+# UNIDADES
+# ---------------------------------------------------------------------------
+# No hay ninguna conversión que hacer: la fuente ya publica $ por kilo. Lo que sí hay que
+# decir es que son pesos CORRIENTES de cada fecha: una serie 2017-2026 en pesos corrientes
+# mide sobre todo la inflación. Cualquier vista que la publique tiene que aclararlo.
+unidades:
+  precio:
+    canonico: "$/kg"
+    moneda: ARS
+    expresion: corrientes
+    deflactado: false
+    advertencia_para_vistas: >
+      Serie en pesos corrientes sin deflactar. Comparar 2017 con 2025 en $/kg no mide
+      precio relativo. Mientras no haya un índice de precios en el pipeline, la lectura
+      honesta es dentro del año o interanual con la aclaración al pie.
+
+# ---------------------------------------------------------------------------
+# MERCADO
+# ---------------------------------------------------------------------------
+# Ojo con la geografía de esta base: el precio se forma en Buenos Aires, la mercadería
+# sale de Santiago. Son dos lugares distintos y el mart los guarda separados.
+mercado:
+  codigo: MCBA
+  nombre: "Mercado Central de Buenos Aires"
+  ubicacion: "La Matanza, Buenos Aires"
+
+# ---------------------------------------------------------------------------
+# TIEMPO: dos granos, diario y mensual
+# ---------------------------------------------------------------------------
+tiempo:
+  grano: fecha                      # una fila = una cotización de un día concreto
+  columna: fecha
+  cobertura_real: "2017-01-02 a 2026-04-09 (101 meses con dato)"
+  agregaciones: [anio_mes, anio]    # los cortes que tiene que soportar el mart
+  # JC pide las dos en el panel ("Precio prom. mensual" / "Precio prom diario"), y las dos
+  # son promedios: ver `valores.precio_kg.agregacion`.
+  granos_que_pide_el_modelo: ["fecha", "anio_mes"]
+  # Abreviaturas con las que el Excel escribe la columna Mes. Sirven para comparar el mes
+  # declarado contra la fecha, no para calcular nada: la fuente de verdad es Fecha.
+  meses_declarados:
+    ene: 1
+    feb: 2
+    mar: 3
+    abr: 4
+    may: 5
+    jun: 6
+    jul: 7
+    ago: 8
+    sep: 9
+    oct: 10
+    nov: 11
+    dic: 12
+
+# ---------------------------------------------------------------------------
+# GEOGRAFÍA
+# ---------------------------------------------------------------------------
+# La base no tiene departamento: lo único geográfico es la PROCEDENCIA de la mercadería,
+# que es toda la provincia. Entra a dim_geo como unidad de nivel provincia (86), no como
+# departamento, y ninguna vista de esta base puede pintar un mapa departamental.
+geo:
+  nivel: provincia
+  particion: sde
+  provincia_propia: 86
+  columna: procedencia
+  procedencias:
+    "SGO.EST.": "SANTIAGO DEL ESTERO"   # 5.655 de 5.655 filas
+  sin_dato: []
+  cobertura_real: "1 sola procedencia; el archivo ya viene recortado a Santiago"
+
+# ---------------------------------------------------------------------------
+# SALIDA
+# ---------------------------------------------------------------------------
+salida:
+  staging: "staging/base-08-precios-mcba.parquet"
+  mart: hecho_precios_mayoristas
+  particiones: [provincia, anio]
+
+# ---------------------------------------------------------------------------
+# METADATA HEREDADA DEL ÍNDICE (configs/manifiesto-indice.yaml, base nro 8)
+# ---------------------------------------------------------------------------
+indice:
+  fuente: "MAGyP"
+  frecuencia: "mensual"             # lo que declara el índice; el dato es DIARIO, ver drift
+  rango_declarado: "2017-01-01 a 2026-04-30"
+  descripcion: "Precios frutas y hortalizas MCBA por variedad, calidad y origen"
+  tema: "Agricultura > Cultivos intensivos > Frutas y hortalizas"
+  registros_declarados: 732383      # base nacional completa; el recorte SGO son 5.655
+  observaciones_jc: "Las variantes variedad, calidad y envase multiplican las variables"
+  cita_fuente_al_pie: "Fuente: MAGyP (Ministerio de Agricultura, Ganadería y Pesca)"
+
+# ---------------------------------------------------------------------------
+notas:
+  - fecha: "2026-09-23"
+    tipo: familia
+    texto: >
+      Primera base de la familia `precios` (adapters/precios.py), la familia 10 del
+      pipeline. No encaja en ninguna de las nueve anteriores: es una tabla plana donde
+      cada fila es una observación de PRECIO de un día, con dimensiones de PRODUCTO
+      (grupo, especie, variedad, envase, calidad, tamaño) y sin geografía por fila. No es
+      `tidy` (no hay unidad geográfica ni campaña), no es `dtv` (no es transaccional ni
+      tiene peso), no es `wide-mes` (no abre meses a lo ancho) y no es `stock` (no abre
+      categorías a lo ancho). Lo que la separa de todas de verdad es la medida: es la
+      primera del pipeline que NO SE SUMA.
+  - fecha: "2026-09-23"
+    tipo: control
+    texto: >
+      CONTROL CONTRA LA HOJA "Zana Mes" DE JC: NO CIERRA, y la diferencia está entendida.
+      Filtrando ZANAHORIA + variedad CHANTENAY (774 filas; JC la escribe "Chantennay" en
+      su maqueta y el dato dice CHANTENAY) los 43 meses que JC lista son EXACTAMENTE los
+      43 meses con dato de esa combinación, así que el recorte es el correcto. Pero sus
+      valores no son el promedio mensual: el promedio simple de los promedios diarios da
+      4,90 / 4,80 / 5,31 / 9,77 / 9,44 para jul-nov 2017 contra 4,97 / 4,92 / 4,78 / 9,90
+      / 9,40 de JC. Se probaron 25 criterios de agregación (promedio, promedio de
+      promedios diarios, mediana, moda, máximo, mínimo, primer y último dato del mes,
+      quincenas, semanas, media recortada, filtrando por cada envase, calidad y tamaño, y
+      combinaciones de los tres) y NINGUNO reproduce la serie. Lo que sí se encontró es
+      qué son esos números: 42 de los 43 son, literalmente, EL PRECIO DE UN DÍA del mes
+      que rotulan (el 43, oct-2017 = 9,90, no está en el dato pero cae entre 7,28 y 10,29
+      de ese mes, al lado del 9,91 del 6 y del 20 de octubre). No es casualidad: por el
+      rango y el paso de los precios de cada mes, el azar explicaría 2,6 coincidencias
+      sobre 43, no 42. El día elegido no sigue ninguna regla estable (ni el primero, ni el
+      último, ni el 15, ni la moda, ni la mediana). Conclusión: "Zana Mes" es una serie
+      TESTIGO tipeada a mano (un precio de referencia por mes), no un promedio mensual
+      calculado. Pega bien con el promedio mensual del pipeline -1,1% de desvío promedio,
+      2,9% en valor absoluto- pero no es la misma medida.
+      PREGUNTA PARA JC (la número uno de esta base): cuando pedís "Precio prom. mensual"
+      en el panel, ¿querés el promedio simple de todos los días del mes (lo que calcula
+      hoy el pipeline) o el precio testigo del mes como en tu hoja Zana Mes? Si es lo
+      segundo, hace falta que nos digas qué día es el testigo.
+  - fecha: "2026-09-23"
+    tipo: criterio
+    texto: >
+      CRITERIO DE AGREGACIÓN (el que está implementado). El precio mensual de un recorte
+      es el PROMEDIO SIMPLE de los promedios diarios de ese recorte, sin ponderar por
+      volumen, porque la fuente no informa volumen. El staging trae esa regla escrita en
+      cada fila (`agregacion: promedio`, `ponderacion: "sin ponderar..."`), el mart la
+      lleva tal cual y la vista tiene que decirla al pie. Si un día del recorte tiene más
+      de una cotización (distinto envase, calidad o tamaño), todas pesan igual. Contar
+      cuántas observaciones hay detrás de cada promedio es COUNT sobre el mart: no se
+      materializa una medida de conteo para no duplicar las filas de staging.
+  - fecha: "2026-09-23"
+    tipo: drift
+    texto: >
+      Dos diferencias contra el índice de JC (configs/manifiesto-indice.yaml, base 8), las
+      dos registradas y ninguna corregida. (1) El índice la da por PROMETIDA PARA LA
+      ENTREGA-02 y sin archivo recibido; el archivo llegó igual con la entrega-01 y el
+      pipeline ya lo baja de SharePoint en cada publicación. El manifiesto del índice va a
+      seguir listándola como "prometida-no-recibida" hasta que indexador-contexto lo
+      regenere: NO es un problema de datos. (2) El índice declara frecuencia MENSUAL y el
+      archivo trae observaciones DIARIAS (5.655 fechas distintas entre 2017 y 2026). El
+      grano bueno es el del archivo; el mensual se calcula. El rango sí coincide: el
+      índice promete 2017-01-01 a 2026-04-30 y el archivo va de 2017-01-02 a 2026-04-09.
+  - fecha: "2026-09-23"
+    tipo: anomalia
+    texto: >
+      ENVASE CON DOS GRAFÍAS. El mismo envase aparece 689 veces como "BANDEJA" y 309 como
+      "Bandeja". Las 309 en minúscula son todas de MELON y todas de 2017 a 2021; desde
+      2022 la fuente escribe siempre en mayúscula. Se unifica a mayúsculas en el config
+      (`dimensiones.envase.normalizar`) y el texto original queda en `envase_origen`. Sin
+      unificar, el envase más usado del melón se partía en dos y el selector "Envase" del
+      panel de JC mostraba dos veces la misma opción. Para qa-datos: contarlo y avisarle a
+      JC que es un problema de la fuente, no del recorte.
+  - fecha: "2026-09-23"
+    tipo: anomalia
+    texto: >
+      73 PARES DE FILAS REPETIDAS, todas de ZANAHORIA y todas de 2018: mismo día, misma
+      especie, misma variedad, mismo envase, misma calidad y mismo tamaño, con DOS precios
+      distintos (ej. 2018-08-15: 5,83 y 6,33). La diferencia entre los dos va de 0,1% a
+      23,7%, mediana 5,9%. No se dropea ninguna: no hay forma de saber cuál es la buena, y
+      elegir una sería inventar. Impacto real: en 2018 el promedio de zanahoria mezcla dos
+      cotizaciones por día. Es justo el año en que el control contra "Zana Mes" más se
+      aparta. Para qa-datos: llevarle las 73 fechas a JC y preguntarle si la fuente publica
+      dos cotizaciones (por ejemplo dos calibres de bolsa) o si es una duplicación.
+  - fecha: "2026-09-23"
+    tipo: anomalia
+    texto: >
+      DIMENSIONES VACÍAS. Variedad vacía en 619 filas (REMOLACHA 419, PEREJIL 81, SANDIA
+      79, ACELGA 28, TUNA 12: son especies que la fuente no abre por variedad, no es un
+      dato perdido), Tamaño vacío en 105 (PEREJIL 57, ZAPALLO 48), Envase vacío en 79
+      (todas SANDIA) y Calidad vacía en 48 (todas ZAPALLO). Quedan en nulo, nunca en un
+      valor inventado. Consecuencia para el panel de JC: el selector "Variedad" tiene que
+      poder ofrecer "sin variedad" o la especie desaparece al filtrar.
+  - fecha: "2026-09-23"
+    tipo: anomalia
+    texto: >
+      UNA FILA CON EL MES DECLARADO MAL. La fila 286 de "Data SDE" (LECHUGA FRANCESA) trae
+      Fecha 2017-05-29 y Mes "mar". El año declarado coincide en las 5.655 filas; el mes
+      no coincide sólo en esa. Manda la Fecha, que es la fuente de verdad, y la fila sale a
+      staging con `tiempo_declarado_coincide=false` para que se pueda listar.
+  - fecha: "2026-09-23"
+    tipo: dato
+    texto: >
+      La columna Tamaño mezcla tres universos: tamaños comerciales (MEDIANO 4.595, GRANDE
+      547, CHICO 110, MED/CHI 99), calibres de fruta en piezas por envase (70 filas de
+      MELON, 12 de POMELO y 1 de LIMON) y etiquetas que no son tamaño (GRANEL 95, SIN TAM
+      21). Por eso la dimensión lleva `clase`: una vista que ofrezca "Tamaño" debería usar
+      sólo los de clase `tamanio` y tratar los calibres aparte.
+  - fecha: "2026-09-23"
+    tipo: dato
+    texto: >
+      COBERTURA MUY DESPAREJA POR ESPECIE, y esto es exactamente lo que JC previó en su
+      Modelo analisis cuando pidió "rangos sólo donde aparece la especie para evitar
+      resultados vacíos". Va de MELON con 1.245 filas y 2017-2026 continuo hasta LIMON y
+      UVA con UNA sola fila cada una (2019-03-22 y 2020-08-26). BATATA arranca recién en
+      abril de 2025 y ZAPALLITO en mayo de 2024. El rango de fechas del panel tiene que
+      salir de la especie elegida, no de la base entera.
+  - fecha: "2026-09-23"
+    tipo: dato
+    texto: >
+      Los nueve chips de cultivo que JC dibujó en la maqueta del panel de precios (Acelga,
+      Batata, Ceb Verdeo, Cebolla, Lechuga, Perejil, Remolacha, Zanahoria, Zapallo) existen
+      los nueve en el dato, y son todas Hortalizas. Quedan afuera de sus chips: ZAPALLITO
+      (29 filas, aparece en 2024, posterior a la maqueta) del lado de las hortalizas, y las
+      siete especies de la pestaña Frutas (MELON, SANDIA, POMELO, TUNA, LIMON, UVA). El
+      selector de la pestaña Frutas todavía no está definido por JC.
+  - fecha: "2026-09-23"
+    tipo: dato
+    texto: >
+      El precio se forma en el Mercado Central de Buenos Aires; lo santiagueño es el
+      ORIGEN de la mercadería (Procedencia SGO.EST. en las 5.655 filas). El mart guarda las
+      dos cosas separadas (`mercado` y `origen_*`) para que ningún título diga que es "el
+      precio en Santiago del Estero", que sería falso.

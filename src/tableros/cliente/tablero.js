@@ -1,9 +1,14 @@
-/* Pivotal - el tablero: cuatro indicadores y cuatro paneles compactos en una pantalla.
+/* Pivotal - el tablero: los indicadores (si los hay) y los paneles compactos, en una pantalla.
 
-   Un dibujante por FORMA de panel (anillo, mapa, tendencia, top). Las formas son las mismas en
-   todas las bases: el spec del tablero dice que panel usa cual y con que datos, y aca solo se
-   dibuja. Todos los textos y todos los colores vienen resueltos del build; este archivo no
-   formatea un solo numero. */
+   Un dibujante por FORMA de panel (anillo, mapa, tendencia, top, tabla-datos, combo,
+   apiladas). Las formas son las mismas en todas las bases: el spec del tablero dice que panel
+   usa cual y con que datos, y aca solo se dibuja. Todos los textos y todos los colores vienen
+   resueltos del build; este archivo no formatea un solo numero.
+
+   Una forma se sale del molde y esta al final del archivo: `precios`, el cuadro de precios del
+   MCBA de la maqueta "Agri 2". No se dibuja desde la combinacion del tablero porque sus
+   filtros son suyos (grupo, especie, cuatro dimensiones de producto, modo y rango) y baja su
+   propio JSON, partido por especie y por modo. */
 
 import * as echarts from "echarts";
 
@@ -422,6 +427,17 @@ export default function iniciar(PIVOTAL) {
      como los dibuja JC en su Modelo 2 (deroga la "una sola serie" de la segunda tanda;
      backlog 38). Cada bloque trae sus columnas y sus filas resueltas del build. La fila del
      periodo elegido queda marcada. */
+  /* Clase de una celda segun su columna. `num` alinea a la derecha; `elegida` marca la columna
+     del periodo elegido en las tablas que tienen un año por columna (maqueta "Agri 2"): es el
+     mismo destacado que en el eje de los graficos, para que el selector no quede mudo. */
+  function claseDeColumna(columna) {
+    if (!columna) { return ""; }
+    var clases = [];
+    if (columna.num) { clases.push("num"); }
+    if (columna.destacada) { clases.push("elegida"); }
+    return clases.join(" ");
+  }
+
   function armarTablaCampanias(columnas, filas) {
     var tabla = document.createElement("table");
     var thead = document.createElement("thead");
@@ -429,7 +445,7 @@ export default function iniciar(PIVOTAL) {
     columnas.forEach(function (columna) {
       var th = document.createElement("th");
       th.textContent = columna.etiqueta;
-      if (columna.num) { th.className = "num"; }
+      th.className = claseDeColumna(columna);
       trCabeza.appendChild(th);
     });
     thead.appendChild(trCabeza);
@@ -443,7 +459,7 @@ export default function iniciar(PIVOTAL) {
       celdas.forEach(function (celda, i) {
         var td = document.createElement("td");
         td.textContent = celda;
-        if (columnas[i] && columnas[i].num) { td.className = "num"; }
+        td.className = claseDeColumna(columnas[i]);
         tr.appendChild(td);
       });
       tbody.appendChild(tr);
@@ -452,10 +468,17 @@ export default function iniciar(PIVOTAL) {
     return tabla;
   }
 
+  /* La tabla de datos de un panel. Tres formas, todas resueltas por el build:
+       - `bloques`: dos bloques de campañas lado a lado (mockup Modelo 2, cultivos);
+       - `tabla`:   un bloque con las categorias del grafico como columnas (maqueta "Agri 2");
+       - `columnas` + `filas`: el caso plano de siempre.
+     El nodo puede no existir: un panel sin `[data-tabla-datos]` simplemente no la dibuja. */
   function pintarTablaDatos(nodo, panel) {
     var caja = nodo.querySelector("[data-tabla-datos]");
+    if (!caja) { return; }
     PIVOTAL.vaciar(caja);
-    var bloques = panel.bloques || [{ columnas: panel.columnas, filas: panel.filas }];
+    var bloques = panel.bloques
+      || (panel.tabla ? [panel.tabla] : [{ columnas: panel.columnas, filas: panel.filas }]);
     bloques.forEach(function (bloque) {
       caja.appendChild(armarTablaCampanias(bloque.columnas, bloque.filas));
     });
@@ -510,11 +533,188 @@ export default function iniciar(PIVOTAL) {
     });
   }
 
+  /* -------- eje horizontal de las formas por categoria (combo y apiladas) --------
+     El periodo elegido en la tira de la cabecera se DESTACA (panel.destacado): los dos cuadros
+     de la maqueta "Agri 2" muestran la ventana entera de años a proposito -su sujeto es la
+     comparacion entre años- y sin esta marca el selector de periodo quedaria mudo sobre ellos.
+     Se marca la etiqueta, no la barra: pintar una barra distinta seria cambiarle el color a un
+     dato, y el color lo manda el protocolo. */
+  function ejeDeCategorias(panel) {
+    return {
+      type: "category",
+      data: panel.x,
+      axisTick: { show: false },
+      axisLine: { lineStyle: { color: PIVOTAL.color("--borde") } },
+      /* El destacado va por texto enriquecido y no por callbacks de estilo: en ECharts el
+         unico estilo de `axisLabel` que acepta una funcion es el color, asi que una funcion
+         en `fontWeight` se ignora en silencio y el año elegido quedaba igual que los demas. */
+      axisLabel: {
+        interval: 0,
+        fontSize: 10,
+        color: PIVOTAL.color("--texto-apoyo"),
+        formatter: function (valor, i) {
+          return i === panel.destacado ? "{elegido|" + valor + "}" : valor;
+        },
+        rich: {
+          elegido: { fontSize: 10, fontWeight: "bold", color: PIVOTAL.color("--texto") }
+        }
+      }
+    };
+  }
+
+  /* Eje vertical de valores, con las etiquetas ya resueltas por el build. `lado` decide de que
+     costado se dibuja: el combo lleva dos, uno por unidad. */
+  function ejeDeValores(eje, lado) {
+    return {
+      type: "value",
+      position: lado,
+      min: eje.min,
+      max: eje.max,
+      interval: eje.paso,
+      name: eje.nombre,
+      nameLocation: "end",
+      nameGap: 8,
+      nameTextStyle: {
+        fontSize: 10, color: PIVOTAL.color("--texto-apoyo"),
+        align: lado === "right" ? "right" : "left"
+      },
+      axisLabel: {
+        show: true, fontSize: 10, color: PIVOTAL.color("--texto-apoyo"),
+        formatter: function (v) { return PIVOTAL.etiquetaEje(eje, v); }
+      },
+      /* Una sola grilla de fondo, la del eje izquierdo: dos juegos de lineas sobre el mismo
+         dibujo se cruzan entre si y no dejan leer ninguno de los dos. */
+      splitLine: lado === "right"
+        ? { show: false }
+        : { lineStyle: { color: PIVOTAL.color("--fondo-apoyo") } }
+    };
+  }
+
+  /* -------- combo: barras + linea, dos ejes --------
+     El primer cuadro de la maqueta "Agri 2" (JC lo dibuja con barras `clustered` de bultos y
+     una linea de toneladas sobre un eje secundario). Las dos series miden la misma carga en
+     unidades distintas: por eso dos ejes y no uno. */
+  function pintarCombo(nodo, panel) {
+    /* La tabla de datos que JC pega debajo del grafico (maqueta "Agri 2"): las dos series
+       como filas y los mismos años como columnas. */
+    pintarTablaDatos(nodo, panel);
+    var chart = PIVOTAL.grafico(nodo.querySelector("[data-grafico]"));
+    chart.setOption({
+      animation: false,
+      /* `top` deja lugar para la leyenda (una linea) MAS el nombre del eje, que ECharts
+         dibuja encima de la primera marca: con menos, "Bolsas" se montaba sobre el 2.500.000. */
+      grid: { left: 4, right: 4, top: 40, bottom: 4, containLabel: true },
+      legend: {
+        top: 0, left: 0, itemWidth: 14, itemHeight: 8,
+        textStyle: { fontSize: 10, color: PIVOTAL.color("--texto-apoyo") }
+      },
+      tooltip: {
+        trigger: "axis",
+        confine: true,
+        formatter: function (params) {
+          var i = params[0].dataIndex;
+          return "<b>" + panel.etiquetas[i] + "</b>"
+            + "<br>" + panel.barras.nombre + ": " + panel.barras.textos[i]
+            + "<br>" + panel.linea.nombre + ": " + panel.linea.textos[i];
+        }
+      },
+      xAxis: ejeDeCategorias(panel),
+      yAxis: [ejeDeValores(panel.eje, "left"), ejeDeValores(panel.eje2, "right")],
+      series: [
+        {
+          name: panel.barras.nombre,
+          type: "bar",
+          yAxisIndex: 0,
+          data: panel.barras.puntos,
+          barMaxWidth: 34,
+          itemStyle: { color: panel.barras.color }
+        },
+        {
+          name: panel.linea.nombre,
+          type: "line",
+          yAxisIndex: 1,
+          data: panel.linea.puntos,
+          smooth: false,
+          connectNulls: false,
+          symbol: "circle",
+          symbolSize: 5,
+          z: 3,
+          lineStyle: { color: panel.linea.color, width: 2 },
+          itemStyle: { color: panel.linea.color }
+        }
+      ]
+    }, true);
+  }
+
+  /* -------- apiladas: una serie por categoria, el total es el alto de la pila --------
+     El segundo cuadro de la maqueta. La leyenda va ABAJO, como en el grafico de JC. El tooltip
+     muestra todas las series del año mas el total de la pila, que es el numero que el ojo lee
+     en el alto de la barra y que si no estaria en ningun lado. */
+  function pintarApiladas(nodo, panel) {
+    /* Igual que el combo: la tabla de datos de JC va debajo, un departamento por fila y un
+       año por columna. */
+    pintarTablaDatos(nodo, panel);
+    /* La leyenda, en HTML y debajo del grafico (JC la dibuja abajo). Misma forma que la del
+       anillo: cuadradito de color + nombre. En HTML su alto lo reparte flexbox y no se monta
+       nunca sobre las etiquetas del eje. */
+    var leyenda = nodo.querySelector("[data-leyenda]");
+    PIVOTAL.vaciar(leyenda);
+    panel.series.forEach(function (serie) {
+      var li = document.createElement("li");
+      var muestra = document.createElement("span");
+      muestra.className = "muestra";
+      muestra.style.background = serie.color;
+      var nombre = document.createElement("span");
+      nombre.className = "nombre";
+      nombre.textContent = serie.nombre;
+      li.appendChild(muestra);
+      li.appendChild(nombre);
+      leyenda.appendChild(li);
+    });
+
+    var chart = PIVOTAL.grafico(nodo.querySelector("[data-grafico]"));
+    chart.setOption({
+      animation: false,
+      /* `top` deja lugar al nombre del eje, que ECharts dibuja sobre la primera marca. Sin
+         leyenda de ECharts, abajo solo van las etiquetas del eje. */
+      grid: { left: 4, right: 8, top: 24, bottom: 4, containLabel: true },
+      legend: { show: false },
+      tooltip: {
+        trigger: "axis",
+        confine: true,
+        formatter: function (params) {
+          var i = params[0].dataIndex;
+          var html = "<b>" + panel.etiquetas[i] + "</b>";
+          panel.series.forEach(function (serie) {
+            html += "<br>" + serie.nombre + ": " + serie.textos[i];
+          });
+          html += "<br><b>Total: " + panel.totales[i] + "</b>";
+          return html;
+        }
+      },
+      xAxis: ejeDeCategorias(panel),
+      yAxis: [ejeDeValores(panel.eje, "left")],
+      series: panel.series.map(function (serie) {
+        return {
+          name: serie.nombre,
+          type: "bar",
+          stack: "total",
+          data: serie.puntos,
+          barMaxWidth: 46,
+          itemStyle: { color: serie.color }
+        };
+      })
+    }, true);
+  }
+
   var DIBUJANTES = {
     anillo: pintarAnillo,
     mapa: pintarMapa,
     tendencia: pintarTendencia,
     "tabla-datos": pintarTablaDatos,
+    "tabla-superficie": pintarTablaDatos,
+    combo: pintarCombo,
+    apiladas: pintarApiladas,
     top: pintarTop
   };
 
@@ -537,6 +737,361 @@ export default function iniciar(PIVOTAL) {
     if (nodo) { nodo.textContent = nota || ""; }
   }
 
+  /* ================= precios del MCBA: el panel con filtros propios =================
+     Es el cuarto cuadro de la maqueta "Agri 2" de JC (chart8), alimentado por la base 8. Se
+     dibuja aparte del resto del tablero porque sus filtros son SUYOS -grupo, especie, cuatro
+     dimensiones de producto, modo y rango- y no entran en la combinacion del tablero.
+
+     Este bloque no compone un solo texto ni formatea un solo numero: los titulos, las notas,
+     los rotulos de cada punto, los de cada marca del eje y los de cada escala vienen resueltos
+     del build. Lo unico que decide aca es CUALES se muestran: que opciones ofrece cada
+     desplegable (las que existen), que tramo se dibuja (el rango) y cada cuantas marcas se
+     escribe un mes (segun el ancho que tenga el cuadro en la pantalla). */
+
+  var DIMENSIONES_PRECIO = ["variedad", "envase", "calidad", "tamanio"];
+  var TODAS = "*";            /* el valor de la opcion "Todas" (site_build.TODAS) */
+  var ANCHO_POR_MARCA = 34;   /* px que necesita una etiqueta de mes para no pisar a la otra */
+
+  function iniciarPrecios() {
+    var panel = document.querySelector("[data-precios]");
+    if (!panel) { return; }
+
+    var cache = {};
+    var estadoPrecios = {
+      grupo: null, especie: null, modo: null, datos: null,
+      dims: {}, inicio: null, fin: null
+    };
+
+    function botones(selector) {
+      return Array.prototype.slice.call(panel.querySelectorAll(selector));
+    }
+
+    function selectDe(atributo, valor) {
+      return panel.querySelector("[" + atributo + '="' + valor + '"]');
+    }
+
+    /* Las opciones que EXISTEN para una dimension, dado lo ya elegido en las otras tres. Es la
+       regla que evita las pantallas vacias: con seis dimensiones independientes, la mayoria de
+       las combinaciones posibles no tiene ni una fila. */
+    function valoresPosibles(indice) {
+      var vistos = [];
+      estadoPrecios.datos.combos.forEach(function (combo) {
+        for (var i = 0; i < DIMENSIONES_PRECIO.length; i++) {
+          if (i === indice) { continue; }
+          var elegido = estadoPrecios.dims[DIMENSIONES_PRECIO[i]];
+          if (elegido !== TODAS && combo[i] !== elegido) { return; }
+        }
+        if (vistos.indexOf(combo[indice]) === -1) { vistos.push(combo[indice]); }
+      });
+      return vistos;
+    }
+
+    function llenarSelect(nodo, opciones, valor) {
+      PIVOTAL.vaciar(nodo);
+      opciones.forEach(function (opcion) {
+        var option = document.createElement("option");
+        option.value = opcion.v;
+        option.textContent = opcion.t;
+        nodo.appendChild(option);
+      });
+      nodo.value = valor;
+    }
+
+    /* Los cuatro desplegables de producto, encadenados. El que se acaba de tocar conserva su
+       valor; los que quedaron sin valor valido vuelven a "Todas", porque una seleccion
+       imposible no se puede dejar puesta. */
+    function pintarDimensiones() {
+      DIMENSIONES_PRECIO.forEach(function (dimension, indice) {
+        var posibles = valoresPosibles(indice);
+        var todas = estadoPrecios.datos.dimensiones[dimension];
+        var opciones = todas.filter(function (opcion) {
+          return opcion.v === TODAS || posibles.indexOf(opcion.v) !== -1;
+        });
+        if (opciones.length === 0 || (estadoPrecios.dims[dimension] !== TODAS
+            && posibles.indexOf(estadoPrecios.dims[dimension]) === -1)) {
+          estadoPrecios.dims[dimension] = TODAS;
+        }
+        llenarSelect(selectDe("data-precios-dim", dimension), opciones,
+                     estadoPrecios.dims[dimension]);
+      });
+    }
+
+    function serieActual() {
+      var clave = DIMENSIONES_PRECIO.map(function (d) { return estadoPrecios.dims[d]; })
+        .join("|");
+      var id = estadoPrecios.datos.claves[clave];
+      return id ? estadoPrecios.datos.series[id] : null;
+    }
+
+    /* Las dos puntas del rango: SOLO los meses con cotizacion de esta seleccion (regla 3 de
+       JC). Se conserva lo elegido si ese mes sigue existiendo; si no, se vuelve a la serie
+       entera, que es el estado por defecto. */
+    function pintarRango(serie) {
+      var opciones = serie.meses.map(function (mes) {
+        return { v: mes, t: estadoPrecios.datos.rotulos_mes[mes] };
+      });
+      if (serie.meses.indexOf(estadoPrecios.inicio) === -1) {
+        estadoPrecios.inicio = serie.meses[0];
+      }
+      if (serie.meses.indexOf(estadoPrecios.fin) === -1) {
+        estadoPrecios.fin = serie.meses[serie.meses.length - 1];
+      }
+      if (serie.meses.indexOf(estadoPrecios.fin) < serie.meses.indexOf(estadoPrecios.inicio)) {
+        estadoPrecios.fin = serie.meses[serie.meses.length - 1];
+      }
+      llenarSelect(selectDe("data-precios-rango", "inicio"), opciones, estadoPrecios.inicio);
+      llenarSelect(selectDe("data-precios-rango", "fin"), opciones, estadoPrecios.fin);
+    }
+
+    /* El tramo de puntos que cae dentro del rango. `inicios[k]` es el indice del primer punto
+       del mes k, asi que recortar es quedarse entre dos de esos indices: no hay que mirar
+       ninguna fecha. */
+    function tramo(serie) {
+      var desde = serie.meses.indexOf(estadoPrecios.inicio);
+      var hasta = serie.meses.indexOf(estadoPrecios.fin);
+      return {
+        desde: serie.inicios[desde],
+        hasta: hasta + 1 < serie.inicios.length ? serie.inicios[hasta + 1]
+                                                : serie.valores.length
+      };
+    }
+
+    /* La escala mas ajustada que cubre el maximo visible. Las escalas vienen del build, con
+       sus rotulos ya escritos: aca solo se ELIGE una. Sin esto, con una escala fija de 0 a
+       4.500 los primeros años de la serie quedarian pegados al piso. */
+    function escalaDe(serie, valores) {
+      var maximo = 0;
+      valores.forEach(function (v) { if (v > maximo) { maximo = v; } });
+      var candidatas = serie.escalas.map(function (i) {
+        return estadoPrecios.datos.escalas[i];
+      });
+      for (var i = 0; i < candidatas.length; i++) {
+        if (candidatas[i].max >= maximo) { return candidatas[i]; }
+      }
+      return candidatas[candidatas.length - 1];
+    }
+
+    /* El eje horizontal de JC: meses, y debajo el año una sola vez por grupo. Cuantas marcas
+       entran lo decide el ANCHO del cuadro, no el build; que dice cada marca, el build. */
+    function categorias(serie, corte, ancho) {
+      var vacias = [];
+      var largo = corte.hasta - corte.desde;
+      for (var i = 0; i < largo; i++) { vacias.push(""); }
+      var visibles = serie.marcas.filter(function (marca) {
+        return marca[0] >= corte.desde && marca[0] < corte.hasta;
+      });
+      if (visibles.length === 0) { return vacias; }
+      var maximo = Math.max(3, Math.floor(ancho / ANCHO_POR_MARCA));
+      var paso = Math.ceil(visibles.length / maximo);
+      var ultimoAnio = null;
+      visibles.forEach(function (marca, i) {
+        if (i % paso !== 0) { return; }
+        var texto = "{m|" + marca[1] + "}";
+        if (marca[2] !== ultimoAnio) {
+          texto += "\n{a|" + marca[2] + "}";
+          ultimoAnio = marca[2];
+        }
+        vacias[marca[0] - corte.desde] = texto;
+      });
+      return vacias;
+    }
+
+    function apagarPrecios(motivo) {
+      panel.classList.add("sin-datos");
+      texto(panel, "[data-vacio]", motivo);
+      texto(panel, "[data-precios-titulo]", "");
+      texto(panel, "[data-precios-subtitulo]", "");
+      texto(panel, "[data-nota]", "");
+    }
+
+    function dibujarPrecios() {
+      if (!estadoPrecios.datos) { return; }
+      pintarDimensiones();
+      var serie = serieActual();
+      if (!serie) {
+        apagarPrecios("Esta combinación no tiene cotizaciones en el Mercado Central.");
+        return;
+      }
+      panel.classList.remove("sin-datos");
+      pintarRango(serie);
+      var corte = tramo(serie);
+      var valores = serie.valores.slice(corte.desde, corte.hasta);
+      var textos = serie.textos.slice(corte.desde, corte.hasta);
+      var escala = escalaDe(serie, valores);
+
+      texto(panel, "[data-precios-titulo]", serie.titulo);
+      texto(panel, "[data-precios-subtitulo]", panel.dataset.subtitulo
+        .replace("{desde}", estadoPrecios.datos.rotulos_mes[estadoPrecios.inicio])
+        .replace("{hasta}", estadoPrecios.datos.rotulos_mes[estadoPrecios.fin]));
+      texto(panel, "[data-nota]", serie.nota);
+      var nota = panel.querySelector("[data-nota]");
+      /* La nota se recorta a cuatro lineas en el CSS y estas son largas: el texto completo
+         queda a mano en el title, no se pierde. */
+      if (nota) { nota.title = serie.nota; }
+
+      var caja = panel.querySelector("[data-grafico]");
+      var chart = PIVOTAL.grafico(caja);
+      /* Cuantas marcas del eje vertical entran sin encimarse. La escala la manda el build
+         (paso, tope y el rotulo de cada marca); lo unico que se decide aca es cada cuantas se
+         escribe, porque eso depende del ALTO que le haya tocado al cuadro en esta pantalla.
+         Con las 7 marcas que el protocolo busca, en un cuadro de 92px los numeros se montan
+         unos sobre otros. Se escriben de a `saltoY` pasos, asi que todas las marcas que
+         quedan siguen teniendo su rotulo en la tabla del build. */
+      var marcasY = Math.max(2, Math.floor((caja.clientHeight || 160) / 22));
+      var saltoY = Math.max(1, Math.ceil((escala.max - escala.min) / escala.paso / marcasY));
+      chart.setOption({
+        animation: false,
+        /* `top` deja lugar al nombre del eje, que ECharts dibuja encima de la primera marca:
+           con menos, "$/kg" se montaba sobre el 800. */
+        grid: { left: 4, right: 8, top: 22, bottom: 4, containLabel: true },
+        tooltip: {
+          trigger: "axis",
+          confine: true,
+          formatter: function (params) { return textos[params[0].dataIndex]; }
+        },
+        xAxis: {
+          type: "category",
+          data: categorias(serie, corte, caja.clientWidth || 360),
+          boundaryGap: false,
+          axisTick: { show: false },
+          axisLine: { lineStyle: { color: PIVOTAL.color("--borde") } },
+          axisLabel: {
+            interval: 0,
+            fontSize: 10,
+            lineHeight: 12,
+            color: PIVOTAL.color("--texto-apoyo"),
+            rich: {
+              m: { fontSize: 10, color: PIVOTAL.color("--texto-apoyo") },
+              a: { fontSize: 10, color: PIVOTAL.color("--texto"), fontWeight: "bold" }
+            }
+          }
+        },
+        yAxis: {
+          type: "value",
+          min: escala.min,
+          max: escala.max,
+          interval: escala.paso * saltoY,
+          name: "$/kg",
+          nameLocation: "end",
+          nameGap: 8,
+          nameTextStyle: { fontSize: 10, color: PIVOTAL.color("--texto-apoyo"), align: "left" },
+          axisLabel: {
+            show: true, fontSize: 10, color: PIVOTAL.color("--texto-apoyo"),
+            formatter: function (v) { return PIVOTAL.etiquetaEje(escala, v); }
+          },
+          splitLine: { lineStyle: { color: PIVOTAL.color("--fondo-apoyo") } }
+        },
+        series: [{
+          type: "line",
+          data: valores,
+          smooth: false,
+          connectNulls: false,
+          /* Con mas de 60 puntos el simbolo tapa la linea: en la serie diaria son cientos. */
+          symbol: valores.length > 60 ? "none" : "circle",
+          symbolSize: 4,
+          lineStyle: { color: panel.dataset.color, width: 2 },
+          itemStyle: { color: panel.dataset.color }
+        }]
+      }, true);
+    }
+
+    /* Baja el archivo de la especie y el modo elegidos (y solo ese) y redibuja. */
+    function cargarPrecios() {
+      var chip = panel.querySelector('[data-precios-especie] [data-valor="'
+        + estadoPrecios.especie + '"]');
+      var ruta = chip.dataset[estadoPrecios.modo];
+      if (cache[ruta]) {
+        estadoPrecios.datos = cache[ruta];
+        dibujarPrecios();
+        return Promise.resolve();
+      }
+      return fetch(ruta).then(function (r) { return r.json(); }).then(function (datos) {
+        cache[ruta] = datos;
+        estadoPrecios.datos = datos;
+        dibujarPrecios();
+      });
+    }
+
+    function marcarElegido(nodos, valor) {
+      nodos.forEach(function (boton) {
+        boton.setAttribute("aria-pressed", boton.dataset.valor === valor ? "true" : "false");
+      });
+    }
+
+    /* Al cambiar de especie la seleccion de producto arranca en la que declara el archivo de
+       esa especie (la de la maqueta de JC si existe ahi), y el rango vuelve a la serie entera:
+       los meses de una especie no tienen por que existir en la siguiente. */
+    function elegirEspecie(especie) {
+      estadoPrecios.especie = especie;
+      estadoPrecios.dims = {};
+      estadoPrecios.inicio = null;
+      estadoPrecios.fin = null;
+      marcarElegido(botones("[data-precios-especie] button"), especie);
+      var chip = panel.querySelector('[data-precios-especie] [data-valor="' + especie + '"]');
+      return fetch(chip.dataset[estadoPrecios.modo])
+        .then(function (r) { return r.json(); })
+        .then(function (datos) {
+          cache[chip.dataset[estadoPrecios.modo]] = datos;
+          estadoPrecios.datos = datos;
+          DIMENSIONES_PRECIO.forEach(function (dimension, i) {
+            estadoPrecios.dims[dimension] = datos.defecto[i];
+          });
+          dibujarPrecios();
+        });
+    }
+
+    function engancharPrecios() {
+      panel.querySelector("[data-precios-grupo]").addEventListener("click", function (evento) {
+        var boton = evento.target.closest("button[data-valor]");
+        if (!boton || boton.dataset.valor === estadoPrecios.grupo) { return; }
+        estadoPrecios.grupo = boton.dataset.valor;
+        marcarElegido(botones("[data-precios-grupo] button"), estadoPrecios.grupo);
+        botones("[data-precios-especie] button").forEach(function (chip) {
+          chip.hidden = chip.dataset.grupo !== estadoPrecios.grupo;
+        });
+        elegirEspecie(boton.dataset.especie);
+      });
+      panel.querySelector("[data-precios-especie]").addEventListener("click", function (e) {
+        var boton = e.target.closest("button[data-valor]");
+        if (!boton || boton.dataset.valor === estadoPrecios.especie) { return; }
+        elegirEspecie(boton.dataset.valor);
+      });
+      DIMENSIONES_PRECIO.forEach(function (dimension) {
+        selectDe("data-precios-dim", dimension).addEventListener("change", function (e) {
+          estadoPrecios.dims[dimension] = e.target.value;
+          dibujarPrecios();
+        });
+      });
+      panel.querySelector("[data-precios-modo]").addEventListener("change", function (e) {
+        estadoPrecios.modo = e.target.value;
+        cargarPrecios();
+      });
+      ["inicio", "fin"].forEach(function (punta) {
+        selectDe("data-precios-rango", punta).addEventListener("change", function (e) {
+          estadoPrecios[punta] = e.target.value;
+          dibujarPrecios();
+        });
+      });
+    }
+
+    var pestania = panel.querySelector('[data-precios-grupo] [aria-pressed="true"]');
+    estadoPrecios.grupo = pestania.dataset.valor;
+    estadoPrecios.modo = panel.querySelector("[data-precios-modo]").value;
+    engancharPrecios();
+    /* Se vuelve a dibujar cuando la caja cambia de tamaño (el reparto de flexbox se resuelve
+       despues de pintar) y cuando comun.js repinta el tablero: al exportar a PDF la pagina se
+       pone en el formato de la HOJA y las marcas del eje no son las mismas que en pantalla. */
+    if (window.ResizeObserver) {
+      var espera = null;
+      new ResizeObserver(function () {
+        if (espera) { clearTimeout(espera); }
+        espera = setTimeout(dibujarPrecios, 200);
+      }).observe(panel.querySelector("[data-grafico]"));
+    }
+    PIVOTAL.alRepintar(dibujarPrecios);
+    return elegirEspecie(pestania.dataset.especie);
+  }
+
   PIVOTAL.arrancar(contenedor.dataset.datos, function (combo, datos) {
     var paneles = Array.prototype.slice.call(contenedor.querySelectorAll("[data-panel]"));
     if (!combo) {
@@ -546,8 +1101,11 @@ export default function iniciar(PIVOTAL) {
       pintarKpisNota("");
       return;
     }
+    /* Un tablero puede no tener indicadores: la maqueta "Agri 2" de JC va de los selectores
+       directo a los paneles. En ese caso el JSON no trae `kpis` y no hay tarjetas en el DOM;
+       las tres funciones de abajo no encuentran nada que pintar y no hacen nada. */
     pintarContexto(combo.contexto);
-    pintarKpis(combo.kpis);
+    pintarKpis(combo.kpis || []);
     pintarKpisNota(combo.kpis_nota);
     /* Despues de los indicadores y ANTES de los paneles: los indicadores son lo ultimo que
        cambia de alto arriba del tablero, y los graficos tienen que medirse con el alto ya fijado. */
@@ -564,4 +1122,8 @@ export default function iniciar(PIVOTAL) {
       DIBUJANTES[nodo.dataset.panel](nodo, panel);
     });
   });
+
+  /* El panel de precios del MCBA no tiene combinacion en el JSON del tablero: arranca solo,
+     con sus propios filtros y su propio archivo de datos. */
+  iniciarPrecios();
 }

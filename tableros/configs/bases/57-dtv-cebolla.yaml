@@ -1,0 +1,227 @@
+# Base 57 - DTV Cebolla (SENASA). Declaraciones de Tránsito Vegetal emitidas para mover
+# cebolla desde Santiago del Estero. Alimenta el tablero de Agricultura > Cultivos
+# intensivos (frutas y hortalizas).
+# Escrito sobre raw/entrega-01/57 - DTV Cebolla Sgo.xlsx el 2026-09-23.
+# El adapter de la familia (adapters/dtv.py) lee este archivo y no sabe nada más de la base.
+base: 57
+slug: dtv-cebolla
+familia: dtv
+estado: activa
+
+archivo:
+  patron: "^57 - DTV Cebolla"
+
+# ---------------------------------------------------------------------------
+# HOJAS
+# ---------------------------------------------------------------------------
+# Cinco hojas de datos, una por año, con el MISMO schema de 15 columnas pero el header en
+# filas distintas: "Sgo 25" lleva arriba un rótulo ("Cebolla Santiago 2025") y "Sgo 21"
+# tiene la fila 1 en blanco, así que las dos empiezan en la fila 2; las otras tres en la 1.
+hojas:
+  datos:
+    - nombre: "Sgo 25"
+      header_fila: 2          # la fila 1 es el rótulo "Cebolla Santiago 2025"
+      ambito: sde
+      contenido: "1.771 movimientos de 2025 (2025-01-31 a 2025-12-16) + 1 fila de total al pie."
+    - nombre: "Sgo 24"
+      header_fila: 1
+      ambito: sde
+      contenido: "2.864 movimientos de 2024 (2024-01-02 a 2024-12-30)."
+    - nombre: "Sgo 23"
+      header_fila: 1
+      ambito: sde
+      contenido: "2.248 movimientos de 2023 (2023-01-03 a 2023-12-28)."
+    - nombre: "Sgo 22"
+      header_fila: 1
+      ambito: sde
+      contenido: "2.576 movimientos de 2022 (2022-01-04 a 2022-12-31)."
+    - nombre: "Sgo 21"
+      header_fila: 2          # DRIFT: la fila 1 está vacía, el header arranca en la 2
+      ambito: sde
+      contenido: "1.633 movimientos de 2021 (2021-01-09 a 2021-12-28)."
+
+  ignorar:
+    - nombre: "Modelo Analisis"
+      motivo: >
+        Hoja de especificación de JC (acá escrita "Modelo Analisis", con A mayúscula y sin
+        tilde). Solo dice "MISMO MODELO QUE DTV DE ALGODÓN": la regla completa está en la
+        base 53. Va a constructor-reglas como herencia de spec, no como datos.
+
+# ---------------------------------------------------------------------------
+# COLUMNAS: origen -> canónico snake_case (idénticas en las cinco hojas)
+# ---------------------------------------------------------------------------
+columnas:
+  "FECHA EMISIÓN": fecha_emision
+  "NRO. DTV": nro_dtv                 # el número de declaración; sirve para detectar repetidas
+  "TIPO MOV.": tipo_movimiento
+  "PROVINCIA ORIGEN": origen_provincia
+  "PARTIDO ORIGEN": origen_departamento
+  "PROVINCIA DESTINO": destino_provincia
+  "PARTIDO DESTINO": destino_departamento
+  "PRODUCTO": producto
+  "ACONDIC.": acondicionamiento
+  "CANT.": cantidad
+  "PESO UNITARIO": peso_unitario
+  "U.M.": um
+  "PESO TOTAL": peso_total
+  "FECHA VENCIMIENTO": fecha_vencimiento   # se mapea y no se usa (igual que en la base 53)
+  "TIPO_ORIGEN_2": tipo_origen
+
+# ---------------------------------------------------------------------------
+# VALORES (idénticos a los de la base 53: es la misma familia)
+# ---------------------------------------------------------------------------
+valores:
+  movimientos:
+    etiqueta: "Movimientos (DTV emitidas)"
+    medida: movimientos
+    unidad: movimientos
+    agregable: true
+    origen: constante
+    valor: 1
+  peso_tn:
+    etiqueta: "Peso movilizado"
+    medida: peso
+    unidad: tn
+    agregable: true
+    origen: peso_tn
+  cantidad:
+    etiqueta: "Bultos declarados"
+    medida: cantidad
+    unidad: bultos
+    agregable: false
+    origen: columna
+    columna: cantidad
+
+# ---------------------------------------------------------------------------
+# UNIDADES: PESO TOTAL -> toneladas
+# ---------------------------------------------------------------------------
+# Verificado sobre las 11.092 filas de detalle: 10.002 con U.M. "Kg.", 1.088 con "U." y 2
+# con "Tn.". En las 11.092 se cumple CANT x PESO UNITARIO = PESO TOTAL sin una sola
+# excepción. Las "U." tienen la misma magnitud que las "Kg." (mediana 16.000, que son
+# 1.000 bolsas de 16 kg): son kilos mal etiquetados y llevan factor 0,001. Las 2 filas
+# "Tn." traen 28 y 31, que son toneladas de verdad.
+unidades:
+  peso:
+    columna_um: um
+    canonico: tn
+    um_a_tn:
+      "Kg.":   {canonica: kg, factor: 0.001}
+      "U.":    {canonica: kg, factor: 0.001}   # ver nota `anomalia` sobre U.M.
+      "Tn.":   {canonica: tn, factor: 1}
+      "Kg-Tn": {canonica: tn, factor: 1}       # no aparece; declarado para futuras entregas
+
+# ---------------------------------------------------------------------------
+# TIEMPO
+# ---------------------------------------------------------------------------
+tiempo:
+  grano: fecha
+  columna: fecha_emision
+  cobertura_real: "2021-01-09 a 2025-12-16"
+  agregaciones: [anio, anio_mes]
+
+# ---------------------------------------------------------------------------
+# GEOGRAFÍA
+# ---------------------------------------------------------------------------
+geo:
+  particion: sde
+  provincia_propia: 86
+  resolver: [86]
+  nivel: departamento
+  sin_dato: ["S/D"]        # no aparece en esta base; se declara por uniformidad de familia
+  cobertura_real:
+    departamentos_origen: 7    # de 27, ver nota `cobertura`
+    provincias_destino: 24
+
+# ---------------------------------------------------------------------------
+# SALIDA
+# ---------------------------------------------------------------------------
+salida:
+  staging: "staging/base-57-dtv-cebolla.parquet"
+  mart: hecho_movimientos_vegetales
+  particiones: [provincia, anio]
+
+# ---------------------------------------------------------------------------
+# METADATA HEREDADA DEL ÍNDICE (configs/manifiesto-indice.yaml, base nro 57)
+# ---------------------------------------------------------------------------
+indice:
+  fuente: "SENASA"
+  frecuencia: "diaria"
+  rango_declarado: "2021-01-01 a 2026-05-31"
+  descripcion: "DTV - Cebolla"
+  tema: "Agricultura > Cultivos intensivos > Frutas y hortalizas"
+  cita_fuente_al_pie: "Fuente: SENASA"
+
+# ---------------------------------------------------------------------------
+notas:
+  - fecha: "2026-09-23"
+    tipo: drift
+    texto: >
+      El header no está en la misma fila en las cinco hojas. "Sgo 25" lleva en la fila 1 un
+      rótulo suelto ("Cebolla Santiago 2025", en la columna 7) y el header en la 2. "Sgo 21"
+      tiene la fila 1 completamente vacía y el header también en la 2: esto último NO estaba
+      en el perfil con el que se planificó la ingesta y se descubrió al perfilar el archivo.
+      Las otras tres tienen el header en la fila 1. Cada hoja declara su `header_fila`.
+  - fecha: "2026-09-23"
+    tipo: control
+    texto: >
+      Queda resuelta la sospecha de copy/paste que dejó abierta la auditoría de la 1ra
+      entrega ("hojas Sgo 22, 23 y 24 tienen exactamente 2.865 filas las tres"). Las cuatro
+      hojas viejas declaran 2.865 filas de DIMENSIÓN en el XML del Excel, que es formato
+      arrastrado y no datos. Las filas realmente cargadas son distintas en cada una: Sgo 24
+      2.864, Sgo 23 2.248, Sgo 22 2.576 y Sgo 21 1.633. No hay copy/paste ni truncado.
+  - fecha: "2026-09-23"
+    tipo: modelo
+    texto: >
+      La hoja "Modelo Analisis" solo dice "MISMO MODELO QUE DTV DE ALGODÓN". Para el
+      operador: pasarle a constructor-reglas la hoja de la base 53 y heredar acá.
+  - fecha: "2026-09-23"
+    tipo: anomalia
+    texto: >
+      1.088 filas (casi el 10%) traen U.M. "U." en vez de "Kg.", fuera del dominio
+      {Kg., Tn.}. Se leen como kilos: tienen la misma magnitud que las "Kg." y cierran
+      CANT x PESO UNITARIO = PESO TOTAL. Para qa-datos y para preguntarle a JC.
+  - fecha: "2026-09-23"
+    tipo: anomalia
+    texto: >
+      La hoja "Sgo 25" trae al pie una fila con los =SUMA() de CANT. (1.427.941) y de PESO
+      TOTAL (26.373.560) y nada más: sin fecha, sin producto y sin U.M. Se marca con
+      es_agregado_fila=true y no se convierte a toneladas (sin U.M. no hay factor). Las
+      otras cuatro hojas no la traen. Para qa-datos: compararla contra el detalle de su hoja.
+  - fecha: "2026-09-23"
+    tipo: control
+    texto: >
+      La fila de total al pie de "Sgo 25" SÍ cierra contra el detalle de su hoja: dice
+      1.427.941 bultos y el detalle de Sgo 25 suma 1.427.941; su PESO TOTAL (26.373.560 kg)
+      es exactamente las 26.373,56 tn que suma el detalle de esa hoja. El hallazgo "la fila
+      de totales del pie no coincide" que hoy tira qa-datos es un falso positivo de su propia
+      configuración: compara el pie de una hoja contra el detalle de las cinco, porque la
+      base todavía no declara `columnas: {particion: hoja}` en validations/reglas.yaml. Eso
+      lo arregla qa-datos en su archivo, no este config.
+  - fecha: "2026-09-23"
+    tipo: anomalia
+    texto: >
+      6 números de DTV aparecen en más de una fila del archivo (por ejemplo 0012659864 y
+      0012652174 en la hoja Sgo 25, y 0010652778 en Sgo 24). Pueden ser una declaración con
+      dos renglones de carga o una fila duplicada de la fuente. No se tocan: van a qa-datos
+      para que se lo pregunte a JC. Esta base y la 75 son las únicas dos de la familia donde
+      se puede hacer este control, porque son las únicas que traen NRO. DTV.
+  - fecha: "2026-09-23"
+    tipo: cobertura
+    texto: >
+      CRITERIO 5. Solo 7 de los 27 departamentos aparecen como origen (Capital, Figueroa,
+      La Banda, Robles, San Martín, Sarmiento y Silípica), y no son los mismos todos los
+      años: en 2021 hay 5 y en 2023 hay 6. No es un error de ingesta. Afecta al diseño del
+      mapa y también al de la serie por departamento, que va a tener huecos legítimos.
+  - fecha: "2026-09-23"
+    tipo: dato
+    texto: >
+      La estacionalidad es fortísima y es la historia que tiene para contar esta base:
+      septiembre, octubre y noviembre concentran la enorme mayoría de los movimientos de
+      todos los años. Un tablero con tendencia ANUAL no cuenta nada acá; el panel tiene que
+      ser mensual (CLAUDE.md, regla de Francisco del 5-ago-2026).
+  - fecha: "2026-09-23"
+    tipo: dato
+    texto: >
+      14 tipos de movimiento distintos y 4 tipos de origen (UP, ACOP, EMPAQUE DE HORTALIZAS,
+      MERCADO B): a diferencia de la batata, acá aparece la cadena comercial completa
+      (acopiador, empaque, mercado, minorista). Da para una vista por eslabón.

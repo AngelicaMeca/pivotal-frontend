@@ -7,8 +7,11 @@ Salida (todo regenerable, marts/ esta gitignoreado):
   marts/dim_geo.parquet                    geo_id INDEC -> nombre, nivel, provincia
   marts/dim_tiempo_campania.parquet        campania 2014/15 -> anio inicio / anio fin / orden
   marts/dim_tiempo_mes.parquet             periodo 2022-01 -> anio / mes / orden / etiqueta
+  marts/dim_tiempo_dia.parquet             fecha -> anio / mes / dia / periodo / orden
   marts/hecho_cultivos.parquet             una fila por base-geo-campania-cultivo-medida
   marts/hecho_movimientos_hacienda.parquet una fila por base-flujo-periodo-categoria-medida
+  marts/hecho_movimientos_vegetales.parquet una fila por base-DTV-medida (grano diario)
+  marts/hecho_precios_mayoristas.parquet   una fila por base-cotizacion-medida (grano diario)
 
 Que base alimenta que hecho lo dice el config de la base (`salida.mart`), no este
 codigo. Lo que si sabe este codigo es que cada FAMILIA de schema tiene su propia forma
@@ -155,6 +158,28 @@ def sql_geo_stock(rutas):
     """ % lista_sql(rutas)
 
 
+def sql_geo_precios(rutas):
+    """Familia precios: la unica geografia de la fila es el ORIGEN de la mercaderia.
+
+    Es una unidad de nivel PROVINCIA (el precio se forma en el mercado, no en el
+    departamento), asi que entra a dim_geo con el codigo INDEC de provincia y
+    es_agregado_geo=true: no pinta ningun departamento del mapa.
+    """
+    return """
+        SELECT DISTINCT
+            origen_geo_id                        AS geo_id,
+            nivel_geo,
+            origen_provincia                     AS nombre,
+            provincia,
+            origen_provincia_id                  AS provincia_id,
+            origen_provincia                     AS provincia_nombre,
+            CAST(NULL AS BIGINT)                 AS departamento_id,
+            TRUE                                 AS es_agregado_geo
+        FROM read_parquet(%s)
+        WHERE origen_geo_id IS NOT NULL
+    """ % lista_sql(rutas)
+
+
 def sql_tiempo_campania(rutas):
     return """
         SELECT DISTINCT
@@ -183,6 +208,34 @@ def sql_tiempo_mes(rutas):
         FROM read_parquet(%s)
         WHERE periodo IS NOT NULL
         ORDER BY orden
+    """ % (casos, lista_sql(rutas))
+
+
+def sql_tiempo_dia(rutas):
+    """Grano diario. Lo alimentan las familias que traen una FECHA por fila.
+
+    Existe porque la base 8 (precios) se mira en los dos granos: JC pide en el mismo panel
+    "Precio prom. mensual" y "Precio prom diario". `orden` son dias corridos desde el
+    1-ene-1970, asi que ordena y resta igual que `orden` de dim_tiempo_mes ordena meses.
+    """
+    casos = " ".join(
+        "WHEN %d THEN '%s'" % (i + 1, nombre) for i, nombre in enumerate(MESES)
+    )
+    return """
+        SELECT DISTINCT
+            fecha,
+            anio,
+            mes,
+            day(fecha)                                   AS dia,
+            isodow(fecha)                                AS dia_semana,
+            periodo,
+            orden_periodo,
+            datediff('day', DATE '1970-01-01', fecha)    AS orden,
+            CAST(day(fecha) AS VARCHAR) || ' de ' || (CASE mes %s END)
+                || ' de ' || CAST(anio AS VARCHAR)       AS etiqueta
+        FROM read_parquet(%s)
+        WHERE fecha IS NOT NULL
+        ORDER BY fecha
     """ % (casos, lista_sql(rutas))
 
 
@@ -246,17 +299,113 @@ def sql_hecho_stock(rutas):
     """ % lista_sql(rutas)
 
 
+def sql_hecho_dtv(rutas):
+    """Familia dtv: una DTV emitida por fila del Excel, con las dos puntas del viaje.
+
+    El grano que llega al mart es el mismo que trae la fuente (diario, una declaracion por
+    fila): es lo que permite cortar despues por anio, por mes, por departamento de origen,
+    por provincia de destino, por tipo de movimiento, por acondicionamiento y por producto
+    sin volver al Excel. Las columnas `*_origen` son el dato crudo de SENASA (cantidad,
+    peso unitario, peso total y la U.M. de esa fila); `valor` con medida='peso' ya viene en
+    toneladas, que es lo que pide JC.
+
+    Mismo criterio de orden que dte y stock: (hoja, fila_origen, variable) identifica la
+    celda del Excel de la que sale cada fila, asi que no hay empates y el parquet no cambia
+    entre corridas.
+    """
+    return """
+        SELECT
+            base_id, entrega, ambito, provincia,
+            alcance, es_agregado_fila, geo_sin_dato,
+            nro_dtv,
+            fecha_hora, fecha, anio, mes, periodo, orden_periodo,
+            origen_provincia_id, origen_geo_id, origen_departamento, origen_provincia,
+            destino_provincia_id, destino_geo_id, destino_departamento, destino_provincia,
+            producto, acondicionamiento, tipo_movimiento, tipo_origen,
+            um_origen, um_canonica, factor_tn,
+            cantidad_origen, peso_unitario_origen, peso_total_origen,
+            variable, medida, medida_etiqueta, unidad, agregable, valor,
+            fuente,
+            hoja, fila_origen
+        FROM read_parquet(%s)
+        ORDER BY base_id, hoja, fila_origen, variable
+    """ % lista_sql(rutas)
+
+
+# Las dimensiones de producto de la familia precios, en el mismo orden que declara
+# adapters/precios.py. Se listan acá para que la proyeccion del hecho sea explicita.
+DIMENSIONES_PRECIOS = ("grupo", "especie", "variedad", "envase", "calidad", "tamanio")
+
+
+def sql_hecho_precios(rutas):
+    """Familia precios: una cotizacion diaria por fila del Excel.
+
+    El grano que llega al mart es el de la fuente (un precio de un dia para un producto
+    concreto). Los promedios -diario, mensual, anual, por variedad o por envase- se
+    calculan sobre este hecho: NO se materializan acá, igual que los rankings y las
+    variaciones (CLAUDE.md).
+
+    OJO AL AGREGAR: `valor` con medida='precio' NO SE SUMA. Cada fila trae `agregable`
+    (false), `agregacion` ('promedio') y `ponderacion` (la frase que explica que el
+    promedio es simple porque la fuente no informa volumen). Una vista que sume esta
+    columna esta mal, y el texto de `ponderacion` es el que tiene que ir al pie.
+
+    `mercado` es donde se forma el precio (MCBA, en Buenos Aires) y `origen_*` de donde
+    sale la mercaderia (Santiago). Son dos lugares distintos a proposito.
+
+    Mismo criterio de orden que las otras familias: (hoja, fila_origen, variable)
+    identifica la celda del Excel de la que sale cada fila, asi que no hay empates y el
+    parquet no cambia entre corridas.
+    """
+    dims = ",\n            ".join(
+        "%s, %s_origen, %s_clase" % (d, d, d) for d in DIMENSIONES_PRECIOS
+    )
+    return """
+        SELECT
+            base_id, entrega, ambito, provincia,
+            es_agregado_fila,
+            fecha, anio, mes, dia, periodo, orden_periodo,
+            anio_declarado, mes_declarado, tiempo_declarado_coincide,
+            mercado, mercado_nombre,
+            procedencia_origen, origen_provincia, origen_provincia_id, origen_geo_id,
+            nivel_geo, geo_sin_dato,
+            %s,
+            variable, medida, medida_etiqueta, unidad, moneda, expresion_precio,
+            agregable, agregacion, ponderacion, valor,
+            fuente,
+            hoja, fila_origen
+        FROM read_parquet(%s)
+        ORDER BY base_id, hoja, fila_origen, variable
+    """ % (dims, lista_sql(rutas))
+
+
 HECHOS_POR_FAMILIA = {
     "tidy": sql_hecho_tidy,
     "dte": sql_hecho_dte,
+    "dtv": sql_hecho_dtv,
     "stock": sql_hecho_stock,
+    "precios": sql_hecho_precios,
 }
 
 GEO_POR_FAMILIA = {
     "tidy": sql_geo_tidy,
     "dte": sql_geo_dte,
+    # La familia dtv tiene la geografia en las dos puntas y con los mismos nombres de
+    # columna que dte (origen_* / destino_*), asi que reusa su proyeccion tal cual.
+    "dtv": sql_geo_dte,
     "stock": sql_geo_stock,
+    "precios": sql_geo_precios,
 }
+
+# Familias cuyo grano se agrega a mes y por lo tanto alimentan dim_tiempo_mes. La dtv y la
+# precios son diarias, pero traen `periodo` y `orden_periodo` ya calculados por el adapter:
+# el mes es el corte que pide el modelo de JC ("Unid temporal: mes y ano" en las DTV,
+# "Precio prom. mensual" en el panel de precios).
+FAMILIAS_CON_MES = ("dte", "dtv", "precios")
+
+# Familias con una FECHA por fila, que alimentan dim_tiempo_dia. Las dos tienen las mismas
+# columnas de tiempo (fecha, anio, mes, periodo, orden_periodo), asi que comparten SQL.
+FAMILIAS_CON_DIA = ("dtv", "precios")
 
 
 # ------------------------------------------------------------------ construccion
@@ -309,11 +458,18 @@ def construir():
         escritos.append(("dim_tiempo_campania", copiar(
             con, sql_tiempo_campania(rutas_campania),
             os.path.join(DIR_MARTS, "dim_tiempo_campania.parquet"))))
-    rutas_mes = rutas_de_familia(bases, "dte")
+    rutas_mes = sorted(
+        r for f in FAMILIAS_CON_MES for r in rutas_de_familia(bases, f))
     if rutas_mes:
         escritos.append(("dim_tiempo_mes", copiar(
             con, sql_tiempo_mes(rutas_mes),
             os.path.join(DIR_MARTS, "dim_tiempo_mes.parquet"))))
+    rutas_dia = sorted(
+        r for f in FAMILIAS_CON_DIA for r in rutas_de_familia(bases, f))
+    if rutas_dia:
+        escritos.append(("dim_tiempo_dia", copiar(
+            con, sql_tiempo_dia(rutas_dia),
+            os.path.join(DIR_MARTS, "dim_tiempo_dia.parquet"))))
 
     # hechos declarados por los configs. Un mart junta bases de la misma familia.
     por_mart = {}

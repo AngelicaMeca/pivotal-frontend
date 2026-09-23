@@ -2,19 +2,20 @@ descripcion: 'Manifiesto de la entrega: que archivos llegaron, con que hash, y q
   GENERADO por pipeline/ingest.py, no editar a mano. Vive en configs/ y no en raw/ porque raw/ es de solo
   lectura.'
 entrega: entrega-01
-archivos_recibidos: 27
+archivos_recibidos: 28
 bases_ingeridas:
+- 8
 - 9
 - 48
+- 53
+- 56
+- 57
+- 75
 - 85
 bases_sin_config:
 - 30
 - 33
 - 38
-- 53
-- 56
-- 57
-- 75
 - 92
 - 93
 - 100
@@ -35,6 +36,21 @@ bases_sin_config:
 bases_diferidas: []
 archivos_ignorados: []
 archivos:
+- archivo: 8 - Precios MCBA origen Sgo.xlsx
+  base: 8
+  sha256: c57e76d0b2b657a6cfe827970e84d11283ca6b78b088f2757fef03196b807593
+  bytes: 285145
+  fecha_archivo: '2026-09-22'
+  familia: precios
+  config: configs/bases/8-precios-mcba.yaml
+  estado: ingerida
+  staging: staging/base-08-precios-mcba.parquet
+  filas_staging: 5655
+  hojas:
+    Data SDE:
+      filas_staging: 5655
+      filas_excel: 5655
+  valores_nulos: 0
 - archivo: 9 - Cultivos extensivos SDE.xlsx
   base: 9
   sha256: cf2930c59f6013bb8e76684e2f2b61396cc923817cb27704da4620f12bab5612
@@ -112,49 +128,85 @@ archivos:
   sha256: 090eb5921741a7d1f1ed39ba7afe31a7eebe3a5262236eb9a755fac6c8202408
   bytes: 8102189
   fecha_archivo: '2026-07-17'
-  familia: null
-  config: null
-  estado: sin-config
-  staging: null
-  filas_staging: null
-  hojas: null
-  valores_nulos: null
+  familia: dtv
+  config: configs/bases/53-dtv-algodon.yaml
+  estado: ingerida
+  staging: staging/base-53-dtv-algodon.parquet
+  filas_staging: 307155
+  hojas:
+    53 PB 13 Sgo 21:
+      filas_staging: 74826
+      filas_excel: 24942
+    53 PB 13 Sgo 22:
+      filas_staging: 71784
+      filas_excel: 23928
+    53 PB 13 Sgo 23:
+      filas_staging: 60501
+      filas_excel: 20167
+    53 PB 13 Sgo 24:
+      filas_staging: 48189
+      filas_excel: 16063
+    53 PB 13 Sgo 25:
+      filas_staging: 51855
+      filas_excel: 17285
+  valores_nulos: 10
 - archivo: 56 - DTV Batata Sgo.xlsx
   base: 56
   sha256: f67036392f0a81f4d99dbb9faf1ba1b75870aae669d0c7eea6aad155e5ff3ac9
   bytes: 60879
   fecha_archivo: '2026-07-17'
-  familia: null
-  config: null
-  estado: sin-config
-  staging: null
-  filas_staging: null
-  hojas: null
-  valores_nulos: null
+  familia: dtv
+  config: configs/bases/56-dtv-batata.yaml
+  estado: ingerida
+  staging: staging/base-56-dtv-batata.parquet
+  filas_staging: 1905
+  hojas:
+    Batata:
+      filas_staging: 1905
+      filas_excel: 635
+  valores_nulos: 0
 - archivo: 57 - DTV Cebolla Sgo.xlsx
   base: 57
   sha256: 0287edae3500a0e0001a68e4118ae28087457b8d61c6a03d6517d78a81c8f778
   bytes: 1033363
   fecha_archivo: '2026-07-17'
-  familia: null
-  config: null
-  estado: sin-config
-  staging: null
-  filas_staging: null
-  hojas: null
-  valores_nulos: null
+  familia: dtv
+  config: configs/bases/57-dtv-cebolla.yaml
+  estado: ingerida
+  staging: staging/base-57-dtv-cebolla.parquet
+  filas_staging: 33279
+  hojas:
+    Sgo 25:
+      filas_staging: 5316
+      filas_excel: 1772
+    Sgo 24:
+      filas_staging: 8592
+      filas_excel: 2864
+    Sgo 23:
+      filas_staging: 6744
+      filas_excel: 2248
+    Sgo 22:
+      filas_staging: 7728
+      filas_excel: 2576
+    Sgo 21:
+      filas_staging: 4899
+      filas_excel: 1633
+  valores_nulos: 2
 - archivo: 75 - DTV Papa SDE.xlsx
   base: 75
   sha256: 9618da6e380725a72f96aca17a4d9ea126754e958b284e34ea6715769e3db427
   bytes: 25010
   fecha_archivo: '2026-07-17'
-  familia: null
-  config: null
-  estado: sin-config
-  staging: null
-  filas_staging: null
-  hojas: null
-  valores_nulos: null
+  familia: dtv
+  config: configs/bases/75-dtv-papa.yaml
+  estado: ingerida
+  staging: staging/base-75-dtv-papa.parquet
+  filas_staging: 531
+  hojas:
+    Data:
+      filas_staging: 531
+      filas_excel: 177
+  valores_nulos: 0
 - archivo: 85 - DTE Bovinos SDE.xlsx
   base: 85
   sha256: 34e7d7702dfff0abb33dde3bfdf52b37b1c00ddcf29516d758e9c07119265343

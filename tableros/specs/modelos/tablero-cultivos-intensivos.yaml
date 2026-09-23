@@ -1,0 +1,832 @@
+# Tablero de la familia DTV de hortalizas (bases 56 batata, 57 cebolla, 75 papa). Es la UNICA
+# puerta de la seccion Agricultura > Cultivos intensivos: rige la misma regla que en cultivos
+# extensivos desde la tercera tanda del 10-ago-2026 ("OLVIDATE DEL ANALISIS COMPLETO, ESO YA
+# NO EXISTE MAS... TE QUEDES CON LOS TABLEROS", formato_v1.tercera_tanda.solo_tableros).
+#
+# ===========================================================================================
+# SEGUNDA VUELTA, 23-sep-2026: LOS PANELES SALEN DEL .XLSX, NO DE UN CSV
+# ===========================================================================================
+# La primera version de este tablero (mapa + tendencia mensual + anillo por tipo de movimiento
+# + ranking de provincias de destino + 4 KPIs) se dedujo de un CSV exportado de la maqueta de
+# JC. El CSV no traia los graficos: eran objetos de Excel y se perdieron al exportar. Francisco
+# abrio el .xlsx original ("0000000000 Maqueta Agri.xlsx", hoja "Agri 2") y ahi estan los
+# graficos de verdad. Son TRES, y ninguno es un mapa.
+#
+# Lo verificado en el archivo (xl/charts/chart9.xml, chart10.xml y chart8.xml, con sus anclas
+# en xl/drawings): titulo literal, tipo de grafico, cantidad de series y valores cacheados.
+#
+#   1. chart9  · ancla G9:AD23  (arriba a la izquierda) · barChart `clustered` + lineChart,
+#      dos pares de ejes. Titulo: "Cebolla - Sgo del Estero - DTV Envios  - Cant bolsas y tn
+#      por año". Serie de barras "Bolsas", serie de linea "Tn", 5 categorias = 2021..2025.
+#   2. chart10 · ancla G27:AD42 (abajo a la izquierda) · barChart `stacked`, 7 series, una por
+#      departamento de origen, mismas 5 categorias. Titulo: "Cebolla - Sgo del Estero - DTV
+#      Envios  - tn por Dto. de origen".
+#   3. chart8  · ancla AE14:BI30 (arriba a la derecha) · lineChart, 1 serie mensual. Titulo:
+#      "Zanahoria Chantennay - Precio promedio en MCBA, origen Sgo del Estero - $/kg
+#      (corrientes)". Es la base 8, que sigue sin adapter: NO se dibuja.
+#
+#   El panel de abajo a la derecha NO tiene grafico. Es un recuadro con el titulo
+#   "Estimaciones de superficies cosechadas (*)" (celda AM35) y las dos notas al pie de JC
+#   (celdas AF36 y AF37). O sea: tabla.
+#
+# QUE SALIO, y por que: mapa, anillo por tipo de movimiento, ranking de provincias de destino,
+# tendencia mensual de toneladas y las cuatro tarjetas de indicadores. Nada de eso esta en la
+# hoja "Agri 2". La maqueta va de los selectores directo a los paneles.
+#
+# EL MAPA, que es el desvio mas fuerte: la hoja "Modelo analisis" de la base 53 dice "CON
+# MAPA". La contradiccion la resuelve el propio JC en las OBSERVACIONES de esta maqueta, punto
+# 4 "Mas informacion", bloque "EN DTV:", celda F72, textual:
+#
+#     "> Mapas calor por departamento por producto por volumen"
+#
+# Esta en su lista de trabajo FUTURO, no dibujado en la hoja. El mapa esta planificado y no es
+# parte de esta pagina. Queda anotado para que no parezca un olvido
+# (_comunes-dtv-hortalizas.fuera_de_alcance).
+#
+# FORMATO: sigue siendo el mockup Modelo 2 (JC f39-f41: "los formatos se mantienen SIEMPRE,
+# asi como la uniformidad de colores y estilos (sino seria un carnaval)"). Lo que cambia es la
+# DISPOSICION interna, que ahora es la grilla 2x2 de la maqueta "Agri 2" en vez de las dos
+# columnas de cultivos extensivos, y QUE cuenta cada panel. Colores, rampas, tipografia y
+# reglas de titulo no se tocaron: los manda _protocolo-presentacion.yaml.
+#
+# ===========================================================================================
+# TERCERA VUELTA, 23-sep-2026: LA MAQUETA RENDERIZADA (lo que no se ve en el XML)
+# ===========================================================================================
+# Las dos vueltas anteriores reconstruyeron la hoja desde coordenadas: celdas con texto y
+# anclas de graficos. Francisco la exporto a PDF con Excel (PrintArea por cuadrante,
+# Orientation = 2, Zoom = $false, FitToPagesWide/Tall = 1, ExportAsFixedFormat(0, ruta)) y la
+# MIRO. Aparecio lo que el XML no dice, porque no son celdas ni graficos: son IMAGENES pegadas
+# y cuadros de texto sueltos. Verificado objeto por objeto en xl/drawings/drawing3.xml:
+#
+#   Imagen 109 (ancla L23:AD27)  la tabla de datos DEBAJO del combo: filas Bolsas y Tn, una
+#                                columna por año.
+#   Imagen 111 (ancla L42:AD51)  la tabla de datos DEBAJO de las apiladas: una fila por
+#                                departamento, una columna por año, en toneladas.
+#   Imagen 122 (ancla AG40:BE52) la tabla de estimaciones: departamentos por AÑO (los cinco),
+#                                con fila TOTAL. No es de un año solo.
+#   CuadroTexto 94/103/97        los chips "DTV Cebolla" / "DTV Batata" / "DTV Papa", con
+#                                icono, ADENTRO de la columna de DTV (fila 7).
+#   CuadroTexto 116/118/119      los chips "Cebolla" / "Batata" / "Papa", con icono, ADENTRO
+#                                del panel de estimaciones (fila 38).
+#   Celdas H54/AX54 + AA54/BF54/BF32 y las tres Imagen 31 (el icono de PDF): "Mas informacion"
+#                                y "Generar PDF" al pie de cada cuadro, no en una tira final.
+#   CuadroTexto 82/48/22/83      la cabecera del panel de precios y sus dos sub-pestañas.
+#
+# Los tres graficos son los MISMOS que en la version anterior del archivo: lo que cambio es
+# que ahora se ven las tablas, los chips y los pies que estaban tapados por el formato.
+
+# ===========================================================================================
+# DE DONDE SALE CADA NUMERO
+# ===========================================================================================
+# De marts/hecho_movimientos_vegetales.parquet, con NOT es_agregado_fila, siempre. Ningun
+# numero de este spec ni del codigo esta embebido: los valores que aparecen escritos aca son
+# AUDITORIAS fechadas contra el mart, para que el dia que cambien se note.
+
+id: tablero-cultivos-intensivos
+tipo: tablero
+familia: dtv-hortalizas         # que contexto de datos construye esta pagina (site_build.CONTEXTOS)
+bases: [56, 57, 75]             # las tres bases que alimentan el mart de la familia
+seccion: cultivos-intensivos
+comunes: _comunes-dtv-hortalizas
+protocolo: _protocolo-presentacion
+
+# `titulo` se usa SOLO en el menu, el catalogo y la pestaña del navegador. NO se dibuja en la
+# cabecera (tercera_tanda.cabecera: ahi van las banderas de idioma).
+titulo: "Movimientos de hortalizas"
+subtitulo: "Provincia de Santiago del Estero · cultivos intensivos"   # solo para catalogo/menu
+
+# ---------------------------------------------------------------------------
+# CABECERA
+# ---------------------------------------------------------------------------
+cabecera:
+  logo: "logo provincial arriba a la izquierda (site/theme.yaml)"
+  botones:
+    # UN solo boton, y desde el 23-sep-2026 es la UNICA entrada a la vista de detalle: al
+    # salir el mapa se fue con el el "AL HACER CLIC EN UN DEPARTAMENTO QUE SE ABRA SU
+    # INFORMACION" de la hoja Modelo analisis. La vista sigue aceptando `?departamento=<geo_id>`
+    # y tiene su propio selector de ambito, asi que no se perdio ningun contenido: se perdio un
+    # atajo. Vuelve solo el dia que entre el mapa de calor que JC pide para mas adelante
+    # (maqueta Agri 2, observaciones, celda F72).
+    # El otro literal de esa hoja, "VER TODOS LOS AÑOS", es exactamente este boton.
+    - {id: ver-todos-los-anios, etiqueta: "Ver todos los años",
+       destino: dtv-departamento-movimientos,
+       nota: "en la vista destino este boton pasa a decir 'Provincia' y vuelve al tablero (cuarta_tanda.boton_volver_provincia)"}
+  banderas_idioma:
+    posicion: "arriba a la derecha, como en cultivos extensivos"
+    idiomas:
+      - {codigo: es, estado: activa}
+      - {codigo: en, estado: deshabilitada, rotulo: "Próximamente"}
+      - {codigo: pt, estado: deshabilitada, rotulo: "Próximamente"}
+  sin_titulo_duplicado: true
+
+# Barra verde bajo la cabecera, cada nivel linkea a SU nivel. La ruta es la de la maqueta
+# (celdas N5, R5 y X5 de la hoja "Agri 2"): "Agricultura | Cultivos Intensivos | Provincia",
+# SIN el producto. El producto ya se lee en el selector y en el titulo de cada cuadro; ponerlo
+# tambien en la ruta lo decia tres veces y no es lo que dibujo JC.
+breadcrumb: "Agricultura - Cultivos Intensivos - Provincia"
+
+# ---------------------------------------------------------------------------
+# SELECTORES
+# ---------------------------------------------------------------------------
+selectores:
+  anio:
+    zona: periodo                  # tira de pestañitas a la derecha de la barra del breadcrumb
+    rotulo: "Año"
+    valores: ventana_anios
+    default: parametros.ventana_anios.anio_por_defecto
+    que_controla: >
+      Nada, y a proposito. Los TRES cuadros con datos muestran la ventana entera de cinco años,
+      porque asi los dibujo JC: en los dos graficos las categorias son los cinco años y en la
+      tabla de estimaciones las columnas son los cinco años. El año elegido se DESTACA: en los
+      graficos, su etiqueta del eje horizontal; en las tres tablas, su columna. Filtrar un
+      cuadro cuyo sujeto es la comparacion entre años lo dejaria con una sola barra.
+    por_que_sigue_estando: >
+      La hoja "Agri 2" no dibuja tira de años, pero la barra del breadcrumb es comun a toda la
+      seccion y el año viaja en la navegacion (`data-conserva`): al salir a la vista de
+      detalle, que SI es por año, la seleccion se conserva. Un destacado no es interactividad
+      nueva: es el unico efecto que un selector de periodo puede tener sobre un cuadro cuyo
+      sujeto es la serie completa.
+  producto:
+    # TERCERA VUELTA: los chips NO van en una fila propia arriba de la pagina. Van ADENTRO de
+    # los paneles, como los dibujo JC: el panel de DTV (columna izquierda) tiene su fila de
+    # chips rotulada "DTV Cebolla / DTV Batata / DTV Papa" y el de estimaciones tiene la suya,
+    # rotulada "Cebolla / Batata / Papa". Los dos manejan el MISMO filtro: no se pueden
+    # desincronizar porque no son dos filtros, es uno dibujado dos veces.
+    zona: panel
+    con_icono: true
+    universo: parametros.productos    # los tres productos de la familia, en el orden del spec
+    incluye_todos: false              # ver _comunes-dtv-hortalizas.parametros.incluye_todos
+    default: parametros.producto_por_defecto
+    iconos: >
+      site/iconos-cultivo.yaml, claves "Cebolla", "Batata" y "Papa" (los dibujos propios
+      site/assets/iconos/trazo/cebolla.svg, batata.svg y papa.svg). Si falta el dibujo, el
+      build corta con el nombre que falta.
+    # Donde se dibuja, y con que rotulo. `{producto}` es el unico slot. El orden de esta lista
+    # es el orden en que se escriben en el JSON de la pagina; el de los chips dentro de cada
+    # fila lo da `parametros.productos`.
+    paneles:
+      - panel: combo
+        rotulo: "DTV {producto}"
+        por_que_aca: >
+          Es el chip de arriba de la COLUMNA izquierda en la maqueta (fila 7, sobre el combo).
+          Gobierna los dos cuadros de DTV, igual que en la hoja de JC, donde esa fila de chips
+          esta arriba del combo y manda tambien sobre las apiladas que van debajo.
+      - panel: tabla-superficie
+        rotulo: "{producto}"
+        por_que_aca: >
+          JC le dibuja al panel de estimaciones su propia fila de chips (fila 38), sin el
+          prefijo "DTV": ahi el sujeto es el cultivo, no la declaracion.
+    por_que_las_apiladas_no_llevan_chips: >
+      Porque en la maqueta la columna izquierda entera tiene UNA sola fila de chips, arriba de
+      todo. Repetirla en el segundo cuadro serian tres filas de chips para un solo filtro:
+      mas ruido, cero informacion nueva. El panel de precios tampoco lleva estos chips: tiene
+      los suyos, que son otros nueve cultivos y otro filtro (ver `precios-mcba`).
+
+# ---------------------------------------------------------------------------
+# SIN TARJETAS DE INDICADORES
+# ---------------------------------------------------------------------------
+# La hoja "Agri 2" no tiene KPIs: de los selectores se pasa directo a los cuatro paneles.
+# Salen las cuatro tarjetas (toneladas, DTV, superficie estimada, provincias de destino) y
+# tambien la tarjeta de contexto, que vivia en la misma fila.
+indicadores:
+  estado: fuera-de-esta-pagina
+  motivo: >
+    No estan en la maqueta (Francisco, 23-sep-2026: "Tampoco hay tarjetas de indicadores (KPIs)
+    en la hoja Agri 2: la maqueta va directo de los selectores a los paneles. Sacalas."). Los
+    cuatro numeros no se pierden: las toneladas y las DTV se leen en los dos graficos de la
+    izquierda y la superficie estimada es la tabla entera de abajo a la derecha.
+  donde_quedo_la_cobertura_de_la_papa: >
+    La tarjeta de contexto era el lugar declarado para el "septiembre a diciembre" de la papa.
+    Al sacarla, esa aclaracion pasa a los TRES paneles con datos: en el titulo de cada cuadro
+    (el parentesis de recorte que compone el protocolo) y en su nota al pie. Es mas repetitivo
+    y es a proposito: la regla dura de la familia es que ningun numero de papa se pueda leer
+    como un año completo, y ahora cada cuadro lo dice por su cuenta
+    (_comunes-dtv-hortalizas.cobertura_mensual.regla_de_lectura).
+
+# ---------------------------------------------------------------------------
+# PANELES: la grilla 2x2 de la hoja "Agri 2"
+# ---------------------------------------------------------------------------
+# Disposicion literal de la maqueta, por ancla de cada objeto en la hoja:
+#
+#   G9:AD23   combo (barras bultos + linea tn)  |  AE14:BI30  precios MCBA (pendiente)
+#   G27:AD42  apiladas (tn por Dto. de origen)  |  AM35..     estimaciones de superficies
+#
+# Cada panel cita su fuente al pie, sin excepcion (regla de JC). Las tres celdas de fuente de
+# la hoja: H23 y H42 dicen "Fuente: SENASA"; AE31 dice "Fuente: MAGyP (Ministerio de
+# Agricultura, Ganaderia y Pesca)".
+paneles:
+  # -------------------------------------------------------------------------
+  # PIE DE CUADRO: lo mismo en los cuatro paneles (tercera vuelta, 23-sep-2026)
+  # -------------------------------------------------------------------------
+  # JC pone "Generar PDF" tres veces (celdas BF32, AA54 y BF54) y "Mas informacion" dos
+  # (H54 y AX54), siempre AL PIE DE UN CUADRO. Francisco lo cerro como regla del tablero:
+  # "Cada panel tiene su 'Mas informacion' y su 'Generar PDF'. Al pie de cada cuadro, no un
+  # panel de utilidades unico al final."
+  #
+  # Se declara UNA vez y el build se lo pega a los cuatro paneles de la grilla: cuatro copias
+  # del mismo bloque se desincronizarian al primer cambio.
+  acciones_de_cuadro:
+    - id: mas-informacion
+      etiqueta: "Más información"
+      # Sin `destino` queda deshabilitado con "Próximamente". El dia que uno de estos cuadros
+      # tenga su informe propio (backlog 44 y 45), se le pone `destino: <slug>` al panel en
+      # `destinos_de_mas_informacion` y el link se enciende solo.
+      estado: deshabilitado
+      rotulo: "Próximamente"
+      flecha: true            # la flecha verde que JC dibuja al lado (celdas L54, BB54)
+    - id: exportar-pdf
+      etiqueta: "Generar PDF"
+      icono: exportar-como-pdf   # el mismo icono en los cuatro pies, como en la maqueta
+      accion: exportar-pdf       # site_build.ACCIONES_UTILIDAD; la atiende comun.js
+  destinos_de_mas_informacion: {}
+  por_que_mas_informacion_no_apunta_a_la_vista_de_detalle: >
+    La vista `dtv-departamento-movimientos` YA tiene su entrada, que es el boton "Ver todos los
+    años" de la cabecera. Ponerla tambien en los cuatro pies seria prometer cuatro salidas
+    distintas que llevan todas al mismo lado. El "Mas informacion" de JC apunta a su lista de
+    trabajo futuro (observaciones de la hoja, celdas F72 a F77), que todavia no existe.
+
+  combo:
+    # FORMA NUEVA en el catalogo de paneles (antes habia anillo, mapa, tendencia, top y
+    # tabla-datos). Barras agrupadas de una medida de CONTEO sobre el eje izquierdo y una
+    # linea de una medida de VOLUMEN sobre el eje derecho, compartiendo categorias.
+    forma: combo
+    origen_en_la_maqueta: "hoja Agri 2, chart9, ancla G9:AD23"
+    titulo_protocolo: "{Producto} - Sgo del Estero - DTV Envíos - Cant {bultos} y tn por año"
+    titulo_literal_de_jc: "Cebolla - Sgo del Estero - DTV Envíos  - Cant bolsas y tn por año"
+    por_que_no_se_copia_letra_por_letra: >
+      La palabra "bolsas" no es constante: JC la escribio mirando la cebolla. El slot {bultos}
+      lo resuelve el build contra el mart, producto por producto, con la regla
+      _comunes-dtv-hortalizas.rotulo_de_bultos. En cebolla da "bolsas" (99,6% Bolsas/Bolsitas)
+      y en batata y papa da "bultos". Los espacios dobles del titulo de JC tampoco se copian:
+      el protocolo normaliza separadores.
+    categorias: ventana_anios        # los cinco años, como en el grafico de JC
+    barras:
+      medida: cantidad
+      eje: izquierdo
+      rotulo: "{Bultos} declarados"
+      condicion: >
+        Es la medida que _comunes-dtv-hortalizas prohibia sumar. Se habilita SOLO aca y SOLO
+        con su nota de composicion al pie (ver `nota_obligatoria`).
+    linea:
+      medida: peso_tn
+      eje: derecho
+      rotulo: "Toneladas"
+    dos_ejes: true
+    por_que_dos_ejes: >
+      Los dos numeros son la misma carga contada de dos maneras y tienen ordenes de magnitud
+      distintos (millones de bultos contra decenas de miles de toneladas). En un solo eje la
+      linea de toneladas queda pegada al piso. JC lo dibujo con eje secundario
+      (chart9 tiene dos pares de axId).
+    nota_obligatoria: >
+      La composicion de acondicionamiento del producto, con los formatos mas pesados y su
+      porcentaje. La arma el build contra el mart. Sin esta nota el panel no se dibuja: es la
+      condicion con la que Francisco habilito la suma de bultos.
+    # TABLA DE DATOS debajo del grafico (Imagen 109, ancla L23:AD27 de la hoja). Las mismas
+    # categorias del grafico como columnas y una fila por serie. Es la forma `tabla-datos` de
+    # siempre, metida dentro del cuadro.
+    tabla:
+      columnas: ventana_anios          # los mismos cinco años del grafico, en el mismo orden
+      encabezado_primera_columna: ""   # JC la deja vacia: los rotulos de fila se leen solos
+      filas:
+        # El rotulo de la primera fila NO es constante, por el mismo motivo que el eje: en
+        # cebolla dice "Bolsas" y en batata y papa "Bultos" (rotulo_de_bultos). JC escribio
+        # "Bolsas" porque dibujo la cebolla.
+        - {serie: barras, rotulo: "{Bultos}", rotulo_literal_de_jc: "Bolsas"}
+        - {serie: linea,  rotulo: "Tn",       rotulo_literal_de_jc: "Tn"}
+      por_que_tn_y_no_toneladas: >
+        Porque es el rotulo de JC y es el mismo que ya usa el eje derecho del grafico. La
+        unidad completa vive en el subtitulo del cuadro y en el tooltip.
+      columna_destacada: "la del año elegido en la tira de periodo"
+    fuente_al_pie: "Fuente: SENASA"     # celda H23 de la hoja
+
+  apiladas:
+    # FORMA NUEVA. Barras apiladas, una serie por categoria, el total es el alto de la pila.
+    forma: apiladas
+    origen_en_la_maqueta: "hoja Agri 2, chart10, ancla G27:AD42"
+    titulo_protocolo: "{Producto} - Sgo del Estero - DTV Envíos - tn por Dto. de origen"
+    titulo_literal_de_jc: "Cebolla - Sgo del Estero - DTV Envíos  - tn por Dto. de origen"
+    categorias: ventana_anios
+    medida: peso_tn
+    apertura: departamento_origen
+    series: todas
+    sin_top_n: >
+      No se recorta a un top 5 con "Resto", como hace el anillo: los departamentos de origen
+      son pocos por definicion (7 en cebolla, 6 en batata, 4 en papa) y entran todos. El
+      grafico de JC tiene exactamente 7 series para la cebolla y ninguna se llama "Resto".
+    orden_de_las_series: >
+      De mayor a menor por total de la ventana, para que la base de la pila sea el departamento
+      que mas pesa (ROBLES en cebolla) y las lonjas finas queden arriba, que es donde se las ve.
+      El COLOR no depende de este orden: se asigna alfabeticamente
+      (_comunes-dtv-hortalizas.uniformidad.paleta.categorica), asi un departamento conserva su
+      color aunque cambie de puesto entre productos.
+    leyenda: abajo             # como en el grafico de JC (legendPos "b")
+    nota_obligatoria: >
+      Cuantos departamentos de los 27 tienen movimiento de ese producto, y que los que no
+      aparecen no son ceros. Es la misma aclaracion que llevaba el mapa: la cobertura baja es
+      el dato, no un faltante (_comunes-dtv-hortalizas.cobertura_departamental). Al salir el
+      mapa, esta nota es el unico lugar donde queda dicho.
+    # TABLA DE DATOS debajo del grafico (Imagen 111, ancla L42:AD51 de la hoja): una fila por
+    # departamento de origen y una columna por año, en toneladas.
+    tabla:
+      columnas: ventana_anios
+      encabezado_primera_columna: ""
+      filas: departamentos_de_origen_con_movimiento
+      orden_de_las_filas: alfabetico
+      por_que_alfabetico_y_no_por_tamanio: >
+        Es el orden que dibuja JC, y es el orden en el que se BUSCA un departamento en una
+        tabla. En el grafico las series van de mayor a menor porque ahi el orden es el del
+        apilado y tiene un motivo visual (la base de la pila es el que mas pesa); en una tabla
+        el orden por tamaño obliga a recorrerla entera para encontrar una fila. El COLOR no
+        depende de ninguno de los dos ordenes: se asigna alfabeticamente y es el mismo en el
+        grafico, en la leyenda y en la tabla.
+      total_provincia: arriba     # _protocolo-presentacion.tablas.estructura.total_arriba
+      por_que_el_total_arriba_si_jc_lo_pone_abajo: >
+        En una tabla manda la regla escrita del protocolo, que es de JC y vale para todo el
+        sitio. La fila existe y esta diferenciada, que es lo que la maqueta pide; lo unico que
+        cambia es que se lee primero.
+      sin_fila_de_porcentaje: >
+        La maqueta agrega una fila "% Robles" al pie. No se copia: es un calculo ad-hoc sobre
+        UN departamento de UN producto, que en batata y en papa no tendria sujeto (el
+        departamento dominante es otro). El mismo dato se lee en el alto de la pila del
+        grafico y en el tooltip, que muestra cada departamento y el total.
+      columna_destacada: "la del año elegido en la tira de periodo"
+    fuente_al_pie: "Fuente: SENASA"     # celda H42 de la hoja
+
+  precios-mcba:
+    # ===========================================================================================
+    # CUARTA VUELTA, 23-sep-2026: EL PANEL SE DIBUJA. ENTRO LA BASE 8.
+    # ===========================================================================================
+    # Hasta esta vuelta el cuadro era una CASCARA INERTE (`forma: pendiente`): la maqueta se
+    # dibujaba entera -cabecera, sub-pestañas, chips, selectores, modo y rango- con el rotulo
+    # "Próximamente" donde iba el grafico, porque la base 8 no tenia adapter ni mart.
+    #
+    # Ya lo tiene: marts/hecho_precios_mayoristas.parquet, 5.655 cotizaciones diarias del
+    # Mercado Central de Buenos Aires de productos con procedencia Santiago del Estero, del
+    # 2-ene-2017 al 9-abr-2026. Los mismos controles que estaban dibujados ahora FUNCIONAN y el
+    # grafico de lineas de JC (chart8) se dibuja.
+    forma: precios
+    origen_en_la_maqueta: "hoja Agri 2, chart8 (ancla AE14:BI30) + los objetos de las filas 5 a 12"
+    estado: publicado
+
+    # ---------------------------------------------------------------------------------------
+    # LAS CINCO REGLAS DE LA HOJA "Modelo analisis" DE JC
+    # ---------------------------------------------------------------------------------------
+    # Se transcriben aca porque son las que gobiernan el panel entero, y la tercera es la que
+    # decide si la pantalla muestra huecos o no.
+    reglas_de_jc:
+      - nivel: 1
+        texto: "Primer nivel de filtrado: Hortalizas o Frutas"
+        donde: "las dos sub-pestañas del cuadro (`sub_pestanias`)"
+      - nivel: 2
+        texto: "Segundo nivel: Especie"
+        donde: "la fila de chips (`chips_cultivo`)"
+      - nivel: 3
+        texto: >
+          "Tercer nivel: rangos de fechas por meses. Rangos sólo donde aparece la especie para
+          evitar resultados vacíos"
+        donde: "`rango` y el eje horizontal del grafico"
+        es_la_mas_importante: >
+          El selector de rango y el eje ofrecen UNICAMENTE los meses en que la combinacion
+          elegida tiene cotizacion. No se dibuja un mes vacio ni se ofrece elegirlo: la
+          zanahoria, por ejemplo, solo cotiza de junio a diciembre y la mayoria de sus años
+          arranca en julio. Los meses se resuelven contra el mart para CADA combinacion, no
+          por especie: cambiar el envase cambia los meses disponibles.
+      - nivel: 4
+        texto: "Cuarto nivel: Variedad, pueden seleccionarse todas o elegir la disponible"
+        donde: "los cuatro desplegables (`selectores_propios`), cada uno con su opcion «Todas»"
+      - nivel: 5
+        texto: "Genera tabla y gráficos de líneas"
+        donde: "solo el grafico de lineas"
+        diferencia_con_la_maqueta: >
+          Su hoja "Modelo analisis" pide tabla Y grafico; su MAQUETA dibuja solo el grafico, y
+          ademas sin tabla debajo (los otros dos cuadros de la pagina si la llevan). Manda la
+          maqueta, que es posterior y es lo que JC dibujo mirando esta pantalla. La diferencia
+          queda anotada aca y en `sin_tabla_debajo`; si JC quiere la tabla, entra como cuadro
+          propio y no apretada debajo de una serie de mas de cien meses.
+
+    # Cabecera del cuadro (CuadroTexto 82, ancla AX5:BJ6). Dos lineas: el organismo y el
+    # recorte. No es el titulo del GRAFICO, que es otra cosa (ver `grafico.titulo_protocolo`).
+    titulo: "Precios Mercado Central de Buenos Aires"
+    subtitulo: "Precios corrientes origen Santiago del Estero"
+    rotulo_de_familia: "Frutas y hortalizas"   # CuadroTexto 48, ancla AP5:AV6
+
+    # Sub-pestañas (CuadroTexto 22 en AP7:AU8 y CuadroTexto 83 en AY7:BD8). Parten el cuadro
+    # en dos universos de producto; en la maqueta esta activa "Hortalizas". Los `id` son los
+    # valores de la columna `grupo` del mart: si la fuente manda un grupo que no esta aca, el
+    # build corta con su nombre en vez de esconderlo.
+    sub_pestanias:
+      - {id: Hortalizas, etiqueta: "Hortalizas", defecto: true}
+      - {id: Frutas, etiqueta: "Frutas"}
+
+    # Los nueve chips de cultivo de la hoja (celdas AF9..BC9 y AF10..AJ10), en el orden en que
+    # JC los escribe, que es alfabetico. Son de la base 8 y NO son los tres productos de DTV:
+    # es otro filtro, con otro universo. En la maqueta esta elegida "Zanahoria".
+    chips_cultivo:
+      # AUDITORIA, no parametro: el universo de chips sale del MART (todas las especies con
+      # cotizacion del grupo elegido). Esta lista es la que dibujo JC y el build verifica que
+      # las nueve existan en el dato; si alguna dejara de existir, corta con su nombre.
+      dibujados_por_jc: ["Acelga", "Batata", "Ceb Verdeo", "Cebolla", "Lechuga", "Perejil",
+                         "Remolacha", "Zanahoria", "Zapallo"]
+      defecto: ZANAHORIA
+      con_icono: false      # JC los dibuja sin icono, a diferencia de los chips de DTV
+      por_que_salen_del_mart: >
+        Porque JC solo dibujo los chips de HORTALIZAS, y la pestaña "Frutas" tambien necesita
+        los suyos. Tomar el universo del dato resuelve las dos con el mismo criterio y evita
+        que una especie con cotizacion quede invisible. No es el caso de los cultivos
+        extensivos (backlog 37, donde el universo lo define el catalogo de JC porque cada chip
+        necesita un icono dibujado): aca los chips no llevan icono y no hay nada que dibujar.
+      divergencia_con_la_maqueta_2026_09_23: >
+        El mart trae DIEZ hortalizas con cotizacion y JC dibujo nueve chips: falta ZAPALLITO
+        (29 cotizaciones, 2018 y 2019). Se dibuja igual, porque tiene dato. Avisado a JC en el
+        backlog 51, junto con el defecto de la pestaña de frutas.
+      frutas_resueltas_2026_09_23: ["LIMON", "MELON", "POMELO", "SANDIA", "TUNA", "UVA"]
+      defecto_de_frutas: >
+        La especie con MAS cotizaciones del grupo, resuelta contra el mart (hoy MELON, con
+        1.245 de las 1.350 cotizaciones de frutas). No la primera del alfabeto: con ese
+        criterio la pestaña abria en LIMON, que tiene UNA sola cotizacion en todo el periodo, y
+        el cuadro arrancaba con un grafico de un punto. Es el mismo criterio con que
+        `_comunes-dtv-hortalizas` elige la cebolla como producto por defecto: el que mas pesa.
+        En la pestaña de hortalizas manda el chip que JC dejo elegido (`defecto`).
+
+    # Como se escribe en pantalla el valor que trae el mart. Las especies llevan tabla propia
+    # porque su forma correcta no se puede deducir (tildes, y la abreviatura "CEB.VERDEO" que
+    # JC escribe "Ceb Verdeo"): el build CORTA si el mart trae una especie que no esta aca, en
+    # vez de inventarle un rotulo.
+    etiquetas:
+      especies:
+        ACELGA: "Acelga"
+        BATATA: "Batata"
+        "CEB.VERDEO": "Ceb Verdeo"     # asi lo escribe JC en su chip
+        CEBOLLA: "Cebolla"
+        LECHUGA: "Lechuga"
+        LIMON: "Limón"
+        MELON: "Melón"
+        PEREJIL: "Perejil"
+        POMELO: "Pomelo"
+        REMOLACHA: "Remolacha"
+        SANDIA: "Sandía"
+        TUNA: "Tuna"
+        UVA: "Uva"
+        ZANAHORIA: "Zanahoria"
+        ZAPALLITO: "Zapallito"
+        ZAPALLO: "Zapallo"
+      # Variedad, envase, calidad y tamaño NO llevan tabla: son decenas de valores y ponerles
+      # nombre seria interpretar la fuente (es la misma regla con la que los departamentos se
+      # muestran como los manda dim_geo). Se les aplica una capitalizacion mecanica -inicial
+      # mayuscula por palabra, el resto minuscula- que es como los escribe JC en su maqueta:
+      # "Chantennay", "Bolsa", "Primera". El mart los trae en mayusculas ("CHANTENAY",
+      # "BOLSA") salvo la calidad, que ya viene capitalizada ("Primera", "Elegido").
+      regla_de_capitalizacion: inicial-mayuscula-por-palabra
+      ejemplos_2026_09_23:
+        CHANTENAY: "Chantenay"     # JC escribe "Chantennay"; el titulo se arma desde el DATO
+        BOLSA: "Bolsa"
+        "ANC.COKENA": "Anc.cokena"
+        "008/012": "008/012"
+      rotulo_todas: "Todas"        # el valor que JC deja puesto en Tamaño
+      # 619 filas del mart no traen variedad (REMOLACHA, PEREJIL, SANDIA, ACELGA y TUNA), 105
+      # no traen tamaño, 79 no traen envase (todas SANDIA) y 48 no traen calidad (todas
+      # ZAPALLO). Si el desplegable no las ofreciera, esas especies desaparecerian al primer
+      # filtro. Entran como una opcion explicita, con este rotulo.
+      rotulo_sin_dato: "Sin dato"
+      por_que_sin_dato_es_una_opcion: >
+        Porque "la fuente no declaro esta dimension" es un estado del dato, no un faltante
+        nuestro, y esconderlo haria desaparecer especies enteras. Es el mismo criterio con que
+        el mapa dibuja los departamentos sin dato en vez de sacarlos.
+
+    # Los cuatro desplegables de la fila 11/12 (celdas AF11..AR12), el modo de agregacion
+    # (AU11/AU12) y el rango (BB11..BH12), ahora vivos.
+    selectores_propios:
+      - {id: variedad, rotulo: "Variedad", valor_en_la_maqueta: "Chantennay", defecto: CHANTENAY}
+      - {id: envase,   rotulo: "Envase",   valor_en_la_maqueta: "Bolsa",      defecto: BOLSA}
+      - {id: calidad,  rotulo: "Calidad",  valor_en_la_maqueta: "Primera",    defecto: Primera}
+      - {id: tamanio,  rotulo: "Tamaño",   valor_en_la_maqueta: "Todas",      defecto: todas}
+    encadenados: >
+      Cada desplegable ofrece SOLO los valores que existen para lo que ya esta elegido. Con
+      seis dimensiones independientes la mayoria de las combinaciones no tiene ni una fila
+      (67 combinaciones reales en todo el mart contra miles posibles), asi que un desplegable
+      con el universo completo llevaria a pantallas vacias casi siempre. Al cambiar un
+      desplegable, los que quedan sin valor valido vuelven a "Todas": nunca se queda una
+      seleccion imposible.
+    defecto_si_no_existe: >
+      Los valores de `defecto` son los de la maqueta de JC y se resuelven contra el mart: si
+      alguno dejara de existir para la especie elegida, ese desplegable arranca en "Todas".
+      Ninguna seleccion por defecto puede dejar el cuadro vacio.
+
+    modo:
+      rotulo: "Agregación"
+      opciones:
+        - {id: mensual, etiqueta: "Precio prom. mensual", defecto: true}
+        - {id: diario,  etiqueta: "Precio prom diario"}
+      que_es_cada_uno:
+        mensual: >
+          El promedio SIMPLE de los promedios diarios del mes. No esta ponderado por volumen
+          porque la fuente no informa volumen comercializado (el mart lo declara fila por fila:
+          `ponderacion: sin ponderar`). Se dice al pie del cuadro, no se esconde.
+        diario: >
+          La cotizacion de cada dia. Cuando la fuente publica mas de una cotizacion el mismo
+          dia para la misma combinacion (pasa 73 veces, todas en zanahoria), el punto es el
+          promedio de esas cotizaciones.
+
+    rango:
+      inicio: {rotulo: "Inicio", valor_en_la_maqueta: "ene · 2017"}
+      fin:    {rotulo: "Fin",    valor_en_la_maqueta: "Mes · Año"}
+      universo: "los meses con cotizacion de la combinacion elegida, y solo esos (regla 3 de JC)"
+      defecto: "la serie entera: del primer al ultimo mes con dato"
+      un_control_por_punta_y_no_dos: >
+        JC dibuja dos campos por punta ("Mes" y "Año"). Se dibuja UNO, con los meses
+        disponibles escritos "Jul 2017". Con dos campos independientes se puede elegir un mes
+        que esa combinacion no tiene, que es exactamente lo que su regla 3 manda evitar; y son
+        cuatro controles mas en un cuadro que ya tiene siete.
+      por_que_el_defecto_no_dice_enero_2017: >
+        Porque la seleccion por defecto (zanahoria Chantenay, bolsa, primera) no cotiza en
+        enero de 2017: su primer mes con dato es julio de 2017, que es donde arranca la serie
+        que JC dibujo. "Desde 2017" y "desde el principio de la serie" son lo mismo aca, y el
+        rotulo muestra el mes real en vez de prometer uno vacio.
+
+    grafico:
+      tipo: serie
+      forma: "linea, una sola serie, un punto por mes"
+      medida: precio_kg
+      unidad: "$/kg"
+      expresion: corrientes
+      eje_horizontal: >
+        Meses agrupados por año, como en el grafico de JC: una fila de meses y debajo una fila
+        con el año, que se escribe una sola vez por grupo y con una guia vertical en el corte.
+      eje_vertical: >
+        Arranca en cero y su tope lo decide el maximo del tramo VISIBLE, no el de la serie
+        entera: al achicar el rango la escala se ajusta y se ven las variaciones
+        (`formato_v1.cuarta_tanda.escala_legible`). Las escalas posibles y sus rotulos los
+        compone el build; el navegador elige la mas ajustada que cubre lo que se ve, no compone
+        ningun numero.
+      titulo_protocolo: "{Producto} - Precio promedio en MCBA, origen Sgo del Estero - $/kg (corrientes)"
+      titulo_literal_de_jc: "Zanahoria Chantennay - Precio promedio en MCBA, origen Sgo del Estero - $/kg (corrientes)"
+      por_que_no_se_copia_letra_por_letra: >
+        El slot {Producto} es la especie mas la variedad elegidas, resueltas contra el MART:
+        con la seleccion de la maqueta da "Zanahoria Chantenay". JC escribe "Chantennay" con
+        dos enes y el dato dice "CHANTENAY": el titulo se arma desde el dato, que es la regla
+        de siempre (un titulo no puede nombrar algo distinto de lo que el grafico muestra).
+        Cuando la variedad esta en "Todas" -o la fuente no la declara, como en la sandia- el
+        slot es solo la especie.
+      subtitulo_protocolo: "En {unidad_larga} corrientes - {desde} a {hasta}"
+      por_que_el_subtitulo_lleva_el_rango: >
+        Porque el titulo de JC no nombra el periodo y el protocolo exige parametros explicitos
+        (`formato_v1.parametros_explicitos`): el cuadro tiene que decir que tramo se esta
+        viendo. Y porque la unidad es obligatoria en el subtitulo (`subtitulo.obligatorio`).
+
+    notas_al_pie:
+      # Las dos aclaraciones que el dato OBLIGA a hacer. Van juntas al pie del cuadro, con la
+      # cuenta de meses y de cotizaciones resuelta contra el mart.
+      mensual: >
+        Cada punto es el promedio simple de las cotizaciones diarias del mes, sin ponderar por
+        volumen: la fuente no lo informa.
+      diario: >
+        Cada punto es la cotización del día; si la fuente publica más de una para esta
+        selección, es el promedio de esas cotizaciones.
+      corrientes: >
+        Precios corrientes, sin deflactar: comparar las puntas de la serie mide sobre todo
+        inflación.
+      cobertura: "La arma el build contra el mart: cuántos meses cotiza la selección y entre cuáles."
+      por_que_tan_cortas: >
+        El pie de cada cuadro se recorta a tres líneas y estas tres frases tienen que entrar
+        enteras: qué se está promediando, que los pesos son corrientes y cuántos meses cotiza.
+        El texto completo queda además en el `title` del párrafo, para el que pase el mouse.
+
+    sin_tabla_debajo: >
+      A diferencia de los dos cuadros de la columna izquierda, este NO lleva tabla de datos.
+      JC no se la dibujo, y con una serie mensual desde 2017 (mas de cien columnas) tampoco
+      entraria. Es una diferencia deliberada, no un olvido; la regla 5 de su hoja "Modelo
+      analisis" si pide tabla y queda anotada en `reglas_de_jc` y en el backlog 52.
+
+    # ---------------------------------------------------------------------------------------
+    # LO QUE PUBLICAMOS NO ES LO QUE CALCULA SU HOJA "Zana Mes"
+    # ---------------------------------------------------------------------------------------
+    # La tercera hoja del Excel de la base 8 es el ejemplo trabajado de JC: su serie mensual de
+    # Zanahoria Chantenay. Nuestro promedio NO la reproduce, y se investigo a fondo: 42 de sus
+    # 43 valores son, literalmente, el precio de UN DIA concreto de ese mes. O sea que su serie
+    # es un PRECIO TESTIGO, no un promedio mensual.
+    #
+    # Los 43 meses que lista coinciden exactamente con los meses que tienen dato, asi que el
+    # RECORTE es el mismo: lo que difiere es la MEDIDA.
+    diferencia_con_la_hoja_zana_mes:
+      que_publica_el_sitio: "el promedio simple de las cotizaciones diarias del mes"
+      que_calcula_la_hoja_de_jc: "el precio de un dia concreto del mes (precio testigo)"
+      coincidencia: "43 de 43 meses en el recorte; 1 de 43 valores"
+      que_se_hizo: >
+        Se publica el promedio, que es una medida bien definida, documentada y reproducible
+        contra el mart. Lo que NO se hace es rotularlo igual que su hoja sin aclararlo: la nota
+        al pie dice exactamente que se esta promediando y sobre cuantas cotizaciones. La
+        pregunta -cuando JC pide "Precio prom. mensual", quiere el promedio del mes o el precio
+        testigo de su hoja- queda en el backlog 50. Si es lo segundo, tiene que decir que dia.
+      como_se_verifico: >
+        Valor por valor contra el mart: para cada uno de sus 43 meses se buscaron las
+        cotizaciones diarias de la combinacion (zanahoria, Chantenay, bolsa, primera) y se
+        comparo su valor con el promedio del mes y con cada dia suelto. 42 de 43 coinciden con
+        el precio de UN dia del mes; ninguno de esos 42 coincide con el promedio.
+
+    fuente_al_pie: "Fuente: MAGyP (Ministerio de Agricultura, Ganadería y Pesca)"   # celda AE31
+    organismo_esperado: "MAGyP"
+    por_que_la_cita_es_mas_larga_que_el_mart: >
+      El mart trae "MAGyP" en su columna `fuente` y el build lo verifica. La cita al pie es la
+      que JC escribe de su puño en la celda AE31, con el organismo desplegado, que es la forma
+      que el backlog 14 dejo adoptada para todo el sitio.
+
+    de_donde_sale_el_dato:
+      mart: "marts/hecho_precios_mayoristas.parquet"
+      base: 8
+      filas_2026_09_23: 5655
+      cobertura_2026_09_23: "2-ene-2017 a 9-abr-2026"
+      combinaciones_reales_2026_09_23: 67
+      contrato_de_la_medida: >
+        El mart marca `agregable: false`, `agregacion: promedio` y `ponderacion: sin ponderar`
+        en CADA fila. El build verifica las tres al cargar y corta si alguna cambia: todo lo
+        que este panel dibuja es un promedio simple, y eso solo vale mientras el mart lo diga.
+        NUNCA se suman precios.
+
+  tabla-superficie:
+    # El cuarto panel de la maqueta. No tiene grafico: es un recuadro con titulo y dos notas.
+    forma: tabla-datos            # la forma que ya existe, con otro contenido
+    origen_en_la_maqueta: "hoja Agri 2, celda AM35 (titulo) y celdas AF36/AF37 (las dos notas)"
+    titulo_protocolo: "Estimaciones de superficies cosechadas (*) - {Producto} - Sgo del Estero - Años {desde} a {hasta}"
+    titulo_literal_de_jc: "Estimaciones de superficies cosechadas (*)"
+    titulo_dibujado_en_la_tabla_de_jc: "Cebolla - Sgo del Estero - Estimación superficies cosechadas en base a datos DTV (ha)"
+    por_que_el_titulo_lleva_mas_que_el_de_jc: >
+      La frase de JC va entera y al principio. Detras se agregan el producto y el periodo
+      porque esta tabla depende del selector de producto y el protocolo exige parametros
+      explicitos (formato_v1.parametros_explicitos). En la maqueta el titulo del panel no los
+      necesita porque la hoja tiene una sola seleccion dibujada; la propia imagen de la tabla,
+      igual, los lleva: "Cebolla - Sgo del Estero - ... (ha)".
+    # TERCERA VUELTA (23-sep-2026): la tabla es DEPARTAMENTOS x AÑOS, no de un año solo. Se
+    # vio en la imagen de la maqueta (AG40:BE52) al exportar la hoja a PDF.
+    ambito: "la ventana entera de años, igual que los dos graficos"
+    columnas: ventana_anios
+    encabezado_primera_columna: ""
+    filas: departamentos_de_origen_con_movimiento
+    orden_de_las_filas: alfabetico
+    total_provincia: arriba
+    rotulo_del_total: "TOTAL"     # literal de la maqueta
+    por_que_el_total_arriba: >
+      _protocolo-presentacion.tablas.estructura: "La fila del total (provincia o agregado) va
+      PRIMERO, arriba de los departamentos, y visualmente diferenciada". El "EL TOTAL PROVINCIAL
+      ABAJO" de la hoja Modelo analisis se refiere al mapa, que no esta en esta pagina; en una
+      tabla manda la regla escrita del protocolo.
+    unidad: ha
+    por_que_ya_no_van_las_toneladas: >
+      Hasta la segunda vuelta la tabla tenia tres columnas (departamento, toneladas, superficie
+      estimada), para dejar el calculo a la vista. Con la tercera vuelta esa auditoria queda
+      mejor resuelta: la tabla de abajo del cuadro de apiladas muestra EXACTAMENTE las
+      toneladas por departamento y por año, que son el numerador de esta cuenta. Repetirlas
+      aca seria la misma columna dos veces, y ademas no entran: las columnas ahora son los
+      cinco años.
+    por_que_por_departamento: >
+      Es lo que dice la propia maqueta al lado del calculo: "Para provincia y departamentos"
+      (celda AO65). Y es donde JC quiere el mapa de calor cuando entre (celda F72, "Mapas calor
+      por departamento por producto por volumen"): hoy la tabla ocupa ese lugar y el dia que
+      entre el mapa reemplaza a estas filas sin mover nada mas de la pagina.
+    celda_sin_movimiento: >
+      Cero, no "S/D". Un departamento entra a la tabla si tuvo DTV en ALGUN año de la ventana;
+      en los años sin declaraciones su celda va en cero, igual que en la maqueta (Capital 2021,
+      Silipica 2021). La regla "un departamento sin DTV no se dibuja como cero" es sobre la
+      FILA, no sobre la celda: el que no tiene ninguna declaracion en los cinco años no
+      aparece, y eso lo dice la nota al pie.
+    columna_destacada: "la del año elegido en la tira de periodo"
+    notas_al_pie:
+      # Las dos lineas de JC, textuales (celdas AF36 y AF37). Viven una sola vez, en
+      # _comunes-dtv-hortalizas.estimacion_superficie.aclaracion_al_pie.
+      - estimacion_superficie.aclaracion_al_pie
+    rotulo_de_anio_parcial: >
+      Cuando el producto no tiene el año completo (papa), el titulo del cuadro lo dice entre
+      parentesis y la nota al pie lo repite. Un total de papa NUNCA se rotula "total anual".
+    fuente_al_pie: "Fuente: SENASA"
+
+  # -------------------------------------------------------------------------
+  # LA TIRA DE ABAJO SALIO (tercera vuelta, 23-sep-2026)
+  # -------------------------------------------------------------------------
+  # Hasta esta vuelta el tablero cerraba con dos paneles a lo ancho: "Información relacionada"
+  # (seis links deshabilitados) y "UTILIDADES" (Asistente IA + Exportar como PDF). Salieron los
+  # dos. Francisco, 23-sep-2026: "Cada panel tiene su 'Mas informacion' y su 'Generar PDF'. Al
+  # pie de cada cuadro, no un panel de utilidades unico al final."
+  #
+  # Donde quedo cada cosa:
+  #   - "Exportar como PDF" -> el "Generar PDF" del pie de los cuatro cuadros
+  #     (`acciones_de_cuadro`). Misma accion, mismo icono, cuatro puertas en vez de una.
+  #   - "Mas informacion"   -> el link del pie de los cuatro cuadros, deshabilitado. Es el
+  #     literal de JC (celdas H54 y AX54), que es de donde el panel "Información relacionada"
+  #     habia salido en primer lugar.
+  #   - "Asistente IA"      -> NO tiene lugar en la hoja "Agri 2" y no se dibuja en esta
+  #     seccion. Sigue vivo en cultivos extensivos, que conserva la disposicion del mockup
+  #     Modelo 2 con su panel UTILIDADES (backlog 33, la excepcion acotada sigue en pie ahi).
+  #   - Los seis links de "Información relacionada" -> se pierden como lista. Ninguno estaba
+  #     habilitado: eran seis promesas repetidas de lo que ya esta en `fuera_de_alcance` de
+  #     _comunes-dtv-hortalizas y en el backlog (44, 45, 8). Lo que la pagina promete ahora
+  #     lo dice una sola vez, en el "Más información" de cada cuadro.
+  quedaron_fuera_de_la_pagina:
+    - {id: utilidades, motivo: "reemplazado por `acciones_de_cuadro` (Francisco, 23-sep-2026)"}
+    - {id: asistente-ia, motivo: "no esta en la maqueta Agri 2; sigue en cultivos extensivos"}
+    - {id: informacion-relacionada,
+       motivo: "reemplazado por el 'Más información' del pie de cada cuadro"}
+
+  # Grilla 2x2 de la maqueta. Los chips de producto ya no son una fila propia: van dentro de
+  # los paneles que los dibuja JC (selectores.producto.paneles), y la tira de abajo salio.
+  disposicion: grilla-2x2
+  orden:
+    - {id: combo,            fila: 1, columna: izquierda}
+    - {id: precios-mcba,     fila: 1, columna: derecha}
+    - {id: apiladas,         fila: 2, columna: izquierda}
+    - {id: tabla-superficie, fila: 2, columna: derecha}
+
+# ---------------------------------------------------------------------------
+# AUDITORIA CONTRA LOS VALORES CACHEADOS DE LA MAQUETA (23-sep-2026)
+# ---------------------------------------------------------------------------
+# El .xlsx guarda los valores con que Excel dibujo cada grafico. Se compararon uno por uno
+# contra marts/hecho_movimientos_vegetales.parquet (cebolla, `NOT es_agregado_fila`).
+# No se toco ningun numero: lo que no coincide queda escrito aca y va al backlog.
+auditoria_contra_la_maqueta:
+  combo_bultos:
+    coinciden_exacto: [2021, 2022, 2024]
+    difieren: {2023: "+600 bultos", 2025: "+300 bultos"}
+  combo_toneladas:
+    coinciden_exacto: [2021, 2024]
+    difieren: {2022: "+1.101,398 tn", 2023: "+59,541 tn", 2025: "+3,900 tn"}
+  apiladas_por_departamento:
+    celdas_comparadas: 35        # 7 departamentos x 5 años
+    coinciden_exacto: 31
+    difieren:
+      - "SARMIENTO 2022: mart 1.968,818 tn / maqueta 867,420 tn"
+      - "ROBLES 2023: mart 30.473,656 tn / maqueta 30.414,715 tn"
+      - "SILIPICA 2023: mart 28,550 tn / maqueta 27,950 tn"
+      - "SILIPICA 2025: mart 28,000 tn / maqueta 23,200 tn"
+  que_muestran_las_diferencias: >
+    Las diferencias de 2022 y 2023 caen sobre declaraciones que el reporte de la entrega YA le
+    habia marcado a JC. La de SARMIENTO 2022 es una sola: la DTV 0007151155 del 7-sep-2022, con
+    U.M. "U.", cantidad 1.050, peso unitario 1.050 y peso total 1.102.500, que el reporte cita
+    textualmente ("En cebolla: 1.050 x 1.050 = 1.102 tn en una sola declaracion"). El mart la
+    lee como 1.102,5 tn; la maqueta de JC la tiene como 1,1025 tn. La de ROBLES 2023 son las
+    dos unicas declaraciones de cebolla con U.M. "Tn." (31 y 28), que el mart lee como 59 tn y
+    la maqueta como 0,059. La de SILIPICA 2023 es una declaracion "U." de 600 kg.
+  que_se_hizo: >
+    NADA en los datos. El mart sigue leyendo el PESO TOTAL tal como viene, fila por fila, segun
+    la U.M. de cada una. La maqueta de JC es la primera evidencia de que su criterio de lectura
+    para esas U.M. raras no coincide con el nuestro, y eso es exactamente lo que el reporte de
+    la entrega le pregunta. Queda en el backlog (pregunta 47) con los numeros de DTV para que
+    JC pueda contestar mirando las declaraciones.
+  tabla_de_estimaciones:
+    # La maqueta trae DIBUJADA la tabla de superficies estimadas de la cebolla (Imagen 122,
+    # ancla AG40:BE52): 7 departamentos x 5 años, en hectareas, con fila TOTAL.
+    celdas_comparadas: 35
+    coinciden_con_rendimiento_19000: 33
+    difieren:
+      - "SARMIENTO 2022: mart 103,6 ha / maqueta 45,7 ha (es la DTV 0007151155, backlog 47)"
+      - "ROBLES 2023: mart 1.603,9 ha / maqueta 1.600,8 ha (las dos DTV en U.M. 'Tn.', backlog 47)"
+    que_muestra: >
+      Que el rendimiento de la cebolla es 19.000 kg/ha y no 20.000: con 20.000 no coincide
+      NINGUNA de las 35 celdas. Las dos que siguen difiriendo son exactamente las mismas
+      declaraciones que ya difieren en toneladas, o sea que no vienen del rendimiento.
+      Detalle en _comunes-dtv-hortalizas.estimacion_superficie.decision_cebolla.
+  diferencias_de_2025: >
+    Aparte. En 2025 no hay ninguna declaracion con U.M. rara: la diferencia (+300 bultos,
+    +3,9 tn) es la de un archivo mas nuevo que el que uso JC para la maqueta. La fila de totales
+    del pie de la hoja "Sgo 25" del Excel actual dice 1.427.941 bultos y 26.373,56 tn, que es
+    EXACTAMENTE lo que lee el mart (verificado en validations/reportes/entrega-01.md). O sea:
+    en 2025 manda nuestro numero y la maqueta esta vieja. Backlog 48.
+
+pie: "Tecnología Pivotal: B3, Minibox y ∞ Prompt"
+
+fuente:
+  pie: "Fuente: SENASA"
+  organismo_esperado: "SENASA"
+
+sensibilidad: normal
+estado: publicada-a-confirmar     # JC valida la seccion en la proxima revision
+
+origen:
+  tipo: pedido-de-francisco + maqueta de JC
+  detalle: >
+    Francisco, 23-sep-2026 (PRIMERA vuelta): construir Agricultura > Cultivos intensivos a
+    partir de un CSV exportado de la maqueta "Agri 2" de JC y de la hoja "Modelo analisis" de
+    la base 53. Ese CSV no traia los graficos.
+  correccion: >
+    Francisco, 23-sep-2026 (SEGUNDA vuelta, la vigente): "El diseño que te pasé lo deduje de un
+    CSV, y el CSV no traia los graficos: eran objetos de Excel y se perdieron al exportar. Abri
+    el .xlsx original y ahora se exactamente que dibujo JC." Los cuatro paneles de esta pagina
+    salen de la hoja "Agri 2" del archivo "0000000000 Maqueta Agri.xlsx", verificados objeto
+    por objeto contra el XML del libro. Lo que se mantuvo de la primera vuelta: el selector de
+    producto con sus iconos, la tira de años, la grilla 2x2 con cita de fuente por panel, el
+    panel de utilidades con Exportar como PDF, el tratamiento de la papa (septiembre a
+    diciembre visible en rotulos y notas, sin variacion interanual) y la nota de cobertura
+    departamental.
+  correccion_tercera_vuelta: >
+    Francisco, 23-sep-2026 (TERCERA vuelta, la vigente): "Esta vez pude VER la maqueta
+    renderizada: exporte la hoja Agri 2 a PDF con Excel y la mire por cuadrantes. Hasta ahora
+    la habiamos reconstruido desde coordenadas de celdas y anclas de graficos, y se nos
+    escaparon cosas." Lo que cambio: (1) el rendimiento de la cebolla pasa a 19.000 kg/ha, por
+    evidencia contra la tabla que JC ya tenia calculada; (2) los dos cuadros de la columna
+    izquierda llevan su tabla de datos debajo, con los años del grafico como columnas; (3) los
+    chips de producto salen de la fila propia y pasan a vivir adentro de los dos paneles que
+    los dibuja JC, manejados por el mismo filtro; (4) "Más información" y "Generar PDF" pasan
+    al pie de cada cuadro y sale la tira de utilidades del final; (5) el panel de precios queda
+    declarado con su estructura completa (cabecera, dos sub-pestañas, nueve chips, cuatro
+    selectores, modo y rango), sin datos; (6) la tabla de estimaciones pasa a departamentos por
+    AÑO con fila TOTAL. Lo que NO se toco, por pedido explicito: la grilla 2x2, los dos tipos
+    de grafico, la ausencia de tarjetas de indicadores, el breadcrumb, el tratamiento de la
+    papa y de la cobertura departamental, y el rotulo "bolsas"/"bultos" segun la composicion.
+  fecha: 2026-09-23

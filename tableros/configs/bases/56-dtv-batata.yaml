@@ -1,0 +1,177 @@
+# Base 56 - DTV Batata (SENASA). Declaraciones de Tránsito Vegetal emitidas para mover
+# batata desde Santiago del Estero. Alimenta el tablero de Agricultura > Cultivos
+# intensivos (frutas y hortalizas).
+# Escrito sobre raw/entrega-01/56 - DTV Batata Sgo.xlsx el 2026-09-23.
+# El adapter de la familia (adapters/dtv.py) lee este archivo y no sabe nada más de la base.
+base: 56
+slug: dtv-batata
+familia: dtv
+estado: activa
+
+archivo:
+  patron: "^56 - DTV Batata"
+
+# ---------------------------------------------------------------------------
+# HOJAS
+# ---------------------------------------------------------------------------
+# Una sola hoja de datos, con los cinco años juntos y el header en la fila 1.
+hojas:
+  datos:
+    - nombre: "Batata"
+      header_fila: 1
+      ambito: sde
+      contenido: >
+        635 movimientos de 2021 a 2025 (2021-01-08 a 2025-12-23), sin fila de total al pie.
+        Un solo producto ("Batata").
+
+  ignorar:
+    - nombre: "Modelo analisis"
+      motivo: >
+        Hoja de especificación de JC. Acá solo dice "MISMO MODELO QUE DTV DE ALGODÓN": la
+        regla completa está en la hoja Modelo analisis de la base 53. Va a constructor-reglas
+        como herencia de spec (`igual_que: base-53`), no como datos.
+
+# ---------------------------------------------------------------------------
+# COLUMNAS: origen -> canónico snake_case
+# ---------------------------------------------------------------------------
+columnas:
+  "FECHA EMISIÓN": fecha_emision
+  "AÑO": anio_declarado               # DRIFT: donde las otras DTV traen "NRO. DTV", esta
+                                      # trae el año. Redundante con FECHA EMISIÓN: se mapea
+                                      # para no romper el chequeo de columnas y no se usa
+                                      # (el año canónico sale de FECHA EMISIÓN).
+  "TIPO MOV.": tipo_movimiento
+  "PROVINCIA ORIGEN": origen_provincia
+  "PARTIDO ORIGEN": origen_departamento
+  "PROVINCIA DESTINO": destino_provincia
+  "PARTIDO DESTINO": destino_departamento
+  "PRODUCTO": producto
+  "ACONDIC.": acondicionamiento
+  "CANT.": cantidad
+  "PESO UNITARIO": peso_unitario
+  "U.M.": um
+  "PESO TOTAL": peso_total
+  "FECHA VENCIMIENTO": fecha_vencimiento   # se mapea y no se usa (igual que en la base 53)
+  "TIPO_ORIGEN_2": tipo_origen
+
+# ---------------------------------------------------------------------------
+# VALORES (idénticos a los de la base 53: es la misma familia)
+# ---------------------------------------------------------------------------
+valores:
+  movimientos:
+    etiqueta: "Movimientos (DTV emitidas)"
+    medida: movimientos
+    unidad: movimientos
+    agregable: true
+    origen: constante
+    valor: 1
+  peso_tn:
+    etiqueta: "Peso movilizado"
+    medida: peso
+    unidad: tn
+    agregable: true
+    origen: peso_tn
+  cantidad:
+    etiqueta: "Bultos declarados"
+    medida: cantidad
+    unidad: bultos
+    agregable: false      # cajas, big-bags, bolsas y fardos no se suman entre sí
+    origen: columna
+    columna: cantidad
+
+# ---------------------------------------------------------------------------
+# UNIDADES: PESO TOTAL -> toneladas
+# ---------------------------------------------------------------------------
+# Verificado sobre las 635 filas: 628 con U.M. "Kg." y 7 con "U.". En las 635 se cumple
+# CANT x PESO UNITARIO = PESO TOTAL sin excepción, y las 7 filas "U." tienen la misma
+# magnitud que las "Kg." (de 900 a 24.000, con mediana 16.000): son kilos mal etiquetados,
+# no unidades. Por eso las dos llevan factor 0,001. En la base 53, en cambio, "U." son
+# toneladas: la tabla es por base a propósito.
+unidades:
+  peso:
+    columna_um: um
+    canonico: tn
+    um_a_tn:
+      "Kg.":   {canonica: kg, factor: 0.001}
+      "U.":    {canonica: kg, factor: 0.001}   # ver nota `anomalia` sobre U.M.
+      "Tn.":   {canonica: tn, factor: 1}       # no aparece; queda declarado para futuras entregas
+      "Kg-Tn": {canonica: tn, factor: 1}       # idem
+
+# ---------------------------------------------------------------------------
+# TIEMPO
+# ---------------------------------------------------------------------------
+tiempo:
+  grano: fecha
+  columna: fecha_emision
+  cobertura_real: "2021-01-08 a 2025-12-23"
+  agregaciones: [anio, anio_mes]
+
+# ---------------------------------------------------------------------------
+# GEOGRAFÍA
+# ---------------------------------------------------------------------------
+geo:
+  particion: sde
+  provincia_propia: 86
+  resolver: [86]
+  nivel: departamento
+  sin_dato: ["S/D"]        # no aparece en esta base; se declara por uniformidad de familia
+  cobertura_real:
+    departamentos_origen: 6    # de 27, ver nota `cobertura`
+    provincias_destino: 16
+
+# ---------------------------------------------------------------------------
+# SALIDA
+# ---------------------------------------------------------------------------
+salida:
+  staging: "staging/base-56-dtv-batata.parquet"
+  mart: hecho_movimientos_vegetales
+  particiones: [provincia, anio]
+
+# ---------------------------------------------------------------------------
+# METADATA HEREDADA DEL ÍNDICE (configs/manifiesto-indice.yaml, base nro 56)
+# ---------------------------------------------------------------------------
+indice:
+  fuente: "SENASA"
+  frecuencia: "diaria"
+  rango_declarado: "2021-01-01 a 2026-05-31"
+  descripcion: "DTV - Batata"
+  tema: "Agricultura > Cultivos intensivos > Frutas y hortalizas"
+  cita_fuente_al_pie: "Fuente: SENASA"
+
+# ---------------------------------------------------------------------------
+notas:
+  - fecha: "2026-09-23"
+    tipo: drift
+    texto: >
+      En la posición donde las otras DTV traen "NRO. DTV" esta base trae "AÑO". El número de
+      DTV no existe en el archivo: `nro_dtv` queda nulo en las 635 filas, así que en esta base
+      no se puede chequear si una misma declaración aparece repetida. Se resuelve en el
+      config; el Excel no se toca.
+  - fecha: "2026-09-23"
+    tipo: modelo
+    texto: >
+      La hoja "Modelo analisis" existe pero solo dice "MISMO MODELO QUE DTV DE ALGODÓN".
+      Para el operador: pasarle a constructor-reglas la hoja de la base 53, que es la que
+      tiene el modelo completo, y heredar acá.
+  - fecha: "2026-09-23"
+    tipo: anomalia
+    texto: >
+      7 filas traen U.M. "U." en vez de "Kg.", fuera del dominio {Kg., Tn.} que pide
+      CLAUDE.md. Se leen como kilos porque tienen la misma magnitud que el resto y cierran
+      CANT x PESO UNITARIO = PESO TOTAL. Para qa-datos: avisarle a JC que la U.M. de SENASA
+      no es confiable y que el pipeline la está interpretando.
+  - fecha: "2026-09-23"
+    tipo: cobertura
+    texto: >
+      CRITERIO 5. Solo 6 de los 27 departamentos aparecen como origen (Capital, La Banda,
+      Robles, San Martín, Sarmiento y Silípica) y el volumen total del quinquenio es chico:
+      635 movimientos en 5 años, contra 102.380 del algodón. No es un error de ingesta: la
+      batata es un cultivo muy concentrado. Afecta al diseño del mapa (21 departamentos en
+      gris) y probablemente convenga que el tablero cuente el dato por departamento con una
+      lista o un ranking además del mapa.
+  - fecha: "2026-09-23"
+    tipo: dato
+    texto: >
+      Los 4 tipos de movimiento son todos "Producción - algo" y el tipo de origen es siempre
+      "UP" (unidad productiva): esta base es producción primaria que sale al mercado, sin
+      eslabones industriales intermedios como los que sí tiene el algodón.

@@ -660,6 +660,215 @@ a { color: var(--enlace); }
 }
 .panel-detalle:hover { text-decoration: underline; }
 
+/* ---------- disposicion de la maqueta "Agri 2" (cultivos intensivos, 23-sep-2026) ----------
+   Cuatro paneles en dos filas de a dos, con los chips de producto arriba y la tira de
+   "Información relacionada" + UTILIDADES abajo. Es la grilla que JC dibuja en la hoja: los
+   objetos estan anclados en G9:AD23 y AE14:BI30 (fila de arriba) y G27:AD42 y AM35 (fila de
+   abajo), o sea dos columnas de ancho parejo.
+   Comparte la clase `con-selector` con el mockup Modelo 2 para heredar el cromo de sus
+   cuadros (titulo centrado, pie compacto); lo que cambia es el EJE del contenedor. */
+.tablero.tablero-maqueta { flex-direction: column; }
+.tablero.tablero-maqueta .fila-maqueta {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+/* Con el alto fijado por tablero.js (el tablero entra en UNA pantalla) las dos filas se
+   reparten el alto en partes iguales. `min-height: 0` en las filas es lo que hace que ese
+   reparto se respete de verdad: sin el, la fila crece hasta el contenido de sus paneles y el
+   tablero se pasa del alto que le fijamos.
+   Desde el 23-sep-2026 no hay nada mas en el contenedor: los chips de producto viven adentro
+   de los paneles y el pie de cada cuadro reemplazo a la tira de utilidades del final. */
+.tablero.tablero-maqueta.alto-fijo > .fila-maqueta { flex: 1 1 0; min-height: 0; }
+.tablero.tablero-maqueta.alto-fijo .fila-maqueta > .panel { min-height: 0; }
+
+/* Los dos graficos nuevos llenan el cuerpo de su panel: el alto lo decide el reparto flex y
+   no una altura escrita. El min-height es el piso de seguridad para cuando la pagina scrollea
+   (ventana baja, sin `alto-fijo`); con el alto fijado vuelve a 0, porque un item de flexbox no
+   se encoge por debajo de su contenido y el pie de fuente se caeria fuera del recorte. */
+.panel[data-panel="combo"] > .panel-cuerpo > .grafico,
+.panel[data-panel="apiladas"] > .panel-cuerpo > .grafico {
+  flex: 1 1 auto; height: auto; min-height: 240px;
+}
+.tablero.alto-fijo .panel[data-panel="combo"] > .panel-cuerpo > .grafico,
+.tablero.alto-fijo .panel[data-panel="apiladas"] > .panel-cuerpo > .grafico { min-height: 0; }
+
+/* En angosto la grilla se apila en una sola columna. Va aca y no en el bloque general de
+   1000px porque las reglas de arriba son posteriores y, con la misma especificidad, ganarian:
+   sin esto el tablero seguia en dos columnas de 350px en una pantalla de telefono. */
+@media (max-width: 1000px) {
+  .tablero.tablero-maqueta .fila-maqueta { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Leyenda de las barras apiladas: en HTML y debajo del grafico, como la dibuja JC. En una
+   tira que envuelve, y no en grilla de dos columnas como la del anillo: los nombres de
+   departamento son cortos y asi entran en una o dos lineas sin dejar huecos. `flex: 0 0 auto`
+   es lo que hace que el que se encoja sea el grafico y no la leyenda. */
+.leyenda-series {
+  flex: 0 0 auto; margin: .3rem 0 0; padding: 0; list-style: none;
+  display: flex; flex-wrap: wrap; gap: .1rem .7rem; font-size: .62rem;
+  color: var(--texto-apoyo);
+}
+.leyenda-series li { display: flex; align-items: center; gap: .25rem; min-width: 0; }
+.leyenda-series .muestra {
+  width: .55rem; height: .55rem; border-radius: var(--radio-chico); flex: 0 0 auto;
+}
+.leyenda-series .nombre { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* La tabla de superficies usa el cuerpo de la forma `tabla-datos`. El alto de la fila lo
+   decide el INTERLINEADO, no el cuerpo de la letra: con el interlineado de texto corrido
+   (1,5) las ocho filas de la cebolla median 153px en una caja de 142 y SILIPICA quedaba
+   cortada (medido en el navegador el 23-sep-2026). Con 1,2 y menos aire vertical la misma
+   tabla mide 126px y entra con margen, sin achicar un solo numero.
+   `overflow: auto` y no `hidden` a proposito: si algun dia un producto se moviera desde mas
+   departamentos, la tabla se desliza en vez de esconder uno. Mostrar 6 departamentos de 7 es
+   publicar un dato equivocado; el encabezado queda fijo para que la columna se siga leyendo. */
+.tablero.tablero-maqueta .panel[data-panel="tabla-superficie"] .tabla-datos {
+  /* `flex-start` y no `stretch`: estirada, la tabla reparte el alto sobrante entre sus filas,
+     y la papa (dos filas) quedaba con dos renglones separados por tres centimetros de nada.
+     Sin estirar, cada fila mide lo suyo y la tabla arranca arriba, tenga dos filas u ocho. */
+  flex: 1 1 auto; min-height: 0; overflow-y: auto; align-items: flex-start;
+}
+.tablero.tablero-maqueta .panel[data-panel="tabla-superficie"] table { font-size: .66rem; }
+.tablero.tablero-maqueta .panel[data-panel="tabla-superficie"] thead th {
+  font-size: .52rem; letter-spacing: 0;
+  position: sticky; top: 0; background: var(--fondo-cuadro);
+}
+.tablero.tablero-maqueta .panel[data-panel="tabla-superficie"] th,
+.tablero.tablero-maqueta .panel[data-panel="tabla-superficie"] td {
+  padding: .06rem .3rem; line-height: 1.2;
+}
+
+/* ---------- panel de precios del MCBA (maqueta "Agri 2", chart8) ----------
+   El unico panel con filtros propios: dos sub-pestañas, una fila de chips de especie y siete
+   desplegables. Todo eso vive ARRIBA del grafico y le come alto, asi que va compacto: los
+   controles en una tira que envuelve, con el rotulo encima del desplegable como los dibuja JC.
+   El grafico se queda con lo que sobra (`flex: 1 1 auto` + `min-height: 0`), que es lo que
+   evita que el pie de fuente se caiga fuera del recorte del panel. */
+.precios-familia { margin: 0 0 .1rem; font-size: .54rem; text-align: center; }
+
+/* Las sub-pestañas y los chips comparten renglon: ver el comentario de Tablero.tsx. */
+.precios-filtros {
+  flex: 0 0 auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+  gap: .15rem .4rem; margin: 0 0 .2rem;
+}
+.precios-pestanias { display: flex; gap: .25rem; }
+.precios-pestania {
+  font: inherit; font-size: .62rem; line-height: 1.2; padding: .08rem .5rem; cursor: pointer;
+  border-radius: var(--radio-pildora); border: 1px solid var(--borde-panel);
+  background: var(--fondo-cuadro); color: var(--texto-apoyo);
+}
+.precios-pestania[aria-pressed="true"] {
+  background: var(--seleccion); border-color: var(--seleccion); color: var(--sobre-seleccion);
+}
+
+.precios-chips {
+  display: flex; flex-wrap: wrap; gap: .1rem .25rem; justify-content: center;
+}
+.precios-chip {
+  font: inherit; font-size: .58rem; line-height: 1.2; padding: .05rem .3rem; cursor: pointer;
+  border-radius: var(--radio-chico); border: 1px solid transparent;
+  background: none; color: var(--texto-apoyo);
+}
+.precios-chip[aria-pressed="true"] {
+  background: var(--fondo-apoyo); border-color: var(--borde-panel); color: var(--texto);
+  font-weight: 650;
+}
+
+/* Los siete desplegables: cuatro de producto, el modo y las dos puntas del rango. Van en UNA
+   fila de siete columnas y no en dos de cuatro: cada fila de controles le saca casi 30px al
+   grafico, y este cuadro ya arranca con la cabecera, las sub-pestañas y los chips encima.
+   El `minmax(0, 1fr)` es lo que permite que un nombre largo de variedad no ensanche el panel:
+   el desplegable recorta, el cuadro no se deforma. */
+.precios-controles {
+  flex: 0 0 auto; display: grid; gap: .1rem .3rem; margin: 0 0 .25rem;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.precios-control { display: flex; flex-direction: column; min-width: 0; }
+.precios-control .rotulo { font-size: .48rem; line-height: 1.2; }
+.precios-control select {
+  font: inherit; font-size: .6rem; line-height: 1.2; width: 100%; min-width: 0;
+  padding: .02rem .1rem;
+  border: 0; border-bottom: 1px solid var(--borde-panel); border-radius: 0;
+  background: none; color: var(--texto); cursor: pointer;
+}
+
+/* El titulo del GRAFICO (el literal de JC) va adentro del cuerpo y no en la cabecera: la
+   cabecera es del CUADRO ("Precios Mercado Central de Buenos Aires") y este cambia con la
+   especie y la variedad elegidas. Dos lineas como maximo; con mas, el grafico no entra. */
+.precios-titulo {
+  flex: 0 0 auto; margin: 0; font-size: .66rem; font-weight: 650; text-align: center;
+  line-height: 1.2;
+}
+.precios-sub {
+  flex: 0 0 auto; margin: .05rem 0 0; font-size: .56rem; line-height: 1.2; text-align: center;
+}
+.panel-precios > .panel-cuerpo > .grafico {
+  flex: 1 1 auto; height: auto; min-height: 150px;
+}
+/* Con el alto fijado vuelve a 0: un item de flexbox no se encoge por debajo de su contenido y
+   el pie de fuente se caeria fuera del recorte del panel. */
+.tablero.alto-fijo .panel-precios > .panel-cuerpo > .grafico { min-height: 0; }
+/* La nota de este cuadro son TRES frases que no se pueden perder: que se esta promediando, que
+   los pesos son corrientes y cuantos meses cotiza la seleccion. Entran en tres lineas con este
+   interlineado; el texto completo queda igual en el `title`. */
+.tablero.tablero-maqueta .panel-precios .cuadro-nota {
+  line-height: 1.25; margin-top: .2rem; font-size: .58rem;
+}
+/* La cita de este cuadro es la mas larga del sitio: JC escribe el organismo desplegado
+   ("Fuente: MAGyP (Ministerio de Agricultura, Ganadería y Pesca)", celda AE31). A .7rem se
+   iba a dos renglones y le sacaba 13px al grafico; a .58rem entra en uno. El texto es el
+   mismo: no se abrevia una cita de fuente. */
+.panel-precios .panel-fuente { font-size: .58rem; }
+
+@media (max-width: 1000px) {
+  .precios-controles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ---------- pie de acciones de cada cuadro (maqueta "Agri 2", 23-sep-2026) ----------
+   "Más información →" y "Generar PDF" al pie de CADA panel, en lugar de la tira de utilidades
+   unica del final. Comparten el renglon con la cita de fuente, que es lo primero: la fuente es
+   obligatoria y no se le cede el lugar a un boton. */
+.panel-acciones {
+  flex: 0 0 auto; display: flex; align-items: center; gap: .6rem; white-space: nowrap;
+}
+.panel-accion {
+  display: inline-flex; align-items: center; gap: .25rem;
+  font-family: var(--rotulos); font-size: .58rem; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--texto-apoyo);
+  background: none; border: 0; padding: 0; text-decoration: none;
+}
+.panel-accion img { width: .85rem; height: .85rem; display: block; }
+.panel-accion-activa, a.panel-accion { cursor: pointer; color: var(--enlace); }
+.panel-accion-activa:hover .accion-nombre, a.panel-accion:hover .accion-nombre {
+  text-decoration: underline;
+}
+.panel-accion .accion-flecha { font-size: .7rem; line-height: 1; }
+/* El "Próximamente" de la accion deshabilitada: mismo tratamiento que en el resto del sitio,
+   chiquito y entre parentesis visuales, para que se lea que el rotulo esta pero no funciona. */
+.panel-accion > .prox { text-transform: none; letter-spacing: 0; font-size: .55rem; opacity: .75; }
+
+/* ---------- chips de producto ADENTRO de un panel (maqueta "Agri 2") ----------
+   Es el selector grande del mockup Modelo 2, en chico y sin grilla de 7 columnas: son tres
+   productos y van centrados sobre el titulo del cuadro, como los dibuja JC. La piel (icono
+   B&W que pasa a color en el elegido, nombre en cajita) la hereda de `.selector-cultivo`. */
+.selector-cultivo.chips-en-panel {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: .2rem .4rem; margin: 0 0 .3rem;
+}
+.chips-en-panel .chip-cultivo { gap: .2rem; }
+.chips-en-panel .chip-ico-caja { width: 1rem; height: 1rem; }
+.chips-en-panel .chip-nombre { font-size: .6rem; padding: .1rem .4rem; }
+
+
+/* La nota al pie de cada cuadro (la composicion de los bultos, la cobertura departamental, el
+   aviso de la papa): hasta TRES lineas. Con dos, la nota mas larga -la de la papa, que suma
+   composicion y cobertura- se cortaba justo en la frase que dice que los meses que faltan no
+   son ceros, que es la que no se puede perder. Tres lineas entran completas y le sacan 14px
+   al grafico, que se lee igual. */
+.tablero.tablero-maqueta .cuadro-nota {
+  flex: 0 0 auto; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+  overflow: hidden; margin-top: .25rem; font-size: .6rem;
+}
+
 /* ---------- selector grande de cultivo (grilla de cajitas, captura del 10-ago) ----------
    Icono a la izquierda (B&W; color cuando el cultivo esta elegido) + nombre en cajita con
    borde; el elegido se pinta de verde; "Todos" en caja grande a la derecha, a lo alto de las
@@ -820,6 +1029,37 @@ a { color: var(--enlace); }
 .tabla-datos td.num, .tabla-datos th.num { text-align: right; font-variant-numeric: tabular-nums; }
 /* La campaña elegida en la barra verde queda marcada: el dato de la pantalla es ese. */
 .tabla-datos tr.actual td { background: var(--fondo-apoyo); font-weight: 650; }
+
+/* ---------- tabla de datos DEBAJO de un grafico (maqueta "Agri 2") ----------
+   JC pega bajo cada uno de los dos cuadros de la izquierda una tabla con los mismos años del
+   grafico como columnas. Va DESPUES del bloque generico de `.tabla-datos` a proposito: las
+   dos reglas tienen la misma especificidad y gana la ultima. Escrita antes, el interlineado
+   compacto de aca no se aplicaba y la tabla del cuadro de apiladas se comia el grafico
+   (medido en el navegador: 181px de tabla y 43px de grafico). */
+.tabla-bajo-grafico { margin-top: .25rem; align-items: flex-start; }
+.tabla-bajo-grafico table { font-size: .6rem; }
+.tabla-bajo-grafico thead th {
+  font-size: .5rem; letter-spacing: 0;
+  position: sticky; top: 0; background: var(--fondo-cuadro);
+}
+.tabla-bajo-grafico th, .tabla-bajo-grafico td { padding: .03rem .25rem; line-height: 1.2; }
+
+/* El reparto de alto dentro del panel: el GRAFICO es el sujeto del cuadro y la tabla es su
+   anexo, asi que la tabla no puede pasar de un tercio del cuerpo. `flex: 0 1 auto` con
+   `max-height` y `overflow-y: auto` es lo que lo garantiza: la tabla se encoge y se desliza
+   (con el encabezado de años fijo) en vez de empujar al grafico contra el piso. Mostrar 6
+   departamentos de 7 seria publicar un dato equivocado; esconderlos detras de un scroll con
+   encabezado fijo, no. */
+.tabla-bajo-grafico { flex: 0 1 auto; min-height: 0; overflow-y: auto; }
+.tablero.alto-fijo .panel[data-panel="apiladas"] .tabla-bajo-grafico { max-height: 45%; }
+
+/* La columna del año elegido en la tira de periodo, en las tablas que tienen un año por
+   columna. Es el mismo destacado que lleva la etiqueta del eje en los graficos: el selector
+   de periodo no filtra estos cuadros -su sujeto es la serie completa- y sin esta marca
+   quedaria mudo sobre ellos. Se marca la COLUMNA, no el numero: el dato no cambia. */
+.tabla-datos th.elegida, .tabla-datos td.elegida { background: var(--fondo-apoyo); }
+.tabla-datos th.elegida { color: var(--texto); }
+.tabla-datos tr.actual td.elegida { background: var(--borde-panel); }
 
 /* Lista de barras (Top N): nombre arriba, barra y valor abajo. */
 .lista-barras { margin: 0; padding: 0; list-style: none; }
@@ -1102,6 +1342,32 @@ table.matriz-od th.esquina { font-weight: 500; color: var(--texto-apoyo); }
 .imprimiendo .tablero.con-selector .fila-tablas {
   grid-template-columns: minmax(0, 12fr) minmax(0, 8fr);
 }
+/* La maqueta "Agri 2" se apila en filas, no en columnas: las dos reglas de arriba estan
+   escritas para el mockup Modelo 2 (mapa a la izquierda) y en este tablero lo darian vuelta.
+   Se reponen sus dos valores, que son los mismos en pantalla y en papel. */
+.imprimiendo .tablero.tablero-maqueta { flex-direction: column; }
+.imprimiendo .tablero.tablero-maqueta .fila-maqueta {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+/* En papel no van los controles: los chips de producto de cada panel, el pie de acciones
+   ("Más información" / "Generar PDF") y las sub-pestañas, chips y desplegables del panel de
+   precios. El PDF sale con la seleccion vigente ya dibujada; un boton impreso no hace nada.
+   Lo que SI queda es el titulo del grafico de precios, que dice que seleccion se imprimio. */
+.imprimiendo .chips-en-panel, .imprimiendo .panel-acciones,
+.imprimiendo .precios-pestanias, .imprimiendo .precios-chips,
+.imprimiendo .precios-controles { display: none; }
+
+/* En la hoja hay menos alto que en una pantalla y la fila de ABAJO de la maqueta es la que mas
+   contenido lleva: sus dos cuadros tienen tabla grande (7 departamentos + total) mientras que
+   el de arriba a la izquierda tiene una de dos filas. Con las dos filas iguales, el grafico de
+   apiladas bajaba a 48px en papel y no se leia (medido en el navegador con la clase
+   `imprimiendo` puesta). Es un REPARTO, no un alto libre: el 1,3 sale de medir. */
+.imprimiendo .tablero.tablero-maqueta .fila-maqueta:nth-child(2) { flex: 1.3 1 0; min-height: 0; }
+/* En papel la tabla no se desliza: lo que no entra en el recorte, se pierde, y perder una fila
+   de un departamento es publicar un dato equivocado. Se imprime entera y el alto que sobra se
+   lo queda el grafico, que en una caja mas baja se sigue leyendo. */
+.imprimiendo .tabla-bajo-grafico { max-height: none; overflow: visible; }
+
 .imprimiendo .kpis-grilla {
   grid-template-columns: minmax(9rem, 1.1fr) repeat(4, minmax(0, 1fr));
 }

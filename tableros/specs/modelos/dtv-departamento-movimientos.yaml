@@ -1,0 +1,135 @@
+# La UNICA vista de detalle de Agricultura > Cultivos intensivos, y las dos salidas que pide
+# la hoja "Modelo analisis" de la base 53 en una sola pagina:
+#
+#   a) "VER TODOS LOS AÑOS": el boton de cabecera del tablero sale a los graficos de
+#      evolucion. Con el ambito en "Total provincia" esta pagina ES ese grafico.
+#   b) "AL HACER CLIC EN UN DEPARTAMENTO SE ABRE SU INFORMACION": la pagina sigue aceptando
+#      `?departamento=<geo_id>`, el mismo patron que 09-departamento-datos en cultivos
+#      extensivos. Lo que ya NO existe es el mapa desde el cual se hacia ese clic: salio del
+#      tablero el 23-sep-2026, porque no esta en la maqueta "Agri 2" y el propio JC lo tiene
+#      en su lista de trabajo futuro. Mientras tanto al departamento se llega por el selector
+#      de ambito de esta misma pagina, que tiene los 27. El dia que entre el mapa de calor, el
+#      clic vuelve a enganchar aca sin tocar nada de esta vista.
+#
+# Por que una sola pagina y no dos: es la MISMA pregunta con distinto ambito ("cuanto se movio
+# cada año"), y el ambito ya es un filtro. Dos paginas con los mismos dos cuadros serian el
+# "dashboard-pulpo" al reves: duplicacion sin lector.
+#
+# Por que NO hay "Analisis completo" en esta seccion: rige la tercera tanda del 10-ago-2026
+# (formato_v1.tercera_tanda.solo_tableros). Esta pagina se alcanza por el boton de cabecera
+# del tablero, igual que las dos paginas sueltas de cultivos extensivos.
+#
+# Escrito por constructor-dashboards el 2026-09-23.
+
+familia: dtv-hortalizas
+bases: [56, 57, 75]
+slug: departamento-movimientos
+comunes: _comunes-dtv-hortalizas
+titulo: "Datos por departamento"
+subtitulo: "Toneladas movidas, DTV emitidas y superficie estimada del producto elegido, año por año"
+
+protocolo: _protocolo-presentacion
+
+# --- Titulo del cuadro del grafico: lo arma _protocolo-presentacion, no se escribe a mano ---
+titulo_componentes:
+  area: {desde_filtro: departamento}      # "Santiago del Estero" o "ROBLES (Santiago del Estero)"
+  sujeto: {desde_filtro: producto}
+  variable:
+    override: "evolución de las toneladas movidas y las DTV emitidas"
+    motivo: >
+      La composicion mecanica daria "evolución de toneladas movidas y declaraciones de tránsito
+      vegetal", que en un titulo de cuadro no se lee. JC escribe "DTV" en toda su maqueta y en
+      el nombre mismo de las bases ("DTV - Cebolla"): se usa su abreviatura, con las dos
+      variables nombradas en el orden en que estan graficadas.
+  # El parentesis de recorte que JC le pone a sus cuadros. Aca resuelve a
+  # "(septiembre a diciembre)" en papa y a nada en los productos con el año completo: la
+  # cobertura la resuelve el build contra el mart, no esta escrita en ningun texto fijo.
+  recorte: {desde_filtro: producto}
+  apertura: null
+  periodo: {ventana: ventana_anios}
+
+# El segundo cuadro (la tabla por año) compone su titulo con la plantilla del tipo `lista`.
+tabla_por_anio:
+  titulo_componentes:
+    area: {desde_filtro: departamento}
+    sujeto: {desde_filtro: producto}
+    variable: {multiple: [peso_tn, movimientos, superficie_estimada_ha]}
+    recorte: {desde_filtro: producto}
+    apertura: null
+    periodo: {ventana: ventana_anios}
+  columnas:
+    - {campo: anio, etiqueta: "Año"}
+    - {campo: peso_tn, etiqueta: "Toneladas (tn)"}
+    - {campo: movimientos, etiqueta: "DTV emitidas (cantidad)"}
+    - {campo: superficie_estimada_ha, etiqueta: "Superficie est. (ha)"}
+
+# El build verifica que el compositor produzca EXACTAMENTE estos titulos en alguna de las
+# combinaciones de la vista. El ejemplo usa ROBLES, que es el departamento con mas movimiento
+# de cebolla, y papa para dejar fijado el parentesis de cobertura.
+titulo_protocolo_ejemplo:
+  - "Evolución de las toneladas movidas y las DTV emitidas de cebolla - Santiago del Estero - años 2021 a 2025"
+  - "Evolución de las toneladas movidas y las DTV emitidas de papa (septiembre a diciembre) - ROBLES (Santiago del Estero) - años 2021 a 2025"
+  - "Toneladas movidas, declaraciones de tránsito vegetal y superficie estimada de cebolla - ROBLES (Santiago del Estero) - años 2021 a 2025"
+
+tipo: serie
+grafico: lineas
+
+variables: [peso_tn, movimientos, superficie_estimada_ha]
+dimensiones: [anio]
+filtros: [departamento, producto]
+orden: {por: anio, dir: asc}
+
+defaults:
+  departamento: provincia          # la pagina abre en el total provincial ("ver todos los años")
+  producto: parametros.producto_por_defecto
+
+universo:
+  ambito: sde
+  nivel_geo: [provincia, departamento]
+  productos: parametros.productos
+  anios: ventana_anios
+  # Solo se generan las combinaciones CON datos: un departamento sin DTV de ese producto no
+  # aparece en el selector de ambito.
+  solo_con_datos: true
+
+# El `resumen` del cuadro del grafico: los numeros del ULTIMO año de la ventana, con el año
+# escrito en cada rotulo porque el dato es de ese año y no de toda la serie
+# (formato_v1.parametros_explicitos).
+indicadores:
+  anio: ultimo_de_la_ventana
+  medidas: [peso_tn, movimientos, superficie_estimada_ha]
+
+# El boton de cabecera en ESTA vista pasa a decir "Provincia" y vuelve al tablero conservando
+# producto y año. Misma regla que 09-departamento-datos
+# (formato_v1.cuarta_tanda.boton_volver_provincia): "un boton que nombra la pagina en la que ya
+# estas no navega a ningun lado".
+cabecera:
+  boton_datos_por_departamento:
+    en_esta_vista: "se transforma en 'Provincia'"
+    destino: tablero-cultivos-intensivos
+    conserva_filtros: true
+    motivo: "un botón que nombra la página en la que ya estás no navega a ningún lado"
+
+notas_metodologicas:
+  - que-es-una-dtv
+  - superficie-estimada
+  - papa-septiembre-a-diciembre
+  - solo-donde-hubo-movimiento
+
+fuente:
+  pie: "Fuente: SENASA"
+  organismo_esperado: "SENASA"
+  publicacion: null
+
+sensibilidad: normal        # dato provincial y departamental, no comparacion entre provincias
+estado: publicada
+
+origen:
+  tipo: pedido-de-francisco + modelo de analisis de JC
+  detalle: >
+    Hoja "Modelo analisis" de la base 53 (que las bases 56, 57 y 75 referencian con "MISMO
+    MODELO QUE DTV DE ALGODON"): "VER TODOS LOS AÑOS" saliendo hacia graficos de evolucion, y
+    "AL HACER CLIC EN UN DEPARTAMENTO QUE SE ABRA SU INFORMACION". El segundo literal espera al
+    mapa de calor que JC pide para mas adelante; mientras tanto el departamento se elige en el
+    selector de ambito de esta pagina.
+  fecha: 2026-09-23

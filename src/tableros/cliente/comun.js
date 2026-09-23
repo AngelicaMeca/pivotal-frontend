@@ -19,15 +19,25 @@ import * as echarts from "echarts";
 export default function crearPivotal() {
 
   var estado = { datos: null, pintar: null, graficos: [], bajadas: {}, historial: [],
-                 colores: {} };
+                 colores: {}, extras: [] };
 
   /* -------- controles de filtro -------- */
   function controles() {
     return Array.prototype.slice.call(document.querySelectorAll("[data-control]"));
   }
 
+  /* TODOS los controles de un filtro, no el primero. Un mismo filtro se puede dibujar mas de
+     una vez: en la maqueta "Agri 2" los chips de producto viven adentro de dos paneles, con
+     rotulos distintos ("DTV Cebolla" y "Cebolla") y un solo valor. Son UN filtro dibujado dos
+     veces, no dos filtros, y por eso se mueven juntos: sin esto, tocar el segundo no hacia
+     nada (la clave se arma con el primero) y los dos quedaban mostrando cosas distintas. */
+  function controlesDe(id) {
+    return Array.prototype.slice.call(
+      document.querySelectorAll('[data-control][data-filtro="' + id + '"]'));
+  }
+
   function control(id) {
-    return document.querySelector('[data-control][data-filtro="' + id + '"]');
+    return controlesDe(id)[0] || null;
   }
 
   function valor(id) {
@@ -35,7 +45,7 @@ export default function crearPivotal() {
     return nodo ? nodo.dataset.valor : null;
   }
 
-  function fijar(nodo, nuevo) {
+  function pintarControl(nodo, nuevo) {
     if (nodo.dataset.valor === nuevo) { return false; }
     nodo.dataset.valor = nuevo;
     if (nodo.dataset.control === "chips") {
@@ -47,6 +57,16 @@ export default function crearPivotal() {
       if (select && select.value !== nuevo) { select.value = nuevo; }
     }
     return true;
+  }
+
+  /* Fija el valor de un filtro en todos sus dibujos. Recibe un NODO y no un id para no tocar
+     a los llamadores, que siempre tienen el control a mano. */
+  function fijar(nodo, nuevo) {
+    var hubo = false;
+    controlesDe(nodo.dataset.filtro).forEach(function (otro) {
+      if (pintarControl(otro, nuevo)) { hubo = true; }
+    });
+    return hubo;
   }
 
   function tiene(nodo, candidato) {
@@ -147,6 +167,11 @@ export default function crearPivotal() {
     sincronizarNavegacion();
     return asegurarParticion().then(function () {
       estado.pintar(estado.datos.combos[clave()], estado.datos);
+      /* Los paneles que se dibujan por su cuenta (hoy el de precios del MCBA, que tiene
+         filtros y datos propios) se enteran por aca de que la pagina se repinto. Importa en
+         la exportacion a PDF: la hoja tiene otro ancho que la ventana y hay dibujos que se
+         calculan con el tamaño de su caja. */
+      estado.extras.forEach(function (fn) { fn(); });
     });
   }
 
@@ -367,9 +392,11 @@ export default function crearPivotal() {
 
   var ACCIONES = { "exportar-pdf": exportarPdf };
 
-  /* Los botones del panel UTILIDADES. El build solo deja pasar acciones que existan aca
-     (site_build.ACCIONES_UTILIDAD), asi que no hay botones sin dueño. El atributo es
-     `data-utilidad` y no `data-accion` porque ese ya es el hueco de texto de la ayuda del
+  /* Los botones de accion: los del panel UTILIDADES (cultivos extensivos) y los del pie de
+     cada cuadro (maqueta "Agri 2": un "Generar PDF" por panel). Son el mismo boton dibujado
+     en distintos lugares y se enganchan todos igual. El build solo deja pasar acciones que
+     existan aca (site_build.ACCIONES_UTILIDAD), asi que no hay botones sin dueño. El atributo
+     es `data-utilidad` y no `data-accion` porque ese ya es el hueco de texto de la ayuda del
      mapa ("Seleccione departamento"). */
   function engancharUtilidades() {
     Array.prototype.forEach.call(document.querySelectorAll("[data-utilidad]"), function (boton) {
@@ -381,6 +408,10 @@ export default function crearPivotal() {
   var PIVOTAL = {
     vaciar: vaciar,
     tamanioMapa: tamanioMapa,
+
+    /* Registra un dibujo que NO sale de la combinacion de filtros de la pagina, para que se
+       repinte junto con el resto (ver `refrescar`). */
+    alRepintar: function (fn) { estado.extras.push(fn); },
 
     /* Color del tema, por su variable CSS. El cromo de los graficos (ejes, guias, bordes de
        las porciones) sale del mismo lugar que el del resto de la pagina: theme.yaml. Los

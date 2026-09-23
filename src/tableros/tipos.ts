@@ -82,12 +82,50 @@ export type Vista = {
   elementos_default: Elemento[];
 };
 
+// Un item del pie de un cuadro: "Más información →" o "Generar PDF". Lo dibuja JC al pie de
+// cada cuadro de la maqueta "Agri 2" y reemplaza al panel de utilidades unico del final.
+// Con `accion` es un boton de verdad (la engancha comun.js); con `href` es un link; sin
+// ninguna de las dos queda deshabilitado con su `rotulo`.
+export type AccionDeCuadro = {
+  id: string;
+  etiqueta: string;
+  flecha: boolean;
+  href: string | null;
+  accion: string | null;
+  rotulo: string;
+  icono?: string;
+};
+
+// El panel de precios del MCBA (base 8), el cuarto cuadro de la maqueta "Agri 2". Tiene
+// filtros PROPIOS -grupo, especie y cuatro dimensiones de producto, mas el modo y el rango- que
+// no viajan en las combinaciones del tablero, y su propio JSON partido por especie y por modo.
+// Esto es la CASCARA: los desplegables se llenan y el grafico se dibuja en tablero.js.
+export type PanelPrecios = {
+  familia: string;
+  pestanias: { id: string; etiqueta: string; actual: boolean; especie: string }[];
+  chips: { v: string; t: string; grupo: string; archivos: Record<string, string> }[];
+  dimensiones: { id: string; rotulo: string }[];
+  modo: { rotulo: string; opciones: Opcion[]; defecto: string };
+  rango: { inicio: string; fin: string };
+  // Plantilla del subtitulo, con {desde} y {hasta}. Los dos slots se reemplazan por rotulos de
+  // mes que ya compuso el build ("Jul 2017"): el navegador sustituye, no arma ningun texto.
+  subtitulo: string;
+  color: string;
+  pie: string;
+};
+
 export type Panel = {
   id: string;
   titulo: string;
+  subtitulo?: string;
   ancho?: string | number;
   alto?: string | number;
   detalle?: string | null;
+  rotulo?: string;
+  pie?: string;
+  // Panel con filtros y datos propios: hoy solo "Precios MCBA" (`forma: precios` en el spec).
+  precios?: PanelPrecios;
+  acciones?: AccionDeCuadro[];
   // `accion` solo la traen los items del panel UTILIDADES: con accion se dibujan como boton
   // (la engancha comun.js), sin accion siguen deshabilitados con "Próximamente".
   items?: { etiqueta: string; icono?: string; accion?: string }[];
@@ -96,7 +134,15 @@ export type Panel = {
 export type PaginaVista = Comun & { vista: Vista };
 
 export type PaginaTablero = Comun & {
-  tablero: { slug: string; titulo: string; ruta_datos: string; tarjeta_contexto: boolean };
+  tablero: {
+    slug: string;
+    titulo: string;
+    ruta_datos: string;
+    // Que disposicion dibuja Tablero.tsx. La elige el spec (site_build.DISPOSICIONES):
+    // "mockup" = las dos columnas de cultivos extensivos; "grilla-2x2" = la maqueta "Agri 2".
+    disposicion: string;
+    tarjeta_contexto: boolean;
+  };
   paneles: Panel[];
   filtros_panel: Record<string, Filtro>;
   filtro_selector: Filtro | null;

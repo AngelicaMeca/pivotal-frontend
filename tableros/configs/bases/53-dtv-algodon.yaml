@@ -1,0 +1,325 @@
+# Base 53 - DTV Algodón (SENASA). Declaraciones de Tránsito Vegetal emitidas para
+# mover algodón (en bruto, grano, semilla y desperdicios) desde Santiago del Estero.
+# Escrito sobre raw/entrega-01/53 - DTV Algodon SDE.xlsx el 2026-09-23.
+# El adapter de la familia (adapters/dtv.py) lee este archivo y no sabe nada más de la base.
+#
+# Esta es la base de REFERENCIA de la familia: su hoja "Modelo analisis" es la que JC
+# escribió completa y las otras tres (56 batata, 57 cebolla, 75 papa) se limitan a decir
+# "MISMO MODELO QUE DTV DE ALGODÓN". Va a specs por constructor-reglas.
+base: 53
+slug: dtv-algodon
+familia: dtv
+estado: activa
+demo_prioritaria: true
+
+archivo:
+  patron: "^53 - DTV Algodon"     # regex sobre el nombre del archivo en raw/entrega-NN/
+
+# ---------------------------------------------------------------------------
+# HOJAS
+# ---------------------------------------------------------------------------
+# Una hoja por año, 2021 a 2025. Las cinco tienen el header en la fila 1 y las mismas
+# 15 columnas, pero las dos primeras titulan la primera columna "FECHA " (con espacio al
+# final) en vez de "FECHA EMISIÓN": por eso el mapeo de `columnas` acepta los dos títulos.
+# Las hojas no se pisan entre sí: cada una trae exclusivamente su año.
+hojas:
+  datos:
+    - nombre: "53 PB 13 Sgo 21"
+      header_fila: 1
+      ambito: sde
+      contenido: "24.941 movimientos de 2021 (2021-01-08 a 2021-12-31) + 1 fila de total al pie."
+    - nombre: "53 PB 13 Sgo 22"
+      header_fila: 1
+      ambito: sde
+      contenido: "23.927 movimientos de 2022 (2022-01-03 a 2022-12-30) + 1 fila de total al pie."
+    - nombre: "53 PB 13 Sgo 23"
+      header_fila: 1
+      ambito: sde
+      contenido: "20.166 movimientos de 2023 (2023-01-02 a 2023-12-28) + 1 fila de total al pie."
+    - nombre: "53 PB 13 Sgo 24"
+      header_fila: 1
+      ambito: sde
+      contenido: "16.062 movimientos de 2024 (2024-01-03 a 2024-12-30) + 1 fila de total al pie."
+    - nombre: "53 PB 13 Sgo 25"
+      header_fila: 1
+      ambito: sde
+      contenido: "17.284 movimientos de 2025 (2025-01-02 a 2025-12-30) + 1 fila de total al pie."
+
+  ignorar:
+    - nombre: "Modelo analisis"
+      motivo: >
+        Especificación de negocio escrita por JC, y la más completa de todo el repo para
+        esta familia: define el modelo de TODAS las DTV ("ESTO ES APLICABLE A TODOS LOS
+        PRODUCTOS POR DTV"). Pide convertir los kg a toneladas, unidad temporal mes y año,
+        unidades geográficas "a) Total provincia (sumatoria) b) Total x departamento",
+        visualización por producto con mapa y selección desde una lista, total provincial
+        abajo, selector de año y variaciones. Trae además tablas 2021 ya calculadas a mano
+        que sirven de control de la ingesta: ver nota `control`. No son datos: va a
+        constructor-reglas para convertirse en specs/modelos/base-53-*.yaml.
+    - nombre: "Hoja1"
+      motivo: "Hoja vacía (1 fila x 1 columna)."
+
+# ---------------------------------------------------------------------------
+# COLUMNAS: origen -> canónico snake_case
+# ---------------------------------------------------------------------------
+# Los títulos se comparan sin espacios al borde, así que "FECHA " entra como "FECHA".
+columnas:
+  "FECHA EMISIÓN": fecha_emision
+  "FECHA": fecha_emision              # así lo titulan las hojas Sgo 21 y Sgo 22
+  "mes": mes_declarado                # redundante con la fecha de emisión; se mapea para
+                                      # no romper el chequeo de columnas y no se usa
+                                      # (el mes canónico sale de FECHA EMISIÓN)
+  "TIPO MOV.": tipo_movimiento
+  "PROVINCIA ORIGEN": origen_provincia
+  "PARTIDO ORIGEN": origen_departamento
+  "PROVINCIA DESTINO": destino_provincia
+  "PARTIDO DESTINO": destino_departamento
+  "PRODUCTO": producto
+  "ACONDIC.": acondicionamiento
+  "CANT.": cantidad
+  "PESO UNITARIO": peso_unitario
+  "U.M.": um
+  "PESO TOTAL": peso_total
+  "FECHA VENCIMIENTO": fecha_vencimiento   # se mapea y NO se usa: en las hojas Sgo 21 y
+                                           # Sgo 22 viene la mitad como fecha y la mitad
+                                           # como número de serie de Excel (ver nota
+                                           # `anomalia` sobre vencimiento). Ninguna vista
+                                           # del modelo de JC la pide.
+  "TIPO_ORIGEN_2": tipo_origen
+
+# ---------------------------------------------------------------------------
+# VALORES: el adapter despivotea estas medidas a filas.
+# `origen` dice de dónde sale cada una: `constante` (vale 1 por fila del Excel),
+# `peso_tn` (PESO TOTAL ya convertido a toneladas) o `columna` (tal cual viene).
+# ---------------------------------------------------------------------------
+valores:
+  movimientos:
+    etiqueta: "Movimientos (DTV emitidas)"
+    medida: movimientos
+    unidad: movimientos
+    agregable: true
+    origen: constante
+    valor: 1
+  peso_tn:
+    etiqueta: "Peso movilizado"
+    medida: peso
+    unidad: tn
+    agregable: true
+    origen: peso_tn
+  cantidad:
+    etiqueta: "Bultos declarados"
+    medida: cantidad
+    unidad: bultos
+    agregable: false        # un fardo, un rollo, un módulo y "a granel" no se suman entre sí
+    origen: columna
+    columna: cantidad
+
+# ---------------------------------------------------------------------------
+# UNIDADES: PESO TOTAL -> toneladas, fila por fila, según la U.M. de esa fila
+# ---------------------------------------------------------------------------
+# JC pide toneladas ("En kg y en tn - CONVERTIR A TN LOS KG", Modelo analisis r3). La U.M.
+# NO es siempre "Kg.": en esta base no aparece ni una vez. Lo que hay, verificado sobre las
+# 102.380 filas de detalle, es:
+#   Tn.    92.387 filas  PESO TOTAL ya en toneladas (CANT x PESO UNITARIO = PESO TOTAL)
+#   Kg-Tn   9.762 filas  PESO UNITARIO en kilos y PESO TOTAL en TONELADAS (8.873 de ellas
+#                        cumplen CANT x PESO UNITARIO / 1000 = PESO TOTAL)
+#   U.        231 filas  fuera del dominio {Kg., Tn.}. Ver nota `anomalia` sobre U.M.
+# El peso crudo y la U.M. cruda viajan igual a staging (peso_total_origen, um_origen): la
+# conversión no pisa el dato de la fuente.
+unidades:
+  peso:
+    columna_um: um
+    canonico: tn
+    # La fila de total al pie no trae U.M. Acá se puede convertir igual porque TODAS las
+    # U.M. de esta base llevan factor 1: el =SUMA() del pie está sí o sí en toneladas.
+    # No es un supuesto, es aritmética. En la 56/57/75, que mezclan factor 1 y 0,001, esta
+    # clave NO está declarada y el total del pie queda sin convertir a propósito.
+    factor_fila_total: 1
+    um_a_tn:
+      "Tn.":   {canonica: tn, factor: 1}
+      "Kg-Tn": {canonica: tn, factor: 1}     # el TOTAL ya viene en tn; el unitario en kg
+      "U.":    {canonica: tn, factor: 1}     # decisión documentada, ver nota `criterio-um`
+      "Kg.":   {canonica: kg, factor: 0.001} # no aparece en esta base; queda declarado por
+                                             # si SENASA lo usa en una entrega futura
+
+# ---------------------------------------------------------------------------
+# TIEMPO
+# ---------------------------------------------------------------------------
+tiempo:
+  grano: fecha                          # una fila = una DTV emitida un día concreto
+  columna: fecha_emision
+  cobertura_real: "2021-01-08 a 2025-12-30"
+  agregaciones: [anio, anio_mes]        # los cortes que tiene que soportar el mart
+
+# ---------------------------------------------------------------------------
+# GEOGRAFÍA (dos puntas: origen y destino)
+# ---------------------------------------------------------------------------
+# El archivo trae la geografía por NOMBRE, igual que la base 85, así que se resuelve contra
+# configs/dims/geo-alias.yaml. Solo Santiago (86) recibe código INDEC de departamento:
+# PARTIDO ORIGEN es siempre un departamento santiagueño y PARTIDO DESTINO lo es solo cuando
+# la provincia de destino es Santiago (60.428 movimientos internos en las 4 bases). Los
+# partidos de las otras 17 provincias se guardan como texto con geo_id nulo: alcanza para
+# agregar flujos por provincia sin cargar los 395 partidos del país.
+geo:
+  particion: sde
+  provincia_propia: 86
+  resolver: [86]
+  nivel: departamento
+  sin_dato: ["S/D"]        # 2.013 filas sin departamento de origen, ver nota `geo-sin-dato`
+  cobertura_real:
+    departamentos_origen: 21   # de 27; más "S/D". No es un error de ingesta, ver nota `cobertura`
+    provincias_destino: 19
+
+# ---------------------------------------------------------------------------
+# SALIDA
+# ---------------------------------------------------------------------------
+salida:
+  staging: "staging/base-53-dtv-algodon.parquet"
+  mart: hecho_movimientos_vegetales
+  particiones: [provincia, anio]
+
+# ---------------------------------------------------------------------------
+# METADATA HEREDADA DEL ÍNDICE (configs/manifiesto-indice.yaml, base nro 53)
+# ---------------------------------------------------------------------------
+indice:
+  fuente: "SENASA"
+  frecuencia: "diaria"
+  rango_declarado: "2021-01-01 a 2026-05-31"
+  descripcion: "DTV - Algodón, semilla fibra, fibrilla, desperrdicio"
+  tema: "Agricultura > Cultivos extensivos"
+  cita_fuente_al_pie: "Fuente: SENASA"
+
+# ---------------------------------------------------------------------------
+notas:
+  - fecha: "2026-09-23"
+    tipo: familia
+    texto: >
+      Primera base de la familia `dtv` (adapters/dtv.py). Transaccional: una fila del Excel
+      es una DTV emitida un día concreto. No hay agregación previa, así que el mart puede
+      cortar por año, por mes, por departamento de origen, por provincia de destino, por
+      tipo de movimiento, por acondicionamiento y por producto sin volver al Excel.
+  - fecha: "2026-09-23"
+    tipo: drift
+    texto: >
+      El perfil con el que se planificó la ingesta decía 3 hojas de datos (Sgo 23, 24 y 25),
+      53.512 filas y "NRO. DTV" en la segunda columna. El archivo trae CINCO hojas (Sgo 21 a
+      Sgo 25), 102.380 filas de detalle y en la segunda columna "mes", no el número de DTV.
+      Además las hojas Sgo 21 y Sgo 22 titulan la primera columna "FECHA " (con espacio) y
+      las otras tres "FECHA EMISIÓN". Todo se resuelve en este config; el Excel no se toca.
+      El número de DTV no existe en esta base: `nro_dtv` queda nulo en las 102.380 filas.
+  - fecha: "2026-09-23"
+    tipo: criterio-um
+    texto: >
+      CRITERIO 1 (conversión a toneladas). Se verificó que la U.M. NO es siempre "Kg.": en
+      esta base no aparece nunca. La medida canónica `peso_tn` sale de PESO TOTAL por el
+      factor que le corresponde a la U.M. de cada fila, y el valor crudo queda en
+      `peso_total_origen` + `um_origen`, así que el kilo original no se pierde. Las 231
+      filas con U.M. "U." se toman a valor nominal (factor 1, o sea como toneladas) porque
+      es lo único que reproduce EXACTO los totales que JC calculó a mano en su hoja Modelo
+      analisis (ver nota `control`). Es una decisión reversible de una línea en este YAML:
+      si JC dice que esas filas son kilos, se cambia el factor a 0.001 y se reingiere.
+  - fecha: "2026-09-23"
+    tipo: control
+    texto: >
+      La hoja Modelo analisis de JC trae los totales 2021 por producto ya calculados a mano,
+      en toneladas. La ingesta los reproduce EXACTO, al último decimal: Algodón en bruto
+      324.969,726 tn; Algodón grano 66.291,20479 tn; Algodón semilla 10.004,888 tn; Algodón
+      desperdicios 5.472,802 tn. Es el mejor control de toda la entrega: valida a la vez la
+      lectura de las 5 hojas, la tabla de conversión de U.M. y la suma por producto.
+  - fecha: "2026-09-23"
+    tipo: anomalia
+    texto: >
+      231 filas traen U.M. "U." (unidades) y 9.762 traen "Kg-Tn", las dos fuera del dominio
+      {Kg., Tn.} que pide CLAUDE.md. Las "Kg-Tn" están entendidas y controladas (el total ya
+      viene en toneladas). Las "U." son el problema: la mayoría son movimientos chicos y
+      coherentes leídos como toneladas (1 x 15 = 15 tn, un camión), pero hay casos como la
+      fila 1559 de la hoja Sgo 21 (6 x 2.553 = 15.318) que leídos como toneladas dan 15.318
+      tn en un solo viaje, imposible: ahí "U." es claramente kilos. Para qa-datos: listar las
+      filas con U.M. "U." y peso_tn mayor a 1.000 y preguntarle a JC qué significa esa U.M.
+  - fecha: "2026-09-23"
+    tipo: anomalia
+    texto: >
+      CRITERIO 2 (CANT x PESO UNITARIO = PESO TOTAL). Verificado sobre las 102.380 filas de
+      detalle: cierra directo en 93.347, cierra dividiendo por 1.000 en otras 8.873 (las
+      Kg-Tn bien formadas, donde el unitario viene en kilos y el total en toneladas) y NO
+      cierra de ninguna de las dos formas en 160. Esas 160 se desglosan en 139 con U.M.
+      "Kg-Tn" cuyo PESO UNITARIO ya viene en toneladas (ej. hoja Sgo 21 fila 7347: 12 x 1
+      declarado como 1) y 21 con U.M. "Tn." que son diferencias de redondeo del orden del 1%
+      (ej. hoja Sgo 24 fila 3692: 30 x 0,33 = 9,9 contra 10,02 declarado). En ningún caso se
+      recalculó nada: manda PESO TOTAL, que es la columna que JC usa en su propio Modelo
+      analisis y la única que reproduce sus totales de control. Van las 160 a qa-datos.
+      En las bases 56, 57 y 75 la identidad cierra en el 100% de las filas.
+  - fecha: "2026-09-23"
+    tipo: anomalia
+    texto: >
+      Las cinco hojas traen al pie una fila con el =SUMA() de PESO TOTAL y nada más (sin
+      fecha, sin producto, sin geografía). Se marcan con es_agregado_fila=true, no se borran.
+      Para qa-datos: comparar cada una contra la suma del detalle de su hoja.
+  - fecha: "2026-09-23"
+    tipo: anomalia
+    texto: >
+      En las hojas Sgo 21 y Sgo 22 la columna FECHA VENCIMIENTO viene mezclada: 4.775 y 3.761
+      celdas respectivamente llegan como número entero (el número de serie de Excel) en vez
+      de como fecha. La columna no se usa en ninguna vista del modelo de JC, así que se mapea
+      y no se ingiere. Si alguna vez hace falta, hay que resolver la época del serial primero.
+  - fecha: "2026-09-23"
+    tipo: anomalia
+    texto: >
+      Las 7 filas "U." más grandes son las que no pueden ser toneladas de ninguna manera:
+      hoja Sgo 23 fila 9652 (1 x 21.000), hoja Sgo 22 fila 17025 (700 x 29,98 = 20.982,6),
+      hoja Sgo 21 fila 1559 (6 x 2.553 = 15.318), hoja Sgo 21 fila 16185 (1 x 14.120), hoja
+      Sgo 22 filas 460 y 461 (1 x 13.000 cada una) y hoja Sgo 23 fila 9527 (12.820 x 1).
+      Leídas como toneladas son camiones de 13.000 a 21.000 tn, imposible; leídas como kilos
+      dan de 13 a 21 tn, que es exactamente un camión. Son 7 filas sobre 102.380 pero entre
+      las siete mueven unas 110.000 tn sobre 1.690.821: el 6,5% del peso total de la base.
+      NO se corrigieron, porque corregirlas rompería el control contra los totales que JC
+      calculó a mano. Es la pregunta número uno para JC de toda esta familia.
+  - fecha: "2026-09-23"
+    tipo: control
+    texto: >
+      La fila de total al pie de las CINCO hojas cierra EXACTO contra la suma del detalle de
+      su propia hoja: 406.738,621 / 409.249,534 / 333.356,403 / 252.185,831 / 289.290,961 tn.
+      Ojo con el hallazgo "la fila de totales del pie no coincide" que hoy tira qa-datos en
+      esta base: es un falso positivo de su propia configuración, no de los datos. El check
+      compara el pie contra el detalle agrupando por `columnas.particion`, y las bases 53 y
+      57 todavía no tienen entrada en validations/reglas.yaml, así que suma las 5 hojas
+      juntas; la diferencia que reporta es ruido de punto flotante (el propio texto dice
+      "diferencia de 0"). Se arregla declarando `columnas: {particion: hoja}` para las bases
+      53 y 57 en reglas.yaml, que es archivo de qa-datos.
+  - fecha: "2026-09-23"
+    tipo: dato
+    texto: >
+      SENASA sella la DTV con fecha Y hora. El grano de análisis es el día, pero la hora se
+      conserva en la columna `fecha_hora`: sin ella, 14.223 declaraciones distintas de esta
+      base (hasta 125 el mismo día, de Moreno hacia Chaco en plena cosecha) quedaban como
+      filas idénticas y el check de duplicados de qa-datos las denunciaba como repetidas.
+      Con la hora puesta no queda ni un duplicado real en las cuatro bases de la familia.
+  - fecha: "2026-09-23"
+    tipo: geo-sin-dato
+    texto: >
+      CRITERIO 4 (geografía). 2.013 filas traen "S/D" en PARTIDO ORIGEN. No es un
+      departamento y no se le inventa un código INDEC: quedan con geo_id nulo, con
+      geo_sin_dato=true y con el texto "S/D" conservado, así que se agregan al total
+      provincial pero no pintan ningún departamento del mapa. El propio JC las trata igual
+      en su Modelo analisis, donde "S/D" figura como una fila más del ranking por
+      departamento con 6.691 tn en 2021.
+  - fecha: "2026-09-23"
+    tipo: cobertura
+    texto: >
+      CRITERIO 5 (cobertura departamental). El algodón sale de 21 de los 27 departamentos
+      (más el S/D). No es un error de ingesta: solo hay DTV donde hubo movimiento registrado.
+      Afecta al diseño del mapa: los 6 departamentos sin dato tienen que dibujarse en gris y
+      leerse como "sin movimientos", no como un hueco.
+  - fecha: "2026-09-23"
+    tipo: dato
+    texto: >
+      La columna PRODUCTO trae cuatro productos distintos: "Algodón" (85.912 filas, lo que
+      JC llama algodón en bruto), "Algodón, grano" (11.402), "Algodón, desperdicios" (4.048)
+      y "Algodón, semilla" (1.018). Son eslabones distintos de la cadena y no se suman entre
+      sí sin decirlo: el modelo de JC pide una vista POR PRODUCTO.
+  - fecha: "2026-09-23"
+    tipo: dato
+    texto: >
+      El 59% de los movimientos tiene destino dentro de Santiago del Estero (alcance
+      `interno`). La columna `alcance` separa interno / egreso para que ninguna vista sume
+      "lo que salió de la provincia" contando movimientos que nunca salieron.

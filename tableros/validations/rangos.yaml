@@ -82,3 +82,25 @@ peso_kg:
 temperatura_c:      {min: -15, max: 50}
 precipitacion_mm:   {min: 0,   max: 500,  nota: "Por dia. Un mensual va a otro rango cuando se ingiera la base."}
 humedad_pct:        {min: 0,   max: 100}
+
+# ---------------------------------------------------------------------------
+# Peso de UN movimiento de producto vegetal (una DTV), en toneladas.
+# Agregado el 2026-09-23 al entrar la familia DTV (bases 53, 56, 57 y 75).
+#
+# Una DTV ampara un transporte. El criterio es el del camion, no el del cultivo:
+#   `max`            45 tn. Es el tope de un bitren cargado. Un semirremolque comun
+#                    lleva 28-30 tn, asi que 45 ya deja margen holgado; lo que lo
+#                    supera se lista para mirar, no se da por malo.
+#   `max_imposible`  1.000 tn. Cuarenta camiones en una sola declaracion. No existe
+#                    bajo ninguna lectura del dato, y una fila de este tamano se come
+#                    sola el 6% de una base: por eso bloquea en vez de avisar.
+# No se pone `min`: hay DTV chiquitas reales (25 kg de semilla) y no son sospechosas.
+# ---------------------------------------------------------------------------
+peso_por_movimiento_tn:
+  _default:
+    max: 45
+    max_imposible: 1000
+    nota: >
+      Tope de transporte terrestre en Argentina. Vale igual para algodon, cebolla,
+      batata y papa: lo que limita el peso es el camion, no el cultivo. Si JC confirma
+      que alguna DTV ampara varios viajes, este rango se ensancha con la fecha anotada.

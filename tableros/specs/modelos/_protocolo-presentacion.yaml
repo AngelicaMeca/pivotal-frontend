@@ -396,6 +396,24 @@ slots:
           `cultivos-extensivos`, la seccion del catalogo). "Agricultura extensiva" describiria la
           ACTIVIDAD; "cultivos extensivos" describe la COSA que se cuenta, que es lo que hace JC
           cuando escribe "ganado bovino" en vez de "ganadería". Se elige el paralelo exacto.
+      # --- familia DTV de hortalizas (bases 56 batata, 57 cebolla, 75 papa) ---
+      # No es una base: son tres bases que comparten mart, adapter y modelo de analisis, y se
+      # titulan igual. La clave es la familia y no un numero, para que ninguna de las tres
+      # quede con un titulo distinto de las otras dos.
+      dtv-hortalizas:
+        sector: "Agricultura"
+        subsector: "cultivos intensivos"
+        frase_en_titulo: "las hortalizas"
+        arbol_jc: "Agricultura > Cultivos intensivos > Frutas y hortalizas"
+        estado: provisorio
+        justificacion: >
+          El subsector es literalmente la rama que JC le puso a las tres bases en su indice
+          ("Agricultura > Cultivos intensivos > Frutas y hortalizas"), igual que en la base 9.
+          Detras de "de" no se puede usar ("de cultivos intensivos" se lee mal cuando el sujeto
+          del cuadro es un producto), asi que la frase para esa posicion es "las hortalizas",
+          que es ademas como las nombra la maqueta "Agri 2" de JC ("DTV de hortalizas"). Mismo
+          criterio que la base 85 con "ganado bovino" / "la hacienda bovina". Se confirma con
+          JC en la primera revision de la seccion.
       48:
         sector: "Ganadería"
         subsector: "ganado bovino"
@@ -467,6 +485,16 @@ slots:
       ingreso_establecimiento: {frase: "ingresos",               genero: m_plural}
       egreso_establecimiento:  {frase: "egresos",                genero: m_plural}
       balance_cabezas:         {frase: "balance de cabezas",     genero: m}
+      # --- familia DTV de hortalizas (bases 56, 57 y 75) ---
+      # `peso_tn` es un FLUJO, como las cabezas de la base 85: son las toneladas que se
+      # movieron, no las que se produjeron. La frase lo dice ("movidas") para que nadie lea el
+      # numero como produccion provincial. `movimientos` se dice completo en el titulo
+      # ("declaraciones de transito vegetal") y abreviado DTV en rotulos y columnas, que es
+      # como lo escribe JC. `superficie_estimada_ha` no es una medida del mart: es el calculo
+      # de JC (kilos de las DTV sobre el rendimiento promedio) y la frase dice "estimada".
+      peso_tn:                {frase: "toneladas movidas",                  genero: f_plural}
+      movimientos:            {frase: "declaraciones de tránsito vegetal",  genero: f_plural}
+      superficie_estimada_ha: {frase: "superficie estimada",                genero: f}
     articulo:
       f:        "de la"
       m:        "del"
@@ -582,6 +610,7 @@ slots:
       9:  campania
       48: anio
       85: anio
+      dtv-hortalizas: anio   # el mart es diario; el sitio lo agrega a año y a año-mes
     como_se_elige:
       - "1 solo valor -> `*_simple`"
       - "2 o mas valores CONTIGUOS segun dim_tiempo_campania.orden -> `*_rango`, con el primero y el ultimo"
@@ -624,6 +653,8 @@ subtitulo:
     "%":   "porcentaje"
     cabezas: "cabezas"
     dte:   "documentos"
+    dtv:   "declaraciones de tránsito"   # familia DTV de hortalizas (bases 56, 57 y 75)
+    "$/kg": "pesos por kilo"             # precios mayoristas del MCBA (base 8)
   se_puede_escribir_a_mano: true
   regla: "Si el spec trae `subtitulo`, manda el del spec, pero TIENE que nombrar la unidad. El build lo verifica buscando la unidad larga en el texto."
   motivo: "JC no pide subtitulo en el docx, pero tampoco quiere la unidad en el titulo, y un numero sin unidad no se publica. Los 16 specs de la base 9 ya lo traen escrito."
@@ -895,6 +926,24 @@ colores:
         variables distintas y el protocolo manda que dos tipos de variable no compartan escala.
         Gris azulado porque es el color de lo administrativo y porque, puesto al lado del marron
         de la hacienda, deja claro de un vistazo cual de los dos cuadros esta mirando el ojo.
+    precio:
+      medidas: [precio_kg]
+      unidad: "$/kg"
+      hex: ["#f3e5f5", "#ce93d8", "#ab47bc", "#7b1fa2", "#4a148c"]
+      color_solido: "#7b1fa2"
+      estado: nueva
+      agregada: 2026-09-23
+      agregada_por: "el panel de precios del MCBA del tablero de cultivos intensivos (base 8)"
+      justificacion: >
+        Un PRECIO no es ninguna de las variables que ya tenian rampa. No es un volumen (no se
+        suma ni se acumula), no es un papel y no es un rendimiento fisico: es dinero por unidad
+        de producto, y ademas viene en pesos CORRIENTES, o sea que su escala mezcla el precio
+        real con la inflacion. El protocolo manda que dos tipos de variable no compartan escala
+        ni rampa, asi que le corresponde una propia. El violeta no lo usa ninguna otra rampa
+        (verde superficie, ocre produccion, azul rendimiento, marron hacienda, gris azulado
+        documentos) ni el cromo del theme, y se distingue de todas ellas tambien en escala de
+        grises.
+      preguntado_a_jc: "backlog 50"
 
   sin_dato:
     hex: "#bdbdbd"
@@ -1484,6 +1533,16 @@ formato_v1:
         entra: los CONTROLES (menu, pestañitas de campaña, chips de cultivo, filtros,
         "Volver") ni los bloques deshabilitados (las propias UTILIDADES e "Información
         relacionada"), porque en un PDF no se puede hacer clic y solo ocupan lugar.
+      donde_va_en_cada_tablero: >
+        EL PANEL NO ES OBLIGATORIO; LAS ACCIONES SI. El mockup Modelo 2 las junta en una tira
+        "UTILIDADES" (cultivos extensivos) y la maqueta "Agri 2" las pone AL PIE DE CADA
+        CUADRO, una vez por panel (cultivos intensivos, desde el 23-sep-2026, decision de
+        Francisco: "Cada panel tiene su 'Mas informacion' y su 'Generar PDF'. Al pie de cada
+        cuadro, no un panel de utilidades unico al final."). Es la misma regla de siempre
+        aplicada a lo que dibujo JC en cada hoja: la FORMA se comparte, la disposicion la
+        decide la maqueta de esa seccion. La accion, el icono y la validacion contra
+        site_build.ACCIONES_UTILIDAD son identicas en los dos casos.
+        El "Asistente IA" solo existe donde la maqueta lo dibuja: hoy, cultivos extensivos.
     informacion_relacionada:
       que_es: "'Información relacionada (abre en nueva ventana)': costos y margenes, exportaciones, calendario de siembra y cosecha, precios, VBP del cultivo elegido"
       estado: >

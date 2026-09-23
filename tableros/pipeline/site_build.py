@@ -30,6 +30,7 @@ ordenado y todo listado del disco se lee con sorted(). Dos corridas dan bytes id
 """
 import argparse
 import hashlib
+import itertools
 import json
 import os
 import shutil
@@ -39,8 +40,10 @@ import duckdb
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
 from pipeline import hacienda as hac
+from pipeline import precios as pc
 from pipeline import presentacion as pr
 from pipeline import stock as stk
+from pipeline import vegetales as veg
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DIR_MODELOS = os.path.join(RAIZ, "specs", "modelos")
@@ -427,6 +430,69 @@ def item_utilidad(item):
             "La utilidad %r declara la accion %r, que el sitio no sabe hacer. "
             "Acciones disponibles: %s" % (item["id"], accion, ", ".join(ACCIONES_UTILIDAD)))
     return dict(item, icono=ruta_icono("color", item["icono"]))
+
+
+# Paneles que NO llevan el pie de acciones aunque el tablero lo declare: los estaticos, que
+# no son cuadros de datos (la tira de utilidades y la lista de informacion relacionada).
+PANELES_SIN_PIE_DE_ACCIONES = ("utilidades", "informacion-relacionada")
+
+
+def accion_de_cuadro(item, destino, url_de, slug_tablero, id_panel):
+    """Un item del pie de un cuadro: "Más información →" o "Generar PDF".
+
+    Es la tira que JC dibuja al pie de cada cuadro de la maqueta "Agri 2" (celdas H54/AX54 y
+    BF32/AA54/BF54) y que Francisco fijo como regla del tablero el 23-sep-2026, en lugar de
+    un panel de utilidades unico al final.
+
+    Dos formas, igual que en el panel UTILIDADES:
+      - con `accion`, es un boton de verdad y la engancha comun.js por su data-utilidad;
+      - con `destino`, es un link a una vista publicada;
+      - sin ninguna de las dos, queda deshabilitado con "Próximamente". Nunca se dibuja un
+        boton que no hace nada sin decirlo.
+    """
+    accion = item.get("accion")
+    if accion is not None and accion not in ACCIONES_UTILIDAD:
+        raise pr.ErrorDeProtocolo(
+            "El pie del panel %s del tablero %s pide la accion %r, que el sitio no sabe "
+            "hacer. Acciones disponibles: %s"
+            % (id_panel, slug_tablero, accion, ", ".join(ACCIONES_UTILIDAD)))
+    if destino is not None and destino not in url_de:
+        raise pr.ErrorDeProtocolo(
+            "El 'Más información' del panel %s del tablero %s apunta a la vista %s, que no "
+            "esta en ninguna seccion de site/navegacion.yaml"
+            % (id_panel, slug_tablero, destino))
+    salida = {"id": item["id"], "etiqueta": item["etiqueta"],
+              "flecha": bool(item.get("flecha")),
+              "href": url_de[destino] if destino else None,
+              "accion": accion,
+              "rotulo": item.get("rotulo", "Próximamente")}
+    if item.get("icono"):
+        salida["icono"] = ruta_icono("color", item["icono"])
+    return salida
+
+
+def filtros_por_panel(filtros):
+    """Que filtro se dibuja dentro de que panel del tablero.
+
+    Un filtro de zona `panel` puede declarar UN panel (`panel`, el caso de siempre: el toggle
+    de variable del mapa) o VARIOS (`paneles`, cada uno con sus propias etiquetas). El segundo
+    caso es el de la maqueta "Agri 2": el producto se dibuja dos veces, rotulado "DTV Cebolla"
+    en el cuadro de DTV y "Cebolla" en el de estimaciones, y es UN SOLO filtro. La clave de la
+    combinacion lo nombra una sola vez y comun.js mantiene los dos dibujos en sincronia.
+    """
+    salida = {}
+    for filtro in filtros:
+        if filtro.get("zona") != "panel":
+            continue
+        if filtro.get("paneles"):
+            for destino in filtro["paneles"]:
+                copia = {clave: valor for clave, valor in filtro.items() if clave != "paneles"}
+                copia["panel"] = destino["panel"]
+                copia["opciones"] = destino["opciones"]
+                salida[destino["panel"]] = copia
+        else:
+            salida[filtro["panel"]] = filtro
+    return salida
 
 
 def iconos_de_cultivo(ctx, cultivo):
@@ -3112,6 +3178,1120 @@ def h_resumen_establecimiento(ctx, tipo, anios, medidas):
              "valor": ctx.texto(totales[medidas[0]] - totales[medidas[1]])}]
 
 
+# ==========================================================================
+# Familia DTV de hortalizas (bases 56 batata, 57 cebolla, 75 papa)
+# Seccion Agricultura > Cultivos intensivos
+# ==========================================================================
+# Tres bases, un mart, una seccion: son la misma cosa contada por producto y el producto es un
+# filtro. Las reglas de negocio viven en _comunes-dtv-hortalizas.yaml; los dos specs que se
+# construyen aca son tablero-cultivos-intensivos y dtv-departamento-movimientos.
+#
+# Sobre `cantidad` (bultos): el mart la marca `agregable=false` y hasta el 23-sep-2026 no se
+# sumaba en ningun lado. Desde esa fecha se suma en UN solo panel (el combo del tablero, que es
+# lo que dibujo JC en su maqueta) y SIEMPRE junto con su composicion de acondicionamiento, que
+# es la que decide si el eje puede decir "bolsas" o tiene que decir "bultos"
+# (`composicion_de_bultos`). Fuera de ese panel sigue sin sumarse.
+# La superficie estimada no es una medida del mart: es un calculo de JC sobre las toneladas
+# (ver `dtv_valor`).
+
+# La superficie estimada no es una medida del mart: es la formula de JC. Se trata como una
+# medida mas en todo el resto del codigo, y el unico lugar donde existe la formula es
+# `dtv_valor`.
+SUPERFICIE_ESTIMADA = "superficie_estimada_ha"
+DTV_UNIDAD = {"peso_tn": "tn", "movimientos": "dtv", SUPERFICIE_ESTIMADA: "ha"}
+# Sufijo que se escribe al lado del numero en tooltips y celdas. No es la unidad del protocolo
+# (esa es DTV_UNIDAD, la que nombra el subtitulo): es como lo escribe JC en su maqueta.
+DTV_SUFIJO = {"peso_tn": "tn", "movimientos": "DTV", SUPERFICIE_ESTIMADA: "ha"}
+DTV_ETIQUETA = {"peso_tn": "Toneladas movidas", "movimientos": "DTV emitidas",
+                SUPERFICIE_ESTIMADA: "Superficie estimada"}
+# `cantidad` (bultos) no entra en estos tres diccionarios a proposito: su rotulo NO es fijo,
+# lo resuelve `composicion_de_bultos` contra el mart producto por producto. Un diccionario
+# constante seria justamente el rotulo inventado que la fuente no sostiene.
+
+
+class ContextoVegetales:
+    """El mismo papel que `Contexto`, para la familia DTV de hortalizas. Misma interfaz publica.
+
+    Se identifica por FAMILIA y no por numero de base: las tres bases comparten mart, modelo de
+    analisis y titulos, asi que compartir contexto es lo que evita que se desincronicen.
+    """
+
+    familia = "dtv-hortalizas"
+
+    def __init__(self, hechos, precios=None):
+        # `precios` es el mart de la base 8 (precios mayoristas del MCBA). No es de esta
+        # familia -son cotizaciones de un mercado, no declaraciones de transito- pero alimenta
+        # UN panel de su tablero: el cuarto grafico de la maqueta "Agri 2". Viaja en este
+        # contexto y no en uno propio porque no tiene pagina propia: sin el tablero de cultivos
+        # intensivos, el panel de precios no existe.
+        self.precios = precios
+        self.protocolo = pr.cargar_protocolo()
+        self.comunes = pr.cargar_comunes(self.familia)
+        self.theme = pr.cargar_theme()
+        self.navegacion = pr.cargar_yaml(os.path.join(DIR_SITE, "navegacion.yaml"))
+        self.hechos = hechos
+        self.colores = pr.Colores(self.protocolo, self.comunes, self.theme)
+        self.notas = self.comunes["notas_metodologicas"]
+
+        parametros = self.comunes["parametros"]
+        self.productos = [p["valor"] for p in parametros["productos"]]
+        self.etiqueta_producto = {p["valor"]: p["etiqueta"] for p in parametros["productos"]}
+        self.producto_defecto = parametros["producto_por_defecto"]
+
+        # La ventana se resuelve contra el mart, no contra una lista escrita a mano: los
+        # Excels se rebajan de SharePoint en cada publicacion y una lista fija dejaria de
+        # mostrar el año nuevo el dia que SENASA lo mande.
+        ventana = self.comunes["ventana_anios"]
+        self.anios = hechos.anios[-ventana["cantidad"]:]
+        self.anio_defecto = self.anios[-1] if self.anios else None
+
+        self.rendimientos = self.comunes["estimacion_superficie"]["rendimientos_kg_ha"]
+        self.aclaracion_superficie = limpiar(
+            self.comunes["estimacion_superficie"]["aclaracion_al_pie"])
+
+        # Cobertura mensual por producto, resuelta contra el mart. La papa llega solo de
+        # septiembre a diciembre (asi la entrega SENASA, no es un faltante) y eso cambia como
+        # se lee CADA numero suyo: el rotulo viaja al titulo, a la tarjeta de contexto y a las
+        # notas al pie. `recortes` es lo que el Titulador pone entre parentesis.
+        self.meses_producto, self.cobertura = {}, {}
+        for producto in self.productos:
+            meses = hechos.meses_con_dato.get(producto) or []
+            self.meses_producto[producto] = meses
+            self.cobertura[producto] = rotulo_de_cobertura(meses)
+        self.recortes = {p: ("(%s)" % r if r else None) for p, r in self.cobertura.items()}
+        self._verificar_cobertura()
+
+        self.titulador = pr.Titulador(self.protocolo, self.comunes, self.familia,
+                                      recortes=self.recortes)
+
+        # Como se rotula el eje de los bultos (la condicion con la que Francisco habilito
+        # sumar `cantidad` el 23-sep-2026). El umbral y los nombres cortos son parametros de
+        # negocio: viven en el spec de comunes, nunca en el codigo.
+        self.rotulo_bultos = self.comunes["rotulo_de_bultos"]
+
+        # Un color fijo por DEPARTAMENTO para las barras apiladas, asignado una sola vez sobre
+        # los departamentos con movimiento de TODA la familia (no producto por producto): asi
+        # ROBLES es del mismo color en cebolla, batata y papa. Es el caso
+        # _protocolo-presentacion.colores.series_de_un_grafico (el color distingue categorias,
+        # no magnitudes), con la paleta categorica del theme.
+        con_dato = sorted({geo for producto in self.productos
+                           for geo in hechos.deptos_con_movimiento(producto)})
+        self.color_depto = self.colores.por_categoria(
+            [hechos.nombre[geo] for geo in con_dato])
+
+        self.iconos_cultivo = pr.cargar_yaml(
+            os.path.join(DIR_SITE, "iconos-cultivo.yaml"))["cultivos"]
+
+    def _verificar_cobertura(self):
+        """Avisa (no corta) si el mart no coincide con la cobertura que declara el spec.
+
+        No corta a proposito: el dia que SENASA mande los meses que faltan, el sitio tiene que
+        publicarlos solo. Lo que no puede pasar es que el cambio ocurra en silencio.
+        """
+        esperada = self.comunes["cobertura_mensual"]["esperada_2026_09_23"]
+        for producto in self.productos:
+            declarada = esperada.get(producto)
+            real = self.cobertura[producto] or "completa"
+            if declarada is not None and declarada != real:
+                print("[site] AVISO la cobertura mensual de %r cambio: el spec esperaba %r y "
+                      "el mart trae %r. Actualizar _comunes-dtv-hortalizas.cobertura_mensual."
+                      % (producto, declarada, real))
+
+    # -- textos ---------------------------------------------------------
+    def pie(self, spec):
+        esperado = (spec.get("fuente") or {}).get("organismo_esperado")
+        reales = sorted(self.hechos.fuentes)
+        if esperado and reales != [esperado]:
+            raise pr.ErrorDeProtocolo(
+                "%s espera fuente %r y el mart trae %r" % (spec["slug_vista"], esperado, reales))
+        return pr.pie_de_fuente(self.protocolo, reales,
+                                (spec.get("fuente") or {}).get("publicacion"))
+
+    def subtitulo_unidad(self, unidad):
+        return pr.subtitulo_por_unidad(self.protocolo, unidad)
+
+    def titulo(self, spec, valores, anios=None, tipo=None, grafico=None):
+        return self.titulador.componer(
+            spec, valores, self.hechos.nombre, campanias_efectivas=anios,
+            ventanas={"ventana_anios": self.anios}, tipo=tipo, grafico=grafico)
+
+    def notas_de(self, spec, extra=()):
+        ids = list(spec.get("notas_metodologicas") or []) + list(extra)
+        vistas, salida = set(), []
+        for nota_id in ids:
+            if nota_id in vistas or nota_id not in self.notas:
+                continue
+            vistas.add(nota_id)
+            nota = self.notas[nota_id]
+            salida.append({"titulo": nota["titulo"], "texto": limpiar(nota["texto"])})
+        return salida
+
+    def periodo_de(self, producto, anio):
+        """"Año 2025" o "Año 2025 · septiembre a diciembre".
+
+        Regla dura de la familia: ningun rotulo de papa puede sugerir un año completo.
+        """
+        texto = "Año %d" % anio
+        rotulo = self.cobertura.get(producto)
+        return "%s · %s" % (texto, rotulo) if rotulo else texto
+
+    # -- numeros ---------------------------------------------------------
+    def texto(self, valor, medida="peso_tn"):
+        """Toneladas y DTV son medidas de la propia declaracion, no estimaciones: se muestran
+        completas. La superficie estimada va sin decimales: el kilo de precision no lo tiene."""
+        if valor is None:
+            return "S/D"
+        return pr.fmt_numero(valor, 0)
+
+    def con_unidad(self, valor, medida):
+        if valor is None:
+            return "S/D"
+        return "%s %s" % (self.texto(valor, medida), DTV_SUFIJO[medida])
+
+    def eje(self, valores, unidad):
+        limpios = [v for v in valores if v is not None]
+        marcas = pr.marcas_eje(min(limpios + [0.0]), max(limpios + [0.0]))
+        etiquetas = {clave_js(m): pr.fmt_numero(m, 0) for m in marcas["marcas"]}
+        return {"min": marcas["min"], "max": marcas["max"], "paso": marcas["paso"],
+                "etiquetas": etiquetas, "nombre": veg.NOMBRE_EJE[unidad]}
+
+    def eje_secundario(self, valores, unidad, intervalos):
+        limpios = [v for v in valores if v is not None]
+        marcas = pr.marcas_eje_secundario(min(limpios + [0.0]), max(limpios + [0.0]), intervalos)
+        etiquetas = {clave_js(m): pr.fmt_numero(m, 0) for m in marcas["marcas"]}
+        return {"min": marcas["min"], "max": marcas["max"], "paso": marcas["paso"],
+                "etiquetas": etiquetas, "nombre": veg.NOMBRE_EJE[unidad]}
+
+
+def rotulo_de_cobertura(meses):
+    """"septiembre a diciembre" cuando el producto no tiene los doce meses; None si los tiene.
+
+    Sale del MART, no de un texto escrito a mano: el dia que la fuente mande los meses que
+    faltan, el rotulo desaparece solo y ningun cartel queda mintiendo.
+    """
+    if not meses or len(meses) >= 12:
+        return None
+    nombres = [veg.MESES[m - 1] for m in meses]
+    if meses == list(range(meses[0], meses[-1] + 1)):
+        return "%s a %s" % (nombres[0], nombres[-1])
+    return pr.unir_lista(nombres, {"separador_lista": ", ", "ultimo_de_lista": " y "})
+
+
+# --------------------------------------------------------------------------
+# Valores: la unica puerta a los numeros de la familia
+# --------------------------------------------------------------------------
+def dtv_valor(ctx, producto, anio, medida, geo=None, mes=None):
+    """Un numero de la familia, con el ambito y el grano que se le pidan.
+
+    `geo=None` es el total provincial, que se calcula SUMANDO departamentos de origen (el mart
+    no trae fila provincial). `superficie_estimada_ha` no es una medida del mart: es la formula
+    de JC (kilos de las DTV sobre el rendimiento promedio del cultivo), y los rendimientos son
+    parametros de negocio que viven en _comunes-dtv-hortalizas, nunca en el codigo.
+    """
+    if medida == SUPERFICIE_ESTIMADA:
+        toneladas = dtv_valor(ctx, producto, anio, "peso_tn", geo, mes)
+        if toneladas is None:
+            return None
+        return toneladas * 1000.0 / ctx.rendimientos[producto]
+    hechos = ctx.hechos
+    if mes is not None:
+        if geo is not None:
+            return hechos.total_depto_mes(producto, anio, geo, mes, medida)
+        return hechos.total_mes(producto, anio, mes, medida)
+    if geo is not None:
+        return hechos.total_depto(producto, anio, geo, medida)
+    return hechos.total_anual(producto, anio, medida)
+
+
+# --------------------------------------------------------------------------
+# Filtros de la familia
+# --------------------------------------------------------------------------
+def dtv_filtro_anio(ctx):
+    """El año es el periodo y va en la barra de la cabecera, en chips cortos."""
+    return {"id": "anio", "etiqueta": "Año", "zona": "periodo",
+            "opciones": [{"v": str(a), "t": str(a), "corto": str(a)[2:]} for a in ctx.anios],
+            "defecto": str(ctx.anio_defecto)}
+
+
+def dtv_filtro_producto(ctx, zona):
+    """El selector de producto, con icono, en la zona que le declare el spec.
+
+    Sin opcion "Todos" (_comunes-dtv-hortalizas.parametros.incluye_todos): la hoja Modelo
+    analisis de JC pide visualizacion POR PRODUCTO, y un agregado de cebolla + batata + papa
+    mezclaria tres cadenas comerciales y tres rendimientos distintos.
+    """
+    lista = con_iconos_de_cultivo(
+        ctx, opciones(ctx.productos, ctx.etiqueta_producto))
+    return {"id": "producto", "etiqueta": "Producto", "zona": zona,
+            "opciones": lista, "defecto": ctx.producto_defecto}
+
+
+def dtv_filtro_producto_en_paneles(ctx, declarado):
+    """El MISMO filtro de producto, dibujado dentro de dos paneles con rotulos distintos.
+
+    Es lo que dibuja JC en la maqueta "Agri 2" y lo que pidio Francisco el 23-sep-2026: el
+    cuadro de DTV tiene su fila de chips ("DTV Cebolla", "DTV Batata", "DTV Papa") y el de
+    estimaciones la suya ("Cebolla", "Batata", "Papa"). No hay selector global arriba.
+
+    UN solo filtro, dos dibujos: la clave de la combinacion se arma con `producto` una sola
+    vez y comun.js mantiene en sincronia todos los controles que declaran el mismo
+    `data-filtro`. Dos filtros separados se podrian desincronizar; uno dibujado dos veces, no.
+
+    El rotulo de cada fila sale del spec (`selectores.producto.paneles[].rotulo`), con
+    `{producto}` como unico slot: la palabra "DTV" no se escribe en el codigo.
+    """
+    base = dtv_filtro_producto(ctx, "panel")
+    copias = []
+    for destino in declarado["paneles"]:
+        plantilla = destino["rotulo"]
+        copias.append({
+            "panel": destino["panel"],
+            "opciones": [dict(opcion, t=titulo_literal(plantilla, producto=opcion["t"]))
+                         for opcion in base["opciones"]],
+        })
+    base["paneles"] = copias
+    return base
+
+
+def dtv_filtro_departamento(ctx):
+    """Ambito: el total provincial y los 27 departamentos.
+
+    Van los 27 y no solo los que tienen DTV: asi el clic sobre un departamento del mapa sin
+    movimiento llega a una pagina que DICE que no hay declaraciones, en vez de quedarse mudo
+    en el ambito anterior. La cobertura baja es el dato, no un faltante.
+    """
+    valores = ["provincia"] + list(ctx.hechos.deptos)
+    etiquetas = {"provincia": "Total provincia"}
+    for geo in ctx.hechos.deptos:
+        etiquetas[geo] = ctx.hechos.nombre[geo]
+    return {"id": "departamento", "etiqueta": "Ámbito",
+            "opciones": opciones(valores, etiquetas), "defecto": "provincia"}
+
+
+# --------------------------------------------------------------------------
+# Paneles del tablero (la grilla 2x2 de la hoja "Agri 2" de JC)
+# --------------------------------------------------------------------------
+# Cuatro paneles y ni uno mas, los que JC dibujo en su maqueta:
+#
+#   combo             barras de bultos + linea de toneladas, por año, dos ejes  (chart9)
+#   apiladas          toneladas por departamento de origen, apiladas por año    (chart10)
+#   precios-mcba      declarado y NO dibujado: la base 8 no tiene mart          (chart8)
+#   tabla-superficie  estimaciones de superficies cosechadas, por departamento  (sin grafico)
+#
+# El panel `precios-mcba` no se construye aca: no tiene datos, es estatico y lo dibuja
+# Tablero.tsx desde el JSON de la pagina.
+
+
+def composicion_de_bultos(ctx, producto):
+    """(rotulo del eje, nota de composicion) para los bultos declarados de un producto.
+
+    Los dos salen del MART, nunca de un texto fijo. Es la condicion con la que Francisco
+    habilito sumar `cantidad` el 23-sep-2026: el eje solo puede decir "bolsas" si la fuente lo
+    sostiene, y la nota al pie tiene que mostrar de que esta hecha la mezcla. La regla y el
+    umbral viven en _comunes-dtv-hortalizas.rotulo_de_bultos; aca solo se aplican.
+
+    Si manda SENASA un año con otra mezcla, el rotulo cambia solo en la proxima publicacion.
+    """
+    regla = ctx.rotulo_bultos
+    partes = ctx.hechos.composicion_acondicionamiento(producto, ctx.anios)
+    if not partes:
+        return None, None
+    total = sum(valor for _, valor in partes)
+    principal, mayor = partes[0]
+    if mayor / total >= regla["umbral_bolsas"] and principal in regla["nombre_corto"]:
+        rotulo = regla["nombre_corto"][principal]
+    else:
+        rotulo = regla["generico"]
+    # Los tres formatos mas pesados con su participacion, y el resto agrupado. Se escriben con
+    # el nombre TAL COMO lo declara la fuente ("Bolsas/Bolsitas", "Big-bags"): renombrarlos
+    # seria interpretar.
+    detalle = ["%s %s" % (nombre, pr.fmt_pct(valor / total * 100, 1))
+               for nombre, valor in partes[:3]]
+    resto = sum(valor for _, valor in partes[3:])
+    if resto:
+        detalle.append("otros formatos %s" % pr.fmt_pct(resto / total * 100, 1))
+    nota = "Composición de los bultos declarados: %s." % pr.unir_lista(
+        detalle, {"separador_lista": ", ", "ultimo_de_lista": " y "})
+    if rotulo == regla["generico"]:
+        nota += (" El eje dice «%s» y no «bolsas» porque ningún formato llega al %s del total."
+                 % (regla["generico"], pr.fmt_pct(regla["umbral_bolsas"] * 100, 0)))
+    return rotulo, nota
+
+
+def producto_con_recorte(ctx, producto):
+    """"Cebolla" o "Papa (septiembre a diciembre)".
+
+    Al salir la tarjeta de contexto (la maqueta no la tiene), el parentesis de cobertura es lo
+    que hace que ningun numero de papa se pueda leer como un año completo. Va en el titulo de
+    los TRES cuadros con datos, no en uno solo.
+    """
+    etiqueta = ctx.etiqueta_producto[producto]
+    recorte = ctx.recortes.get(producto)
+    return "%s %s" % (etiqueta, recorte) if recorte else etiqueta
+
+
+def nota_de_cobertura_mensual(ctx, producto):
+    """La frase de la papa, o "" si el producto trae los doce meses.
+
+    Corta a proposito: va al pie de paneles que ya tienen otra nota obligatoria y el pie se
+    recorta a tres lineas. El recorte de cobertura ya viaja ademas en el titulo del cuadro
+    ("Papa (septiembre a diciembre)"), asi que aca alcanza con decir lo que el titulo no puede:
+    que los meses que faltan no son meses en cero.
+    """
+    if not ctx.cobertura[producto]:
+        return ""
+    return ("La fuente entrega %s solo de %s: los meses que faltan no son ceros."
+            % (pr.minuscula_inicial(ctx.etiqueta_producto[producto]), ctx.cobertura[producto]))
+
+
+def tabla_bajo_el_grafico(ctx, declarado, anio, filas):
+    """La tabla de datos que va DEBAJO de un grafico por año (maqueta "Agri 2", tercera vuelta).
+
+    Las columnas son las MISMAS categorias del grafico (los años de la ventana) y cada fila
+    trae su rotulo mas un valor ya formateado por columna. La columna del año elegido en la
+    tira de periodo va marcada (`destacada`), que es el unico efecto que el selector tiene
+    sobre un cuadro cuyo sujeto es la serie completa.
+
+    `filas` es [(rotulo, [textos por año], es_total)]. Los numeros llegan formateados: este
+    archivo no decide precision, la decide `ctx.texto` con la regla del spec de comunes.
+    """
+    columnas = [{"etiqueta": declarado["encabezado_primera_columna"], "num": False}]
+    for a in ctx.anios:
+        columnas.append({"etiqueta": str(a), "num": True,
+                         "destacada": a == anio})
+    return {
+        "columnas": columnas,
+        "filas": [{"celdas": [rotulo] + textos, "actual": total} for rotulo, textos, total in filas],
+    }
+
+
+def panel_combo_intensivos(ctx, spec, producto, anio, pie):
+    """Barras de bultos declarados + linea de toneladas, por año, con dos ejes.
+
+    Es el primer grafico de la maqueta "Agri 2" (chart9, ancla G9:AD23), titulo literal
+    "Cebolla - Sgo del Estero - DTV Envios - Cant bolsas y tn por año": barras `clustered` de
+    la serie "Bolsas" y linea de la serie "Tn", cinco categorias = los cinco años.
+
+    La palabra "bolsas" NO es constante: la resuelve `composicion_de_bultos` contra el mart
+    producto por producto. En cebolla da "bolsas" (99,6% Bolsas/Bolsitas); en batata (95,7%) y
+    en papa (97,1%) da "bultos", y la nota al pie muestra la mezcla en los tres casos.
+    """
+    declarado = spec["paneles"]["combo"]
+    rotulo, nota = composicion_de_bultos(ctx, producto)
+    titulo = titulo_literal(declarado["titulo_protocolo"],
+                            Producto=producto_con_recorte(ctx, producto),
+                            bultos=rotulo or "bultos")
+    bultos = [ctx.hechos.total_bultos(producto, a) for a in ctx.anios]
+    toneladas = [dtv_valor(ctx, producto, a, "peso_tn") for a in ctx.anios]
+    if not [v for v in bultos if v] or not [v for v in toneladas if v]:
+        return panel_vacio(titulo, "No hay declaraciones de este producto en la ventana de años.")
+    eje_izq = ctx.eje(bultos, "bultos")
+    eje_izq["nombre"] = pr.mayuscula_inicial(rotulo)
+    eje_der = ctx.eje_secundario(toneladas, "tn", len(eje_izq["etiquetas"]) - 1)
+    cobertura = nota_de_cobertura_mensual(ctx, producto)
+    return {
+        "titulo": titulo,
+        "subtitulo": "",
+        "pie": pie,
+        "x": [str(a) for a in ctx.anios],
+        "etiquetas": ["Año %d" % a for a in ctx.anios],
+        # El año de la tira de periodo se DESTACA en el eje: los cinco años se dibujan siempre
+        # (el sujeto del cuadro es la comparacion entre años) y sin esta marca el selector
+        # quedaria mudo sobre este panel.
+        "destacado": ctx.anios.index(anio) if anio in ctx.anios else None,
+        "barras": {
+            # El nombre de la serie sale del spec, con su concordancia ya resuelta
+            # (rotulo_de_bultos.nombre_de_la_serie): nada de gramatica en el codigo.
+            "nombre": ctx.rotulo_bultos["nombre_de_la_serie"][rotulo],
+            "color": ctx.colores.solido("cantidad"),
+            "puntos": bultos,
+            "textos": ["%s %s" % (ctx.texto(v), rotulo) if v is not None else "S/D"
+                       for v in bultos],
+        },
+        "linea": {
+            "nombre": DTV_ETIQUETA["peso_tn"],
+            "color": ctx.colores.solido("peso_tn"),
+            "puntos": toneladas,
+            "textos": [ctx.con_unidad(v, "peso_tn") for v in toneladas],
+        },
+        "eje": eje_izq,
+        "eje2": eje_der,
+        # La tabla de datos bajo el grafico (Imagen 109 de la hoja): dos filas, los bultos y
+        # las toneladas, con los mismos cinco años como columnas. El rotulo de la primera fila
+        # lo decide la composicion, igual que el eje: "Bolsas" en cebolla, "Bultos" en el resto.
+        "tabla": tabla_bajo_el_grafico(ctx, declarado["tabla"], anio, [
+            (titulo_literal(declarado["tabla"]["filas"][0]["rotulo"],
+                            Bultos=pr.mayuscula_inicial(rotulo)),
+             [ctx.texto(v) if v is not None else "S/D" for v in bultos], False),
+            (declarado["tabla"]["filas"][1]["rotulo"],
+             [ctx.texto(v, "peso_tn") if v is not None else "S/D" for v in toneladas], False),
+        ]),
+        "nota": (nota + " " + cobertura).strip(),
+    }
+
+
+def panel_apiladas_intensivos(ctx, spec, producto, anio, pie):
+    """Toneladas por departamento de ORIGEN, apiladas, un bloque por año.
+
+    Segundo grafico de la maqueta (chart10, ancla G27:AD42): barras `stacked`, siete series
+    para la cebolla (una por departamento) y las mismas cinco categorias de años.
+
+    Entran TODOS los departamentos con movimiento, sin "Resto": son pocos por definicion
+    (7 / 6 / 4 de 27) y el grafico de JC tampoco agrupa ninguno. El alto de cada pila es el
+    total provincial de ese año, que es lo que el mapa mostraba antes.
+    """
+    declarado = spec["paneles"]["apiladas"]
+    titulo = titulo_literal(declarado["titulo_protocolo"],
+                            Producto=producto_con_recorte(ctx, producto))
+    totales = []
+    for geo in ctx.hechos.deptos:
+        puntos = [dtv_valor(ctx, producto, a, declarado["medida"], geo) for a in ctx.anios]
+        suma = sum(v for v in puntos if v is not None)
+        if suma:
+            totales.append((suma, geo, puntos))
+    if not totales:
+        return panel_vacio(titulo, "No hay movimientos de este producto en la ventana de años.")
+    # De mayor a menor: el departamento que mas pesa queda en la BASE de la pila y las lonjas
+    # finas arriba, que es donde se las ve. El desempate por nombre deja el orden deterministico.
+    totales.sort(key=lambda t: (-t[0], pr.clave_alfabetica(ctx.hechos.nombre[t[1]])))
+    series = []
+    for _, geo, puntos in totales:
+        nombre = ctx.hechos.nombre[geo]
+        series.append({
+            "nombre": nombre,
+            # El color lo fija el NOMBRE del departamento y se asigna una sola vez para toda la
+            # familia (ctx.color_depto): asi ROBLES es del mismo color en cebolla, batata y
+            # papa, aunque cambie de puesto en la pila.
+            "color": ctx.color_depto[nombre],
+            "puntos": [v if v is not None else 0.0 for v in puntos],
+            "textos": [ctx.con_unidad(v, declarado["medida"]) for v in puntos],
+        })
+    alturas = [sum(s["puntos"][i] for s in series) for i in range(len(ctx.anios))]
+    con_dato = ctx.hechos.deptos_con_movimiento(producto)
+    nota = ("%d de los %d departamentos de la provincia %s DTV de %s en estos años. Los que no "
+            "aparecen no son ceros: no tienen ninguna declaración de tránsito de este producto."
+            % (len(con_dato), len(ctx.hechos.deptos),
+               "tiene" if len(con_dato) == 1 else "tienen",
+               pr.minuscula_inicial(ctx.etiqueta_producto[producto])))
+    cobertura = nota_de_cobertura_mensual(ctx, producto)
+    return {
+        "titulo": titulo,
+        "subtitulo": ctx.subtitulo_unidad(DTV_UNIDAD[declarado["medida"]]),
+        "pie": pie,
+        "x": [str(a) for a in ctx.anios],
+        "etiquetas": ["Año %d" % a for a in ctx.anios],
+        "destacado": ctx.anios.index(anio) if anio in ctx.anios else None,
+        "series": series,
+        "totales": [ctx.con_unidad(v, declarado["medida"]) for v in alturas],
+        "eje": ctx.eje(alturas, DTV_UNIDAD[declarado["medida"]]),
+        # La tabla de datos bajo el grafico (Imagen 111 de la hoja): una fila por departamento
+        # de origen y una columna por año, en toneladas. ALFABETICA, que es como la dibuja JC
+        # y como se busca una fila en una tabla; el grafico de arriba apila de mayor a menor
+        # porque ahi el orden tiene un motivo visual (la base de la pila es el que mas pesa).
+        # El total provincial va PRIMERO y marcado (protocolo, tablas.estructura).
+        "tabla": tabla_bajo_el_grafico(ctx, declarado["tabla"], anio, (
+            [("Total provincia",
+              [ctx.texto(v, declarado["medida"]) for v in alturas], True)]
+            + [(ctx.hechos.nombre[geo],
+                [ctx.texto(v if v is not None else 0.0, declarado["medida"]) for v in puntos],
+                False)
+               for _, geo, puntos in sorted(
+                   totales, key=lambda t: pr.clave_alfabetica(ctx.hechos.nombre[t[1]]))]
+        )),
+        "nota": (nota + " " + cobertura).strip(),
+    }
+
+
+def panel_tabla_superficie(ctx, spec, producto, anio, pie):
+    """"Estimaciones de superficies cosechadas (*)": el cuarto panel de la maqueta.
+
+    No tiene grafico (celda AM35 de la hoja, con las dos notas de JC en AF36 y AF37): es la
+    tabla que JC dibujo en la Imagen 122 (ancla AG40:BE52), DEPARTAMENTOS POR AÑO en
+    hectareas, con fila TOTAL. Va por departamento porque es lo que la propia maqueta aclara
+    al lado del calculo ("Para provincia y departamentos", celda AO65) y porque ese es el
+    lugar donde JC quiere su mapa de calor cuando entre (celda F72): el dia que llegue,
+    reemplaza a estas filas sin mover nada mas.
+
+    Las toneladas ya no van al lado: la tabla del cuadro de apiladas muestra exactamente esas
+    toneladas por departamento y por año, que son el numerador de esta cuenta. El calculo
+    sigue a la vista y auditable, una sola vez y en el cuadro que le corresponde.
+    """
+    declarado = spec["paneles"]["tabla-superficie"]
+    titulo = titulo_literal(declarado["titulo_protocolo"],
+                            Producto=producto_con_recorte(ctx, producto),
+                            desde=str(ctx.anios[0]), hasta=str(ctx.anios[-1]))
+    medida = SUPERFICIE_ESTIMADA
+    # Una fila por departamento con DTV en ALGUN año de la ventana; dentro de la fila, el año
+    # sin declaraciones va en CERO, como en la maqueta. La regla "un departamento sin DTV no
+    # se dibuja como cero" es sobre la FILA, no sobre la celda.
+    filas = []
+    for geo in ctx.hechos.deptos:
+        puntos = [dtv_valor(ctx, producto, a, medida, geo) for a in ctx.anios]
+        if not [v for v in puntos if v]:
+            continue
+        filas.append((ctx.hechos.nombre[geo], puntos))
+    if not filas:
+        return panel_vacio(titulo, "No hay DTV de este producto en la ventana de años.")
+    filas.sort(key=lambda f: pr.clave_alfabetica(f[0]))
+    totales = [dtv_valor(ctx, producto, a, medida) for a in ctx.anios]
+    # El total provincial va PRIMERO y marcado, como manda el protocolo
+    # (_protocolo-presentacion.tablas.estructura.total_arriba). El rotulo es el de la maqueta.
+    cuerpo = [(declarado["rotulo_del_total"],
+               [ctx.texto(v if v is not None else 0.0, medida) for v in totales], True)]
+    for nombre, puntos in filas:
+        cuerpo.append((nombre,
+                       [ctx.texto(v if v is not None else 0.0, medida) for v in puntos],
+                       False))
+    nota = ctx.aclaracion_superficie
+    cobertura = nota_de_cobertura_mensual(ctx, producto)
+    if cobertura:
+        nota = cobertura + " " + nota
+    return {
+        "titulo": titulo,
+        "subtitulo": ctx.subtitulo_unidad(DTV_UNIDAD[medida]),
+        "pie": pie,
+        "tabla": tabla_bajo_el_grafico(ctx, declarado, anio, cuerpo),
+        "nota": nota,
+    }
+
+
+# --------------------------------------------------------------------------
+# precios-mcba: el cuarto grafico de la maqueta "Agri 2" (chart8), base 8
+# --------------------------------------------------------------------------
+# Es el unico panel del sitio que NO viaja en las combinaciones del tablero. Motivo: sus
+# filtros son SUYOS -grupo, especie, cuatro dimensiones de producto, modo y rango- y no tienen
+# nada que ver con el producto y el año que gobiernan los otros tres cuadros. Meterlos en la
+# clave de la combinacion multiplicaria las 15 combinaciones del tablero por varios cientos y
+# el navegador bajaria todo eso para dibujar una sola linea.
+#
+# COMO SE ACOTA EL PAYLOAD (el riesgo real: seis dimensiones por 101 meses)
+# Cuatro decisiones, en orden de cuanto ahorran:
+#
+#   1. No se genera el producto cartesiano. Las combinaciones que EXISTEN en el mart son 67
+#      (contra varios miles posibles). El reticulado de selecciones -cada dimension en "Todas"
+#      o en uno de sus valores- da 650 selecciones sobre esas 67 combinaciones.
+#   2. Las 650 selecciones caen sobre 159 series distintas: cuando una dimension tiene un solo
+#      valor, elegirlo o dejar "Todas" seleccionan lo mismo. Se guarda la serie una vez y un
+#      mapa `claves` de seleccion a serie.
+#   3. El JSON se parte POR ESPECIE y POR MODO (el mismo patron con que el mapa de cultivos
+#      parte sus 600 combinaciones). La pagina baja un archivo: el de la especie que se esta
+#      mirando, en el modo que se esta mirando. La serie diaria pesa quince veces mas que la
+#      mensual y el modo por defecto es el mensual, asi que casi nunca se baja.
+#   4. Todo lo que se repite entre series del mismo archivo sale a una tabla del archivo: las
+#      escalas del eje vertical y los rotulos de mes. Una escala se usa en decenas de series.
+TODAS = "*"          # el valor del desplegable "Todas". No colisiona con `Precios.SIN_DATO`
+                     # (""), que es la opcion "Sin dato": son dos cosas distintas y el JSON
+                     # tiene que poder distinguirlas.
+MODOS = ("mensual", "diario")
+
+
+def capitalizar_valor(valor):
+    """"CHANTENAY" -> "Chantenay", "ANC.COKENA" -> "Anc.cokena", "008/012" -> "008/012".
+
+    Inicial mayuscula por palabra y el resto en minuscula. Es como escribe JC los valores de
+    estos cuatro desplegables en su maqueta ("Chantennay", "Bolsa", "Primera", "Todas") y es
+    mecanico: no hay tabla de nombres porque ponerle nombre propio a decenas de abreviaturas
+    de la fuente seria interpretarla (la misma regla con la que los departamentos se muestran
+    tal como los manda dim_geo).
+    """
+    return " ".join(p[:1].upper() + p[1:].lower() for p in str(valor).split(" "))
+
+
+def etiqueta_de_dimension(etiquetas, valor):
+    """El texto de una opcion de los cuatro desplegables, incluidos los dos casos especiales.
+
+    `TODAS` y el valor vacio (la dimension que la fuente NO declara) son opciones de verdad y
+    llevan el rotulo que declara el spec. Sin la segunda, las cinco especies sin variedad
+    -REMOLACHA, PEREJIL, SANDIA, ACELGA y TUNA- desaparecerian al primer filtro.
+    """
+    if valor == TODAS:
+        return etiquetas["rotulo_todas"]
+    if valor == pc.Precios.SIN_DATO:
+        return etiquetas["rotulo_sin_dato"]
+    return capitalizar_valor(valor)
+
+
+def precio_texto(valor):
+    """"415,08 $/kg". Dos decimales siempre: los precios van de 3,79 a 4.500 y el centavo es
+    informacion en la punta baja de la serie."""
+    return "%s $/kg" % pr.fmt_numero(valor, 2)
+
+
+class TablaDeEscalas:
+    """Las escalas del eje vertical de un archivo, sin repetir ninguna.
+
+    El eje arranca en CERO, como en el resto del sitio, asi que su unica variable es el maximo
+    del tramo VISIBLE. Se guarda una escala por cada tope posible y cada serie se queda con los
+    indices de las suyas; el navegador elige despues la primera que cubre lo que se ve, sin
+    componer un solo numero (los rotulos de cada marca vienen resueltos de aca).
+
+    Es lo que hace que al achicar el rango la escala se ajuste y se vean las variaciones
+    (_protocolo-presentacion.formato_v1.cuarta_tanda.escala_legible): con una escala fija de 0
+    a 4.500, los primeros años de cualquier serie quedarian pegados al piso.
+    """
+
+    def __init__(self):
+        self.escalas = []
+        self._indice = {}
+
+    def indices_para(self, valores):
+        """Los indices de las escalas que esta serie puede llegar a necesitar, de menor a mayor
+        tope. Una por cada valor de la serie, deduplicadas: cualquier tramo tiene como maximo
+        uno de esos valores."""
+        firmas = []
+        for tope in sorted(set(valores)):
+            marcas = pr.marcas_eje(0.0, tope)
+            firma = (marcas["min"], marcas["max"], marcas["paso"])
+            if firma in firmas:
+                continue
+            firmas.append(firma)
+            if firma not in self._indice:
+                enteras = all(float(m).is_integer() for m in marcas["marcas"])
+                self._indice[firma] = len(self.escalas)
+                self.escalas.append({
+                    "min": marcas["min"], "max": marcas["max"], "paso": marcas["paso"],
+                    "etiquetas": {clave_js(m): pr.fmt_numero(m, 0 if enteras else 2)
+                                  for m in marcas["marcas"]},
+                })
+        firmas.sort(key=lambda f: f[1])
+        return [self._indice[f] for f in firmas]
+
+
+def marcas_del_eje_horizontal(periodos):
+    """Meses agrupados por año, como el eje del grafico de JC.
+
+    Devuelve (marcas, cortes):
+      marcas  [[indice, "Jul", "2017"], ...] una por MES -no una por punto-, con el año
+              siempre escrito. En la serie mensual hay una marca por punto; en la diaria, una
+              por mes (un punto por dia daria miles de marcas).
+      cortes  los indices de marca donde empieza un año nuevo. Es la guia vertical que separa
+              los grupos, y ademas le dice al navegador en que marcas escribir el año: en esas
+              y en la primera que se vea.
+
+    Cuales de esas marcas entran finalmente en el eje lo decide el navegador segun el ancho,
+    pero los TEXTOS salen todos de aca.
+    """
+    marcas, cortes = [], []
+    ultimo = None
+    for i, periodo in enumerate(periodos):
+        clave = periodo[:7]
+        if clave == ultimo:
+            continue
+        if ultimo is None or clave[:4] != ultimo[:4]:
+            cortes.append(len(marcas))
+        marcas.append([i, veg.MESES_CORTOS[int(clave[5:7]) - 1], clave[:4]])
+        ultimo = clave
+    return marcas, cortes
+
+
+def frase_de_cobertura(periodos):
+    """"Cotiza 44 meses, entre julio de 2017 y diciembre de 2025."
+
+    Sale del mart y no de un texto fijo: es la prueba de la regla 3 de JC ("rangos solo donde
+    aparece la especie"), o sea que la serie no tiene huecos porque los meses sin dato no se
+    dibujan ni se ofrecen en el rango. Sin esta frase, un lector podria leer 44 puntos
+    seguidos como 44 meses consecutivos.
+    """
+    def largo(periodo):
+        return "%s de %s" % (veg.MESES[int(periodo[5:7]) - 1], periodo[:4])
+    frase = "Esta selección cotiza %s %s" % (pr.fmt_numero(len(periodos), 0),
+                                             "mes" if len(periodos) == 1 else "meses")
+    if len(periodos) > 1:
+        frase += ", entre %s y %s" % (largo(periodos[0]), largo(periodos[-1]))
+    return frase + "."
+
+
+def puntos_mensuales(precios, especie, combos):
+    """[(periodo, valor, texto)] con un punto por mes con dato, y solo esos (regla 3 de JC).
+
+    Cada punto es el PROMEDIO SIMPLE de los promedios diarios del mes: es lo unico que el mart
+    habilita (`agregable: false`, `agregacion: promedio`, `ponderacion: sin ponderar`). El
+    tooltip dice sobre cuantos dias se promedio, que es la parte que no se puede esconder.
+    """
+    salida = []
+    for periodo, precio, cotizaciones, dias in precios.serie_mensual(especie, combos):
+        detalle = "%s %s con cotización" % (pr.fmt_numero(dias, 0),
+                                            "día" if dias == 1 else "días")
+        if cotizaciones != dias:
+            detalle += " (%s cotizaciones)" % pr.fmt_numero(cotizaciones, 0)
+        texto = "%s de %s · %s · promedio de %s" % (
+            veg.MESES[int(periodo[5:7]) - 1].capitalize(), periodo[:4],
+            precio_texto(precio), detalle)
+        salida.append((periodo, precio, texto))
+    return salida
+
+
+def puntos_diarios(precios, especie, combos):
+    """[(fecha, valor, texto)] con un punto por dia con cotizacion.
+
+    El rango se sigue eligiendo POR MES ("Mes" y "Año", como lo dibuja JC), asi que el id de
+    cada punto es su fecha y el recorte se hace contra el mes que la fecha contiene.
+    """
+    salida = []
+    for fecha, precio, cotizaciones in precios.serie_diaria(especie, combos):
+        texto = "%s/%s/%s · %s" % (fecha[8:], fecha[5:7], fecha[:4], precio_texto(precio))
+        if cotizaciones > 1:
+            texto += " · promedio de %s cotizaciones del día" % pr.fmt_numero(cotizaciones, 0)
+        salida.append((fecha, precio, texto))
+    return salida
+
+
+def serie_de_precios(declarado, puntos, modo, escalas, titulo):
+    """Un bloque de serie listo para dibujar: valores, textos, marcas del eje y su nota al pie.
+
+    `meses` e `inicios` son el mecanismo del rango: `meses` son los unicos meses elegibles -los
+    que tienen dato, que es la regla 3 de JC- e `inicios[k]` es el indice del primer punto del
+    mes k. Recortar de "Jul 2017" a "Oct 2018" es quedarse con los puntos entre `inicios` de
+    uno y el final del otro; no hace falta mirar ninguna fecha.
+    """
+    if not puntos:
+        return None
+    ids = [p[0] for p in puntos]
+    valores = [p[1] for p in puntos]
+    marcas, cortes = marcas_del_eje_horizontal(ids)
+    meses, inicios = [], []
+    for i, identificador in enumerate(ids):
+        if not meses or meses[-1] != identificador[:7]:
+            meses.append(identificador[:7])
+            inicios.append(i)
+    notas = [limpiar(declarado["notas_al_pie"][modo]),
+             limpiar(declarado["notas_al_pie"]["corrientes"]),
+             frase_de_cobertura(meses)]
+    return {
+        "titulo": titulo,
+        "valores": valores,
+        "textos": [p[2] for p in puntos],
+        "marcas": marcas,
+        "cortes": cortes,
+        "meses": meses,
+        "inicios": inicios,
+        "escalas": escalas.indices_para(valores),
+        "nota": " ".join(notas),
+    }
+
+
+def titulo_de_precios(declarado, especie, combos):
+    """"Zanahoria Chantenay - Precio promedio en MCBA, origen Sgo del Estero - $/kg (corrientes)".
+
+    El slot {Producto} es la especie mas la variedad, y la variedad sale del DATO: JC escribe
+    "Chantennay" con dos enes y el mart dice "CHANTENAY". Un titulo no puede nombrar algo
+    distinto de lo que el grafico muestra.
+
+    La variedad entra SOLO si la seleccion deja una sola variedad no vacia. Con "Todas" sobre
+    dos variedades el titulo seria mentira, y en las especies donde la fuente no declara
+    variedad (la sandia) no hay nada que agregar.
+    """
+    variedades = {combo[0] for combo in combos}
+    etiqueta = declarado["etiquetas"]["especies"][especie]
+    if len(variedades) == 1:
+        unica = next(iter(variedades))
+        if unica != pc.Precios.SIN_DATO:
+            etiqueta = "%s %s" % (etiqueta, capitalizar_valor(unica))
+    return titulo_literal(declarado["grafico"]["titulo_protocolo"], Producto=etiqueta)
+
+
+def seleccion_por_defecto(declarado, opciones, claves):
+    """Con que valores arranca cada desplegable en esta especie.
+
+    Los de la maqueta de JC si la especie los tiene, "Todas" si no. Si aun asi la combinacion
+    no existe, se afloja de derecha a izquierda hasta que exista: ninguna seleccion por defecto
+    puede dejar el cuadro vacio.
+    """
+    defecto = []
+    for selector in declarado["selectores_propios"]:
+        pedido = selector["defecto"]
+        defecto.append(pedido if pedido in opciones[selector["id"]] else TODAS)
+    for i in range(len(defecto), -1, -1):
+        clave = "|".join(defecto[:i] + [TODAS] * (len(defecto) - i))
+        if clave in claves:
+            return clave.split("|")
+    raise pr.ErrorDeProtocolo(
+        "El panel de precios no encuentra ninguna seleccion con datos (%s)" % defecto)
+
+
+def archivos_de_especie(declarado, precios, especie):
+    """Los dos JSON de una especie: {"mensual": ..., "diario": ...}.
+
+    `claves` mapea cada seleccion posible ("CHANTENAY|BOLSA|Primera|*") a la serie que le
+    corresponde. Dos selecciones comparten serie cuando seleccionan las mismas combinaciones,
+    que es lo que pasa siempre que una dimension tiene un solo valor.
+
+    `combos` viaja tal cual para que el navegador pueda ENCADENAR los desplegables sin
+    recalcular nada: las opciones validas de una dimension son los valores que aparecen en las
+    combinaciones que cumplen lo ya elegido. Es lo que evita las pantallas vacias.
+    """
+    combos = precios.combos[especie]
+    opciones = precios.opciones[especie]
+    for dim, valores in opciones.items():
+        for valor in valores:
+            if "|" in valor:
+                raise pr.ErrorDeProtocolo(
+                    "El mart de precios trae el valor %r en la dimension %s y la clave de "
+                    "seleccion usa '|' como separador" % (valor, dim))
+
+    puntos_de = {"mensual": puntos_mensuales, "diario": puntos_diarios}
+    escalas = {modo: TablaDeEscalas() for modo in MODOS}
+    series = {modo: {} for modo in MODOS}
+    claves, por_firma = {}, {}
+    for seleccion in itertools.product(*[[None] + opciones[d] for d in pc.DIMENSIONES]):
+        elegidos = precios.combos_que_cumplen(especie, seleccion)
+        if not elegidos:
+            continue
+        firma = tuple(elegidos)
+        if firma not in por_firma:
+            por_firma[firma] = "s%d" % len(por_firma)
+            titulo = titulo_de_precios(declarado, especie, elegidos)
+            for modo in MODOS:
+                series[modo][por_firma[firma]] = serie_de_precios(
+                    declarado, puntos_de[modo](precios, especie, elegidos), modo,
+                    escalas[modo], titulo)
+        claves["|".join(TODAS if v is None else v for v in seleccion)] = por_firma[firma]
+
+    defecto = seleccion_por_defecto(declarado, opciones, claves)
+    # Rotulos de mes del archivo: los comparten todas sus series y son los que se leen en los
+    # dos desplegables del rango.
+    meses = sorted({mes for modo in MODOS for serie in series[modo].values()
+                    if serie for mes in serie["meses"]})
+    rotulos = {mes: "%s %s" % (veg.MESES_CORTOS[int(mes[5:7]) - 1], mes[:4]) for mes in meses}
+
+    comun = {
+        "especie": especie,
+        "etiqueta": declarado["etiquetas"]["especies"][especie],
+        "dimensiones": {
+            d: [{"v": TODAS, "t": etiqueta_de_dimension(declarado["etiquetas"], TODAS)}]
+               + [{"v": v, "t": etiqueta_de_dimension(declarado["etiquetas"], v)}
+                  for v in opciones[d]]
+            for d in pc.DIMENSIONES
+        },
+        "combos": [list(c) for c in combos],
+        "defecto": defecto,
+        "claves": claves,
+        "rotulos_mes": rotulos,
+    }
+    return {modo: dict(comun, modo=modo, escalas=escalas[modo].escalas,
+                       series=series[modo])
+            for modo in MODOS}
+
+
+def construir_precios_mcba(ctx, spec):
+    """El panel de precios del MCBA: lo que va en el JSON de la pagina y sus archivos de datos.
+
+    Devuelve {"pagina": ..., "archivos": [...]}. Los archivos se escriben en `escribir_sitio`,
+    que es quien tiene el escritor, y ahi cada chip recibe las rutas de los suyos.
+    """
+    declarado = spec["paneles"]["precios-mcba"]
+    precios = ctx.precios
+
+    reales = sorted(precios.fuentes)
+    esperado = declarado["organismo_esperado"]
+    if reales != [esperado]:
+        raise pr.ErrorDeProtocolo(
+            "El panel de precios espera fuente %r y el mart trae %r" % (esperado, reales))
+
+    # Los grupos son los del spec (las dos sub-pestañas que dibuja JC) y tienen que ser los del
+    # mart: si la fuente manda un grupo nuevo, el build corta con su nombre en vez de
+    # esconderlo detras de una pestaña que no existe.
+    declarados = [p["id"] for p in declarado["sub_pestanias"]]
+    sobran = [g for g in precios.grupos if g not in declarados]
+    if sobran:
+        raise pr.ErrorDeProtocolo(
+            "El mart de precios trae los grupos %s y el spec solo declara sub-pestañas para %s"
+            % (", ".join(sobran), ", ".join(declarados)))
+
+    chips, archivos, pestanias = [], [], []
+    for pestania in declarado["sub_pestanias"]:
+        especies = precios.especies(pestania["id"])
+        if not especies:
+            raise pr.ErrorDeProtocolo(
+                "La sub-pestaña %s del panel de precios no tiene ninguna especie con "
+                "cotizacion en el mart" % pestania["id"])
+        for especie in especies:
+            if especie not in declarado["etiquetas"]["especies"]:
+                raise pr.ErrorDeProtocolo(
+                    "El mart de precios trae la especie %r y el spec no le declara etiqueta "
+                    "(paneles.precios-mcba.etiquetas.especies)" % especie)
+            chips.append({"v": especie, "t": declarado["etiquetas"]["especies"][especie],
+                          "grupo": pestania["id"], "i": len(archivos)})
+            archivos.append(archivos_de_especie(declarado, precios, especie))
+        # El chip que arranca elegido en cada pestaña: el de JC (la zanahoria) en la que el la
+        # dibujo, y en la otra -la de frutas, que JC no dibujo- la especie con MAS
+        # cotizaciones. El criterio alfabetico abria en LIMON, que tiene una sola cotizacion
+        # en todo el periodo: el cuadro arrancaba con un grafico de un punto.
+        defecto = declarado["chips_cultivo"]["defecto"]
+        pestanias.append({
+            "id": pestania["id"], "etiqueta": pestania["etiqueta"],
+            "actual": bool(pestania.get("defecto")),
+            "especie": (defecto if defecto in especies
+                        else max(especies, key=lambda e: (precios.cotizaciones(e),
+                                                          pr.clave_alfabetica(e)))),
+        })
+
+    # Los nueve chips que JC dibujo tienen que seguir existiendo en el dato. Es una AUDITORIA,
+    # no un universo: el universo sale del mart (chips_cultivo.por_que_salen_del_mart).
+    faltan = sorted(set(declarado["chips_cultivo"]["dibujados_por_jc"])
+                    - {chip["t"] for chip in chips})
+    if faltan:
+        raise pr.ErrorDeProtocolo(
+            "El panel de precios: JC dibujo chips para %s y el mart no trae esas especies"
+            % ", ".join(faltan))
+
+    pagina = {
+        "familia": declarado["rotulo_de_familia"],
+        "pestanias": pestanias,
+        "chips": chips,
+        "dimensiones": [{"id": s["id"], "rotulo": s["rotulo"]}
+                        for s in declarado["selectores_propios"]],
+        "modo": {
+            "rotulo": declarado["modo"]["rotulo"],
+            "opciones": [{"v": o["id"], "t": o["etiqueta"]}
+                         for o in declarado["modo"]["opciones"]],
+            "defecto": next(o["id"] for o in declarado["modo"]["opciones"]
+                            if o.get("defecto")),
+        },
+        "rango": {"inicio": declarado["rango"]["inicio"]["rotulo"],
+                  "fin": declarado["rango"]["fin"]["rotulo"]},
+        # El subtitulo lleva la unidad (obligatoria, protocolo) y el tramo que se esta viendo
+        # (formato_v1.parametros_explicitos). Los dos slots que quedan son rotulos de mes que
+        # el propio build compuso (`rotulos_mes`): el navegador los sustituye, no los arma.
+        "subtitulo": declarado["grafico"]["subtitulo_protocolo"].replace(
+            "{unidad_larga}", pr.unidad_larga(ctx.protocolo, declarado["grafico"]["unidad"])),
+        "color": ctx.colores.solido(declarado["grafico"]["medida"]),
+        # La cita de fuente NO es la del tablero (SENASA): este cuadro tiene la suya, que es la
+        # que JC escribe en la celda AE31 con el organismo desplegado (backlog 14). El
+        # organismo del mart ya se verifico mas arriba contra `organismo_esperado`.
+        "pie": declarado["fuente_al_pie"],
+    }
+    return {"pagina": pagina, "archivos": archivos}
+
+
+def construir_tablero_intensivos(ctx, spec):
+    """El tablero de Agricultura > Cultivos intensivos: la grilla 2x2 de la hoja "Agri 2".
+
+    Cuatro paneles con datos. Tres viajan en las combinaciones del tablero (combo, apiladas y
+    tabla de superficies, que dependen del producto y del año); el de precios del MCBA tiene
+    sus propios filtros y su propio JSON partido por especie, asi que no lleva combinacion.
+
+    SIN indicadores y SIN tarjeta de contexto: la maqueta va de los selectores directo a los
+    paneles (spec, `indicadores.estado: fuera-de-esta-pagina`).
+    """
+    tablero = tablero_base(ctx, spec, [
+        # UN filtro de producto, dibujado como fila de chips dentro de los dos paneles que
+        # JC le dibuja chips (el de DTV y el de estimaciones). No hay selector global arriba.
+        dtv_filtro_producto_en_paneles(ctx, spec["selectores"]["producto"]),
+        dtv_filtro_anio(ctx),
+    ])
+    tablero["particion"] = "producto"
+    # El panel de precios NO entra en las combinaciones: tiene sus propios filtros y su propio
+    # JSON, partido por especie (ver `construir_precios_mcba`). Se cuelga del tablero y lo
+    # escribe `escribir_sitio`, que es quien tiene el escritor.
+    tablero["precios"] = construir_precios_mcba(ctx, spec)
+    pie = ctx.pie(spec)
+    for producto in ctx.productos:
+        for anio in ctx.anios:
+            tablero["combos"]["|".join([producto, str(anio)])] = {
+                "paneles": {
+                    "combo": panel_combo_intensivos(ctx, spec, producto, anio, pie),
+                    "apiladas": panel_apiladas_intensivos(ctx, spec, producto, anio, pie),
+                    "tabla-superficie": panel_tabla_superficie(ctx, spec, producto, anio, pie),
+                },
+            }
+    return tablero
+
+# --------------------------------------------------------------------------
+# dtv-departamento-movimientos (la unica vista de detalle de la seccion)
+# --------------------------------------------------------------------------
+def construir_dtv_departamento(ctx, spec):
+    """Las dos salidas que pide la hoja Modelo analisis de JC, en una sola pagina: "ver todos
+    los años" (ambito = Total provincia, que es como abre) y "al hacer clic en un departamento
+    que se abra su informacion" (el clic del mapa llega con ?departamento=<geo_id>, el mismo
+    patron que 09-departamento-datos en cultivos extensivos).
+
+    Dos cuadros, cada uno con su titulo de protocolo: el grafico de evolucion anual y la tabla
+    por año. El grafico lleva arriba los numeros del ultimo año de la ventana.
+    """
+    vista = vista_base(ctx, spec, "serie.html", [
+        dtv_filtro_departamento(ctx),
+        dtv_filtro_producto(ctx, "barra"),
+    ])
+    vista["particion"] = "departamento"
+    vista["sin_combinacion"] = (
+        "No hay DTV de este producto en este ámbito. Solo hay declaraciones de tránsito donde "
+        "hubo movimiento registrado: no informar no es lo mismo que mover cero.")
+    pie = ctx.pie(spec)
+    ultimo = ctx.anios[-1]
+    declarado_tabla = spec["tabla_por_anio"]
+    spec_tabla = dict(spec, titulo_componentes=declarado_tabla["titulo_componentes"])
+    columnas = [{"etiqueta": c["etiqueta"], "num": c["campo"] != "anio"}
+                for c in declarado_tabla["columnas"]]
+    medidas_tabla = [c["campo"] for c in declarado_tabla["columnas"] if c["campo"] != "anio"]
+
+    for geo in ["provincia"] + list(ctx.hechos.deptos):
+        ambito = None if geo == "provincia" else geo
+        for producto in ctx.productos:
+            toneladas = [dtv_valor(ctx, producto, a, "peso_tn", ambito) for a in ctx.anios]
+            documentos = [dtv_valor(ctx, producto, a, "movimientos", ambito) for a in ctx.anios]
+            if all(v is None for v in toneladas):
+                continue
+            valores_filtro = {"departamento": geo, "producto": producto}
+            resumen = []
+            for medida in spec["indicadores"]["medidas"]:
+                valor = dtv_valor(ctx, producto, ultimo, medida, ambito)
+                resumen.append({
+                    "etiqueta": "%s · %s" % (DTV_ETIQUETA[medida],
+                                             ctx.periodo_de(producto, ultimo)),
+                    "valor": ctx.con_unidad(valor, medida)})
+            eje_izq = ctx.eje(toneladas, "tn")
+            eje_der = ctx.eje_secundario(documentos, "dtv", len(eje_izq["etiquetas"]) - 1)
+            nota = ctx.aclaracion_superficie
+            if ctx.cobertura[producto]:
+                nota = ("La fuente entrega %s solo de %s: ningún año de este cuadro es un año "
+                        "completo. " % (pr.minuscula_inicial(ctx.etiqueta_producto[producto]),
+                                        ctx.cobertura[producto])) + nota
+            elemento_grafico = {
+                "clase": "grafico",
+                "titulo": ctx.titulo(spec, valores_filtro, ctx.anios),
+                "subtitulo": "En toneladas y en declaraciones de tránsito (DTV) emitidas",
+                "unidad": ["tn", "dtv"],
+                "pie": pie,
+                "grafico": spec["grafico"],
+                "x": [str(a) for a in ctx.anios],
+                "series": [
+                    {"nombre": DTV_ETIQUETA["peso_tn"], "tipo": "line", "eje": 0,
+                     "apilado": False, "color": ctx.colores.solido("peso_tn"),
+                     "v": toneladas,
+                     "t": [ctx.con_unidad(v, "peso_tn") for v in toneladas],
+                     "extra": [""] * len(toneladas)},
+                    {"nombre": DTV_ETIQUETA["movimientos"], "tipo": "line", "eje": 1,
+                     "apilado": False, "color": ctx.colores.solido("movimientos"),
+                     "v": documentos,
+                     "t": [ctx.con_unidad(v, "movimientos") for v in documentos],
+                     "extra": [""] * len(documentos)},
+                ],
+                "eje": eje_izq,
+                "eje2": eje_der,
+                "resumen": resumen,
+                "nota": nota,
+            }
+            filas = []
+            for a in ctx.anios:
+                celdas = [str(a)]
+                for medida in medidas_tabla:
+                    celdas.append(ctx.texto(dtv_valor(ctx, producto, a, medida, ambito), medida))
+                filas.append({"celdas": celdas})
+            elemento_tabla = {
+                "clase": "tabla",
+                "titulo": ctx.titulo(spec_tabla, valores_filtro, ctx.anios, tipo="lista"),
+                "subtitulo": limpiar(spec["subtitulo"]),
+                "pie": pie,
+                "columnas": columnas,
+                "filas": filas,
+                "nota": nota,
+            }
+            vista["combos"]["|".join([geo, producto])] = {
+                "elementos": [elemento_grafico, elemento_tabla]}
+    return vista
+
+
 CONSTRUCTORES = {
     "09-cultivo-mapa-sup-sembrada": construir_mapa,
     "09-cultivo-evolucion-sup-sembrada": construir_evolucion_simple,
@@ -3149,6 +4329,8 @@ CONSTRUCTORES = {
     "85-balance-introduccion-extraccion": construir_hacienda_balance,
     "85-matriz-od-interna": construir_hacienda_matriz,
     "85-tambos-engorde-corral": construir_hacienda_tambos,
+
+    "dtv-departamento-movimientos": construir_dtv_departamento,
 }
 
 
@@ -4182,6 +5364,7 @@ def construir_tablero_stock(ctx, spec):
 
 TABLEROS = {
     "tablero-cultivos-extensivos": construir_tablero_cultivos,
+    "tablero-cultivos-intensivos": construir_tablero_intensivos,
     "tablero-movimientos-hacienda": construir_tablero_hacienda,
     "tablero-stock-bovino": construir_tablero_stock,
 }
@@ -4197,6 +5380,11 @@ def anotar_abreviaturas(tablero):
     larga = {"ha": "hectáreas", "tn": "toneladas", "kg/ha": "kilos por hectárea",
              "cabezas": "cabezas", "dte": "documentos"}
     for combo in tablero["combos"].values():
+        # Un tablero puede no tener indicadores: la maqueta "Agri 2" de JC va de los selectores
+        # directo a los paneles (tablero-cultivos-intensivos.indicadores.estado). Sin tarjetas
+        # no hay unidad que abreviar y no hay nota que escribir.
+        if "kpis" not in combo:
+            continue
         usadas = []
         for kpi in combo["kpis"]:
             unidad = kpi.get("unidad") or ""
@@ -4209,8 +5397,13 @@ def anotar_abreviaturas(tablero):
             base = unidad[2:].rstrip("*")
             if base not in usadas:
                 usadas.append(base)
-        combo["kpis_nota"] = ("* " + " · ".join(
+        # La nota puede venir escrita por el constructor del tablero (en cultivos intensivos
+        # trae la aclaracion de JC sobre la superficie estimada): se le SUMA la de las
+        # abreviaturas, no se la pisa.
+        propia = combo.get("kpis_nota") or ""
+        asterisco = ("* " + " · ".join(
             "M %s: millones de %s" % (u, larga.get(u, u)) for u in usadas)) if usadas else ""
+        combo["kpis_nota"] = " ".join(t for t in (propia, asterisco) if t)
 
 
 def verificar_tablero(tablero):
@@ -4218,8 +5411,12 @@ def verificar_tablero(tablero):
     for clave, combo in tablero["combos"].items():
         # El layout dibuja 4 tarjetas; un combo puede llenar menos cuando la agregacion no es
         # legal (cultivo "Todos": queda solo la produccion, formato_v1.agregacion). Cero
-        # indicadores si es un error.
-        if not 1 <= len(combo["kpis"]) <= 4:
+        # indicadores es un error, SALVO en un tablero que declara no tenerlos: la maqueta
+        # "Agri 2" de JC no dibuja tarjetas y va de los selectores directo a los paneles
+        # (tablero-cultivos-intensivos.indicadores.estado). "Sin tarjetas" y "la tarjeta salio
+        # vacia" tienen que poder distinguirse: por eso la ausencia de la clave, y no una
+        # lista vacia.
+        if "kpis" in combo and not 1 <= len(combo["kpis"]) <= 4:
             raise pr.ErrorDeProtocolo(
                 "El tablero %s tiene %d indicadores en %s y el layout admite de 1 a 4"
                 % (tablero["slug"], len(combo["kpis"]), clave))
@@ -4491,6 +5688,26 @@ def escribir_datos(escritor, vista, carpeta_datos, ruta_publica):
     return "%s/%s.json" % (ruta_publica, vista["slug"])
 
 
+def escribir_datos_precios(escritor, tablero, carpeta_datos, ruta_publica):
+    """Los archivos del panel de precios: uno por especie y modo, con su ruta en cada chip.
+
+    Mismo criterio que la particion de `escribir_datos`: el navegador baja el archivo de la
+    especie que esta mirando, en el modo que esta mirando, y ninguno mas. Sin partir, el panel
+    bajaria las 159 series de las 16 especies -en los dos modos- para dibujar una sola linea.
+    """
+    bloque = tablero["precios"]
+    rutas = [{} for _ in bloque["archivos"]]
+    for i, por_modo in enumerate(bloque["archivos"]):
+        for modo in sorted(por_modo):
+            nombre = "%s/%s-precios/p%02d-%s.json" % (carpeta_datos, tablero["slug"], i, modo)
+            escritor.texto(nombre, json_determinista(por_modo[modo]))
+            rutas[i][modo] = "%s/%s-precios/p%02d-%s.json" % (
+                ruta_publica, tablero["slug"], i, modo)
+    for chip in bloque["pagina"]["chips"]:
+        chip["archivos"] = rutas[chip.pop("i")]
+    return bloque["pagina"]
+
+
 def construir_home(ctx, vistas_por_slug):
     """La home sale del arbol tematico del indice de JC. Las ramas sin datos se muestran igual."""
     manifiesto = pr.cargar_yaml(os.path.join(DIR_CONFIGS, "manifiesto-indice.yaml"))
@@ -4634,9 +5851,26 @@ def vista_para_pagina(vista):
     return datos
 
 
+# Disposiciones que sabe dibujar src/tableros/paginas/Tablero.tsx. El spec elige una en
+# `paneles.disposicion`; sin declaracion queda la de siempre. Un valor que el componente no
+# sepa dibujar es un error de protocolo: el build no publica una pagina que el sitio no puede
+# armar.
+DISPOSICIONES = ("mockup", "grilla-2x2")
+
+
+def disposicion_de(tablero):
+    declarada = tablero["paneles"].get("disposicion") or "mockup"
+    if declarada not in DISPOSICIONES:
+        raise pr.ErrorDeProtocolo(
+            "El tablero %s pide la disposicion %r, que el sitio no sabe dibujar. "
+            "Disponibles: %s" % (tablero["slug"], declarada, ", ".join(DISPOSICIONES)))
+    return declarada
+
+
 def tablero_para_pagina(tablero):
     return {"slug": tablero["slug"], "titulo": tablero["titulo"],
             "ruta_datos": tablero["ruta_datos"],
+            "disposicion": disposicion_de(tablero),
             "tarjeta_contexto": bool(tablero["spec"].get("tarjeta_contexto"))}
 
 
@@ -4823,6 +6057,12 @@ def escribir_sitio(ctx, vistas, tableros):
         seccion = next(s for s in secciones if s["id"] == tablero["seccion"])
         tablero["ruta_datos"] = escribir_datos(escritor, tablero, "public/plataforma/data",
                                                PREFIJO + "/data")
+        # El panel de precios del MCBA tiene su propio JSON, partido por especie: no viaja en
+        # las combinaciones del tablero porque sus filtros son otros (ver
+        # `construir_precios_mcba`).
+        precios = (escribir_datos_precios(escritor, tablero, "public/plataforma/data",
+                                          PREFIJO + "/data")
+                   if tablero.get("precios") else None)
         periodo, barra, selector = repartir_filtros(tablero["filtros"])
         paneles = []
         for declarado in tablero["paneles"]["orden"]:
@@ -4847,6 +6087,14 @@ def escribir_sitio(ctx, vistas, tableros):
                 # declara `accion` es un boton de verdad (hoy "Exportar como PDF"); el que no
                 # la declara sigue deshabilitado con "Proximamente" (Asistente IA).
                 panel["items"] = [item_utilidad(item) for item in definicion["items"]]
+            if definicion.get("forma") == "precios":
+                # Panel con filtros PROPIOS y datos propios (precios del MCBA, base 8). Se
+                # dibuja como cualquier otro panel del tablero, pero su cascara y sus controles
+                # salen de aca y el dibujo lo hace `pintarPrecios` en tablero.js. Su cita de
+                # fuente no es la del tablero: es la suya (MAGyP y no SENASA).
+                panel["precios"] = precios
+                panel["pie"] = precios["pie"]
+                panel["subtitulo"] = definicion.get("subtitulo", "")
             if declarado["id"] == "informacion-relacionada":
                 # Panel estatico del mockup, DIBUJADO con sus links deshabilitados y
                 # "Proximamente" (cuarta tanda, informacion_relacionada_se_dibuja: "tiene que
@@ -4854,13 +6102,22 @@ def escribir_sitio(ctx, vistas, tableros):
                 # de botones muertos que utilidades y banderas; cada link se activa cuando
                 # entre su base (backlog 8).
                 panel["items"] = list(definicion["items"])
+            # Pie de cuadro (maqueta "Agri 2", tercera vuelta): "Más información →" y
+            # "Generar PDF" al pie de CADA panel, no en una tira de utilidades al final. Se
+            # declara una sola vez en el spec y se le pega a todos los paneles de la grilla.
+            acciones = tablero["paneles"].get("acciones_de_cuadro")
+            if acciones and declarado["id"] not in PANELES_SIN_PIE_DE_ACCIONES:
+                destinos = tablero["paneles"].get("destinos_de_mas_informacion") or {}
+                panel["acciones"] = [
+                    accion_de_cuadro(item, destinos.get(declarado["id"], {}).get(item["id"]),
+                                     url_de, tablero["slug"], declarado["id"])
+                    for item in acciones]
             paneles.append(panel)
         escribir_pagina("%s/index" % seccion["url"], pagina(
             "tablero",
             tablero=tablero_para_pagina(tablero), paneles=paneles,
             miga=miga_de_tablero(seccion, tablero["spec"]),
-            filtros_panel={f["panel"]: f for f in tablero["filtros"]
-                           if f.get("zona") == "panel"},
+            filtros_panel=filtros_por_panel(tablero["filtros"]),
             titulo_cabecera=tablero["titulo"],
             subtitulo_cabecera=tablero["subtitulo_pagina"],
             filtros_periodo=periodo, filtros_barra=barra,
@@ -5001,11 +6258,22 @@ def main(args=None):
     hechos = Hechos(con)
     hacienda = hac.Hacienda(con)
     stock = stk.Stock(con)
+    # Las DTV de hortalizas son TRES bases (56 batata, 57 cebolla, 75 papa) sobre un solo mart:
+    # se leen juntas y los productos que entran los declara el spec de comunes de la familia
+    # (el algodon vive en el mismo mart y NO entra: es cultivo extensivo).
+    comunes_dtv = pr.cargar_comunes(ContextoVegetales.familia)
+    vegetales = veg.Vegetales(
+        con, [p["valor"] for p in comunes_dtv["parametros"]["productos"]])
+    # Base 8: los precios mayoristas del MCBA, que alimentan UN panel del tablero de cultivos
+    # intensivos (el cuarto grafico de la maqueta "Agri 2").
+    precios_mcba = pc.Precios(con)
     con.close()
     ctx = Contexto(hechos)
-    # Un contexto por base: no comparten hecho, ni grano temporal, ni medidas, ni redondeo. La
-    # vista se construye con el contexto de SU base, que es lo que dice el campo `base` del spec.
-    contextos = {9: ctx, 85: ContextoHacienda(hacienda), 48: ContextoStock(stock)}
+    # Un contexto por base (o por FAMILIA de bases): no comparten hecho, ni grano temporal, ni
+    # medidas, ni redondeo. La vista se construye con el contexto que dice su spec en `familia`
+    # o, si no la declara, en `base`.
+    contextos = {9: ctx, 85: ContextoHacienda(hacienda), 48: ContextoStock(stock),
+                 ContextoVegetales.familia: ContextoVegetales(vegetales, precios_mcba)}
 
     with open(os.path.join(DIR_SITE, "colores-cultivo.yaml"), "w", encoding="utf-8") as f:
         f.write(escribir_asignacion_colores(ctx))
@@ -5028,11 +6296,12 @@ def main(args=None):
         if constructor is None:
             omitidas.append((slug, "no hay constructor para este spec"))
             continue
-        base = spec.get("base")
-        if base not in contextos:
+        clave_contexto = spec.get("familia") or spec.get("base")
+        if clave_contexto not in contextos:
             raise pr.ErrorDeProtocolo(
-                "El spec %s declara base %r y no hay contexto para esa base" % (slug, base))
-        ctx_vista = contextos[base]
+                "El spec %s declara base/familia %r y no hay contexto para eso"
+                % (slug, clave_contexto))
+        ctx_vista = contextos[clave_contexto]
         if slug in TABLEROS:
             tablero = constructor(ctx_vista, spec)
             anotar_abreviaturas(tablero)

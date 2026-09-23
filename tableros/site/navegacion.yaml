@@ -105,6 +105,39 @@ secciones:
       - 09-noa-participacion-provincia
     grupos: []
 
+  # Agricultura > Cultivos intensivos (frutas y hortalizas). Tres bases que comparten mart,
+  # adapter y modelo de analisis, asi que comparten seccion: la eleccion de producto es un
+  # filtro, no tres paginas. Construida el 23-sep-2026 a pedido de Francisco, con la maqueta
+  # "Agri 2" de JC y la hoja "Modelo analisis" de la base 53.
+  #
+  # Mismo formato que cultivos extensivos (JC f39-f41: "los formatos se mantienen SIEMPRE"):
+  # SIN "Analisis completo" (tercera tanda del 10-ago: solo tableros), banderas de idioma en
+  # la cabecera y los dos botones de cabecera que pide el Modelo analisis. La unica vista de
+  # detalle es la departamental, suelta, alcanzable por esos botones y por el clic del mapa.
+  - id: cultivos-intensivos
+    familia: dtv-hortalizas
+    bases: [56, 57, 75]
+    rama: agricultura
+    ruta: [Agricultura, Cultivos intensivos]
+    url: agricultura/cultivos-intensivos
+    titulo: "Cultivos intensivos"
+    bajada: >
+      Cuántas toneladas de cebolla, batata y papa salen de Santiago del Estero, desde qué
+      departamentos, hacia qué provincias y en qué meses. Cada movimiento es una Declaración
+      de Tránsito Vegetal (DTV) emitida por SENASA.
+    sin_pestanias: true
+    cabecera_banderas: true
+    # UN solo boton: las dos salidas que pide el Modelo analisis de JC ("ver todos los años"
+    # y "al hacer clic en un departamento que se abra su informacion") son la MISMA pagina con
+    # distinto ambito. El boton la abre en Total provincia, que es "ver todos los años"; el
+    # clic del mapa la abre en el departamento, como en cultivos extensivos. Dos botones al
+    # mismo destino serian dos veces el mismo link.
+    botones_cabecera:
+      - {texto: "Ver todos los años", vista: dtv-departamento-movimientos}
+    vistas_sueltas:
+      - dtv-departamento-movimientos
+    grupos: []
+
   - id: movimientos-hacienda
     base: 85
     rama: ganaderia

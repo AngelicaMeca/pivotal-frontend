@@ -1,0 +1,447 @@
+# Parametros comunes a TODAS las vistas de la familia DTV de hortalizas
+# (bases 56 batata, 57 cebolla y 75 papa), que alimentan la seccion
+# Agricultura > Cultivos intensivos.
+#
+# Por que un solo archivo de comunes para tres bases: las tres son la MISMA cosa contada por
+# producto (una Declaracion de Transito Vegetal emitida por SENASA para mover carga desde la
+# provincia), comparten adapter (`dtv`), comparten mart
+# (marts/hecho_movimientos_vegetales.parquet) y comparten el modelo de analisis. La hoja
+# "Modelo Analisis" de las bases 56, 57 y 75 dice literalmente "MISMO MODELO QUE DTV DE
+# ALGODON", y la de la base 53 cierra con "ESTO ES APLICABLE A TODOS LOS PRODUCTOS POR DTV".
+# Un archivo por base seria el mismo texto tres veces y se desincronizaria al primer cambio.
+#
+# El ALGODON (base 53), que vive en el mismo mart, NO entra en esta familia: es cultivo
+# extensivo y su lugar es Agricultura > Cultivos extensivos. Por eso `productos` es una lista
+# explicita y no "todo lo que traiga el mart".
+#
+# Escrito por constructor-dashboards el 2026-09-23.
+
+id: _comunes-dtv-hortalizas
+familia: dtv-hortalizas
+bases: [56, 57, 75]
+slug_base: cultivos-intensivos
+fuente_datos:
+  staging:
+    - "staging/base-56-dtv-batata.parquet"
+    - "staging/base-57-dtv-cebolla.parquet"
+    - "staging/base-75-dtv-papa.parquet"
+  mart: "marts/hecho_movimientos_vegetales.parquet"
+  dims: ["marts/dim_geo.parquet", "marts/dim_tiempo_mes.parquet"]
+
+# ---------------------------------------------------------------------------
+# PARAMETROS
+# ---------------------------------------------------------------------------
+parametros:
+  provincia: sde                 # provincia es parametro, nunca hardcodeada (CLAUDE.md)
+  ambito_publicable: sde
+  cita_pie: "Fuente: SENASA"     # la arma _protocolo-presentacion.pie_de_fuente con la columna
+                                 # `fuente` del mart (valor unico: 'SENASA'). Coincide con lo
+                                 # que declara el indice de JC en las tres bases
+                                 # (`indice.cita_fuente_al_pie`).
+
+  # Los tres productos de la seccion, con el nombre CANONICO del mart (que es el valor del
+  # filtro) y la etiqueta con que se dibujan. Hoy coinciden; se escriben las dos igual que en
+  # la base 9, donde "Soja total" se muestra "Soja".
+  productos:
+    - {valor: "Cebolla", etiqueta: "Cebolla", base: 57}
+    - {valor: "Batata",  etiqueta: "Batata",  base: 56}
+    - {valor: "Papa",    etiqueta: "Papa",    base: 75}
+  producto_por_defecto: "Cebolla"   # el que mas pesa: 93% de las toneladas de la familia
+
+  # Sin opcion "Todos". El modelo de JC pide "VISUALIZACION POR PRODUCTO CON MAPA Y SELECCION
+  # DE UNA LISTA" (hoja Modelo analisis de la base 53): el sujeto del tablero es UN producto.
+  # Un agregado cebolla + batata + papa ademas no tendria lector: mezclaria tres cadenas
+  # comerciales distintas y una superficie estimada con tres rendimientos distintos.
+  incluye_todos: false
+
+# ---------------------------------------------------------------------------
+# MEDIDAS (las dos agregables de la familia)
+# ---------------------------------------------------------------------------
+# El mart trae tres variables: `peso_tn`, `movimientos` y `cantidad`.
+medidas:
+  peso_tn:
+    etiqueta: "Toneladas movidas"
+    unidad: tn
+    agregable: true
+    de_donde: "PESO TOTAL de cada DTV, convertido a toneladas fila por fila segun su U.M."
+  movimientos:
+    etiqueta: "DTV emitidas"
+    unidad: dtv
+    agregable: true
+    de_donde: "una DTV emitida = un movimiento. La constante 1 por fila de detalle."
+  cantidad:
+    etiqueta: "Bultos declarados"
+    unidad: bultos
+    agregable: condicionada
+    # HASTA EL 23-SEP-2026 ESTA MEDIDA ESTABA PROHIBIDA. La habilito Francisco ese dia, al
+    # abrir el .xlsx original de la maqueta "Agri 2" y encontrar que el primer grafico de JC
+    # es exactamente esto: "Cebolla - Sgo del Estero - DTV Envios - Cant bolsas y tn por año",
+    # barras de cantidad con una linea de toneladas encima.
+    por_que_estaba_prohibida: >
+      Porque el bulto no es una unidad homogenea. Sumando TODA la tabla del mart se mezclan
+      bolsas con fardos, rollos y modulos (el algodon de la base 53 vive en el mismo mart y
+      casi la mitad de sus unidades son rollos). Un total asi no significa nada.
+    cuando_se_puede_agregar: >
+      Dentro de UN producto de hortaliza, y solo si el rotulo del eje dice la verdad sobre la
+      mezcla. La composicion se mide contra el mart producto por producto
+      (`vegetales.composicion_acondicionamiento`) y de ahi sale el rotulo, segun la regla
+      `rotulo_de_bultos` de mas abajo. Ningun panel escribe "bolsas" sin que la fuente lo
+      sostenga.
+    donde_se_usa: "solo en el panel `combo` del tablero (barras). No entra en ningun total ni en ningun ranking."
+
+# ---------------------------------------------------------------------------
+# COMO SE ROTULA EL EJE DE LOS BULTOS (la condicion de Francisco, 23-sep-2026)
+# ---------------------------------------------------------------------------
+# "Verifica el acondicionamiento por producto antes de rotular el eje 'bolsas'. Si en batata o
+# papa la mezcla no es tan limpia, el rotulo tiene que decir 'bultos' y no 'bolsas', y la nota
+# al pie tiene que aclarar la composicion. No inventes un rotulo que la fuente no sostiene."
+rotulo_de_bultos:
+  regla: >
+    Si un unico acondicionamiento explica al menos `umbral_bolsas` de los bultos declarados
+    del producto, el eje se rotula con el nombre corto de ese acondicionamiento ("bolsas").
+    Si no, el eje se rotula "bultos", que es el termino generico y no compromete a la fuente.
+    La composicion se resuelve contra el mart en cada publicacion: si la mezcla cambia, cambia
+    el rotulo solo.
+  umbral_bolsas: 0.99
+  por_que_99: >
+    Es el corte que separa "la fuente lo sostiene" de "lo estoy redondeando". Con 99,6% de la
+    cebolla en bolsas, decir "bolsas" describe el dato; con 95,7% de la batata quedaria un 4,3%
+    de bandejas, big-bags, cajas, granel y fardo escondido detras de un rotulo que no los
+    nombra. El numero es un parametro y no una constante del codigo: si JC prefiere otro corte,
+    se cambia aca.
+  nota_al_pie_obligatoria: >
+    Siempre, con los dos o tres acondicionamientos mas pesados y su porcentaje, diga "bolsas" o
+    diga "bultos". El rotulo resume; la nota es la que rinde cuentas.
+  nombre_corto:
+    "Bolsas/Bolsitas": bolsas
+  generico: bultos
+  # Como se llama la SERIE en la leyenda del grafico. Vive aca y no en el codigo para que la
+  # concordancia de genero ("bolsas declaradas" / "bultos declarados") sea un dato de
+  # configuracion y no una regla gramatical escrita en Python.
+  nombre_de_la_serie:
+    bolsas: "Bolsas declaradas"
+    bultos: "Bultos declarados"
+  # Auditoria del 23-sep-2026 sobre marts/hecho_movimientos_vegetales.parquet (NO es el
+  # parametro: el build lo recalcula). Total de bultos declarados por producto y participacion
+  # del acondicionamiento principal.
+  resuelto_2026_09_23:
+    Cebolla: {bultos: 8948308, principal: "Bolsas/Bolsitas", participacion: "99,6%", rotulo: bolsas}
+    Batata:  {bultos: 259078,  principal: "Bolsas/Bolsitas", participacion: "95,7%", rotulo: bultos}
+    Papa:    {bultos: 46562,   principal: "Bolsas/Bolsitas", participacion: "97,1%", rotulo: bultos}
+
+# Que rampa de color le toca a cada medida. Es la extension prevista por el protocolo
+# (_protocolo-presentacion.colores.como_se_hereda: "cada nueva base declara a que tipo de
+# variable pertenece cada una de sus medidas. Si el tipo ya existe, usa su rampa sin
+# discutir"). No se invento ninguna rampa nueva ni se toco ningun color.
+presentacion:
+  protocolo: _protocolo-presentacion
+  sujeto_de_la_base: "cultivos intensivos"     # el "sector/subsector" de JC, de su indice
+  frase_en_titulo: "las hortalizas"
+  tipos_de_variable:
+    peso_tn: produccion            # toneladas de producto agricola: mismo TIPO de variable que
+                                   # la produccion de la base 9, misma rampa ocre.
+    movimientos: documentos        # una DTV es un papel, igual que un DTE de la base 85:
+                                   # mismo tipo, misma rampa gris azulada.
+    cantidad: documentos           # el bulto es un CONTEO DECLARADO en el papel, no una
+                                   # magnitud medida: la distincion que funda la rampa
+                                   # `documentos` en el protocolo es justamente esa ("un DTE no
+                                   # es una cabeza: es un papel"). Bultos y DTV salen de la
+                                   # misma declaracion y ninguno de los dos es un volumen. No
+                                   # se invento ninguna rampa nueva. Efecto buscado: en el
+                                   # panel `combo`, barras gris azulado y linea ocre, que es la
+                                   # misma lectura que JC dibujo en su Excel (barras frias,
+                                   # linea calida). Preguntado a JC en el backlog 49.
+    superficie_estimada_ha: superficie   # hectareas: rampa verde, como las de la base 9.
+    precio_kg: precio              # $/kg del MCBA (base 8, panel de precios del tablero de
+                                   # cultivos intensivos). Es la rampa `precio` que el
+                                   # protocolo agrego el 23-sep-2026: un precio no es un
+                                   # volumen, no es un papel y no es un rendimiento fisico, y
+                                   # ademas viene en pesos CORRIENTES. Tipo de variable propio,
+                                   # rampa propia. Preguntado a JC en el backlog 50.
+
+# ---------------------------------------------------------------------------
+# VENTANA TEMPORAL
+# ---------------------------------------------------------------------------
+# Las cinco entregas anuales que trajo SENASA, todas cerradas. El indice de JC declara las
+# bases hasta 2026-05-31, pero los archivos llegan hasta diciembre de 2025: la ventana se
+# resuelve contra el mart y se deja escrita para que sea auditable.
+ventana_anios:
+  cantidad: 5
+  ancla: ultimo_anio_cerrado
+  # La ventana NO se escribe a mano: el build toma los ultimos `cantidad` años presentes en
+  # el mart y el año por defecto es el ultimo de esa ventana (misma regla que la base 9, JC
+  # f12: "SIEMPRE ULTIMA"). Los Excels se rebajan de SharePoint en cada publicacion: una lista
+  # fija dejaria de mostrar el año nuevo el dia que SENASA lo mande.
+  anio_por_defecto: ultimo_de_la_ventana
+  resuelto_2026_09_23: [2021, 2022, 2023, 2024, 2025]   # auditoria, no es el parametro
+  sin_anio_en_curso: >
+    No hay año en curso que recortar: el ultimo movimiento del mart es del 2025-12-16 y las
+    hojas cubren enero a diciembre. Ningun año de la ventana se compara contra un año parcial
+    (la excepcion es la papa, ver `cobertura_mensual`).
+
+# ---------------------------------------------------------------------------
+# COBERTURA MENSUAL POR PRODUCTO (la papa NO tiene años completos)
+# ---------------------------------------------------------------------------
+# Regla dura: cualquier rotulo, titulo o eje que sugiera un año completo de papa es un error
+# de lectura. La fuente entrega la papa SOLO de septiembre a diciembre, por definicion y no
+# por falta de datos: el propio indice de JC la llama "DTV - Papa (septiembre a diciembre)".
+# La cobertura REAL la resuelve el build contra el mart; lo de abajo es la expectativa con la
+# que se construyo, y el build avisa por consola si el mart dice otra cosa.
+cobertura_mensual:
+  se_resuelve: >
+    Contra el mart, no contra esta lista: el build mira que meses tiene cada producto en la
+    ventana y, si son menos de doce, arma el rotulo con los meses que realmente hay. Asi la
+    aclaracion no puede quedar desactualizada el dia que SENASA mande los meses que faltan.
+    Lo declarado abajo es la EXPECTATIVA; si el mart no coincide, el build lo avisa por
+    consola y manda el mart.
+  esperada_2026_09_23:
+    Cebolla: completa
+    Batata: completa
+    Papa: "septiembre a diciembre"
+  regla_de_lectura: >
+    Cualquier rotulo, titulo o eje que sugiera un año completo de papa es un error de lectura.
+    La fuente la entrega SOLO de septiembre a diciembre, por definicion y no por falta de
+    datos: el propio indice de JC la llama "DTV - Papa (septiembre a diciembre)". Ningun total
+    de papa se rotula "total anual" ni se compara contra un año completo de otro producto.
+  referencia: "configs/bases/75-dtv-papa.yaml y el indice de JC (base 75)"
+
+# ---------------------------------------------------------------------------
+# ESTIMACION DE SUPERFICIE (regla de negocio de JC)
+# ---------------------------------------------------------------------------
+# JC define el calculo en su hoja Modelo analisis: los KILOS de las DTV emitidas divididos el
+# rendimiento promedio del cultivo. Los rendimientos son PARAMETROS DE NEGOCIO y viven aca:
+# nunca en el JavaScript ni en el JSON de datos.
+estimacion_superficie:
+  formula: "superficie_estimada_ha = peso_tn * 1000 / rendimiento_kg_ha"
+  unidad: ha
+  rendimientos_kg_ha:
+    Cebolla: 19000
+    Batata: 17000
+    Papa: 26000
+  # -------------------------------------------------------------------------
+  # CEBOLLA: 19.000, RESUELTO POR EVIDENCIA EL 23-SEP-2026 (reemplaza la decision anterior)
+  # -------------------------------------------------------------------------
+  decision_cebolla:
+    que_dice_jc: >
+      La misma linea de la maqueta escribe la formula "kg / 20.000" (celda F66 de la hoja
+      Agri 2) y entre parentesis aclara "(Rendimiento promedio 19.000 kg/ha)". Los dos numeros
+      no pueden ser ciertos a la vez.
+    que_se_hacia_antes: >
+      Hasta el 23-sep-2026 se usaba 20.000, por ser la FORMULA escrita, y la contradiccion
+      quedaba preguntada a JC en el backlog 42.
+    que_manda_ahora: 19000
+    por_que: >
+      La maqueta "Agri 2" trae DIBUJADA la tabla de estimaciones de la cebolla (una imagen
+      anclada en AG40:BE52, departamentos por año en hectareas, con fila TOTAL). Esos son los
+      numeros que JC ya calculo, y salen de dividir por 19.000, no por 20.000. El parentesis
+      describe lo que JC hizo; la formula escrita tiene el numero mal tipeado.
+    evidencia_2026_09_23: >
+      Contra marts/hecho_movimientos_vegetales.parquet (cebolla, NOT es_agregado_fila),
+      toneladas x 1000 / 19.000 reproduce la tabla de JC celda por celda. Tres ejemplos:
+      ROBLES 2021, mart 22.267,770 tn -> 1.171,99 ha (JC: 1.172,0; con 20.000 daria 1.113,4);
+      LA BANDA 2021, mart 1.825,086 tn -> 96,06 ha (JC: 96,1); SARMIENTO 2021, mart
+      1.032,665 tn -> 54,35 ha (JC: 54,4). Las unicas celdas que NO cierran son las que ya
+      difieren en toneladas por las declaraciones con U.M. rara (SARMIENTO 2022, ROBLES 2023),
+      que estan en el backlog 47 y no dependen del rendimiento.
+    backlog: "specs/preguntas/backlog.md, pregunta 42 (CERRADA por evidencia, no por respuesta de JC)"
+  coherentes: >
+    Batata (17.000) y papa (26.000) no tienen contradiccion: en las dos, la formula de JC
+    (celdas F67 y F68) y el rendimiento declarado entre parentesis coinciden. Verificado el
+    23-sep-2026: la maqueta dibuja la tabla de estimaciones SOLO para la cebolla, asi que no
+    hay numeros calculados de JC contra los cuales contrastar batata y papa. No se cambia
+    ninguno de los dos: no hay ni contradiccion interna ni evidencia que la contradiga.
+  # Texto LITERAL que va al pie de todo cuadro que muestre la superficie estimada. Es la
+  # aclaracion de JC y se escribe una sola vez, aca.
+  aclaracion_al_pie: >
+    Las superficies se estiman sobre los kilos de las DTV emitidas. Solo se consideran los
+    cultivos con registros de DTV, por lo que no contempla la superficie total.
+
+# ---------------------------------------------------------------------------
+# COMO SE MUESTRA UN DEPARTAMENTO SIN MOVIMIENTO (no todo cero es cero)
+# ---------------------------------------------------------------------------
+cobertura_departamental:
+  regla: >
+    Un departamento sin DTV no se dibuja como cero: no aparece. En las barras apiladas no tiene
+    serie, en la tabla de superficies no tiene fila, y la nota al pie del cuadro dice cuantos de
+    los 27 departamentos tienen movimiento y que los que faltan no son ceros. (Hasta el
+    23-sep-2026 esta regla estaba escrita en terminos del mapa, que salio de la seccion.)
+  # Auditoria del 23-sep-2026, no es un parametro: los departamentos con movimiento los
+  # resuelve el build contra el mart, producto por producto y año por año.
+  resuelto_2026_09_23:
+    Cebolla: 7     # CAPITAL, FIGUEROA, LA BANDA, ROBLES, SAN MARTIN, SARMIENTO, SILIPICA
+    Batata: 6      # CAPITAL, LA BANDA, ROBLES, SAN MARTIN, SARMIENTO, SILIPICA
+    Papa: 4        # GUASAYAN, LA BANDA, ROBLES, SAN MARTIN
+    de_un_total_de: 27
+  motivo_legible: >
+    Solo hay DTV donde hubo movimiento registrado. El mapa va a quedar mayormente vacio y eso
+    es el dato, no un faltante: se dice al pie del panel y no se disimula.
+  referencia: "configs/bases/57-dtv-cebolla.yaml, nota de cobertura (CRITERIO 5)"
+
+# ---------------------------------------------------------------------------
+# PRECISION DE DISPLAY
+# ---------------------------------------------------------------------------
+# Las toneladas y las DTV son medidas de la propia declaracion, no estimaciones: se muestran
+# completas, sin redondear (mismo criterio que las cabezas de la base 85). La superficie
+# estimada SI es una estimacion y va sin decimales: el kilo de precision no lo tiene.
+precision_display:
+  peso_tn: {formato: entero, redondeo: ninguno}
+  movimientos: {formato: entero, redondeo: ninguno}
+  superficie_estimada_ha: {formato: entero, redondeo: ninguno}
+  porcentajes: {formato: "1 decimal", sufijo: "%"}
+  separador_miles: "."
+  separador_decimal: ","
+
+# ---------------------------------------------------------------------------
+# NOTAS METODOLOGICAS REUTILIZABLES (JC f154: "llamadas con icono de pregunta")
+# ---------------------------------------------------------------------------
+notas_metodologicas:
+  que-es-una-dtv:
+    titulo: "¿Qué es una DTV?"
+    texto: >
+      Una DTV es una Declaración de Tránsito Vegetal: el papel que SENASA exige para mover
+      carga vegetal de un lugar a otro. Cada DTV declara qué producto se mueve, cuánto pesa,
+      desde qué departamento sale y a qué provincia va. Esta sección cuenta esos papeles y
+      esas toneladas, no la producción total de la provincia: lo que no se mueve con DTV, acá
+      no aparece.
+
+  solo-donde-hubo-movimiento:
+    # Reescrita el 23-sep-2026: hablaba de "los departamentos pintados del mapa" y el mapa
+    # salio de la seccion (el propio JC lo tiene en su lista de trabajo futuro). La nota decia
+    # algo cierto sobre una pantalla que ya no existe.
+    titulo: "¿Por qué aparecen tan pocos departamentos?"
+    texto: >
+      Porque solo hay DTV donde hubo movimiento registrado. De los 27 departamentos de la
+      provincia, la cebolla se mueve desde 7, la batata desde 6 y la papa desde 4. Los que no
+      aparecen no produjeron cero: no tienen ninguna declaración de tránsito de ese producto.
+      Es el dato tal como viene de SENASA.
+
+  papa-septiembre-a-diciembre:
+    titulo: "¿Por qué la papa no tiene los doce meses?"
+    texto: >
+      Porque la fuente la entrega así. El propio índice la llama "DTV - Papa (septiembre a
+      diciembre)" y las cinco hojas del archivo traen únicamente esos cuatro meses. Los meses
+      que faltan no son meses en cero. Ningún total de papa de esta sección se lee como un
+      año completo, ni se compara contra uno.
+
+  superficie-estimada:
+    titulo: "¿Cómo se estima la superficie?"
+    texto: >
+      Es el cálculo que definió Juan Carlos Antuña: los kilos de las DTV emitidas divididos el
+      rendimiento promedio del cultivo (cebolla 19.000 kg/ha, batata 17.000 kg/ha, papa 26.000
+      kg/ha). Solo se consideran los cultivos con registros de DTV, por lo que no contempla la
+      superficie total de la provincia. Es un orden de magnitud, no una medición.
+
+  unidad-de-origen:
+    titulo: "¿De dónde salen las toneladas?"
+    texto: >
+      Del campo PESO TOTAL de cada declaración. La fuente no siempre lo informa en kilos: hay
+      declaraciones en "Kg.", en "Tn." y un grupo con la unidad escrita "U.", que tiene la
+      misma magnitud que las de kilos y se lee como kilos. La conversión a toneladas se hizo
+      fila por fila según la unidad de cada una, nunca con un factor único.
+
+  que-es-un-bulto:
+    titulo: "¿Qué es un bulto y por qué a veces dice \"bolsas\"?"
+    texto: >
+      Cada declaración informa cuántas unidades de carga lleva y cómo vienen acondicionadas:
+      bolsas, cajas, bandejas, big-bags o a granel. El total de unidades se llama "bultos"
+      porque mezcla esos formatos. Cuando un único formato explica prácticamente toda la carga
+      del producto (la cebolla santiagueña se mueve en bolsas en el 99,6% de sus unidades), el
+      gráfico lo nombra por su nombre; cuando la mezcla es más repartida, dice "bultos" y la
+      nota al pie aclara de qué está hecha. El rótulo nunca dice más de lo que la fuente
+      sostiene.
+
+  a-donde-va:
+    titulo: "¿Estas toneladas salen de la provincia?"
+    texto: >
+      Casi todas. La enorme mayoría de las DTV de hortalizas de Santiago del Estero ampara
+      carga que sale hacia otra provincia; lo que se mueve dentro de la provincia es una
+      fracción muy chica. Por eso el ranking de provincias de destino es el que mejor cuenta
+      esta base: muestra a dónde va la producción santiagueña de hortalizas. Santiago del
+      Estero aparece en ese ranking como destino cuando el movimiento fue interno.
+
+# ---------------------------------------------------------------------------
+# UNIFORMIDAD VISUAL (JC f39-f41: "sino seria un carnaval")
+# ---------------------------------------------------------------------------
+uniformidad:
+  regla: >
+    Un tipo de dato = un tipo de grafico = una paleta, en todas las vistas y para todos los
+    productos. La seccion usa la MISMA disposicion que Cultivos extensivos (mockup Modelo 2):
+    el formato no cambia de una seccion a la otra.
+  convenciones:
+    evolucion_mensual: "linea, un punto por mes, con el año anterior punteado de fondo"
+    participacion_una_categoria: "anillo, top 5 + Resto"
+    mapa: "coropleta de un solo color, escala de intensidad, total provincial al pie"
+    ranking: "tabla con puesto, nombre, valor y participacion"
+    # Las dos formas que entraron el 23-sep-2026 con la maqueta "Agri 2" (ver el spec del
+    # tablero). Quedan disponibles para todas las bases, como cualquier otra forma.
+    dos_medidas_una_serie_temporal: "combo: barras de la medida de conteo + linea de la medida de volumen, dos ejes"
+    composicion_de_un_total_en_el_tiempo: "barras apiladas, una serie por categoria, el total es el alto de la pila"
+  paleta:
+    escalas_de_intensidad: "las de _protocolo-presentacion.colores.rampas, por TIPO DE VARIABLE"
+    categorica: >
+      site/theme.yaml (paleta_categorica), un color fijo por categoria, asignado en orden
+      alfabetico y estable entre vistas: por tipo de movimiento en el anillo y por
+      departamento de origen en las barras apiladas. Es el caso
+      `_protocolo-presentacion.colores.series_de_un_grafico`: cuando el color distingue
+      categorias y no magnitudes, no se usa una rampa.
+  mouseover_obligatorio: true
+
+# ---------------------------------------------------------------------------
+# LO QUE JC PIDIO Y NO SE ESPECIFICA TODAVIA
+# ---------------------------------------------------------------------------
+fuera_de_alcance:
+  - item: "Panel de precios del MCBA (Mercado Central de Buenos Aires)"
+    referencia: "maqueta Agri 2 de JC, panel superior derecho"
+    estado: >
+      bloqueada: la base 8 ("Precios frutas y hortalizas MCBA por variedad, calidad y origen",
+      fuente MAGyP) se baja de la nube en cada publicacion pero todavia no tiene adapter ni
+      mart. No se dibuja con datos inventados: queda declarada como "Próximamente" en el panel
+      de informacion relacionada del tablero, con el mismo criterio que usa Cultivos
+      extensivos. Backlog pregunta 43.
+  - item: "Mapa de calor por departamento (volumen movido por producto)"
+    referencia: >
+      maqueta "Agri 2", hoja de OBSERVACIONES SOBRE CULTIVOS INTENSIVOS, punto 4 "Mas
+      informacion", bloque "EN DTV:", primera linea (celda F72): "> Mapas calor por
+      departamento por producto por volumen".
+    estado: >
+      FUTURO, por decision del propio JC. La hoja "Modelo analisis" de la base 53 dice "CON
+      MAPA", y esa contradiccion la resuelve JC en esta maqueta: el mapa no esta dibujado en la
+      hoja "Agri 2" y aparece en su lista de trabajo futuro. Por eso el tablero no lleva mapa
+      hoy. No es un olvido ni un recorte nuestro: es el orden que puso JC.
+      Cuando entre, el lugar natural es el panel de estimaciones de superficies (abajo a la
+      derecha), que hoy es una tabla por departamento.
+  - item: "Graficos por departamento (los mismos cuadros del tablero, con ambito departamental)"
+    referencia: "maqueta Agri 2, observaciones, celda F73: \"> Graficos idem provincia por departamento x producto\""
+    estado: >
+      parcialmente cubierto: la vista `dtv-departamento-movimientos` ya abre por departamento
+      con el boton de cabecera. Los cuadros del tablero (combo y apiladas) todavia no tienen
+      version departamental.
+  - item: "Informes por tipo de movimiento y por provincia de destino, resumenes totales anuales"
+    referencia: "maqueta Agri 2, observaciones, celdas F74 y F76"
+    estado: >
+      pendiente. El 23-sep-2026 estos dos cortes estaban dibujados en el tablero (un anillo por
+      tipo de movimiento y un ranking de provincias de destino); salieron al revisar el .xlsx
+      original, porque no estan en la maqueta. JC los pide como INFORMES, no como paneles del
+      tablero. Backlog 44 y 45.
+  - item: "Apertura por eslabon de la cadena comercial (tipo de origen: UP, acopiador, empaque, mercado)"
+    referencia: "configs/bases/57-dtv-cebolla.yaml, nota de dato"
+    estado: "pendiente: da para una vista de detalle propia. Backlog pregunta 45."
+  - item: "Matriz origen-destino (departamento de origen x provincia de destino)"
+    estado: "pendiente: existe el dato, falta que Francisco defina si se publica (ver `sensibilidad`)."
+
+# ---------------------------------------------------------------------------
+# SENSIBILIDAD
+# ---------------------------------------------------------------------------
+sensibilidad:
+  nivel: normal
+  nota_provincias_destino: >
+    SIN EFECTO desde el 23-sep-2026 (segunda vuelta): el ranking de provincias de destino salio
+    del tablero, porque no esta en la maqueta "Agri 2" de JC. Ninguna vista publicada de esta
+    familia muestra hoy la provincia de contraparte. La discusion queda abierta para el dia que
+    se construya el "informe por provincia de destino" que JC pide en sus observaciones (celda
+    F76): ahi vuelve a aplicar el precedente de la base 85, donde dos vistas equivalentes
+    quedaron en `_privado` por el default seguro de CLAUDE.md (backlog 21 y 44).
+  nota_departamento_de_origen: >
+    Las barras apiladas del tablero muestran el departamento de ORIGEN, que es dato provincial
+    y departamental, no comparacion entre provincias. Mismo nivel de sensibilidad que el resto
+    de la seccion.
