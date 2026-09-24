@@ -254,6 +254,23 @@ class Colores:
     def solido(self, medida):
         return self.rampas[self.tipos[medida]]["color_solido"]
 
+    # Paso de la rampa que le toca a la SEGUNDA serie cuando un cuadro compara dos valores del
+    # mismo filtro (el "cruzar datos" del zoom, Francisco 24-sep-2026).
+    PASO_COMPARACION = 2
+
+    def comparacion(self, medida):
+        """El color de la serie COMPARADA: la misma variable, otro paso de la misma rampa.
+
+        La regla mas fuerte del protocolo es que el color lo decide el TIPO DE VARIABLE. Una
+        comparacion no cambia la variable -produccion de soja contra produccion de maiz sigue
+        siendo produccion- asi que no le corresponde otro color sino otra intensidad del
+        mismo: el paso medio de su rampa, que ya esta declarada. No se inventa ninguna paleta.
+        Lo que distingue a las dos series ademas del tono es el punteado, que es lo que
+        sobrevive a la impresion en blanco y negro. La pregunta de si JC prefiere otra cosa
+        queda en el backlog (pregunta 53).
+        """
+        return self.rampa(medida)[self.PASO_COMPARACION]
+
     def por_categoria(self, categorias, excluir=()):
         """Un color fijo por categoria, asignado en orden alfabetico. Deterministico.
 

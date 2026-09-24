@@ -410,10 +410,12 @@ def ruta_icono(variante, nombre):
     return "%s/iconos/%s/%s.svg" % (PREFIJO, variante, nombre)
 
 
-# Acciones que el sitio sabe hacer desde el panel de UTILIDADES (las engancha
-# src/tableros/cliente/comun.js). Un spec que declare otra cosa es un error de protocolo: la
-# regla es que no se dibujan botones que no hacen nada.
-ACCIONES_UTILIDAD = ("exportar-pdf",)
+# Acciones que el sitio sabe hacer desde el panel de UTILIDADES y desde el pie de cada cuadro
+# (las engancha src/tableros/cliente/comun.js). Un spec que declare otra cosa es un error de
+# protocolo: la regla es que no se dibujan botones que no hacen nada.
+#   exportar-pdf  imprime el tablero entero con la seleccion vigente (el PDF lo arma el navegador)
+#   zoom          abre ESE cuadro a pantalla completa, con sus controles en grande
+ACCIONES_UTILIDAD = ("exportar-pdf", "zoom")
 
 
 def item_utilidad(item):
@@ -469,6 +471,87 @@ def accion_de_cuadro(item, destino, url_de, slug_tablero, id_panel):
     if item.get("icono"):
         salida["icono"] = ruta_icono("color", item["icono"])
     return salida
+
+
+# ---------------------------------------------------------------------------
+# CRUZAR DATOS: la comparacion del zoom (Francisco, 24-sep-2026)
+# ---------------------------------------------------------------------------
+# Francisco eligio DOS formas de cruce y descarto la tercera (unir bases distintas):
+#   - dos valores del mismo filtro (dos cultivos, dos productos, dos anios);
+#   - dos medidas de la misma base, con dos ejes si no comparten unidad.
+#
+# Va ADENTRO DEL ZOOM y en ningun otro lado: el tablero es la maqueta literal de JC -cuatro
+# cuadros, una pantalla- y meterle selectores de comparacion rompe justo lo que el pidio que
+# se respetara. Al cerrar el zoom la comparacion se apaga.
+#
+# Solo la ofrecen las formas de SERIE TEMPORAL, que son las unicas donde una segunda serie se
+# lee sin mentir. En el mapa no (un mapa no admite dos cultivos encima), en el anillo tampoco
+# (dos anillos superpuestos no son nada), en el ranking tampoco (dos ordenes distintos en la
+# misma tabla) y en las barras apiladas tampoco: el alto de la pila es un total, y dos totales
+# encimados dejan de poder leerse. El cuadro de precios del MCBA queda afuera por payload, y
+# esta escrito en su spec.
+FORMAS_QUE_COMPARAN = ("tendencia", "combo")
+
+
+def opciones_de_comparacion(filtro):
+    """Las opciones del filtro que se compara, sin el cromo que no hace falta en un <select>.
+
+    No se duplica ningun catalogo: son las mismas opciones que ya viajan en el filtro. La que
+    este puesta en el tablero la esconde el navegador (comparar un valor consigo mismo son dos
+    lineas identicas), y por eso la lista viaja entera.
+    """
+    return [{"v": opcion["v"], "t": opcion["t"]} for opcion in filtro["opciones"]]
+
+
+def bloque_comparacion(definicion, filtros, id_panel, slug):
+    """El bloque `comparacion` de un panel para el JSON de la pagina, o None si no compara.
+
+    Todos los textos salen del spec. Las plantillas llevan slots que sustituye el navegador
+    ({valor} y {medida} para la leyenda, {titulo} y {otro} para el titulo, {nota} y {otra}
+    para el pie): el sitio no compone frases, solo reemplaza.
+    """
+    declarada = definicion.get("comparacion")
+    if not declarada:
+        return None
+    forma = definicion.get("forma", id_panel)
+    if forma not in FORMAS_QUE_COMPARAN:
+        raise pr.ErrorDeProtocolo(
+            "El panel %s del tablero %s declara comparacion y su forma es %r. Solo comparan "
+            "las formas de serie temporal %s: en las demas una segunda serie no se lee sin "
+            "mentir" % (id_panel, slug, forma, ", ".join(FORMAS_QUE_COMPARAN)))
+    filtro = next((f for f in filtros if f["id"] == declarada["filtro"]), None)
+    if filtro is None:
+        raise pr.ErrorDeProtocolo(
+            "El panel %s del tablero %s compara por el filtro %r, que el tablero no tiene"
+            % (id_panel, slug, declarada["filtro"]))
+    medidas = declarada.get("medidas")
+    return {
+        "filtro": filtro["id"],
+        "rotulo": declarada["rotulo"],
+        "ninguno": declarada["ninguno"],
+        "opciones": opciones_de_comparacion(filtro),
+        "plantilla_serie": declarada["plantilla_serie"],
+        "plantilla_titulo": declarada["plantilla_titulo"],
+        "plantilla_titulo_medida": declarada["plantilla_titulo_medida"],
+        "plantilla_nota": declarada["plantilla_nota"],
+        "nota": limpiar(declarada["nota"]),
+        "medidas": {"rotulo": medidas["rotulo"], "ninguna": medidas["ninguna"],
+                    "opciones": [{"v": o["v"], "t": o["t"]} for o in medidas["opciones"]]}
+                   if medidas else None,
+    }
+
+
+def medida_extra(ctx, medida, nombre, puntos, textos, eje=None, eje2=None):
+    """Una serie de SEGUNDA MEDIDA para un cuadro que la ofrece en el zoom.
+
+    `eje` reemplaza a la escala principal del cuadro (cuando la medida comparte unidad con lo
+    que ya esta dibujado y las dos entran en un eje) y `eje2` es una escala nueva a la derecha
+    (cuando no la comparte). Va una de las dos y nunca las dos: es la regla 3 de JC, "si
+    comparten unidad, un solo eje; si no, dos ejes con su unidad rotulada".
+    """
+    return {"id": medida, "nombre": nombre,
+            "color": ctx.colores.solido(medida), "color_comp": ctx.colores.comparacion(medida),
+            "puntos": puntos, "textos": textos, "eje": eje, "eje2": eje2}
 
 
 def filtros_por_panel(filtros):
@@ -2228,6 +2311,16 @@ class ContextoHacienda:
         return {"min": marcas["min"], "max": marcas["max"], "paso": marcas["paso"],
                 "etiquetas": etiquetas, "nombre": hac.NOMBRE_EJE[unidad]}
 
+    def eje_secundario(self, valores, unidad, intervalos):
+        """Eje derecho con la MISMA cantidad de intervalos que el izquierdo: asi las marcas de
+        los dos caen sobre las mismas lineas de grilla. Lo usa el cruce de medidas del zoom,
+        donde cabezas y documentos comparten cuadro y no pueden compartir escala."""
+        limpios = [v for v in valores if v is not None]
+        marcas = pr.marcas_eje_secundario(min(limpios + [0.0]), max(limpios + [0.0]), intervalos)
+        etiquetas = {clave_js(m): pr.fmt_numero(m, 0) for m in marcas["marcas"]}
+        return {"min": marcas["min"], "max": marcas["max"], "paso": marcas["paso"],
+                "etiquetas": etiquetas, "nombre": hac.NOMBRE_EJE[unidad]}
+
     def eje_porcentual(self):
         marcas = pr.marcas_eje(0, 100)
         etiquetas = {clave_js(m): pr.fmt_numero(m, 0) + "%" for m in marcas["marcas"]}
@@ -3604,6 +3697,9 @@ def panel_combo_intensivos(ctx, spec, producto, anio, pie):
             # (rotulo_de_bultos.nombre_de_la_serie): nada de gramatica en el codigo.
             "nombre": ctx.rotulo_bultos["nombre_de_la_serie"][rotulo],
             "color": ctx.colores.solido("cantidad"),
+            # Colores para cuando el zoom dibuja otro producto encima: el mismo tipo de
+            # variable, otro paso de su rampa (`Colores.comparacion`).
+            "color_comp": ctx.colores.comparacion("cantidad"),
             "puntos": bultos,
             "textos": ["%s %s" % (ctx.texto(v), rotulo) if v is not None else "S/D"
                        for v in bultos],
@@ -3611,6 +3707,7 @@ def panel_combo_intensivos(ctx, spec, producto, anio, pie):
         "linea": {
             "nombre": DTV_ETIQUETA["peso_tn"],
             "color": ctx.colores.solido("peso_tn"),
+            "color_comp": ctx.colores.comparacion("peso_tn"),
             "puntos": toneladas,
             "textos": [ctx.con_unidad(v, "peso_tn") for v in toneladas],
         },
@@ -3619,15 +3716,36 @@ def panel_combo_intensivos(ctx, spec, producto, anio, pie):
         # La tabla de datos bajo el grafico (Imagen 109 de la hoja): dos filas, los bultos y
         # las toneladas, con los mismos cinco años como columnas. El rotulo de la primera fila
         # lo decide la composicion, igual que el eje: "Bolsas" en cebolla, "Bultos" en el resto.
-        "tabla": tabla_bajo_el_grafico(ctx, declarado["tabla"], anio, [
-            (titulo_literal(declarado["tabla"]["filas"][0]["rotulo"],
-                            Bultos=pr.mayuscula_inicial(rotulo)),
-             [ctx.texto(v) if v is not None else "S/D" for v in bultos], False),
-            (declarado["tabla"]["filas"][1]["rotulo"],
-             [ctx.texto(v, "peso_tn") if v is not None else "S/D" for v in toneladas], False),
-        ]),
+        "tabla": tabla_bajo_el_grafico(ctx, declarado["tabla"], anio, filas_tabla_combo(
+            ctx, declarado, rotulo, bultos, toneladas, "")),
+        # La MISMA tabla con cada fila rotulada con su producto ("Cebolla · Bolsas"). Es la que
+        # se dibuja cuando el zoom compara dos productos: dos bloques con los mismos rotulos no
+        # se podrian distinguir. Se compone aca, como todo texto del sitio.
+        "tabla_comp": tabla_bajo_el_grafico(ctx, declarado["tabla"], anio, filas_tabla_combo(
+            ctx, declarado, rotulo, bultos, toneladas, ctx.etiqueta_producto[producto])),
         "nota": (nota + " " + cobertura).strip(),
     }
+
+
+def filas_tabla_combo(ctx, declarado, rotulo, bultos, toneladas, sujeto):
+    """Las dos filas de la tabla del cuadro combinado: los bultos y las toneladas.
+
+    Con `sujeto` los rotulos quedan rotulados con el producto, que es lo que hace falta cuando
+    hay dos tablas una debajo de la otra (comparacion del zoom). La plantilla del prefijo sale
+    del spec (`tabla.rotulo_comparado`), como todo texto.
+    """
+    def rotular(texto_fila):
+        if not sujeto:
+            return texto_fila
+        return titulo_literal(declarado["tabla"]["rotulo_comparado"],
+                              Producto=sujeto, Fila=texto_fila)
+    return [
+        (rotular(titulo_literal(declarado["tabla"]["filas"][0]["rotulo"],
+                                Bultos=pr.mayuscula_inicial(rotulo))),
+         [ctx.texto(v) if v is not None else "S/D" for v in bultos], False),
+        (rotular(declarado["tabla"]["filas"][1]["rotulo"]),
+         [ctx.texto(v, "peso_tn") if v is not None else "S/D" for v in toneladas], False),
+    ]
 
 
 def panel_apiladas_intensivos(ctx, spec, producto, anio, pie):
@@ -4669,6 +4787,9 @@ def panel_tendencia_cosecha_produccion(ctx, spec, campania, cultivos, todos, pie
         series.append({
             "nombre": ETIQUETA_VARIABLE[medida] + (" (fina y gruesa)" if todos else ""),
             "color": ctx.colores.solido(medida),
+            # Color de la MISMA rampa para cuando el zoom dibuja otro cultivo encima
+            # (`bloque_comparacion`): el color lo sigue mandando el tipo de variable.
+            "color_comp": ctx.colores.comparacion(medida),
             "eje": 0,     # un solo eje para las dos series, como el mockup (sin secundario)
             "puntos": [ctx.precision.valor(p, medida, "provincia") if p is not None else None
                        for p in puntos],
@@ -4699,8 +4820,52 @@ def panel_tendencia_cosecha_produccion(ctx, spec, campania, cultivos, todos, pie
         "eje": eje,
         "eje2": None,
         "eje_visible": True,
+        "medidas_extra": medidas_extra_cultivos(ctx, declarado, cultivos, todos, juntos, eje),
         "nota": nota,
     }
+
+
+def medidas_extra_cultivos(ctx, declarado, cultivos, todos, juntos, eje):
+    """Las segundas medidas que este cuadro ofrece en el zoom (spec, `comparacion.medidas`).
+
+    Son las variables de la base que el grafico de JC no dibuja: la superficie SEMBRADA, que
+    comparte la escala en millones con lo que ya esta dibujado, y el RENDIMIENTO, que es un
+    cociente en kg/ha y necesita su propio eje a la derecha (regla 3 de JC: nunca dos escalas
+    sobre el mismo eje). El rendimiento nunca se promedia: lo recalcula `medida_provincial`
+    como produccion sobre superficie cosechada.
+
+    Con el filtro en "Todos" no se ofrece ninguna: la superficie no se suma entre estaciones
+    (formato_v1.agregacion) y el rendimiento sale de ella. El cuadro queda como esta y el
+    desplegable no dibuja esa linea.
+    """
+    comparacion = declarado.get("comparacion") or {}
+    pedidas = (comparacion.get("medidas") or {}).get("opciones") or []
+    if todos or not pedidas:
+        return []
+    salida = []
+    for opcion in pedidas:
+        medida = opcion["v"]
+        puntos = [medida_provincial(ctx, c, cultivos, medida) for c in ctx.ventana]
+        if not [p for p in puntos if p is not None]:
+            continue
+        valores = [ctx.precision.valor(p, medida, "provincia") if p is not None else None
+                   for p in puntos]
+        textos = [ctx.precision.texto(p, medida, "provincia") + " " + UNIDAD[medida]
+                  if p is not None else "S/D" for p in puntos]
+        if UNIDAD[medida] in ("ha", "tn"):
+            # Misma escala en millones que el cuadro: se recalcula sobre las tres series
+            # juntas para que la nueva entre entera.
+            limpios = [v for v in puntos if v is not None]
+            salida.append(medida_extra(ctx, medida, ETIQUETA_VARIABLE[medida], valores, textos,
+                                       eje=eje_millones(juntos + limpios)))
+        else:
+            # Otra unidad: eje propio a la derecha, con la misma cantidad de intervalos que el
+            # izquierdo para que las marcas caigan sobre las mismas lineas de grilla.
+            salida.append(medida_extra(
+                ctx, medida, ETIQUETA_VARIABLE[medida], valores, textos,
+                eje2=ctx.eje_secundario([p for p in puntos if p is not None],
+                                        UNIDAD[medida], len(eje["etiquetas"]) - 1)))
+    return salida
 
 
 def eje_millones(valores):
@@ -5013,16 +5178,22 @@ def panel_tendencia_hacienda(ctx, spec, recorte, anio, pie):
                                      for v in valores]}
 
     todos = [p for p in puntos if p is not None]
-    subtitulo = ctx.subtitulo_unidad("cabezas")
+    base = ctx.subtitulo_unidad("cabezas")
+    subtitulo = base
     if referencia:
         todos = todos + [v for v in referencia["puntos"] if v is not None]
         # La linea gris punteada se explica aca y no en una leyenda: el panel es chico y el
         # subtitulo ya ocupa su renglon. Sigue nombrando la unidad, que es lo que exige el
         # protocolo.
         subtitulo = subtitulo + " · punteado: " + referencia["nombre"]
+    eje = ctx.eje(todos, "cabezas")
     return {
         "titulo": spec["paneles"]["tendencia"]["titulo"],
         "subtitulo": subtitulo,
+        # Con una comparacion explicita encima, la linea de referencia se apaga (dos punteados
+        # no se distinguen) y el subtitulo no puede seguir nombrandola. Este es el mismo
+        # subtitulo sin esa frase; lo elige el navegador, no lo escribe.
+        "subtitulo_comparado": base,
         "pie": pie,
         "x": list(MESES_CORTOS),
         "puntos": puntos,
@@ -5032,10 +5203,45 @@ def panel_tendencia_hacienda(ctx, spec, recorte, anio, pie):
         # punto que marcar sobre la serie como pasaba con la serie anual.
         "actual": None,
         "nombre": str(anio),
+        # Como se llama esta linea en la leyenda cuando el zoom le pone otra al lado. Sin
+        # comparacion el cuadro tiene una sola serie y no dibuja leyenda.
+        "medida_nombre": hac.ETIQUETA_MEDIDA["cabezas"],
         "referencia": referencia,
         "color": ctx.theme["colores"]["primario_medio"],
-        "eje": ctx.eje(todos, "cabezas"),
+        # Segundo verde del theme para la serie comparada: este cuadro no pinta por rampa de
+        # variable (su linea es cromo del tema), asi que su comparacion tampoco.
+        "color_comp": ctx.theme["colores"]["primario"],
+        "eje": eje,
+        "medidas_extra": medidas_extra_hacienda(ctx, spec, recorte, anio, meses, eje),
     }
+
+
+def medidas_extra_hacienda(ctx, spec, recorte, anio, meses, eje):
+    """La segunda medida que este cuadro ofrece en el zoom: los DTE emitidos mes a mes.
+
+    Un documento no es una cabeza -son dos tipos de variable distintos, con rampa propia cada
+    uno en el protocolo- asi que van con dos ejes y cada uno con su unidad rotulada (regla 3
+    de JC). Nunca se suman ni se combinan en un numero: son dos lineas, y punto.
+
+    Es lo unico que hay que agregar al payload para el cruce de medidas de esta base: el otro
+    cruce, el de dos anios, ya viaja en las combinaciones.
+    """
+    comparacion = (spec["paneles"]["tendencia"].get("comparacion") or {})
+    pedidas = (comparacion.get("medidas") or {}).get("opciones") or []
+    salida = []
+    for opcion in pedidas:
+        medida = opcion["v"]
+        puntos = [ctx.hechos.total_mes(recorte, anio, m, "Total", medida) for m in meses]
+        limpios = [p for p in puntos if p is not None]
+        if not limpios:
+            continue
+        unidad = h_unidad_texto(medida)
+        salida.append(medida_extra(
+            ctx, medida, hac.ETIQUETA_MEDIDA[medida], puntos,
+            [ctx.texto(p) + " " + unidad if p is not None else "S/D" for p in puntos],
+            eje2=ctx.eje_secundario(limpios, hac.UNIDAD[medida],
+                                    len(eje["etiquetas"]) - 1)))
+    return salida
 
 
 def panel_top_hacienda(ctx, spec, recorte, anio, pie):
@@ -5314,7 +5520,13 @@ def panel_tendencia_stock(ctx, spec, anio, categoria, pie):
         "textos": [ctx.texto(p) + " cabezas" if p is not None else "S/D" for p in puntos],
         "etiquetas": [str(a) for a in ctx.anios],
         "actual": ctx.anios.index(anio) if anio in ctx.anios else None,
+        # Como se llama esta linea en la leyenda cuando el zoom pone otra categoria al lado.
+        # Sin comparacion el cuadro tiene una sola serie y no dibuja leyenda.
+        "medida_nombre": spec["paneles"]["tendencia"]["medida_nombre"],
         "color": ctx.theme["colores"]["primario_medio"],
+        # Segundo verde del theme para la serie comparada: este cuadro no pinta por rampa de
+        # variable (su linea es cromo del tema), asi que su comparacion tampoco.
+        "color_comp": ctx.theme["colores"]["primario"],
         "eje": ctx.eje([p for p in puntos if p is not None], "cabezas"),
     }
 
@@ -5425,6 +5637,34 @@ def verificar_tablero(tablero):
                 raise pr.ErrorDeProtocolo(
                     "El panel %s del tablero %s no tiene pie de fuente (%s)"
                     % (nombre, tablero["slug"], clave))
+    verificar_comparaciones(tablero)
+
+
+def verificar_comparaciones(tablero):
+    """Un cuadro que ofrece cruzar datos tiene que poder hacerlo.
+
+    Misma regla que con los botones: no se dibuja un control que no hace nada. Se verifica que
+    cada segunda medida declarada en el spec aparezca en el payload de alguna combinacion
+    (`medidas_extra`); si ninguna la trae, el desplegable seria un adorno. "Alguna" y no
+    "todas" a proposito: hay combinaciones donde la medida no es legal y ahi no se ofrece (el
+    cultivo "Todos", donde la superficie no se suma entre estaciones).
+    """
+    for nombre, definicion in tablero["paneles"].items():
+        if not isinstance(definicion, dict):
+            continue
+        pedidas = ((definicion.get("comparacion") or {}).get("medidas") or {}).get("opciones")
+        if not pedidas:
+            continue
+        ofrecidas = set()
+        for combo in tablero["combos"].values():
+            panel = combo["paneles"].get(nombre) or {}
+            for extra in panel.get("medidas_extra") or []:
+                ofrecidas.add(extra["id"])
+        faltan = [o["v"] for o in pedidas if o["v"] not in ofrecidas]
+        if faltan:
+            raise pr.ErrorDeProtocolo(
+                "El panel %s del tablero %s ofrece comparar con %s y ninguna combinacion trae "
+                "esa serie en `medidas_extra`" % (nombre, tablero["slug"], ", ".join(faltan)))
 
 
 def verificar_subtitulos(ctx, vista):
@@ -6105,13 +6345,31 @@ def escribir_sitio(ctx, vistas, tableros):
             # Pie de cuadro (maqueta "Agri 2", tercera vuelta): "Más información →" y
             # "Generar PDF" al pie de CADA panel, no en una tira de utilidades al final. Se
             # declara una sola vez en el spec y se le pega a todos los paneles de la grilla.
-            acciones = tablero["paneles"].get("acciones_de_cuadro")
-            if acciones and declarado["id"] not in PANELES_SIN_PIE_DE_ACCIONES:
+            #
+            # Dos lugares para declararlas, y no es lo mismo:
+            #   `paneles.acciones_de_cuadro`  las que llevan TODOS los cuadros de ese tablero
+            #                                 ("Más información" y "Generar PDF" de la maqueta)
+            #   `paneles.<id>.acciones`       las de ESE cuadro y nada mas. Es por donde entra
+            #                                 el "Zoom" (Francisco, 24-sep-2026): un cuadro sin
+            #                                 grafico -la tabla de superficies, la lista de
+            #                                 informacion relacionada- no tiene nada que
+            #                                 ampliar y no lo declara. No se prende solo.
+            # Las propias van DESPUES de las comunes: el "Zoom" queda al lado del "Generar PDF",
+            # como en la maqueta de pasturas y forrajes de JC.
+            # Cruzar datos: los dos controles que el zoom le pone a este cuadro, si su spec
+            # se los habilita (ver `bloque_comparacion`). Van en el JSON de la PAGINA -no en
+            # el de los datos- porque son cascara: las opciones son las del filtro y las
+            # combinaciones ya estan en el payload de datos.
+            panel["comparacion"] = bloque_comparacion(
+                definicion, tablero["filtros"], declarado["id"], tablero["slug"])
+            comunes = tablero["paneles"].get("acciones_de_cuadro") or []
+            propias = definicion.get("acciones") or []
+            if (comunes or propias) and declarado["id"] not in PANELES_SIN_PIE_DE_ACCIONES:
                 destinos = tablero["paneles"].get("destinos_de_mas_informacion") or {}
                 panel["acciones"] = [
                     accion_de_cuadro(item, destinos.get(declarado["id"], {}).get(item["id"]),
                                      url_de, tablero["slug"], declarado["id"])
-                    for item in acciones]
+                    for item in list(comunes) + list(propias)]
             paneles.append(panel)
         escribir_pagina("%s/index" % seccion["url"], pagina(
             "tablero",

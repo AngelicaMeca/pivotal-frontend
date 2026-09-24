@@ -274,6 +274,118 @@ export default function iniciar(PIVOTAL) {
     });
   }
 
+  /* ================= cruzar datos: las dos series del zoom (Francisco, 24-sep-2026) =========
+     La comparacion se prende ADENTRO DEL ZOOM y solo en los cuadros de serie temporal, que son
+     los unicos donde una segunda serie se lee sin mentir (en el mapa, el anillo y el ranking
+     no: un mapa no admite dos cultivos encima). Que cuadro la ofrece lo dice el spec.
+
+     Reglas de JC que condicionan lo de abajo, y donde se cumplen:
+       1. las dos series NUNCA se combinan en un numero: se dibujan uno al lado de la otra y
+          no se suma ni se promedia nada. Aca no hay una sola cuenta: los puntos y los textos
+          llegan resueltos del build, de dos combinaciones distintas del mismo payload.
+       2. cobertura despareja (la papa, que solo trae septiembre a diciembre): los puntos sin
+          dato son null y no se dibujan (`connectNulls: false`), y ademas la nota del cuadro
+          se queda con las notas de las DOS series, que es donde el build escribe el recorte.
+       3. unidades: si las dos medidas comparten unidad va un solo eje; si no, el build manda
+          la segunda escala (`medidas_extra[].eje2`) y se dibuja un eje a la derecha CON su
+          unidad rotulada. Nunca dos escalas sobre el mismo eje.
+       4. colores: los manda el protocolo. La serie comparada usa un paso de la MISMA rampa
+          (lo resuelve el build en `color_comp`) y va punteada, asi se distingue tambien
+          impresa en escala de grises. No hay ninguna paleta nueva.
+       5. la leyenda dice que es cada serie sin ambiguedad ("Soja · Producción"), con la
+          plantilla que viene del spec. */
+
+  function medidaExtra(panel, id) {
+    var lista = (panel && panel.medidas_extra) || [];
+    for (var i = 0; i < lista.length; i++) {
+      if (lista[i].id === id) { return lista[i]; }
+    }
+    return null;
+  }
+
+  /* De dos escalas, la que CONTIENE a la otra. Las dos las armo el build con la misma regla y
+     las dos incluyen el cero (protocolo, `marcas_eje`), asi que la de mayor tope contiene a la
+     otra y sus etiquetas ya vienen escritas. Aca no se formatea ningun numero: se ELIGE una de
+     las dos que mando el build, igual que el cuadro de precios elige entre sus escalas
+     candidatas. El ultimo caso no se da con medidas no negativas -que son todas las que hay
+     publicadas- y queda como red de seguridad. */
+  function ejeQueContiene(a, b) {
+    if (!a) { return b || null; }
+    if (!b) { return a; }
+    if (b.min <= a.min && b.max >= a.max) { return b; }
+    if (a.min <= b.min && a.max >= b.max) { return a; }
+    return (b.max - b.min) > (a.max - a.min) ? b : a;
+  }
+
+  /* Las lineas de UN panel de tendencia: las suyas mas, si se pidio, la de la segunda medida.
+     `sujeto` es la etiqueta del valor que representa ese panel ("Soja", "2024"); con
+     comparacion prendida cada linea se rotula con el, que es lo unico que hace que la leyenda
+     no sea ambigua. `comparada` marca las del segundo valor: color de comparacion y punteado. */
+  function lineasDeTendencia(panel, comp, sujeto, comparada) {
+    var propias = panel.series || [{
+      /* Los cuadros de una sola medida (hacienda, stock) no rotulan su linea: sin comparacion
+         no hay leyenda que llenar y el tooltip quedaria repitiendo el nombre de la medida. */
+      nombre: comp ? (panel.medida_nombre || "") : "",
+      color: panel.color, color_comp: panel.color_comp, eje: 0,
+      puntos: panel.puntos, textos: panel.textos
+    }];
+    var lineas = propias.slice();
+    var extra = comp && comp.medida ? medidaExtra(panel, comp.medida) : null;
+    if (extra) {
+      lineas.push({ nombre: extra.nombre, color: extra.color, color_comp: extra.color_comp,
+                    eje: extra.eje2 ? 1 : 0, puntos: extra.puntos, textos: extra.textos });
+    }
+    return lineas.map(function (linea) {
+      return {
+        nombre: comp
+          ? comp.serie.replace("{valor}", sujeto).replace("{medida}", linea.nombre)
+          : linea.nombre,
+        color: comparada ? (linea.color_comp || linea.color) : linea.color,
+        comparada: comparada,
+        eje: linea.eje || 0,
+        puntos: linea.puntos,
+        textos: linea.textos
+      };
+    });
+  }
+
+  /* El panel del segundo valor, o null. Puede no haber: el build arma un panel `vacio` cuando
+     esa combinacion no tiene datos, y en ese caso no se dibuja ninguna segunda serie ni se
+     toca el titulo (un titulo que promete una comparacion que no esta seria peor que nada). */
+  function panelComparado(comp) {
+    return comp && comp.panel && !comp.panel.vacio ? comp.panel : null;
+  }
+
+  /* Los textos del cuadro cuando hay comparacion. El titulo tiene que decir que hay dos cosas
+     dibujadas (regla 5 de JC) y la nota se queda con las de las DOS series, que es donde el
+     build escribe la cobertura de cada una (regla 2: la papa). Las plantillas vienen del
+     spec; aca se sustituyen slots y no se escribe una sola palabra. */
+  function textosComparados(nodo, panel, comp, otro) {
+    if (!comp) { return; }
+    var titulo = panel.titulo || "";
+    if (otro) {
+      titulo = comp.titulo.replace("{titulo}", titulo).replace("{otro}", comp.otro);
+    }
+    if (comp.medida) {
+      titulo = comp.tituloMedida.replace("{titulo}", titulo)
+                                .replace("{medida}", comp.medidaEtiqueta);
+    }
+    texto(nodo, "[data-titulo]", titulo);
+    if (!otro) { return; }
+    /* La nota del otro solo si DICE algo distinto: en un cuadro donde la nota explica el eje
+       ("* Eje en millones...") las dos son la misma frase y repetirla se lee como un error.
+       Donde importa -la cobertura de la papa- son distintas y entran las dos. */
+    var otraNota = otro.nota && otro.nota !== panel.nota ? otro.nota : "";
+    texto(nodo, "[data-nota]", comp.nota.replace("{nota}", panel.nota || "")
+                                        .replace("{otra}", otraNota).trim());
+    /* Con dos valores explicitos encima, la serie de referencia del cuadro (el periodo
+       anterior, gris punteado) se apaga: era el sustituto de una comparacion que ahora esta
+       pedida y rotulada. El subtitulo que la nombraba lo reemplaza el build. */
+    if (panel.subtitulo_comparado !== undefined) {
+      texto(nodo, "[data-subtitulo]", panel.subtitulo_comparado);
+    }
+  }
+
   /* -------- tendencia --------
      Una linea (panel.puntos, forma original) o varias (panel.series, cada una con su eje:
      el mockup de JC dibuja cosecha y produccion juntas y son unidades distintas, asi que la
@@ -281,11 +393,16 @@ export default function iniciar(PIVOTAL) {
      intervalos que el primero). */
   function pintarTendencia(nodo, panel) {
     var chart = PIVOTAL.grafico(nodo.querySelector("[data-grafico]"));
+    var comp = PIVOTAL.comparacion(nodo.dataset.panel);
+    var otro = panelComparado(comp);
+    textosComparados(nodo, panel, comp, otro);
     var series = [];
     /* Serie de referencia opcional (el periodo anterior). Va primero y en gris punteado: es
        contexto para leer la principal, no un dato que compita con ella. `silent` la deja fuera
-       del hover para que el tooltip siempre hable del periodo elegido. */
-    if (panel.referencia) {
+       del hover para que el tooltip siempre hable del periodo elegido.
+       Con una comparacion explicita encima se apaga: dos punteados distintos sobre el mismo
+       cuadro no se distinguen, y el segundo valor elegido ya hace su trabajo. */
+    if (panel.referencia && !otro) {
       series.push({
         type: "line",
         data: panel.referencia.puntos,
@@ -299,9 +416,10 @@ export default function iniciar(PIVOTAL) {
       });
     }
 
-    var lineas = panel.series || [{
-      nombre: "", color: panel.color, eje: 0, puntos: panel.puntos, textos: panel.textos
-    }];
+    var lineas = lineasDeTendencia(panel, comp, comp ? comp.sujeto : "", false);
+    if (otro) {
+      lineas = lineas.concat(lineasDeTendencia(otro, comp, comp.otro, true));
+    }
     var varias = lineas.length > 1;
     lineas.forEach(function (linea) {
       series.push({
@@ -314,7 +432,10 @@ export default function iniciar(PIVOTAL) {
         symbol: "circle",
         symbolSize: 4,
         z: 2,
-        lineStyle: { color: linea.color, width: 2 },
+        /* La serie comparada va PUNTEADA ademas de con su color: es lo que la deja distinguir
+           en la hoja impresa, que JC lee en blanco y negro. */
+        lineStyle: { color: linea.color, width: 2,
+                     type: linea.comparada ? "dashed" : "solid" },
         itemStyle: { color: linea.color },
         /* El area rellena solo con una serie: con dos, taparia a la otra. */
         areaStyle: varias ? undefined : { color: linea.color, opacity: 0.12 },
@@ -343,47 +464,62 @@ export default function iniciar(PIVOTAL) {
        Nunca menos de 5 marcas rotuladas: partiendo de 8 intervalos o mas, saltear de a una
        deja 5 o mas, que es el minimo del protocolo (seccion 7). `getHeight()` se relee en
        cada render, asi que al agrandar la ventana vuelven todas las etiquetas. */
+    /* La escala del cuadro. Con la segunda medida prendida la manda el build (la calcula
+       sobre las dos series juntas cuando comparten unidad, o manda una segunda escala para el
+       eje derecho cuando no); con un segundo valor encima se elige, entre las dos escalas que
+       mando el build, la que contiene a la otra. */
+    var extra = comp && comp.medida ? medidaExtra(panel, comp.medida) : null;
+    var extraOtro = otro && comp.medida ? medidaExtra(otro, comp.medida) : null;
+    var eje = ejeQueContiene((extra && extra.eje) || panel.eje,
+                             otro ? ((extraOtro && extraOtro.eje) || otro.eje) : null);
+    var ejeDerecho = ejeQueContiene((extra && extra.eje2) || panel.eje2,
+                                    otro ? ((extraOtro && extraOtro.eje2) || otro.eje2) : null);
+
     function etiquetaLegible(v) {
-      var intervalos = Math.round((panel.eje.max - panel.eje.min) / panel.eje.paso);
+      var intervalos = Math.round((eje.max - eje.min) / eje.paso);
       /* El area de dibujo es el alto del canvas menos el cromo de arriba (leyenda + nombre
          del eje) y las campañas rotadas de abajo: ~70px que no son plot. Menos de ~13px por
          intervalo = etiquetas pisadas. */
       if (intervalos >= 8 && (chart.getHeight() - 70) < intervalos * 13) {
-        var indice = Math.round((v - panel.eje.min) / panel.eje.paso);
+        var indice = Math.round((v - eje.min) / eje.paso);
         if (indice % 2 === 1) { return ""; }
       }
-      return PIVOTAL.etiquetaEje(panel.eje, v);
+      return PIVOTAL.etiquetaEje(eje, v);
     }
 
+    /* Los cuadros compactos del tablero van sin escala a la vista cuando el spec no la pide:
+       el numero se lee en el hover y el panel es chico. Pero en cuanto aparece un SEGUNDO eje
+       (la segunda medida, que trae otra unidad) hay que rotular los dos: un cuadro con una
+       escala rotulada y otra muda invita a leer las dos series contra la misma, que es
+       justo lo que el protocolo prohibe. */
+    var conEscala = !!(panel.eje_visible || ejeDerecho);
     var ejes = [{
       type: "value",
-      min: panel.eje.min,
-      max: panel.eje.max,
-      interval: panel.eje.paso,
-      name: panel.eje_visible ? panel.eje.nombre : undefined,
+      min: eje.min,
+      max: eje.max,
+      interval: eje.paso,
+      name: conEscala ? eje.nombre : undefined,
       nameLocation: "end",
       nameGap: 8,
       nameTextStyle: { fontSize: 10, color: PIVOTAL.color("--texto-apoyo"), align: "left" },
-      axisLabel: panel.eje_visible
+      axisLabel: conEscala
         ? { show: true, fontSize: 10, color: PIVOTAL.color("--texto-apoyo"),
             formatter: etiquetaLegible }
         : { show: false },
       splitLine: { lineStyle: { color: PIVOTAL.color("--fondo-apoyo") } }
     }];
-    if (panel.eje2) {
-      ejes.push({
-        type: "value",
-        min: panel.eje2.min,
-        max: panel.eje2.max,
-        interval: panel.eje2.paso,
-        axisLabel: { show: false },
-        splitLine: { show: false }
-      });
-    }
+    /* Eje derecho: solo aparece con una segunda medida de OTRA unidad, y va con su unidad
+       rotulada (regla 3 de JC: nunca dos escalas sobre el mismo eje). Es el mismo eje derecho
+       del cuadro combinado, con el mismo dibujante. */
+    if (ejeDerecho) { ejes.push(ejeDeValores(ejeDerecho, "right")); }
 
     chart.setOption({
       animation: false,
-      grid: { left: 4, right: 8, top: (varias ? 26 : 12) + (panel.eje_visible ? 12 : 0),
+      /* Lugar para la leyenda arriba: con mas de dos series (una comparacion sobre un cuadro
+         que ya traia dos medidas) envuelve a dos renglones y sin este aire se monta sobre la
+         primera marca del eje. */
+      grid: { left: 4, right: 8,
+              top: (varias ? (lineas.length > 2 ? 40 : 26) : 12) + (conEscala ? 12 : 0),
               bottom: 4, containLabel: true },
       legend: varias
         ? { top: 0, left: 0, itemWidth: 14, itemHeight: 8,
@@ -398,7 +534,7 @@ export default function iniciar(PIVOTAL) {
           lineas.forEach(function (linea) {
             html += "<br>" + (linea.nombre ? linea.nombre + ": " : "") + linea.textos[i];
           });
-          if (panel.referencia) {
+          if (panel.referencia && !otro) {
             html += "<br><span style=\"color:var(--texto-apoyo)\">" + panel.referencia.nombre + ": " +
                     panel.referencia.textos[i] + "</span>";
           }
@@ -473,11 +609,11 @@ export default function iniciar(PIVOTAL) {
        - `tabla`:   un bloque con las categorias del grafico como columnas (maqueta "Agri 2");
        - `columnas` + `filas`: el caso plano de siempre.
      El nodo puede no existir: un panel sin `[data-tabla-datos]` simplemente no la dibuja. */
-  function pintarTablaDatos(nodo, panel) {
+  function pintarTablaDatos(nodo, panel, propios) {
     var caja = nodo.querySelector("[data-tabla-datos]");
     if (!caja) { return; }
     PIVOTAL.vaciar(caja);
-    var bloques = panel.bloques
+    var bloques = propios || panel.bloques
       || (panel.tabla ? [panel.tabla] : [{ columnas: panel.columnas, filas: panel.filas }]);
     bloques.forEach(function (bloque) {
       caja.appendChild(armarTablaCampanias(bloque.columnas, bloque.filas));
@@ -594,16 +730,70 @@ export default function iniciar(PIVOTAL) {
      El primer cuadro de la maqueta "Agri 2" (JC lo dibuja con barras `clustered` de bultos y
      una linea de toneladas sobre un eje secundario). Las dos series miden la misma carga en
      unidades distintas: por eso dos ejes y no uno. */
+  /* El nombre de una serie del combo: el suyo, o el rotulado con su sujeto cuando hay dos
+     productos encima ("Cebolla · Bolsas" contra "Papa · Bultos"). La plantilla viene del spec. */
+  function nombreDeSerie(comp, sujeto, nombre) {
+    return comp ? comp.serie.replace("{valor}", sujeto).replace("{medida}", nombre) : nombre;
+  }
+
+  /* Las dos series de un panel combinado (barras de conteo + linea de volumen), listas para
+     ECharts. `comparada` las pinta con el color de comparacion de su misma rampa y, la linea,
+     punteada. */
+  function seriesDelCombo(panel, comp, sujeto, comparada) {
+    var colorBarras = comparada ? (panel.barras.color_comp || panel.barras.color)
+                                : panel.barras.color;
+    var colorLinea = comparada ? (panel.linea.color_comp || panel.linea.color)
+                               : panel.linea.color;
+    return [
+      {
+        name: nombreDeSerie(comp, sujeto, panel.barras.nombre),
+        type: "bar",
+        yAxisIndex: 0,
+        data: panel.barras.puntos,
+        barMaxWidth: 34,
+        itemStyle: { color: colorBarras }
+      },
+      {
+        name: nombreDeSerie(comp, sujeto, panel.linea.nombre),
+        type: "line",
+        yAxisIndex: 1,
+        data: panel.linea.puntos,
+        smooth: false,
+        connectNulls: false,
+        symbol: "circle",
+        symbolSize: 5,
+        z: 3,
+        lineStyle: { color: colorLinea, width: 2, type: comparada ? "dashed" : "solid" },
+        itemStyle: { color: colorLinea }
+      }
+    ];
+  }
+
+  function filaDeTooltip(panel, comp, sujeto, i) {
+    return "<br>" + nombreDeSerie(comp, sujeto, panel.barras.nombre) + ": "
+         + panel.barras.textos[i]
+         + "<br>" + nombreDeSerie(comp, sujeto, panel.linea.nombre) + ": "
+         + panel.linea.textos[i];
+  }
+
   function pintarCombo(nodo, panel) {
+    var comp = PIVOTAL.comparacion(nodo.dataset.panel);
+    var otro = panelComparado(comp);
+    textosComparados(nodo, panel, comp, otro);
     /* La tabla de datos que JC pega debajo del grafico (maqueta "Agri 2"): las dos series
-       como filas y los mismos años como columnas. */
-    pintarTablaDatos(nodo, panel);
+       como filas y los mismos años como columnas. Comparando van las dos tablas, una debajo
+       de la otra, cada una con sus filas rotuladas con su producto (`tabla_comp`): dos
+       bloques con los mismos rotulos no se podrian distinguir. */
+    pintarTablaDatos(nodo, panel, otro ? [panel.tabla_comp, otro.tabla_comp] : null);
     var chart = PIVOTAL.grafico(nodo.querySelector("[data-grafico]"));
+    var series = seriesDelCombo(panel, comp, comp ? comp.sujeto : "", false);
+    if (otro) { series = series.concat(seriesDelCombo(otro, comp, comp.otro, true)); }
     chart.setOption({
       animation: false,
-      /* `top` deja lugar para la leyenda (una linea) MAS el nombre del eje, que ECharts
-         dibuja encima de la primera marca: con menos, "Bolsas" se montaba sobre el 2.500.000. */
-      grid: { left: 4, right: 4, top: 40, bottom: 4, containLabel: true },
+      /* `top` deja lugar para la leyenda MAS el nombre del eje, que ECharts dibuja encima de
+         la primera marca: con menos, "Bolsas" se montaba sobre el 2.500.000. Comparando, la
+         leyenda son cuatro entradas y se va a dos renglones. */
+      grid: { left: 4, right: 4, top: otro ? 54 : 40, bottom: 4, containLabel: true },
       legend: {
         top: 0, left: 0, itemWidth: 14, itemHeight: 8,
         textStyle: { fontSize: 10, color: PIVOTAL.color("--texto-apoyo") }
@@ -613,36 +803,20 @@ export default function iniciar(PIVOTAL) {
         confine: true,
         formatter: function (params) {
           var i = params[0].dataIndex;
-          return "<b>" + panel.etiquetas[i] + "</b>"
-            + "<br>" + panel.barras.nombre + ": " + panel.barras.textos[i]
-            + "<br>" + panel.linea.nombre + ": " + panel.linea.textos[i];
+          var html = "<b>" + panel.etiquetas[i] + "</b>"
+            + filaDeTooltip(panel, comp, comp ? comp.sujeto : "", i);
+          if (otro) { html += filaDeTooltip(otro, comp, comp.otro, i); }
+          return html;
         }
       },
       xAxis: ejeDeCategorias(panel),
-      yAxis: [ejeDeValores(panel.eje, "left"), ejeDeValores(panel.eje2, "right")],
-      series: [
-        {
-          name: panel.barras.nombre,
-          type: "bar",
-          yAxisIndex: 0,
-          data: panel.barras.puntos,
-          barMaxWidth: 34,
-          itemStyle: { color: panel.barras.color }
-        },
-        {
-          name: panel.linea.nombre,
-          type: "line",
-          yAxisIndex: 1,
-          data: panel.linea.puntos,
-          smooth: false,
-          connectNulls: false,
-          symbol: "circle",
-          symbolSize: 5,
-          z: 3,
-          lineStyle: { color: panel.linea.color, width: 2 },
-          itemStyle: { color: panel.linea.color }
-        }
-      ]
+      /* Una escala por unidad, la que contiene a las dos series de esa unidad. Nunca se
+         mezclan bultos y toneladas en un mismo eje (regla 3 de JC). */
+      yAxis: [
+        ejeDeValores(ejeQueContiene(panel.eje, otro ? otro.eje : null), "left"),
+        ejeDeValores(ejeQueContiene(panel.eje2, otro ? otro.eje2 : null), "right")
+      ],
+      series: series
     }, true);
   }
 

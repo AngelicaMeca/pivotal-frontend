@@ -42,6 +42,14 @@
   --radio-pildora: 999px;
   /* Fila marcada de una tabla: el rosa de seleccion, apenas insinuado sobre la caja */
   --resaltado: color-mix(in srgb, {{ c.seleccion }} 22%, {{ c.fondo_cuadro }});
+  /* Apertura y cierre del zoom. Corto a proposito: esto es una herramienta de trabajo, no una
+     presentacion. El mismo numero esta en comun.js (ZOOM_MS), que lo necesita para la red de
+     seguridad del transitionend; si se cambia aca, se cambia alla. */
+  --zoom-dur: 220ms;
+  /* Arranca despacio y frena: el cuadro se despega de su celda y se acomoda. Una curva que
+     dispara al principio (ease-out puro) llega al 90% en un tercio del tiempo y se pierde el
+     gesto, que es justamente lo que se pidio mostrar. */
+  --zoom-curva: cubic-bezier(.4, 0, .2, 1);
 }
 
 * { box-sizing: border-box; }
@@ -1400,3 +1408,196 @@ table.matriz-od th.esquina { font-weight: 500; color: var(--texto-apoyo); }
    tamaño que tenia el canvas en su caja, sin deformarla. */
 .imprimiendo .grafico-en-pantalla { display: none; }
 .imprimiendo .grafico-impreso { display: block; width: 100%; height: 100%; object-fit: contain; }
+
+/* ---------- Zoom: un cuadro a PANTALLA COMPLETA (Francisco, 24-sep-2026) ----------
+   El "Zoom" que JC dibuja al pie de sus cuadros, al lado de "Generar PDF" (maqueta de
+   pasturas y forrajes, hoja "Agri 3 - C"). Lo abre comun.js con un <dialog> nativo y
+   showModal(): el panel REAL se muda adentro del dialogo y vuelve a su lugar al cerrar.
+
+   Este bloque va AL FINAL de la hoja a proposito. Adentro del dialogo el panel sigue siendo
+   descendiente de `.tablero` para el CSS (un dialogo modal cambia donde se DIBUJA, no donde
+   esta colgado), asi que hereda todo el cromo de su cuadro -que es lo que se quiere: el mismo
+   cuadro, mas grande- y lo unico que hay que corregir son los altos escritos para una celda
+   del tablero. Varias de esas reglas tienen la misma especificidad que estas: al estar
+   despues, estas ganan. Si alguien mueve este bloque mas arriba, el grafico deja de estirarse.
+
+   El punto del pedido son los CONTROLES: en el tablero van chicos porque todo tiene que
+   entrar en una pantalla, y aca hay lugar de sobra. Los del propio panel viajan con el; los
+   de afuera (la tira de anios, los chips de la barra) los copia comun.js a la barra de
+   arriba. Los dos juegos se agrandan aca: cuerpo de letra Y area de click. */
+dialog.zoom {
+  position: fixed; inset: 0; width: 100%; height: 100%; max-width: 100%; max-height: 100%;
+  margin: 0; border: 0; overflow: hidden;
+  background: transparent; color: var(--texto);
+  /* El MARCO de fondo, y es funcional antes que decorativo: el dialogo ocupa la ventana
+     entera y el unico pedazo suyo que queda a la vista es este borde. Sin el, `.zoom-caja`
+     tapaba el 100% del dialogo, el click nunca llegaba al fondo y el "click afuera para
+     cerrar" no cerraba nada (estaba roto desde la primera version, 24-sep-2026).
+     De paso el cuadro ampliado se ve FLOTANDO sobre el tablero en vez de taparlo entero, que
+     es lo que acompania al gesto de "creci desde ahi" de la animacion. Va en `padding` y no
+     en un margen de la caja para que el area de fondo sea del DIALOGO -que es el nodo que
+     escucha el click- y no un hueco entre dos cajas. */
+  padding: 2vmin;
+}
+.zoom-caja {
+  width: 100%; height: 100%; padding: .9rem 1.1rem 1.1rem;
+  display: flex; flex-direction: column; gap: .7rem;
+  background: var(--fondo);
+  /* La caja es una tarjeta mas del sitio: mismo radio y mismo borde fino que los paneles. Sin
+     sombras ni degradados (regla del tema): lo que la despega del tablero es el fondo oscuro
+     del ::backdrop. */
+  border: 1px solid var(--borde-panel); border-radius: var(--radio);
+}
+
+/* ---- apertura y cierre: el cuadro CRECE desde donde estaba (Francisco, 24-sep-2026) ----
+   Aparecia de golpe. Ahora la caja del dialogo arranca encogida sobre el rectangulo que
+   ocupaba el panel en el tablero y crece hasta la pantalla; al cerrar, el camino inverso
+   hasta el hueco que dejo. Ese gesto es el que hace entender de donde salio el cuadro y a
+   donde vuelve: un desvanecido no lo cuenta.
+
+   Se anima `transform` y NADA mas. Es lo unico que el navegador mueve sin rehacer la pagina
+   en cada cuadro, y sobre todo: el transform no cambia el layout, asi que la caja mide lo
+   mismo que a pantalla completa desde el primer cuadro y ECharts nunca ve una medida
+   intermedia. Animar el alto o el ancho romperia justo eso (el mapa se calcula con el tamanio
+   de su caja). El rectangulo de partida lo mide comun.js antes de mudar el panel -es el mismo
+   con el que le fija el alto al hueco- y lo escribe como transform en linea. */
+.zoom-caja {
+  transform-origin: 0 0;
+  transition: transform var(--zoom-dur) var(--zoom-curva);
+}
+/* Mientras la caja se mueve, el dialogo no recibe clicks (pointer-events se hereda, asi que
+   tampoco lo de adentro). Sin esto, el segundo click de un doble click sobre "Zoom" cae sobre
+   el fondo del dialogo recien abierto y lo cierra en el acto. */
+dialog.zoom.zoom-animando { pointer-events: none; }
+/* El fondo oscuro acompania con su propia transicion. El ::backdrop nace junto con
+   showModal(), o sea sin estado anterior del que partir: por eso comun.js fuerza un reflow con
+   la clase afuera y recien despues la pone. Se anima la opacidad y no el color para no pasar
+   por gris al aclararse. */
+dialog.zoom::backdrop {
+  background: color-mix(in srgb, var(--cromo) 78%, transparent);
+  opacity: 0;
+  transition: opacity var(--zoom-dur) var(--zoom-curva);
+}
+dialog.zoom.zoom-visible::backdrop { opacity: 1; }
+/* Hay gente que se marea con el movimiento. El zoom sigue funcionando igual: abre y cierra en
+   seco. comun.js ademas no arranca la animacion (mira la misma preferencia), asi que el
+   repintado del grafico no depende de un transitionend que no va a llegar. */
+@media (prefers-reduced-motion: reduce) {
+  .zoom-caja, dialog.zoom::backdrop { transition: none; }
+}
+.zoom-barra { flex: 0 0 auto; display: flex; align-items: center; gap: 1rem; }
+.zoom-controles {
+  flex: 1 1 auto; min-width: 0;
+  display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1.4rem;
+}
+.zoom-cerrar {
+  flex: 0 0 auto; width: 2.4rem; height: 2.4rem; border-radius: var(--radio-pildora);
+  border: 1px solid var(--borde-panel); background: var(--fondo-cuadro); color: var(--texto);
+  font: inherit; font-size: 1.1rem; line-height: 1; cursor: pointer;
+}
+.zoom-cerrar:hover { background: var(--fondo-apoyo); }
+/* El cuadro se queda con TODO el alto que sobra. `min-height: 0` es lo que deja que el panel
+   se encoja adentro del reparto: sin el, su pie de fuente se cae fuera del recorte. */
+.zoom-marco { flex: 1 1 auto; min-height: 0; display: flex; }
+.zoom .zoom-marco > .panel { flex: 1 1 auto; min-width: 0; min-height: 0; }
+.zoom .zoom-marco > .panel > .panel-cuerpo { min-height: 0; }
+/* El hueco que queda en la grilla mientras el cuadro esta afuera: comun.js le fija el alto
+   que tenia el panel para que el tablero no se desarme detras del dialogo. Se dibuja como una
+   caja vacia del mismo tamanio y no en blanco, que se leeria como un cuadro roto. */
+.zoom-hueco {
+  border: 1px dashed var(--borde-panel); border-radius: var(--radio);
+  background: color-mix(in srgb, var(--fondo-cuadro) 50%, transparent);
+}
+/* El propio "Zoom" no se dibuja adentro del zoom: ya estas ahi. Se sale con la cruz, con
+   Escape o con un click afuera. */
+.zoom .zoom-marco [data-utilidad="zoom"] { display: none; }
+
+/* Los altos escritos para la celda del tablero: adentro del dialogo el grafico se estira. */
+.zoom .zoom-marco .panel[data-panel="tendencia"] .grafico,
+.zoom .zoom-marco .panel[data-panel="combo"] > .panel-cuerpo > .grafico,
+.zoom .zoom-marco .panel[data-panel="apiladas"] > .panel-cuerpo > .grafico,
+.zoom .zoom-marco .panel-precios > .panel-cuerpo > .grafico {
+  height: auto; flex: 1 1 auto; min-height: 0;
+}
+.zoom .zoom-marco .panel[data-panel="anillo"] .anillo-caja,
+.zoom .zoom-marco .panel[data-panel="anillo"] .anillo-caja > .grafico,
+.zoom .zoom-marco .panel[data-panel="mapa"] > .panel-cuerpo > .grafico { min-height: 0; }
+/* En el tablero la leyenda del anillo se esconde (no entra al lado del donut) y la nota se
+   recorta a una linea. En pantalla completa entran las dos enteras. */
+.zoom .zoom-marco .panel[data-panel="anillo"] .anillo-leyenda { display: flex; }
+.zoom .zoom-marco .panel[data-panel="anillo"] .anillo-nota { display: block; }
+.zoom .zoom-marco .panel[data-panel="anillo"] .cuadro-nota { -webkit-line-clamp: none; }
+
+/* Texto del cuadro ampliado: titulo, fuente y notas suben de cuerpo con la caja. */
+.zoom .zoom-marco .panel .panel-cab h2 { font-size: 1.3rem; }
+.zoom .zoom-marco .panel .panel-cab-mockup h2 { font-size: 1.25rem; }
+.zoom .zoom-marco .panel .panel-sub,
+.zoom .zoom-marco .panel .precios-titulo { font-size: 1rem; }
+.zoom .zoom-marco .panel .panel-pie,
+.zoom .zoom-marco .panel .panel-fuente { font-size: .85rem; }
+.zoom .zoom-marco .panel .cuadro-nota,
+.zoom .zoom-marco .panel .anillo-total-linea,
+.zoom .zoom-marco .panel .total-provincial { font-size: .85rem; }
+.zoom .zoom-marco .panel .panel-accion { font-size: .72rem; }
+.zoom .zoom-marco .panel .panel-accion img { width: 1.05rem; height: 1.05rem; }
+.zoom .zoom-marco .panel table { font-size: .85rem; }
+.zoom .zoom-marco .panel thead th { font-size: .7rem; }
+.zoom .zoom-marco .panel th, .zoom .zoom-marco .panel td { padding: .2rem .45rem; }
+
+/* ---- los controles, que es lo que pidio Francisco: grandes de verdad ----
+   Mismo tratamiento para los que viajan con el panel (.zoom-marco) y para las copias de los
+   de afuera (.zoom-controles): el usuario no tiene por que saber cual es cual. */
+.zoom .zoom-controles .rotulo,
+.zoom .zoom-controles .periodo-rotulo { font-size: .8rem; letter-spacing: .1em; }
+.zoom .zoom-controles .periodo { gap: .6rem; }
+.zoom .zoom-controles .periodo-tira button,
+.zoom .zoom-controles .chips button,
+.zoom .zoom-controles .panel-toggle button,
+.zoom .zoom-marco .panel-toggle button {
+  font-size: .85rem; letter-spacing: .04em; padding: .4rem .8rem; line-height: 1.2;
+}
+.zoom .zoom-controles .filtro-select {
+  font-size: .95rem; padding: .4rem .8rem; max-width: none;
+}
+.zoom .zoom-controles .chips { gap: .3rem; }
+.zoom .zoom-controles .chip-ico { width: 1.2rem; height: 1.2rem; }
+/* Chips con icono (el selector de cultivo del mockup y los de producto de la maqueta) */
+.zoom .zoom-controles .selector-cultivo,
+.zoom .zoom-marco .selector-cultivo.chips-en-panel { gap: .35rem .6rem; }
+.zoom .zoom-controles .chip-ico-caja,
+.zoom .zoom-marco .chips-en-panel .chip-ico-caja { width: 2rem; height: 2rem; }
+.zoom .zoom-controles .chip-nombre,
+.zoom .zoom-marco .chips-en-panel .chip-nombre { font-size: .9rem; padding: .25rem .7rem; }
+.zoom .zoom-controles .chip-grande { font-size: .95rem; padding: .35rem .9rem; }
+/* Los controles propios del cuadro de precios (sub-pestanias, chips y seis desplegables) */
+.zoom .zoom-marco .precios-pestania,
+.zoom .zoom-marco .precios-chip { font-size: .85rem; padding: .3rem .8rem; }
+.zoom .zoom-marco .precios-controles { gap: .5rem .8rem; }
+.zoom .zoom-marco .precios-control .rotulo { font-size: .72rem; }
+.zoom .zoom-marco .precios-control select { font-size: .9rem; padding: .3rem .5rem; }
+
+/* ---------- Cruzar datos: los dos controles de comparacion (Francisco, 24-sep-2026) -------
+   Viven adentro del panel y OCULTOS; el zoom los muda a su barra y los muestra. En el tablero
+   no se dibujan: la maqueta de JC son cuatro cuadros y una pantalla.
+   El `[hidden]` va explicito porque `display: flex` le gana a la hoja del navegador y sin esta
+   regla los dos desplegables se verian en el tablero. */
+.comparar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .4rem 1rem;
+  padding-left: 1.2rem; border-left: 1px solid var(--borde-panel);
+}
+.comparar[hidden] { display: none; }
+.comparar-control { display: inline-flex; align-items: center; gap: .5rem; }
+/* La aclaracion de que la comparacion no viaja al PDF: es una nota, no un control, y se lee
+   despues de ellos. */
+.comparar-nota {
+  flex: 1 0 100%; margin: 0;
+  font-size: .78rem; color: var(--texto-apoyo);
+}
+.zoom .comparar .rotulo { font-size: .8rem; letter-spacing: .1em; }
+.zoom .comparar .filtro-select { font-size: .95rem; padding: .4rem .8rem; max-width: none; }
+
+/* Seguro: si algo llegara a imprimirse con un cuadro ampliado, la hoja sale sin el dialogo.
+   El camino normal es otro -comun.js cierra el zoom antes de imprimir- porque el PDF es
+   siempre el tablero completo, y con el panel afuera de su celda la hoja saldria con un
+   hueco donde iba el cuadro. */
+.imprimiendo dialog.zoom { display: none; }

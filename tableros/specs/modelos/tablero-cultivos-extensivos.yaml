@@ -110,6 +110,115 @@ con_cultivo_todos:
   nota_interpretacion: "qué va en el lugar de los 3 indicadores caídos sigue abierto (backlog 29)"
 
 # ---------------------------------------------------------------------------
+# ZOOM: ampliar un cuadro a pantalla completa (Francisco, 24-sep-2026)
+# ---------------------------------------------------------------------------
+zoom_de_los_cuadros:
+  pedido_por: "Francisco, 24-sep-2026"
+  palabra_de_jc: "Zoom"
+  origen: >
+    No es un invento nuestro: JC ya lo tiene dibujado en su maqueta de pasturas y forrajes
+    (hoja "Agri 3 - C" de "0000000000 Modelo 1 - Pasturas y forrajes (1).xlsx"), donde al pie
+    de los cuadros escribe "Generar PDF" y "Zoom". Se usa su palabra, sin traducir.
+  que_hace: >
+    Abre ESE cuadro a pantalla completa -su grafico, su tabla si la tiene, su titulo, su
+    fuente y sus notas- con los controles que lo gobiernan adentro y mas grandes. El motivo
+    del pedido son los controles: en el tablero los chips y los desplegables van chicos
+    porque todo tiene que entrar en una pantalla, y asi son dificiles de usar.
+  donde_se_declara: >
+    Panel por panel (`paneles.<id>.acciones`), nunca a nivel del tablero: es lo unico que
+    garantiza que no aparezca en un cuadro que no tiene nada que ampliar. No se prende sola.
+  que_cuadros_la_llevan: "mapa, tendencia y anillo (los tres cuadros con grafico)"
+  que_cuadros_no: "tabla-datos y top son tablas, y utilidades e informacion-relacionada no son cuadros de datos"
+  animacion: >
+    Abre y cierra con movimiento, pedido de Francisco (24-sep-2026: "una animacion para
+    hacerlo mas fluido"). El cuadro CRECE desde el lugar que ocupaba en el tablero hasta la
+    pantalla completa y al cerrar vuelve a su lugar, en 220 ms, con el fondo oscuro
+    acompaniando. El gesto es el que explica de donde salio el cuadro y a donde vuelve; un
+    simple desvanecido no lo cuenta. Quien tenga puesto "reducir movimiento" en su sistema lo
+    sigue viendo abrir y cerrar en seco.
+  marco_y_click_afuera: >
+    El dialogo deja un marco de fondo de 2vmin alrededor del cuadro. No es decoracion: el
+    dialogo ocupa la ventana entera y ese marco es el UNICO pedazo suyo que queda a la vista,
+    o sea la unica superficie donde puede caer un click "afuera". Sin el, la caja tapaba el
+    100% del dialogo y el cierre por click en el fondo no funcionaba desde la primera version
+    (lo verifico Francisco el 24-sep-2026). De paso el cuadro ampliado se ve flotando sobre el
+    tablero en vez de taparlo entero, que acompania al gesto de "creci desde ahi" de la
+    animacion. La animacion se calcula contra la CAJA y no contra la ventana: con el marco ya
+    no miden lo mismo.
+  sobre_el_pdf: >
+    Si hay un cuadro ampliado, "Generar PDF" lo cierra ANTES de imprimir. El formato de la
+    hoja lo define la clase `imprimiendo` sobre el tablero entero y un dialogo modal no se
+    imprime: el PDF es siempre el tablero completo con la seleccion vigente.
+
+# ---------------------------------------------------------------------------
+# CRUZAR DATOS: la comparacion adentro del zoom (Francisco, 24-sep-2026)
+# ---------------------------------------------------------------------------
+cruzar_datos:
+  pedido_por: "Francisco, 24-sep-2026"
+  que_pidio: >
+    Dos formas de cruce, elegidas por el explicitamente: dos VALORES DEL MISMO FILTRO
+    superpuestos en un mismo grafico (dos cultivos, dos departamentos, dos anios) y dos
+    MEDIDAS distintas de la misma base, con dos ejes cuando no comparten unidad. Descarto la
+    tercera forma que estaba sobre la mesa: unir bases distintas en un mismo cuadro.
+  donde_vive: >
+    Adentro del ZOOM y en ningun otro lado. El tablero es la maqueta literal de JC -cuatro
+    cuadros, una pantalla- y meterle selectores de comparacion romperia justo lo que el pidio
+    que se respetara; el zoom ya tiene su barra de controles y lugar de sobra. Francisco lo
+    sabe y esta de acuerdo. Son dos desplegables APAGADOS por defecto, y al cerrar el zoom la
+    comparacion se apaga sola: el tablero vuelve a ser el de JC.
+  que_cuadros_la_llevan: "tendencia (la evolucion por campanias), y ninguno mas"
+  que_cuadros_no: >
+    El mapa no: un mapa no admite dos cultivos encima, y pintar un departamento con dos valores a la vez es imposible sin mentir. El anillo tampoco: dos anillos superpuestos no son nada, y ademas ese cuadro ya muestra todos los cultivos juntos. El ranking y la tabla de datos tampoco: serian dos ordenes distintos en la misma tabla.
+  reglas_de_jc_que_la_condicionan:
+    nunca_se_combinan_en_un_numero: >
+      Las dos series no se suman ni se promedian NUNCA: se dibujan una al lado de la otra. El
+      rendimiento no se promedia entre cultivos y un precio no se suma. Cada serie sale de su
+      propia combinacion del payload, ya calculada por el build; el navegador no hace una sola
+      cuenta.
+    cobertura_despareja: >
+      En este cuadro las campanias sin dato ya viajan como huecos y no se dibujan (`connectNulls: false`): una serie que arranca mas tarde no baja a cero, se corta. Comparando, la nota del cuadro se queda ademas con las notas de LAS DOS series.
+    unidades: >
+      Si las dos medidas comparten unidad va UN solo eje (el build recalcula la escala sobre
+      las dos series juntas para que la segunda entre entera). Si no la comparten, van dos
+      ejes y cada uno con su unidad rotulada, con la misma cantidad de intervalos para que las
+      marcas caigan sobre las mismas lineas de grilla. Nunca dos escalas sobre el mismo eje.
+    colores: >
+      Los manda el protocolo y no se inventa ninguna paleta. La serie comparada usa OTRO PASO DE LA MISMA RAMPA de su variable: la produccion de soja contra la produccion de maiz sigue siendo produccion, asi que no le corresponde otro color sino otra intensidad del mismo.
+      Lo que distingue a las dos series ademas del tono es el PUNTEADO de la comparada, que es
+      lo unico que sobrevive a la impresion en blanco y negro con la que lee JC. Queda como
+      pregunta para JC en el backlog: si prefiere otra cosa, se cambia en el protocolo y
+      cambia en todo el sitio.
+    leyenda_y_titulo: >
+      La leyenda dice que es cada serie sin ambiguedad ("Soja: Produccion") y el titulo del
+      cuadro refleja que hay comparacion ("... Evolucion ... - comparado con Maiz"). Las dos
+      frases salen de las
+      plantillas de este spec: el navegador sustituye slots, no escribe texto.
+  sobre_el_pdf:
+    decision: "El PDF sigue siendo el TABLERO completo. La comparacion no viaja."
+    por_que: >
+      El formato de la hoja lo define la clase `imprimiendo` sobre el tablero entero y un
+      dialogo modal no se imprime: con el cuadro ampliado afuera de su celda, la hoja saldria
+      con un hueco donde iba el cuadro. Imprimir SOLO el cuadro ampliado seria otro producto
+      (otra hoja, con su propio formato) y nadie lo pidio. Se eligio lo mas simple y
+      predecible: "Generar PDF" cierra el zoom -y con el la comparacion- e imprime el tablero
+      con la seleccion vigente.
+    como_se_avisa: >
+      No se deja que el usuario lo descubra perdiendo lo que estaba mirando: la barra del zoom
+      lo dice al lado de los dos desplegables, con el texto de
+      `paneles.<id>.comparacion.nota`.
+    si_alguna_vez_se_quiere_al_reves: >
+      Habria que darle al cuadro ampliado su propio formato de hoja (una pagina, un cuadro, su
+      fuente y sus notas) y decidir que pasa con el resto del tablero. Es otra tarea y va al
+      backlog, no una variante de esta.
+  payload: >
+    La comparacion por valor no agrega un byte al JSON de datos: es una segunda clave de
+    combinacion y los combos ya estan en el payload (si el archivo esta partido por ese mismo
+    filtro, el navegador baja la otra particion a pedido, como hace para cualquier cambio de
+    ese filtro). Lo unico que se agrego son las series de la segunda medida (`medidas_extra`)
+    donde el cuadro la ofrece, y el color de comparacion de cada serie. No se genera el
+    producto cartesiano de las comparaciones posibles: seria imposible de sostener.
+
+# ---------------------------------------------------------------------------
 # PANELES (los del mockup, LITERALES)
 # ---------------------------------------------------------------------------
 # Sin badges de tipo de gráfico (formato_v1.sin_leyendas_de_tipo_de_grafico) y SIN links
@@ -121,6 +230,9 @@ paneles:
     # miniatura y está deformado"; regla formato_v1.tercera_tanda.mapa_grande). La caja se
     # adapta al mapa, nunca al revés.
     rotulo_accion: "Seleccione departamento"   # arriba del mapa, como el mockup; el panel no lleva otro título
+    # Zoom: este cuadro se puede ampliar a pantalla completa (ver `zoom_de_los_cuadros`).
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
     variables: [sup_sembrada_ha, sup_cosechada_ha, produccion_tn, rendimiento_kg_ha]   # secuencia fija de JC
     fuente_al_pie: "Fuente: MAGyP (Ministerio de Agricultura, Ganadería y Pesca)"
     # (forma literal del mockup; pie_de_fuente.aclaracion_base_9. Backlog 14, respondida)
@@ -143,7 +255,36 @@ paneles:
     # RESUELTA). El período sale de las campañas realmente graficadas: el mockup dice
     # "2013/14 a 2024/25" pero la ventana sigue en 10 mientras JC no la amplíe (backlog 32).
     nota_interpretacion: "'Total' se lee como el recorte total (soja total, agregado provincial). Backlog 39."
+    # CRUZAR DATOS (ver `cruzar_datos`): los dos desplegables que el zoom le pone a
+    # este cuadro. Se compara por CULTIVO, que es el sujeto del cuadro: soja contra maíz sobre las mismas campañas.
+    comparacion:
+      filtro: cultivo
+      rotulo: "Comparar con"
+      ninguno: "Sin comparación"
+      # Plantillas de texto con slots. El navegador SUSTITUYE, no escribe: la leyenda,
+      # el título y la nota del cuadro comparado salen de acá.
+      plantilla_serie: "{valor} · {medida}"
+      plantilla_titulo: "{titulo} · comparado con {otro}"
+      plantilla_titulo_medida: "{titulo} · con {medida}"
+      plantilla_nota: "{nota} {otra}"
+      nota: "La comparación se ve solo acá: «Generar PDF» imprime siempre el tablero completo."
+      medidas:
+        rotulo: "Segunda medida"
+        ninguna: "Ninguna"
+        opciones:
+          - {v: rendimiento_kg_ha, t: "Rendimiento (kg/ha)"}
+        # Por que el rendimiento y no la superficie SEMBRADA, que es la otra variable que este
+        # cuadro no dibuja: sembrada y cosechada son el MISMO tipo de variable (superficie) y
+        # el protocolo les da la misma rampa, asi que las dos lineas saldrian del mismo color
+        # y no habria como distinguirlas; darle otro color a una de ellas seria romper la
+        # regla mas fuerte del protocolo. La sembrada ya se lee en la tabla de datos y en el
+        # ranking del mismo tablero. Queda como pregunta para JC en el backlog.
+        # El rendimiento, en cambio, tiene rampa propia (es un cociente, no un volumen) y otra
+        # unidad, asi que entra con su color y con su propio eje a la derecha.
     medidas: [sup_cosechada_ha, produccion_tn]
+    # Zoom: este cuadro se puede ampliar a pantalla completa (ver `zoom_de_los_cuadros`).
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
     grafico: lineas
     eje_vertical:
       visible: true                # JC: "no está el eje vertical y tampoco la escala"
@@ -168,6 +309,9 @@ paneles:
     top_n: 5
     resto: "Resto"
     sin_cifra_central: true
+    # Zoom: este cuadro se puede ampliar a pantalla completa (ver `zoom_de_los_cuadros`).
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
     # Cuarta tanda ("queda muy chico por el número en el medio; prefiero sacarlo y que quede
     # bien"): el anillo va SIN el total en el centro y usa el espacio del panel. El total
     # "(fina y gruesa)" se muestra fuera del centro (subtítulo o pie del panel). Es una

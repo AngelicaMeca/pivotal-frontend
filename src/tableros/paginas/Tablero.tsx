@@ -26,7 +26,13 @@
        stock), con los indicadores arriba y "Ver detalle" donde el spec lo declare.
 
    Sin badges de tipo de grafico: los saco JC el 10-ago-2026. */
-import type { AccionDeCuadro, Filtro, PaginaTablero, Panel } from "@/tableros/tipos";
+import type {
+  AccionDeCuadro,
+  ComparacionDeCuadro,
+  Filtro,
+  PaginaTablero,
+  Panel,
+} from "@/tableros/tipos";
 import Arranque from "./Arranque";
 import Cascara from "./Cascara";
 
@@ -229,6 +235,62 @@ function AccionesDeCuadro({ acciones }: { acciones?: AccionDeCuadro[] }) {
   );
 }
 
+/* CRUZAR DATOS: los dos controles del zoom (Francisco, 24-sep-2026).
+
+   Viven adentro del panel y OCULTOS: en el tablero no se dibujan -la maqueta de JC son cuatro
+   cuadros y una pantalla, y meterle selectores de comparacion rompe justo eso- y es el zoom el
+   que los muda a su barra al ampliar el cuadro, los muestra y los devuelve al cerrar. Van
+   adentro del panel porque son SUYOS: cada cuadro compara lo que su spec le habilita.
+
+   No llevan `data-control`: no forman parte de la clave de la combinacion de la pagina. Lo
+   que hacen es pedir una SEGUNDA clave (el mismo cuadro con otro valor del filtro) o una
+   segunda medida, y de eso se encarga comun.js.
+
+   Arrancan los dos apagados, con la opcion "sin comparacion" / "ninguna" primera y elegida. */
+function ControlesDeComparacion({ comparacion }: { comparacion?: ComparacionDeCuadro | null }) {
+  if (!comparacion) return null;
+  return (
+    <div
+      className="comparar"
+      hidden
+      data-comparar=""
+      data-filtro-base={comparacion.filtro}
+      data-serie={comparacion.plantilla_serie}
+      data-titulo={comparacion.plantilla_titulo}
+      data-titulo-medida={comparacion.plantilla_titulo_medida}
+      data-nota={comparacion.plantilla_nota}
+    >
+      <label className="comparar-control">
+        <span className="rotulo">{comparacion.rotulo}</span>
+        <select className="filtro-select" data-comparar-valor="" defaultValue="">
+          <option value="">{comparacion.ninguno}</option>
+          {comparacion.opciones.map((opcion) => (
+            <option key={opcion.v} value={opcion.v}>
+              {opcion.t}
+            </option>
+          ))}
+        </select>
+      </label>
+      {comparacion.medidas ? (
+        <label className="comparar-control">
+          <span className="rotulo">{comparacion.medidas.rotulo}</span>
+          <select className="filtro-select" data-comparar-medida="" defaultValue="">
+            <option value="">{comparacion.medidas.ninguna}</option>
+            {comparacion.medidas.opciones.map((opcion) => (
+              <option key={opcion.v} value={opcion.v}>
+                {opcion.t}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
+      {/* Lo que la comparacion NO hace, dicho donde se la prende: el PDF es siempre el tablero
+          completo (decision registrada en el spec de cada tablero). */}
+      <p className="comparar-nota">{comparacion.nota}</p>
+    </div>
+  );
+}
+
 // El toggle del panel es un control mas: mismo contrato data-* que los chips de la barra
 function TogglePanel({ filtro }: { filtro?: Filtro }) {
   if (!filtro) return null;
@@ -280,6 +342,10 @@ function PanelComun({ panel, filtro }: { panel: Panel; filtro?: Filtro }) {
 
       <div className="panel-pie">
         <span className="panel-fuente" data-pie=""></span>
+        {/* Las acciones del cuadro (hoy "Zoom") tambien en la disposicion generica: la tira
+            de acciones al pie es del CUADRO, no de una disposicion. Cada panel declara las
+            suyas en el spec; un cuadro sin gráfico no lleva ninguna y esto no dibuja nada. */}
+        <AccionesDeCuadro acciones={panel.acciones} />
         {/* El enlace solo aparece si la seccion ya tiene su vista de detalle construida */}
         {panel.detalle ? (
           <a className="panel-detalle" href={panel.detalle} data-conserva="">
@@ -287,6 +353,8 @@ function PanelComun({ panel, filtro }: { panel: Panel; filtro?: Filtro }) {
           </a>
         ) : null}
       </div>
+
+      <ControlesDeComparacion comparacion={panel.comparacion} />
     </section>
   );
 }
@@ -324,6 +392,7 @@ function PanelMockup({ panel, filtro }: { panel: Panel; filtro?: Filtro }) {
         <span className="panel-fuente" data-pie=""></span>
         <AccionesDeCuadro acciones={panel.acciones} />
       </div>
+      <ControlesDeComparacion comparacion={panel.comparacion} />
     </section>
   );
 }

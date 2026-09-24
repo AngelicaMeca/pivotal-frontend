@@ -114,6 +114,25 @@ export type PanelPrecios = {
   pie: string;
 };
 
+/* Los dos controles de CRUCE que el zoom le pone a un cuadro (Francisco, 24-sep-2026): uno
+   elige un segundo valor del filtro principal de ese cuadro y el otro una segunda medida. Los
+   declara el spec, panel por panel, y solo los cuadros de serie temporal los tienen: en un
+   mapa o en un anillo una segunda serie no se lee sin mentir.
+   Las `plantilla_*` son los textos con slots ({valor}, {medida}, {titulo}, {otro}, {nota},
+   {otra}): el navegador sustituye, nunca escribe. */
+export type ComparacionDeCuadro = {
+  filtro: string;
+  rotulo: string;
+  ninguno: string;
+  opciones: Opcion[];
+  plantilla_serie: string;
+  plantilla_titulo: string;
+  plantilla_titulo_medida: string;
+  plantilla_nota: string;
+  nota: string;
+  medidas: { rotulo: string; ninguna: string; opciones: Opcion[] } | null;
+};
+
 export type Panel = {
   id: string;
   titulo: string;
@@ -126,6 +145,8 @@ export type Panel = {
   // Panel con filtros y datos propios: hoy solo "Precios MCBA" (`forma: precios` en el spec).
   precios?: PanelPrecios;
   acciones?: AccionDeCuadro[];
+  // Solo en los cuadros donde el spec habilita cruzar datos (ver ComparacionDeCuadro)
+  comparacion?: ComparacionDeCuadro | null;
   // `accion` solo la traen los items del panel UTILIDADES: con accion se dibujan como boton
   // (la engancha comun.js), sin accion siguen deshabilitados con "Próximamente".
   items?: { etiqueta: string; icono?: string; accion?: string }[];

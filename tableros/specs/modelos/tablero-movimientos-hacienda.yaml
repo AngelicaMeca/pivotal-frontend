@@ -35,17 +35,132 @@ indicadores:
     introduccion:             {etiqueta: "Extracción",   recorte: extraccion}
 
 # ---------------------------------------------------------------------------
+# ZOOM: ampliar un cuadro a pantalla completa (Francisco, 24-sep-2026)
+# ---------------------------------------------------------------------------
+zoom_de_los_cuadros:
+  pedido_por: "Francisco, 24-sep-2026"
+  palabra_de_jc: "Zoom"
+  origen: >
+    No es un invento nuestro: JC ya lo tiene dibujado en su maqueta de pasturas y forrajes
+    (hoja "Agri 3 - C" de "0000000000 Modelo 1 - Pasturas y forrajes (1).xlsx"), donde al pie
+    de los cuadros escribe "Generar PDF" y "Zoom". Se usa su palabra, sin traducir.
+  que_hace: >
+    Abre ESE cuadro a pantalla completa -su grafico, su tabla si la tiene, su titulo, su
+    fuente y sus notas- con los controles que lo gobiernan adentro y mas grandes. El motivo
+    del pedido son los controles: en el tablero los chips y los desplegables van chicos
+    porque todo tiene que entrar en una pantalla, y asi son dificiles de usar.
+  donde_se_declara: >
+    Panel por panel (`paneles.<id>.acciones`), nunca a nivel del tablero: es lo unico que
+    garantiza que no aparezca en un cuadro que no tiene nada que ampliar. No se prende sola.
+  que_cuadros_la_llevan: "anillo, mapa y tendencia (los tres cuadros con grafico)"
+  que_cuadros_no: "top: es una lista de barras en HTML, no un grafico; ampliarla no muestra nada nuevo"
+  animacion: >
+    Abre y cierra con movimiento, pedido de Francisco (24-sep-2026: "una animacion para
+    hacerlo mas fluido"). El cuadro CRECE desde el lugar que ocupaba en el tablero hasta la
+    pantalla completa y al cerrar vuelve a su lugar, en 220 ms, con el fondo oscuro
+    acompaniando. El gesto es el que explica de donde salio el cuadro y a donde vuelve; un
+    simple desvanecido no lo cuenta. Quien tenga puesto "reducir movimiento" en su sistema lo
+    sigue viendo abrir y cerrar en seco.
+  marco_y_click_afuera: >
+    El dialogo deja un marco de fondo de 2vmin alrededor del cuadro. No es decoracion: el
+    dialogo ocupa la ventana entera y ese marco es el UNICO pedazo suyo que queda a la vista,
+    o sea la unica superficie donde puede caer un click "afuera". Sin el, la caja tapaba el
+    100% del dialogo y el cierre por click en el fondo no funcionaba desde la primera version
+    (lo verifico Francisco el 24-sep-2026). De paso el cuadro ampliado se ve flotando sobre el
+    tablero en vez de taparlo entero, que acompania al gesto de "creci desde ahi" de la
+    animacion. La animacion se calcula contra la CAJA y no contra la ventana: con el marco ya
+    no miden lo mismo.
+  sobre_el_pdf: >
+    Si hay un cuadro ampliado, "Generar PDF" lo cierra ANTES de imprimir. El formato de la
+    hoja lo define la clase `imprimiendo` sobre el tablero entero y un dialogo modal no se
+    imprime: el PDF es siempre el tablero completo con la seleccion vigente.
+
+# ---------------------------------------------------------------------------
+# CRUZAR DATOS: la comparacion adentro del zoom (Francisco, 24-sep-2026)
+# ---------------------------------------------------------------------------
+cruzar_datos:
+  pedido_por: "Francisco, 24-sep-2026"
+  que_pidio: >
+    Dos formas de cruce, elegidas por el explicitamente: dos VALORES DEL MISMO FILTRO
+    superpuestos en un mismo grafico (dos cultivos, dos departamentos, dos anios) y dos
+    MEDIDAS distintas de la misma base, con dos ejes cuando no comparten unidad. Descarto la
+    tercera forma que estaba sobre la mesa: unir bases distintas en un mismo cuadro.
+  donde_vive: >
+    Adentro del ZOOM y en ningun otro lado. El tablero es la maqueta literal de JC -cuatro
+    cuadros, una pantalla- y meterle selectores de comparacion romperia justo lo que el pidio
+    que se respetara; el zoom ya tiene su barra de controles y lugar de sobra. Francisco lo
+    sabe y esta de acuerdo. Son dos desplegables APAGADOS por defecto, y al cerrar el zoom la
+    comparacion se apaga sola: el tablero vuelve a ser el de JC.
+  que_cuadros_la_llevan: "tendencia (los doce meses del anio elegido), y ninguno mas"
+  que_cuadros_no: >
+    El mapa no (un mapa no admite dos universos encima), el anillo tampoco (dos anillos superpuestos no son nada) y el ranking tampoco: serian dos ordenes distintos en la misma tabla.
+  reglas_de_jc_que_la_condicionan:
+    nunca_se_combinan_en_un_numero: >
+      Las dos series no se suman ni se promedian NUNCA: se dibujan una al lado de la otra. El
+      rendimiento no se promedia entre cultivos y un precio no se suma. Cada serie sale de su
+      propia combinacion del payload, ya calculada por el build; el navegador no hace una sola
+      cuenta.
+    cobertura_despareja: >
+      Los meses sin movimiento viajan como huecos y no se dibujan (`connectNulls: false`): una curva que cae a cero donde la fuente no informo seria una mentira visual.
+    unidades: >
+      Si las dos medidas comparten unidad va UN solo eje (el build recalcula la escala sobre
+      las dos series juntas para que la segunda entre entera). Si no la comparten, van dos
+      ejes y cada uno con su unidad rotulada, con la misma cantidad de intervalos para que las
+      marcas caigan sobre las mismas lineas de grilla. Nunca dos escalas sobre el mismo eje.
+    colores: >
+      Este cuadro no pinta por rampa de variable: su linea es cromo del tema (el verde medio declarado en site/theme.yaml para lineas de tendencia), asi que la serie comparada usa el otro verde de series del mismo theme. Para la SEGUNDA MEDIDA si manda el protocolo: los documentos tienen rampa propia porque un DTE no es una cabeza.
+      Lo que distingue a las dos series ademas del tono es el PUNTEADO de la comparada, que es
+      lo unico que sobrevive a la impresion en blanco y negro con la que lee JC. Queda como
+      pregunta para JC en el backlog: si prefiere otra cosa, se cambia en el protocolo y
+      cambia en todo el sitio.
+    leyenda_y_titulo: >
+      La leyenda dice que es cada serie sin ambiguedad ("2024: Cabezas movidas") y el titulo del
+      cuadro refleja que hay comparacion ("... - comparado con 2022"). Las dos frases salen de
+      las
+      plantillas de este spec: el navegador sustituye slots, no escribe texto.
+  sobre_el_pdf:
+    decision: "El PDF sigue siendo el TABLERO completo. La comparacion no viaja."
+    por_que: >
+      El formato de la hoja lo define la clase `imprimiendo` sobre el tablero entero y un
+      dialogo modal no se imprime: con el cuadro ampliado afuera de su celda, la hoja saldria
+      con un hueco donde iba el cuadro. Imprimir SOLO el cuadro ampliado seria otro producto
+      (otra hoja, con su propio formato) y nadie lo pidio. Se eligio lo mas simple y
+      predecible: "Generar PDF" cierra el zoom -y con el la comparacion- e imprime el tablero
+      con la seleccion vigente.
+    como_se_avisa: >
+      No se deja que el usuario lo descubra perdiendo lo que estaba mirando: la barra del zoom
+      lo dice al lado de los dos desplegables, con el texto de
+      `paneles.<id>.comparacion.nota`.
+    si_alguna_vez_se_quiere_al_reves: >
+      Habria que darle al cuadro ampliado su propio formato de hoja (una pagina, un cuadro, su
+      fuente y sus notas) y decidir que pasa con el resto del tablero. Es otra tarea y va al
+      backlog, no una variante de esta.
+  payload: >
+    La comparacion por valor no agrega un byte al JSON de datos: es una segunda clave de
+    combinacion y los combos ya estan en el payload (si el archivo esta partido por ese mismo
+    filtro, el navegador baja la otra particion a pedido, como hace para cualquier cambio de
+    ese filtro). Lo unico que se agrego son las series de la segunda medida (`medidas_extra`)
+    donde el cuadro la ofrece, y el color de comparacion de cada serie. No se genera el
+    producto cartesiano de las comparaciones posibles: seria imposible de sostener.
+
+# ---------------------------------------------------------------------------
 # PANELES
 # ---------------------------------------------------------------------------
 paneles:
   anillo:
     titulo: "Participación por categoría"
+    # Zoom: este cuadro se puede ampliar a pantalla completa (ver `zoom_de_los_cuadros`).
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
 
   mapa:
     titulo: "Movimientos por departamento"
     # Contar animales y contar papeles son dos tipos de variable distintos y no comparten
     # escala de color (_comunes-base-85.tipos_de_variable).
     medidas: [cabezas, documentos]
+    # Zoom: este cuadro se puede ampliar a pantalla completa (ver `zoom_de_los_cuadros`).
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
 
   tendencia:
     # Mes a mes y no año a año: la base tiene cuatro años cerrados y la serie anual salia con
@@ -53,6 +168,27 @@ paneles:
     # tiene que dejar ver. Es ademas lo que pide JC en su hoja Modelo Analisis (f45,
     # "MENSUALIZAR LOS MISMOS CUADROS PARA ESTABLECER ESTACIONALIDAD").
     titulo: "Movimientos mes a mes"
+    # CRUZAR DATOS (ver `cruzar_datos`): los dos desplegables que el zoom le pone a
+    # este cuadro. Se compara por AÑO: dos temporadas mes a mes. Con una comparación explícita encima, la línea gris punteada del año anterior se apaga (dos punteados no se distinguen) y el subtítulo deja de nombrarla.
+    comparacion:
+      filtro: anio
+      rotulo: "Comparar con"
+      ninguno: "Sin comparación"
+      # Plantillas de texto con slots. El navegador SUSTITUYE, no escribe: la leyenda,
+      # el título y la nota del cuadro comparado salen de acá.
+      plantilla_serie: "{valor} · {medida}"
+      plantilla_titulo: "{titulo} · comparado con {otro}"
+      plantilla_titulo_medida: "{titulo} · con {medida}"
+      plantilla_nota: "{nota} {otra}"
+      nota: "La comparación se ve solo acá: «Generar PDF» imprime siempre el tablero completo."
+      medidas:
+        rotulo: "Segunda medida"
+        ninguna: "Ninguna"
+        opciones:
+          - {v: documentos, t: "DTE emitidos (documentos)"}
+    # Zoom: este cuadro se puede ampliar a pantalla completa (ver `zoom_de_los_cuadros`).
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
 
   top:
     titulo: "Top 5 departamentos de origen"
