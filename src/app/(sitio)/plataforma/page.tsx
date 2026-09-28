@@ -105,7 +105,7 @@ export default function PlataformaPage() {
             <Reveal delay={0.1}>
               <div className="mt-16 grid grid-cols-12 gap-x-6 md:gap-x-8">
                 <div className="col-span-12 md:col-span-10 md:col-start-3">
-                  {dashboardSections.map((section) => (
+                  {dashboardSections().map((section) => (
                     <div
                       key={section.area}
                       className="grid grid-cols-12 gap-x-6 border-t border-cocoa/15 py-6 last:border-b md:gap-x-8"

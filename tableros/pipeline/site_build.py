@@ -5968,7 +5968,13 @@ def construir_home(ctx, vistas_por_slug):
                 continue
             cantidad = sum(1 for grupo in seccion["grupos"] for slug in grupo["vistas"]
                            if slug in vistas_por_slug)
+            # `bajada` viaja para que la LANDING (src/lib/dashboard.ts, fuera de los tableros)
+            # arme su lista de accesos directos leyendo esto y no una copia a mano: la copia
+            # se quedo vieja cuando entro cultivos intensivos. `bajada_corta` es la frase de
+            # una linea que entra en esa lista; sin ella se usa la bajada larga de la seccion.
             publicadas.append({"url": seccion["url"], "titulo": seccion["titulo"],
+                               "bajada": limpiar(seccion.get("bajada_corta")
+                                                 or seccion.get("bajada") or ""),
                                "cantidad": cantidad})
         listado = []
         if not publicadas:

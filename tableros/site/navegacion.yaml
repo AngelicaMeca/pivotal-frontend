@@ -76,6 +76,9 @@ secciones:
     rama: agricultura
     ruta: [Agricultura, Cultivos extensivos]
     url: agricultura/cultivos-extensivos
+    # La frase de una linea que muestra la landing en "Entra directo a la vista que
+    # necesitas" (src/lib/dashboard.ts la lee del contenido generado).
+    bajada_corta: "Superficie sembrada y cosechada y producción, por campaña."
     titulo: "Cultivos extensivos"
     bajada: >
       Superficie sembrada y cosechada, producción y rendimiento de los cultivos extensivos de
@@ -120,6 +123,9 @@ secciones:
     rama: agricultura
     ruta: [Agricultura, Cultivos intensivos]
     url: agricultura/cultivos-intensivos
+    # La frase de una linea que muestra la landing en "Entra directo a la vista que
+    # necesitas" (src/lib/dashboard.ts la lee del contenido generado).
+    bajada_corta: "Toneladas de cebolla, batata y papa que salen de la provincia, mes a mes."
     titulo: "Cultivos intensivos"
     bajada: >
       Cuántas toneladas de cebolla, batata y papa salen de Santiago del Estero, desde qué
@@ -143,6 +149,9 @@ secciones:
     rama: ganaderia
     ruta: [Ganadería, Movimientos de hacienda]
     url: ganaderia/movimientos-hacienda
+    # La frase de una linea que muestra la landing en "Entra directo a la vista que
+    # necesitas" (src/lib/dashboard.ts la lee del contenido generado).
+    bajada_corta: "Movimientos por categoría, por departamento y mes a mes."
     titulo: "Movimientos de hacienda"
     bajada: >
       Cómo circula la hacienda bovina de Santiago del Estero: cuánta se mueve, desde y hacia qué
@@ -178,6 +187,9 @@ secciones:
     rama: ganaderia
     ruta: [Ganadería, Stock bovino]
     url: ganaderia/stock-bovino
+    # La frase de una linea que muestra la landing en "Entra directo a la vista que
+    # necesitas" (src/lib/dashboard.ts la lee del contenido generado).
+    bajada_corta: "Existencias por zona y por departamento, y su evolución."
     titulo: "Stock bovino"
     bajada: >
       Cuánta hacienda bovina hay en Santiago del Estero y cómo está compuesto el rodeo: por
