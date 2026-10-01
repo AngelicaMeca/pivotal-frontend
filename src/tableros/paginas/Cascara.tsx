@@ -17,7 +17,7 @@
    recien cargado, como en el sitio estatico. */
 import { Fragment, type ReactNode } from "react";
 import type { Comun, Filtro } from "@/tableros/tipos";
-import ClaseCuerpo from "./ClaseCuerpo";
+import Glosa from "./Glosa";
 
 function Periodo({ filtro }: { filtro: Filtro }) {
   // Mismo contrato data-* que lee comun.js
@@ -30,7 +30,9 @@ function Periodo({ filtro }: { filtro: Filtro }) {
       role="group"
       aria-label={filtro.etiqueta}
     >
-      <span className="periodo-rotulo">{filtro.etiqueta}</span>
+      <span className="periodo-rotulo">
+        <Glosa texto={filtro.etiqueta} partes={filtro.etiqueta_partes} />
+      </span>
       <span className="periodo-tira">
         {filtro.opciones.map((opcion) => (
           <button
@@ -56,7 +58,9 @@ function FiltroBarra({ filtro }: { filtro: Filtro }) {
         data-filtro={filtro.id}
         data-valor={filtro.defecto}
       >
-        <span className="rotulo">{filtro.etiqueta}</span>
+        <span className="rotulo">
+          <Glosa texto={filtro.etiqueta} partes={filtro.etiqueta_partes} />
+        </span>
         <div className="chips" role="group" aria-label={filtro.etiqueta}>
           {filtro.opciones.map((opcion) => (
             <button
@@ -88,7 +92,7 @@ function FiltroBarra({ filtro }: { filtro: Filtro }) {
       data-valor={filtro.defecto}
     >
       <label className="rotulo" htmlFor={`f-${filtro.id}`}>
-        {filtro.etiqueta}
+        <Glosa texto={filtro.etiqueta} partes={filtro.etiqueta_partes} />
       </label>
       <select className="filtro-select" id={`f-${filtro.id}`} defaultValue={filtro.defecto}>
         {filtro.opciones.map((opcion) => (
@@ -107,8 +111,11 @@ export default function Cascara({ pagina, children }: { pagina: Comun; children:
   const titulo = pagina.titulo_cabecera || theme.titulo_sitio;
 
   return (
-    <>
-      {pagina.clase_cuerpo ? <ClaseCuerpo clase={pagina.clase_cuerpo} /> : null}
+    // La CROMADA del area cuelga de acá y no del <body> (protocolo,
+    // formato_v1.cromada_por_area): el <body> es del layout común, así que ponerle la clase
+    // desde la página obligaría a esperar al navegador y la cabecera se vería un instante del
+    // color equivocado. Las variables CSS se heredan: envolver la página alcanza.
+    <div className={pagina.clase_cuerpo ? `pagina ${pagina.clase_cuerpo}` : "pagina"}>
       <header className="cabecera">
         {/* Logo provincial (theme.logo_provincia.archivo, parametrizado por cliente). Sin
             asset: wordmark sobrio de texto. */}
@@ -210,21 +217,33 @@ export default function Cascara({ pagina, children }: { pagina: Comun; children:
             {pagina.miga ? (
               <nav className="miga" aria-label="Ruta">
                 {pagina.miga.map((paso, i) => (
-                  <Fragment key={i}>
-                    {paso.href ? (
-                      <a href={paso.href}>{paso.texto}</a>
-                    ) : paso.dinamico ? (
-                      <span className="miga-actual" data-miga-dinamica={paso.dinamico}></span>
-                    ) : (
-                      <span aria-current="page">{paso.texto}</span>
-                    )}
-                    {i < pagina.miga!.length - 1 ? (
+                  /* Cada tramo lleva ADENTRO su separador (el de la izquierda), para que
+                     esconder un tramo esconda tambien el guion que lo precede: el tramo del
+                     departamento no existe mientras se mira la provincia, y un "-" suelto al
+                     final de la miga se lee como un error. Lo esconde comun.js. */
+                  <span className="miga-paso" key={i} data-miga-paso={paso.dinamico || ""}>
+                    {i > 0 ? (
                       <>
                         {" "}
                         <span className="miga-sep">-</span>{" "}
                       </>
                     ) : null}
-                  </Fragment>
+                    {paso.href ? (
+                      <a href={paso.href}>{paso.texto}</a>
+                    ) : paso.dinamico ? (
+                      <span className="miga-actual" data-miga-dinamica={paso.dinamico}></span>
+                    ) : paso.accion === "provincia" ? (
+                      /* "Provincia": con un departamento elegido es el link de vuelta a los
+                         datos provinciales (hoja "Agri 1 Dto", nota 2). Es un <a> de verdad y
+                         no un boton para que se pueda copiar y abrir en otra pestaña; el
+                         href lo mantiene comun.js y el clic no recarga la pagina. */
+                      <a data-miga-provincia href="">
+                        {paso.texto}
+                      </a>
+                    ) : (
+                      <span aria-current="page">{paso.texto}</span>
+                    )}
+                  </span>
                 ))}
               </nav>
             ) : (
@@ -265,6 +284,28 @@ export default function Cascara({ pagina, children }: { pagina: Comun; children:
             {children}
           </main>
 
+          {/* ACLARACIONES DE TERMINOS (regla de JC, ver Glosa.tsx). Dos piezas, una sola
+              vez por pagina: el recuadro que se reposiciona al lado del termino, y las
+              definiciones. Las definiciones van en un <dl> escondido y no en un JSON: asi
+              el texto existe en el HTML aunque el JS no llegue a correr, y comun.js lo lee
+              de ahi sin deserializar nada. */}
+          {Object.keys(pagina.glosario || {}).length ? (
+            <>
+              <div className="glosa" id="glosa-globo" role="tooltip" hidden>
+                <p className="glosa-titulo" data-glosa-titulo=""></p>
+                <p className="glosa-texto" data-glosa-texto=""></p>
+              </div>
+              <dl className="glosa-datos" hidden>
+                {Object.entries(pagina.glosario).map(([id, termino]) => (
+                  <Fragment key={id}>
+                    <dt data-glosa-id={id}>{termino.termino}</dt>
+                    <dd>{termino.aclaracion}</dd>
+                  </Fragment>
+                ))}
+              </dl>
+            </>
+          ) : null}
+
           {/* Pie del Modelo 2 + el pie de datos: la fecha sale del manifiesto de la entrega */}
           <footer className="pie-sitio">
             <p className="pie-tec">{theme.pie_tecnologia}</p>
@@ -273,6 +314,6 @@ export default function Cascara({ pagina, children }: { pagina: Comun; children:
           </footer>
         </div>
       </div>
-    </>
+    </div>
   );
 }

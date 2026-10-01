@@ -60,7 +60,11 @@ cabecera:
   sin_titulo_duplicado: true
 
 # El breadcrumb del mockup: barra VERDE bajo la cabecera, cada nivel linkea a SU nivel.
-breadcrumb: "Agricultura - Cultivos Extensivos - {cultivo} - Provincia"
+breadcrumb: "Agricultura - Cultivos Extensivos - {cultivo} - Provincia - {departamento}"
+# El ultimo tramo es la hoja "Agri 1 Dto": con la provincia elegida NO se dibuja (ni el
+# separador), y con un departamento dice "Dto ALBERDI". "Provincia" deja de ser texto
+# muerto y pasa a ser el link de vuelta, que es lo que pide la nota 2 de esa hoja:
+# "FUNCIONAL EL LINK 'PROVINCIA' PARA REGRESAR A DATOS PROVINCIALES".
 
 # ---------------------------------------------------------------------------
 # SELECTORES (los dos que dibujó JC, en su misma posición)
@@ -225,6 +229,31 @@ cruzar_datos:
 # "ver detalle": ningún panel navega a otra página (tercera_tanda.solo_tableros). Los specs
 # de detalle que alimentan cada panel quedan como registro de las transformaciones.
 paneles:
+  # ALTO DE LA PAGINA (JC, 30-sep-2026; acta en specs/fuentes/, punto 6): "Gráficos achatados
+  # por forzar todo en una pantalla (dos líneas chatas, anillo en miniatura). Quiere que la
+  # página siga hacia abajo."
+  #
+  # Hasta esta revisión el tablero se forzaba a entrar en UNA pantalla (tablero.js medía la
+  # ventana y le fijaba el alto al contenedor). En una ventana de 1440x800 eso le dejaba entre
+  # 100 y 150 px de dibujo a cada cuadro: el gráfico de líneas salía plano y el anillo, una
+  # miniatura. `fluye` = cada cuadro se queda con el alto que necesita para LEERSE y la página
+  # scrollea.
+  #
+  # La referencia de alto no es a ojo: son las cajas de gráfico de la maqueta de JC
+  # ("0000000000 Maqueta Agri.xlsx", hoja "Agri 1", medidas de las anclas de los objetos).
+  # El gráfico de líneas mide 597x323 px y el anillo 415x322 px; de ahí sale el piso de 300 px
+  # de dibujo que fija el CSS (site/templates/pivotal.css.j2, bloque `alto-fluido`).
+  #
+  # Qué NO cambia: el PDF. "Generar PDF" arma la hoja A4 con el reparto de `alto-fijo`, que
+  # comun.js le pone al tablero mientras imprime; en la hoja el tablero SÍ tiene que entrar
+  # entero. El zoom y el mapa tampoco cambian: los dos se calculan con el tamaño de la caja
+  # del panel, que acá solo es más grande.
+  #
+  # Alcance: SOLO agricultura (este tablero y el de cultivos intensivos). Ganadería queda con
+  # `una-pantalla` hasta que JC mande sus maquetas (acuerdo del acta: "primero agricultura,
+  # después ganadería").
+  alto: fluye
+
   mapa:
     # Columna izquierda ENTERA, grande, proporción geográfica CORRECTA (JC: "El mapa es una
     # miniatura y está deformado"; regla formato_v1.tercera_tanda.mapa_grande). La caja se
@@ -236,9 +265,32 @@ paneles:
     variables: [sup_sembrada_ha, sup_cosechada_ha, produccion_tn, rendimiento_kg_ha]   # secuencia fija de JC
     fuente_al_pie: "Fuente: MAGyP (Ministerio de Agricultura, Ganadería y Pesca)"
     # (forma literal del mockup; pie_de_fuente.aclaracion_base_9. Backlog 14, respondida)
-    click_departamento: 09-departamento-datos
-    # ÚNICA navegación de contenido permitida: "NO debe llevar NADA a otra página salvo el
-    # dato departamental". Viaja con el cultivo y la campaña vigentes.
+    click_departamento: en-la-misma-vista
+    # Cambio del 30-sep-2026 (Francisco: "cuando clickee el departamento, quiero que en la
+    # misma vista vayan cambiando los datos"). Es lo que dibuja JC en la hoja "Agri 1 Dto" de
+    # su maqueta: el MISMO tablero con los datos del departamento elegido ("Idem Agri 1 PERO
+    # CON DATOS DE CADA DEPARTAMENTO, salvo los datos de los RANKINGS"). Antes el clic
+    # navegaba a la vista 09-departamento-datos, que es otra página y otro diseño.
+    # Lo que cambia al elegir departamento: KPIs, tendencia, anillo y tabla de datos.
+    # Lo que NO cambia: el ranking (regla de JC), que sigue siendo provincial y solo marca
+    # la fila del departamento elegido; y el mapa, que es el selector.
+    # 09-departamento-datos SIGUE EXISTIENDO: es el botón de cabecera "Datos por
+    # Departamento", que en la maqueta es la puerta a TODOS los datos de un departamento
+    # (hoja "Agri 1 Dto", nota 3: "Cuando deseen visualizarse TODOS los datos de un
+    # departamento, deberá accederse a través de la opción superior").
+    seleccion_departamento:
+      defecto: provincia          # el tablero arranca en la provincia, como "Agri 1"
+      rotulo_provincia: "Provincia"
+      # El texto que JC escribe DEBAJO del mapa cuando hay un departamento elegido.
+      rotulo_cambiar: "Seleccione otro departamento si desea visualizar"
+      # El título que JC escribe ARRIBA del mapa en la hoja departamental.
+      rotulo_titulo: "Departamento {Departamento}"
+      # La miga de la maqueta: "... Soja | Provincia | Dto ALBERDI", con "Provincia" como
+      # link vivo de vuelta (nota 2 de la hoja: "FUNCIONAL EL LINK 'PROVINCIA' PARA REGRESAR
+      # A DATOS PROVINCIALES").
+      miga: "Dto {Departamento}"
+      # Un departamento sin datos para el cultivo y la campaña vigentes no se puede elegir
+      # (misma regla de siempre: opciones_sin_datos). En el mapa ya se pinta gris y no es link.
     mouseover:
       # Cuarta tanda (regla general cuarta_tanda.tooltips_con_nombre_y_datos). Bug corregido:
       # el tooltip mostraba el geo_id.
@@ -251,6 +303,10 @@ paneles:
     # El gráfico de líneas del mockup, con su título LITERAL y su eje VISIBLE.
     titulo_protocolo: "{Cultivo} - Sgo del Estero - Total - Evolución de la superficie cosechada y producción - Campañas {desde} a {hasta}"
     titulo_protocolo_ejemplo: "Soja - Sgo del Estero - Total - Evolución de la superficie cosechada y producción - Campañas 2015/16 a 2024/25"
+    # Con un departamento elegido, el título es el que JC escribió en el gráfico de su hoja
+    # "Agri 1 Dto" (es el MISMO que ya usa la vista 09-departamento-datos): donde el
+    # provincial dice "Total", el departamental dice "Departamento {Departamento}".
+    titulo_protocolo_departamento: "{Cultivo} - Sgo del Estero - Departamento {Departamento} - Evolución de la superficie cosechada y producción - Campañas {desde} a {hasta}"
     # Plantilla literal del mockup (tercera_tanda.titulos_del_tablero_literales; backlog 31
     # RESUELTA). El período sale de las campañas realmente graficadas: el mockup dice
     # "2013/14 a 2024/25" pero la ventana sigue en 10 mientras JC no la amplíe (backlog 32).
@@ -305,6 +361,10 @@ paneles:
     # en agregados. Números validados por JC: Soja 48,1%, total 6.016.454 tn.
     titulo_protocolo: "Sgo del Estero - Campaña {campania} - Participación porcentual por cultivo en el total de la producción (fina y gruesa)"
     titulo_protocolo_ejemplo: "Sgo del Estero - Campaña 2024/25 - Participación porcentual por cultivo en el total de la producción (fina y gruesa)"
+    # Literal del anillo de la hoja "Agri 1 Dto". OJO: JC NO pone guión entre el departamento
+    # y "Campaña" (dice "Departamento ALBERDI Campaña 2024/25"), a diferencia del provincial.
+    # Se respeta tal cual: los títulos de la maqueta son literales.
+    titulo_protocolo_departamento: "Sgo del Estero - Departamento {Departamento} Campaña {campania} - Participación porcentual por cultivo en el total de la producción (fina y gruesa)"
     medida: produccion_tn
     top_n: 5
     resto: "Resto"

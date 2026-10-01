@@ -328,6 +328,22 @@ cruzar_datos:
 # la hoja: H23 y H42 dicen "Fuente: SENASA"; AE31 dice "Fuente: MAGyP (Ministerio de
 # Agricultura, Ganaderia y Pesca)".
 paneles:
+  # ALTO DE LA PAGINA (JC, 30-sep-2026; acta en specs/fuentes/, punto 6): "Gráficos achatados
+  # por forzar todo en una pantalla (dos líneas chatas, anillo en miniatura). Quiere que la
+  # página siga hacia abajo." Mismo motivo y mismo alcance que en cultivos extensivos, donde
+  # está la explicación larga.
+  #
+  # Acá pesa todavía más: la grilla 2x2 mete DOS filas de cuadros en la misma pantalla y tres
+  # de los cuatro cuadros llevan además su tabla debajo del gráfico, así que al dibujo le
+  # quedaban menos de 120 px. Referencia de alto de la maqueta ("0000000000 Maqueta Agri.xlsx",
+  # hoja "Agri 2", medidas de las anclas): el cuadro combo mide 654x289 px, el de barras
+  # apiladas 651x293 y el de precios del MCBA 867x325.
+  #
+  # El PDF sigue saliendo igual: comun.js le pone `alto-fijo` al tablero mientras imprime y la
+  # hoja A4 se reparte como siempre (incluido el reparto 1,3 de la fila de abajo, que se midió
+  # en papel).
+  alto: fluye
+
   # -------------------------------------------------------------------------
   # PIE DE CUADRO: lo mismo en los cuatro paneles (tercera vuelta, 23-sep-2026)
   # -------------------------------------------------------------------------
@@ -786,16 +802,22 @@ paneles:
   tabla-superficie:
     # El cuarto panel de la maqueta. No tiene grafico: es un recuadro con titulo y dos notas.
     forma: tabla-datos            # la forma que ya existe, con otro contenido
-    origen_en_la_maqueta: "hoja Agri 2, celda AM35 (titulo) y celdas AF36/AF37 (las dos notas)"
-    titulo_protocolo: "Estimaciones de superficies cosechadas (*) - {Producto} - Sgo del Estero - Años {desde} a {hasta}"
-    titulo_literal_de_jc: "Estimaciones de superficies cosechadas (*)"
-    titulo_dibujado_en_la_tabla_de_jc: "Cebolla - Sgo del Estero - Estimación superficies cosechadas en base a datos DTV (ha)"
-    por_que_el_titulo_lleva_mas_que_el_de_jc: >
-      La frase de JC va entera y al principio. Detras se agregan el producto y el periodo
-      porque esta tabla depende del selector de producto y el protocolo exige parametros
-      explicitos (formato_v1.parametros_explicitos). En la maqueta el titulo del panel no los
-      necesita porque la hoja tiene una sola seleccion dibujada; la propia imagen de la tabla,
-      igual, los lleva: "Cebolla - Sgo del Estero - ... (ha)".
+    origen_en_la_maqueta: "hoja Agri 2, imagen AG40:BE52 (el titulo va dibujado DENTRO de la tabla) y celdas AF36/AF37 (las dos notas)"
+    # CORREGIDO el 30-sep-2026 (acta en specs/fuentes/, punto 3: "Titulos cambiados en graficos
+    # y tablas. Los titulos de la maqueta son literales"). Este era el unico titulo de los dos
+    # tableros de agricultura que no salia textual de la maqueta.
+    titulo_protocolo: "{Producto} - Sgo del Estero - Estimación superficies cosechadas en base a datos DTV (ha)"
+    titulo_que_habia_antes: "Estimaciones de superficies cosechadas (*) - {Producto} - Sgo del Estero - Años {desde} a {hasta}"
+    por_que_cambio: >
+      Era la celda AM35 de la hoja ("Estimaciones de superficies cosechadas (*)", que es el
+      rotulo de la SECCION) con el producto y el periodo agregados por nosotros detras. JC
+      objeto los titulos cambiados y los textos agregados, asi que ahora se usa el titulo que
+      el mismo dibujo DENTRO de la tabla (imagen AG40:BE52), que ademas sigue la misma
+      secuencia que los otros dos cuadros de la hoja ("{Producto} - Sgo del Estero - concepto")
+      y ya trae la unidad. El periodo sale: ninguno de los otros titulos de "Agri 2" lo lleva
+      (los años son las columnas de la tabla, a la vista) y agregarlo era justamente lo que el
+      objeto. El "(*)" tambien sale: sus dos aclaraciones siguen al pie del cuadro, que es
+      donde se leen, y no habia ningun asterisco que las apuntara.
     # TERCERA VUELTA (23-sep-2026): la tabla es DEPARTAMENTOS x AÑOS, no de un año solo. Se
     # vio en la imagen de la maqueta (AG40:BE52) al exportar la hoja a PDF.
     ambito: "la ventana entera de años, igual que los dos graficos"

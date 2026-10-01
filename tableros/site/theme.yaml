@@ -61,29 +61,72 @@ colores:
   # se sacaron el 10-ago-2026, tercera tanda: JC rechazo ese rediseño ("Todo deformado Facu")
   # y el mockup Modelo 2 volvio a mandar de forma LITERAL, diseño incluido
   # (formato_v1.tercera_tanda.mockup_literal). No hay tema alternativo en cultivos.
-# Logo provincial (cabecera). El asset llego el 10-ago-2026 (Facu): es el isologotipo
-# multicolor "SANTiAGO del Estero / ARGENTINA" en PNG, guardado en
-# site/assets/logo-provincia.png. `archivo` es la ruta PUBLICA; el build lo copia a
-# public/plataforma/ del sitio (y le antepone el prefijo /plataforma). La `bajada` se dibuja chica debajo del logo, como en la captura del 10-ago.
-# El wordmark de texto queda como fallback si otro cliente no trae asset (F3).
+
+# --- CROMADA POR AREA (29-sep-2026) --------------------------------------------------------
+# JC, hoja INDICACIONES de "0000000000 Maqueta Agri.xlsx": "Para lo que es agricola, el color
+# predominante (por asociacion natural) es el verde y en ganaderia el borravino o un marron.
+# Que tono de verde o borravino/marron queda a su criterio, pero siemple aplicable a todo ese
+# grupo de productos."
 #
-# VARIANTE NEGATIVA (22-sep-2026, cabecera marron). El PNG de Facu esta armado para fondo
-# claro: tiene un contorno BLANCO OPACO tipo sticker alrededor de las letras (45% de la
-# imagen), que sobre el cocoa se ve como un parche. site/assets/logo-provincia-cromo.png es
-# ese mismo isologotipo DERIVADO para fondo oscuro, pixel a pixel:
-#   - blanco del sticker -> transparente;
-#   - tinta (el marron casi negro de "SANTiAGO", "DeL EsTeRo" y "ARGENTINA") -> crema
-#     (sobre_cromo), que es la puesta habitual de este isologotipo sobre fondo oscuro;
-#   - rojo, azul y amarillo de la marca -> intactos.
-# Un pixel es color de marca si es saturado (>0,35) Y claro (max RGB >= 130): la tinta
-# tambien da saturacion 0,33 y la saturacion sola la confundiria con el rojo. Lo demas sale
-# de la luminancia entre 238 (sticker) y 36 (tinta), asi el antialias queda en el alfa.
-# El original NO se toca: si la provincia manda su version negativa oficial, se reemplaza
-# este archivo y no hay nada mas que cambiar.
+# Lectura: el color acompaña al AREA, no al sitio. Una seccion de Agricultura se ve verde y
+# una de Ganaderia se ve marron, con la MISMA maqueta, la misma tipografia y las mismas
+# medidas. Cambia la cromada, no el diseño.
+#
+# Los colores de arriba (`colores`) son la cromada POR DEFECTO: la marron del 22-sep, que es
+# la que le corresponde a Ganaderia y la que usan las paginas que no son de ningun area (la
+# home, el material reservado). Cada entrada de abajo se llama igual que una rama de
+# site/navegacion.yaml y PISA solo los tokens que nombra. Una rama sin entrada sale con el
+# default y no rompe nada.
+#
+# CONTRASTE: todo par texto/fondo esta medido y ninguno baja de 4,5:1 (WCAG AA texto normal).
+# Es la razon por la que el cromo de agricultura NO es el #00af50 de la captura del 10-ago:
+# ese verde da 2,19:1 contra la crema y no se puede usar de fondo de cabecera. El verde que
+# se usa es el institucional que ya vive en este archivo (`primario`) y al que el protocolo
+# ata la rampa de superficie.
+cromadas:
+  agricultura:
+    cromo: "#22502c"           # verde profundo (= primario): cabecera, menu lateral, banda
+    cromo_oscuro: "#35693e"    # verde medio: tira de campañas y seccion activa del menu
+    seleccion: "#9fbb86"       # salvia claro: chip de producto SELECCIONADO y acentos
+    borde_panel: "#c6cdb4"     # verde grisado muy claro: borde fino de panel, KPI y chips
+    enlace: "#2f6238"          # verde: links y acciones de texto sobre la crema
+    # sobre_cromo y sobre_seleccion no cambian: crema sobre el verde y cocoa sobre el salvia.
+    contraste_medido:
+      - "crema #f1dccb sobre cromo #22502c = 7,03:1"
+      - "crema #f1dccb sobre cromo_oscuro #35693e = 4,89:1"
+      - "cocoa #2b1c18 sobre seleccion #9fbb86 = 7,74:1"
+      - "enlace #2f6238 sobre fondo_cuadro #fbf4ec = 6,58:1"
+  ganaderia:
+    # Ya era marron: no pisa ningun token. Queda declarada para que se vea que la decision
+    # es explicita y no un olvido, y para que otro cliente sepa donde tocarla (F3).
+    contraste_medido:
+      - "crema #f1dccb sobre cromo #2b1c18 = 12,36:1"
+      - "crema #f1dccb sobre cromo_oscuro #7d5545 = 4,86:1"
+      - "cocoa #2b1c18 sobre seleccion #c18477 = 5,33:1"
+
+# Logo provincial (cabecera). EL LOGO NUEVO, 29-sep-2026: JC avisa que el que vale es el que
+# el mismo pone en su maqueta ("0000000000 Maqueta Agri.xlsx", hoja "Agri 1", primera imagen
+# anclada en A1). Es el ISOLOGOTIPO OFICIAL DEL GOBIERNO: banner rojo con el escudo provincial
+# y "SANTIAGO DEL ESTERO" en blanco, 287x96 px, guardado tal cual salio del archivo en
+# site/assets/logo-provincia-escudo.png. `archivo` es la ruta PUBLICA; el build lo copia a
+# public/plataforma/ (y le antepone el prefijo /plataforma).
+#
+# Trae su PROPIO fondo rojo opaco, asi que no necesita variante para fondo oscuro y funciona
+# igual sobre la cromada verde de Agricultura y sobre la marron de Ganaderia. Por eso ya no se
+# usa la derivacion negativa del 22-sep (site/assets/logo-provincia-cromo.png) ni el
+# isologotipo multicolor que trajo Facu el 10-ago (site/assets/logo-provincia.png): los dos
+# archivos quedan en el repo como registro de lo que hubo antes, sin referenciar.
+#
+# La `bajada` se sigue dibujando chica debajo del logo. El wordmark de texto queda como
+# fallback si otro cliente no trae asset (F3).
+#
+# LIMITACION CONOCIDA: el archivo de JC mide 287x96, o sea que en la cabecera (3,8rem de alto)
+# se dibuja a 179 px de ancho y en una pantalla de alta densidad queda un poco blando. Si la
+# provincia tiene el original en mayor resolucion, se reemplaza el archivo y listo.
 logo_provincia:
   nombre: "Santiago del Estero"
   bajada: "Gobierno de la Provincia de Santiago del Estero"
-  archivo: "/logo-provincia-cromo.png"
+  archivo: "/logo-provincia-escudo.png"
 logo: null                   # logo Pivotal: sigue pendiente (semana 3-ago)
 pie: "Pivotal · Elaboración propia en base a fuentes oficiales citadas en cada cuadro"
 # Pie de tecnologia del Modelo 2 de JC (aprobado el 10-ago, backlog 35).

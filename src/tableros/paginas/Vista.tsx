@@ -9,6 +9,7 @@ import type { ReactNode } from "react";
 import type { Elemento, PaginaVista } from "@/tableros/tipos";
 import Arranque, { type TipoDePagina } from "./Arranque";
 import Cascara from "./Cascara";
+import Glosa from "./Glosa";
 
 /* Cascara de un cuadro: titulo de protocolo arriba y pie de fuente abajo. Titulo y pie son
    OBLIGATORIOS en todo mapa, grafico y tabla del sitio. El texto ya viene compuesto por
@@ -176,7 +177,9 @@ export default function Vista({ pagina }: { pagina: PaginaVista }) {
           {vista.notas.map((nota, i) => (
             <details key={i}>
               <summary>{nota.titulo}</summary>
-              <p>{nota.texto}</p>
+              <p>
+                <Glosa texto={nota.texto} partes={nota.texto_partes} />
+              </p>
             </details>
           ))}
         </div>

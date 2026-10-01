@@ -4,12 +4,15 @@
 import { Fragment } from "react";
 import type { PaginaSeccion } from "@/tableros/tipos";
 import Cascara from "./Cascara";
+import Glosa from "./Glosa";
 
 export default function Seccion({ pagina }: { pagina: PaginaSeccion }) {
   const { seccion } = pagina;
   return (
     <Cascara pagina={pagina}>
-      <p className="bajada">{seccion.bajada}</p>
+      <p className="bajada">
+        <Glosa texto={seccion.bajada} partes={seccion.bajada_partes} />
+      </p>
 
       {seccion.grupos.map((grupo) => (
         <Fragment key={grupo.titulo}>

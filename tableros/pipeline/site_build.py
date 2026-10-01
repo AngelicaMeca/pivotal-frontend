@@ -35,11 +35,13 @@ import json
 import os
 import shutil
 import sys
+import unicodedata
 
 import duckdb
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
 from pipeline import hacienda as hac
+from pipeline import pngs
 from pipeline import precios as pc
 from pipeline import presentacion as pr
 from pipeline import stock as stk
@@ -273,8 +275,7 @@ class Contexto:
         # Asignacion icono -> cultivo (site/iconos-cultivo.yaml, habilitada el 10-ago-2026).
         # Un cultivo puede declarar null (sin icono, ej. Lenteja); uno AUSENTE es un error:
         # obliga a decidir el icono de cada cultivo nuevo en vez de dejarlo caer en silencio.
-        self.iconos_cultivo = pr.cargar_yaml(
-            os.path.join(DIR_SITE, "iconos-cultivo.yaml"))["cultivos"]
+        self.iconos_cultivo = iconos_yaml()["cultivos"]
 
     # -- textos ---------------------------------------------------------
     def pie(self, spec):
@@ -306,7 +307,8 @@ class Contexto:
     def _con_etiquetas(self, marcas, unidad, decimales, sufijo):
         etiquetas = {clave_js(m): pr.fmt_numero(m, decimales) + sufijo for m in marcas["marcas"]}
         return {"min": marcas["min"], "max": marcas["max"], "paso": marcas["paso"],
-                "etiquetas": etiquetas, "nombre": NOMBRE_EJE[unidad]}
+                "etiquetas": etiquetas, "nombre": NOMBRE_EJE[unidad],
+                "minimo": minimo_rotuladas()}
 
     def eje_secundario(self, valores, unidad, intervalos):
         limpios = [v for v in valores if v is not None]
@@ -387,27 +389,298 @@ def opciones(valores, etiquetas=None):
     return [{"v": v, "t": (etiquetas or {}).get(v, v)} for v in valores]
 
 
-# Iconos que el sitio realmente usa: se llenan al armar los filtros y escribir_sitio escribe
-# SOLO estos en public/plataforma/iconos/ del sitio.
+# --------------------------------------------------------------------------
+# ACLARACIONES DE TERMINOS (protocolo, formato_v1.aclaraciones_de_terminos)
+# --------------------------------------------------------------------------
+# JC, hoja INDICACIONES de su maqueta: "sera necesario agregar ACLARACIONES de terminos que se
+# podran visualizar con un mouseover o click... y un mini popup con el texto aclaratorio".
+#
+# El build NO escribe HTML: lo que hace es PARTIR el texto en pedazos y marcar cual de ellos
+# es un termino. El componente de la pagina dibuja los pedazos y el JS abre el recuadro. Un
+# texto sin ningun termino devuelve None y el componente escribe el string de siempre, asi que
+# agregar el glosario no cambia una sola letra de lo que ya se veia.
+_GLOSARIO = None
+
+
+def glosario():
+    """{id: {termino, aclaracion, formas}} de site/glosario.yaml. {} si el archivo no esta."""
+    global _GLOSARIO
+    if _GLOSARIO is None:
+        ruta = os.path.join(DIR_SITE, "glosario.yaml")
+        datos = pr.cargar_yaml(ruta) if os.path.exists(ruta) else None
+        _GLOSARIO = (datos or {}).get("terminos") or {}
+    return _GLOSARIO
+
+
+def _plano(texto):
+    """Minusculas y sin acentos: el cotejo no puede depender de como se escribio la palabra."""
+    return "".join(c for c in unicodedata.normalize("NFKD", texto.lower())
+                   if not unicodedata.combining(c))
+
+
+def _formas_ordenadas():
+    """[(forma_plana, id_de_termino), ...] de la mas larga a la mas corta.
+
+    De la mas larga primero para que "superficie cosechada" gane sobre "cosechada" y
+    "precios corrientes" sobre "precio corriente": si no, la forma corta se comeria el
+    principio de la larga y la aclaracion seria la equivocada.
+    """
+    pares = []
+    for clave in sorted(glosario()):
+        for forma in glosario()[clave].get("formas") or []:
+            pares.append((_plano(forma), clave))
+    pares.sort(key=lambda par: (-len(par[0]), par[0]))
+    return pares
+
+
+def _es_letra(caracter):
+    return caracter.isalnum() or caracter in "áéíóúüñÁÉÍÓÚÜÑ"
+
+
+def partes_con_terminos(texto):
+    """Parte `texto` en pedazos y marca los terminos del glosario. None si no hay ninguno.
+
+    Devuelve [{"t": "..."}, {"t": "...", "termino": "dtv"}, ...]. Solo la PRIMERA aparicion
+    de cada termino (un parrafo con seis subrayados no se lee) y solo palabras enteras.
+    """
+    if not texto:
+        return None
+    plano = _plano(texto)
+    encontrados = []            # (inicio, fin, id)
+    usados = set()
+    for forma, clave in _formas_ordenadas():
+        if clave in usados:
+            continue
+        desde = 0
+        while True:
+            i = plano.find(forma, desde)
+            if i < 0:
+                break
+            fin = i + len(forma)
+            antes_ok = i == 0 or not _es_letra(texto[i - 1])
+            despues_ok = fin >= len(texto) or not _es_letra(texto[fin])
+            solapa = any(not (fin <= a or i >= b) for a, b, _ in encontrados)
+            if antes_ok and despues_ok and not solapa:
+                encontrados.append((i, fin, clave))
+                usados.add(clave)
+                break
+            desde = i + 1
+    if not encontrados:
+        return None
+    encontrados.sort()
+    partes, cursor = [], 0
+    for inicio, fin, clave in encontrados:
+        if inicio > cursor:
+            partes.append({"t": texto[cursor:inicio]})
+        partes.append({"t": texto[inicio:fin], "termino": clave})
+        cursor = fin
+    if cursor < len(texto):
+        partes.append({"t": texto[cursor:]})
+    return partes
+
+
+def anotar_termino(destino, campo):
+    """Le agrega a `destino` el campo `<campo>_partes` si su texto tiene algun termino."""
+    partes = partes_con_terminos(destino.get(campo))
+    if partes:
+        destino[campo + "_partes"] = partes
+    return destino
+
+
+def anotar_glosario(datos, terminos_datos=()):
+    """Marca los terminos en los textos ESTATICOS de una pagina y devuelve sus definiciones.
+
+    La lista de abajo es la que fija el protocolo
+    (`formato_v1.aclaraciones_de_terminos.donde_se_marca`): rotulos de filtro, titulos y
+    subtitulos de cuadro, notas metodologicas y la bajada de la seccion. Adentro de un chip no
+    se marca nada: el chip ya es un boton y no se puede meter otro boton adentro.
+
+    Los titulos que cambian con la seleccion no pasan por aca -viven en el JSON de datos y los
+    marca `normalizar_paneles`-, pero sus terminos llegan en `terminos_datos` para que la
+    pagina traiga tambien esas definiciones.
+    """
+    usados = set(terminos_datos)
+
+    def marcar(destino, campo):
+        if not isinstance(destino, dict):
+            return
+        anotar_termino(destino, campo)
+        for parte in destino.get(campo + "_partes") or ():
+            if parte.get("termino"):
+                usados.add(parte["termino"])
+
+    for clave in ("filtros_periodo", "filtros_barra"):
+        for filtro in datos.get(clave) or ():
+            marcar(filtro, "etiqueta")
+    for filtro in (datos.get("filtros_panel") or {}).values():
+        marcar(filtro, "etiqueta")
+    marcar(datos.get("filtro_selector") or {}, "etiqueta")
+    for panel in datos.get("paneles") or ():
+        for campo in ("titulo", "subtitulo", "rotulo"):
+            marcar(panel, campo)
+    for nota in (datos.get("vista") or {}).get("notas") or ():
+        marcar(nota, "texto")
+    marcar(datos.get("seccion") or {}, "bajada")
+
+    return {clave: {"termino": glosario()[clave]["termino"],
+                    "aclaracion": " ".join(glosario()[clave]["aclaracion"].split())}
+            for clave in sorted(usados) if clave in glosario()}
+
+
+# --------------------------------------------------------------------------
+# CROMADA POR AREA (protocolo, formato_v1.cromada_por_area)
+# --------------------------------------------------------------------------
+# Un area (una rama de site/navegacion.yaml) puede pisar parte de la paleta de cromo. Los
+# unicos tokens que puede pisar son los de CROMO: el lienzo, los paneles, la tipografia y los
+# colores de datos no dependen del area. Si un theme nombra otra cosa, el build corta: es la
+# forma de que "cromada" no se convierta en "tema alternativo por seccion".
+TOKENS_DE_CROMADA = ("cromo", "cromo_oscuro", "seleccion", "borde_panel", "enlace",
+                     "sobre_cromo", "sobre_seleccion")
+# Claves del bloque que son documentacion y no colores.
+_CLAVES_NO_COLOR = ("contraste_medido",)
+
+
+def cromadas_del_theme(theme):
+    """[(id_de_rama, [(token, hex), ...]), ...] ordenado, para el CSS. Vacio si no hay bloque."""
+    salida = []
+    for rama in sorted(theme.get("cromadas") or {}):
+        bloque = theme["cromadas"][rama] or {}
+        tokens = []
+        for token in sorted(bloque):
+            if token in _CLAVES_NO_COLOR:
+                continue
+            if token not in TOKENS_DE_CROMADA:
+                raise pr.ErrorDeProtocolo(
+                    "La cromada %r de site/theme.yaml pisa %r, que no es un token de cromo. "
+                    "Solo se pueden pisar: %s" % (rama, token, ", ".join(TOKENS_DE_CROMADA)))
+            tokens.append((token.replace("_", "-"), bloque[token]))
+        if tokens:
+            salida.append((rama, tokens))
+    return salida
+
+
+def clase_de_cromada(theme, rama):
+    """La clase de cuerpo que le toca a una seccion segun su rama, o "" si usa la del sitio."""
+    if not rama:
+        return ""
+    bloque = (theme.get("cromadas") or {}).get(rama) or {}
+    if not [k for k in bloque if k not in _CLAVES_NO_COLOR]:
+        return ""
+    return "cromada-%s" % rama
+
+
+# --------------------------------------------------------------------------
+# EJE VERTICAL: el minimo de marcas ROTULADAS viaja con cada eje
+# --------------------------------------------------------------------------
+# Regla de JC (protocolo, `eje_vertical.minimo_marcas_rotuladas`), ratificada el 29-sep-2026
+# en la hoja INDICACIONES de su maqueta: "en el eje vertical, la escala debe tener un minimo
+# de 5 valores". `marcas_eje` ya garantiza 5 marcas CALCULADAS; esto es lo que hace que el
+# navegador no pueda rotular menos de 5. El numero no se escribe en el JS: sale del protocolo,
+# se mete en cada objeto de eje y el dibujante lo lee de ahi.
+_MINIMO_ROTULADAS = None
+
+
+def minimo_rotuladas():
+    global _MINIMO_ROTULADAS
+    if _MINIMO_ROTULADAS is None:
+        _MINIMO_ROTULADAS = pr.minimo_marcas_rotuladas(pr.cargar_protocolo())
+    return _MINIMO_ROTULADAS
+
+
+# --------------------------------------------------------------------------
+# ICONOS (protocolo, formato_v1.iconografia.vuelta_al_paquete_de_jc)
+# --------------------------------------------------------------------------
+# Los iconos de PRODUCTO son los PNG de JC: site/assets/iconos/bn/ para el inactivo y
+# site/assets/iconos/color/ para el activo. Dos dibujos distintos, no dos tintas del mismo,
+# que es lo que pide JC en la hoja INDICACIONES de su maqueta ("el icono de soja esta en color
+# y el resto en B&W").
+# Las excepciones las declara site/iconos-cultivo.yaml en el bloque `trazo` y salen de
+# site/assets/iconos/trazo/. Desde el 30-sep-2026 son solo DOS iconos de interfaz (exportar
+# como PDF y el asistente IA): JC mando "specs/fuentes/000 Iconos.docx" con la batata y el
+# zoom, que eran los dos que se dibujaban aparte, y ya no queda ninguna excepcion de PRODUCTO.
+#
+# Lo que el sitio realmente usa se junta aca y `escribir_sitio` copia SOLO eso a
+# public/plataforma/iconos/ (el catalogo completo son 202 archivos y se usan ~25).
 # Es un set de pares (variante, nombre); ordenado al escribir, para determinismo.
 _ICONOS_USADOS = set()
 
-# Que color toma el trazo del icono en cada variante. Sale del theme: el icono acompaña al
-# texto que tiene al lado (marron sobre la caja clara, cocoa sobre el chip elegido).
-COLOR_ICONO = {"bn": "texto_apoyo", "color": "texto"}
+VARIANTES_ICONO = ("bn", "color")
+
+# Que color toma el trazo de un icono de INTERFAZ en cada variante (los de `trazo` con
+# `tema: true`). Sale del theme, asi que se re-brandea sin tocar codigo (F3). Los iconos de
+# producto no pasan por aca: son dibujos, no cromo.
+COLOR_TRAZO = {"bn": "texto_apoyo", "color": "texto"}
+
+# Asignacion completa de site/iconos-cultivo.yaml, cacheada: la piden los dos Ctx y cada
+# resolucion de icono.
+_ICONOS_YAML = None
+
+
+def iconos_yaml():
+    global _ICONOS_YAML
+    if _ICONOS_YAML is None:
+        _ICONOS_YAML = pr.cargar_yaml(os.path.join(DIR_SITE, "iconos-cultivo.yaml"))
+    return _ICONOS_YAML
 
 
 def ruta_icono(variante, nombre):
-    """Ruta publica del icono, verificando que el dibujo exista en site/assets/iconos/trazo/."""
-    origen = os.path.join(DIR_ASSETS, "iconos", "trazo", nombre + ".svg")
+    """Ruta publica del icono en esa variante, verificando que el archivo exista.
+
+    Devuelve un .png cuando el icono sale del paquete de JC y un .svg cuando sale de la lista
+    de excepciones (`trazo` en site/iconos-cultivo.yaml). El que llama no necesita saber cual
+    es cual: le llega una ruta.
+    """
+    if variante not in VARIANTES_ICONO:
+        raise pr.ErrorDeProtocolo("Variante de icono desconocida: %r" % variante)
+    excepciones = iconos_yaml().get("trazo") or {}
+    if nombre in excepciones:
+        declaracion = excepciones[nombre] or {}
+        archivo = declaracion.get(variante) or (nombre + ".svg")
+        origen = os.path.join(DIR_ASSETS, "iconos", "trazo", archivo)
+        if not os.path.exists(origen):
+            raise pr.ErrorDeProtocolo(
+                "El icono %r esta declarado en el bloque `trazo` de site/iconos-cultivo.yaml "
+                "pero falta site/assets/iconos/trazo/%s." % (nombre, archivo))
+        _ICONOS_USADOS.add((variante, nombre))
+        return "%s/iconos/%s/%s.svg" % (PREFIJO, variante, nombre)
+    origen = os.path.join(DIR_ASSETS, "iconos", variante, nombre + ".png")
     if not os.path.exists(origen):
         raise pr.ErrorDeProtocolo(
-            "No hay dibujo para el icono %r (falta site/assets/iconos/trazo/%s.svg). "
-            "Revisar site/iconos-cultivo.yaml." % (nombre, nombre))
-    if variante not in COLOR_ICONO:
-        raise pr.ErrorDeProtocolo("Variante de icono desconocida: %r" % variante)
+            "No hay icono %r en el paquete de JC (falta site/assets/iconos/%s/%s.png). "
+            "Si el producto no esta en su catalogo, va al bloque `trazo` de "
+            "site/iconos-cultivo.yaml con su dibujo propio."
+            % (nombre, variante, nombre))
     _ICONOS_USADOS.add((variante, nombre))
-    return "%s/iconos/%s/%s.svg" % (PREFIJO, variante, nombre)
+    return "%s/iconos/%s/%s.png" % (PREFIJO, variante, nombre)
+
+
+def copiar_iconos(escritor, theme):
+    """Escribe en el sitio los iconos que la construccion uso, y solo esos.
+
+    - PNG de JC: se copian SIN el fondo plano #f7f7f7 con que vienen (pipeline/pngs.py). El
+      archivo original no se toca: site/assets/iconos/ se trata como raw/.
+    - SVG de trazo: los de interfaz se pintan con el color que les toca en el theme (vienen
+      con `currentColor`, que un <img> no hereda). Un eventual SVG de PRODUCTO iria tal cual,
+      sin tema, porque son dibujos con sus propios colores igual que los PNG de JC; hoy no
+      queda ninguno (la batata paso al paquete de JC el 30-sep-2026).
+    """
+    excepciones = iconos_yaml().get("trazo") or {}
+    for variante, nombre in sorted(_ICONOS_USADOS):
+        if nombre in excepciones:
+            declaracion = excepciones[nombre] or {}
+            archivo = declaracion.get(variante) or (nombre + ".svg")
+            with open(os.path.join(DIR_ASSETS, "iconos", "trazo", archivo),
+                      encoding="utf-8") as f:
+                dibujo = f.read()
+            if declaracion.get("tema"):
+                dibujo = dibujo.replace("currentColor", theme["colores"][COLOR_TRAZO[variante]])
+            escritor.texto("public/plataforma/iconos/%s/%s.svg" % (variante, nombre), dibujo)
+            continue
+        origen = os.path.join(DIR_ASSETS, "iconos", variante, nombre + ".png")
+        with open(origen, "rb") as f:
+            crudo = f.read()
+        escritor.binario("public/plataforma/iconos/%s/%s.png" % (variante, nombre),
+                         pngs.sin_fondo(crudo, origen))
 
 
 # Acciones que el sitio sabe hacer desde el panel de UTILIDADES y desde el pie de cada cuadro
@@ -900,7 +1173,6 @@ def nombres_extra_geojson():
 
 
 def sin_tildes_mayuscula(texto):
-    import unicodedata
     plano = unicodedata.normalize("NFKD", texto)
     return "".join(c for c in plano if not unicodedata.combining(c)).upper()
 
@@ -982,15 +1254,26 @@ def tooltip_departamento(ctx, medidas):
     return filas
 
 
-def leyenda_mapa(ctx, deptos, escala, variable, rampa):
-    """Color, minimo y maximo de cada subescala, de la clase mas alta a la mas baja.
+def plantillas_de_tramo(ctx):
+    """Las tres plantillas de rotulo de la escala del mapa (protocolo, bloque mapa.leyenda)."""
+    leyenda = ctx.protocolo["mapa"]["leyenda"]
+    return {"entre": leyenda["plantilla_de_clase"],
+            "mas": leyenda["plantilla_clase_mas_alta"],
+            "menos": leyenda["plantilla_clase_mas_baja"]}
 
-    Se muestran el menor y el mayor de los departamentos QUE ESTAN en la clase, no los puntos
-    de corte. Si el redondeo de pantalla hace que una clase termine donde empieza la de arriba,
-    esas dos se muestran sin redondear: una leyenda donde 26.200 es el techo de una clase y el
-    piso de la siguiente se lee como un error.
+
+def clases_de_la_escala(ctx, deptos, escala, rampa, con_conteo=True):
+    """Las clases de la escala del mapa, de la mas alta a la mas baja, con color y rotulo.
+
+    Los rotulos son los CINCO TRAMOS CONTIGUOS que pidio JC el 30-sep-2026 (protocolo,
+    mapa.leyenda): los limites salen redondeados de pr.tramos_de_escala y el limite entre dos
+    clases es uno solo, compartido, asi que la leyenda no tiene huecos. El calculo de los
+    quintiles y la clase de cada departamento NO pasan por aca: ya vienen resueltos con los
+    valores reales.
+
+    La entrada "Sin datos" va siempre al final, con su color, si hay al menos un departamento
+    sin dato (protocolo, mapa.sin_dato).
     """
-    plantilla = ctx.protocolo["mapa"]["leyenda"]["plantilla_de_clase"]
     por_clase = {}
     for fila in deptos:
         if fila["v"] is None:
@@ -998,36 +1281,42 @@ def leyenda_mapa(ctx, deptos, escala, variable, rampa):
         por_clase.setdefault(pr.clase_de(fila["v"], escala["cortes"]), []).append(fila["v"])
 
     clases = []
-    for clase in sorted(por_clase, reverse=True):
-        crudos = sorted(por_clase[clase])
-        clases.append({
-            "color": rampa[min(clase, len(rampa)) - 1],
-            "conteo": "(%d)" % len(crudos),
-            "crudo_desde": crudos[0], "crudo_hasta": crudos[-1],
-            "redondear": True,
-        })
-    for arriba, abajo in zip(clases, clases[1:]):
-        techo_de_abajo = ctx.precision.valor(abajo["crudo_hasta"], variable, "departamento")
-        piso_de_arriba = ctx.precision.valor(arriba["crudo_desde"], variable, "departamento")
-        if techo_de_abajo == piso_de_arriba:
-            arriba["redondear"] = abajo["redondear"] = False
-    for clase in clases:
-        if clase["redondear"]:
-            desde = ctx.precision.valor(clase["crudo_desde"], variable, "departamento")
-            hasta = ctx.precision.valor(clase["crudo_hasta"], variable, "departamento")
-        else:
-            desde, hasta = clase["crudo_desde"], clase["crudo_hasta"]
-        clase["texto"] = (plantilla.replace("{minimo}", pr.fmt_numero(desde))
-                                   .replace("{maximo}", pr.fmt_numero(hasta)))
-        for interno in ("crudo_desde", "crudo_hasta", "redondear"):
-            clase.pop(interno)
+    for tramo in pr.tramos_de_escala(por_clase, plantillas_de_tramo(ctx)):
+        entrada = {"color": rampa[min(tramo["clase"], len(rampa)) - 1], "texto": tramo["texto"]}
+        if con_conteo:
+            entrada["conteo"] = "(%d)" % len(por_clase[tramo["clase"]])
+        clases.append(entrada)
 
     sin_dato = [f for f in deptos if f["v"] is None]
     if sin_dato:
-        clases.append({"color": ctx.colores.sin_dato,
-                       "texto": ctx.protocolo["mapa"]["sin_dato"]["etiqueta_en_leyenda"],
-                       "conteo": "(%d)" % len(sin_dato)})
-    return {"encabezado": NOMBRE_EJE[UNIDAD[variable]], "clases": clases}
+        entrada = {"color": ctx.colores.sin_dato,
+                   "texto": ctx.protocolo["mapa"]["sin_dato"]["etiqueta_en_leyenda"]}
+        if con_conteo:
+            entrada["conteo"] = "(%d)" % len(sin_dato)
+        clases.append(entrada)
+    return clases
+
+
+def leyenda_mapa(ctx, deptos, escala, variable, rampa):
+    """La leyenda del mapa de la vista de detalle: encabezado con la unidad y los 5 tramos."""
+    return {"encabezado": NOMBRE_EJE[UNIDAD[variable]],
+            "clases": clases_de_la_escala(ctx, deptos, escala, rampa)}
+
+
+def escala_del_panel_mapa(ctx, deptos, escala, rampa, unidad):
+    """La escala que va DEBAJO del mapa en el tablero, en la forma que dibuja JC.
+
+    Hasta el 30-sep-2026 era una barra de degrade de 0 al maximo. Eso es justo lo que JC
+    rechazo: "la escala del mapa no dice nada". El mapa se pinta en cinco clases discretas, asi
+    que un degrade continuo de 0 al maximo no describe ni los colores ni los cortes.
+
+    Ahora son las CINCO MUESTRAS de su maqueta (hoja "Agri 1", imagen bajo el mapa): un
+    cuadradito por clase con su tramo debajo, de la mas oscura a la mas clara, y la unidad una
+    sola vez al final del rotulo. Sin conteos: la tira es horizontal y angosta, y el conteo por
+    clase se sigue viendo en la leyenda de la vista de detalle.
+    """
+    tramos = clases_de_la_escala(ctx, deptos, escala, rampa, con_conteo=False)
+    return {"unidad": unidad, "tramos": tramos}
 
 
 def participacion_texto(valor, total):
@@ -1987,6 +2276,14 @@ def construir_datos_departamento(ctx, spec):
         filtro_cultivo(ctx, cultivos, spec["defaults"]["cultivo"]),
     ], notas_extra=("estimacion-departamental",))
     vista["particion"] = "departamento"
+    # Esta pagina ES el departamento elegido (la hoja "Agri 1 Dto" de la maqueta: la miga dice
+    # "Dto ALBERDI" y el selector dice "Seleccione otro departamento si desea visualizar"). El
+    # cultivo se acomoda si no tiene datos ahi; el departamento no se toca.
+    vista["filtro_sujeto"] = "departamento"
+    # El motivo que lleva un chip apagado. Es EL caso que puso JC en su maqueta ("si no hay
+    # datos para garbanzo en departamento Alberdi, QUE NO PUEDA PONERSE ACTIVO"), asi que la
+    # pagina lo dice con esas palabras en vez del texto generico.
+    vista["sin_opcion"] = "Sin datos de {opcion} en este departamento."
     vista["enlaces"] = [{"texto": destino["accion"], "href": destino["va_a"] + ".html"}
                         for destino in spec["navegacion"]]
     pie = ctx.pie(spec)
@@ -2018,7 +2315,14 @@ def construir_datos_departamento(ctx, spec):
             eje_der = ctx.eje_secundario(produccion, "tn", len(eje_izq["etiquetas"]) - 1)
             elemento_grafico = {
                 "clase": "grafico",
-                "titulo": ctx.titulo(spec, valores_filtro, ctx.ventana),
+                # Titulo LITERAL de la hoja "Agri 1 Dto" de la maqueta (spec.titulo_protocolo;
+                # revision del 30-sep-2026, "los titulos de la maqueta son literales"). Misma
+                # plantilla que el grafico del tablero, con "Departamento X" donde el
+                # provincial dice "Total".
+                "titulo": titulo_literal(spec["titulo_protocolo"],
+                                         Cultivo=valores_filtro["cultivo_para_titulo"],
+                                         Departamento=hechos.nombre[geo],
+                                         desde=ctx.ventana[0], hasta=ctx.ventana[-1]),
                 "subtitulo": "Superficie cosechada en hectáreas y producción en toneladas, por campaña",
                 "unidad": ["ha", "tn"],
                 "pie": pie,
@@ -2055,7 +2359,10 @@ def construir_datos_departamento(ctx, spec):
                 filas.append({"celdas": celdas})
             elemento_tabla = {
                 "clase": "tabla",
-                "titulo": ctx.titulo(spec_tabla, valores_filtro, ctx.ventana, tipo="lista"),
+                "titulo": titulo_literal(spec["tabla_por_campania"]["titulo_protocolo"],
+                                         Cultivo=valores_filtro["cultivo_para_titulo"],
+                                         Departamento=hechos.nombre[geo],
+                                         desde=ctx.ventana[0], hasta=ctx.ventana[-1]),
                 "subtitulo": limpiar(spec["subtitulo"]),
                 "pie": pie,
                 "columnas": columnas,
@@ -2309,7 +2616,8 @@ class ContextoHacienda:
         marcas = pr.marcas_eje(min(limpios + [0.0]), max(limpios + [0.0]))
         etiquetas = {clave_js(m): pr.fmt_numero(m, 0) for m in marcas["marcas"]}
         return {"min": marcas["min"], "max": marcas["max"], "paso": marcas["paso"],
-                "etiquetas": etiquetas, "nombre": hac.NOMBRE_EJE[unidad]}
+                "etiquetas": etiquetas, "nombre": hac.NOMBRE_EJE[unidad],
+                "minimo": minimo_rotuladas()}
 
     def eje_secundario(self, valores, unidad, intervalos):
         """Eje derecho con la MISMA cantidad de intervalos que el izquierdo: asi las marcas de
@@ -2319,13 +2627,15 @@ class ContextoHacienda:
         marcas = pr.marcas_eje_secundario(min(limpios + [0.0]), max(limpios + [0.0]), intervalos)
         etiquetas = {clave_js(m): pr.fmt_numero(m, 0) for m in marcas["marcas"]}
         return {"min": marcas["min"], "max": marcas["max"], "paso": marcas["paso"],
-                "etiquetas": etiquetas, "nombre": hac.NOMBRE_EJE[unidad]}
+                "etiquetas": etiquetas, "nombre": hac.NOMBRE_EJE[unidad],
+                "minimo": minimo_rotuladas()}
 
     def eje_porcentual(self):
         marcas = pr.marcas_eje(0, 100)
         etiquetas = {clave_js(m): pr.fmt_numero(m, 0) + "%" for m in marcas["marcas"]}
         return {"min": marcas["min"], "max": marcas["max"], "paso": marcas["paso"],
-                "etiquetas": etiquetas, "nombre": NOMBRE_EJE["%"]}
+                "etiquetas": etiquetas, "nombre": NOMBRE_EJE["%"],
+                "minimo": minimo_rotuladas()}
 
 
 # --------------------------------------------------------------------------
@@ -2763,29 +3073,10 @@ def construir_hacienda_mapa(ctx, spec):
 
 
 def h_leyenda_mapa(ctx, deptos, escala, medida, rampa):
-    """Misma mecanica que la leyenda del mapa de cultivos, sin redondeo de pantalla: aca el
-    dato es un conteo exacto y no hay dos clases que puedan solaparse por redondear."""
-    plantilla = ctx.protocolo["mapa"]["leyenda"]["plantilla_de_clase"]
-    por_clase = {}
-    for fila in deptos:
-        if fila["v"] is None:
-            continue
-        por_clase.setdefault(pr.clase_de(fila["v"], escala["cortes"]), []).append(fila["v"])
-    clases = []
-    for clase in sorted(por_clase, reverse=True):
-        crudos = sorted(por_clase[clase])
-        clases.append({
-            "color": rampa[min(clase, len(rampa)) - 1],
-            "conteo": "(%d)" % len(crudos),
-            "texto": (plantilla.replace("{minimo}", pr.fmt_numero(crudos[0]))
-                               .replace("{maximo}", pr.fmt_numero(crudos[-1]))),
-        })
-    sin_dato = [f for f in deptos if f["v"] is None]
-    if sin_dato:
-        clases.append({"color": ctx.colores.sin_dato,
-                       "texto": ctx.protocolo["mapa"]["sin_dato"]["etiqueta_en_leyenda"],
-                       "conteo": "(%d)" % len(sin_dato)})
-    return {"encabezado": hac.NOMBRE_EJE[hac.UNIDAD[medida]], "clases": clases}
+    """La misma leyenda de cinco tramos contiguos que el mapa de cultivos; lo unico propio es
+    el encabezado, que nombra la unidad de esta base."""
+    return {"encabezado": hac.NOMBRE_EJE[hac.UNIDAD[medida]],
+            "clases": clases_de_la_escala(ctx, deptos, escala, rampa)}
 
 
 def h_nota_sin_movimiento(nombres):
@@ -3372,8 +3663,7 @@ class ContextoVegetales:
         self.color_depto = self.colores.por_categoria(
             [hechos.nombre[geo] for geo in con_dato])
 
-        self.iconos_cultivo = pr.cargar_yaml(
-            os.path.join(DIR_SITE, "iconos-cultivo.yaml"))["cultivos"]
+        self.iconos_cultivo = iconos_yaml()["cultivos"]
 
     def _verificar_cobertura(self):
         """Avisa (no corta) si el mart no coincide con la cobertura que declara el spec.
@@ -3446,14 +3736,16 @@ class ContextoVegetales:
         marcas = pr.marcas_eje(min(limpios + [0.0]), max(limpios + [0.0]))
         etiquetas = {clave_js(m): pr.fmt_numero(m, 0) for m in marcas["marcas"]}
         return {"min": marcas["min"], "max": marcas["max"], "paso": marcas["paso"],
-                "etiquetas": etiquetas, "nombre": veg.NOMBRE_EJE[unidad]}
+                "etiquetas": etiquetas, "nombre": veg.NOMBRE_EJE[unidad],
+                "minimo": minimo_rotuladas()}
 
     def eje_secundario(self, valores, unidad, intervalos):
         limpios = [v for v in valores if v is not None]
         marcas = pr.marcas_eje_secundario(min(limpios + [0.0]), max(limpios + [0.0]), intervalos)
         etiquetas = {clave_js(m): pr.fmt_numero(m, 0) for m in marcas["marcas"]}
         return {"min": marcas["min"], "max": marcas["max"], "paso": marcas["paso"],
-                "etiquetas": etiquetas, "nombre": veg.NOMBRE_EJE[unidad]}
+                "etiquetas": etiquetas, "nombre": veg.NOMBRE_EJE[unidad],
+                "minimo": minimo_rotuladas()}
 
 
 def rotulo_de_cobertura(meses):
@@ -3836,8 +4128,7 @@ def panel_tabla_superficie(ctx, spec, producto, anio, pie):
     """
     declarado = spec["paneles"]["tabla-superficie"]
     titulo = titulo_literal(declarado["titulo_protocolo"],
-                            Producto=producto_con_recorte(ctx, producto),
-                            desde=str(ctx.anios[0]), hasta=str(ctx.anios[-1]))
+                            Producto=producto_con_recorte(ctx, producto))
     medida = SUPERFICIE_ESTIMADA
     # Una fila por departamento con DTV en ALGUN año de la ventana; dentro de la fila, el año
     # sin declaraciones va en CERO, como en la maqueta. La regla "un departamento sin DTV no
@@ -3970,6 +4261,7 @@ class TablaDeEscalas:
                     "min": marcas["min"], "max": marcas["max"], "paso": marcas["paso"],
                     "etiquetas": {clave_js(m): pr.fmt_numero(m, 0 if enteras else 2)
                                   for m in marcas["marcas"]},
+                    "minimo": minimo_rotuladas(),
                 })
         firmas.sort(key=lambda f: f[1])
         return [self._indice[f] for f in firmas]
@@ -4491,6 +4783,11 @@ def indicador(etiqueta, valor, unidad, medida, previo, etiqueta_previo, formato=
             "unidad": (prefijo + " " + unidad).strip(), "var": variacion}
 
 
+# El valor de `paneles.mapa.click_departamento` que significa "no navega a ninguna pagina:
+# cambia los datos de este mismo tablero" (hoja "Agri 1 Dto" de la maqueta de JC).
+EN_LA_MISMA_VISTA = "en-la-misma-vista"
+
+
 def panel_vacio(titulo, motivo):
     """Un panel sin datos dice POR QUE no los tiene. Nunca se dibuja un panel en blanco."""
     return {"titulo": titulo, "vacio": motivo}
@@ -4506,16 +4803,21 @@ def cultivos_del_filtro(ctx, cultivo):
     return cultivos_con_datos(ctx) if cultivo == TODOS else [cultivo]
 
 
-def total_provincia_cultivos(ctx, campania, cultivos, medida):
+def total_provincia_cultivos(ctx, campania, cultivos, medida, geos=None):
     """Suma departamental de una medida. Devuelve None si ningun departamento informo.
 
     Se suma por departamento y no se lee la fila provincial de la fuente por el mismo motivo que
     el ranking total: cuando el filtro es un subconjunto de cultivos, la fila provincial no
     existe y las dos formas de contar tienen que dar lo mismo en todo el sitio.
+
+    `geos` recorta el universo geografico: None (lo normal) suma TODA la provincia; una lista
+    de un solo departamento da el mismo numero para ese departamento. Es lo que permite que el
+    tablero muestre los datos del departamento elegido sin una segunda forma de contar
+    (Francisco, 30-sep-2026; hoja "Agri 1 Dto" de la maqueta).
     """
     hechos = ctx.hechos
     suma, hubo = 0.0, False
-    for geo in hechos.deptos:
+    for geo in (hechos.deptos if geos is None else geos):
         for cultivo in cultivos:
             valor, _ = valor_util(hechos.medidas(geo, campania, cultivo), medida)
             if valor is not None:
@@ -4524,12 +4826,16 @@ def total_provincia_cultivos(ctx, campania, cultivos, medida):
     return suma if hubo else None
 
 
-def medida_provincial(ctx, campania, cultivos, medida):
-    """El rendimiento no se suma ni se promedia: se recalcula produccion/superficie cosechada."""
+def medida_provincial(ctx, campania, cultivos, medida, geos=None):
+    """El rendimiento no se suma ni se promedia: se recalcula produccion/superficie cosechada.
+
+    Con `geos` la cuenta es la MISMA acotada a esos departamentos (ver
+    total_provincia_cultivos): el rendimiento departamental tampoco se promedia.
+    """
     if medida != "rendimiento_kg_ha":
-        return total_provincia_cultivos(ctx, campania, cultivos, medida)
-    produccion = total_provincia_cultivos(ctx, campania, cultivos, "produccion_tn")
-    cosechada = total_provincia_cultivos(ctx, campania, cultivos, "sup_cosechada_ha")
+        return total_provincia_cultivos(ctx, campania, cultivos, medida, geos)
+    produccion = total_provincia_cultivos(ctx, campania, cultivos, "produccion_tn", geos)
+    cosechada = total_provincia_cultivos(ctx, campania, cultivos, "sup_cosechada_ha", geos)
     if not produccion or not cosechada:
         return None
     return produccion * 1000.0 / cosechada
@@ -4554,7 +4860,7 @@ MOTIVO_TODOS = {"sup_sembrada_ha": MOTIVO_TODOS_SUPERFICIE,
                 "rendimiento_kg_ha": MOTIVO_TODOS_RENDIMIENTO}
 
 
-def indicadores_cultivos(ctx, spec, campania, cultivos, todos=False):
+def indicadores_cultivos(ctx, spec, campania, cultivos, todos=False, geos=None):
     """La secuencia FIJA de JC: sembrada, cosechada, produccion, rendimiento (formato_v1).
 
     SIN variacion contra la campaña anterior: solo el valor con su unidad, como el mockup
@@ -4577,7 +4883,7 @@ def indicadores_cultivos(ctx, spec, campania, cultivos, todos=False):
         completo = (lambda m: lambda v: (ctx.precision.texto(v, m, "provincia"), ""))(medida)
         salida.append(indicador(
             etiqueta,
-            medida_provincial(ctx, campania, cultivos, medida),
+            medida_provincial(ctx, campania, cultivos, medida, geos),
             declarado["unidad"], medida,
             None,        # sin campaña previa: la variacion esta PROHIBIDA en estos KPIs
             None, formato=completo))
@@ -4593,7 +4899,7 @@ def titulo_literal(plantilla, **valores):
     return plantilla
 
 
-def panel_anillo_participacion(ctx, spec, campania, pie):
+def panel_anillo_participacion(ctx, spec, campania, pie, geos=None, area=None):
     """El anillo del mockup de JC: participacion de cada cultivo en la produccion provincial
     de la campaña, top 5 + Resto, "(fina y gruesa)". NO sigue el selector de cultivo: muestra
     todos por diseño, y la nota lo dice (formato_v1.parametros_explicitos)."""
@@ -4608,10 +4914,14 @@ def panel_anillo_participacion(ctx, spec, campania, pie):
     # (universo_visible: visible no es incluido en agregados). Total validado: 6.016.454 tn.
     partes = []
     for cultivo in cultivos_con_datos(ctx):
-        valor = total_provincia_cultivos(ctx, campania, [cultivo], declarado["medida"])
+        valor = total_provincia_cultivos(ctx, campania, [cultivo], declarado["medida"], geos)
         if valor:
             partes.append((cultivo, valor))
-    titulo = titulo_literal(declarado["titulo_protocolo"], campania=campania)
+    # Con un departamento elegido el titulo es OTRA plantilla literal de JC y no la provincial
+    # con un agregado: en su hoja "Agri 1 Dto" escribe "Departamento ALBERDI Campaña 2024/25".
+    titulo = titulo_literal(
+        declarado["titulo_protocolo_departamento"] if area else declarado["titulo_protocolo"],
+        campania=campania, Departamento=area or "")
     if not partes:
         return panel_vacio(titulo, "Sin producción informada en la campaña elegida.")
     partes.sort(key=lambda t: (-t[1], pr.clave_alfabetica(t[0])))
@@ -4633,7 +4943,9 @@ def panel_anillo_participacion(ctx, spec, campania, pie):
             # El Resto no es un cultivo: no le toca color de la paleta categorica. Gris de
             # apoyo del theme, que no compite con ningun cultivo real.
             "color": ctx.theme["colores"]["texto_apoyo"]})
-    nota = "Muestra todos los cultivos de la campaña: no sigue el selector de cultivo."
+    nota = ("Muestra todos los cultivos del departamento en la campaña: no sigue el selector "
+            "de cultivo." if area else
+            "Muestra todos los cultivos de la campaña: no sigue el selector de cultivo.")
     if resto:
         nota += " «%s» agrupa los %d cultivos restantes." % (declarado["resto"], len(resto))
     return {
@@ -4701,16 +5013,27 @@ def panel_mapa_cultivos(ctx, spec, campania, cultivos, variable, pie, todos=Fals
         # es la UNICA navegacion de contenido permitida (tercera_tanda.solo_tableros) y lleva
         # al dato departamental, conservando la seleccion vigente (persistencia_de_filtros).
         "accion": spec["paneles"]["mapa"].get("rotulo_accion"),
-        "ficha": url_de_vista(ctx, spec["paneles"]["mapa"]["click_departamento"],
-                              "?departamento="),
+        # Los dos textos que JC escribe en la hoja departamental: el titulo ARRIBA del mapa
+        # ("Departamento ALBERDI") y la invitacion DEBAJO ("Seleccione otro departamento si
+        # desea visualizar"), que reemplaza a "Seleccione departamento" de la hoja provincial.
+        # Son plantillas con un slot: el navegador sustituye, no compone.
+        "accion_con_departamento": (spec["paneles"]["mapa"].get("seleccion_departamento")
+                                    or {}).get("rotulo_cambiar"),
+        "titulo_departamento": (spec["paneles"]["mapa"].get("seleccion_departamento")
+                                or {}).get("rotulo_titulo"),
+        # A donde lleva el clic en un departamento. Con `en-la-misma-vista` NO lleva a ningun
+        # lado: cambia los datos de ESTE tablero (Francisco, 30-sep-2026; hoja "Agri 1 Dto" de
+        # la maqueta). `ficha` queda en None y el navegador usa `selecciona`.
+        "selecciona": spec["paneles"]["mapa"]["click_departamento"] == EN_LA_MISMA_VISTA,
+        "ficha": None if spec["paneles"]["mapa"]["click_departamento"] == EN_LA_MISMA_VISTA
+                 else url_de_vista(ctx, spec["paneles"]["mapa"]["click_departamento"],
+                                   "?departamento="),
         # Proporcion geografica correcta (tercera_tanda.mapa_grande): la caja se adapta al
         # mapa, nunca al reves. Lo aplica tablero.js como aspectScale.
         "aspecto": aspecto_mapa(), "relacion": relacion_mapa(),
         "deptos": deptos,
         "unidad": UNIDAD[variable],
-        "escala": {"min": "0",
-                   "max": ctx.precision.texto(max(con_dato), variable, "departamento"),
-                   "rampa": rampa},
+        "escala": escala_del_panel_mapa(ctx, deptos, escala, rampa, UNIDAD[variable]),
         "total": ("Total provincial: %s %s"
                   % (ctx.precision.texto(total, variable, "provincia"), UNIDAD[variable]))
                  if total is not None else "Total provincial: sin dato",
@@ -4749,7 +5072,7 @@ def tooltip_depto_cultivos(ctx, geo, campania, cultivos, todos):
     return filas
 
 
-def titulo_tendencia_cultivos(ctx, declarado, cultivo_titulo, todos):
+def titulo_tendencia_cultivos(ctx, declarado, cultivo_titulo, todos, area=None):
     """El titulo LITERAL del grafico de lineas del mockup (tercera tanda, backlog 31):
     "{Cultivo} - Sgo del Estero - Total - Evolución de la superficie cosechada y producción -
     Campañas {desde} a {hasta}". Slots dinamicos: cultivo y periodo, nada mas. El periodo se
@@ -4761,17 +5084,20 @@ def titulo_tendencia_cultivos(ctx, declarado, cultivo_titulo, todos):
     rotulada "(fina y gruesa)" como la rotula JC. Es la unica desviacion de la plantilla y
     existe para que el titulo no diga algo falso.
     """
-    plantilla = declarado["titulo_protocolo"]
+    # Con un departamento elegido cambia la PLANTILLA, no se parchea la provincial: donde el
+    # titulo provincial dice "Total", el de la hoja "Agri 1 Dto" dice "Departamento ALBERDI".
+    # Las dos las escribio JC y las dos estan en el spec.
+    plantilla = declarado["titulo_protocolo_departamento" if area else "titulo_protocolo"]
     if todos:
         plantilla = plantilla.replace(
             "Evolución de la superficie cosechada y producción",
             "Evolución de la producción (fina y gruesa)")
-    return titulo_literal(plantilla, Cultivo=cultivo_titulo,
+    return titulo_literal(plantilla, Cultivo=cultivo_titulo, Departamento=area or "",
                           desde=ctx.ventana[0], hasta=ctx.ventana[-1])
 
 
 def panel_tendencia_cosecha_produccion(ctx, spec, campania, cultivos, todos, pie,
-                                       cultivo_titulo):
+                                       cultivo_titulo, geos=None, area=None):
     """El grafico de lineas del mockup: superficie cosechada + produccion sobre UN SOLO eje
     en "Millones", visible y con su escala, como lo dibuja JC (tercera tanda,
     formato_v1.tercera_tanda.eje_vertical_visible; deroga el eje secundario que hubo antes).
@@ -4782,7 +5108,7 @@ def panel_tendencia_cosecha_produccion(ctx, spec, campania, cultivos, todos, pie
     medidas = [m for m in declarado["medidas"] if not (todos and m != "produccion_tn")]
     series, crudas = [], []
     for medida in medidas:
-        puntos = [medida_provincial(ctx, c, cultivos, medida) for c in ctx.ventana]
+        puntos = [medida_provincial(ctx, c, cultivos, medida, geos) for c in ctx.ventana]
         crudas.append(puntos)
         series.append({
             "nombre": ETIQUETA_VARIABLE[medida] + (" (fina y gruesa)" if todos else ""),
@@ -4796,9 +5122,10 @@ def panel_tendencia_cosecha_produccion(ctx, spec, campania, cultivos, todos, pie
             "textos": [ctx.precision.texto(p, medida, "provincia") + " " + UNIDAD[medida]
                        if p is not None else "S/D" for p in puntos],
         })
-    titulo = titulo_tendencia_cultivos(ctx, declarado, cultivo_titulo, todos)
+    titulo = titulo_tendencia_cultivos(ctx, declarado, cultivo_titulo, todos, area)
     if not any(p is not None for puntos in crudas for p in puntos):
         return panel_vacio(titulo,
+                           "No hay serie para este cultivo en este departamento." if area else
                            "No hay serie para este cultivo en la ventana de campañas.")
     # Eje unico "Millones": las marcas se calculan sobre TODOS los valores de las dos series
     # juntas (comparten eje) y se rotulan divididas por millon, como lo escribe JC en su
@@ -4820,12 +5147,17 @@ def panel_tendencia_cosecha_produccion(ctx, spec, campania, cultivos, todos, pie
         "eje": eje,
         "eje2": None,
         "eje_visible": True,
-        "medidas_extra": medidas_extra_cultivos(ctx, declarado, cultivos, todos, juntos, eje),
+        # Todas las campanias rotuladas y rotadas, como las dibuja JC en el mockup
+        # (protocolo, eje_horizontal). Es propio de este cuadro y no de todo tablero
+        # con eje: los tableros mensuales saltean etiquetas en el eje horizontal.
+        "x_completo": True,
+        "medidas_extra": medidas_extra_cultivos(ctx, declarado, cultivos, todos, juntos, eje,
+                                                geos),
         "nota": nota,
     }
 
 
-def medidas_extra_cultivos(ctx, declarado, cultivos, todos, juntos, eje):
+def medidas_extra_cultivos(ctx, declarado, cultivos, todos, juntos, eje, geos=None):
     """Las segundas medidas que este cuadro ofrece en el zoom (spec, `comparacion.medidas`).
 
     Son las variables de la base que el grafico de JC no dibuja: la superficie SEMBRADA, que
@@ -4845,7 +5177,7 @@ def medidas_extra_cultivos(ctx, declarado, cultivos, todos, juntos, eje):
     salida = []
     for opcion in pedidas:
         medida = opcion["v"]
-        puntos = [medida_provincial(ctx, c, cultivos, medida) for c in ctx.ventana]
+        puntos = [medida_provincial(ctx, c, cultivos, medida, geos) for c in ctx.ventana]
         if not [p for p in puntos if p is not None]:
             continue
         valores = [ctx.precision.valor(p, medida, "provincia") if p is not None else None
@@ -4902,7 +5234,7 @@ def eje_millones(valores):
             "nombre": "Millones"}
 
 
-def panel_tabla_datos_cultivos(ctx, spec, campania, cultivos, todos, pie):
+def panel_tabla_datos_cultivos(ctx, spec, campania, cultivos, todos, pie, geos=None):
     """Forma `tabla-datos`: los numeros crudos bajo el grafico de evolucion, LITERAL al
     mockup Modelo 2 (tercera tanda del 10-ago): DOS bloques de campañas lado a lado, con las
     columnas que dibuja JC ("Campaña", "Superficie Cos. (Ha)", "Producción (Tn)",
@@ -4923,13 +5255,15 @@ def panel_tabla_datos_cultivos(ctx, spec, campania, cultivos, todos, pie):
     for c in ctx.ventana:
         celdas = []
         for medida in medidas:
-            valor = medida_provincial(ctx, c, cultivos, medida)
+            valor = medida_provincial(ctx, c, cultivos, medida, geos)
             celdas.append(ctx.precision.texto(valor, medida, "provincia"))
             if valor is not None:
                 hubo = True
         filas.append({"campania": c, "celdas": celdas, "actual": c == campania})
     if not hubo:
-        return panel_vacio("", "No hay datos de este cultivo en la ventana de campañas.")
+        return panel_vacio("", "No hay datos de este cultivo en este departamento."
+                           if geos else
+                           "No hay datos de este cultivo en la ventana de campañas.")
     mitad = (len(filas) + 1) // 2
     bloques = [{"columnas": columnas, "filas": parte}
                for parte in (filas[:mitad], filas[mitad:]) if parte]
@@ -4972,7 +5306,12 @@ def panel_top_sembrada(ctx, spec, campania, cultivos, todos, pie):
                      {"etiqueta": etiquetas[1], "num": False},
                      {"etiqueta": etiquetas[2], "num": True},
                      {"etiqueta": etiquetas[3], "num": True}],
-        "filas": [{"celdas": ["%d°" % puesto_de[geo],
+        # `geo` no se dibuja: le sirve al navegador para marcar la fila del departamento
+        # elegido, que es lo que JC resalta en su hoja "Agri 1 Dto" (ahi ALBERDI aparece
+        # pintado en el 4to puesto). El ranking en si NO cambia: sigue siendo provincial
+        # ("salvo los datos de los RANKINGS").
+        "filas": [{"geo": geo,
+                   "celdas": ["%d°" % puesto_de[geo],
                               nombre,
                               ctx.precision.texto(valor, medida, "departamento"),
                               participacion_texto(valor, total)]}
@@ -5046,7 +5385,66 @@ def construir_tablero_cultivos(ctx, spec):
                         "top": top,
                     },
                 }
+    tablero["capa_departamental"] = capa_departamental_cultivos(ctx, spec, cultivos, etiquetas,
+                                                                pie)
     return tablero
+
+
+def capa_departamental_cultivos(ctx, spec, cultivos, etiquetas, pie):
+    """Los mismos cuadros del tablero, pero con los datos de UN departamento.
+
+    Francisco, 30-sep-2026: "cuando clickee el departamento, quiero que en la misma vista
+    vayan cambiando los datos". Es la hoja "Agri 1 Dto" de la maqueta de JC, que es el MISMO
+    tablero con otro recorte geografico ("Idem Agri 1 PERO CON DATOS DE CADA DEPARTAMENTO,
+    salvo los datos de los RANKINGS").
+
+    Por que va en una CAPA APARTE y no como un filtro mas de la clave del combo: el mapa es el
+    52% del payload del tablero y NO cambia con el departamento (siempre es la provincia
+    entera, pintada por cultivo/campaña/variable), y el ranking tampoco cambia (regla de JC).
+    Meter el departamento en la clave multiplicaria por 28 justamente lo que no varia. Aca se
+    escribe solo lo que cambia -KPIs, contexto, tendencia, anillo y tabla-, sin la variable
+    (ninguno de esos cuadros depende de ella: el unico que la mira es el mapa), y el navegador
+    lo superpone sobre el combo provincial que ya tiene.
+
+    Un archivo por departamento, que el navegador baja recien cuando se lo clickea.
+    """
+    hechos = ctx.hechos
+    capa = {}
+    for geo in hechos.deptos:
+        nombre = hechos.nombre[geo]
+        combos = {}
+        for cultivo in cultivos + [TODOS]:
+            todos = cultivo == TODOS
+            lista = cultivos_del_filtro(ctx, cultivo)
+            nombre_contexto = "Todos los cultivos" if todos else etiquetas[cultivo]
+            icono_contexto = None if todos else iconos_de_cultivo(ctx, cultivo)[1]
+            for campania in ctx.ventana:
+                combos["|".join([cultivo, campania])] = {
+                    # La tarjeta de contexto dice DONDE se esta parado, no solo que cultivo:
+                    # con un departamento elegido el numero de al lado ya no es el provincial
+                    # (formato_v1.parametros_explicitos).
+                    "contexto": {"nombre": nombre_contexto,
+                                 "detalle": "Campaña %s · %s" % (campania, nombre),
+                                 "icono": icono_contexto},
+                    "kpis": indicadores_cultivos(ctx, spec, campania, lista, todos, [geo]),
+                    "paneles": {
+                        "tendencia": panel_tendencia_cosecha_produccion(
+                            ctx, spec, campania, lista, todos, pie, nombre_contexto,
+                            [geo], nombre),
+                        "anillo": panel_anillo_participacion(ctx, spec, campania, pie,
+                                                             [geo], nombre),
+                        "tabla-datos": panel_tabla_datos_cultivos(ctx, spec, campania, lista,
+                                                                  todos, pie, [geo]),
+                    },
+                }
+        capa[geo] = {"nombre": nombre, "combos": combos,
+                     # Las combinaciones que EXISTEN en este departamento: es lo que le permite
+                     # al navegador apagar los cultivos sin datos ahi sin bajar nada mas
+                     # (regla de JC: "si no hay datos para garbanzo en departamento Alberdi,
+                     # QUE NO PUEDA PONERSE ACTIVO").
+                     "claves": sorted(k for k, v in combos.items()
+                                      if not v["paneles"]["tendencia"].get("vacio"))}
+    return capa
 
 
 # --------------------------------------------------------------------------
@@ -5143,7 +5541,7 @@ def panel_mapa_hacienda(ctx, spec, recorte, anio, medida, pie):
         "aspecto": aspecto_mapa(), "relacion": relacion_mapa(),
         "deptos": deptos,
         "unidad": hac.UNIDAD[medida],
-        "escala": {"min": "0", "max": ctx.texto(max(con_dato)), "rampa": rampa},
+        "escala": escala_del_panel_mapa(ctx, deptos, escala, rampa, hac.UNIDAD[medida]),
         "total": ("Total provincial: %s %s" % (ctx.texto(total), hac.UNIDAD[medida]))
                  if total is not None else "Total provincial: sin dato",
     }
@@ -5499,7 +5897,7 @@ def panel_mapa_stock(ctx, spec, anio, categoria, pie):
         "aspecto": aspecto_mapa(), "relacion": relacion_mapa(),
         "deptos": deptos,
         "unidad": "cabezas",
-        "escala": {"min": "0", "max": ctx.texto(max(con_dato)), "rampa": rampa},
+        "escala": escala_del_panel_mapa(ctx, deptos, escala, rampa, "cabezas"),
         "total": "Total provincial: %s cabezas" % ctx.texto(total),
     }
 
@@ -5775,6 +6173,15 @@ class Escritor:
         self.escritos.append((ruta_relativa, hashlib.sha256(datos).hexdigest()))
         return len(datos)
 
+    def binario(self, ruta_relativa, datos):
+        """Un archivo que el build GENERA y no es texto (hoy: los PNG de icono sin su fondo)."""
+        ruta = os.path.join(self.destino, ruta_relativa)
+        os.makedirs(os.path.dirname(ruta), exist_ok=True)
+        with open(ruta, "wb") as f:
+            f.write(datos)
+        self.escritos.append((ruta_relativa, hashlib.sha256(datos).hexdigest()))
+        return len(datos)
+
     def copia(self, origen, ruta_relativa):
         with open(origen, "rb") as f:
             datos = f.read()
@@ -5885,18 +6292,79 @@ def repartir_filtros(filtros):
     return periodo, barra, selector
 
 
+def normalizar_paneles(vista):
+    """Dos pasadas sobre los cuadros de cada combinacion, justo antes de escribir el JSON.
+
+    1. EJE ROTULADO. Todo cuadro con eje de VALORES rotula su escala (protocolo,
+       `eje_vertical`). Regla de JC ratificada el 29-sep-2026: "en el eje vertical, la escala
+       debe tener un minimo de 5 valores". Un eje sin ninguna etiqueta no cumple -son cero
+       valores- y es lo mismo que JC ya habia reclamado el 10-ago ("no esta el eje vertical y
+       tampoco la escala"). El spec puede seguir declarando `eje_visible`, pero aca se fuerza:
+       no queda ningun cuadro con la escala muda.
+    2. ACLARACIONES. Titulos y subtitulos de cuadro se parten en pedazos marcando los terminos
+       del glosario (protocolo, `formato_v1.aclaraciones_de_terminos`). Es donde estan las
+       palabras que JC quiere explicar -"superficie cosechada", "rendimiento", "cabezas"-
+       porque el titulo cambia con lo que el usuario elige. El texto plano sigue viajando: si
+       un titulo no tiene ningun termino, no se agrega nada y el dibujo no cambia.
+
+    Deja anotado en `vista["terminos"]` que terminos aparecieron, para que la pagina mande al
+    navegador solo las definiciones que va a necesitar.
+    """
+    usados = set(vista.get("terminos") or ())
+    for combo in vista["combos"].values():
+        for panel in (combo.get("paneles") or {}).values():
+            if not isinstance(panel, dict):
+                continue
+            if panel.get("eje") or panel.get("eje2"):
+                panel["eje_visible"] = True
+            for campo in ("titulo", "subtitulo"):
+                anotar_termino(panel, campo)
+                for parte in panel.get(campo + "_partes") or ():
+                    if parte.get("termino"):
+                        usados.add(parte["termino"])
+    vista["terminos"] = usados
+
+
 def payload_json(vista):
+    normalizar_paneles(vista)
     return {
         "slug": vista["slug"],
         "tipo": vista["tipo"],
         "filtros": [f["id"] for f in vista["filtros"]],
+        # El filtro que es el SUJETO de la pagina: el que la pagina dice ser. El navegador no
+        # lo mueve nunca solo. Sin el, al llegar a una combinacion vacia se acomodaba el
+        # PRIMER filtro que estuviera sin datos, y en la ficha departamental ese es el
+        # departamento: se clickeaba ALBERDI en el mapa con un cultivo que ALBERDI no tiene y
+        # la pagina mostraba GUASAYAN, con la URL diciendo todavia ALBERDI. Un dato que no es
+        # el que se pidio es el peor error posible. Lo declara la vista; el resto de las
+        # paginas no declara ninguno y se sigue acomodando como antes.
+        "filtro_sujeto": vista.get("filtro_sujeto"),
+        # La capa departamental del tablero de cultivos: {filtros, archivos, nombres, claves}.
+        # El navegador baja el archivo del departamento elegido y superpone sus cuadros sobre
+        # el combo provincial (ver `capa_departamental_cultivos`). None en todo lo demas.
+        "capa_departamental": vista.get("indice_departamental"),
         "combos": vista["combos"],
+        # Las combinaciones que EXISTEN, ordenadas. Es lo que le permite al navegador apagar
+        # las opciones sin datos sin bajar ninguna particion (protocolo,
+        # `formato_v1.opciones_sin_datos`): JC pidio que un cultivo sin datos en el
+        # departamento elegido "no pueda ponerse activo".
+        "claves": sorted(vista["combos"]),
         # El texto del combo vacio lo puede afinar la vista. No todas las combinaciones que
         # faltan faltan por lo mismo: en la base 85, cruzar "documentos" con una categoria no
         # es una laguna del dato, es que la fuente no abre los documentos por categoria, y el
         # mensaje generico lo haria pasar por un agujero.
         "sin_combinacion": vista.get("sin_combinacion")
                            or "No hay datos para esta combinación de filtros.",
+        # El motivo que lleva una opcion APAGADA (protocolo, formato_v1.opciones_sin_datos).
+        # Es una plantilla con UN slot: el navegador sustituye, no compone. Va al title y al
+        # aria-label del chip, asi que se lee con el mouse y con lector de pantalla.
+        "sin_opcion": vista.get("sin_opcion")
+                      or "Sin datos de {opcion} para lo que está seleccionado.",
+        # El mismo motivo, pero cuando hay un departamento elegido: es EL caso que puso JC en
+        # su maqueta ("si no hay datos para garbanzo en departamento Alberdi, QUE NO PUEDA
+        # PONERSE ACTIVO"), asi que lo dice con sus palabras y no con el texto generico.
+        "sin_opcion_departamento": vista.get("sin_opcion_departamento")
+                                   or "Sin datos de {opcion} en este departamento.",
     }
 
 
@@ -5926,6 +6394,28 @@ def escribir_datos(escritor, vista, carpeta_datos, ruta_publica):
     payload["archivos"] = archivos
     escritor.texto("%s/%s.json" % (carpeta_datos, vista["slug"]), json_determinista(payload))
     return "%s/%s.json" % (ruta_publica, vista["slug"])
+
+
+def escribir_capa_departamental(escritor, tablero, carpeta_datos, ruta_publica, miga=None):
+    """Un archivo por departamento con lo que cambia al elegirlo, y su indice en el payload.
+
+    Mismo criterio que la particion de `escribir_datos` y que el panel de precios: el navegador
+    baja el departamento que se clickeo y ninguno mas. La capa NO repite el mapa ni el ranking
+    (ver `capa_departamental_cultivos`): son justo los dos cuadros que no cambian.
+    """
+    capa = tablero["capa_departamental"]
+    archivos, nombres, claves = {}, {}, {}
+    for i, geo in enumerate(sorted(capa)):
+        nombre = "%s/%s-dto/%s.json" % (carpeta_datos, tablero["slug"], geo)
+        escritor.texto(nombre, json_determinista({"combos": capa[geo]["combos"]}))
+        archivos[geo] = "%s/%s-dto/%s.json" % (ruta_publica, tablero["slug"], geo)
+        nombres[geo] = capa[geo]["nombre"]
+        claves[geo] = capa[geo]["claves"]
+    return {"filtros": ["cultivo", "campania"], "archivos": archivos,
+            "nombres": nombres, "claves": claves,
+            # El texto del ultimo tramo de la miga ("Dto ALBERDI"): plantilla con un slot, que
+            # el navegador sustituye. Es como lo escribe JC en su hoja "Agri 1 Dto".
+            "miga": miga}
 
 
 def escribir_datos_precios(escritor, tablero, carpeta_datos, ruta_publica):
@@ -6014,6 +6504,12 @@ def miga_de_tablero(seccion, spec):
             pasos.append({"texto": tramo, "href": "%s/%s" % (PREFIJO, seccion["url"])})
         elif tramo.startswith("{") and tramo.endswith("}"):
             pasos.append({"texto": "", "dinamico": tramo[1:-1]})
+        elif (tramo == (spec.get("paneles", {}).get("mapa", {})
+                        .get("seleccion_departamento", {}) or {}).get("rotulo_provincia")):
+            # "Provincia" deja de ser texto muerto: es el link de vuelta a los datos
+            # provinciales cuando hay un departamento elegido (nota 2 de la hoja "Agri 1 Dto").
+            # Con la provincia puesta no lleva a ningun lado y se dibuja como el tramo actual.
+            pasos.append({"texto": tramo, "href": None, "accion": "provincia"})
         else:
             pasos.append({"texto": tramo, "href": None})
     return pasos
@@ -6113,10 +6609,37 @@ def disposicion_de(tablero):
     return declarada
 
 
+# Como resuelve el ALTO un tablero. Lo decide el spec en `paneles.alto`; sin declaracion queda
+# "una-pantalla", que es como se construyeron todos hasta el 30-sep-2026.
+#
+#   una-pantalla  tablero.js mide lo que sobra de la ventana y se lo fija al tablero, que
+#                 reparte ese alto entre sus filas (clase `alto-fijo`). Entra entero sin
+#                 scrollear, a costa de achicar cada cuadro.
+#   fluye         cada cuadro se queda con el alto que necesita para leerse y la PAGINA
+#                 scrollea. Lo pidio JC el 30-sep-2026 (acta en specs/fuentes/, punto 6:
+#                 "graficos achatados por forzar todo en una pantalla -dos lineas chatas,
+#                 anillo en miniatura-. Quiere que la pagina siga hacia abajo").
+#
+# Esto NO afecta al PDF: "Generar PDF" sigue armando la hoja A4 con el reparto de `alto-fijo`,
+# que comun.js le pone al tablero mientras imprime y le saca al terminar. La hoja mide siempre
+# lo mismo y ahi el tablero SI tiene que entrar entero.
+ALTOS_DE_TABLERO = ("una-pantalla", "fluye")
+
+
+def alto_de(tablero):
+    declarado = tablero["paneles"].get("alto") or "una-pantalla"
+    if declarado not in ALTOS_DE_TABLERO:
+        raise pr.ErrorDeProtocolo(
+            "El tablero %s pide el alto %r, que el sitio no sabe dibujar. Disponibles: %s"
+            % (tablero["slug"], declarado, ", ".join(ALTOS_DE_TABLERO)))
+    return declarado
+
+
 def tablero_para_pagina(tablero):
     return {"slug": tablero["slug"], "titulo": tablero["titulo"],
             "ruta_datos": tablero["ruta_datos"],
             "disposicion": disposicion_de(tablero),
+            "alto": alto_de(tablero),
             "tarjeta_contexto": bool(tablero["spec"].get("tarjeta_contexto"))}
 
 
@@ -6142,10 +6665,16 @@ def escribir_sitio(ctx, vistas, tableros):
                     "pie_tecnologia": theme["pie_tecnologia"], "logo_provincia": logo_pagina}
 
     def pagina(plantilla, **extra):
+        # `terminos_datos` no es contenido de la pagina: son los terminos del glosario que ya
+        # aparecieron en el JSON de DATOS de esta seccion (los titulos de cuadro, que cambian
+        # con la seleccion). Se suman a los que se marcan aca para que el recuadro de
+        # aclaraciones tenga las definiciones de todo lo que la pagina puede llegar a mostrar.
+        terminos_datos = extra.pop("terminos_datos", ())
         datos = dict(comun)
         datos.update(extra)
         datos["plantilla"] = plantilla
         datos["theme"] = theme_pagina
+        datos["glosario"] = anotar_glosario(datos, terminos_datos)
         return datos
 
     def escribir_pagina(ruta, datos):
@@ -6155,7 +6684,7 @@ def escribir_sitio(ctx, vistas, tableros):
 
     # CSS generado desde el theme
     css = entorno.get_template("pivotal.css.j2").render(
-        theme=theme, c=theme["colores"],
+        theme=theme, c=theme["colores"], cromadas=cromadas_del_theme(theme),
         variacion=ctx.protocolo["tablas"]["colores_de_variacion"],
         sin_dato=ctx.colores.sin_dato)
     escritor.texto("src/tableros/estilos/pivotal.css", css)
@@ -6203,8 +6732,16 @@ def escribir_sitio(ctx, vistas, tableros):
         if not seccion:
             return {}
         extras = {}
+        # La CROMADA del area (protocolo, formato_v1.cromada_por_area): Agricultura se ve
+        # verde y Ganaderia marron, con la misma maqueta. Sale de la `rama` de la seccion, asi
+        # que una seccion nueva hereda la cromada de su area sin declarar nada.
+        # `tema_cuerpo` sigue existiendo para el caso raro de una seccion que quiera una clase
+        # propia, y pisa a la cromada.
+        clase = clase_de_cromada(theme, seccion.get("rama"))
         if seccion.get("tema_cuerpo"):
-            extras["clase_cuerpo"] = seccion["tema_cuerpo"]
+            clase = seccion["tema_cuerpo"]
+        if clase:
+            extras["clase_cuerpo"] = clase
         # Banderas de idioma es/en/pt arriba a la derecha, donde estaba el titulo duplicado
         # (tercera tanda: "ahí iban las banderas de idiomas"; backlog 33, RESUELTA). Español
         # activa; ingles y portugues deshabilitadas con "Próximamente" (excepcion acotada a
@@ -6301,6 +6838,13 @@ def escribir_sitio(ctx, vistas, tableros):
     tablero_de_seccion = {t["seccion"]: t for t in tableros}
     for tablero in tableros:
         seccion = next(s for s in secciones if s["id"] == tablero["seccion"])
+        # La capa departamental se escribe ANTES que el payload: su indice viaja adentro
+        # (`payload_json` lo lee de `tablero["indice_departamental"]`).
+        if tablero.get("capa_departamental"):
+            seleccion = ((tablero["spec"].get("paneles") or {}).get("mapa") or {})                 .get("seleccion_departamento") or {}
+            tablero["indice_departamental"] = escribir_capa_departamental(
+                escritor, tablero, "public/plataforma/data", PREFIJO + "/data",
+                seleccion.get("miga"))
         tablero["ruta_datos"] = escribir_datos(escritor, tablero, "public/plataforma/data",
                                                PREFIJO + "/data")
         # El panel de precios del MCBA tiene su propio JSON, partido por especie: no viaja en
@@ -6380,6 +6924,7 @@ def escribir_sitio(ctx, vistas, tableros):
         escribir_pagina("%s/index" % seccion["url"], pagina(
             "tablero",
             tablero=tablero_para_pagina(tablero), paneles=paneles,
+            terminos_datos=tablero.get("terminos") or (),
             miga=miga_de_tablero(seccion, tablero["spec"]),
             filtros_panel=filtros_por_panel(tablero["filtros"]),
             titulo_cabecera=tablero["titulo"],
@@ -6459,14 +7004,7 @@ def escribir_sitio(ctx, vistas, tableros):
 
     # Iconos: al deploy van SOLO los que el sitio usa (los referencio algun filtro, la tarjeta
     # de contexto o el panel de utilidades). El catalogo completo queda en site/assets/iconos/.
-    for variante, nombre in sorted(_ICONOS_USADOS):
-        with open(os.path.join(DIR_ASSETS, "iconos", "trazo", nombre + ".svg"),
-                  encoding="utf-8") as f:
-            dibujo = f.read()
-        # El dibujo viene con `currentColor`: aca se fija el color de la variante, asi el SVG
-        # se puede usar como <img> (que no hereda el color del texto).
-        escritor.texto("public/plataforma/iconos/%s/%s.svg" % (variante, nombre),
-                       dibujo.replace("currentColor", theme["colores"][COLOR_ICONO[variante]]))
+    copiar_iconos(escritor, theme)
 
     return escritor
 

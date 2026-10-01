@@ -52,6 +52,31 @@
   --zoom-curva: cubic-bezier(.4, 0, .2, 1);
 }
 
+/* ---------- cromada por AREA (site/theme.yaml, bloque `cromadas`) ----------
+   Regla de JC (hoja INDICACIONES de su maqueta, 29-sep-2026): el verde es de lo agricola y el
+   borravino/marron de lo ganadero, "siempre aplicable a todo ese grupo de productos". El color
+   acompaña al AREA, no al sitio: lo de arriba es la cromada por defecto (la marron, que es la
+   de Ganaderia y la de las paginas que no son de ningun area) y cada bloque de abajo la pisa.
+
+   Se cuelga de la envoltura que dibuja la cascara, no del <body>: el <body> es del layout
+   comun de Next.js y ponerle la clase desde la pagina obliga a esperar al navegador, con lo
+   que la cabecera se veria un instante del color equivocado. Las variables se heredan, asi
+   que alcanza con declararlas en el nodo que envuelve toda la pagina.
+   Lo que NO cambia con el area: el lienzo, los paneles, la tipografia, las medidas y los
+   colores de DATOS (rampas y series), que los manda _protocolo-presentacion.yaml. */
+{% for id, cromada in cromadas %}
+.cromada-{{ id }} {
+{% for token, valor in cromada %}
+  --{{ token }}: {{ valor }};
+{% endfor %}
+  --resaltado: color-mix(in srgb, var(--seleccion) 22%, var(--fondo-cuadro));
+}
+{% endfor %}
+
+/* La envoltura de la pagina: hereda el reparto vertical que antes hacia el <body>, para que
+   la cascara pueda colgarle la cromada del area sin cambiar el layout. */
+.pagina { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+
 * { box-sizing: border-box; }
 
 html { -webkit-text-size-adjust: 100%; }
@@ -273,14 +298,73 @@ a.boton-cabecera:hover { background: color-mix(in srgb, var(--sobre-cromo) 16%, 
 }
 
 /* Variantes de icono (asignacion en site/iconos-cultivo.yaml): B&W en reposo, COLOR en el
-   seleccionado y en la tarjeta de contexto, que es como se ve en la captura del 10-ago. */
+   ELEGIDO y en la tarjeta de contexto. Es el criterio de JC, textual: "el icono de soja esta
+   en color y el resto en B&W, y cuando cambie a otro cultivo mismo criterio". Desde el
+   29-sep-2026 son DOS DIBUJOS distintos (sus PNG), no el mismo con dos tintas. */
 .ico-color { display: none; }
 [aria-pressed="true"] .ico-bn { display: none; }
 [aria-pressed="true"] .ico-color { display: inline-block; }
 
+/* ---------- opciones SIN DATOS ----------
+   Regla de JC (protocolo, formato_v1.opciones_sin_datos): si no hay datos de garbanzo en
+   Alberdi, el chip de garbanzo NO se puede poner activo. Se APAGA, no se esconde: si
+   desapareciera, la lista cambiaria de largo al cambiar de departamento y no se sabria si el
+   cultivo no existe o si no tiene datos ahi. El motivo viaja en el title (lo pone comun.js).
+   El ícono queda en B&W y desteñido, que es lo que dice "acá no hay nada que ver". */
+.chips button:disabled,
+.chip-cultivo:disabled,
+.panel-toggle button:disabled {
+  opacity: .38;
+  cursor: not-allowed;
+  background: var(--fondo-cuadro);
+  color: var(--texto-apoyo);
+  border-style: dashed;
+}
+.chips button:disabled:hover,
+.chip-cultivo:disabled:hover .chip-nombre,
+.panel-toggle button:disabled:hover { background: var(--fondo-cuadro); }
+.chip-cultivo:disabled .chip-nombre { border-style: dashed; }
+.chip-cultivo:disabled img { filter: grayscale(1); }
+
 main { padding: .55rem .8rem 1rem; flex: 1 1 auto; }
 
 /* ---------- pie ---------- */
+/* ---------- aclaraciones de terminos ----------
+   Regla de JC (hoja INDICACIONES de su maqueta): un termino se aclara con mouseover o click y
+   un "mini popup" con el texto. El TERMINO es un <button> para que se abra tambien con
+   teclado; se lo desarma visualmente hasta que parezca texto, con lo unico que lo distingue
+   siendo un subrayado punteado. Tiene que verse, pero no puede competir con el dato. */
+.termino {
+  font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0;
+  text-align: inherit; letter-spacing: inherit; text-transform: inherit;
+  text-decoration: underline dotted;
+  text-underline-offset: .18em; text-decoration-thickness: 1px;
+  text-decoration-color: color-mix(in srgb, currentColor 55%, transparent);
+  cursor: help;
+}
+.termino:hover, .termino:focus-visible {
+  text-decoration-color: currentColor;
+}
+.termino:focus-visible { outline: 2px solid var(--enlace); outline-offset: 2px; }
+
+/* El recuadro. Uno solo por pagina: comun.js lo mueve al lado del termino que se abrio. */
+.glosa {
+  position: fixed; z-index: 60; max-width: 22rem;
+  background: var(--fondo-cuadro); color: var(--texto);
+  border: 1px solid var(--borde-panel); border-radius: var(--radio-chico);
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--texto) 18%, transparent);
+  padding: .5rem .65rem;
+}
+.glosa[hidden] { display: none; }
+.glosa-titulo {
+  margin: 0 0 .2rem; font-family: var(--rotulos); font-size: .62rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .12em; color: var(--texto-apoyo);
+}
+.glosa-texto { margin: 0; font-size: .82rem; line-height: 1.4; }
+/* Las definiciones viven en el HTML (un <dl> escondido) y no en un JSON: asi el texto esta
+   aunque el JS no llegue a correr. `hidden` no alcanza contra `display:flex` heredado. */
+.glosa-datos[hidden] { display: none; }
+
 .pie-sitio { border-top: 1px solid var(--borde); padding: .6rem .8rem 1rem; }
 .pie-tec { margin: 0 0 .25rem; font-size: .8rem; font-weight: 650; font-style: italic; }
 .pie-linea { margin: 0; font-size: .74rem; color: var(--texto-apoyo); }
@@ -444,9 +528,11 @@ a { color: var(--enlace); }
 .tablero.con-selector .mapa-cab {
   display: flex; flex-direction: column; align-items: center; gap: .3rem; margin: 0 0 .35rem;
 }
-.tablero.con-selector .mapa-cab .mapa-accion {
-  margin: 0; border: 1px solid var(--borde-panel); border-radius: var(--radio-pildora);
-  padding: .16rem .7rem; font-weight: 650;
+/* La invitacion a elegir departamento, DEBAJO del mapa y su escala (es donde la escribe JC
+   en las dos hojas de su maqueta). Antes iba arriba en una pildora, que con el texto de la
+   hoja departamental ocupaba dos renglones y le comia alto al mapa. */
+.tablero.con-selector .panel[data-panel="mapa"] .mapa-accion {
+  margin: .35rem 0 0; text-align: center; font-weight: 650;
 }
 .tablero.con-selector.alto-fijo .panel > .panel-pie { margin-top: .3rem; padding-top: .3rem; }
 .panel-sub:empty { display: none; }
@@ -603,7 +689,69 @@ a { color: var(--enlace); }
   background: none; padding: 0; margin: .3rem 0 0; font-size: .74rem;
 }
 .tablero.con-selector .panel[data-panel="mapa"] .escala { margin: .35rem 0 0; }
-.tablero.con-selector .panel[data-panel="mapa"] .mapa-accion { margin-bottom: .15rem; }
+
+/* ---------- tablero que FLUYE hacia abajo (JC, 30-sep-2026) ----------
+   Lo pidio en la reunion del 30-sep (acta en specs/fuentes/, punto 6): "Graficos achatados por
+   forzar todo en una pantalla (dos lineas chatas, anillo en miniatura). Quiere que la pagina
+   siga hacia abajo."
+
+   Lo decide el SPEC de cada tablero (`paneles.alto: fluye`, site_build.ALTOS_DE_TABLERO), no
+   este archivo ni tablero.js: el build pone la clase `alto-fluido` y tablero.js, al verla, no
+   le fija el alto de la ventana al contenedor. Hoy la tienen los dos tableros de agricultura;
+   ganaderia sigue entrando en una pantalla hasta que JC mande sus maquetas.
+
+   Los minimos NO son a ojo: son las cajas de grafico de la maqueta de JC ("0000000000 Maqueta
+   Agri.xlsx", medidas de las anclas de cada objeto). Hoja "Agri 1": lineas 597x323 px, anillo
+   415x322, mapa 505x709 con su escala. Hoja "Agri 2": combo 654x289, apiladas 651x293, precios
+   del MCBA 867x325. De ahi salen los 300 px de dibujo de los cuadros y los 560 del mapa.
+
+   `:not(.alto-fijo)` en todos: mientras se imprime, comun.js le pone `alto-fijo` al tablero
+   para repartir la hoja A4 (que mide siempre lo mismo y donde el tablero SI tiene que entrar
+   entero), y estos minimos se apagan solos. Sin el `:not`, el PDF salia con los cuadros
+   pidiendo 300 px cada uno y los paneles se montaban sobre el pie. */
+.tablero.alto-fluido:not(.alto-fijo) .panel[data-panel="tendencia"] .grafico {
+  height: auto; flex: 1 1 auto; min-height: 300px;
+}
+.tablero.con-selector.alto-fluido:not(.alto-fijo) .panel[data-panel="anillo"] .anillo-caja,
+.tablero.con-selector.alto-fluido:not(.alto-fijo) .panel[data-panel="anillo"] .anillo-caja > .grafico,
+.tablero.alto-fluido:not(.alto-fijo) .panel[data-panel="anillo"] .anillo-caja,
+.tablero.alto-fluido:not(.alto-fijo) .panel[data-panel="anillo"] .anillo-caja > .grafico {
+  min-height: 300px;
+}
+.tablero.con-selector.alto-fluido:not(.alto-fijo) .panel[data-panel="mapa"] > .panel-cuerpo > .grafico,
+.tablero.alto-fluido:not(.alto-fijo) .panel[data-panel="mapa"] > .panel-cuerpo > .grafico {
+  min-height: 560px;
+}
+.tablero.alto-fluido:not(.alto-fijo) .panel[data-panel="combo"] > .panel-cuerpo > .grafico,
+.tablero.alto-fluido:not(.alto-fijo) .panel[data-panel="apiladas"] > .panel-cuerpo > .grafico {
+  min-height: 290px;
+}
+.tablero.alto-fluido:not(.alto-fijo) .panel-precios > .panel-cuerpo > .grafico {
+  min-height: 320px;
+}
+/* La tabla que va DEBAJO del grafico (maqueta "Agri 2") ya no scrollea adentro de su caja: con
+   la pagina fluyendo hay alto para las dos cosas y una tabla con scroll propio dentro de una
+   pagina que scrollea es una trampa de lectura. */
+.tablero.alto-fluido:not(.alto-fijo) .tabla-bajo-grafico { max-height: none; overflow: visible; }
+/* Sin huecos (cuarta tanda, proporciones_sin_huecos): la tabla de campañas comparte fila con el
+   ranking de 10 puestos, que es mas alto, asi que la grilla le estira el panel. Sin esto la
+   tabla media su contenido y dejaba el resto del panel en blanco. Con `flex: 1 1 auto` la caja
+   de la tabla toma el alto del panel y el `height: 100%` que ya tienen las tablas reparte el
+   aire entre las filas, como en el mockup. Sin `overflow: auto`: aca la pagina scrollea, y una
+   tabla con scroll propio adentro de una pagina que scrollea se lee peor que una tabla entera. */
+.tablero.alto-fluido:not(.alto-fijo) .panel[data-panel="tabla-datos"] .tabla-datos,
+.tablero.alto-fluido:not(.alto-fijo) .panel[data-panel="tabla-superficie"] .tabla-datos {
+  flex: 1 1 auto; min-height: 0;
+}
+/* Y las tablas de esos dos paneles reparten el aire entre sus filas. En cultivos extensivos
+   esto ya lo hacia `.tablero.con-selector ... table { height: 100% }`; el de superficies de la
+   maqueta "Agri 2" no entraba en ese selector. */
+.tablero.alto-fluido:not(.alto-fijo) .panel[data-panel="tabla-superficie"] .tabla-datos {
+  align-items: stretch;
+}
+.tablero.alto-fluido:not(.alto-fijo) .panel[data-panel="tabla-superficie"] .tabla-datos table {
+  height: 100%;
+}
 
 /* Pantallas bajas (notebooks de 13"): se achica lo que hay ARRIBA del tablero para que el alto
    se lo queden los paneles, que es lo que se mira. */
@@ -1019,6 +1167,20 @@ a { color: var(--enlace); }
 .mapa-accion { margin: 0 0 .3rem; }
 .mapa-accion:empty { display: none; }
 
+/* El titulo del departamento elegido, ARRIBA del mapa (hoja "Agri 1 Dto" de JC: ahi dice
+   "Departamento ALBERDI" con el peso de un titulo de cuadro). */
+.mapa-departamento {
+  margin: 0 0 .2rem; font-family: var(--serif); font-weight: 700;
+  font-size: 1.02rem; color: var(--texto); text-align: center;
+}
+.mapa-departamento:empty { display: none; }
+
+/* El tramo "Provincia" de la miga mientras NO hay departamento elegido: es el lugar donde
+   estas, no un link. Se dibuja como el resto de los tramos actuales y no responde al hover. */
+.miga a.miga-inerte {
+  color: var(--sobre-cromo); font-weight: 700; cursor: default; pointer-events: none;
+}
+
 /* Forma `tabla-datos`: los numeros crudos bajo el grafico de evolucion (mockup Modelo 2).
    DOS bloques de campañas lado a lado, como los dibuja JC (tercera tanda, mockup literal;
    deroga la "una sola serie" de la segunda tanda, backlog 38). El hueco que dejaba la tabla
@@ -1099,12 +1261,38 @@ a { color: var(--enlace); }
   flex: 0 0 auto; font-size: .82rem; font-variant-numeric: tabular-nums; font-weight: 650;
 }
 
-/* Barra de escala del mapa compacto: reemplaza a la leyenda en lista cuando no hay lugar. */
-.escala { display: flex; align-items: center; gap: .5rem; margin: .5rem 0 0; }
-.escala-min, .escala-max {
-  font-family: var(--rotulos); font-size: .62rem; color: var(--texto-apoyo); flex: 0 0 auto;
+/* Escala del mapa del tablero: las CINCO MUESTRAS que dibuja JC bajo el mapa en la hoja
+   "Agri 1" de su maqueta (un cuadradito por clase con su tramo debajo, de la mas oscura a la
+   mas clara). Reemplaza a la barra de degrade de 0 al maximo desde el 30-sep-2026: el mapa se
+   pinta en cinco clases y un degrade continuo no describia ni los colores ni los cortes ("la
+   escala del mapa no dice nada", acta de la reunion, punto 10).
+   `flex: 0 0 auto` sobre el contenedor: la escala es parte del cuadro, no se encoge; el que se
+   encoge cuando falta alto es el mapa. */
+.escala {
+  flex: 0 0 auto; display: flex; align-items: flex-start; justify-content: center;
+  gap: .4rem; margin: .5rem 0 0;
 }
-.escala-rampa { flex: 1 1 auto; height: .45rem; border-radius: var(--radio-chico); }
+/* Todos los tramos del mismo ancho, como los dibuja JC. `flex: 1 1 0` y no `0 1 auto`: con el
+   ancho del contenido, el tramo de rotulo mas largo se comia a los de al lado y en el zoom
+   -donde hay lugar de sobra y los rotulos entran en una linea- los textos se tocaban. El tope
+   evita que en un cuadro muy ancho queden cinco cuadrados enormes. */
+.escala-tramo {
+  flex: 1 1 0; min-width: 0; max-width: 9rem;
+  display: flex; flex-direction: column; align-items: center;
+  gap: .18rem; text-align: center;
+}
+.escala-muestra {
+  width: 100%; min-width: 1.6rem; height: .7rem; border: 1px solid var(--borde-panel);
+  border-radius: var(--radio-chico);
+}
+.escala-rotulo {
+  font-family: var(--rotulos); font-size: .56rem; line-height: 1.15; color: var(--texto-apoyo);
+}
+/* La unidad una sola vez, al pie de la tira (protocolo, mapa.leyenda.unidad). */
+.escala-unidad {
+  flex: 0 0 auto; margin: .15rem 0 0; text-align: center;
+  font-family: var(--rotulos); font-size: .56rem; color: var(--texto-apoyo);
+}
 
 /* ---------- cuadros de las vistas de detalle ----------
    Misma piel que los paneles del tablero: una vista de detalle es un panel grande. */
@@ -1330,7 +1518,11 @@ table.matriz-od th.esquina { font-weight: 500; color: var(--texto-apoyo); }
 .imprimiendo .periodo, .imprimiendo .borrar-filtros, .imprimiendo .boton-cabecera,
 .imprimiendo .cabecera-banderas, .imprimiendo .panel-selector,
 .imprimiendo .panel-utilidades, .imprimiendo .panel-info,
+/* Las aclaraciones son ayuda de PANTALLA: en papel no hay mouseover ni foco, y el subrayado
+   punteado quedaria como una mancha en un cuadro que ya esta apretado. */
+.imprimiendo .glosa, .imprimiendo .glosa-datos,
 .imprimiendo .noscript { display: none; }
+.imprimiendo .termino { text-decoration: none; }
 
 /* El alto de una PANTALLA lo fija tablero.js en el estilo del nodo (.alto-fijo); en papel lo
    manda la hoja. El tablero se queda con lo que sobra despues de la cabecera, la banda y el
@@ -1522,6 +1714,22 @@ dialog.zoom.zoom-visible::backdrop { opacity: 1; }
 .zoom .zoom-marco .panel[data-panel="anillo"] .anillo-caja,
 .zoom .zoom-marco .panel[data-panel="anillo"] .anillo-caja > .grafico,
 .zoom .zoom-marco .panel[data-panel="mapa"] > .panel-cuerpo > .grafico { min-height: 0; }
+/* Lo mismo para los minimos de `alto-fluido` (los tableros de agricultura): adentro del
+   dialogo el cuadro ya tiene la pantalla entera y el alto lo reparte el dialogo, no un minimo
+   escrito para la celda del tablero.
+   El prefijo largo NO es decorativo: las reglas de `alto-fluido` son mas especificas que las
+   de `.zoom .zoom-marco` y sin el le ganaban. Se vio en el navegador: el mapa ampliado seguia
+   pidiendo sus 560px, el cuadro desbordaba el dialogo y se perdian la escala, la linea de
+   total provincial y el borde inferior del mapa. Cada selector de aca le gana por uno al
+   minimo que apaga; si se agrega un minimo nuevo arriba, se agrega su apagado aca. */
+.tablero.con-selector.alto-fluido .zoom .zoom-marco .panel[data-panel] .grafico,
+.tablero.con-selector.alto-fluido .zoom .zoom-marco .panel[data-panel] > .panel-cuerpo > .grafico,
+.tablero.con-selector.alto-fluido .zoom .zoom-marco .panel[data-panel="anillo"] .anillo-caja,
+.tablero.con-selector.alto-fluido .zoom .zoom-marco .panel[data-panel="anillo"] .anillo-caja > .grafico,
+.tablero.con-selector.alto-fluido .zoom .zoom-marco .panel[data-panel] .tabla-datos,
+.tablero.con-selector.alto-fluido .zoom .zoom-marco .panel-precios > .panel-cuerpo > .grafico {
+  min-height: 0;
+}
 /* En el tablero la leyenda del anillo se esconde (no entra al lado del donut) y la nota se
    recorta a una linea. En pantalla completa entran las dos enteras. */
 .zoom .zoom-marco .panel[data-panel="anillo"] .anillo-leyenda { display: flex; }

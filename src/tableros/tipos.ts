@@ -1,6 +1,14 @@
 // Forma del JSON de cada pagina (src/tableros/contenido/paginas/<ruta>.json). Lo escribe
 // tableros/pipeline/site_build.py -> escribir_sitio(); aca solo se describe lo que se lee.
 
+/* Un texto partido en pedazos, con los terminos del glosario marcados. Lo arma el pipeline
+   (site_build.partes_con_terminos) y lo dibuja <Glosa>. Regla de JC (hoja INDICACIONES de su
+   maqueta): las aclaraciones de terminos se abren con mouseover o click en un mini popup.
+   Donde hay `<campo>_partes` se dibuja eso; donde no, el string de siempre. */
+export type ParteDeTexto = { t: string; termino?: string };
+
+export type Termino = { termino: string; aclaracion: string };
+
 export type Opcion = {
   v: string;
   t: string;
@@ -13,6 +21,7 @@ export type Opcion = {
 export type Filtro = {
   id: string;
   etiqueta: string;
+  etiqueta_partes?: ParteDeTexto[];
   defecto: string;
   control: "chips" | "select";
   zona: string;
@@ -20,7 +29,11 @@ export type Filtro = {
   panel?: string;
 };
 
-export type PasoMiga = { texto: string; href?: string | null; dinamico?: string };
+/* `accion` marca un tramo que no navega a una URL sino que cambia el estado de la pagina.
+   Hoy solo "provincia": el tramo que vuelve a los datos provinciales desde un departamento
+   (hoja "Agri 1 Dto" de la maqueta de JC, nota 2). */
+export type PasoMiga = { texto: string; href?: string | null; dinamico?: string;
+                         accion?: string };
 
 export type SectorMenu = {
   id: string;
@@ -58,6 +71,9 @@ export type Comun = {
   pestanias: { texto: string; href: string; actual: boolean }[];
   botones_cabecera: Enlace[];
   banderas_idioma: { codigo: string; nombre: string; activa: boolean }[];
+  // Definiciones de los terminos marcados en ESTA pagina (site/glosario.yaml). Vacio si no
+  // hay ninguno: ahi la cascara no dibuja el recuadro de aclaraciones.
+  glosario: Record<string, Termino>;
 };
 
 export type Elemento = {
@@ -77,7 +93,7 @@ export type Vista = {
   motivo_reserva: string | null;
   advertencias: string[];
   ruta_datos: string;
-  notas: { titulo: string; texto: string }[];
+  notas: { titulo: string; texto: string; texto_partes?: ParteDeTexto[] }[];
   enlaces: Enlace[];
   elementos_default: Elemento[];
 };
@@ -136,11 +152,14 @@ export type ComparacionDeCuadro = {
 export type Panel = {
   id: string;
   titulo: string;
+  titulo_partes?: ParteDeTexto[];
   subtitulo?: string;
+  subtitulo_partes?: ParteDeTexto[];
   ancho?: string | number;
   alto?: string | number;
   detalle?: string | null;
   rotulo?: string;
+  rotulo_partes?: ParteDeTexto[];
   pie?: string;
   // Panel con filtros y datos propios: hoy solo "Precios MCBA" (`forma: precios` en el spec).
   precios?: PanelPrecios;
@@ -162,6 +181,10 @@ export type PaginaTablero = Comun & {
     // Que disposicion dibuja Tablero.tsx. La elige el spec (site_build.DISPOSICIONES):
     // "mockup" = las dos columnas de cultivos extensivos; "grilla-2x2" = la maqueta "Agri 2".
     disposicion: string;
+    // Como resuelve el ALTO (site_build.ALTOS_DE_TABLERO): "una-pantalla" = tablero.js le
+    // fija el alto de la ventana y entra entero; "fluye" = cada cuadro se queda con el alto
+    // que necesita y la pagina scrollea (pedido de JC del 30-sep-2026, hoy solo agricultura).
+    alto: string;
     tarjeta_contexto: boolean;
   };
   paneles: Panel[];
@@ -181,6 +204,7 @@ export type PaginaSeccion = Comun & {
   seccion: {
     titulo: string;
     bajada: string;
+    bajada_partes?: ParteDeTexto[];
     url: string;
     grupos: { titulo: string; vistas: Ficha[] }[];
   };

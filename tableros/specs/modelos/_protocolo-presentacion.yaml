@@ -734,7 +734,42 @@ numeracion:
 # ===========================================================================
 eje_vertical:
   origen_docx: {parrafo: 25, texto: "Las escalas verticales deben tener UN MÍNIMO DE 5 ESCALAS (los intervalos, en este caso 5% los elige cada uno: 0%; 5%; 10%, etc)"}
+  origen_xlsx:
+    archivo: "0000000000 Maqueta Agri.xlsx"
+    hoja: INDICACIONES
+    celda: D11
+    fecha_registro: 2026-09-29
+    texto: "> Indicaciones de escalas de los graficos (por ejemplo, en el eje vertical, la escala debe tener un minimo de 5 valores)"
+    nota: "JC repite la regla del parrafo 25 del primer docx. No la cambia: la ratifica."
   regla_de_jc: "minimo 5 marcas rotuladas"
+
+  # ------------------------------------------------------------------
+  # EL MINIMO ES DE MARCAS ROTULADAS EN PANTALLA, NO DE MARCAS CALCULADAS
+  # ------------------------------------------------------------------
+  # Distincion que costo un incumplimiento: `marcas_eje` (abajo) ya garantizaba 5 marcas
+  # CALCULADAS desde el 2026-07-30, pero el navegador puede rotular menos de las que recibe.
+  # Al 29-sep-2026 pasaba en dos lugares del tablero:
+  #   - los cuadros cuyo spec no pedia `eje_visible` dibujaban el eje SIN NINGUNA etiqueta
+  #     (0 valores a la vista: el peor caso, y es justo lo que JC ya habia reclamado el
+  #     10-ago, "en el grafico de lineas no esta el eje vertical y tampoco la escala");
+  #   - el cuadro de precios del MCBA raleaba etiquetas por alto disponible y podia bajar
+  #     hasta 3.
+  # Por eso la regla se escribe aca y NO como una constante suelta del JS: el numero viaja
+  # adentro de cada objeto de eje que arma el build (`eje.minimo`) y el dibujante lo obedece.
+  minimo_marcas_rotuladas:
+    cantidad: 5
+    se_mide_en: "etiquetas efectivamente escritas en el eje de valores, en pantalla"
+    alcance: "TODO cuadro con eje de valores, en tableros y en vistas de detalle, y tambien con el cuadro ampliado (zoom) y en la hoja impresa"
+    eje_siempre_visible: >
+      Un eje de valores sin etiquetas no cumple la regla. `eje_visible` deja de ser opcional:
+      todo cuadro con eje de valores rotula su escala. El spec puede seguir declarandolo, pero
+      el build lo fuerza a verdadero.
+    ralear_etiquetas:
+      permitido: true
+      motivo: "en un cuadro bajo las etiquetas se pisan entre si y no se lee ninguna"
+      condicion: "solo hasta donde queden `cantidad` etiquetas o mas. Si no entran 5 sin pisarse, se achica la tipografia del eje, nunca se baja de 5."
+      quien_lo_decide: "el navegador, que es el unico que conoce el alto real del cuadro (src/tableros/cliente/)"
+    como_viaja_al_navegador: "cada objeto de eje que escribe el build lleva `minimo`. El JS no define el numero: lo lee."
   lo_que_no_hacemos: >
     "los elige cada uno" no puede quedar asi: en un sitio generado no hay un "cada uno". Se define
     una funcion y todos los graficos del sitio la usan. La funcion esta calibrada para reproducir el
@@ -810,15 +845,43 @@ mapa:
       nota_para_jc: "Si prefiere cortes fijos para toda la serie, se cambia aca y los mapas pasan a ser comparables entre si. Backlog pregunta 16."
 
   leyenda:
-    muestra: "el color, el minimo y el maximo de cada subescala"
+    # REESCRITA el 30-sep-2026 por pedido de JC en la reunion (acta en specs/fuentes/
+    # "2026-09-30 reunion con JC - cambios pedidos.txt", punto 10): "La escala del mapa no dice
+    # nada. Quiere cinco tramos con rangos legibles y contiguos (tipo '100.000 a 200.000'). Hoy
+    # la leyenda muestra rangos con huecos y numeros raros. En orden de quintiles".
+    # Es ademas lo que el mismo dibuja en la hoja "Agri 1" de su maqueta, bajo el mapa:
+    # cinco muestras con "20.000 a 29.000", "30.000 a 39.000", "40.000 a 49.000" y los dos
+    # extremos abiertos.
+    muestra: "el color y el TRAMO de cada subescala, en cinco tramos contiguos"
     plantilla_de_clase: "{minimo} a {maximo}"
-    valores_que_se_muestran: "el menor y el mayor de los departamentos QUE ESTAN en la clase (no los puntos de corte)"
-    formato: "el de `precision_display` de la base (para superficie: entero, redondeado a la centena si es >= 1.000)"
-    redondeo: "comercial (half-up). NO el redondeo bancario que Python trae por defecto en round()."
-    si_el_redondeo_solapa_dos_clases: "se muestran las dos clases sin redondear. Una leyenda donde una clase termina en 26.200 y la siguiente empieza en 26.200 se lee como un error."
-    orden: "de la clase mas alta a la mas baja, de arriba hacia abajo"
+    plantilla_clase_mas_alta: "más de {minimo}"
+    plantilla_clase_mas_baja: "menos de {maximo}"
+    valores_que_se_muestran: >
+      los LIMITES de cada tramo, redondeados, no el minimo y el maximo de los departamentos de
+      la clase. El limite entre dos clases contiguas es UN solo numero, compartido por las dos:
+      por eso los tramos no tienen huecos.
+    el_calculo_no_cambia: >
+      Los quintiles, los cortes y la clase de cada departamento se siguen resolviendo con los
+      VALORES REALES (bloque `escala` de arriba). Esto es solo el rotulo.
+    como_se_elige_el_limite: >
+      El limite de una frontera se busca dentro del intervalo (maximo de la clase de abajo,
+      minimo de la clase de arriba] y se elige el numero mas redondo que haya ahi: la grilla
+      mas gruesa (10^k, luego 5*10^(k-1), luego 2*10^(k-1), etc.) que tenga un multiplo
+      adentro. Asi el rotulo queda redondo SIN cambiar en que clase cae ningun departamento:
+      todo departamento de la clase de abajo queda por debajo del limite y todo el de la de
+      arriba, en el limite o por encima. Lo implementa presentacion.limite_redondo.
+      El extremo de abajo del intervalo se excluye para que ningun departamento de la clase de
+      abajo quede dibujado sobre la frontera misma.
+    si_no_hay_ningun_numero_redondo_en_el_intervalo: "va el valor crudo del minimo de la clase de arriba: se lee peor pero nunca miente."
+    orden: "de la clase mas alta a la mas baja (vertical: de arriba hacia abajo; horizontal: de izquierda a derecha, como la dibuja JC)"
     ultima_entrada: "'Sin datos', con el color `sin_dato.color`, siempre al final y siempre presente si hay al menos un departamento sin dato"
     unidad: "va en el encabezado de la leyenda, una sola vez (ej. 'Hectáreas sembradas')"
+    deroga: >
+      La regla anterior (mostrar el menor y el mayor de los departamentos que ESTAN en cada
+      clase, con `si_el_redondeo_solapa_dos_clases` mostrando las dos sin redondear). Esa regla
+      es la que producia los "rangos con huecos y numeros raros" que JC rechazo: entre el
+      maximo de una clase y el minimo de la siguiente quedaba un hueco sin rotular, y los dos
+      numeros eran valores crudos de departamentos.
 
   sin_dato:
     entran_al_calculo_de_quintiles: false
@@ -870,8 +933,47 @@ colores:
 
   regla: >
     El color lo decide el TIPO DE VARIABLE, no la vista, no la base, no el cultivo y no quien
-    construye la pagina. Superficie es verde en todos lados y siempre; produccion es ocre en todos
-    lados y siempre. Si una vista necesita otro color, se cambia ACA y cambia en todo el sitio.
+    construye la pagina. Superficie es verde hoja en todos lados y siempre; produccion es verde
+    oliva en todos lados y siempre. Si una vista necesita otro color, se cambia ACA y cambia en
+    todo el sitio.
+
+  # ------------------------------------------------------------------
+  # REGLA DE GRUPO (JC, hoja INDICACIONES de "0000000000 Maqueta Agri.xlsx", 2026-09-29)
+  # ------------------------------------------------------------------
+  # Manda POR ENCIMA de cada rampa: primero se elige la FAMILIA por area productiva y recien
+  # despues se separan las variables de esa area entre si.
+  grupo_por_area:
+    origen_xlsx:
+      archivo: "0000000000 Maqueta Agri.xlsx"
+      hoja: INDICACIONES
+      celdas: "D21-D22"
+      texto: >
+        "Colores: Esto es prerrogativa de los diseñadores, pero en general hay estandares
+        medianamente internacionales. Para lo que es agricola, el color predominante (por
+        asociacion natural) es el verde y en ganaderia el borravino o un marron. Que tono de
+        verde o borravino/marron queda a su criterio, pero siemple aplicable a todo ese grupo
+        de productos."
+    familias:
+      agricultura:
+        familia: verde
+        tipos_de_variable: [superficie, produccion, rendimiento]
+        como_se_separan_entre_si: >
+          Por TONO y SATURACION dentro del verde, nunca saliendose del verde. Superficie en el
+          medio del arco (hoja), produccion del lado calido (oliva/lima) y rendimiento del lado
+          frio (esmeralda). La separacion tiene que sobrevivir a un mapa: mirando el mapa solo,
+          sin leer el rotulo, se tiene que saber que variable esta puesta.
+      ganaderia:
+        familia: "borravino / marron"
+        tipos_de_variable: [cabezas]
+        estado: "ya cumplia. La rampa `cabezas` es marron desde el dia uno y no se toca."
+    que_NO_alcanza_la_regla: >
+      Los tipos de variable que no son de un area productiva: `documentos` (un DTE es un papel,
+      gris azulado) y `precio` (dinero, violeta). JC habla de "ese grupo de productos", no de
+      todo lo que el sitio dibuja. Si manda una regla de color para ellos, se agrega aca.
+    tambien_manda_sobre_el_cromo: >
+      La cromada de la interfaz acompaña al area, no al sitio entero: las secciones de
+      Agricultura van con cromada verde y las de Ganaderia con la marron. Ver
+      `formato_v1.cromada_por_area` y site/theme.yaml (bloque `cromadas`).
 
   como_se_hereda: >
     Cada nueva base declara a que tipo de variable pertenece cada una de sus medidas. Si el tipo ya
@@ -884,6 +986,8 @@ colores:
       unidad: ha
       hex: ["#e5f1db", "#b7d3a8", "#7fae7a", "#4c8352", "#22502c"]
       color_solido: "#22502c"
+      color_comparacion: "#7fae7a"
+      familia_de_verde: "verde HOJA (tono 93-133, saturacion media). Es el verde de referencia del grupo agricola."
       justificacion: >
         Termina exactamente en el verde institucional de site/theme.yaml (#22502c), asi que la
         variable principal del sitio y la identidad visual son el mismo color. Cinco pasos con
@@ -891,22 +995,63 @@ colores:
         Actualizada el 2026-08-03: la regla no cambio, cambio el verde institucional al que la
         regla la ata. Los dos extremos se muestrearon del mapa del mockup aprobado por Francisco
         (specs/fuentes/WhatsApp Image 2026-07-27 at 20.24.16.jpeg).
+        29-sep-2026: NO cambia. Es la unica de las tres agricolas que ya cumplia la regla de
+        JC de la hoja INDICACIONES ("para lo que es agricola, el color predominante es el
+        verde"), y por eso queda de ancla de la familia: las otras dos se movieron hacia ella,
+        no al reves.
     produccion:
       medidas: [produccion_tn]
       unidad: tn
-      hex: ["#fff3e0", "#ffcc80", "#ffa726", "#f57c00", "#e65100"]
-      color_solido: "#e65100"
-      justificacion: "Ocre/naranja de grano cosechado. Un solo tono, sin choque con el verde institucional: en un tablero con las dos variables al lado se distinguen de un vistazo y tambien en escala de grises."
+      hex: ["#f0f4d7", "#d6e09a", "#bdcc5c", "#95a52c", "#555f11"]
+      color_solido: "#95a52c"
+      color_comparacion: "#d6e09a"
+      familia_de_verde: "verde OLIVA / LIMA (tono 68, saturacion alta). Verde calido, con el amarillo del grano seco adentro."
+      justificacion: >
+        Cambiada el 2026-09-29 (hoja INDICACIONES de "0000000000 Maqueta Agri.xlsx", punto 2 de
+        JC: "Para lo que es agricola, el color predominante (por asociacion natural) es el verde
+        y en ganaderia el borravino o un marron... siempre aplicable a todo ese grupo de
+        productos"). Era ocre/naranja (#fff3e0..#e65100), que no es del grupo verde.
+        La produccion sigue siendo la variable "calida" de las tres, pero ahora lo es DENTRO
+        del verde: mismo peldaño de luminosidad que superficie, tono corrido al amarillo
+        (68 en vez de 93-133) y mas saturacion. Asi conserva el guiño al grano cosechado que
+        motivaba el ocre y deja de romper el grupo.
+        Por que se distingue de superficie: 65 grados de tono y una saturacion que casi la
+        dobla. En un mapa se ve de entrada cual de las dos variables esta puesta, que es el
+        motivo real por el que estas tres tenian colores distintos.
     rendimiento:
       medidas: [rendimiento_kg_ha]
       unidad: kg/ha
-      hex: ["#e3f2fd", "#90caf9", "#42a5f5", "#1976d2", "#0d47a1"]
-      color_solido: "#0d47a1"
+      hex: ["#ddeeea", "#a7d2c9", "#6fb8aa", "#3d9483", "#18594c"]
+      color_solido: "#18594c"
+      color_comparacion: "#6fb8aa"
+      familia_de_verde: "verde ESMERALDA (tono 168, saturacion media-alta). Verde frio, el otro extremo del arco respecto de produccion."
       justificacion: >
-        El rendimiento es un cociente, no un volumen: no se suma ni se acumula. Merece un tono
-        claramente distinto de los dos anteriores para que nadie lo lea como "mas superficie" o
-        "mas produccion". El azul no se confunde con el verde ni con el ocre en las formas de
-        daltonismo mas frecuentes.
+        Cambiada el 2026-09-29, mismo motivo que produccion: era azul (#e3f2fd..#0d47a1), que
+        no es del grupo verde que pide JC.
+        El rendimiento sigue siendo un cociente y no un volumen (no se suma ni se acumula), asi
+        que sigue necesitando leerse distinto de las otras dos. Ahora se separa por TONO FRIO:
+        superficie esta en el medio del arco verde, produccion al lado calido (68) y
+        rendimiento al lado frio (168). Las tres son verdes y ninguna se confunde con otra.
+        Se probaron tambien un verde salvia apagado (tono 152, saturacion 20) y un turquesa
+        (tono 175): el salvia no se despegaba de superficie y el turquesa ya se leia como
+        celeste, o sea "ajeno al verde". 168 es el punto donde todavia se lee verde y ya no se
+        lee hoja.
+
+    # Los tres solidos conviven en un mismo cuadro (produccion en barras + rendimiento en
+    # linea; superficie cosechada en barras + produccion en linea), asi que ademas del tono
+    # tienen que separarse en LUMINOSIDAD. Por eso `color_solido` no es siempre el ultimo paso
+    # de la rampa: es el paso que mantiene la separacion.
+    #   superficie   #22502c  luminancia 0,063  (oscuro)
+    #   produccion   #95a52c  luminancia 0,322  (medio)   -> paso 4 de 5, no el ultimo
+    #   rendimiento  #18594c  luminancia 0,077  (oscuro)
+    # Contrastes medidos entre los pares que comparten cuadro: superficie/produccion 3,42:1 y
+    # produccion/rendimiento 2,99:1. Superficie y rendimiento no comparten ningun cuadro (se
+    # verifico sobre todas las llamadas a Colores.solido de pipeline/site_build.py).
+    _separacion_de_solidos_agricolas:
+      verificado: 2026-09-29
+      pares_que_comparten_cuadro:
+        - {a: superficie, b: produccion, contraste: 3.42}
+        - {a: produccion, b: rendimiento, contraste: 2.99}
     cabezas:
       medidas: [cabezas, ingreso_establecimiento, egreso_establecimiento, balance_cabezas]
       unidad: cabezas
@@ -940,8 +1085,8 @@ colores:
         de producto, y ademas viene en pesos CORRIENTES, o sea que su escala mezcla el precio
         real con la inflacion. El protocolo manda que dos tipos de variable no compartan escala
         ni rampa, asi que le corresponde una propia. El violeta no lo usa ninguna otra rampa
-        (verde superficie, ocre produccion, azul rendimiento, marron hacienda, gris azulado
-        documentos) ni el cromo del theme, y se distingue de todas ellas tambien en escala de
+        (verde hoja superficie, verde oliva produccion, verde esmeralda rendimiento, marron
+        hacienda, gris azulado documentos) ni el cromo del theme, y se distingue de todas ellas tambien en escala de
         grises.
       preguntado_a_jc: "backlog 50"
 
@@ -1492,6 +1637,147 @@ formato_v1:
       general: [Educación, Población, Comunicaciones, Infraestructura]
       independientes: [Maquinaria agrícola, Silos y stocks, Sanidad animal, Industria, Alimentación y nutrición, Clima]
       otros: [Costos y márgenes, Análisis de datos, Escenarios Internacionales, Banderas es/en/pt, IA]
+
+    # ---- 29-sep-2026: se vuelve al paquete de JC y se implementa su criterio --------------
+    # Hoja INDICACIONES de "0000000000 Maqueta Agri.xlsx", punto 3 (celdas C28-C30):
+    #   "Iconografia: Yo ya subi un word (que en todo caso luego lo subo al ASANA) donde ya
+    #    busque todos los iconos (variantes B&W y color). Yo habia sugerido que cuando estaba
+    #    'inactivo' supongamos que estoy en soja como en el inicio de la maqueta, el icono de
+    #    soja esta en color y el resto en B&W, y cuando cambie a otro cultivo mismo criterio.
+    #    Porque ese 'paquete de iconos' y no otro??? Porque fue el UNICO DONDE LOGRE ENCONTRAR
+    #    TODO EL UNIVERSO DE PRODUCTOS CONTEMPLADOS LUEGO DE 1 SEMANA DE NAVEGAR."
+    # Deroga la decision del 22-sep-2026 de dibujar iconos de trazo propios.
+    vuelta_al_paquete_de_jc:
+      fecha: 2026-09-29
+      decision_de: "Francisco (implementar todo lo que pide la hoja INDICACIONES)"
+      que_se_usa: "los PNG de los Anexos I (B&W) y II (color) de JC, en site/assets/iconos/{bn,color}/, 101 por variante, catalogados en site/assets/iconos/catalogo.yaml"
+      criterio_de_variante:
+        inactivo: "B&W"
+        activo: "COLOR"
+        regla: >
+          Son DOS DIBUJOS DISTINTOS, no el mismo dibujo con dos tintas. Lo que habia hasta el
+          28-sep (el trazo propio pintado marron para el chip en reposo y cocoa para el
+          elegido) no cumple el criterio de JC: los dos son la misma tinta en dos tonos.
+        lo_hace_el_css: "las dos rutas viajan en cada opcion de filtro (icono y icono_color) y el CSS muestra una u otra segun aria-pressed"
+      fondo_de_los_png:
+        problema: "los 202 PNG traen un fondo PLANO #f7f7f7 OPACO, que sobre la crema del sitio se ve como una estampilla y sobre un chip elegido se ve directamente roto"
+        solucion: "el build los sirve SIN ese fondo. La transparencia se calcula al copiarlos (pipeline/pngs.py), no se edita el asset: site/assets/iconos/ queda con los archivos tal como los mando JC, igual que raw/."
+        determinista: "si, mismo PNG de entrada -> mismos bytes de salida"
+      excepcion_batata:
+        producto: Batata
+        motivo: >
+          El catalogo de JC tiene CEBOLLA y PAPA pero NO tiene BATATA, y los tres son los
+          productos de Agricultura > Cultivos intensivos. Un chip sin icono al lado de dos con
+          icono se lee como un error de la pagina, asi que la batata conserva el dibujo de
+          trazo propio (site/assets/iconos/trazo/batata.svg para el inactivo y
+          batata-color.svg para el activo), dibujado con el mismo lenguaje que los PNG de JC
+          (silueta con contorno grueso y relleno plano) para que no desentone al lado de
+          cebolla y papa.
+        es_la_unica: "si. Ningun otro PRODUCTO usa el trazo propio."
+        pendiente: "pedirle a JC el icono de batata de su paquete (backlog 56). Cuando llegue, se borran los dos SVG y se nombra el icono en site/iconos-cultivo.yaml como cualquier otro."
+      iconos_que_no_son_de_producto:
+        cuales: [exportar-como-pdf, ia, zoom]
+        que_pasa: "siguen siendo trazo propio, pintado con los colores del theme"
+        motivo: >
+          Son cromo de INTERFAZ, no productos. zoom directamente no existe en el catalogo de
+          JC; exportar-como-pdf e ia existen como PNG, pero puestos al lado de un boton de
+          texto de la barra de utilidades desentonan (son ilustraciones, no iconos de UI) y
+          ademas no tienen el par inactivo/activo que motiva la regla de JC. El criterio B&W /
+          color es sobre el UNIVERSO DE PRODUCTOS, que es de lo que habla la hoja INDICACIONES.
+
+  # -------------------------------------------------------------------
+  # CROMADA POR AREA (JC, hoja INDICACIONES, 2026-09-29)
+  # -------------------------------------------------------------------
+  cromada_por_area:
+    origen: "colores.grupo_por_area (arriba). JC habla del color de ese grupo de productos, no del color del sitio."
+    lectura: >
+      Si el verde es de lo agricola y el borravino/marron de lo ganadero, el color no puede ser
+      una propiedad del SITIO: es una propiedad del AREA. Una seccion de Agricultura se ve
+      verde y una de Ganaderia se ve marron, con el mismo diseno, la misma tipografia y la
+      misma estructura. Cambia la cromada, no la maqueta.
+    implementacion:
+      donde: "site/theme.yaml, bloque cromadas (una entrada por rama de site/navegacion.yaml) mas la clase de cuerpo que el build le pone a cada pagina"
+      que_cambia: "cabecera, menu lateral, banda de breadcrumb, tira de campanas, chip elegido, bordes de panel y color de enlace"
+      que_NO_cambia: "el lienzo crema, los paneles, la tipografia, las medidas y los COLORES DE DATOS (rampas y series), que los manda este protocolo y no el area"
+      default: "ganaderia (la cromada marron del 22-sep). Una rama sin entrada propia sale con el default y no rompe."
+    contraste_minimo:
+      regla: "4,5:1 entre cualquier texto y su fondo, medido (WCAG AA texto normal)"
+      motivo: "el verde institucional de la captura del 10-ago (#00af50) da 2,19:1 contra la crema: no se puede usar de fondo de cabecera aunque sea el de la maqueta"
+      medido_el: 2026-09-29
+
+  # -------------------------------------------------------------------
+  # ACLARACIONES DE TERMINOS (JC, hoja INDICACIONES, 2026-09-29)
+  # -------------------------------------------------------------------
+  aclaraciones_de_terminos:
+    origen_xlsx:
+      archivo: "0000000000 Maqueta Agri.xlsx"
+      hoja: INDICACIONES
+      celdas: "D17-D20"
+      texto: >
+        dado que la "web publica" va destinada a todo tipo de publico, sera necesario agregar
+        ACLARACIONES de terminos que se podran visualizar con un mouseover o click, como uds
+        elijan y un "mini popup" (ni idea como se llama, pero como un cuadro de notas de word o
+        excel) con el texto aclaratorio. Ojo que no se trata solo del publico "no tecnico", a
+        veces por la especialidad, un profesional economista puede no tener en claro un termino
+        especifico que sea agronomico o climatologico. Esto llevara mas tiempo y sera un poco
+        largo y tedioso, pero vamos priorizando.
+    donde_viven_los_textos: "site/glosario.yaml (uno por termino: termino, aclaracion, y las formas en que aparece escrito)"
+    forma:
+      disparador: "mouseover Y click Y foco de teclado, los tres. JC dice como uds elijan; no elegir excluye a alguien."
+      teclado: "el termino marcado es un boton: entra en el orden de tabulacion, abre con Enter/Espacio o con el foco, y cierra con Escape"
+      marca_visual: "subrayado punteado y el cursor de ayuda. Discreto: no puede competir con el dato."
+      popup: "uno solo por pagina, reposicionado; nunca uno por termino"
+      impresion: "no se imprime (es ayuda de pantalla)"
+    donde_se_marca:
+      prioridad_1: >
+        Rotulos y titulos que compone el build: etiquetas de filtro, titulos y subtitulos de
+        panel, notas metodologicas de una vista y la bajada de una seccion.
+      no_se_marca: "adentro de un boton ya existente (un chip) no se mete otro boton: ahi el termino se marca en la ETIQUETA del filtro, no en cada opcion"
+      criterio: "la primera aparicion de cada termino en cada bloque de texto, no todas: un parrafo con seis subrayados no se lee"
+    priorizacion: >
+      JC dice "vamos priorizando". El glosario arranca con los terminos que el sitio YA usa y
+      crece por pedido. No es requisito de publicacion que este completo.
+
+  # -------------------------------------------------------------------
+  # OPCIONES SIN DATOS: NO SE PUEDEN ELEGIR (JC, hoja "Agri 1 Dto", 2026-09-29)
+  # -------------------------------------------------------------------
+  opciones_sin_datos:
+    origen_xlsx:
+      archivo: "0000000000 Maqueta Agri.xlsx"
+      hoja: "Agri 1 Dto"
+      celdas: "E51-E52"
+      texto: >
+        SOLO DEBERAN ESTAR ACTIVOS LOS LINKS PARA CASOS DONDE EXISTAN DATOS. Por ejemplo, si
+        no hay datos para "garbanzo" en departamento Alberdi, QUE NO PUEDA PONERSE ACTIVO. Idem
+        para datos SOLO APLICACBLES A NIVEL PROVINCIAL (Por ejemplo: cultivos intensivos)
+    que_deroga: >
+      El cartel "No hay datos para esta combinacion de filtros". Ese cartel sigue existiendo
+      como red de seguridad, pero deja de ser el camino normal: si la combinacion no existe, la
+      opcion no se puede elegir y el cartel no se llega a ver.
+    regla:
+      alcance: "todo control de filtro (chips y desplegables) de tableros y vistas de detalle"
+      se_recalcula: "en cada cambio de cualquier otro filtro. Cambiar de departamento reordena que cultivos se pueden elegir."
+      estado_visual: "apagado, sin puntero de mano, con el motivo accesible en el title y en aria-label"
+      no_se_esconde: >
+        La opcion se DESHABILITA, no se borra. Si desapareciera, la lista de cultivos cambiaria
+        de largo al cambiar de departamento y el usuario no sabria si el cultivo no existe o si
+        no tiene datos ahi. JC pide que no pueda ponerse activo, no que no se vea.
+      si_el_valor_puesto_queda_sin_datos: >
+        Se mueve solo al primer valor que SI tenga datos (el de defecto si lo tiene). Nunca se
+        queda parado en una combinacion vacia.
+      relacion_con_solo_con_datos: >
+        selectores.cultivo.solo_con_datos saca del selector al cultivo que no tiene datos en
+        NINGUN lado. Esta regla es el escalon siguiente: el cultivo existe en la provincia pero
+        no en ESE departamento.
+    como_lo_sabe_el_navegador:
+      problema: "los JSON grandes vienen partidos por un filtro, asi que el navegador no tiene todas las combinaciones a mano"
+      solucion: "el build escribe claves en el indice del JSON: la lista completa de combinaciones que existen, ordenada. Es texto corto y no obliga a bajar ninguna particion."
+    fuera_de_alcance_por_ahora: >
+      La segunda mitad de la observacion de JC (datos SOLO APLICABLES A NIVEL PROVINCIAL, por
+      ejemplo cultivos intensivos) es sobre LINKS DE NAVEGACION entre secciones, no sobre
+      filtros: hoy la pagina departamental de cultivos intensivos no ofrece nada que no tenga
+      dato, asi que no hay link muerto que apagar. Queda anotado en backlog 57 para cuando la
+      navegacion departamental cruce secciones.
 
   # -------------------------------------------------------------------
   # Bloques nuevos de pagina que trae el mockup (formas que HOY no existen

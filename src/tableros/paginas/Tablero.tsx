@@ -35,6 +35,7 @@ import type {
 } from "@/tableros/tipos";
 import Arranque from "./Arranque";
 import Cascara from "./Cascara";
+import Glosa from "./Glosa";
 
 function TarjetasKpi({ contexto }: { contexto: boolean }) {
   return (
@@ -92,12 +93,18 @@ function CuerpoPanel({ id, mockup = false }: { id: string; mockup?: boolean }) {
     cuerpo = (
       <>
         <div className="grafico" data-grafico=""></div>
-        <div className="escala">
-          <span className="escala-min" data-escala-min=""></span>
-          <span className="escala-rampa" data-escala-rampa=""></span>
-          <span className="escala-max" data-escala-max=""></span>
-        </div>
+        {/* Las cinco muestras de la escala (una por quintil, con su tramo debajo) y la unidad
+            una sola vez, como las dibuja JC bajo el mapa en su maqueta. Las llena tablero.js
+            con los tramos que ya vienen escritos del build. */}
+        <div className="escala" data-escala=""></div>
+        <p className="escala-unidad" data-escala-unidad=""></p>
         <p className="total-provincial" data-total=""></p>
+        {/* La invitacion a elegir departamento va DEBAJO del mapa y su escala, que es donde
+            la escribe JC en las dos hojas de su maqueta ("seleccione departamento para..." en
+            "Agri 1" y "Seleccione otro departamento si desea visualizar" en "Agri 1 Dto").
+            Antes estaba arriba, en una pildora: con el texto largo de la hoja departamental
+            entraba en dos renglones y empujaba el mapa hacia abajo. */}
+        <p className="mapa-accion" data-accion=""></p>
       </>
     );
   } else if (id === "tendencia") {
@@ -329,14 +336,20 @@ function PanelComun({ panel, filtro }: { panel: Panel; filtro?: Filtro }) {
     >
       <div className="panel-cab">
         <div>
-          <h2 data-titulo="">{panel.titulo}</h2>
-          <p className="panel-sub" data-subtitulo=""></p>
+          <h2 data-titulo="">
+            <Glosa texto={panel.titulo} partes={panel.titulo_partes} />
+          </h2>
+          <p className="panel-sub" data-subtitulo="">
+            <Glosa texto={panel.subtitulo} partes={panel.subtitulo_partes} />
+          </p>
         </div>
         <TogglePanel filtro={filtro} />
       </div>
 
       <div className="panel-cuerpo">
-        {panel.id === "mapa" ? <p className="rotulo mapa-accion" data-accion=""></p> : null}
+        {panel.id === "mapa" ? (
+          <p className="mapa-departamento" data-mapa-departamento="" hidden></p>
+        ) : null}
         <CuerpoPanel id={panel.id} />
       </div>
 
@@ -371,7 +384,10 @@ function PanelMockup({ panel, filtro }: { panel: Panel; filtro?: Filtro }) {
     <section className="panel" data-panel={panel.id}>
       {panel.id === "mapa" ? (
         <div className="mapa-cab">
-          <p className="mapa-accion" data-accion=""></p>
+          {/* El titulo que JC escribe ARRIBA del mapa en su hoja "Agri 1 Dto"
+              ("Departamento ALBERDI"). Vacio y oculto mientras se mira la provincia, que es
+              el estado de su hoja "Agri 1". Lo escribe tablero.js. */}
+          <p className="mapa-departamento" data-mapa-departamento="" hidden></p>
           <TogglePanel filtro={filtro} />
         </div>
       ) : panel.id !== "tabla-datos" ? (
@@ -380,8 +396,12 @@ function PanelMockup({ panel, filtro }: { panel: Panel; filtro?: Filtro }) {
            ("Estimaciones de superficies cosechadas (*)") y porque depende de los selectores. */
         <div className="panel-cab panel-cab-mockup">
           {conIconos && filtro ? <ChipsPanel filtro={filtro} /> : null}
-          <h2 data-titulo="">{panel.titulo}</h2>
-          <p className="panel-sub" data-subtitulo=""></p>
+          <h2 data-titulo="">
+            <Glosa texto={panel.titulo} partes={panel.titulo_partes} />
+          </h2>
+          <p className="panel-sub" data-subtitulo="">
+            <Glosa texto={panel.subtitulo} partes={panel.subtitulo_partes} />
+          </p>
           {conIconos ? null : <TogglePanel filtro={filtro} />}
         </div>
       ) : null}
@@ -633,6 +653,14 @@ export default function Tablero({ pagina }: { pagina: PaginaTablero }) {
      "Agri 2" directamente no tiene: va de los chips a los paneles. */
   const conIndicadoresArriba = !selector && tablero.disposicion !== "grilla-2x2";
 
+  /* Como resuelve el alto, decidido por el SPEC (site_build.ALTOS_DE_TABLERO) y no por este
+     archivo: con "fluye" el tablero lleva la clase `alto-fluido`, que en el CSS le devuelve a
+     cada cuadro un alto donde el dibujo se lea y deja que la pagina scrollee, y que tablero.js
+     mira para no fijarle el alto de la ventana. Sin ella sigue el comportamiento de siempre
+     (entra todo en una pantalla). */
+  const clasesTablero = (base: string) =>
+    tablero.alto === "fluye" ? base + " alto-fluido" : base;
+
   return (
     <Cascara pagina={pagina}>
       {conIndicadoresArriba ? (
@@ -658,7 +686,7 @@ export default function Tablero({ pagina }: { pagina: PaginaTablero }) {
         // JC y lo declara el spec; aca se buscan por id para que mover uno no toque este
         // archivo.
         <div
-          className="tablero con-selector tablero-maqueta"
+          className={clasesTablero("tablero con-selector tablero-maqueta")}
           id="tablero"
           data-datos={tablero.ruta_datos}
         >
@@ -674,7 +702,7 @@ export default function Tablero({ pagina }: { pagina: PaginaTablero }) {
       ) : selector ? (
         // ---- DISPOSICION DEL MOCKUP MODELO 2 (cultivos, tercera tanda del 10-ago-2026) ----
         <div
-          className="tablero con-selector tablero-mockup"
+          className={clasesTablero("tablero con-selector tablero-mockup")}
           id="tablero"
           data-datos={tablero.ruta_datos}
         >
@@ -705,7 +733,7 @@ export default function Tablero({ pagina }: { pagina: PaginaTablero }) {
         </div>
       ) : (
         // ---- Disposicion generica en grilla de 12 (hacienda, stock) ----
-        <div className="tablero" id="tablero" data-datos={tablero.ruta_datos}>
+        <div className={clasesTablero("tablero")} id="tablero" data-datos={tablero.ruta_datos}>
           {paneles.map((panel) =>
             panel.id === "utilidades" ? (
               <PanelUtilidades key={panel.id} panel={panel} />

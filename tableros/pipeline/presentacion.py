@@ -15,7 +15,7 @@ Determinismo: sustitucion de strings, aritmetica con Decimal y redondeo comercia
 import math
 import os
 import unicodedata
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal, ROUND_CEILING, ROUND_HALF_UP
 
 import yaml
 
@@ -153,6 +153,17 @@ class Precision:
 MANTISAS = [1, 2, 2.5, 5, 10]
 
 
+def minimo_marcas_rotuladas(protocolo):
+    """Cuantas marcas del eje de valores tienen que quedar ROTULADAS en pantalla.
+
+    Sale de `eje_vertical.minimo_marcas_rotuladas.cantidad` del protocolo (regla de JC,
+    ratificada el 29-sep-2026 en la hoja INDICACIONES: "en el eje vertical, la escala debe
+    tener un minimo de 5 valores"). El numero NO vive en el JS: viaja adentro de cada objeto
+    de eje que escribe el build y el dibujante lo obedece (ver `Ctx._con_etiquetas`).
+    """
+    return int(protocolo["eje_vertical"]["minimo_marcas_rotuladas"]["cantidad"])
+
+
 def marcas_eje(minimo, maximo, objetivo=7):
     """Devuelve {min, max, paso, marcas}. El eje siempre incluye el cero."""
     piso_bruto = min(0.0, float(minimo))
@@ -234,6 +245,101 @@ def clase_de(valor, cortes):
     return len(cortes) + 1
 
 
+# --- Rotulos de la escala del mapa: tramos CONTIGUOS y REDONDOS -------------
+# Pedido de JC del 30-sep-2026 ("la escala del mapa no dice nada... quiere cinco tramos con
+# rangos legibles y contiguos, tipo '100.000 a 200.000'. En orden de quintiles"), y es lo que
+# el mismo dibuja en la hoja "Agri 1" de su maqueta: cinco muestras con "20.000 a 29.000",
+# "30.000 a 39.000", "40.000 a 49.000" y los dos extremos abiertos.
+#
+# LO QUE NO CAMBIA: el CALCULO. Los quintiles, los cortes y la clase de cada departamento se
+# siguen resolviendo con `quintiles()` y `clase_de()` sobre los valores reales. Lo unico que
+# esto resuelve es el TEXTO del rotulo.
+#
+# Como se elige el numero del rotulo sin mentir: el limite entre dos clases contiguas es UN
+# solo numero (por eso los tramos son contiguos y no hay huecos), y se lo busca DENTRO del
+# intervalo cerrado [maximo de la clase de abajo, minimo de la clase de arriba]. Cualquier
+# numero de ese intervalo deja a los dos lados bien rotulados: todo departamento de la clase
+# de abajo es <= al limite y todo el de la de arriba es >=. Entre todos los candidatos se
+# elige el mas REDONDO (la grilla mas gruesa que tenga un multiplo adentro), que es lo que
+# convierte "26.187" en "30.000".
+def _pasos_redondos(magnitud_maxima):
+    """Grillas candidatas, de la mas gruesa a la mas fina y sin repetir.
+
+    Por exponente k: 10^k, 5*10^(k-1), 2*10^(k-1). La serie queda estrictamente decreciente
+    (100, 50, 20, 10, 5, 2, 1, 0,5...), que es lo que hace que la primera que tenga un
+    multiplo adentro del intervalo sea la MAS redonda.
+    """
+    for exponente in range(magnitud_maxima, -4, -1):
+        yield _dec(10) ** exponente
+        yield _dec(5) * (_dec(10) ** (exponente - 1))
+        yield _dec(2) * (_dec(10) ** (exponente - 1))
+
+
+def limite_redondo(desde, hasta):
+    """El numero mas redondo del intervalo (desde, hasta], con `desde` = maximo de la clase de
+    abajo y `hasta` = minimo de la clase de arriba.
+
+    El extremo de abajo se EXCLUYE a proposito. Si el limite cayera justo en el maximo de la
+    clase de abajo, ese departamento quedaria dibujado en el tramo de abajo pero leyendose
+    tambien como el piso del de arriba. Excluyendolo, el unico valor que puede caer sobre la
+    frontera es el MINIMO de la clase de arriba, que es el piso de su propio tramo y se lee
+    bien.
+
+    Si no queda ningun candidato (las dos clases se tocan sin lugar en el medio), devuelve
+    `hasta` crudo: un rotulo con el valor sin redondear se lee peor pero nunca miente, que es
+    lo mismo que hacia la leyenda vieja cuando el redondeo solapaba dos clases.
+    """
+    lo, hi = _dec(desde), _dec(hasta)
+    if lo > hi:
+        lo, hi = hi, lo
+    if lo == hi:
+        return float(hi)
+    magnitud = int(math.floor(math.log10(float(abs(hi))))) if hi != 0 else 0
+    for paso in _pasos_redondos(magnitud + 1):
+        candidato = (lo / paso).to_integral_value(rounding=ROUND_CEILING) * paso
+        if candidato == lo:
+            candidato += paso           # el extremo de abajo no cuenta
+        if candidato <= hi:
+            return float(candidato)
+    return float(hi)
+
+
+def tramos_de_escala(por_clase, plantillas):
+    """Los rotulos de las 5 clases del mapa, de la mas alta a la mas baja.
+
+    `por_clase`: {numero de clase -> lista de valores de los departamentos de esa clase}. Las
+    clases vacias (dos cortes consecutivos iguales) no vienen y no se rotulan, como manda el
+    protocolo.
+    `plantillas`: {"entre": "{minimo} a {maximo}", "mas": "mas de {minimo}",
+                   "menos": "menos de {maximo}"}.
+
+    Devuelve la lista de clases (numero de clase y texto ya escrito), de mayor a menor.
+    """
+    numeros = sorted(por_clase, reverse=True)
+    extremos = [(n, min(por_clase[n]), max(por_clase[n])) for n in numeros]
+    # Un limite por FRONTERA, compartido por las dos clases que separa: asi los tramos quedan
+    # contiguos por construccion y es imposible que quede un hueco entre uno y el siguiente.
+    limites = [limite_redondo(abajo[2], arriba[1])
+               for arriba, abajo in zip(extremos, extremos[1:])]
+    clases = []
+    for i, (numero, _, _) in enumerate(extremos):
+        techo = limites[i - 1] if i > 0 else None    # el limite con la clase de ARRIBA
+        piso = limites[i] if i < len(limites) else None
+        if piso is not None and techo is not None:
+            texto = (plantillas["entre"].replace("{minimo}", fmt_numero(piso))
+                                        .replace("{maximo}", fmt_numero(techo)))
+        elif piso is not None:
+            texto = plantillas["mas"].replace("{minimo}", fmt_numero(piso))
+        elif techo is not None:
+            texto = plantillas["menos"].replace("{maximo}", fmt_numero(techo))
+        else:
+            # Una sola clase con dato: no hay frontera que rotular, va el rango real.
+            texto = (plantillas["entre"].replace("{minimo}", fmt_numero(extremos[i][1]))
+                                        .replace("{maximo}", fmt_numero(extremos[i][2])))
+        clases.append({"clase": numero, "texto": texto})
+    return clases
+
+
 # ===========================================================================
 # COLORES
 # ===========================================================================
@@ -252,10 +358,19 @@ class Colores:
         return self.rampas[tipo]["hex"]
 
     def solido(self, medida):
+        """El color de la variable cuando NO representa magnitud sino identidad de serie.
+
+        Lo declara la rampa (`color_solido`) y no es necesariamente su ultimo paso: desde el
+        29-sep-2026 las tres variables agricolas son verdes (regla de grupo de JC), y las que
+        comparten cuadro (produccion en barras + rendimiento en linea; superficie cosechada en
+        barras + produccion en linea) tienen que separarse tambien en luminosidad. El paso
+        elegido y los contrastes medidos estan en `colores._separacion_de_solidos_agricolas`.
+        """
         return self.rampas[self.tipos[medida]]["color_solido"]
 
     # Paso de la rampa que le toca a la SEGUNDA serie cuando un cuadro compara dos valores del
-    # mismo filtro (el "cruzar datos" del zoom, Francisco 24-sep-2026).
+    # mismo filtro (el "cruzar datos" del zoom, Francisco 24-sep-2026). Es el DEFAULT con el
+    # que se derivo el `color_comparacion` de cada rampa; el valor vigente es el declarado.
     PASO_COMPARACION = 2
 
     def comparacion(self, medida):
@@ -268,8 +383,13 @@ class Colores:
         Lo que distingue a las dos series ademas del tono es el punteado, que es lo que
         sobrevive a la impresion en blanco y negro. La pregunta de si JC prefiere otra cosa
         queda en el backlog (pregunta 53).
+
+        Cada rampa lo declara (`color_comparacion`) porque `color_solido` dejo de ser siempre
+        el ultimo paso: en produccion, el solido ya es el paso 4 y el paso 2 quedaria pegado.
         """
-        return self.rampa(medida)[self.PASO_COMPARACION]
+        rampa = self.rampas[self.tipos[medida]]
+        declarado = rampa.get("color_comparacion")
+        return declarado if declarado else rampa["hex"][self.PASO_COMPARACION]
 
     def por_categoria(self, categorias, excluir=()):
         """Un color fijo por categoria, asignado en orden alfabetico. Deterministico.

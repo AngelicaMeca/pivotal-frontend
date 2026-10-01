@@ -2,10 +2,50 @@
 # extraccion del 10-ago-2026 a partir de los Anexos I (B&W) y II (color) de
 # "specs/fuentes/0000 Protocolo de formato - Versión 1.docx" (word/media/).
 #
-# DESDE EL 22-sep-2026 EL SITIO NO USA ESTOS ARCHIVOS: los iconos son dibujos propios en
-# site/assets/iconos/trazo/*.svg (ver site/iconos-cultivo.yaml). Este catalogo queda como
-# registro de que pidio JC y con que nombre, que es lo que conserva la nomenclatura.
-# La ASIGNACION icono -> cultivo del sitio no vive aca: esta en site/iconos-cultivo.yaml.
+# ESTE ES EL CATALOGO VIGENTE. El sitio sirve estos archivos: bn/<nombre>.png para el
+# producto INACTIVO y color/<nombre>.png para el ACTIVO, que es el criterio que pide JC.
+#
+# Entre el 22-sep y el 28-sep-2026 el sitio uso dibujos de trazo propios y este catalogo
+# quedo de registro historico. Volvio a ser el catalogo vigente el 29-sep-2026, cuando
+# Francisco resolvio implementar la hoja INDICACIONES de "0000000000 Maqueta Agri.xlsx",
+# donde JC pide sus iconos y explica por que ese paquete y no otro: "fue el UNICO DONDE
+# LOGRE ENCONTRAR TODO EL UNIVERSO DE PRODUCTOS CONTEMPLADOS LUEGO DE 1 SEMANA DE NAVEGAR".
+#
+# Los archivos NO se editan: son los que mando JC. El fondo plano #f7f7f7 con que vienen se
+# les saca al copiarlos al sitio (pipeline/pngs.py), no en el archivo.
+#
+# La ASIGNACION icono -> producto no vive aca: esta en site/iconos-cultivo.yaml, que ademas
+# lista las excepciones que NO salen de este catalogo (la batata, que JC no tiene, y los tres
+# iconos de interfaz).
+#
+# SEGUNDA ENTREGA DE JC (29/30-sep-2026): "specs/fuentes/000 Iconos.docx". Trae el mismo
+# paquete otra vez (98 rotulos en color, 95 en B&W) y DOS que no estaban en los Anexos I y II:
+# `batata` y `zoom` (el rotula el segundo "Zoom aumento"). Los dos entraron al catalogo con
+# esta revision y por eso se borraron los dibujos de trazo propios que los suplian.
+# OJO con las variantes de esa entrega: la PRIMERA mitad del documento es la de COLOR y la
+# segunda la de B&W. "Zoom aumento" aparece solo en la primera (ver `origen_bn: null` abajo).
+#
+# COTEJO del 30-sep-2026 entre "000 Iconos.docx" y este catalogo (103 entradas). Se ANOTAN,
+# no se aplican: el catalogo vigente es este y nada se renombra sin decision de Francisco.
+#   - El documento es un SUBCONJUNTO: 98 rotulos en color y 95 en B&W contra 103 entradas. Lo
+#     que este catalogo tiene y el documento nuevo ya no trae: Cebolla, Garbanzo,
+#     Comunicaciones, Infraestructura, Moneda, IA -1, "Alimentacion y nutricion" y las tres
+#     banderas de idioma (Español, Ingles, Portugues). Ninguno se borra: el sitio usa cebolla
+#     y garbanzo hoy mismo.
+#   - El resto de las diferencias son de ROTULO, no de dibujo: singular/plural (Apicola /
+#     Apicolas, Equino / Equinos, Bubalino / Bubalinos), abreviaturas ("Caña azucar" /
+#     "Caña de azucar", "Series precios" / "Serie de precios", "Silos" / "Silos y stocks",
+#     "Exportar PDF" / "Exportar como PDF") y sinonimos ("Carne de cerdo" / "Carne porcina",
+#     "Transporte camion" / "Transporte vial", "Clima 2", "Alimentacion").
+#   - Tres slots vienen rotulados DISTINTO en cada mitad del propio documento: el mismo dibujo
+#     es "Hortalizas" en color y "Cebolla" en B&W (es la cebolla), "Insumos agricolas" en
+#     color y "Agroquimicos" en B&W, y "Maderas" en color y "Forestal" en B&W. Este catalogo
+#     ya los tenia resueltos como cebolla, agroquimicos y maderas-y-subproductos.
+#   - Poroto alubia y poroto negro siguen compartiendo archivo entre las dos variantes: en el
+#     documento nuevo el bloque de B&W reusa las mismas imagenes que el de color. Ya estaba
+#     asi en el catalogo (`origen_bn` y `origen_color` iguales).
+#
+# FALTANTES conocidos frente a lo que el sitio necesita: alpiste y lenteja.
 iconos:
   aceites:
     nombre: "Aceites"
@@ -82,6 +122,14 @@ iconos:
     categoria: "Energía"
     origen_bn: "image87.png"
     origen_color: "image186.png"
+  batata:
+    nombre: "Batata"
+    categoria: "AGRICULTURA"
+    # Unico icono que NO sale de los Anexos I y II: lo mando JC el 29-sep-2026 en
+    # "specs/fuentes/000 Iconos.docx", donde es el anteultimo rotulo ("Batata").
+    origen_documento: "specs/fuentes/000 Iconos.docx"
+    origen_bn: "image193.png"
+    origen_color: "image97.png"
   bosques:
     nombre: "Bosques"
     categoria: "Forestal"
@@ -512,3 +560,17 @@ iconos:
     categoria: "AGRICULTURA"
     origen_bn: "image35.png"
     origen_color: "image134.png"
+  zoom:
+    nombre: "Zoom aumento"
+    categoria: "Interfaz"
+    # Idem batata: lo mando JC el 29-sep-2026 en "specs/fuentes/000 Iconos.docx", como ultimo
+    # rotulo del bloque en color. Es el primer icono de INTERFAZ que sale de su paquete.
+    origen_documento: "specs/fuentes/000 Iconos.docx"
+    # NO hay variante B&W: el documento la trae solo en color (el bloque de B&W termina en
+    # "Camelidos / Tabaco / Bosques" + "Batata", sin zoom). No hace falta: los iconos de
+    # interfaz se piden siempre en la variante `color` (site_build.ruta_icono se llama con
+    # "color" desde `item_utilidad` y desde las acciones de cuadro), porque el criterio
+    # B&W-inactivo/color-activo de JC es sobre el universo de PRODUCTOS. Si algun dia se pide
+    # la variante bn, el build corta con el mensaje de icono faltante en vez de inventar una.
+    origen_bn: null
+    origen_color: "image98.png"

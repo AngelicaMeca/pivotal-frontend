@@ -1,0 +1,111 @@
+# Aclaraciones de términos. Lo lee pipeline/site_build.py.
+#
+# Lo pidió JC en la hoja INDICACIONES de "0000000000 Maqueta Agri.xlsx" (29-sep-2026):
+#   "dado que la 'web pública' va destinada a todo tipo de público, será necesario agregar
+#    ACLARACIONES de términos que se podrán visualizar con un mouseover o click, como uds
+#    elijan, y un 'mini popup' (ni idea como se llama, pero como un cuadro de notas de word o
+#    excel) con el texto aclaratorio. Ojo que no se trata sólo del público 'no técnico', a
+#    veces por la especialidad, un profesional economista puede no tener en claro un término
+#    específico que sea agronómico o climatológico. Esto llevará más tiempo y será un poco
+#    largo y tedioso, pero vamos priorizando."
+#
+# "VAMOS PRIORIZANDO": esto NO es el glosario completo y no pretende serlo. Arranca por los
+# términos que el sitio ya escribe en pantalla y crece por pedido. Que falte un término no
+# rompe nada: si no está acá, la palabra sale sin marcar.
+#
+# CÓMO SE USA
+# - `termino` es el título del recuadro y `aclaracion` su texto. Una definición, no un
+#   tratado: tiene que entrar en un recuadro chico al lado de la palabra.
+# - `formas` son las maneras en que esa idea aparece ESCRITA en los textos que compone el
+#   build. Se busca la más larga primero y solo la PRIMERA aparición en cada bloque de texto:
+#   un párrafo con seis subrayados no se lee.
+# - El cotejo ignora mayúsculas y acentos, y solo toma palabras enteras.
+#
+# DÓNDE SE MARCA (protocolo, formato_v1.aclaraciones_de_terminos.donde_se_marca)
+# Etiquetas de filtro, títulos y subtítulos de panel, notas metodológicas de una vista y la
+# bajada de una sección. Adentro de un chip no se marca: un chip ya es un botón y no se puede
+# meter otro botón adentro.
+terminos:
+  dtv:
+    termino: "DTV"
+    formas: ["DTV", "Declaración de Tránsito Vegetal", "Declaraciones de Tránsito Vegetal"]
+    aclaracion: >
+      Declaración de Tránsito Vegetal: el documento que emite el SENASA para que un producto
+      vegetal pueda moverse de un lugar a otro. Cada DTV registra qué se movió, cuánto, desde
+      dónde y hacia dónde, así que contar DTV es contar movimientos declarados, no producción.
+
+  dte:
+    termino: "DTE"
+    formas: ["DTE", "documento de tránsito electrónico", "documentos de tránsito electrónico"]
+    aclaracion: >
+      Documento de Tránsito Electrónico: el permiso que emite el SENASA para trasladar
+      hacienda. Cada DTE dice cuántos animales se mueven, de qué categoría, desde qué
+      establecimiento y hacia cuál, y por qué motivo. Un DTE es un papel, no un animal: un
+      mismo animal puede generar varios a lo largo del año.
+
+  campania:
+    termino: "Campaña"
+    formas: ["campaña", "campañas"]
+    aclaracion: >
+      El ciclo agrícola completo, de la siembra a la cosecha. Se nombra con los dos años que
+      abarca (2024/25) porque los cultivos de verano se siembran en un año y se cosechan en el
+      siguiente. No coincide con el año calendario.
+
+  superficie-sembrada:
+    termino: "Superficie sembrada"
+    formas: ["superficie sembrada", "sembrada"]
+    aclaracion: >
+      Las hectáreas que se sembraron en la campaña. No todas llegan a cosecharse: la
+      diferencia con la superficie cosechada es lo que se perdió por sequía, granizo, plagas o
+      porque no dio el precio. Las superficies de cultivos de invierno y de verano NO se suman
+      entre sí: en un mismo lote suele sembrarse trigo en invierno y soja en verano, y
+      sumarlas contaría dos veces la misma tierra.
+
+  superficie-cosechada:
+    termino: "Superficie cosechada"
+    formas: ["superficie cosechada", "cosechada"]
+    aclaracion: >
+      Las hectáreas que efectivamente se cosecharon, siempre iguales o menores que las
+      sembradas. Es la superficie que se usa para los mapas y para calcular el rendimiento.
+
+  rendimiento:
+    termino: "Rendimiento"
+    formas: ["rendimiento", "rendimientos"]
+    aclaracion: >
+      Cuánto se produjo por cada hectárea cosechada, en kilos por hectárea. Es un cociente, no
+      un volumen: no se suma ni se promedia entre cultivos distintos. El rendimiento de un
+      conjunto se recalcula como producción total sobre superficie cosechada total.
+
+  quintil:
+    termino: "Quintil"
+    formas: ["quintil", "quintiles"]
+    aclaracion: >
+      Una de las cinco partes en que se divide un conjunto ordenado de menor a mayor. En los
+      mapas de este sitio los departamentos se reparten en cinco grupos de tamaño parecido, y
+      cada grupo lleva un tono: el más oscuro para los valores más altos. Los cortes se
+      calculan con los datos de ese mapa, así que dos mapas de campañas distintas usan los
+      mismos colores pero no necesariamente los mismos cortes.
+
+  materia-seca:
+    termino: "Materia seca"
+    formas: ["materia seca"]
+    aclaracion: >
+      El peso de un forraje o un grano una vez descontada el agua que contiene. Se usa para
+      poder comparar alimentos con humedades muy distintas: dos toneladas de pastura fresca y
+      dos de grano no alimentan lo mismo, pero sí lo hacen dos toneladas de materia seca.
+
+  cabeza:
+    termino: "Cabeza"
+    formas: ["cabezas", "cabeza"]
+    aclaracion: >
+      Un animal. Es la unidad con que se cuenta la hacienda, sin distinguir peso ni edad: una
+      vaca y un ternero son una cabeza cada uno. Por eso el stock en cabezas y el stock en
+      kilos no se mueven necesariamente igual.
+
+  precio-corriente:
+    termino: "Precio corriente"
+    formas: ["precios corrientes", "precio corriente", "pesos corrientes"]
+    aclaracion: >
+      El precio tal como se pagó en ese momento, sin descontarle la inflación. Comparar precios
+      corrientes de años distintos mezcla el cambio real del precio con el cambio del valor del
+      peso: para ver la evolución real hay que deflactarlos o pasarlos a dólares.

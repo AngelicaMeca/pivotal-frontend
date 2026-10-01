@@ -17,7 +17,25 @@ comunes: _comunes-base-9
 titulo: "Datos por departamento"
 subtitulo: "Los números del cultivo elegido en el departamento: última campaña, evolución y serie completa"
 
-# --- Titulo del cuadro: lo arma _protocolo-presentacion, no se escribe a mano ---
+# --- Titulo del cuadro: LITERAL de la maqueta ------------------------------------------------
+# Revisión del 30-sep-2026 (acta en specs/fuentes/, punto 3: "Títulos cambiados en gráficos y
+# tablas. Los títulos de la maqueta son literales"). Esta página es la hoja "Agri 1 Dto" de
+# "0000000000 Maqueta Agri.xlsx" y el título de su gráfico está en el XML del gráfico:
+#
+#   "Soja - Sgo del Estero - Departamento ALBERDI - Evolución de la superficie cosechada y
+#    producción - Campañas 2013/14 a 2024/25"
+#
+# El compositor mecánico producía otra cosa ("Evolución de la superficie cosechada y producción
+# de soja - AGUIRRE (Santiago del Estero) - campañas 2015/16 a 2024/25"): otro orden de los
+# componentes, "Santiago del Estero" en vez de "Sgo del Estero", sin la palabra "Departamento"
+# y con "campañas" en minúscula. Es la MISMA plantilla que el gráfico de la hoja "Agri 1" que
+# ya usa el tablero (tablero-cultivos-extensivos.paneles.tendencia.titulo_protocolo), con
+# "Departamento {Departamento}" donde el provincial dice "Total".
+#
+# Los `titulo_componentes` de abajo quedan como REGISTRO de la composición mecánica (de dónde
+# salía cada parte). La regla vigente es `titulo_protocolo`.
+titulo_protocolo: "{Cultivo} - Sgo del Estero - Departamento {Departamento} - Evolución de la superficie cosechada y producción - Campañas {desde} a {hasta}"
+
 protocolo: _protocolo-presentacion
 titulo_componentes:
   area: {desde_filtro: departamento}
@@ -36,6 +54,13 @@ titulo_componentes:
 # tipo `mapa`, que compone el del ranking vinculado con otra plantilla). El segundo se compone
 # con `tabla_por_campania.titulo_componentes` y la plantilla del tipo `lista`.
 tabla_por_campania:
+  # La tabla que JC pega debajo del gráfico (imagen `image21.png` de la maqueta, la misma en
+  # "Agri 1" y en "Agri 1 Dto") NO lleva título propio: es la tabla de datos del gráfico de
+  # arriba. Acá la página es una vista de detalle y cada cuadro necesita el suyo, así que se
+  # compone con la MISMA secuencia de la maqueta (producto - provincia - área - concepto -
+  # período) cambiando solo el concepto por lo que la tabla muestra de verdad. Queda anotado
+  # como interpretación para JC: es el único título de esta página que él no escribió.
+  titulo_protocolo: "{Cultivo} - Sgo del Estero - Departamento {Departamento} - Superficie cosechada, producción y rendimiento - Campañas {desde} a {hasta}"
   titulo_componentes:
     area: {desde_filtro: departamento}
     sujeto: {desde_filtro: cultivo}
@@ -51,8 +76,8 @@ tabla_por_campania:
 # El build verifica que el compositor produzca EXACTAMENTE estos titulos. El ejemplo usa
 # MORENO, como los demas specs departamentales; no es el default de la pagina (ese se calcula).
 titulo_protocolo_ejemplo:
-  - "Evolución de la superficie cosechada y producción de soja - MORENO (Santiago del Estero) - campañas 2015/16 a 2024/25"
-  - "Superficie cosechada, producción y rendimiento de soja - MORENO (Santiago del Estero) - campañas 2015/16 a 2024/25"
+  - "Soja - Sgo del Estero - Departamento MORENO - Evolución de la superficie cosechada y producción - Campañas 2015/16 a 2024/25"
+  - "Soja - Sgo del Estero - Departamento MORENO - Superficie cosechada, producción y rendimiento - Campañas 2015/16 a 2024/25"
 
 tipo: serie
 grafico: lineas            # las mismas dos lineas del grafico del mockup, a grano departamento

@@ -1,0 +1,36 @@
+La idea central de JC: los datos y el procesamiento están bien, no falta nada. Lo que rechazó es cómo se presentan.
+
+Lo que marcó como mal
+
+Respeto de la maqueta
+1. Títulos cambiados en gráficos y tablas. Los títulos de la maqueta son literales.
+2. Textos agregados que él no escribió. Objetó el conteo de DTE y el "total sin introducción". Ojo: en el repo esos dos salen de su propia hoja "Modelo Análisis", así que conviene mostrarle la hoja y no discutirle.
+3. Se sacaron los "datos relevantes" (el bloque de cifras destacadas por área) y se reescribió su texto de metodología.
+4. Se avanzó en ganadería sin maqueta. Los tableros de movimientos de hacienda y stock bovino "no pegan" con las maquetas que él está armando.
+
+Diseño y marca
+6. Gráficos achatados por forzar todo en una pantalla ("dos líneas chatas", anillo en miniatura). Quiere que la página siga hacia abajo.
+7. Color por sector: agricultura verde, ganadería bordó o marrón. Tampoco quiere los colores de la web institucional de Pivotal, porque esto es un producto.
+8. Logo provincial viejo. Hay un manual de marca oficial de Santiago del Estero y no se puede salir de ahí. (CARGADO EN EL DRIVE)
+
+Conceptuales
+9. Stock con filtro por categoría: las categorías van todas juntas en una tabla, para leer la relación entre ellas.
+10. La escala del mapa "no dice nada". Quiere cinco tramos con rangos legibles y contiguos (tipo "100.000 a 200.000"). Hoy la leyenda muestra rangos con huecos y números raros. En orden de quintiles
+11. El click en un departamento lleva a algo que no es lo que él diseñó.
+12. Se mezcló lo sectorial con lo departamental. Son dos entradas distintas: la sectorial y el "Sistema de Información Departamental".
+13. La home es "inocua", pero él mismo pidió dejarla para el final.
+
+Lo que aprobó
+
+- La matriz origen-destino de hacienda: "espectacular".--diseñada por facu
+- La web institucional de Pivotal y la estructura de boxes del B3.
+- No le importan el tono exacto del verde, la tipografía ni la posición del menú. --aqui podemos usar la tipografia del manual de marca de SDE provincia
+- Las ayudas tipo signo de pregunta se ven al final: el público es ministro y gobernador, no estudiantes.
+
+Acuerdos
+
+- Primero agricultura, después ganadería. JC no sube las maquetas de ganadería hasta que agricultura tenga su ok.
+- JC terminaba las maquetas de ganadería para el miércoles siguiente a la reunión.
+- Vos revisás el sitio esa semana y hablás con Angélica para que se respete la maqueta.
+- En cada página de la maqueta, JC marca qué no se toca y qué queda librado a creatividad. Solo se interviene en lo segundo.
+- JC pasó por chat el manual de marca de SDE (paleta con RGB en la página 19), el Word "Iconos" y las capturas de la maqueta de ganadería. Falta archivarlos en specs/fuentes/. ---cargados en drive

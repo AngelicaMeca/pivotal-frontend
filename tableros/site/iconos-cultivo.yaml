@@ -1,21 +1,27 @@
-# Asignación ícono -> cultivo. La escribe constructor-dashboards y la lee pipeline/site_build.py.
+# Asignación ícono -> producto. La escribe constructor-dashboards y la lee pipeline/site_build.py.
 #
-# Los dibujos viven en site/assets/iconos/trazo/<icono>.svg: son PROPIOS, dibujados el
-# 22-sep-2026 con el lenguaje visual del sitio institucional (trazo de 1.6 sobre 24x24, puntas
-# redondeadas, sin relleno). Reemplazan a los PNG de los Anexos I y II del "Protocolo de
-# formato - Versión 1" de JC, cuya licencia (flaticon) seguía sin verificar desde el 10-ago
-# (backlog pregunta 26, RESUELTA: ya no se usa material de terceros).
+# --- Revisión 2026-09-29: vuelven los íconos de JC -----------------------------------------
+# Los íconos de PRODUCTO son otra vez los PNG que armó JC (site/assets/iconos/bn/ y color/,
+# 101 por variante, catalogados en site/assets/iconos/catalogo.yaml). Queda derogada la
+# decisión del 22-sep de dibujar íconos de trazo propios.
 #
-# Variantes: el build escribe cada dibujo dos veces, con el color que le toca según el theme
-# (bn = marrón para los chips en reposo; color = cocoa para el cultivo SELECCIONADO y la
-# tarjeta de contexto). El dibujo es el mismo: lo único que cambia es el color del trazo.
-# Acá solo se dice QUÉ ícono le toca a cada cultivo.
+# Lo pidió JC en la hoja INDICACIONES de "0000000000 Maqueta Agri.xlsx" (punto 3), y explica
+# por qué ese paquete y no otro: "fue el ÚNICO DONDE LOGRÉ ENCONTRAR TODO EL UNIVERSO DE
+# PRODUCTOS CONTEMPLADOS LUEGO DE 1 SEMANA DE NAVEGAR". Y pide el criterio de variante:
+# el producto INACTIVO va en B&W y el ACTIVO en COLOR. Son dos dibujos distintos, no el mismo
+# dibujo con dos tintas (que es lo que había hasta ahora: marrón para el chip en reposo y
+# cocoa para el elegido).
 #
-# Para dar de alta un cultivo nuevo: dibujar site/assets/iconos/trazo/<nombre>.svg y nombrarlo
-# acá. Si falta el dibujo, el build corta con el nombre que falta.
+# El build sirve los dos archivos por producto y el CSS muestra uno u otro según aria-pressed.
+# Al copiarlos les saca el fondo plano #f7f7f7 con que vienen los PNG (pipeline/pngs.py); los
+# archivos de site/assets/iconos/ no se tocan nunca, son los que mandó JC.
 #
-# La clave es el nombre canónico del cultivo en marts (el valor del filtro), no la etiqueta
+# La clave es el nombre canónico del producto en marts (el valor del filtro), no la etiqueta
 # del chip: "Soja total" se muestra "Soja" pero el dato se llama "Soja total".
+# El valor es el nombre del ícono en el catálogo. `null` = sin ícono; ese producto queda fuera
+# del universo visible (no es chip ni serie propia, pero sus datos siguen en los agregados).
+# Un producto AUSENTE de esta lista es un error del build: obliga a decidir el ícono de cada
+# alta en vez de dejarla caer en silencio.
 cultivos:
   "Algodón": algodon
   # Sin ícono en el catálogo de JC (no hay "Alpiste" en los anexos): chip sin ícono.
@@ -44,12 +50,34 @@ cultivos:
   "Trigo total": trigo
 
 # --- Familia DTV de hortalizas (bases 56 batata, 57 cebolla, 75 papa) ---------------------
-# Los tres productos de Agricultura > Cultivos intensivos. Los dibujos son propios, con el
-# mismo lenguaje visual que los de arriba (trazo de 1.6 sobre 24x24, puntas redondeadas, sin
-# relleno). La clave es el nombre canonico del producto en marts
-# (hecho_movimientos_vegetales.producto), que es el valor del filtro.
-# El algodon de la base 53 vive en el mismo mart pero NO es de esta familia: es cultivo
-# extensivo y ya tiene su icono arriba.
+# Los tres productos de Agricultura > Cultivos intensivos. La clave es el nombre canónico del
+# producto en marts (hecho_movimientos_vegetales.producto), que es el valor del filtro.
+# El algodón de la base 53 vive en el mismo mart pero NO es de esta familia: es cultivo
+# extensivo y ya tiene su ícono arriba.
   "Batata": batata
   "Cebolla": cebolla
   "Papa": papa
+
+# --- Íconos que NO salen del paquete de JC ------------------------------------------------
+# Todo lo que se nombre acá se sirve desde site/assets/iconos/trazo/ en vez de bn/ y color/.
+#
+# --- Revisión 2026-09-30: se fueron la batata y el zoom ------------------------------------
+# JC mandó "specs/fuentes/000 Iconos.docx", que trae justo los dos que faltaban: **Batata**
+# (en color y en B&W) y **Zoom aumento** (solo en color). Los dos entraron al catálogo
+# (site/assets/iconos/catalogo.yaml) y se borraron los tres SVG propios que los suplían
+# (trazo/batata.svg, trazo/batata-color.svg y trazo/zoom.svg).
+#
+# Con eso NO QUEDA NINGUNA EXCEPCIÓN DE PRODUCTO: los tres productos de Cultivos intensivos
+# (batata, cebolla, papa) salen del paquete de JC, con su criterio B&W inactivo / color
+# activo. El backlog 56 ("pedirle a JC el ícono de batata") queda resuelto.
+#
+# Lo que queda acá son los DOS íconos de interfaz que JC no dibuja: no son productos, son
+# cromo del sitio, y se siguen pintando con los colores del theme (site_build.COLOR_TRAZO),
+# que es lo que los deja re-brandeables (F3).
+trazo:
+  exportar-como-pdf:
+    motivo: "ícono de interfaz, no de producto; no está en el paquete de JC"
+    tema: true
+  ia:
+    motivo: "ícono de interfaz, no de producto; no está en el paquete de JC"
+    tema: true

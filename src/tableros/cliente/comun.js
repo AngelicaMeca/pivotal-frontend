@@ -21,8 +21,10 @@ export default function crearPivotal() {
   /* `comparar` es la comparacion vigente del zoom (ver "cruzar datos", mas abajo). Vive en el
      estado y no adentro del zoom porque quien la usa es el dibujante del cuadro, que corre en
      cada repintado; el zoom solo la prende y la apaga. */
+  /* `dto` es el departamento elegido ("" = la provincia) y `dtoCombos` lo que se bajo de
+     cada uno. Ver "capa departamental", mas abajo. */
   var estado = { datos: null, pintar: null, graficos: [], bajadas: {}, historial: [],
-                 colores: {}, extras: [],
+                 colores: {}, extras: [], claves: [], dto: "", dtoCombos: {},
                  comparar: { panel: null, nodo: null, filtro: null, valor: "", medida: "" } };
 
   /* -------- controles de filtro -------- */
@@ -98,6 +100,111 @@ export default function crearPivotal() {
     return estado.datos.filtros.map(valor).join("|");
   }
 
+  /* ================= opciones sin datos: no se pueden elegir =================
+     Regla de JC (hoja "Agri 1 Dto" de su maqueta, 29-sep-2026): "SOLO DEBERAN ESTAR ACTIVOS
+     LOS LINKS PARA CASOS DONDE EXISTAN DATOS. Por ejemplo, si no hay datos para 'garbanzo' en
+     departamento Alberdi, QUE NO PUEDA PONERSE ACTIVO."
+
+     Antes se podia elegir igual y el cuadro quedaba vacio con un cartel. Ahora la opcion
+     queda APAGADA, con el motivo a mano, y se recalcula cada vez que se mueve otro filtro:
+     cambiar de departamento cambia que cultivos se pueden elegir.
+
+     Lo que se pregunta es si EXISTE la combinacion, no si el dato es cero. El build manda la
+     lista completa de combinaciones en `datos.claves`, justamente para no tener que bajar las
+     particiones del JSON solo para saber cuales existen. */
+
+  /* Los valores de `id` que forman combinacion con lo que hay puesto en los demas filtros. */
+  function valoresConDatos(id) {
+    var ids = estado.datos.filtros;
+    var pos = ids.indexOf(id);
+    if (pos < 0 || !estado.claves.length) { return null; }
+    var actuales = ids.map(valor);
+    var conDatos = {};
+    estado.claves.forEach(function (partes) {
+      for (var i = 0; i < ids.length; i++) {
+        if (i !== pos && partes[i] !== actuales[i]) { return; }
+      }
+      conDatos[partes[pos]] = true;
+    });
+    /* Ninguno: los OTROS filtros estan en una combinacion que no existe (puede pasar al
+       llegar con parametros en la URL). No se apaga nada, asi no queda una pagina sin ninguna
+       opcion elegible; el paso siguiente del ciclo acomoda los otros filtros. */
+    return Object.keys(conDatos).length ? conDatos : null;
+  }
+
+  function motivoSinDatos(etiqueta) {
+    /* Con un departamento elegido el motivo es OTRO: no es que falte el dato para la campaña,
+       es que no lo hay EN ESE DEPARTAMENTO. Es el caso que escribio JC en su maqueta. */
+    var plantilla = (estado.dto && estado.datos.sin_opcion_departamento)
+      || estado.datos.sin_opcion;
+    return plantilla ? plantilla.replace("{opcion}", etiqueta) : "";
+  }
+
+  /* Apaga en UN control las opciones sin datos y devuelve el primer valor que si tiene.
+     Devuelve null si el control no participa de las combinaciones. */
+  function apagarSinDatos(nodo, conDatos) {
+    var primero = null;
+    var puestos = nodo.dataset.control === "chips"
+      ? nodo.querySelectorAll("button[data-valor]")
+      : nodo.querySelectorAll("option");
+    Array.prototype.forEach.call(puestos, function (opcion) {
+      var v = opcion.dataset && opcion.dataset.valor !== undefined
+        ? opcion.dataset.valor : opcion.value;
+      var hay = !!conDatos[v];
+      if (hay && primero === null) { primero = v; }
+      opcion.disabled = !hay;
+      if (hay) {
+        opcion.removeAttribute("aria-disabled");
+        opcion.removeAttribute("title");
+      } else {
+        opcion.setAttribute("aria-disabled", "true");
+        var motivo = motivoSinDatos(opcion.textContent.trim());
+        if (motivo) { opcion.title = motivo; }
+      }
+    });
+    return primero;
+  }
+
+  /* Recorre todos los filtros. Si el valor puesto quedo sin datos, se mueve al de defecto si
+     lo tiene y si no al primero que si tenga: nunca se queda parado en una combinacion vacia.
+     Mover un filtro cambia lo que hay disponible en los otros, asi que se repite hasta que no
+     se mueva nada (con dos o tres filtros converge en una o dos vueltas).
+
+     EXCEPCION: el filtro SUJETO de la pagina (`datos.filtro_sujeto`) no se mueve nunca. La
+     ficha departamental ES el departamento que se pidio, y acomodarlo solo convertia el clic
+     del mapa en una mentira: se clickeaba ALBERDI con un cultivo que ALBERDI no tiene y se
+     leian los numeros de GUASAYAN bajo el titulo de GUASAYAN, con la URL diciendo ALBERDI.
+     Ahora se acomoda el cultivo, que es lo que JC pide en su maqueta ("si no hay datos para
+     garbanzo en departamento Alberdi, QUE NO PUEDA PONERSE ACTIVO"). Si el sujeto no tiene
+     datos para NINGUNA combinacion -hoy SALAVINA, que no esta en la base 9 de MAGyP- se queda
+     donde esta y el cuadro muestra su cartel de "no hay datos": es la verdad. Sus opciones se
+     siguen apagando igual, asi que el motivo esta a mano. */
+  function sincronizarDisponibles() {
+    if (!estado.datos || !estado.claves.length) { return false; }
+    var sujeto = estado.datos.filtro_sujeto || null;
+    var movio = false;
+    for (var vuelta = 0; vuelta < 3; vuelta++) {
+      var hubo = false;
+      estado.datos.filtros.forEach(function (id) {
+        var conDatos = valoresConDatos(id);
+        if (!conDatos) { return; }
+        var primero = null;
+        controlesDe(id).forEach(function (nodo) {
+          var candidato = apagarSinDatos(nodo, conDatos);
+          if (primero === null) { primero = candidato; }
+        });
+        if (id === sujeto) { return; }
+        if (!conDatos[valor(id)] && primero !== null) {
+          var nodo = control(id);
+          if (nodo && fijar(nodo, primero)) { hubo = true; }
+        }
+      });
+      movio = movio || hubo;
+      if (!hubo) { break; }
+    }
+    return movio;
+  }
+
   function vaciar(nodo) { while (nodo.firstChild) { nodo.removeChild(nodo.firstChild); } }
 
   /* Un contenedor de GRAFICO no se vacia nunca: adentro vive el canvas de ECharts, y la
@@ -127,6 +234,74 @@ export default function crearPivotal() {
         });
     }
     return estado.bajadas[ruta];
+  }
+
+  /* ================= capa departamental =================
+     Francisco, 30-sep-2026: "cuando clickee el departamento, quiero que en la misma vista
+     vayan cambiando los datos". Es la hoja "Agri 1 Dto" de la maqueta de JC: el MISMO tablero
+     con los datos del departamento elegido.
+
+     Lo que llega del build (`datos.capa_departamental`) es solo lo que CAMBIA -KPIs, contexto,
+     tendencia, anillo y tabla-, un archivo por departamento, sin el mapa ni el ranking, que
+     son justamente los dos cuadros que no cambian (el mapa es el selector y el ranking es
+     provincial por regla de JC). Aca se baja el archivo del departamento clickeado y se
+     SUPERPONE sobre el combo provincial que la pagina ya tiene. */
+
+  function hayCapa() { return !!(estado.datos && estado.datos.capa_departamental); }
+
+  /* La clave de la capa se arma con SUS filtros (cultivo|campania), que son menos que los del
+     tablero: ninguno de esos cuadros depende de la variable del mapa. */
+  function claveDepartamental() {
+    return estado.datos.capa_departamental.filtros.map(valor).join("|");
+  }
+
+  function bajarDepartamento(geo) {
+    var ruta = estado.datos.capa_departamental.archivos[geo];
+    if (!ruta) { return Promise.resolve(); }
+    if (!estado.bajadas[ruta]) {
+      estado.bajadas[ruta] = fetch(ruta).then(function (r) { return r.json(); })
+        .then(function (parte) { estado.dtoCombos[geo] = parte.combos; });
+    }
+    return estado.bajadas[ruta];
+  }
+
+  function asegurarDepartamento() {
+    if (!estado.dto || !hayCapa()) { return Promise.resolve(); }
+    return bajarDepartamento(estado.dto);
+  }
+
+  /* El combo que se dibuja. Sin departamento es el provincial de siempre; con departamento es
+     el provincial con los cuadros de la capa encima. Si esa combinacion no existe en el
+     departamento devuelve undefined, que es lo que el dibujante ya sabe leer como "no hay
+     datos" (nunca se muestran los numeros de otro recorte). */
+  function comboVigente() {
+    var base = estado.datos.combos[clave()];
+    if (!estado.dto || !hayCapa() || !base) { return base; }
+    var extra = (estado.dtoCombos[estado.dto] || {})[claveDepartamental()];
+    if (!extra) { return undefined; }
+    var paneles = {};
+    Object.keys(base.paneles).forEach(function (k) { paneles[k] = base.paneles[k]; });
+    Object.keys(extra.paneles).forEach(function (k) { paneles[k] = extra.paneles[k]; });
+    return { contexto: extra.contexto, kpis: extra.kpis, paneles: paneles };
+  }
+
+  /* Las combinaciones que se pueden elegir. Con un departamento puesto son las del tablero
+     RECORTADAS a las que ese departamento tiene: es la regla de JC ("si no hay datos para
+     garbanzo en departamento Alberdi, QUE NO PUEDA PONERSE ACTIVO") aplicada al tablero.
+     El build manda la lista por departamento justamente para no bajar nada para saberlo. */
+  function recalcularClaves() {
+    var datos = estado.datos;
+    var todas = (datos.claves || []).map(function (k) { return k.split("|"); });
+    if (!estado.dto || !hayCapa()) { estado.claves = todas; return; }
+    var propias = {};
+    (datos.capa_departamental.claves[estado.dto] || []).forEach(function (k) {
+      propias[k] = true;
+    });
+    var ids = datos.filtros;
+    var pos = datos.capa_departamental.filtros.map(function (f) { return ids.indexOf(f); });
+    estado.claves = todas.filter(function (partes) {
+      return propias[pos.map(function (i) { return partes[i]; }).join("|")];
+    });
   }
 
   function asegurarParticion() {
@@ -173,7 +348,19 @@ export default function crearPivotal() {
     controles().forEach(function (nodo) {
       if (nodo.dataset.valor) { parametros.set(nodo.dataset.filtro, nodo.dataset.valor); }
     });
+    if (hayCapa()) {
+      /* El departamento elegido va en la URL como un filtro mas, asi el estado se comparte y
+         el boton "atras" del navegador deshace la eleccion. `replaceState` y no `pushState`:
+         pasar por cinco departamentos no tiene que dejar cinco pasos de historial. */
+      if (estado.dto) { parametros.set("departamento", estado.dto); }
+      else { parametros.delete("departamento"); }
+    }
     var consulta = parametros.toString();
+    if (hayCapa() && window.history && window.history.replaceState) {
+      window.history.replaceState(null, "",
+        window.location.pathname + (consulta ? "?" + consulta : ""));
+    }
+    pintarMigaDepartamental(parametros);
     Array.prototype.forEach.call(document.querySelectorAll("a[data-conserva]"), function (a) {
       var base = a.getAttribute("href").split("?")[0];
       a.setAttribute("href", consulta ? base + "?" + consulta : base);
@@ -182,6 +369,38 @@ export default function crearPivotal() {
       var nodo = control(tramo.dataset.migaDinamica);
       if (nodo) { tramo.textContent = etiquetaDe(nodo); }
     });
+  }
+
+  /* Los dos tramos que la hoja "Agri 1 Dto" agrega a la miga: "Provincia", que con un
+     departamento elegido es el link de VUELTA, y "Dto ALBERDI". Con la provincia puesta el
+     tramo del departamento no se dibuja (ni su separador) y "Provincia" no lleva a ningun
+     lado, que es el estado de la hoja "Agri 1". */
+  function pintarMigaDepartamental(parametros) {
+    if (!hayCapa()) { return; }
+    var paso = document.querySelector("[data-miga-paso=\"departamento\"]");
+    if (paso) {
+      paso.hidden = !estado.dto;
+      /* El texto del tramo no sale de ningun control (el selector del departamento es el
+         mapa), asi que no lo escribe el enganche generico de [data-miga-dinamica]: se escribe
+         aca con la plantilla del build ("Dto {Departamento}"). */
+      var rotulo = paso.querySelector("[data-miga-dinamica]");
+      var plantilla = estado.datos.capa_departamental.miga;
+      if (rotulo && plantilla) {
+        rotulo.textContent = estado.dto
+          ? plantilla.replace("{Departamento}", nombreDepartamento()) : "";
+      }
+    }
+    var volver = document.querySelector("[data-miga-provincia]");
+    if (!volver) { return; }
+    var sin = new URLSearchParams(parametros.toString());
+    sin.delete("departamento");
+    volver.setAttribute("href",
+      window.location.pathname + (sin.toString() ? "?" + sin.toString() : ""));
+    /* Sin departamento no hay a donde volver: el tramo queda como el actual y no como un link
+       que no hace nada (misma regla que el boton "volver" del tablero). */
+    volver.classList.toggle("miga-inerte", !estado.dto);
+    if (estado.dto) { volver.removeAttribute("aria-current"); }
+    else { volver.setAttribute("aria-current", "page"); }
   }
 
   /* Repinta cuando la pagina se quedo quieta. Hay dibujos que se calculan con el tamaño de su
@@ -203,15 +422,57 @@ export default function crearPivotal() {
   }
 
   function refrescar() {
+    /* Primero se acomoda que se puede elegir (y, si hace falta, se mueve el filtro que quedo
+       en una combinacion sin datos): todo lo que sigue se calcula con la seleccion ya valida. */
+    recalcularClaves();
+    sincronizarDisponibles();
     sincronizarNavegacion();
     sincronizarComparacion();
-    return asegurarParticion().then(function () {
-      estado.pintar(estado.datos.combos[clave()], estado.datos);
+    return Promise.all([asegurarParticion(), asegurarDepartamento()]).then(function () {
+      estado.pintar(comboVigente(), estado.datos);
       /* Los paneles que se dibujan por su cuenta (hoy el de precios del MCBA, que tiene
          filtros y datos propios) se enteran por aca de que la pagina se repinto. Importa en
          la exportacion a PDF: la hoja tiene otro ancho que la ventana y hay dibujos que se
          calculan con el tamaño de su caja. */
       estado.extras.forEach(function (fn) { fn(); });
+    });
+  }
+
+  /* El departamento con que se LLEGO a la pagina. Viaja en la URL (y no solo en memoria)
+     para que el estado se pueda compartir, marcar y volver con el boton del navegador, que es
+     lo que se perdia cuando el clic del mapa navegaba a otra pagina. Un valor que la capa no
+     conoce se ignora: se queda en la provincia. */
+  function preseleccionarDepartamento() {
+    if (!hayCapa()) { return; }
+    var pedido = new URLSearchParams(window.location.search).get("departamento");
+    if (pedido && estado.datos.capa_departamental.archivos[pedido]) { estado.dto = pedido; }
+  }
+
+  /* Cambia el departamento (o vuelve a la provincia con ""). Lo llama el clic del mapa y el
+     tramo "Provincia" de la miga. */
+  function elegirDepartamento(geo, recordable) {
+    var nuevo = geo || "";
+    if (nuevo === estado.dto) { return Promise.resolve(); }
+    if (recordable) { recordar(foto()); }
+    estado.dto = nuevo;
+    return refrescar();
+  }
+
+  function nombreDepartamento() {
+    if (!estado.dto || !hayCapa()) { return ""; }
+    return estado.datos.capa_departamental.nombres[estado.dto] || "";
+  }
+
+  /* El tramo "Provincia" de la miga es un <a> con href de verdad (se puede copiar y abrir en
+     otra pestaña), pero el clic comun no recarga: cambia el estado y repinta. */
+  function escucharMigaProvincia() {
+    var volver = document.querySelector("[data-miga-provincia]");
+    if (!volver) { return; }
+    volver.addEventListener("click", function (evento) {
+      if (evento.metaKey || evento.ctrlKey || evento.shiftKey || evento.button) { return; }
+      evento.preventDefault();
+      recordar(foto());
+      elegirDepartamento("");
     });
   }
 
@@ -231,6 +492,9 @@ export default function crearPivotal() {
   function foto() {
     var valores = {};
     controles().forEach(function (nodo) { valores[nodo.dataset.filtro] = nodo.dataset.valor; });
+    /* El departamento no es un control del DOM (el selector es el mapa), pero es parte de lo
+       que se esta mirando: sin esto, "volver" deshacia el cultivo y dejaba el departamento. */
+    if (hayCapa()) { valores.__dto = estado.dto; }
     return valores;
   }
 
@@ -278,6 +542,10 @@ export default function crearPivotal() {
           var valorPrevio = anterior[nodo.dataset.filtro];
           if (valorPrevio !== undefined && fijar(nodo, valorPrevio)) { hubo = true; }
         });
+        if (anterior.__dto !== undefined && anterior.__dto !== estado.dto) {
+          estado.dto = anterior.__dto;
+          hubo = true;
+        }
         if (hubo) { refrescar(); }
       });
     }
@@ -908,7 +1176,128 @@ export default function crearPivotal() {
      existan aca (site_build.ACCIONES_UTILIDAD), asi que no hay botones sin dueño. El atributo
      es `data-utilidad` y no `data-accion` porque ese ya es el hueco de texto de la ayuda del
      mapa ("Seleccione departamento"). */
+  /* ================= aclaraciones de terminos (JC, 29-sep-2026) =================
+     "sera necesario agregar ACLARACIONES de terminos que se podran visualizar con un
+     mouseover o click, como uds elijan, y un mini popup con el texto aclaratorio."
+
+     JC dice "como uds elijan" y la eleccion es: los tres. Mouseover para el que viene con el
+     mouse, foco para el que viene con el teclado, y click para dejarlo FIJO (si solo abriera
+     con el mouse, el que navega con teclado se queda afuera; si solo abriera con click, el
+     que pasa por arriba no se entera de que hay algo que leer).
+
+     Ni el texto ni la palabra se deciden aca: el build parte los textos y marca los terminos
+     (<button class="termino" data-termino="dtv">) y las definiciones vienen en un <dl>
+     escondido que dibujo la cascara. Este archivo abre, cierra y ubica el recuadro. */
+  var glosa = { globo: null, fijo: null };
+
+  function globoDeGlosa() {
+    if (!glosa.globo) { glosa.globo = document.getElementById("glosa-globo"); }
+    return glosa.globo;
+  }
+
+  function definicionDe(id) {
+    var dt = document.querySelector('.glosa-datos [data-glosa-id="' + id + '"]');
+    if (!dt) { return null; }
+    var dd = dt.nextElementSibling;
+    return { titulo: dt.textContent, texto: dd ? dd.textContent : "" };
+  }
+
+  function cerrarGlosa() {
+    var globo = globoDeGlosa();
+    if (!globo) { return; }
+    globo.hidden = true;
+    if (glosa.fijo) { glosa.fijo.setAttribute("aria-expanded", "false"); }
+    glosa.fijo = null;
+  }
+
+  function abrirGlosa(boton) {
+    var globo = globoDeGlosa();
+    if (!globo) { return; }
+    var definicion = definicionDe(boton.dataset.termino);
+    if (!definicion) { return; }
+    texto(globo, "[data-glosa-titulo]", definicion.titulo);
+    texto(globo, "[data-glosa-texto]", definicion.texto);
+    globo.hidden = false;
+    /* Se ubica DESPUES de mostrarlo: con `hidden` puesto no tiene medidas. Position fixed,
+       asi que se trabaja en coordenadas de ventana y no hay que sumar scroll. Si no entra
+       abajo, salta arriba del termino; si se pasa de un costado, se corre para adentro. */
+    var caja = boton.getBoundingClientRect();
+    var globoCaja = globo.getBoundingClientRect();
+    var margen = 8;
+    var arriba = caja.bottom + margen;
+    if (arriba + globoCaja.height > window.innerHeight - margen) {
+      arriba = Math.max(margen, caja.top - globoCaja.height - margen);
+    }
+    var izquierda = Math.min(
+      Math.max(margen, caja.left),
+      Math.max(margen, window.innerWidth - globoCaja.width - margen));
+    globo.style.top = arriba + "px";
+    globo.style.left = izquierda + "px";
+  }
+
+  function engancharGlosario() {
+    if (!globoDeGlosa()) { return; }
+    /* Delegado en el documento: los terminos que el zoom se lleva adentro del dialogo son
+       copias, y con un listener por boton esas copias no harian nada. */
+    document.addEventListener("click", function (evento) {
+      var boton = evento.target.closest ? evento.target.closest(".termino") : null;
+      if (!boton) { cerrarGlosa(); return; }
+      if (glosa.fijo === boton) { cerrarGlosa(); return; }
+      cerrarGlosa();
+      glosa.fijo = boton;
+      boton.setAttribute("aria-expanded", "true");
+      abrirGlosa(boton);
+    });
+    document.addEventListener("mouseover", function (evento) {
+      var boton = evento.target.closest ? evento.target.closest(".termino") : null;
+      if (boton && !glosa.fijo) { abrirGlosa(boton); }
+    });
+    document.addEventListener("mouseout", function (evento) {
+      var boton = evento.target.closest ? evento.target.closest(".termino") : null;
+      if (boton && !glosa.fijo) { cerrarGlosa(); }
+    });
+    document.addEventListener("focusin", function (evento) {
+      var boton = evento.target.closest ? evento.target.closest(".termino") : null;
+      if (boton) { abrirGlosa(boton); }
+    });
+    document.addEventListener("focusout", function (evento) {
+      var boton = evento.target.closest ? evento.target.closest(".termino") : null;
+      if (boton && glosa.fijo !== boton) { cerrarGlosa(); }
+    });
+    document.addEventListener("keydown", function (evento) {
+      if (evento.key === "Escape") { cerrarGlosa(); }
+    });
+    /* Al mover la pagina el recuadro quedaria flotando lejos de su palabra: se cierra. */
+    window.addEventListener("scroll", cerrarGlosa, true);
+    window.addEventListener("resize", cerrarGlosa);
+  }
+
+  /* Escribe un texto que puede traer terminos marcados. `partes` lo arma el build; sin
+     partes se escribe el texto plano de siempre, que es el 99% de los casos. */
+  function glosar(nodo, selector, valorTexto, partes) {
+    var destino = nodo.querySelector(selector);
+    if (!destino) { return; }
+    if (!partes || !partes.length) {
+      destino.textContent = valorTexto || "";
+      return;
+    }
+    vaciar(destino);
+    partes.forEach(function (parte) {
+      if (!parte.termino) {
+        destino.appendChild(document.createTextNode(parte.t));
+        return;
+      }
+      var boton = document.createElement("button");
+      boton.type = "button";
+      boton.className = "termino";
+      boton.dataset.termino = parte.termino;
+      boton.textContent = parte.t;
+      destino.appendChild(boton);
+    });
+  }
+
   function engancharUtilidades() {
+    engancharGlosario();
     Array.prototype.forEach.call(document.querySelectorAll("[data-utilidad]"), function (boton) {
       var hacer = ACCIONES[boton.dataset.utilidad];
       if (hacer) { boton.addEventListener("click", function () { hacer(boton); }); }
@@ -972,7 +1361,43 @@ export default function crearPivotal() {
       controles().forEach(function (nodo) {
         if (nodo.dataset.valor) { parametros.set(nodo.dataset.filtro, nodo.dataset.valor); }
       });
+      if (estado.dto) { parametros.set("departamento", estado.dto); }
       return parametros.toString();
+    },
+
+    /* Escribe un texto que puede traer terminos del glosario marcados (`<campo>_partes` del
+       build). Lo usan los titulos de cuadro del tablero, que cambian con la seleccion y por
+       eso no los puede dibujar el servidor. */
+    glosa: glosar,
+
+    /* El departamento elegido y como cambiarlo. Lo usa el mapa del tablero: su clic ya no
+       navega a otra pagina, cambia los datos de esta (ver "capa departamental"). */
+    departamento: function () { return estado.dto; },
+    nombreDepartamento: nombreDepartamento,
+    elegirDepartamento: elegirDepartamento,
+
+    /* Cada cuantas marcas del eje de valores se escribe una etiqueta.
+
+       Por que hace falta ralear: en un cuadro bajo las etiquetas se pisan unas con otras y no
+       se lee ninguna. Por que hay un piso: el protocolo exige un MINIMO de etiquetas a la
+       vista (regla de JC: "en el eje vertical, la escala debe tener un minimo de 5 valores").
+       El numero no esta escrito aca: viaja en el propio eje (`eje.minimo`), que lo arma el
+       build desde specs/modelos/_protocolo-presentacion.yaml. Este archivo solo sabe cuanto
+       alto hay, que es lo unico que el build no puede saber.
+
+       `alto` es el alto util del cuadro en px y `porEtiqueta` los px que necesita una etiqueta
+       para no tocar a la de al lado. */
+    saltoDeEje: function (eje, alto, porEtiqueta) {
+      var intervalos = Math.round((eje.max - eje.min) / eje.paso);
+      if (!(intervalos > 0)) { return 1; }
+      var minimo = eje.minimo || 5;
+      var entran = Math.max(2, Math.floor((alto || 0) / (porEtiqueta || 22)));
+      var salto = Math.max(1, Math.ceil((intervalos + 1) / entran));
+      /* Con un salto de N se escriben floor(intervalos / N) + 1 etiquetas. Se afloja el salto
+         hasta que queden `minimo`: antes de incumplir la regla de JC se dejan etiquetas
+         apretadas, que al menos se pueden leer agrandando la ventana o con el zoom. */
+      while (salto > 1 && Math.floor(intervalos / salto) + 1 < minimo) { salto -= 1; }
+      return salto;
     },
 
     /* Etiqueta de una marca de eje. Los textos vienen del build, indexados por el valor de la
@@ -1046,8 +1471,13 @@ export default function crearPivotal() {
       estado.pintar = pintar;
       return fetch(ruta).then(function (r) { return r.json(); }).then(function (datos) {
         estado.datos = datos;
+        /* Las combinaciones que existen, ya partidas: se consultan en cada repintado para
+           apagar las opciones sin datos (ver sincronizarDisponibles). */
+        estado.claves = (datos.claves || []).map(function (k) { return k.split("|"); });
         preseleccionar();
+        preseleccionarDepartamento();
         escuchar();
+        escucharMigaProvincia();
         engancharUtilidades();
         window.addEventListener("resize", reacomodar);
         return refrescar();

@@ -22,15 +22,23 @@ export default function iniciar(PIVOTAL) {
     if (destino) { destino.textContent = valor || ""; }
   }
 
-  /* -------- alto: el tablero entra en UNA pantalla --------
-     JC pidio un tablero y no un informe, asi que los cuatro paneles tienen que verse sin
-     scrollear. El alto no se puede escribir en el CSS porque lo que hay ARRIBA del tablero
-     cambia de pagina en pagina: el titulo puede irse a dos lineas y los chips de filtro pueden
-     envolver. Se mide una sola vez, ya pintados los indicadores, y se le fija al contenedor lo
-     que sobra de la ventana; el CSS reparte ese alto entre las filas (.alto-fijo).
+  /* -------- alto: el tablero entra en UNA pantalla, salvo que el spec diga que fluye --------
+     El tablero nacio para entrar sin scrollear: JC pidio un tablero y no un informe, asi que
+     los cuatro paneles tenian que verse juntos. El alto no se puede escribir en el CSS porque
+     lo que hay ARRIBA del tablero cambia de pagina en pagina (el titulo puede irse a dos
+     lineas y los chips de filtro pueden envolver), asi que se mide una sola vez, ya pintados
+     los indicadores, y se le fija al contenedor lo que sobra de la ventana; el CSS reparte ese
+     alto entre las filas (.alto-fijo).
 
-     Por debajo de ALTO_MINIMO no se fuerza nada y la pagina scrollea como cualquier otra: en
-     una ventana muy baja un tablero aplastado se lee peor que uno que no entra. */
+     El 30-sep-2026 JC dio marcha atras para AGRICULTURA: forzar la pantalla le dejaba 100-150
+     px de dibujo a cada cuadro ("dos lineas chatas", el anillo "en miniatura") y pidio que la
+     pagina siga hacia abajo. Eso NO es un `if` suelto: lo declara el spec del tablero
+     (`paneles.alto: fluye`, site_build.ALTOS_DE_TABLERO) y llega hasta aca como la clase
+     `alto-fluido`. Con esa clase puesta este bloque entero no hace nada y manda el CSS, que le
+     da a cada cuadro el alto de la maqueta de JC.
+
+     Por debajo de ALTO_MINIMO tampoco se fuerza nada y la pagina scrollea como cualquier otra:
+     en una ventana muy baja un tablero aplastado se lee peor que uno que no entra. */
   var ALTO_MINIMO = 500;   /* px de tablero por debajo de los cuales conviene dejar scrollear */
   var AIRE_ABAJO = 16;     /* respiro entre el ultimo panel y el borde de la ventana */
   var ANGOSTO = window.matchMedia("(max-width: 1000px)");   /* el mismo corte que el CSS */
@@ -41,6 +49,10 @@ export default function iniciar(PIVOTAL) {
        el repintado que hace falta antes de sacar las fotos le borraba ese reparto y en una
        ventana angosta los paneles se montaban sobre el pie. */
     if (document.documentElement.classList.contains("imprimiendo")) { return; }
+    /* Tablero que fluye (lo dice su spec): el alto lo pone el contenido y la pagina scrollea.
+       Va DESPUES de la guarda de impresion a proposito: en la hoja A4 el tablero se sigue
+       repartiendo el alto con `alto-fijo`, que se la pone comun.js. */
+    if (contenedor.classList.contains("alto-fluido")) { return; }
     contenedor.classList.remove("alto-fijo");
     contenedor.style.removeProperty("height");
     if (ANGOSTO.matches) { return; }   /* en angosto los paneles se apilan y el alto lo pone el contenido */
@@ -191,11 +203,42 @@ export default function iniciar(PIVOTAL) {
   /* -------- mapa -------- */
   function pintarMapa(nodo, panel) {
     texto(nodo, "[data-total]", panel.total);
-    texto(nodo, "[data-accion]", panel.accion);
-    texto(nodo, "[data-escala-min]", panel.escala.min);
-    texto(nodo, "[data-escala-max]", panel.escala.max);
-    var rampa = nodo.querySelector("[data-escala-rampa]");
-    rampa.style.background = "linear-gradient(to right, " + panel.escala.rampa.join(", ") + ")";
+    /* Con un departamento elegido el mapa deja de invitar a elegir y pasa a invitar a CAMBIAR,
+       y gana el titulo "Departamento ALBERDI" arriba: los dos textos son los de la hoja
+       "Agri 1 Dto" de la maqueta. Sin departamento queda exactamente como estaba. */
+    var elegidoNombre = PIVOTAL.nombreDepartamento();
+    texto(nodo, "[data-accion]",
+          elegidoNombre && panel.accion_con_departamento
+            ? panel.accion_con_departamento : panel.accion);
+    var rotuloDepto = nodo.querySelector("[data-mapa-departamento]");
+    if (rotuloDepto) {
+      rotuloDepto.textContent = elegidoNombre && panel.titulo_departamento
+        ? panel.titulo_departamento.replace("{Departamento}", elegidoNombre) : "";
+      rotuloDepto.hidden = !elegidoNombre;
+    }
+    /* La escala: una muestra por clase con su tramo debajo, de la mas oscura a la mas clara,
+       y la unidad una sola vez al pie (maqueta de JC, hoja "Agri 1"). Los tramos vienen
+       escritos del build (cinco rangos contiguos y redondeados); aca solo se dibujan. */
+    var escala = nodo.querySelector("[data-escala]");
+    PIVOTAL.vaciar(escala);
+    panel.escala.tramos.forEach(function (tramo) {
+      var item = document.createElement("span");
+      item.className = "escala-tramo";
+      var muestra = document.createElement("span");
+      muestra.className = "escala-muestra";
+      muestra.style.background = tramo.color;
+      var rotulo = document.createElement("span");
+      rotulo.className = "escala-rotulo";
+      rotulo.textContent = tramo.texto;
+      item.appendChild(muestra);
+      item.appendChild(rotulo);
+      escala.appendChild(item);
+    });
+    texto(nodo, "[data-escala-unidad]", panel.escala.unidad);
+
+    /* "Tiene dato" es que el build le haya puesto un valor: los departamentos sin dato
+       llegan con `v` nulo y se pintan con el gris `sin_dato` de la escala. */
+    function conDato(d) { return !!d && d.v !== null && d.v !== undefined; }
 
     var porId = {};
     panel.deptos.forEach(function (d) { porId[d.id] = d; });
@@ -206,10 +249,29 @@ export default function iniciar(PIVOTAL) {
          conservando la seleccion vigente (persistencia_de_filtros). off() antes de on():
          el panel se repinta en cada cambio de filtro y los handlers no se apilan. */
       chart.off("click");
-      if (panel.ficha) {
-        chart.getZr().setCursorStyle("pointer");
+      chart.off("mouseover");
+      if (panel.ficha || panel.selecciona) {
+        /* La mano aparece SOLO donde el clic hace algo. Antes era un `setCursorStyle`
+           unico al iniciar, que prometia un link tambien en los departamentos grises.
+           Va por hover y no como `cursor` de cada dato: la serie `map` de ECharts ignora
+           el cursor por item (probado: quedaban todos iguales). */
+        chart.on("mouseover", function (p) {
+          chart.getZr().setCursorStyle(conDato(porId[p.name]) ? "pointer" : "default");
+        });
         chart.on("click", function (p) {
           if (!p.name) { return; }
+          /* Un departamento SIN dato para la seleccion vigente no se puede elegir (regla de
+             JC, hoja "Agri 1 Dto": "SOLO DEBERAN ESTAR ACTIVOS LOS LINKS PARA CASOS DONDE
+             EXISTAN DATOS"). El gris del mapa ya dice que no hay dato; aca se respeta. */
+          if (!conDato(porId[p.name])) { return; }
+          if (panel.selecciona) {
+            /* El clic NO navega: cambia los datos de ESTE tablero (Francisco, 30-sep-2026).
+               Volver a clickear el que ya esta elegido vuelve a la provincia, que es la otra
+               forma de deshacer ademas del tramo "Provincia" de la miga. */
+            var actual = PIVOTAL.departamento();
+            PIVOTAL.elegirDepartamento(p.name === actual ? "" : p.name, true);
+            return;
+          }
           var extra = PIVOTAL.parametros();
           window.location.href = panel.ficha + encodeURIComponent(p.name)
             + (extra ? "&" + extra : "");
@@ -261,12 +323,19 @@ export default function iniciar(PIVOTAL) {
           label: { show: false },
           itemStyle: { borderColor: PIVOTAL.color("--fondo-cuadro"), borderWidth: 0.7 },
           data: panel.deptos.map(function (d) {
+            /* El departamento elegido va MARCADO, como lo dibuja JC en su hoja "Agri 1 Dto"
+               (ahi ALBERDI esta pintado distinto del resto). No se le cambia el color de
+               relleno -ese lo manda la escala y cambiarlo mentiria sobre su valor-: se lo
+               rodea con un borde grueso del color del texto. */
+            var elegido = d.id === PIVOTAL.departamento();
             return {
               name: d.id,
               value: d.v,
-              itemStyle: { areaColor: d.color },
+              itemStyle: elegido
+                ? { areaColor: d.color, borderColor: PIVOTAL.color("--texto"), borderWidth: 2.2 }
+                : { areaColor: d.color },
               emphasis: { itemStyle: { areaColor: d.color, borderColor: PIVOTAL.color("--texto"),
-                                       borderWidth: 1.4 } }
+                                       borderWidth: elegido ? 2.2 : 1.4 } }
             };
           })
         }]
@@ -453,17 +522,17 @@ export default function iniciar(PIVOTAL) {
       });
     });
 
-    /* Eje vertical VISIBLE cuando el build lo pide (`eje_visible`): rotulo de escala
-       ("Millones") y marcas con sus etiquetas, como lo dibuja JC en el mockup (tercera
-       tanda: "no está el eje vertical y tampoco la escala"). Los textos de las marcas vienen
-       resueltos del build (etiquetas por valor); aca no se formatea ningun numero. */
+    /* Eje vertical SIEMPRE rotulado: rotulo de escala ("Millones") y marcas con sus
+       etiquetas, como lo dibuja JC en el mockup (tercera tanda: "no está el eje vertical y
+       tampoco la escala"). Los textos de las marcas vienen resueltos del build (etiquetas por
+       valor); aca no se formatea ningun numero. */
     /* Escala legible (cuarta tanda, escala_legible): el build manda el paso fino que dibujo
        JC (0,50 de referencia) y aca solo se cuida que las etiquetas no se pisen cuando el
-       panel quedo bajo: si no hay ~16px por intervalo se rotula una marca de por medio (las
-       lineas de grilla siguen en el paso fino, que es lo que deja leer las variaciones).
-       Nunca menos de 5 marcas rotuladas: partiendo de 8 intervalos o mas, saltear de a una
-       deja 5 o mas, que es el minimo del protocolo (seccion 7). `getHeight()` se relee en
-       cada render, asi que al agrandar la ventana vuelven todas las etiquetas. */
+       panel quedo bajo, escribiendo una marca de por medio (las lineas de grilla siguen en el
+       paso fino, que es lo que deja leer las variaciones). El piso de etiquetas a la vista lo
+       manda el protocolo y viaja en el eje (`eje.minimo`, regla de JC del minimo de 5 valores
+       en el eje vertical): lo calcula PIVOTAL.saltoDeEje. `getHeight()` se relee en cada
+       render, asi que al agrandar la ventana vuelven todas las etiquetas. */
     /* La escala del cuadro. Con la segunda medida prendida la manda el build (la calcula
        sobre las dos series juntas cuando comparten unidad, o manda una segunda escala para el
        eje derecho cuando no); con un segundo valor encima se elige, entre las dos escalas que
@@ -476,23 +545,22 @@ export default function iniciar(PIVOTAL) {
                                     otro ? ((extraOtro && extraOtro.eje2) || otro.eje2) : null);
 
     function etiquetaLegible(v) {
-      var intervalos = Math.round((eje.max - eje.min) / eje.paso);
       /* El area de dibujo es el alto del canvas menos el cromo de arriba (leyenda + nombre
-         del eje) y las campañas rotadas de abajo: ~70px que no son plot. Menos de ~13px por
-         intervalo = etiquetas pisadas. */
-      if (intervalos >= 8 && (chart.getHeight() - 70) < intervalos * 13) {
+         del eje) y las campañas rotadas de abajo: ~70px que no son plot. */
+      var salto = PIVOTAL.saltoDeEje(eje, chart.getHeight() - 70, 13);
+      if (salto > 1) {
         var indice = Math.round((v - eje.min) / eje.paso);
-        if (indice % 2 === 1) { return ""; }
+        if (indice % salto !== 0) { return ""; }
       }
       return PIVOTAL.etiquetaEje(eje, v);
     }
 
-    /* Los cuadros compactos del tablero van sin escala a la vista cuando el spec no la pide:
-       el numero se lee en el hover y el panel es chico. Pero en cuanto aparece un SEGUNDO eje
-       (la segunda medida, que trae otra unidad) hay que rotular los dos: un cuadro con una
-       escala rotulada y otra muda invita a leer las dos series contra la misma, que es
-       justo lo que el protocolo prohibe. */
-    var conEscala = !!(panel.eje_visible || ejeDerecho);
+    /* TODO cuadro con eje de valores lleva su escala rotulada: un eje sin etiquetas son CERO
+       valores a la vista y la regla de JC pide un minimo de cinco. Hasta el 28-sep los
+       cuadros compactos del tablero salian mudos salvo que el spec pidiera `eje_visible`;
+       desde el 29-sep el build lo fuerza (site_build.forzar_eje_visible) y esto queda como
+       red de seguridad para cualquier cuadro que traiga eje. */
+    var conEscala = true;
     var ejes = [{
       type: "value",
       min: eje.min,
@@ -546,10 +614,13 @@ export default function iniciar(PIVOTAL) {
         data: panel.x,
         axisTick: { show: false },
         axisLine: { lineStyle: { color: PIVOTAL.color("--borde") } },
-        /* Con el eje visible (cultivos, mockup literal) se rotulan TODAS las campañas,
-           rotadas a 45 grados como en el dibujo de JC (protocolo, eje_horizontal: nunca se
-           ocultan etiquetas). En los otros tableros queda el salteo compacto de siempre. */
-        axisLabel: panel.eje_visible
+        /* `x_completo` (cultivos, mockup literal): se rotulan TODAS las campañas, rotadas a
+           45 grados como en el dibujo de JC (protocolo, eje_horizontal: nunca se ocultan
+           etiquetas). En los otros tableros queda el salteo compacto de siempre.
+           Esta decision iba colgada de `eje_visible` hasta el 29-sep, cuando el eje de
+           valores paso a estar SIEMPRE rotulado y dejo de servir para distinguir un tablero
+           del otro: por eso ahora es una bandera propia. */
+        axisLabel: panel.x_completo
           ? { fontSize: 9, color: PIVOTAL.color("--texto-apoyo"), interval: 0, rotate: 45 }
           : { fontSize: 10, color: PIVOTAL.color("--texto-apoyo"), interval: 1 }
       },
@@ -629,7 +700,16 @@ export default function iniciar(PIVOTAL) {
     var lista = nodo.querySelector("[data-barras]");
     PIVOTAL.vaciar(lista);
     if (panel.columnas) {
-      lista.appendChild(armarTablaCampanias(panel.columnas, panel.filas));
+      /* El ranking sigue siendo PROVINCIAL (regla de JC: los datos del ranking no cambian con
+         el departamento), pero marca la fila del departamento elegido, como lo dibuja el en su
+         hoja "Agri 1 Dto". Las filas se copian en vez de tocarse: el panel viene del payload y
+         se reusa en cada repintado. */
+      var elegido = PIVOTAL.departamento();
+      var filas = panel.filas.map(function (fila) {
+        if (!elegido || fila.geo !== elegido) { return fila; }
+        return { geo: fila.geo, celdas: fila.celdas, actual: true };
+      });
+      lista.appendChild(armarTablaCampanias(panel.columnas, filas));
       return;
     }
     panel.barras.forEach(function (barra) {
@@ -1109,10 +1189,11 @@ export default function iniciar(PIVOTAL) {
          (paso, tope y el rotulo de cada marca); lo unico que se decide aca es cada cuantas se
          escribe, porque eso depende del ALTO que le haya tocado al cuadro en esta pantalla.
          Con las 7 marcas que el protocolo busca, en un cuadro de 92px los numeros se montan
-         unos sobre otros. Se escriben de a `saltoY` pasos, asi que todas las marcas que
-         quedan siguen teniendo su rotulo en la tabla del build. */
-      var marcasY = Math.max(2, Math.floor((caja.clientHeight || 160) / 22));
-      var saltoY = Math.max(1, Math.ceil((escala.max - escala.min) / escala.paso / marcasY));
+         unos sobre otros.
+         El PISO lo pone el protocolo y viaja en la escala (`minimo`): hasta el 28-sep este
+         calculo podia bajar a 3 etiquetas, que incumple la regla de JC del minimo de 5
+         valores en el eje vertical. Ahora lo resuelve PIVOTAL.saltoDeEje. */
+      var saltoY = PIVOTAL.saltoDeEje(escala, caja.clientHeight || 160, 22);
       chart.setOption({
         animation: false,
         /* `top` deja lugar al nombre del eje, que ECharts dibuja encima de la primera marca:
@@ -1289,8 +1370,12 @@ export default function iniciar(PIVOTAL) {
       if (!panel) { return; }
       if (panel.vacio) { apagar(nodo, panel.vacio); return; }
       encender(nodo);
-      texto(nodo, "[data-titulo]", panel.titulo);
-      texto(nodo, "[data-subtitulo]", panel.subtitulo);
+      /* Titulo y subtitulo pueden traer terminos del glosario marcados (regla de JC de las
+         aclaraciones): es donde viven "superficie cosechada", "rendimiento" o "cabezas", y
+         cambian con lo que el usuario elige, asi que no los puede dibujar el servidor. Sin
+         terminos marcados `glosa` escribe el texto plano, igual que antes. */
+      PIVOTAL.glosa(nodo, "[data-titulo]", panel.titulo, panel.titulo_partes);
+      PIVOTAL.glosa(nodo, "[data-subtitulo]", panel.subtitulo, panel.subtitulo_partes);
       texto(nodo, "[data-pie]", panel.pie);
       texto(nodo, "[data-nota]", panel.nota);
       DIBUJANTES[nodo.dataset.panel](nodo, panel);
