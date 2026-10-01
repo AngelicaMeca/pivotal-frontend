@@ -957,6 +957,16 @@ colores:
       agricultura:
         familia: verde
         tipos_de_variable: [superficie, produccion, rendimiento]
+        # EXCEPCION, 1-oct-2026 (Francisco): la regla de grupo manda sobre los colores SOLIDOS
+        # (lineas, anillo, barras), pero NO sobre la rampa de los mapas de calor. Para esos, JC
+        # dibujo sus propios tonos en la hoja "Agri 1" de la maqueta, bajo el rotulo "Tonos de
+        # mapas de calor por variable": superficie en verde, produccion en OCRE y rendimiento
+        # en AZUL. Ese bloque habla solo de mapas de calor, asi que para ese elemento lo
+        # especifico le gana a lo general. Ver `rampas.*.hex`.
+        # Queda la incoherencia de que, en el mismo tablero, la produccion es ocre en el mapa y
+        # verde oliva en la linea de evolucion. Es asi en la maqueta de JC tambien (su grafico
+        # de lineas usa azul y naranja). Backlog 58 sigue abierta para que el cierre las dos.
+        no_alcanza_a: "la rampa `hex` de los mapas de calor"
         como_se_separan_entre_si: >
           Por TONO y SATURACION dentro del verde, nunca saliendose del verde. Superficie en el
           medio del arco (hoja), produccion del lado calido (oliva/lima) y rendimiento del lado
@@ -984,7 +994,7 @@ colores:
     superficie:
       medidas: [sup_sembrada_ha, sup_cosechada_ha]
       unidad: ha
-      hex: ["#e5f1db", "#b7d3a8", "#7fae7a", "#4c8352", "#22502c"]
+      hex: ["#e2efda", "#c6e0b4", "#a9d08e", "#548235", "#375623"]
       color_solido: "#22502c"
       color_comparacion: "#7fae7a"
       familia_de_verde: "verde HOJA (tono 93-133, saturacion media). Es el verde de referencia del grupo agricola."
@@ -999,10 +1009,18 @@ colores:
         JC de la hoja INDICACIONES ("para lo que es agricola, el color predominante es el
         verde"), y por eso queda de ancla de la familia: las otras dos se movieron hacia ella,
         no al reves.
+        RAMPA DE MAPA, 1-oct-2026 (Francisco): el `hex` vuelve a ser el que JC dibujo en su
+        maqueta, hoja "Agri 1", bloque "Tonos de mapas de calor por variable". Son SUS cinco
+        pasos, muestreados del archivo, de mas claro a mas oscuro (el orden que usa el sitio;
+        JC los dibuja al reves). Ese bloque habla de MAPAS DE CALOR y nada mas, asi que manda
+        sobre la regla general de grupo para ESTE elemento: lo especifico le gana a lo general.
+        Lo que NO cambia es `color_solido` ni `color_comparacion`: las lineas, el anillo y las
+        barras siguen en la familia verde que pide la hoja INDICACIONES.
+        En esta rampa el cambio es menor: JC tambien la dibuja verde, con otros pasos.
     produccion:
       medidas: [produccion_tn]
       unidad: tn
-      hex: ["#f0f4d7", "#d6e09a", "#bdcc5c", "#95a52c", "#555f11"]
+      hex: ["#fff8e5", "#fff2cc", "#ffe699", "#ffd966", "#bf8f00"]
       color_solido: "#95a52c"
       color_comparacion: "#d6e09a"
       familia_de_verde: "verde OLIVA / LIMA (tono 68, saturacion alta). Verde calido, con el amarillo del grano seco adentro."
@@ -1018,16 +1036,34 @@ colores:
         Por que se distingue de superficie: 65 grados de tono y una saturacion que casi la
         dobla. En un mapa se ve de entrada cual de las dos variables esta puesta, que es el
         motivo real por el que estas tres tenian colores distintos.
+        RAMPA DE MAPA, 1-oct-2026 (Francisco): el `hex` vuelve a ser el que JC dibujo en su
+        maqueta, hoja "Agri 1", bloque "Tonos de mapas de calor por variable". Son SUS cinco
+        pasos, muestreados del archivo, de mas claro a mas oscuro (el orden que usa el sitio;
+        JC los dibuja al reves). Ese bloque habla de MAPAS DE CALOR y nada mas, asi que manda
+        sobre la regla general de grupo para ESTE elemento: lo especifico le gana a lo general.
+        Lo que NO cambia es `color_solido` ni `color_comparacion`: las lineas, el anillo y las
+        barras siguen en la familia verde que pide la hoja INDICACIONES.
+        Aca el cambio es grande: EN EL MAPA la produccion vuelve al OCRE/DORADO de JC. El verde
+        oliva se queda solo en la linea del grafico de evolucion y en el anillo.
     rendimiento:
       medidas: [rendimiento_kg_ha]
       unidad: kg/ha
-      hex: ["#ddeeea", "#a7d2c9", "#6fb8aa", "#3d9483", "#18594c"]
+      hex: ["#ddebf7", "#bdd7ee", "#9bc2e6", "#2f75b5", "#1f4e78"]
       color_solido: "#18594c"
       color_comparacion: "#6fb8aa"
       familia_de_verde: "verde ESMERALDA (tono 168, saturacion media-alta). Verde frio, el otro extremo del arco respecto de produccion."
       justificacion: >
         Cambiada el 2026-09-29, mismo motivo que produccion: era azul (#e3f2fd..#0d47a1), que
         no es del grupo verde que pide JC.
+        RAMPA DE MAPA, 1-oct-2026 (Francisco): el `hex` vuelve a ser el que JC dibujo en su
+        maqueta, hoja "Agri 1", bloque "Tonos de mapas de calor por variable". Son SUS cinco
+        pasos, muestreados del archivo, de mas claro a mas oscuro (el orden que usa el sitio;
+        JC los dibuja al reves). Ese bloque habla de MAPAS DE CALOR y nada mas, asi que manda
+        sobre la regla general de grupo para ESTE elemento: lo especifico le gana a lo general.
+        Lo que NO cambia es `color_solido` ni `color_comparacion`: las lineas, el anillo y las
+        barras siguen en la familia verde que pide la hoja INDICACIONES.
+        Aca el cambio es grande: EN EL MAPA el rendimiento vuelve al AZUL de JC. El verde
+        esmeralda se queda solo en la segunda medida del zoom y donde se dibuje como serie.
         El rendimiento sigue siendo un cociente y no un volumen (no se suma ni se acumula), asi
         que sigue necesitando leerse distinto de las otras dos. Ahora se separa por TONO FRIO:
         superficie esta en el medio del arco verde, produccion al lado calido (68) y

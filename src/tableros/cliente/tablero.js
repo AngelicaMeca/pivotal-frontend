@@ -240,17 +240,60 @@ export default function iniciar(PIVOTAL) {
        llegan con `v` nulo y se pintan con el gris `sin_dato` de la escala. */
     function conDato(d) { return !!d && d.v !== null && d.v !== undefined; }
 
-    /* El color del NOMBRE sobre cada departamento. La escala va del verde mas oscuro al mas
-       claro, asi que un solo color de texto no sirve: sobre el tramo oscuro hay que escribir
-       en crema y sobre el claro en el texto del theme. Se elige con la luminancia percibida
-       del relleno que ya calculo el build (Rec. 601, que alcanza de sobra para decidir entre
-       dos colores). Son los dos unicos colores que se usan: nada de inventar una paleta. */
+    /* El color del NOMBRE sobre cada departamento: de los DOS colores del theme (el texto
+       oscuro y la crema del panel) se queda con el que MAS CONTRASTA con el relleno de ese
+       departamento. Un solo color de texto no sirve porque las rampas van del tono mas oscuro
+       al casi blanco.
+
+       Por que contraste de verdad y no un umbral de luminancia: con el umbral alcanzaba
+       mientras las tres rampas eran verdes, pero al volver a la rampa OCRE de JC para
+       produccion el paso mas oscuro (#bf8f00) quedaba del lado "oscuro" del umbral y se
+       escribia en crema, que sobre ese dorado da 2,8:1. El texto oscuro sobre el mismo dorado
+       da 5,6:1. La cuenta de abajo es la de WCAG (luminancia relativa con el canal
+       linealizado) y elige sola, sea cual sea la rampa. */
+    function luminanciaRelativa(n) {
+      var canal = function (v) {
+        v = v / 255;
+        return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+      };
+      return 0.2126 * canal((n >> 16) & 255)
+           + 0.7152 * canal((n >> 8) & 255)
+           + 0.0722 * canal(n & 255);
+    }
+
+    function contraste(a, b) {
+      var claro = Math.max(a, b), oscuro = Math.min(a, b);
+      return (claro + 0.05) / (oscuro + 0.05);
+    }
+
+    /* Acerca un color al fondo del panel. 0 = sin tocar, 1 = el fondo. Lo usa el
+       atenuado de los departamentos NO elegidos. */
+    function haciaElFondo(color, cuanto) {
+      var n = hexANumero(color), f = hexANumero(PIVOTAL.color("--fondo-cuadro"));
+      if (n === null || f === null) { return color; }
+      var mezcla = function (desp) {
+        var a = (n >> desp) & 255, b = (f >> desp) & 255;
+        return Math.round(a + (b - a) * cuanto);
+      };
+      var hx = function (v) { return (v < 16 ? "0" : "") + v.toString(16); };
+      return "#" + hx(mezcla(16)) + hx(mezcla(8)) + hx(mezcla(0));
+    }
+
+    function hexANumero(color) {
+      var m = /^#?([0-9a-fA-F]{6})$/.exec(color || "");
+      return m ? parseInt(m[1], 16) : null;
+    }
+
     function tintaSobre(fondo) {
-      var m = /^#?([0-9a-fA-F]{6})$/.exec(fondo || "");
-      if (!m) { return PIVOTAL.color("--texto"); }
-      var n = parseInt(m[1], 16);
-      var luz = (((n >> 16) & 255) * 299 + ((n >> 8) & 255) * 587 + (n & 255) * 114) / 1000;
-      return luz > 150 ? PIVOTAL.color("--texto") : PIVOTAL.color("--fondo-cuadro");
+      var n = hexANumero(fondo);
+      var texto = PIVOTAL.color("--texto");
+      if (n === null) { return texto; }
+      var crema = PIVOTAL.color("--fondo-cuadro");
+      var lFondo = luminanciaRelativa(n);
+      var lTexto = hexANumero(texto), lCrema = hexANumero(crema);
+      if (lTexto === null || lCrema === null) { return texto; }
+      return contraste(lFondo, luminanciaRelativa(lTexto))
+           >= contraste(lFondo, luminanciaRelativa(lCrema)) ? texto : crema;
     }
 
     /* Cuanto aire se le deja a un rotulo contra el canto del canvas. */
@@ -398,21 +441,46 @@ export default function iniciar(PIVOTAL) {
                relleno -ese lo manda la escala y cambiarlo mentiria sobre su valor-: se lo
                rodea con un borde grueso del color del texto. */
             var elegido = d.id === PIVOTAL.departamento();
+            /* Como se muestra el departamento ELEGIDO (Francisco, 1-oct-2026: el contorno
+               grueso con halo "queda muy feo", hacerlo de otra forma):
+
+               NO se remarca el elegido, se ATENUAN LOS DEMAS. El elegido se queda con su
+               color real -el que le da la escala- y el resto del mapa se acerca al fondo del
+               panel. La diferencia se ve de un golpe, no hay ningun adorno encima del dibujo
+               y el relleno del elegido sigue diciendo la verdad sobre su valor, que es lo que
+               no se podia tocar. Mientras hay un departamento elegido el mapa esta haciendo de
+               SELECTOR ("Seleccione otro departamento si desea visualizar", JC), asi que que
+               los demas pierdan fuerza es lo que corresponde.
+
+               El elegido NO lleva contorno propio. Se probo y no se puede: en un mapa los
+               bordes son COMPARTIDOS, cada poligono dibuja el suyo y el que se dibuja despues
+               pinta encima. Un borde distinto en un solo departamento sobrevive nada mas que
+               en los tramos donde le toco dibujarse ultimo, asi que sale un contorno partido
+               -medio oscuro y medio crema- que se lee como un error de dibujo. Todos los
+               bordes quedan iguales; lo que distingue al elegido es el color. */
+            var hayElegido = !!PIVOTAL.departamento();
+            var relleno = (hayElegido && !elegido) ? haciaElFondo(d.color, 0.62) : d.color;
+            /* La tinta se calcula sobre el relleno EFECTIVO: si el departamento esta atenuado,
+               el nombre tiene que contrastar con el tono atenuado, no con el original. */
+            var tinta = tintaSobre(relleno);
+            /* El NOMBRE del elegido va en negrita. Hace falta un segundo canal porque el
+               color solo no alcanza en todos los casos: si el elegido cae en el quintil mas
+               claro, su relleno real y el de los vecinos atenuados son casi el mismo tono y
+               la seleccion se pierde (probado con LORETO). El rotulo sirve justamente porque
+               se dibuja POR ENCIMA de todos los poligonos, asi que no depende del orden de
+               dibujado como si dependia el contorno. Negrita y nada mas: ni mas grande ni de
+               otro color, que es lo que antes quedaba pesado. */
             return {
               name: d.id,
               value: d.v,
-              /* Cada nombre con la tinta que contrasta con SU relleno: la escala va de verde
-                 muy oscuro a casi blanco y un color unico quedaria ilegible en una punta. */
-              label: { color: tintaSobre(d.color) },
-              itemStyle: elegido
-                ? { areaColor: d.color, borderColor: PIVOTAL.color("--texto"), borderWidth: 2.2 }
-                : { areaColor: d.color },
-              /* UN solo `emphasis` por item: el relleve del borde y la tinta del rotulo van
+              label: elegido ? { color: tinta, fontWeight: "bold" } : { color: tinta },
+              itemStyle: { areaColor: relleno },
+              /* UN solo `emphasis` por item: el relieve del borde y la tinta del rotulo van
                  juntos. Dos claves `emphasis` en el mismo objeto se pisan en silencio. */
               emphasis: {
-                label: { color: tintaSobre(d.color) },
-                itemStyle: { areaColor: d.color, borderColor: PIVOTAL.color("--texto"),
-                             borderWidth: elegido ? 2.2 : 1.4 }
+                label: elegido ? { color: tinta, fontWeight: "bold" } : { color: tinta },
+                itemStyle: { areaColor: relleno, borderColor: PIVOTAL.color("--texto"),
+                             borderWidth: 1.4 }
               }
             };
           })
@@ -581,7 +649,8 @@ export default function iniciar(PIVOTAL) {
         z: 2,
         /* La serie comparada va PUNTEADA ademas de con su color: es lo que la deja distinguir
            en la hoja impresa, que JC lee en blanco y negro. */
-        lineStyle: { color: linea.color, width: 2,
+        /* 3 y no 2: Francisco pidio lineas mas gruesas para que llamen la atencion. */
+        lineStyle: { color: linea.color, width: 3,
                      type: linea.comparada ? "dashed" : "solid" },
         itemStyle: { color: linea.color },
         /* El area rellena solo con una serie: con dos, taparia a la otra. */
@@ -921,7 +990,8 @@ export default function iniciar(PIVOTAL) {
         symbol: "circle",
         symbolSize: 5,
         z: 3,
-        lineStyle: { color: colorLinea, width: 2, type: comparada ? "dashed" : "solid" },
+        /* Mismo grosor que las demas series del sitio (ver `pintarCombo`). */
+        lineStyle: { color: colorLinea, width: 3, type: comparada ? "dashed" : "solid" },
         itemStyle: { color: colorLinea }
       }
     ];
@@ -1327,7 +1397,7 @@ export default function iniciar(PIVOTAL) {
           /* Con mas de 60 puntos el simbolo tapa la linea: en la serie diaria son cientos. */
           symbol: valores.length > 60 ? "none" : "circle",
           symbolSize: 4,
-          lineStyle: { color: panel.dataset.color, width: 2 },
+          lineStyle: { color: panel.dataset.color, width: 3 },
           itemStyle: { color: panel.dataset.color }
         }]
       }, true);

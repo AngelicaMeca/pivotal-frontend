@@ -163,7 +163,27 @@ ancho_maximo_px: 1280
 # Los cinco primeros son los del anillo del mockup, en su mismo orden. El resto extiende la
 # misma familia (tierras, verdes y ocres apagados): tonos que aguantan proyeccion y que se
 # siguen distinguiendo en escala de grises, que es como JC imprime.
+# PALETA CATEGORICA. Los seis primeros son los de la maqueta de JC ("0000000000 Maqueta
+# Agri.xlsx": son los acentos del tema del archivo, que es con lo que Excel pinto sus
+# graficos de torta y de barras apiladas). Francisco, 1-oct-2026: "los colores en los
+# graficos deben ser iguales a los colores que se usan en la maqueta".
+#
+# OJO con lo que esto NO hace: la maqueta asigna color por ORDEN DE TAMAÑO de la serie, asi
+# que ahi la soja es azul porque es la mas grande. Nosotros asignamos un color FIJO por
+# cultivo, en orden alfabetico (_comunes-base-9.uniformidad.regla_color_cultivo), para que
+# un cultivo no cambie de color entre campañas ni entre cuadros. Se adoptan los TONOS de la
+# maqueta conservando esa regla: el resultado usa su paleta, pero el reparto no es el mismo
+# que el de su dibujo. Copiar tambien el reparto es una linea (`por_categoria` ordenando por
+# valor en vez de alfabeticamente) y rompe la estabilidad: queda como pregunta para JC.
+#
+# Del septimo en adelante siguen los nuestros: la maqueta tiene seis y hay 14 cultivos.
 paleta_categorica:
+  - "#5b9bd5"   # azul claro          (maqueta de JC, accent1)
+  - "#ed7d31"   # naranja             (maqueta de JC, accent2)
+  - "#a5a5a5"   # gris                (maqueta de JC, accent3)
+  - "#ffc000"   # dorado              (maqueta de JC, accent4)
+  - "#4472c4"   # azul                (maqueta de JC, accent5)
+  - "#70ad47"   # verde               (maqueta de JC, accent6)
   - "#22502c"   # verde profundo      (mockup)
   - "#b8552e"   # terracota           (mockup)
   - "#407a47"   # verde medio         (mockup)

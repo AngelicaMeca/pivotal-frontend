@@ -391,14 +391,21 @@ class Colores:
         declarado = rampa.get("color_comparacion")
         return declarado if declarado else rampa["hex"][self.PASO_COMPARACION]
 
-    def por_categoria(self, categorias, excluir=()):
-        """Un color fijo por categoria, asignado en orden alfabetico. Deterministico.
+    def por_categoria(self, categorias, excluir=(), respetar_orden=False):
+        """Un color fijo por categoria. Deterministico.
 
         `excluir` saca colores de la paleta: en las comparaciones geograficas el primario esta
         reservado para Santiago del Estero y ninguna otra area puede usarlo.
+
+        `respetar_orden` usa el orden en que vienen las categorias en vez del alfabetico. Lo usa
+        la asignacion de color por cultivo, que reparte por IMPORTANCIA: los primeros colores de
+        la paleta son los de la maqueta de JC y tienen que caer sobre los cultivos que se ven
+        (soja, maiz, algodon...), no sobre los primeros del abecedario. El color sigue siendo
+        FIJO por cultivo -el orden se calcula una vez sobre toda la base, no por cuadro-, que
+        es lo que pide `_comunes-base-9.uniformidad.regla_color_cultivo`.
         """
         paleta = [c for c in self.categorica if c not in excluir]
-        orden = sorted(categorias, key=clave_alfabetica)
+        orden = list(categorias) if respetar_orden else sorted(categorias, key=clave_alfabetica)
         return {c: paleta[i % len(paleta)] for i, c in enumerate(orden)}
 
 

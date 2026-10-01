@@ -81,8 +81,13 @@ ETIQUETA_VARIABLE = {"sup_sembrada_ha": "Superficie sembrada",
                      "rendimiento_kg_ha": "Rendimiento"}
 # Version corta para los toggles que van adentro de un panel del tablero, donde el rotulo
 # largo le come el lugar al titulo del cuadro.
+# 1-oct-2026 (Francisco: "las palabras de los botones produccion y rendimiento que esten
+# completas"): se dejan de abreviar. El motivo por el que estaban cortas era el lugar -el
+# toggle vive adentro del panel del mapa- y ese motivo se cayo solo: al sacar SEMBRADA del
+# mapa quedaron tres botones en vez de cuatro. La maqueta de JC no dice nada al respecto (su
+# mapa no tiene toggle), asi que no hay regla suya que lo ate.
 ETIQUETA_CORTA = {"sup_sembrada_ha": "Sembrada", "sup_cosechada_ha": "Cosechada",
-                  "produccion_tn": "Prod.", "rendimiento_kg_ha": "Rend."}
+                  "produccion_tn": "Producción", "rendimiento_kg_ha": "Rendimiento"}
 NOMBRE_EJE = {"ha": "Hectáreas", "tn": "Toneladas", "kg/ha": "Kilos por hectárea", "%": "Porcentaje"}
 ESTACIONES = {"verano": "Cultivos de verano", "invierno": "Cultivos de invierno",
               "todos": "Todos los cultivos"}
@@ -270,7 +275,8 @@ class Contexto:
         self.campania_defecto = ventana["campania_por_defecto"]
         self.ventanas = {"ventana_campanias": self.ventana}
         self.notas = self.comunes["notas_metodologicas"]
-        self.color_cultivo = self.colores.por_categoria(sorted(hechos.rol))
+        self.color_cultivo = colores_por_cultivo(self.colores, hechos,
+                                                 self.campania_defecto)
         self.departamento_defecto = departamento_de_mayor_produccion(self)
         # Asignacion icono -> cultivo (site/iconos-cultivo.yaml, habilitada el 10-ago-2026).
         # Un cultivo puede declarar null (sin icono, ej. Lenteja); uno AUSENTE es un error:
@@ -4796,6 +4802,53 @@ def panel_vacio(titulo, motivo):
 # --------------------------------------------------------------------------
 # Tablero de la base 9 (cultivos extensivos)
 # --------------------------------------------------------------------------
+def colores_por_cultivo(colores, hechos, campania):
+    """El color fijo de cada cultivo. Dos reglas, y las dos importan:
+
+    1. SE REPARTE POR IMPORTANCIA, no por abecedario. Los primeros colores de la paleta son los
+       de la maqueta de JC, y tienen que caer sobre los cultivos que de verdad se ven -soja,
+       maiz, algodon, trigo, sorgo- y no sobre los primeros del abecedario (alpiste, arroz,
+       avena). El orden es por produccion total de la ventana, de mayor a menor. Con eso el
+       anillo queda con los mismos colores que el de su maqueta.
+    2. EL AGREGADO Y EL SIMPLE DEL MISMO CULTIVO COMPARTEN COLOR. "Soja" y "Soja total" son el
+       mismo cultivo (el titulo de los dos es "Soja"): darles colores distintos era un error
+       propio, y ademas cada uno se llevaba un lugar de la paleta y corria a los demas.
+
+    Por que la importancia se mide en la campaña POR DEFECTO y no sumando toda la ventana:
+    porque el anillo de JC -el cuadro donde estos colores se leen- es de UNA campaña, la
+    ultima. Sumando las diez, el maiz le pasa a la soja y el anillo sale con los colores
+    cambiados respecto de su dibujo. Sigue siendo un solo calculo para todo el sitio: la
+    campaña por defecto es un dato del protocolo, no algo que el lector pueda mover.
+
+    El color sigue siendo FIJO por cultivo: el orden se calcula UNA sola vez sobre toda la base,
+    no por cuadro ni por campaña, asi que un cultivo no cambia de color entre vistas
+    (`_comunes-base-9.uniformidad.regla_color_cultivo`). Los empates y los cultivos sin
+    produccion informada caen en orden alfabetico, para que el build sea deterministico.
+    """
+    total = {}
+    for cultivo in hechos.rol:
+        suma = 0.0
+        for geo in hechos.deptos:
+            valor, _ = valor_util(hechos.medidas(geo, campania, cultivo), "produccion_tn")
+            if valor:
+                suma += valor
+        total[cultivo] = suma
+    grupos = {}
+    for cultivo in hechos.rol:
+        grupos.setdefault(hechos.cultivo_para_titulo(cultivo), []).append(cultivo)
+    # Los COMPONENTES van al final. "Soja 1ra" y "Soja 2da" son el desglose de la soja y solo
+    # se dibujan en la vista de componentes; si compiten por lugar en la paleta -y compiten,
+    # porque la soja de primera produce mas que el algodon- corren a los cultivos que si se
+    # ven en el anillo y en las barras, que es donde estos colores se leen.
+    def principal(grupo):
+        return any(hechos.rol.get(c) in ("agregado", "simple") for c in grupos[grupo])
+    orden = sorted(grupos, key=lambda g: (0 if principal(g) else 1,
+                                          -max(total[c] for c in grupos[g]),
+                                          pr.clave_alfabetica(g)))
+    del_grupo = colores.por_categoria(orden, respetar_orden=True)
+    return {c: del_grupo[g] for g, cultivos in grupos.items() for c in cultivos}
+
+
 def cultivos_del_filtro(ctx, cultivo):
     # "Todos" es un AGREGADO: suma todos los cultivos de la fuente, tambien los que no tienen
     # chip (universo_visible: visible no es lo mismo que incluido en agregados). Los numeros

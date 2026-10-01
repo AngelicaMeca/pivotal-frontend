@@ -269,7 +269,12 @@ paneles:
     # Zoom: este cuadro se puede ampliar a pantalla completa (ver `zoom_de_los_cuadros`).
     acciones:
       - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
-    variables: [sup_sembrada_ha, sup_cosechada_ha, produccion_tn, rendimiento_kg_ha]   # secuencia fija de JC
+    # SIN la superficie SEMBRADA: lo dice JC en el rotulo de su propia rampa de mapas, hoja
+    # "Agri 1" de la maqueta: "SUPERFICIE COSECHADA (no considerar para mapa la sembrada)".
+    # La secuencia fija de las cuatro variables es la de los KPIs y la tabla, no la del mapa:
+    # aca estaba aplicada de mas. Sacarla ademas baja las combinaciones del tablero de 600 a
+    # 450, porque `variable` es parte de la clave del combo.
+    variables: [sup_cosechada_ha, produccion_tn, rendimiento_kg_ha]
     fuente_al_pie: "Fuente: MAGyP (Ministerio de Agricultura, Ganadería y Pesca)"
     # (forma literal del mockup; pie_de_fuente.aclaracion_base_9. Backlog 14, respondida)
     click_departamento: en-la-misma-vista
