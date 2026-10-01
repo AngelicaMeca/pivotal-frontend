@@ -126,7 +126,17 @@ cromadas:
 logo_provincia:
   nombre: "Santiago del Estero"
   bajada: "Gobierno de la Provincia de Santiago del Estero"
-  archivo: "/logo-provincia-escudo.png"
+  # El ISOLOGOTIPO NEGATIVO oficial, sacado del manual de marca (MANUAL_MARCA_SDE_2025.pdf,
+  # pagina 11: "Isologotipo positivo/negativo"). PNG blanco sobre fondo TRANSPARENTE, asi que
+  # apoya sobre el cromo de cada area -verde en agricultura, cocoa en ganaderia- sin recuadro.
+  #
+  # Que reemplaza y por que: antes era `logo-provincia-escudo.png`, un recorte de la maqueta
+  # de JC con el escudo en blanco sobre un BLOQUE ROJO opaco. Dos problemas: el bloque rojo se
+  # veia como una estampilla pegada sobre el verde, y el escudo venia en silueta, que el
+  # manual prohibe expresamente ("NO aplicar el escudo en outline", pagina 12, usos
+  # incorrectos). La version PRINCIPAL del manual es el isologotipo a color con el texto en
+  # negro: no se lee sobre un cromo oscuro, por eso va la negativa.
+  archivo: "/logo-provincia-sde.png"
 logo: null                   # logo Pivotal: sigue pendiente (semana 3-ago)
 pie: "Pivotal · Elaboración propia en base a fuentes oficiales citadas en cada cuadro"
 # Pie de tecnologia del Modelo 2 de JC (aprobado el 10-ago, backlog 35).

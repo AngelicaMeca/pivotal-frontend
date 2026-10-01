@@ -110,20 +110,34 @@ body {
 .cabecera {
   display: flex; align-items: stretch;
   background: var(--cromo); color: var(--sobre-cromo);
+  /* Aire ARRIBA de todo lo que va en la cabecera (Francisco, 1-oct-2026: "alejalo un poco del
+     margen superior para que no este tan encima de la barra de busqueda del browser"). Va en
+     la cabecera y no solo en el bloque del logo para que el logo, los botones y las banderas
+     bajen juntos: moviendo uno solo se desalineaban entre si. La banda de cromo sigue
+     arrancando en el borde de la ventana; lo que baja es el contenido. */
+  padding-top: .55rem;
 }
 /* PUESTA del logo (cuarta tanda, logo_provincial_bien_puesto: "esta mal puesto... se ve
    horrible"): el bloque mide lo que mide el logo (sin la plancha vacia del min-width que
-   habia antes), el isologotipo va GRANDE como en el mockup (la cabecera del mockup es alta:
-   el logo manda su alto) y centrado sobre la leyenda de gobierno. Sin deformar ni recortar:
-   alto fijo y ancho auto del PNG. El asset es el mismo (backlog 41). */
+   habia antes), centrado sobre la leyenda de gobierno y sin deformar ni recortar (alto fijo y
+   ancho auto del PNG).
+
+   TAMAÑO (Francisco, 1-oct-2026: "esta demasiado grande, hace que ocupe menos espacio"): se
+   baja de 3,8rem a 2,6rem de alto. La cuarta tanda lo habia puesto GRANDE porque el logo
+   mandaba el alto de la cabecera, como en el mockup; eso se revierte a pedido. El piso NO es
+   libre: el manual de marca fija un tamaño minimo para la version horizontal (pagina 13,
+   41 x 10 mm, que a 96 dpi son ~155 x 38 px). Con 2,6rem el logo mide ~174 x 42 px, un 12%
+   arriba de ese minimo. No bajar de ~2,4rem sin volver a mirar esa pagina. */
 .cabecera-logo {
   flex: 0 0 auto; display: flex; align-items: center;
-  padding: .55rem 1.3rem .55rem 1.1rem;
+  /* Abajo lleva menos que antes: el aire que se le agrego a la cabecera ya separa el logo del
+     borde, y sin este recorte la cabecera volvia a crecer justo despues de haberla achicado. */
+  padding: .55rem 1.3rem .35rem 1.1rem;
 }
 .logo-con-imagen {
   text-decoration: none; display: flex; flex-direction: column; align-items: center;
 }
-.logo-imagen { height: 3.8rem; width: auto; display: block; }
+.logo-imagen { height: 2.6rem; width: auto; display: block; }
 .logo-con-imagen .logo-bajada { margin-top: .3rem; text-align: center; font-size: .62rem; }
 /* Wordmark sobrio de texto: fallback cuando el cliente no trae asset de logo (F3). */
 .logo-wordmark { text-decoration: none; display: block; }
@@ -1591,8 +1605,13 @@ table.matriz-od th.esquina { font-weight: 500; color: var(--texto-apoyo); }
 /* En la hoja hay menos alto que en una pantalla, asi que la cromada se achica para que el
    alto se lo lleven los cuadros: el logo un poco mas chico y menos aire en el pie y en el
    cuerpo. Es lo unico que se dibuja distinto de la pantalla, y se gana casi 1cm de cuadros. */
-.imprimiendo .logo-imagen { height: 3rem; }
+/* En la hoja la raiz esta al 87,5%, asi que 2,6rem son 36,4 px de alto y ~152 px de ancho:
+   sobre un A4 apaisado de 297 mm eso son ~43 mm, tambien por arriba del minimo del manual. */
+.imprimiendo .logo-imagen { height: 2.6rem; }
 .imprimiendo .cabecera-logo { padding: .35rem 1.1rem; }
+/* En la hoja no hay barra del navegador de la que alejarse y el alto es un recurso escaso: el
+   aire de arriba se apaga y el tablero recupera esos milimetros. */
+.imprimiendo .cabecera { padding-top: 0; }
 .imprimiendo main { padding: .35rem .6rem .4rem; }
 .imprimiendo .pie-sitio { padding: .35rem .8rem .4rem; }
 
