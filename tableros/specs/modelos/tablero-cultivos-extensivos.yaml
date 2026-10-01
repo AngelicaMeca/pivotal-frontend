@@ -259,6 +259,13 @@ paneles:
     # miniatura y está deformado"; regla formato_v1.tercera_tanda.mapa_grande). La caja se
     # adapta al mapa, nunca al revés.
     rotulo_accion: "Seleccione departamento"   # arriba del mapa, como el mockup; el panel no lleva otro título
+    # Nombre de cada departamento ESCRITO sobre el mapa (pedido de Francisco, 1-oct-2026).
+    # DESVÍO ANOTADO: la hoja "Agri 1" de la maqueta dibuja el mapa SIN nombres (el nombre
+    # vive en el tooltip y en el ranking de al lado). Queda en el backlog para que JC lo
+    # valide; se apaga poniendo esto en false.
+    # El navegador los esconde igual si la caja queda chica para leerlos (mapa de menos de
+    # 340 px: ahí 27 nombres encimados ensucian y no se leen).
+    rotulos_departamento: true
     # Zoom: este cuadro se puede ampliar a pantalla completa (ver `zoom_de_los_cuadros`).
     acciones:
       - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}

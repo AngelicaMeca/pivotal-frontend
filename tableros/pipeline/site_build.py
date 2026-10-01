@@ -5013,6 +5013,10 @@ def panel_mapa_cultivos(ctx, spec, campania, cultivos, variable, pie, todos=Fals
         # es la UNICA navegacion de contenido permitida (tercera_tanda.solo_tableros) y lleva
         # al dato departamental, conservando la seleccion vigente (persistencia_de_filtros).
         "accion": spec["paneles"]["mapa"].get("rotulo_accion"),
+        # Si los nombres de los departamentos van ESCRITOS sobre el mapa. Lo decide el spec
+        # (es un desvio de la maqueta de JC, que lo dibuja sin nombres); el navegador los
+        # esconde igual si la caja queda chica para leerlos.
+        "rotulos": bool(spec["paneles"]["mapa"].get("rotulos_departamento")),
         # Los dos textos que JC escribe en la hoja departamental: el titulo ARRIBA del mapa
         # ("Departamento ALBERDI") y la invitacion DEBAJO ("Seleccione otro departamento si
         # desea visualizar"), que reemplaza a "Seleccione departamento" de la hoja provincial.

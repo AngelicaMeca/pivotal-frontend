@@ -240,6 +240,37 @@ export default function iniciar(PIVOTAL) {
        llegan con `v` nulo y se pintan con el gris `sin_dato` de la escala. */
     function conDato(d) { return !!d && d.v !== null && d.v !== undefined; }
 
+    /* El color del NOMBRE sobre cada departamento. La escala va del verde mas oscuro al mas
+       claro, asi que un solo color de texto no sirve: sobre el tramo oscuro hay que escribir
+       en crema y sobre el claro en el texto del theme. Se elige con la luminancia percibida
+       del relleno que ya calculo el build (Rec. 601, que alcanza de sobra para decidir entre
+       dos colores). Son los dos unicos colores que se usan: nada de inventar una paleta. */
+    function tintaSobre(fondo) {
+      var m = /^#?([0-9a-fA-F]{6})$/.exec(fondo || "");
+      if (!m) { return PIVOTAL.color("--texto"); }
+      var n = parseInt(m[1], 16);
+      var luz = (((n >> 16) & 255) * 299 + ((n >> 8) & 255) * 587 + (n & 255) * 114) / 1000;
+      return luz > 150 ? PIVOTAL.color("--texto") : PIVOTAL.color("--fondo-cuadro");
+    }
+
+    /* Cuanto aire se le deja a un rotulo contra el canto del canvas. */
+    var AIRE_ROTULO = 2;
+
+    /* Los nombres se dibujan si el spec los pide Y si la caja da para leerlos. Los dos pisos
+       salen de probarlo: con menos ALTO (ganaderia, que entra en una pantalla) o con menos
+       ANCHO (la celda del mapa en la hoja A4, que mide 280 px) los nombres se amontonan
+       -"AVELLANEDA" pegado a "GENERAL TABOADA"- y el mapa se lee PEOR con nombres que sin
+       ellos. El ancho pesa mas que el alto porque los nombres son largos y horizontales.
+       Debajo del piso el nombre sigue estando en el tooltip y en el ranking de al lado, que
+       es como estuvo siempre. */
+    var MINIMO_PARA_ROTULAR = { ancho: 300, alto: 340 };
+
+    function rotularDepartamentos(caja) {
+      if (!panel.rotulos) { return false; }
+      var r = caja.getBoundingClientRect();
+      return r.width >= MINIMO_PARA_ROTULAR.ancho && r.height >= MINIMO_PARA_ROTULAR.alto;
+    }
+
     var porId = {};
     panel.deptos.forEach(function (d) { porId[d.id] = d; });
 
@@ -277,6 +308,11 @@ export default function iniciar(PIVOTAL) {
             + (extra ? "&" + extra : "");
         });
       }
+      var rotulos = rotularDepartamentos(nodo.querySelector("[data-grafico]"));
+      function rotuloDepartamento(p) {
+        var d = porId[p.name];
+        return d ? d.nombre : "";
+      }
       chart.setOption({
         animation: false,
         tooltip: {
@@ -301,10 +337,47 @@ export default function iniciar(PIVOTAL) {
           type: "map",
           map: "provincia",
           nameProperty: "geo_id",
-          /* Sin esto ECharts rotula el poligono resaltado con su `name`, que aca es el
-             geo_id: era el bug del mouseover que marco Facu (el ID dibujado sobre el mapa).
-             El nombre legible va en el tooltip, nunca el codigo. */
-          emphasis: { label: { show: false } },
+          /* El NOMBRE del departamento sobre el mapa (pedido de Francisco, 1-oct-2026).
+             El `formatter` no es opcional: `name` aca es el geo_id (ver `nameProperty`), asi
+             que sin el ECharts dibujaria el CODIGO sobre el mapa, que es exactamente el bug
+             que marco Facu en el mouseover. En el mapa nunca se dibuja un codigo interno.
+             OJO: la maqueta de JC dibuja el mapa SIN nombres (hoja "Agri 1"); esto es un
+             desvio pedido por Francisco y anotado en el backlog para que JC lo valide. */
+          label: {
+            show: rotulos,
+            formatter: rotuloDepartamento,
+            /* El nombre no tiene que competir con el dato: va chico y sin negrita. */
+            fontSize: 8,
+            fontWeight: "normal"
+          },
+          /* Dos cosas sobre los rotulos, resueltas en el mismo lugar porque ECharts solo
+             acepta UN labelLayout:
+               1. `hideOverlap`: los que no entran NO se dibujan encimados, se esconden. Sin
+                  esto, en el racimo de departamentos chicos del centro-oeste (Silipica, San
+                  Martin, Sarmiento, Robles) los nombres se montaban unos sobre otros y no se
+                  leia ninguno. El que queda sin rotulo sigue teniendo su nombre en el tooltip
+                  y en el ranking de al lado.
+               2. el corrimiento de los del BORDE: el rotulo se dibuja centrado en el
+                  departamento y se escapa de su contorno, asi que los del oeste (RIO HONDO,
+                  GUASAYAN) salian cortados contra el canto del canvas. Se los empuja hacia
+                  adentro lo justo para que entren. Es preferible a achicar el mapa, que es lo
+                  primero que probamos: JC ya reclamo una vez que "el mapa es una miniatura". */
+          labelLayout: function (info) {
+            var caja = nodo.querySelector("[data-grafico]");
+            var ancho = caja ? caja.clientWidth : 0;
+            var r = info.labelRect;
+            var dx = 0;
+            if (!ancho || !r) { return { hideOverlap: true }; }
+            if (r.x < AIRE_ROTULO) { dx = AIRE_ROTULO - r.x; }
+            else if (r.x + r.width > ancho - AIRE_ROTULO) {
+              dx = ancho - AIRE_ROTULO - (r.x + r.width);
+            }
+            return { dx: dx, hideOverlap: true };
+          },
+          /* Al pasar el mouse el rotulo se mantiene (antes se escondia para que ECharts no
+             dibujara el geo_id; con el `formatter` puesto ya no hace falta esconderlo, y
+             esconderlo ahora haria parpadear el nombre al pasar por encima). */
+          emphasis: { label: { show: rotulos, formatter: rotuloDepartamento } },
           /* Proporcion geografica CORRECTA (JC: "El mapa es una miniatura y está deformado";
              tercera_tanda.mapa_grande): el build manda `aspecto` = coseno de la latitud media
              de la provincia, calculado del propio GeoJSON. Sin el dato queda el default de
@@ -318,9 +391,6 @@ export default function iniciar(PIVOTAL) {
           layoutSize: PIVOTAL.tamanioMapa(nodo.querySelector("[data-grafico]"), panel.relacion),
           roam: false,
           selectedMode: false,
-          /* Sin rotulos: en un panel de 340px los 27 nombres no entran y lo unico que hacen es
-             ensuciar. El nombre esta en el tooltip y en el Top 5 de al lado. */
-          label: { show: false },
           itemStyle: { borderColor: PIVOTAL.color("--fondo-cuadro"), borderWidth: 0.7 },
           data: panel.deptos.map(function (d) {
             /* El departamento elegido va MARCADO, como lo dibuja JC en su hoja "Agri 1 Dto"
@@ -331,11 +401,19 @@ export default function iniciar(PIVOTAL) {
             return {
               name: d.id,
               value: d.v,
+              /* Cada nombre con la tinta que contrasta con SU relleno: la escala va de verde
+                 muy oscuro a casi blanco y un color unico quedaria ilegible en una punta. */
+              label: { color: tintaSobre(d.color) },
               itemStyle: elegido
                 ? { areaColor: d.color, borderColor: PIVOTAL.color("--texto"), borderWidth: 2.2 }
                 : { areaColor: d.color },
-              emphasis: { itemStyle: { areaColor: d.color, borderColor: PIVOTAL.color("--texto"),
-                                       borderWidth: elegido ? 2.2 : 1.4 } }
+              /* UN solo `emphasis` por item: el relleve del borde y la tinta del rotulo van
+                 juntos. Dos claves `emphasis` en el mismo objeto se pisan en silencio. */
+              emphasis: {
+                label: { color: tintaSobre(d.color) },
+                itemStyle: { areaColor: d.color, borderColor: PIVOTAL.color("--texto"),
+                             borderWidth: elegido ? 2.2 : 1.4 }
+              }
             };
           })
         }]

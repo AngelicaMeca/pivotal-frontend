@@ -561,8 +561,17 @@ a { color: var(--enlace); }
    desde la cuarta tanda (anillo_sin_cifra_central): el total "(fina y gruesa)" va en la
    linea .anillo-total-linea bajo el donut y la nota aclaratoria se recorta a una linea. */
 .tablero.con-selector .panel[data-panel="anillo"] .anillo-leyenda { display: none; }
+/* ================= por que la base de flex de un GRAFICO es 0 y no auto =================
+   Un contenedor de grafico NUNCA puede sacar su alto de su propio canvas. ECharts dimensiona
+   el canvas segun el contenedor; si ademas el contenedor saca su base de flex del contenido
+   -que es el canvas-, las dos medidas se persiguen y el cuadro crece en cada redibujo. Era el
+   bug que vio Francisco el 1-oct-2026 en Cultivos intensivos: cada clic en Cebolla/Batata/Papa
+   estiraba el cuadro de precios 14 px, la fila iguala alturas asi que arrastraba al de al
+   lado, y la pagina se hacia cada vez mas larga ("los graficos se estiran y se scrollea raro").
+   Con `flex-basis: 0` el alto baja SOLO del reparto del panel y del `min-height`, que es el
+   piso que sale de la maqueta de JC; el canvas lo sigue, nunca al reves. */
 .tablero.con-selector .panel[data-panel="anillo"] .anillo-caja {
-  flex: 1 1 auto; height: auto; min-height: 130px;
+  flex: 1 1 0; height: auto; min-height: 130px;
 }
 .tablero.con-selector .panel[data-panel="anillo"] .anillo-caja > .grafico {
   height: 100%; min-height: 130px;
@@ -581,7 +590,7 @@ a { color: var(--enlace); }
   overflow: hidden; margin-top: .2rem; font-size: .62rem;
 }
 .tablero.alto-fijo .panel[data-panel="tendencia"] .grafico {
-  height: auto; flex: 1 1 auto; min-height: 0;
+  height: auto; flex: 1 1 0; min-height: 0;
 }
 /* El Top N es el unico panel cuyo alto lo manda el CONTENIDO (una barra por departamento) y no
    un grafico que se estira. Repartiendo las barras en el alto disponible entran siempre las N
@@ -710,7 +719,7 @@ a { color: var(--enlace); }
    entero), y estos minimos se apagan solos. Sin el `:not`, el PDF salia con los cuadros
    pidiendo 300 px cada uno y los paneles se montaban sobre el pie. */
 .tablero.alto-fluido:not(.alto-fijo) .panel[data-panel="tendencia"] .grafico {
-  height: auto; flex: 1 1 auto; min-height: 300px;
+  height: auto; flex: 1 1 0; min-height: 300px;
 }
 .tablero.con-selector.alto-fluido:not(.alto-fijo) .panel[data-panel="anillo"] .anillo-caja,
 .tablero.con-selector.alto-fluido:not(.alto-fijo) .panel[data-panel="anillo"] .anillo-caja > .grafico,
@@ -791,7 +800,7 @@ a { color: var(--enlace); }
 .panel-cuerpo { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
 .panel[data-panel="anillo"] .anillo-caja { flex: 1 1 auto; min-height: 240px; }
 .panel[data-panel="anillo"] .anillo-caja > .grafico { height: 100%; min-height: 240px; }
-.panel[data-panel="mapa"] > .panel-cuerpo > .grafico { flex: 1 1 auto; height: auto; min-height: 300px; }
+.panel[data-panel="mapa"] > .panel-cuerpo > .grafico { flex: 1 1 0; height: auto; min-height: 300px; }
 .panel[data-panel="tendencia"] .grafico { height: 190px; }
 /* Los toggles internos del panel (PROD. / SEMBRADA / REND.) son chips cuadrados y chicos:
    no compiten con los chips del selector de cultivo. */
@@ -842,7 +851,7 @@ a { color: var(--enlace); }
    se encoge por debajo de su contenido y el pie de fuente se caeria fuera del recorte. */
 .panel[data-panel="combo"] > .panel-cuerpo > .grafico,
 .panel[data-panel="apiladas"] > .panel-cuerpo > .grafico {
-  flex: 1 1 auto; height: auto; min-height: 240px;
+  flex: 1 1 0; height: auto; min-height: 240px;
 }
 .tablero.alto-fijo .panel[data-panel="combo"] > .panel-cuerpo > .grafico,
 .tablero.alto-fijo .panel[data-panel="apiladas"] > .panel-cuerpo > .grafico { min-height: 0; }
@@ -958,7 +967,7 @@ a { color: var(--enlace); }
   flex: 0 0 auto; margin: .05rem 0 0; font-size: .56rem; line-height: 1.2; text-align: center;
 }
 .panel-precios > .panel-cuerpo > .grafico {
-  flex: 1 1 auto; height: auto; min-height: 150px;
+  flex: 1 1 0; height: auto; min-height: 150px;
 }
 /* Con el alto fijado vuelve a 0: un item de flexbox no se encoge por debajo de su contenido y
    el pie de fuente se caeria fuera del recorte del panel. */
@@ -1709,7 +1718,7 @@ dialog.zoom.zoom-visible::backdrop { opacity: 1; }
 .zoom .zoom-marco .panel[data-panel="combo"] > .panel-cuerpo > .grafico,
 .zoom .zoom-marco .panel[data-panel="apiladas"] > .panel-cuerpo > .grafico,
 .zoom .zoom-marco .panel-precios > .panel-cuerpo > .grafico {
-  height: auto; flex: 1 1 auto; min-height: 0;
+  height: auto; flex: 1 1 0; min-height: 0;
 }
 .zoom .zoom-marco .panel[data-panel="anillo"] .anillo-caja,
 .zoom .zoom-marco .panel[data-panel="anillo"] .anillo-caja > .grafico,
