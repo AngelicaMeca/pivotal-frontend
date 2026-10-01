@@ -24,7 +24,7 @@ export default function crearPivotal() {
   /* `dto` es el departamento elegido ("" = la provincia) y `dtoCombos` lo que se bajo de
      cada uno. Ver "capa departamental", mas abajo. */
   var estado = { datos: null, pintar: null, graficos: [], bajadas: {}, historial: [],
-                 colores: {}, extras: [], claves: [], dto: "", dtoCombos: {},
+                 colores: {}, extras: [], claves: [], dto: "", dtoCombos: {}, fallo: false,
                  comparar: { panel: null, nodo: null, filtro: null, valor: "", medida: "" } };
 
   /* -------- controles de filtro -------- */
@@ -223,17 +223,47 @@ export default function crearPivotal() {
      En `bajadas` se guarda la PROMESA y no un booleano: dos repintados seguidos sobre la misma
      particion tienen que esperar la misma bajada, no seguir de largo con los combos a medio
      llegar. */
+  /* El mensaje de un cuadro cuando la bajada de sus datos fallo. No es lo mismo que "no hay
+     datos para esta combinacion": ahi el dato no existe, aca no llego. Decirlo distinto
+     importa porque la salida tambien es distinta (reintentar, no cambiar de filtro). */
+  var FALLO_AL_BAJAR = "No se pudieron cargar los datos. Probá de nuevo en unos segundos.";
+
+  /* Una bajada que se pide una sola vez, sin cachear los fracasos.
+
+     Por que el `catch` que borra la entrada: en `bajadas` se guarda la PROMESA, para que dos
+     repintados seguidos esperen la misma bajada en vez de seguir de largo con los combos a
+     medio llegar. Pero si se guarda una promesa RECHAZADA, queda cacheado el fracaso: todos
+     los repintados siguientes vuelven a esperar ese mismo error y la pagina no se recupera
+     nunca, ni reintentando. Era el bug de los chips de Cultivos intensivos (Francisco,
+     1-oct-2026): ese tablero esta partido POR PRODUCTO, asi que cada clic en Cebolla/Batata/
+     Papa baja un archivo; si uno fallaba -un deploy a mitad de camino, la red, o el pipeline
+     reescribiendo los datos mientras el server estaba levantado- ese producto quedaba muerto
+     hasta recargar, y mientras tanto los chips decian uno y los cuadros mostraban otro. */
+  function bajar(ruta, usar) {
+    if (!estado.bajadas[ruta]) {
+      estado.bajadas[ruta] = fetch(ruta)
+        .then(function (r) {
+          /* fetch NO rechaza con un 404: resuelve con ok=false y un cuerpo que no es JSON.
+             Sin esto, el error salia despues como un parseo roto y costaba leerlo. */
+          if (!r.ok) { throw new Error("HTTP " + r.status + " al bajar " + ruta); }
+          return r.json();
+        })
+        .then(usar)
+        .catch(function (error) {
+          delete estado.bajadas[ruta];   // que el proximo intento sea un intento de verdad
+          throw error;
+        });
+    }
+    return estado.bajadas[ruta];
+  }
+
   function bajarParticion(valorParticion) {
     var datos = estado.datos;
     var ruta = datos.archivos[valorParticion];
     if (!ruta) { return Promise.resolve(); }
-    if (!estado.bajadas[ruta]) {
-      estado.bajadas[ruta] = fetch(ruta).then(function (r) { return r.json(); })
-        .then(function (parte) {
-          Object.keys(parte.combos).forEach(function (k) { datos.combos[k] = parte.combos[k]; });
-        });
-    }
-    return estado.bajadas[ruta];
+    return bajar(ruta, function (parte) {
+      Object.keys(parte.combos).forEach(function (k) { datos.combos[k] = parte.combos[k]; });
+    });
   }
 
   /* ================= capa departamental =================
@@ -258,11 +288,7 @@ export default function crearPivotal() {
   function bajarDepartamento(geo) {
     var ruta = estado.datos.capa_departamental.archivos[geo];
     if (!ruta) { return Promise.resolve(); }
-    if (!estado.bajadas[ruta]) {
-      estado.bajadas[ruta] = fetch(ruta).then(function (r) { return r.json(); })
-        .then(function (parte) { estado.dtoCombos[geo] = parte.combos; });
-    }
-    return estado.bajadas[ruta];
+    return bajar(ruta, function (parte) { estado.dtoCombos[geo] = parte.combos; });
   }
 
   function asegurarDepartamento() {
@@ -428,8 +454,21 @@ export default function crearPivotal() {
     sincronizarDisponibles();
     sincronizarNavegacion();
     sincronizarComparacion();
+    estado.fallo = false;
     return Promise.all([asegurarParticion(), asegurarDepartamento()]).then(function () {
-      estado.pintar(comboVigente(), estado.datos);
+      return { combo: comboVigente(), datos: estado.datos };
+    }, function (error) {
+      /* La bajada fallo. Lo que NO se puede hacer es cortar el repintado: los filtros ya se
+         movieron, asi que los cuadros quedarian mostrando los numeros del producto ANTERIOR
+         debajo del chip del nuevo. Un dato que no es el que se pidio es el peor error
+         posible, asi que se repinta IGUAL, en blanco y con el motivo a la vista. El proximo
+         clic vuelve a intentar la bajada (ver `bajar`). */
+      if (window.console && window.console.warn) { window.console.warn(error); }
+      estado.fallo = true;
+      return { combo: undefined,
+               datos: Object.assign({}, estado.datos, { sin_combinacion: FALLO_AL_BAJAR }) };
+    }).then(function (listo) {
+      estado.pintar(listo.combo, listo.datos);
       /* Los paneles que se dibujan por su cuenta (hoy el de precios del MCBA, que tiene
          filtros y datos propios) se enteran por aca de que la pagina se repinto. Importa en
          la exportacion a PDF: la hoja tiene otro ancho que la ventana y hay dibujos que se
@@ -520,11 +559,17 @@ export default function crearPivotal() {
         if (!boton) { return; }
         var previa = foto();
         if (fijar(nodo, boton.dataset.valor)) { recordar(previa); refrescar(); }
+        /* Si el ultimo repintado quedo fallado, tocar el MISMO chip reintenta. Sin esto el
+           control ya estaba en ese valor, `fijar` devolvia false y el clic no hacia nada:
+           justo cuando el cartel dice "Probá de nuevo", probar de nuevo era lo unico que no
+           funcionaba. */
+        else if (estado.fallo) { refrescar(); }
       });
     } else {
       nodo.querySelector("select").addEventListener("change", function (evento) {
         var previa = foto();
         if (fijar(nodo, evento.target.value)) { recordar(previa); refrescar(); }
+        else if (estado.fallo) { refrescar(); }
       });
     }
   }

@@ -979,6 +979,11 @@ export default function iniciar(PIVOTAL) {
   function apagar(nodo, motivo) {
     nodo.classList.add("sin-datos");
     texto(nodo, "[data-vacio]", motivo);
+    /* El TITULO tambien se borra, no solo el subtitulo. Si no, el cuadro queda con el titulo
+       del producto anterior ("Cebolla - ...") encima del cartel que explica que no hay datos
+       del que se acaba de pedir: dice una cosa y muestra otra. Es la misma regla que ya
+       aplican `pintarVista` con el resumen y `apagarPrecios` con su propio titulo. */
+    texto(nodo, "[data-titulo]", "");
     texto(nodo, "[data-subtitulo]", "");
   }
 
