@@ -1021,9 +1021,18 @@ colores:
       medidas: [produccion_tn]
       unidad: tn
       hex: ["#fff8e5", "#fff2cc", "#ffe699", "#ffd966", "#bf8f00"]
-      color_solido: "#95a52c"
-      color_comparacion: "#d6e09a"
-      familia_de_verde: "verde OLIVA / LIMA (tono 68, saturacion alta). Verde calido, con el amarillo del grano seco adentro."
+      # 2-oct-2026 (Francisco, mirando el tablero: "el color del mapa de produccion y la linea
+      # del grafico de produccion debe ser del mismo color amarillo"). Cierra el backlog 58
+      # para esta variable: el color SOLIDO es el paso mas oscuro de la propia rampa, asi que
+      # el mapa y la linea dicen el mismo color y se entiende de una que hablan de lo mismo.
+      # Antes era verde oliva (#95a52c) por la regla de grupo de la hoja INDICACIONES, y eso
+      # dejaba la produccion ocre en el mapa y verde en la linea DEL MISMO TABLERO.
+      # El contraste contra la crema del cuadro no empeora: 2,69:1 contra los 2,51:1 que daba
+      # el oliva. Es una linea, no texto.
+      color_solido: "#bf8f00"
+      # "Otro paso de la MISMA rampa" (regla de JC para la serie comparada del zoom): el cuarto.
+      color_comparacion: "#ffd966"
+      familia_de_verde: "YA NO: desde el 2-oct-2026 la produccion es OCRE/DORADA en todos lados, no solo en el mapa."
       justificacion: >
         Cambiada el 2026-09-29 (hoja INDICACIONES de "0000000000 Maqueta Agri.xlsx", punto 2 de
         JC: "Para lo que es agricola, el color predominante (por asociacion natural) es el verde
@@ -1041,10 +1050,15 @@ colores:
         pasos, muestreados del archivo, de mas claro a mas oscuro (el orden que usa el sitio;
         JC los dibuja al reves). Ese bloque habla de MAPAS DE CALOR y nada mas, asi que manda
         sobre la regla general de grupo para ESTE elemento: lo especifico le gana a lo general.
-        Lo que NO cambia es `color_solido` ni `color_comparacion`: las lineas, el anillo y las
-        barras siguen en la familia verde que pide la hoja INDICACIONES.
-        Aca el cambio es grande: EN EL MAPA la produccion vuelve al OCRE/DORADO de JC. El verde
-        oliva se queda solo en la linea del grafico de evolucion y en el anillo.
+        2-oct-2026: tambien cambian `color_solido` y `color_comparacion`. La produccion es OCRE
+        en TODOS los elementos, no solo en el mapa. Lo pidio Francisco mirando el tablero -el
+        mapa de produccion en ocre y la linea de produccion en verde, en la misma pantalla- y
+        tiene razon: el color es lo que dice de que variable se esta hablando, y una variable
+        que cambia de color de un cuadro al de al lado no dice nada. La regla de grupo de la
+        hoja INDICACIONES ("para lo que es agricola el color predominante es el verde") se
+        sigue cumpliendo en el conjunto: superficie, que es la variable principal y el ancla de
+        la familia, sigue en el verde institucional. Backlog 58 CERRADA para produccion; sigue
+        abierta para rendimiento, que todavia es azul en el mapa y verde esmeralda como serie.
     rendimiento:
       medidas: [rendimiento_kg_ha]
       unidad: kg/ha
