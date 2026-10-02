@@ -295,8 +295,11 @@ paneles:
       rotulo_provincia: "Provincia"
       # El texto que JC escribe DEBAJO del mapa cuando hay un departamento elegido.
       rotulo_cambiar: "Seleccione otro departamento si desea visualizar"
-      # El título que JC escribe ARRIBA del mapa en la hoja departamental.
-      rotulo_titulo: "Departamento {Departamento}"
+      # NO se dibuja ningún título arriba del mapa (Francisco, 2-oct-2026: "no quiero que
+      # aparezca el nombre del departamento arriba porque el mapa se achica"). JC sí lo pone
+      # en su hoja "Agri 1 Dto" ("Departamento ALBERDI"), así que es un desvío anotado: el
+      # alto que ocupaba ese renglón se lo queda el mapa, y qué departamento está elegido se
+      # lee en el propio mapa (es el único que conserva su nombre) y en la miga.
       # La miga de la maqueta: "... Soja | Provincia | Dto ALBERDI", con "Provincia" como
       # link vivo de vuelta (nota 2 de la hoja: "FUNCIONAL EL LINK 'PROVINCIA' PARA REGRESAR
       # A DATOS PROVINCIALES").

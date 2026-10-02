@@ -210,12 +210,6 @@ export default function iniciar(PIVOTAL) {
     texto(nodo, "[data-accion]",
           elegidoNombre && panel.accion_con_departamento
             ? panel.accion_con_departamento : panel.accion);
-    var rotuloDepto = nodo.querySelector("[data-mapa-departamento]");
-    if (rotuloDepto) {
-      rotuloDepto.textContent = elegidoNombre && panel.titulo_departamento
-        ? panel.titulo_departamento.replace("{Departamento}", elegidoNombre) : "";
-      rotuloDepto.hidden = !elegidoNombre;
-    }
     /* La escala: una muestra por clase con su tramo debajo, de la mas oscura a la mas clara,
        y la unidad una sola vez al pie (maqueta de JC, hoja "Agri 1"). Los tramos vienen
        escritos del build (cinco rangos contiguos y redondeados); aca solo se dibujan. */
@@ -463,22 +457,28 @@ export default function iniciar(PIVOTAL) {
             /* La tinta se calcula sobre el relleno EFECTIVO: si el departamento esta atenuado,
                el nombre tiene que contrastar con el tono atenuado, no con el original. */
             var tinta = tintaSobre(relleno);
-            /* El NOMBRE del elegido va en negrita. Hace falta un segundo canal porque el
+            /* Con un departamento elegido, el UNICO que conserva su nombre es ese
+               (Francisco, 2-oct-2026: "que solo se seleccione de color en el mapa, y los
+               otros dejan de tener nombre"). Es lo que vuelve inconfundible la seleccion: el
+               mapa queda con un solo nombre escrito. Hace falta ademas del color porque el
                color solo no alcanza en todos los casos: si el elegido cae en el quintil mas
-               claro, su relleno real y el de los vecinos atenuados son casi el mismo tono y
-               la seleccion se pierde (probado con LORETO). El rotulo sirve justamente porque
-               se dibuja POR ENCIMA de todos los poligonos, asi que no depende del orden de
-               dibujado como si dependia el contorno. Negrita y nada mas: ni mas grande ni de
-               otro color, que es lo que antes quedaba pesado. */
+               claro, su relleno real y el de los vecinos atenuados son casi el mismo tono y la
+               seleccion se pierde (probado con LORETO). El rotulo sirve justamente porque se
+               dibuja POR ENCIMA de todos los poligonos, asi que no depende del orden de
+               dibujado, que es lo que hacia fracasar al contorno.
+               Sin departamento elegido no cambia nada: se rotulan todos, como siempre. */
             return {
               name: d.id,
               value: d.v,
-              label: elegido ? { color: tinta, fontWeight: "bold" } : { color: tinta },
+              label: (hayElegido && !elegido) ? { show: false } : { color: tinta },
               itemStyle: { areaColor: relleno },
               /* UN solo `emphasis` por item: el relieve del borde y la tinta del rotulo van
                  juntos. Dos claves `emphasis` en el mismo objeto se pisan en silencio. */
+              /* Al pasar el mouse por uno sin rotulo NO se le enciende el nombre: el dato
+                 ya esta en el tooltip y encender nombres sueltos al pasar por encima vuelve a
+                 ensuciar el mapa, que es justo lo que se quiso sacar. */
               emphasis: {
-                label: elegido ? { color: tinta, fontWeight: "bold" } : { color: tinta },
+                label: (hayElegido && !elegido) ? { show: false } : { color: tinta },
                 itemStyle: { areaColor: relleno, borderColor: PIVOTAL.color("--texto"),
                              borderWidth: 1.4 }
               }

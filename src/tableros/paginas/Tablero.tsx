@@ -347,9 +347,6 @@ function PanelComun({ panel, filtro }: { panel: Panel; filtro?: Filtro }) {
       </div>
 
       <div className="panel-cuerpo">
-        {panel.id === "mapa" ? (
-          <p className="mapa-departamento" data-mapa-departamento="" hidden></p>
-        ) : null}
         <CuerpoPanel id={panel.id} />
       </div>
 
@@ -384,10 +381,6 @@ function PanelMockup({ panel, filtro }: { panel: Panel; filtro?: Filtro }) {
     <section className="panel" data-panel={panel.id}>
       {panel.id === "mapa" ? (
         <div className="mapa-cab">
-          {/* El titulo que JC escribe ARRIBA del mapa en su hoja "Agri 1 Dto"
-              ("Departamento ALBERDI"). Vacio y oculto mientras se mira la provincia, que es
-              el estado de su hoja "Agri 1". Lo escribe tablero.js. */}
-          <p className="mapa-departamento" data-mapa-departamento="" hidden></p>
           <TogglePanel filtro={filtro} />
         </div>
       ) : panel.id !== "tabla-datos" ? (

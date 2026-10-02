@@ -5076,8 +5076,6 @@ def panel_mapa_cultivos(ctx, spec, campania, cultivos, variable, pie, todos=Fals
         # Son plantillas con un slot: el navegador sustituye, no compone.
         "accion_con_departamento": (spec["paneles"]["mapa"].get("seleccion_departamento")
                                     or {}).get("rotulo_cambiar"),
-        "titulo_departamento": (spec["paneles"]["mapa"].get("seleccion_departamento")
-                                or {}).get("rotulo_titulo"),
         # A donde lleva el clic en un departamento. Con `en-la-misma-vista` NO lleva a ningun
         # lado: cambia los datos de ESTE tablero (Francisco, 30-sep-2026; hoja "Agri 1 Dto" de
         # la maqueta). `ficha` queda en None y el navegador usa `selecciona`.
