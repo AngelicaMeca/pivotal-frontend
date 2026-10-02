@@ -474,8 +474,17 @@ paneles:
       encabezado_primera_columna: "Variable"
     # 5.4: "RANKINGS POR DEPARTAMENTO - ESTO SOLO EN EL AREA PROVINCIAL". Sus tres rankings:
     # 5.3.1 superficies cosechadas (NO van las sembradas), 5.3.2 producción, 5.3.3 rendimientos.
+    # Los tres van en UNA sola sección, las tablas una al lado de la otra (Francisco,
+    # 2-oct-2026). Es como los lista JC: un solo título de sección ("5.4. RANKINGS POR
+    # DEPARTAMENTO") y debajo sus tres variables. Y es lo que se quiere leer: son el mismo
+    # recorte -los departamentos de la campaña- visto por tres variables, y puestas una al lado
+    # de la otra se ve de un vistazo qué departamento manda en superficie pero no en
+    # rendimiento. Apiladas eran tres pantallas de scroll que no se podían comparar.
     rankings:
-      titulo: "Sgo del Estero - Ranking de {Variable} por departamento - Campaña {campania}"
+      titulo: "Sgo del Estero - Rankings por departamento - Campaña {campania}"
+      # El título de CADA tabla es su variable y nada más: el resto ya lo dice el título de la
+      # sección y repetirlo tres veces en tres columnas angostas no entra ni aporta.
+      titulo_tabla: "{Variable}"
       medidas: [sup_cosechada_ha, produccion_tn, rendimiento_kg_ha]
 
   # Disposición calcada de la hoja "Agri 1": columna izquierda = mapa (a lo alto, él solo) +

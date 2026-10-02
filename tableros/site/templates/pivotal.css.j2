@@ -1288,9 +1288,65 @@ dialog.info.info-visible::backdrop { opacity: 1; }
 /* Alto FIJO y generoso para cada grafico del popup: aca no compite con nada, la pagina
    scrollea. `flex-basis` no aplica porque el cuadro no es un contenedor flex. */
 .info-cuadro > .grafico { height: 380px; }
-.info-cuadro.info-ranking { padding-bottom: .6rem; }
+/* Los tres rankings (5.4) en UNA seccion, una tabla al lado de la otra. Tres columnas
+   iguales con `minmax(0, 1fr)` y no `1fr`: `1fr` es `minmax(auto, 1fr)`, o sea que una tabla
+   con un nombre largo ("GENERAL TABOADA") ensancharia su columna y las otras dos perderian
+   lugar. Con el minimo en 0 las tres miden lo mismo y la que no entra scrollea adentro de su
+   propia caja (`.info-tabla` ya lleva overflow-x). */
+.info-cuadro.info-rankings { padding-bottom: .6rem; }
+.info-rankings-fila {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .9rem;
+  align-items: start; margin-top: .6rem;
+}
+/* CADA ranking en su PROPIO recuadro (Francisco, 2-oct-2026: "separa cada recuadro por tabla
+   para que no parezca una sola tabla enorme"). Con las tres pegadas, y como los 26 renglones
+   caen a la misma altura en las tres, las nueve columnas se leian como UNA tabla de nueve
+   columnas. El recuadro es el lenguaje del resto del sitio -borde fino y esquina redondeada- y
+   va un tono mas abajo que la seccion que lo contiene (`--fondo` adentro de `--fondo-cuadro`),
+   asi que se lee como una caja metida adentro de otra y no como un remiendo. */
+.info-rankings-fila .info-ranking {
+  min-width: 0; padding: .55rem .55rem .15rem;
+  background: var(--fondo); border: 1px solid var(--borde-panel);
+  border-radius: var(--radio-chico);
+}
+/* El nombre de la variable, sobre su tabla. El titulo de la seccion ya dijo el resto. */
+.info-rankings-fila h4 {
+  margin: 0 0 .35rem; font-family: var(--rotulos); font-size: .64rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .08em; color: var(--texto-apoyo);
+  text-align: center;
+}
+.info-rankings-fila .info-tabla { margin-top: 0; }
+/* Adentro del recuadro la linea de separacion de filas tiene que verse sobre `--fondo`, que es
+   mas oscuro que el fondo de cuadro para el que esta pensado `--fondo-apoyo`. */
+.info-rankings-fila .info-tabla th, .info-rankings-fila .info-tabla td {
+  border-bottom-color: color-mix(in srgb, var(--texto) 12%, transparent);
+}
+/* Con 28 departamentos por tabla y tres tablas en fila, la letra puede bajar un punto: lo que
+   importa es poder leer las tres de una. */
+.info-rankings-fila table { font-size: .72rem; }
+
+@media (max-width: 1100px) {
+  /* No entran tres: se apilan. Es la misma caida que el resto del popup en angosto. */
+  .info-rankings-fila { grid-template-columns: minmax(0, 1fr); }
+}
+/* Las tablas del popup llevan el mismo cromo que las del sitio. Hay que escribirlo: las reglas
+   de `table.datos` y de `.tabla-datos` estan scopeadas a esas clases y estas tablas no las
+   tienen, asi que salian sin aire, sin linea de separacion y -lo que mas se notaba- con los
+   numeros alineados a la izquierda, porque `td.num` tambien esta scopeado alla. */
 .info-tabla { margin-top: .6rem; overflow-x: auto; }
 .info-tabla table { width: 100%; border-collapse: collapse; font-size: .76rem; }
+.info-tabla th, .info-tabla td {
+  padding: .22rem .45rem; border-bottom: 1px solid var(--fondo-apoyo); white-space: nowrap;
+}
+.info-tabla thead th {
+  text-align: left; border-bottom: 1px solid var(--borde);
+  font-family: var(--rotulos); font-size: .6rem; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--texto-apoyo); font-weight: 600;
+}
+.info-tabla td.num, .info-tabla th.num {
+  text-align: right; font-variant-numeric: tabular-nums;
+}
+.info-tabla tbody tr:last-child th, .info-tabla tbody tr:last-child td { border-bottom: 0; }
 .info-nota { margin: .5rem 0 0; font-size: .74rem; color: var(--texto-apoyo); }
 .info-nota:empty { display: none; }
 .info-vacio { margin: .6rem 0 0; font-size: .8rem; color: var(--texto-apoyo); text-align: center; }

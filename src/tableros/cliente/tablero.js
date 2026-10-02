@@ -1620,22 +1620,37 @@ export default function iniciar(PIVOTAL) {
     info.graficos.push(fig.querySelector("[data-grafico]"));
   }
 
-  /* Los rankings (5.4) son TABLAS, no graficos: van sin caja de dibujo. */
-  function infoDibujarRanking(panel) {
+  /* Los rankings (5.4) son TABLAS, no graficos: van sin caja de dibujo. Y van los TRES en UNA
+     seccion, una tabla al lado de la otra (Francisco, 2-oct-2026): miran el mismo recorte -los
+     departamentos de la campaña- por tres variables distintas, y en fila se comparan de un
+     vistazo. Apiladas eran tres pantallas de scroll. El titulo y la cita de fuente son de la
+     seccion y van una sola vez; cada tabla se queda con el nombre de su variable. */
+  function infoDibujarRankings(seccion) {
+    if (!seccion || !seccion.tablas || !seccion.tablas.length) { return; }
     var fig = document.createElement("figure");
-    fig.className = "info-cuadro info-ranking";
+    fig.className = "info-cuadro info-rankings";
     var h = document.createElement("h3");
-    h.textContent = panel.titulo;
-    var sub = document.createElement("p");
-    sub.className = "info-sub";
-    sub.textContent = panel.subtitulo || "";
-    var caja = document.createElement("div");
-    caja.className = "info-tabla";
-    caja.appendChild(armarTablaCampanias(panel.columnas, panel.filas));
+    h.textContent = seccion.titulo;
+    fig.appendChild(h);
+    var fila = document.createElement("div");
+    fila.className = "info-rankings-fila";
+    seccion.tablas.forEach(function (tabla) {
+      var col = document.createElement("div");
+      col.className = "info-ranking";
+      var h4 = document.createElement("h4");
+      h4.textContent = tabla.titulo;
+      var caja = document.createElement("div");
+      caja.className = "info-tabla";
+      caja.appendChild(armarTablaCampanias(tabla.columnas, tabla.filas));
+      col.appendChild(h4);
+      col.appendChild(caja);
+      fila.appendChild(col);
+    });
+    fig.appendChild(fila);
     var pie = document.createElement("p");
     pie.className = "panel-fuente";
-    pie.textContent = panel.pie || "";
-    [h, sub, caja, pie].forEach(function (n) { fig.appendChild(n); });
+    pie.textContent = seccion.pie || "";
+    fig.appendChild(pie);
     info.cuerpo.appendChild(fig);
   }
 
@@ -1672,7 +1687,7 @@ export default function iniciar(PIVOTAL) {
       var cultivo = PIVOTAL.valorDeFiltro("cultivo");
       var prod = contenido.produccion_rendimiento[cultivo];
       if (prod) { infoDibujarCuadro("combo", prod); }
-      contenido.rankings.forEach(infoDibujarRanking);
+      infoDibujarRankings(contenido.rankings);
       /* Los graficos se midieron mientras el dialogo recien se abria: una vez que el layout
          quedo quieto hay que redimensionarlos o salen con la caja equivocada. */
       info.graficos.forEach(function (nodo) {

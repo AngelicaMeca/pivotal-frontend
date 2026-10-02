@@ -5505,11 +5505,19 @@ def _info_prod_rendimiento(ctx, spec, geo, cultivo, pie):
 
 def _info_rankings(ctx, spec, pie):
     """El bloque 5.4: los rankings por departamento. SOLO a nivel provincial, que es como lo
-    acota JC: "RANKINGS POR DEPARTAMENTO - ESTO SOLO EN EL AREA PROVINCIAL"."""
+    acota JC: "RANKINGS POR DEPARTAMENTO - ESTO SOLO EN EL AREA PROVINCIAL".
+
+    Sale como UNA seccion con sus tres tablas adentro, no como tres bloques sueltos (Francisco,
+    2-oct-2026). Es como las lista JC -un titulo de seccion y debajo sus tres variables- y es lo
+    que se quiere leer: las tres miran el mismo recorte (los departamentos de la campaña) por
+    tres variables distintas, y una al lado de la otra se ve de un vistazo que departamento
+    manda en superficie pero no en rendimiento. Apiladas eran tres pantallas de scroll que no
+    se podian comparar.
+    """
     declarado = spec["paneles"]["mas-informacion"]["rankings"]
     campania = ctx.campania_defecto
     cultivos = cultivos_con_datos(ctx)
-    salida = []
+    tablas = []
     for medida in declarado["medidas"]:
         filas = []
         for geo in ctx.hechos.deptos:
@@ -5519,19 +5527,25 @@ def _info_rankings(ctx, spec, pie):
         if not filas:
             continue
         filas.sort(key=lambda f: (-f[0], pr.clave_alfabetica(f[1])))
-        salida.append({
-            "titulo": titulo_literal(declarado["titulo"],
-                                     Variable=ETIQUETA_VARIABLE[medida], campania=campania),
-            "subtitulo": ctx.subtitulo_unidad(UNIDAD[medida]),
-            "pie": pie,
+        tablas.append({
+            "titulo": titulo_literal(declarado["titulo_tabla"],
+                                     Variable=ETIQUETA_VARIABLE[medida]),
+            # Sin subtitulo de unidad: con tres tablas en fila cada renglon que se agrega se
+            # paga por tres, y la unidad ya viaja en el encabezado de la columna.
             "columnas": [{"etiqueta": "Puesto", "num": False},
                          {"etiqueta": "Departamento", "num": False},
-                         {"etiqueta": ETIQUETA_VARIABLE[medida], "num": True}],
+                         # La abreviatura de JC ("Sup. cosechada (ha)"), la misma que usa el
+                         # ranking del tablero: dice la variable Y la unidad en un renglon.
+                         {"etiqueta": ETIQUETA_COLUMNA[medida], "num": True}],
             "filas": [{"celdas": [str(i + 1) + "\u00b0", nombre,
                                   ctx.precision.texto(valor, medida, "departamento")]}
                       for i, (valor, nombre) in enumerate(filas)],
         })
-    return salida
+    if not tablas:
+        return None
+    # La cita de fuente va UNA sola vez, al pie de la seccion: es la misma para las tres.
+    return {"titulo": titulo_literal(declarado["titulo"], campania=campania),
+            "pie": pie, "tablas": tablas}
 
 
 def _info_area(ctx, geo):
@@ -5570,7 +5584,7 @@ def capa_mas_informacion(ctx, spec, pie):
             "bloques": bloques,
             "produccion_rendimiento": por_cultivo,
             # Los rankings son provinciales por regla de JC: en un departamento no se dibujan.
-            "rankings": _info_rankings(ctx, spec, pie) if geo == "provincia" else [],
+            "rankings": _info_rankings(ctx, spec, pie) if geo == "provincia" else None,
         }
     return capa
 
