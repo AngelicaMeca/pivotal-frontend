@@ -709,7 +709,7 @@ def copiar_iconos(escritor, theme):
 ACCIONES_UTILIDAD = ("exportar-pdf", "zoom", "mas-informacion")
 
 
-def accion_de_cuadro(item, destino, url_de, slug_tablero, id_panel):
+def accion_de_cuadro(item, destino, url_de, slug_tablero, id_panel, variante=None):
     """Un item del pie de un cuadro: "Más información →" o "Generar PDF".
 
     Es la tira que JC dibuja al pie de cada cuadro de la maqueta "Agri 2" (celdas H54/AX54 y
@@ -737,6 +737,12 @@ def accion_de_cuadro(item, destino, url_de, slug_tablero, id_panel):
               "flecha": bool(item.get("flecha")),
               "href": url_de[destino] if destino else None,
               "accion": accion,
+              # QUE bloque del popup abre este boton, cuando el tablero tiene mas de uno. En
+              # la hoja "Agri 2" JC dibuja DOS "Más información" -uno por columna- y sus
+              # observaciones les dan contenido distinto: el de la izquierda abre los cortes
+              # de DTV y el de la derecha el mapa de las estimaciones de superficie. En la
+              # hoja "Agri 1" hay uno solo y esto viaja en None.
+              "variante": variante,
               "rotulo": item.get("rotulo", "Próximamente")}
     if item.get("icono"):
         salida["icono"] = ruta_icono("color", item["icono"])
@@ -3864,8 +3870,11 @@ def dtv_filtro_departamento(ctx):
 # Tablero.tsx desde el JSON de la pagina.
 
 
-def composicion_de_bultos(ctx, producto):
+def composicion_de_bultos(ctx, producto, geo=None):
     """(rotulo del eje, nota de composicion) para los bultos declarados de un producto.
+
+    Con `geo` mira la mezcla de ESE departamento de origen y no la de la provincia: un cuadro
+    departamental no puede heredar un rotulo que su propio dato no sostiene.
 
     Los dos salen del MART, nunca de un texto fijo. Es la condicion con la que Francisco
     habilito sumar `cantidad` el 23-sep-2026: el eje solo puede decir "bolsas" si la fuente lo
@@ -3875,7 +3884,7 @@ def composicion_de_bultos(ctx, producto):
     Si manda SENASA un año con otra mezcla, el rotulo cambia solo en la proxima publicacion.
     """
     regla = ctx.rotulo_bultos
-    partes = ctx.hechos.composicion_acondicionamiento(producto, ctx.anios)
+    partes = ctx.hechos.composicion_acondicionamiento(producto, ctx.anios, geo)
     if not partes:
         return None, None
     total = sum(valor for _, valor in partes)
@@ -3947,8 +3956,13 @@ def tabla_bajo_el_grafico(ctx, declarado, anio, filas):
     }
 
 
-def panel_combo_intensivos(ctx, spec, producto, anio, pie):
+def panel_combo_intensivos(ctx, spec, producto, anio, pie, geo=None, plantilla_titulo=None):
     """Barras de bultos declarados + linea de toneladas, por año, con dos ejes.
+
+    Con `geo` dibuja el mismo cuadro recortado a un departamento de ORIGEN, que es lo que pide
+    JC en sus observaciones de la hoja "Agri 2" para el popup "Mas informacion" (celda F73:
+    "Graficos idem provincia por departamento x producto"). El titulo lo trae entonces el
+    llamador, porque el de la maqueta nombra la provincia.
 
     Es el primer grafico de la maqueta "Agri 2" (chart9, ancla G9:AD23), titulo literal
     "Cebolla - Sgo del Estero - DTV Envios - Cant bolsas y tn por año": barras `clustered` de
@@ -3959,12 +3973,13 @@ def panel_combo_intensivos(ctx, spec, producto, anio, pie):
     en papa (97,1%) da "bultos", y la nota al pie muestra la mezcla en los tres casos.
     """
     declarado = spec["paneles"]["combo"]
-    rotulo, nota = composicion_de_bultos(ctx, producto)
-    titulo = titulo_literal(declarado["titulo_protocolo"],
+    rotulo, nota = composicion_de_bultos(ctx, producto, geo)
+    titulo = titulo_literal(plantilla_titulo or declarado["titulo_protocolo"],
                             Producto=producto_con_recorte(ctx, producto),
+                            Departamento=ctx.hechos.nombre[geo] if geo else "",
                             bultos=rotulo or "bultos")
-    bultos = [ctx.hechos.total_bultos(producto, a) for a in ctx.anios]
-    toneladas = [dtv_valor(ctx, producto, a, "peso_tn") for a in ctx.anios]
+    bultos = [ctx.hechos.total_bultos(producto, a, geo) for a in ctx.anios]
+    toneladas = [dtv_valor(ctx, producto, a, "peso_tn", geo) for a in ctx.anios]
     if not [v for v in bultos if v] or not [v for v in toneladas if v]:
         return panel_vacio(titulo, "No hay declaraciones de este producto en la ventana de años.")
     eje_izq = ctx.eje(bultos, "bultos")
@@ -4571,6 +4586,204 @@ def construir_precios_mcba(ctx, spec):
     return {"pagina": pagina, "archivos": archivos}
 
 
+# --------------------------------------------------------------------------
+# El popup "Mas informacion" de cultivos intensivos (hoja "Agri 2", OBSERVACIONES)
+# --------------------------------------------------------------------------
+# JC lo define en dos bloques de su hoja, y les dibuja un boton "Más información" a cada
+# columna de la maqueta (celdas H54 y AX54):
+#
+#   "Más información   EN DTV:"                                             (celda E71)
+#     > Mapas calor por departamento por producto por volumen               (F72)
+#     > Graficos idem provincia por departamento x producto                 (F73)
+#     > Informes por tipo de movimiento (*) por producto provincia y por
+#       departamento (sin busqueda, solo resumenes totales anuales)         (F74)
+#     > Informes por provincia de destino, ... (idem)                       (F76)
+#     > Mapas calor pais con provincias de destino por producto             (F77)
+#
+#   "Más información   EN ESTIMACIONES SUPERFICIES"                         (celda E79)
+#     > A la tabla, solo agregarle mapa de calor (que en resumen sera identico al de
+#       volumen porque tiene valores constantes) por producto               (F80)
+#
+# QUE NO SE CONSTRUYE Y POR QUE: los dos de PROVINCIA DE DESTINO (F76 y F77). Son dato de
+# contraparte interprovincial y la regla de CLAUDE.md no los deja salir a lo publico sin
+# decision de Francisco; el precedente de la base 85 dejo dos vistas equivalentes en
+# `_privado`. Francisco decidio el 2-oct-2026 dejarlos afuera por ahora. Siguen anotados en
+# _comunes-dtv-hortalizas.fuera_de_alcance, que es donde ya estaban.
+#
+# NINGUNO de estos cuadros filtra por año: suman la ventana entera, igual que los cuadros del
+# tablero (el spec explica por que en `selectores.anio.que_controla`).
+def _info_dtv_mapa(ctx, spec, producto, medida, pie):
+    """Un mapa de calor de los departamentos de ORIGEN, por volumen o por superficie estimada.
+
+    Es el F72 de JC y, con la otra medida, su F80. El propio JC anticipa que los dos van a
+    dibujar la misma mancha ("en resumen sera identico al de volumen porque tiene valores
+    constantes"): la superficie estimada son los kilos de las DTV sobre un rendimiento fijo por
+    producto, o sea el mapa de volumen multiplicado por una constante. Se emiten igual los dos,
+    porque son dos bloques distintos de su lista y cada uno habla en su unidad.
+    """
+    declarado = spec["paneles"]["mas-informacion"]["mapas"]
+    hechos = ctx.hechos
+    nombres_mapa = dict(hechos.nombre)
+    for geo_id, nombre in nombres_extra_geojson().items():
+        nombres_mapa.setdefault(geo_id, nombre)
+    deptos, con_dato = [], []
+    for geo in sorted(nombres_mapa_solo_deptos(nombres_mapa)):
+        valores = [dtv_valor(ctx, producto, anio, medida, geo) for anio in ctx.anios]
+        limpios = [v for v in valores if v is not None]
+        valor = sum(limpios) if limpios else None
+        deptos.append({
+            "id": geo, "nombre": nombres_mapa[geo], "v": valor,
+            # El mouseover muestra el nombre y el detalle por año, nunca el geo_id.
+            "filas": [{"etiqueta": str(anio), "valor": ctx.con_unidad(v, medida)}
+                      for anio, v in zip(ctx.anios, valores) if v is not None],
+        })
+        if valor is not None:
+            con_dato.append(valor)
+    if not con_dato:
+        return panel_vacio("", limpiar(declarado["sin_datos"]))
+    escala = pr.quintiles(con_dato)
+    # La rampa es la del TIPO DE VARIABLE, como en todos los mapas de calor del sitio, y el
+    # tipo lo declara la propia familia (_comunes-dtv-hortalizas.presentacion.tipos_de_variable:
+    # `peso_tn` es produccion -ocre- y `superficie_estimada_ha` es superficie -verde-). Son las
+    # tres rampas que dibujo JC en su hoja "Agri 1"; aca no se elige ninguna a mano.
+    rampa = ctx.colores.rampa(medida)
+    for fila in deptos:
+        if fila["v"] is None:
+            fila["color"] = ctx.colores.sin_dato
+        else:
+            fila["color"] = rampa[min(pr.clase_de(fila["v"], escala["cortes"]), len(rampa)) - 1]
+        fila["t"] = ctx.texto(fila["v"], medida)
+    total = sum(v for v in (dtv_valor(ctx, producto, anio, medida) for anio in ctx.anios)
+                if v is not None)
+    return {
+        "titulo": titulo_literal(declarado["titulo"][medida],
+                                 Producto=producto_con_recorte(ctx, producto),
+                                 desde=str(ctx.anios[0]), hasta=str(ctx.anios[-1])),
+        "subtitulo": ctx.subtitulo_unidad(DTV_UNIDAD[medida]),
+        "pie": pie,
+        "nota": nota_de_cobertura_mensual(ctx, producto),
+        "geojson": GEOJSON,
+        "accion": "",
+        "rotulos": bool(declarado.get("rotulos_departamento")),
+        "accion_con_departamento": None,
+        # NI selecciona NI navega: el popup es estatico. Sin esto el mapa engancharia el clic y
+        # la manito prometeria adentro del dialogo algo que no existe.
+        "selecciona": False,
+        "ficha": None,
+        "aspecto": aspecto_mapa(), "relacion": relacion_mapa(),
+        "deptos": deptos,
+        "unidad": DTV_UNIDAD[medida],
+        "escala": escala_del_panel_mapa(ctx, deptos, escala, rampa, DTV_UNIDAD[medida]),
+        "total": "%s: %s %s" % (declarado["rotulo_total"], ctx.texto(total, medida),
+                                DTV_UNIDAD[medida]),
+    }
+
+
+def _info_dtv_por_departamento(ctx, spec, producto, pie):
+    """El F73 de JC: "Graficos idem provincia por departamento x producto".
+
+    El cuadro de la provincia es el combo de la maqueta (bultos en barras, toneladas en linea,
+    un año por categoria). Aca va el MISMO cuadro -el mismo constructor, no una copia- uno por
+    departamento de origen con movimiento. Son pocos por definicion (8 en toda la familia):
+    solo hay DTV donde hubo movimiento registrado.
+    """
+    plantilla = spec["paneles"]["mas-informacion"]["por_departamento"]["titulo"]
+    salida = []
+    for geo in ctx.hechos.deptos_con_movimiento(producto):
+        panel = panel_combo_intensivos(ctx, spec, producto, None, pie, geo, plantilla)
+        if panel.get("vacio"):
+            continue
+        salida.append({"id": "dto-" + geo, "forma": "combo", "panel": panel})
+    return salida
+
+
+def _info_dtv_tipos_de_movimiento(ctx, spec, producto, pie):
+    """El F74 de JC: "Informes por tipo de movimiento (*) por producto provincia y por
+    departamento (sin busqueda, solo resumenes totales anuales)".
+
+    Dos tablas, que es lo que pide: la provincial (tipo x año) y la departamental, que suma el
+    departamento de origen como primera columna. SIN buscador y sin mas grano que el año: son
+    resumenes, no un explorador de las DTV.
+    """
+    declarado = spec["paneles"]["mas-informacion"]["tipos_de_movimiento"]
+    tipos = ctx.hechos.movimientos_con_dato(producto)
+    if not tipos:
+        return []
+    anios = ctx.anios
+    columnas_anios = [{"etiqueta": str(a), "num": True} for a in anios]
+
+    def celdas(iniciales, valores):
+        return {"celdas": list(iniciales) + [ctx.texto(v, "peso_tn") if v is not None else "S/D"
+                                             for v in valores]}
+
+    filas = []
+    for tipo in tipos:
+        valores = [ctx.hechos.total_movimiento(producto, a, tipo, "peso_tn") for a in anios]
+        total = sum(v for v in valores if v is not None)
+        filas.append((-total, pr.clave_alfabetica(tipo), celdas([tipo], valores)))
+    filas.sort(key=lambda t: (t[0], t[1]))
+    salida = [{"id": "tipos-provincia", "forma": "tabla-datos", "panel": {
+        "titulo": titulo_literal(declarado["titulo_provincial"],
+                                 Producto=producto_con_recorte(ctx, producto),
+                                 desde=str(anios[0]), hasta=str(anios[-1])),
+        "subtitulo": ctx.subtitulo_unidad("tn"),
+        "pie": pie,
+        "nota": limpiar(declarado["nota"]),
+        "columnas": [{"etiqueta": declarado["encabezado_tipo"], "num": False}] + columnas_anios,
+        "filas": [t[2] for t in filas],
+    }}]
+
+    filas_dto = []
+    for geo in ctx.hechos.deptos_con_movimiento(producto):
+        nombre = ctx.hechos.nombre[geo]
+        for tipo in ctx.hechos.movimientos_con_dato(producto, geo):
+            valores = [ctx.hechos.total_movimiento_depto(producto, a, geo, tipo, "peso_tn")
+                       for a in anios]
+            total = sum(v for v in valores if v is not None)
+            filas_dto.append((pr.clave_alfabetica(nombre), -total, pr.clave_alfabetica(tipo),
+                              celdas([nombre, tipo], valores)))
+    if filas_dto:
+        filas_dto.sort(key=lambda t: (t[0], t[1], t[2]))
+        salida.append({"id": "tipos-departamento", "forma": "tabla-datos", "panel": {
+            "titulo": titulo_literal(declarado["titulo_departamental"],
+                                     Producto=producto_con_recorte(ctx, producto),
+                                     desde=str(anios[0]), hasta=str(anios[-1])),
+            "subtitulo": ctx.subtitulo_unidad("tn"),
+            "pie": pie,
+            "columnas": [{"etiqueta": declarado["encabezado_departamento"], "num": False},
+                         {"etiqueta": declarado["encabezado_tipo"], "num": False}]
+                        + columnas_anios,
+            "filas": [t[3] for t in filas_dto],
+        }})
+    return salida
+
+
+def capa_mas_informacion_intensivos(ctx, spec, pie):
+    """El contenido del popup, por producto y por variante de boton.
+
+    Dos claves por producto, una por cada bloque que JC escribe en sus observaciones:
+      <producto>-dtv           los tres cortes de DTV que se construyen (F72, F73 y F74)
+      <producto>-estimaciones  el mapa de calor que pide agregarle a la tabla (F80)
+    """
+    capa = {}
+    for producto in ctx.productos:
+        etiqueta = ctx.etiqueta_producto[producto]
+        capa["%s-dtv" % producto] = {
+            "nombre": "%s · DTV" % etiqueta,
+            "bloques": ([{"id": "mapa-volumen", "forma": "mapa",
+                          "panel": _info_dtv_mapa(ctx, spec, producto, "peso_tn", pie)}]
+                        + _info_dtv_por_departamento(ctx, spec, producto, pie)
+                        + _info_dtv_tipos_de_movimiento(ctx, spec, producto, pie)),
+        }
+        capa["%s-estimaciones" % producto] = {
+            "nombre": "%s · Estimación de superficies" % etiqueta,
+            "bloques": [{"id": "mapa-superficie", "forma": "mapa",
+                         "panel": _info_dtv_mapa(ctx, spec, producto, SUPERFICIE_ESTIMADA,
+                                                 pie)}],
+        }
+    return capa
+
+
 def construir_tablero_intensivos(ctx, spec):
     """El tablero de Agricultura > Cultivos intensivos: la grilla 2x2 de la hoja "Agri 2".
 
@@ -4593,6 +4806,11 @@ def construir_tablero_intensivos(ctx, spec):
     # escribe `escribir_sitio`, que es quien tiene el escritor.
     tablero["precios"] = construir_precios_mcba(ctx, spec)
     pie = ctx.pie(spec)
+    # El popup "Mas informacion". La clave de su capa es el PRODUCTO mas la variante del boton
+    # (`Cebolla-dtv`), no el area: JC define dos bloques distintos y les dibuja un boton a cada
+    # columna de la maqueta.
+    tablero["capa_informacion_por"] = "producto"
+    tablero["capa_informacion"] = capa_mas_informacion_intensivos(ctx, spec, pie)
     for producto in ctx.productos:
         for anio in ctx.anios:
             tablero["combos"]["|".join([producto, str(anio)])] = {
@@ -5576,13 +5794,19 @@ def capa_mas_informacion(ctx, spec, pie):
                             "panel": _info_cartera(ctx, spec, geo, estacion, False, pie)})
             bloques.append({"id": estacion + "-pct", "forma": "apiladas",
                             "panel": _info_cartera(ctx, spec, geo, estacion, True, pie)})
+        # El 5.3 es el UNICO bloque que depende de la seleccion de la pagina (el cultivo
+        # vigente) y no de la clave del archivo. Va en `por_valor`, que es el mecanismo
+        # generico: el navegador mira el filtro que se le nombra y dibuja los bloques de ese
+        # valor. El resto es igual siempre, como pide JC ("ES ESTATICO").
         por_cultivo = {}
         for cultivo in cultivos_visibles(ctx):
-            por_cultivo[cultivo] = _info_prod_rendimiento(ctx, spec, geo, cultivo, pie)
+            por_cultivo[cultivo] = [
+                {"id": "prod-rendimiento", "forma": "combo",
+                 "panel": _info_prod_rendimiento(ctx, spec, geo, cultivo, pie)}]
         capa[geo] = {
             "nombre": _info_area(ctx, geo),
             "bloques": bloques,
-            "produccion_rendimiento": por_cultivo,
+            "por_valor": {"filtro": "cultivo", "bloques": por_cultivo},
             # Los rankings son provinciales por regla de JC: en un departamento no se dibujan.
             "rankings": _info_rankings(ctx, spec, pie) if geo == "provincia" else None,
         }
@@ -5657,6 +5881,9 @@ def construir_tablero_cultivos(ctx, spec):
                 }
     tablero["capa_departamental"] = capa_departamental_cultivos(ctx, spec, cultivos, etiquetas,
                                                                 pie)
+    # El popup "Mas informacion": la seccion 5 de la hoja "Agri 1". Su capa se parte por
+    # AREA, que es lo unico que sigue de la pagina ademas del cultivo del bloque 5.3.
+    tablero["capa_informacion_por"] = "area"
     tablero["capa_informacion"] = capa_mas_informacion(ctx, spec, pie)
     return tablero
 
@@ -6693,24 +6920,38 @@ def escribir_capa_departamental(escritor, tablero, carpeta_datos, ruta_publica, 
 
 
 def escribir_capa_informacion(escritor, tablero, carpeta_datos, ruta_publica):
-    """Un archivo por area con el contenido del popup "Mas informacion" (seccion 5).
+    """Un archivo por CLAVE con el contenido del popup "Mas informacion".
 
-    Mismo criterio que la capa departamental y que el panel de precios: el navegador baja el
-    area que esta mirando y recien cuando abre el popup. El tablero no carga nada de esto para
-    dibujarse.
+    Que es una clave lo decide cada tablero y viaja al navegador en `capa_informacion_por`:
+
+      - cultivos extensivos: el AREA (`provincia` o el geo_id del departamento elegido). Es la
+        seccion 5 de la hoja "Agri 1", que "se refiere a la ampliacion de graficos y datos,
+        tanto provinciales como departamentales".
+      - cultivos intensivos: el PRODUCTO mas la VARIANTE del boton que se apreto
+        (`Cebolla-dtv`). Son dos claves por producto porque JC define dos bloques distintos en
+        sus observaciones de la hoja "Agri 2" -"Más información EN DTV:" (celda E71) y
+        "Más información EN ESTIMACIONES SUPERFICIES" (celda E79)- y les dibuja un boton a
+        cada columna de la maqueta (celdas H54 y AX54).
+
+    Mismo criterio de carga que la capa departamental y que el panel de precios: el navegador
+    baja la clave que esta mirando y recien cuando abre el popup. El tablero no carga nada de
+    esto para dibujarse.
     """
     capa = tablero["capa_informacion"]
     archivos, nombres = {}, {}
-    for geo in sorted(capa):
-        nombre = "%s/%s-info/%s.json" % (carpeta_datos, tablero["slug"], geo)
+    for clave in sorted(capa):
+        nombre = "%s/%s-info/%s.json" % (carpeta_datos, tablero["slug"], clave)
         escritor.texto(nombre, json_determinista({
-            "bloques": capa[geo]["bloques"],
-            "produccion_rendimiento": capa[geo]["produccion_rendimiento"],
-            "rankings": capa[geo]["rankings"],
+            "bloques": capa[clave]["bloques"],
+            # Bloques que dependen de un filtro de la PAGINA y no de la clave del archivo: el
+            # 5.3 de extensivos sigue al cultivo elegido. None cuando no hay ninguno.
+            "por_valor": capa[clave].get("por_valor"),
+            "rankings": capa[clave].get("rankings"),
         }))
-        archivos[geo] = "%s/%s-info/%s.json" % (ruta_publica, tablero["slug"], geo)
-        nombres[geo] = capa[geo]["nombre"]
-    return {"archivos": archivos, "nombres": nombres}
+        archivos[clave] = "%s/%s-info/%s.json" % (ruta_publica, tablero["slug"], clave)
+        nombres[clave] = capa[clave]["nombre"]
+    return {"por": tablero["capa_informacion_por"],
+            "archivos": archivos, "nombres": nombres}
 
 
 def escribir_datos_precios(escritor, tablero, carpeta_datos, ruta_publica):
@@ -7203,10 +7444,28 @@ def escribir_sitio(ctx, vistas, tableros):
             propias = definicion.get("acciones") or []
             if comunes or propias:
                 destinos = tablero["paneles"].get("destinos_de_mas_informacion") or {}
+                # Que bloque del popup abre el "Más información" de ESTE cuadro.
+                variantes = tablero["paneles"].get("variantes_de_mas_informacion") or {}
+                variante = variantes.get(declarado["id"])
+
+                def lleva_el_item(item, variante=variante, variantes=variantes):
+                    """Si este cuadro dibuja este item del pie.
+
+                    Cuando el tablero declara `variantes_de_mas_informacion`, el
+                    "Más información" va SOLO en los cuadros que figuran ahi. En la hoja
+                    "Agri 2" JC lo dibuja en los dos cuadros de abajo y en ninguno de los dos
+                    de arriba, asi que a los de arriba no se les dibuja: no es un boton
+                    deshabilitado, es un boton que no existe en la maqueta. La diferencia
+                    importa -un "Próximamente" promete algo- y ademas evita el caso peor, que
+                    es un boton apretable que no abre nada.
+                    """
+                    return item["id"] != "mas-informacion" or not variantes or variante
+
                 panel["acciones"] = [
                     accion_de_cuadro(item, destinos.get(declarado["id"], {}).get(item["id"]),
-                                     url_de, tablero["slug"], declarado["id"])
-                    for item in list(comunes) + list(propias)]
+                                     url_de, tablero["slug"], declarado["id"],
+                                     variante if item["id"] == "mas-informacion" else None)
+                    for item in list(comunes) + list(propias) if lleva_el_item(item)]
             paneles.append(panel)
         # La tira SUELTA del pie de la hoja "Agri 1": "Más información →" y "Generar PDF",
         # una debajo de la otra y alineadas a la derecha, abajo de la tabla de campañas. No

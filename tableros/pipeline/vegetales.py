@@ -18,7 +18,9 @@ Tres reglas del dato que este archivo hace cumplir, todas confirmadas por la ing
      Dentro de UN producto de hortaliza la mezcla se puede medir, y por eso este archivo
      devuelve siempre las dos cosas juntas: el total (`total_bultos`) y de que esta hecho
      (`composicion_acondicionamiento`). Quien rotule el eje sin mirar la composicion esta
-     inventando un rotulo que la fuente no sostiene. Lo pide JC en su maqueta "Agri 2"
+     inventando un rotulo que la fuente no sostiene. Vale IGUAL por departamento: los dos
+     accesores toman `geo` y los dos leen el mismo corte, para que un grafico departamental no
+     pueda heredar el rotulo de la provincia. Lo pide JC en su maqueta "Agri 2"
      ("Cant bolsas y tn por año"); la condicion la puso Francisco el 23-sep-2026.
   2. `es_agregado_fila` se filtra SIEMPRE: las hojas de SENASA traen una fila de total al pie
      que ya esta marcada en el mart y que, sumada, contaria el año dos veces.
@@ -67,17 +69,24 @@ SQL = """
 """
 
 
-# Los bultos, aparte. Se agregan por (producto, año) y por (producto, acondicionamiento):
-# el primero es el total que dibuja la barra y el segundo es de que esta hecho ese total, que
-# es lo que decide como se puede rotular el eje. Mismo ORDER BY fijo, por el mismo motivo.
+# Los bultos, aparte. Se agregan por (producto, año, departamento de origen,
+# acondicionamiento) y de ahi salen las cuatro cosas que hacen falta: el total provincial que
+# dibuja la barra, el total del departamento, y de que esta hecho cada uno de los dos, que es
+# lo que decide como se puede rotular el eje en cada caso. Mismo ORDER BY fijo, por el mismo
+# motivo.
+# El departamento entro el 2-oct-2026 con el popup "Mas informacion": JC pide ahi los mismos
+# graficos de la provincia pero por departamento (hoja "Agri 2", celda F73), y el grafico es
+# justamente el de bultos y toneladas. La regla 1 de este archivo sigue en pie y por eso el
+# acondicionamiento viaja junto al geo: un total departamental de bultos TAMPOCO se puede
+# rotular sin mirar su propia composicion.
 SQL_BULTOS = """
-    SELECT producto, anio, acondicionamiento, sum(valor)
+    SELECT producto, anio, origen_geo_id, acondicionamiento, sum(valor)
     FROM read_parquet('%s')
     WHERE NOT es_agregado_fila
       AND valor IS NOT NULL
       AND variable = 'cantidad'
     GROUP BY ALL
-    ORDER BY producto, anio, acondicionamiento
+    ORDER BY producto, anio, origen_geo_id, acondicionamiento
 """
 
 
@@ -105,10 +114,15 @@ class Vegetales:
         self.depto = {}        # (producto, anio, geo_id, medida) -> valor
         self.mes = {}          # (producto, anio, mes, medida) -> valor
         self.movimiento = {}   # (producto, anio, tipo_movimiento, medida) -> valor
+        self.movimiento_depto = {}    # (producto, anio, geo_id, tipo_movimiento, medida) -> valor
         self.destino = {}      # (producto, anio, destino_provincia, medida) -> valor
         self.depto_mes = {}    # (producto, anio, geo_id, mes, medida) -> valor
         self.bultos = {}       # (producto, anio) -> bultos declarados
+        self.bultos_depto = {}        # (producto, anio, geo_id) -> bultos declarados
         self.acondicionamiento = {}   # (producto, anio, acondicionamiento) -> bultos declarados
+        # Lo mismo por departamento de origen, que es lo que permite rotular el eje de un
+        # grafico departamental sin suponer que su mezcla es la de la provincia.
+        self.acondicionamiento_depto = {}   # (producto, anio, geo_id, acond) -> bultos
 
         self.anios = []
         self.meses_con_dato = {}   # producto -> [meses presentes en el mart, ordenados]
@@ -143,6 +157,7 @@ class Vegetales:
             _sumar(self.depto, (producto, anio, geo, medida), valor)
             _sumar(self.mes, (producto, anio, mes, medida), valor)
             _sumar(self.movimiento, (producto, anio, tipo_mov, medida), valor)
+            _sumar(self.movimiento_depto, (producto, anio, geo, tipo_mov, medida), valor)
             _sumar(self.destino, (producto, anio, destino, medida), valor)
             _sumar(self.depto_mes, (producto, anio, geo, mes, medida), valor)
 
@@ -158,11 +173,14 @@ class Vegetales:
         unica forma de que nadie use uno sin el otro es que salgan del mismo lugar.
         """
         for fila in con.execute(SQL_BULTOS % self.ruta_sql).fetchall():
-            (producto, anio, acond, valor) = fila
+            (producto, anio, geo, acond, valor) = fila
             if producto not in productos:
                 continue
-            _sumar(self.bultos, (producto, int(anio)), valor)
-            _sumar(self.acondicionamiento, (producto, int(anio), acond), valor)
+            anio = int(anio)
+            _sumar(self.bultos, (producto, anio), valor)
+            _sumar(self.acondicionamiento, (producto, anio, acond), valor)
+            _sumar(self.bultos_depto, (producto, anio, geo), valor)
+            _sumar(self.acondicionamiento_depto, (producto, anio, geo, acond), valor)
 
     @staticmethod
     def _lista(valores):
@@ -194,6 +212,9 @@ class Vegetales:
     def total_movimiento(self, producto, anio, tipo, medida="peso_tn"):
         return self.movimiento.get((producto, anio, tipo, medida))
 
+    def total_movimiento_depto(self, producto, anio, geo, tipo, medida="peso_tn"):
+        return self.movimiento_depto.get((producto, anio, geo, tipo, medida))
+
     def total_destino(self, producto, anio, provincia, medida="peso_tn"):
         return self.destino.get((producto, anio, provincia, medida))
 
@@ -214,11 +235,16 @@ class Vegetales:
                   and (anio is None or clave[1] == anio)}
         return sorted(vistos)
 
-    def total_bultos(self, producto, anio):
-        """Bultos declarados del producto en el año. NUNCA se dibuja sin su composicion."""
+    def total_bultos(self, producto, anio, geo=None):
+        """Bultos declarados del producto en el año. NUNCA se dibuja sin su composicion.
+
+        Con `geo`, los del departamento de origen; sin el, los de la provincia.
+        """
+        if geo is not None:
+            return self.bultos_depto.get((producto, anio, geo))
         return self.bultos.get((producto, anio))
 
-    def composicion_acondicionamiento(self, producto, anios):
+    def composicion_acondicionamiento(self, producto, anios, geo=None):
         """[(acondicionamiento, bultos)] del producto en esos años, de mayor a menor.
 
         De aca sale el rotulo del eje de bultos. La lista no se recorta: el que decide como se
@@ -230,15 +256,27 @@ class Vegetales:
         """
         ventana = set(anios)
         juntos = {}
-        for (p, anio, acond), valor in self.acondicionamiento.items():
-            if p != producto or anio not in ventana:
-                continue
-            juntos[acond] = juntos.get(acond, 0.0) + valor
+        if geo is not None:
+            for (p, anio, g, acond), valor in self.acondicionamiento_depto.items():
+                if p != producto or anio not in ventana or g != geo:
+                    continue
+                juntos[acond] = juntos.get(acond, 0.0) + valor
+        else:
+            for (p, anio, acond), valor in self.acondicionamiento.items():
+                if p != producto or anio not in ventana:
+                    continue
+                juntos[acond] = juntos.get(acond, 0.0) + valor
         partes = [(acond, valor) for acond, valor in juntos.items() if valor]
         partes.sort(key=lambda par: (-par[1], par[0]))
         return partes
 
-    def movimientos_con_dato(self, producto):
-        vistos = {clave[2] for clave in self.movimiento
-                  if clave[0] == producto and clave[3] == "peso_tn"}
+    def movimientos_con_dato(self, producto, geo=None):
+        """Tipos de movimiento con al menos una DTV del producto. Con `geo`, los de ese
+        departamento de origen."""
+        if geo is not None:
+            vistos = {clave[3] for clave in self.movimiento_depto
+                      if clave[0] == producto and clave[2] == geo and clave[4] == "peso_tn"}
+        else:
+            vistos = {clave[2] for clave in self.movimiento
+                      if clave[0] == producto and clave[3] == "peso_tn"}
         return [t for t in self.tipos_movimiento if t in vistos]

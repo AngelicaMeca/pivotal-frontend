@@ -223,6 +223,10 @@ function AccionesDeCuadro({ acciones }: { acciones?: AccionDeCuadro[] }) {
               type="button"
               className="panel-accion panel-accion-activa"
               data-utilidad={accion.accion}
+              /* Que bloque del popup abre ESTE boton. En la hoja "Agri 2" hay dos "Más
+                 información", uno por columna, con contenido distinto; en la "Agri 1" hay uno
+                 solo y esto no viaja. */
+              data-variante={accion.variante ?? undefined}
             >
               {contenido}
             </button>

@@ -304,8 +304,16 @@ export default function iniciar(PIVOTAL) {
 
     function rotularDepartamentos(caja) {
       if (!panel.rotulos) { return false; }
-      var r = caja.getBoundingClientRect();
-      return r.width >= MINIMO_PARA_ROTULAR.ancho && r.height >= MINIMO_PARA_ROTULAR.alto;
+      /* Se mide el LAYOUT (`clientWidth`/`clientHeight`) y no `getBoundingClientRect`, que
+         devuelve la caja YA TRANSFORMADA. Importa desde que el mapa tambien se dibuja dentro
+         del popup "Mas informacion": ese dialogo entra con un FLIP que arranca encogido sobre
+         el boton, asi que el rectangulo en pantalla mide 105x9 px en el primer cuadro y el
+         piso no se alcanzaba nunca -el mapa salia sin un solo nombre, aunque su caja real
+         midiera 1150x560-. La pregunta que hace este piso es si hay LUGAR para los nombres, y
+         eso lo contesta el layout; una animacion no cambia cuanto lugar hay. Es la misma razon
+         por la que `comun.tamanioMapa` ya medía con `clientHeight`. */
+      return caja.clientWidth >= MINIMO_PARA_ROTULAR.ancho
+          && caja.clientHeight >= MINIMO_PARA_ROTULAR.alto;
     }
 
     var porId = {};
@@ -977,7 +985,19 @@ export default function iniciar(PIVOTAL) {
         type: "bar",
         yAxisIndex: 0,
         data: panel.barras.puntos,
-        barMaxWidth: 34,
+        /* El ANCHO de la barra se pide en porcentaje de su casilla y no en pixeles, que es
+           como lo resuelve el Excel de JC: asi la barra crece con el cuadro y la comparacion
+           entre años se lee igual en la celda del tablero, en el zoom y en el popup. Con el
+           tope en pixeles solo (34 px) las barras quedaban finitas apenas el cuadro era ancho
+           -en el popup la casilla mide mas de 100 px- y las diferencias de alto se perdian
+           entre tanto aire (Francisco, 2-oct-2026: "ensanchalas para que se note mas las
+           diferencias, casi como los que estan en las maquetas").
+           `barCategoryGap` es el aire TOTAL de la casilla: 35% deja la barra en el 65%, que es
+           la proporcion que dibuja el Excel. El tope en pixeles queda, pero mas alto y solo
+           para el caso raro de pocas categorias en un cuadro muy ancho, donde una barra
+           proporcional saldria del tamanio de un cartel. */
+        barCategoryGap: "35%",
+        barMaxWidth: 64,
         itemStyle: { color: colorBarras }
       },
       {
@@ -1102,7 +1122,12 @@ export default function iniciar(PIVOTAL) {
           type: "bar",
           stack: "total",
           data: serie.puntos,
-          barMaxWidth: 46,
+          /* Mismo criterio que el combo: el ancho sale de la casilla, no de un numero de
+             pixeles. Las apiladas aguantan un poco mas de barra que las agrupadas -no hay dos
+             series compitiendo por el mismo lugar- y es lo que dibuja JC: en sus barras de
+             cartera el aire entre años es bastante menor que la barra. */
+          barCategoryGap: "30%",
+          barMaxWidth: 80,
           itemStyle: { color: serie.color }
         };
       })
@@ -1590,13 +1615,26 @@ export default function iniciar(PIVOTAL) {
     var tabla = document.createElement("div");
     tabla.className = "info-tabla";
     tabla.dataset.tablaDatos = "";
+    /* Los tres huecos que ademas necesita la forma `mapa`: la escala de color, su unidad y el
+       total provincial. Las otras formas los dejan vacios y el CSS los esconde (`:empty`), asi
+       que un solo armazon sirve para todas y no hay que ramificar por forma. */
+    var escala = document.createElement("div");
+    escala.className = "escala-mapa";
+    escala.dataset.escala = "";
+    var escalaUnidad = document.createElement("p");
+    escalaUnidad.className = "escala-unidad";
+    escalaUnidad.dataset.escalaUnidad = "";
+    var total = document.createElement("p");
+    total.className = "mapa-total";
+    total.dataset.total = "";
     var nota = document.createElement("p");
     nota.className = "info-nota";
     nota.dataset.nota = "";
     var pie = document.createElement("p");
     pie.className = "panel-fuente";
     pie.dataset.pie = "";
-    [h, sub, graf, ley, tabla, nota, pie].forEach(function (n) { fig.appendChild(n); });
+    [h, sub, graf, ley, escala, escalaUnidad, total, tabla, nota, pie]
+        .forEach(function (n) { fig.appendChild(n); });
     return fig;
   }
 
@@ -1617,7 +1655,14 @@ export default function iniciar(PIVOTAL) {
     texto(fig, "[data-nota]", panel.nota);
     texto(fig, "[data-pie]", panel.pie);
     DIBUJANTES[forma](fig, panel);
-    info.graficos.push(fig.querySelector("[data-grafico]"));
+    /* Solo se anota el hueco en el que el dibujante REALMENTE dibujo: si tiene un hijo,
+       ECharts se instancio ahi. Anotarlos todos tenia dos efectos feos en los cuadros que
+       son solo tabla (los informes por tipo de movimiento de la hoja "Agri 2"): el
+       `PIVOTAL.grafico(nodo)` del redimensionado CREA la instancia si no existe, asi que
+       nacia un grafico vacio, y de paso el hueco dejaba de estar `:empty` y se quedaba con
+       sus 380px de alto -media pantalla en blanco entre el titulo y la tabla-. */
+    var caja = fig.querySelector("[data-grafico]");
+    if (caja && caja.childNodes.length) { info.graficos.push(caja); }
   }
 
   /* Los rankings (5.4) son TABLAS, no graficos: van sin caja de dibujo. Y van los TRES en UNA
@@ -1669,7 +1714,7 @@ export default function iniciar(PIVOTAL) {
     return info.bajados[ruta];
   }
 
-  function infoPintar(datos, capa, area) {
+  function infoPintar(datos, capa, clave) {
     /* La limpieza va al ABRIR y no al cerrar. Suena al reves y tiene motivo: el evento `close`
        del <dialog> no dispara en todos los navegadores (verificado en el que viene embebido en
        el entorno de desarrollo), y colgar de el la unica limpieza dejaba las instancias de
@@ -1677,16 +1722,20 @@ export default function iniciar(PIVOTAL) {
        de cero pase lo que pase. El `close` sigue enganchado, pero como refuerzo. */
     infoLimpiar();
     info.graficos = [];
-    info.titulo.textContent = "Más información · " + (capa.nombres[area] || "");
-    return infoBajar(capa.archivos[area]).then(function (contenido) {
+    info.titulo.textContent = "Más información · " + (capa.nombres[clave] || "");
+    return infoBajar(capa.archivos[clave]).then(function (contenido) {
       contenido.bloques.forEach(function (bloque) {
         infoDibujarCuadro(bloque.forma, bloque.panel);
       });
-      /* 5.3 sigue al cultivo que esta puesto en el tablero: es el unico bloque que depende de
-         la seleccion. El resto es igual siempre, como pide JC ("ES ESTATICO"). */
-      var cultivo = PIVOTAL.valorDeFiltro("cultivo");
-      var prod = contenido.produccion_rendimiento[cultivo];
-      if (prod) { infoDibujarCuadro("combo", prod); }
+      /* Los bloques que siguen a un filtro de la PAGINA y no a la clave del archivo. Hoy el
+         unico es el 5.3 de cultivos extensivos, que sigue al cultivo elegido; el resto es
+         igual siempre, como pide JC ("ES ESTATICO"). */
+      if (contenido.por_valor) {
+        var valor = PIVOTAL.valorDeFiltro(contenido.por_valor.filtro);
+        (contenido.por_valor.bloques[valor] || []).forEach(function (bloque) {
+          infoDibujarCuadro(bloque.forma, bloque.panel);
+        });
+      }
       infoDibujarRankings(contenido.rankings);
       /* Los graficos se midieron mientras el dialogo recien se abria: una vez que el layout
          quedo quieto hay que redimensionarlos o salen con la caja equivocada. */
@@ -1704,12 +1753,28 @@ export default function iniciar(PIVOTAL) {
     });
   }
 
+  /* La clave del archivo que hay que bajar. La decide el TABLERO, no este archivo:
+       `capa.por` dice "area" (cultivos extensivos: la provincia o el departamento elegido) o
+       el id de un filtro (cultivos intensivos: el producto). Si ademas el boton declara una
+       variante, se le suma: en la hoja "Agri 2" JC dibuja dos "Más información" con contenido
+       distinto, uno por columna. */
+  function infoClave(capa, variante) {
+    var base = capa.por === "area"
+      ? (PIVOTAL.departamento() || "provincia")
+      : PIVOTAL.valorDeFiltro(capa.por);
+    var clave = variante ? base + "-" + variante : base;
+    if (capa.archivos[clave]) { return clave; }
+    /* Vuelta atras util y honesta: en extensivos un departamento sin ficha cae a la
+       provincia. Si ni eso existe, no hay nada que abrir. */
+    return capa.archivos[base] ? base : null;
+  }
+
   function abrirMasInformacion(boton) {
     var datos = PIVOTAL.datos();
     var capa = datos && datos.capa_informacion;
     if (!capa) { return; }
-    var area = PIVOTAL.departamento() || "provincia";
-    if (!capa.archivos[area]) { area = "provincia"; }
+    var clave = infoClave(capa, boton && boton.dataset && boton.dataset.variante);
+    if (!clave) { return; }
     /* De donde SALE y a donde VUELVE la caja: el rectangulo del boton "Más información". Se
        mide ANTES de abrir, mientras el boton sigue en su lugar. Si por lo que sea no hay boton
        (una accion disparada desde otro lado), se usa el centro de la ventana: el gesto queda
@@ -1722,6 +1787,8 @@ export default function iniciar(PIVOTAL) {
        apertura anterior. */
     info.anim.remedir();
     info.cuerpo.scrollTop = 0;
+    /* El popup se repinta desde cero en cada apertura, asi que el combo de la pagina y el
+       producto elegido llegan siempre al dia. */
     /* El contenido se pinta YA, sin esperar a que termine la animacion: el transform no toca
        el layout, asi que la caja mide lo que va a medir a pantalla completa desde el primer
        cuadro y los graficos nacen con el tamanio bueno. Lo que crece es el dibujo definitivo.
@@ -1729,7 +1796,7 @@ export default function iniciar(PIVOTAL) {
        sitio: si el movimiento no llega a correr, lo peor que pasa es que el popup aparezca
        quieto y a pantalla completa, nunca abierto e invisible. */
     info.anim.mover(info.anim.encajarEn(info.desde), "none", true, function () {});
-    return infoPintar(datos, capa, area);
+    return infoPintar(datos, capa, clave);
   }
 
   function centroDeLaVentana() {

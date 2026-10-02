@@ -404,25 +404,39 @@ fuera_de_alcance:
       informacion", bloque "EN DTV:", primera linea (celda F72): "> Mapas calor por
       departamento por producto por volumen".
     estado: >
-      FUTURO, por decision del propio JC. La hoja "Modelo analisis" de la base 53 dice "CON
-      MAPA", y esa contradiccion la resuelve JC en esta maqueta: el mapa no esta dibujado en la
-      hoja "Agri 2" y aparece en su lista de trabajo futuro. Por eso el tablero no lleva mapa
-      hoy. No es un olvido ni un recorte nuestro: es el orden que puso JC.
-      Cuando entre, el lugar natural es el panel de estimaciones de superficies (abajo a la
-      derecha), que hoy es una tabla por departamento.
+      HECHO el 2-oct-2026, en el popup "Mas informacion" del tablero y no como panel de la
+      pagina, que es donde lo pone JC. El TABLERO sigue sin mapa, y eso no cambio: la hoja
+      "Modelo analisis" de la base 53 dice "CON MAPA" y esa contradiccion la resuelve el propio
+      JC al dejar el mapa fuera de la hoja "Agri 2" y ponerlo en su lista de "Mas informacion".
+      El mapa gemelo de las estimaciones de superficie (celda F80) tambien esta.
   - item: "Graficos por departamento (los mismos cuadros del tablero, con ambito departamental)"
     referencia: "maqueta Agri 2, observaciones, celda F73: \"> Graficos idem provincia por departamento x producto\""
     estado: >
-      parcialmente cubierto: la vista `dtv-departamento-movimientos` ya abre por departamento
-      con el boton de cabecera. Los cuadros del tablero (combo y apiladas) todavia no tienen
-      version departamental.
-  - item: "Informes por tipo de movimiento y por provincia de destino, resumenes totales anuales"
-    referencia: "maqueta Agri 2, observaciones, celdas F74 y F76"
+      HECHO el 2-oct-2026: el popup "Mas informacion" trae el cuadro combinado (bultos en
+      barras, toneladas en linea) de CADA departamento de origen con movimiento. Es el mismo
+      constructor que el cuadro provincial, no una copia. La vista
+      `dtv-departamento-movimientos` sigue existiendo y es otra cosa: la abre el boton de
+      cabecera y muestra la evolucion de UN departamento elegido.
+  - item: "Informes por tipo de movimiento, resumenes totales anuales"
+    referencia: "maqueta Agri 2, observaciones, celda F74"
     estado: >
-      pendiente. El 23-sep-2026 estos dos cortes estaban dibujados en el tablero (un anillo por
-      tipo de movimiento y un ranking de provincias de destino); salieron al revisar el .xlsx
-      original, porque no estan en la maqueta. JC los pide como INFORMES, no como paneles del
-      tablero. Backlog 44 y 45.
+      HECHO el 2-oct-2026, en el popup "Mas informacion": dos tablas, la provincial (tipo de
+      movimiento x año) y la departamental (departamento de origen + tipo x año). Sin buscador
+      y sin mas grano que el año, como pide JC ("sin busqueda, solo resumenes totales
+      anuales"). El 23-sep-2026 este corte estaba dibujado como un anillo EN EL TABLERO y
+      salio al revisar el .xlsx: JC lo pide como INFORME, no como panel. Backlog 44.
+  - item: "Informes y mapa de calor por PROVINCIA DE DESTINO, resumenes totales anuales"
+    referencia: >
+      maqueta Agri 2, observaciones, celdas F76 ("> Informes por provincia de destino, por
+      producto provincia y por departamento") y F77 ("> Mapas calor pais con provincias de
+      destino por producto").
+    estado: >
+      PENDIENTE por decision de Francisco (2-oct-2026), no por falta de dato: el mart tiene la
+      provincia de destino y los dos cortes se construirian en el dia. Es material de
+      contraparte interprovincial, que CLAUDE.md no deja publicar sin decision suya, y el
+      precedente de la base 85 dejo dos vistas equivalentes en `_privado` (backlog 21 y 44).
+      Preguntado el 2-oct-2026 al construir el popup "Mas informacion"; respondio dejarlos
+      afuera por ahora. Los otros cuatro cortes de su lista si se construyeron.
   - item: "Apertura por eslabon de la cadena comercial (tipo de origen: UP, acopiador, empaque, mercado)"
     referencia: "configs/bases/57-dtv-cebolla.yaml, nota de dato"
     estado: "pendiente: da para una vista de detalle propia. Backlog pregunta 45."
@@ -435,12 +449,14 @@ fuera_de_alcance:
 sensibilidad:
   nivel: normal
   nota_provincias_destino: >
-    SIN EFECTO desde el 23-sep-2026 (segunda vuelta): el ranking de provincias de destino salio
-    del tablero, porque no esta en la maqueta "Agri 2" de JC. Ninguna vista publicada de esta
-    familia muestra hoy la provincia de contraparte. La discusion queda abierta para el dia que
-    se construya el "informe por provincia de destino" que JC pide en sus observaciones (celda
-    F76): ahi vuelve a aplicar el precedente de la base 85, donde dos vistas equivalentes
-    quedaron en `_privado` por el default seguro de CLAUDE.md (backlog 21 y 44).
+    SIN EFECTO: ninguna vista ni popup publicado de esta familia muestra la provincia de
+    contraparte. El ranking de provincias de destino salio del tablero el 23-sep-2026 porque no
+    esta en la maqueta "Agri 2"; el 2-oct-2026, al construir el popup "Mas informacion", se le
+    pregunto a Francisco por los dos cortes de destino que JC pide en sus observaciones (celdas
+    F76 y F77) y decidio dejarlos afuera por ahora. Sigue valiendo el precedente de la base 85,
+    donde dos vistas equivalentes quedaron en `_privado` por el default seguro de CLAUDE.md
+    (backlog 21 y 44). El dato esta en el mart y los accesores existen
+    (`total_destino`, `destinos_con_movimiento`): lo que falta es la decision, no el trabajo.
   nota_departamento_de_origen: >
     Las barras apiladas del tablero muestran el departamento de ORIGEN, que es dato provincial
     y departamental, no comparacion entre provincias. Mismo nivel de sensibilidad que el resto

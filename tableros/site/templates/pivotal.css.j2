@@ -1288,6 +1288,28 @@ dialog.info.info-visible::backdrop { opacity: 1; }
 /* Alto FIJO y generoso para cada grafico del popup: aca no compite con nada, la pagina
    scrollea. `flex-basis` no aplica porque el cuadro no es un contenedor flex. */
 .info-cuadro > .grafico { height: 380px; }
+/* Un cuadro que es SOLO tabla (los informes por tipo de movimiento de la hoja "Agri 2") usa el
+   mismo armazon que los demas, asi que trae su hueco de grafico sin usar. Vacio no ocupa: sin
+   esta linea reservaba los 380px y entre el titulo y la tabla quedaba media pantalla en
+   blanco. `:empty` basta porque ECharts le mete un <canvas> adentro al dibujar. */
+.info-cuadro > .grafico:empty { height: 0; }
+/* El mapa va mas alto que un grafico de barras: es la silueta de la provincia, que es alargada
+   (ver `aspecto_mapa`), y a 380px quedaba una tira finita en el medio de un cuadro vacio. */
+.info-cuadro[data-panel="info-mapa"] > .grafico { height: 560px; }
+/* La escala de color del mapa y su total, debajo del dibujo. Mismo lenguaje que la del
+   tablero, en una fila que se parte si no entra. Cuando el cuadro no es un mapa los tres
+   nodos llegan vacios y desaparecen. */
+.info-cuadro .escala-mapa {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: .3rem .9rem;
+  margin-top: .6rem;
+}
+.info-cuadro .escala-mapa:empty { display: none; }
+.info-cuadro .escala-unidad,
+.info-cuadro .mapa-total {
+  margin: .35rem 0 0; text-align: center; font-size: .78rem; color: var(--texto-apoyo);
+}
+.info-cuadro .mapa-total { font-weight: 650; color: var(--texto); }
+.info-cuadro .escala-unidad:empty, .info-cuadro .mapa-total:empty { display: none; }
 /* Los tres rankings (5.4) en UNA seccion, una tabla al lado de la otra. Tres columnas
    iguales con `minmax(0, 1fr)` y no `1fr`: `1fr` es `minmax(auto, 1fr)`, o sea que una tabla
    con un nombre largo ("GENERAL TABOADA") ensancharia su columna y las otras dos perderian

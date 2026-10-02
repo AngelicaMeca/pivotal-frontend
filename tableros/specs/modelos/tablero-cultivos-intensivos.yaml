@@ -357,22 +357,101 @@ paneles:
   acciones_de_cuadro:
     - id: mas-informacion
       etiqueta: "Más información"
-      # Sin `destino` queda deshabilitado con "Próximamente". El dia que uno de estos cuadros
-      # tenga su informe propio (backlog 44 y 45), se le pone `destino: <slug>` al panel en
-      # `destinos_de_mas_informacion` y el link se enciende solo.
-      estado: deshabilitado
-      rotulo: "Próximamente"
+      # ACTIVO desde el 2-oct-2026: abre el POPUP con el contenido que JC define en las
+      # observaciones de la hoja (ver `mas-informacion`, abajo).
+      # NO va en los cuatro cuadros: JC lo dibuja SOLO en los dos de abajo. Qué cuadro lo lleva
+      # y qué bloque abre lo dice `variantes_de_mas_informacion`; al que no figure ahí no se le
+      # dibuja el botón (no queda "Próximamente": en la maqueta directamente no está).
+      accion: mas-informacion
       flecha: true            # la flecha verde que JC dibuja al lado (celdas L54, BB54)
     - id: exportar-pdf
       etiqueta: "Generar PDF"
       icono: exportar-como-pdf   # el mismo icono en los cuatro pies, como en la maqueta
       accion: exportar-pdf       # site_build.ACCIONES_UTILIDAD; la atiende comun.js
   destinos_de_mas_informacion: {}
+  # QUIÉN lleva el botón "Más información" y QUÉ bloque abre.
+  # JC dibuja DOS, y los dos en la FILA DE ABAJO de su grilla (Francisco, 2-oct-2026: "los
+  # únicos dos bloques que tienen botón de más información son el gráfico y tabla inferiores"):
+  #   - celda H54,  al pie del gráfico de abajo a la izquierda (`apiladas`, las barras apiladas
+  #     de tn por departamento de origen) -> "Más información EN DTV:" (celda E71)
+  #   - celda AX54, al pie de la tabla de abajo a la derecha (`tabla-superficie`) ->
+  #     "Más información EN ESTIMACIONES SUPERFICIES" (celda E79)
+  # Los dos cuadros de ARRIBA no lo llevan, y se ve en las mismas celdas: el combo de DTV
+  # (arriba a la izquierda) cierra con su cita de fuente y nada más (celda H23), y el de precios
+  # del MCBA cierra con su fuente y un "Generar PDF" suelto (celdas AE31 y BF32).
+  variantes_de_mas_informacion:
+    apiladas: dtv
+    tabla-superficie: estimaciones
   por_que_mas_informacion_no_apunta_a_la_vista_de_detalle: >
     La vista `dtv-departamento-movimientos` YA tiene su entrada, que es el boton "Ver todos los
     años" de la cabecera. Ponerla tambien en los cuatro pies seria prometer cuatro salidas
-    distintas que llevan todas al mismo lado. El "Mas informacion" de JC apunta a su lista de
-    trabajo futuro (observaciones de la hoja, celdas F72 a F77), que todavia no existe.
+    distintas que llevan todas al mismo lado. El "Mas informacion" de JC no es un link a una
+    vista: es un popup con la ampliacion de datos que el lista en sus observaciones.
+
+  # ---------------------------------------------------------------------------
+  # EL POPUP "MÁS INFORMACIÓN" (observaciones de la hoja "Agri 2")
+  # ---------------------------------------------------------------------------
+  # Lo que JC escribe, textual, en su hoja de OBSERVACIONES SOBRE CULTIVOS INTENSIVOS:
+  #
+  #   "Más información   EN DTV:"                                            (celda E71)
+  #     > Mapas calor por departamento por producto por volumen              (F72)
+  #     > Gráficos idem provincia por departamento x producto                (F73)
+  #     > Informes por tipo de movimiento (*) por producto provincia y por departamento
+  #       (sin búsqueda, sólo resúmenes totales anuales)                     (F74)
+  #       (*): Acopiador - Mercado, Acopiador - Minorista, Producción - Minorista etc  (G75)
+  #     > Informes por provincia de destino, por producto provincia y por departamento
+  #       (sin búsqueda, sólo resúmenes totales anuales)                     (F76)
+  #     > Mapas calor país con provincias de destino por producto            (F77)
+  #
+  #   "Más información   EN ESTIMACIONES SUPERFICIES"                        (celda E79)
+  #     > A la tabla, sólo agregarle mapa de calor (que en resumen será idéntico al de
+  #       volumen porque tiene valores constantes) por producto              (F80)
+  #
+  # LOS DOS DE PROVINCIA DE DESTINO (F76 y F77) NO SE CONSTRUYEN. Son dato de contraparte
+  # interprovincial: la regla de CLAUDE.md no los deja salir a lo público sin decisión de
+  # Francisco, y el precedente de la base 85 dejó dos vistas equivalentes en `_privado`.
+  # Francisco decidió el 2-oct-2026 dejarlos afuera por ahora. Siguen anotados en
+  # _comunes-dtv-hortalizas.fuera_de_alcance, que es donde ya estaban.
+  #
+  # Ninguno de estos cuadros filtra por AÑO: suman la ventana entera, igual que los cuadros del
+  # tablero (ver `selectores.anio.que_controla`). El popup sigue al PRODUCTO de la página y a
+  # nada más.
+  mas-informacion:
+    titulo: "Más información"
+    # F72 y F80: el mismo mapa con dos medidas. JC ya anticipa que van a dibujar la misma
+    # mancha ("en resumen será idéntico al de volumen porque tiene valores constantes"): la
+    # superficie estimada son los kilos de las DTV sobre un rendimiento fijo por producto. Se
+    # emiten igual los dos porque son dos bloques distintos de su lista y cada uno habla en su
+    # unidad.
+    mapas:
+      titulo:
+        peso_tn: "{Producto} - Sgo del Estero - DTV Envíos - tn por Dto. de origen - Años {desde} a {hasta}"
+        superficie_estimada_ha: "{Producto} - Sgo del Estero - Estimación superficies cosechadas en base a datos DTV (ha) - Años {desde} a {hasta}"
+      # La rampa NO se declara acá: la decide el tipo de variable de la medida, que ya está
+      # en `_comunes-dtv-hortalizas.presentacion.tipos_de_variable` (peso_tn es producción, o
+      # sea ocre; superficie_estimada_ha es superficie, o sea verde). Son las tres rampas que
+      # dibujó JC en su hoja "Agri 1" y valen para todos los mapas de calor del sitio.
+      rotulo_total: "Total provincial"
+      rotulos_departamento: true
+      sin_datos: >
+        Ningún departamento registra DTV de este producto en la ventana de años.
+    # F73: el MISMO cuadro de la provincia (bultos en barras, toneladas en línea), uno por
+    # departamento de origen con movimiento. Son pocos por definición: sólo hay DTV donde hubo
+    # movimiento registrado (7 departamentos en cebolla, 6 en batata, 4 en papa).
+    por_departamento:
+      titulo: "{Producto} - Sgo del Estero - Departamento {Departamento} - DTV Envíos - Cant {bultos} y tn por año"
+    # F74: los informes por tipo de movimiento. Dos tablas, que es lo que pide: la provincial y
+    # la departamental. SIN buscador y sin más grano que el año ("sin búsqueda, sólo resúmenes
+    # totales anuales"): son resúmenes, no un explorador de las DTV.
+    tipos_de_movimiento:
+      titulo_provincial: "{Producto} - Sgo del Estero - DTV Envíos por tipo de movimiento - Años {desde} a {hasta}"
+      titulo_departamental: "{Producto} - Sgo del Estero - DTV Envíos por tipo de movimiento y Dto. de origen - Años {desde} a {hasta}"
+      encabezado_tipo: "Tipo de movimiento"
+      encabezado_departamento: "Departamento de origen"
+      nota: >
+        El tipo de movimiento es el par origen-destino que declara la DTV (Producción -
+        Mercado, Acopiador - Minorista, y así). Es el eslabón de la cadena comercial en el que
+        se mueve la carga, no el medio de transporte.
 
   combo:
     # FORMA NUEVA en el catalogo de paneles (antes habia anillo, mapa, tendencia, top y

@@ -103,6 +103,9 @@ export type Vista = {
 // Con `accion` es un boton de verdad (la engancha comun.js); con `href` es un link; sin
 // ninguna de las dos queda deshabilitado con su `rotulo`.
 export type AccionDeCuadro = {
+  // Que bloque del popup "Más información" abre este boton, cuando el tablero tiene mas de
+  // uno (hoja "Agri 2": uno por columna). null en los tableros con un solo bloque.
+  variante?: string | null;
   id: string;
   etiqueta: string;
   flecha: boolean;
