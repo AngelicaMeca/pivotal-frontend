@@ -4,24 +4,28 @@
    Este componente dibuja la CASCARA de cada panel (titulo, pie) y deja los huecos marcados con
    data-*; los llena src/tableros/cliente/tablero.js con la combinacion de filtros elegida.
 
-   Las FORMAS de panel (anillo, mapa, tendencia, top, tabla-datos, combo, apiladas,
-   utilidades) son las mismas en todas las bases, a proposito: el protocolo de JC pide que los
-   formatos se repitan. Si aparece una forma nueva se agrega un bloque en CuerpoPanel y su
+   Las FORMAS de panel (anillo, mapa, tendencia, top, tabla-datos, combo, apiladas) son las
+   mismas en todas las bases, a proposito: el protocolo de JC pide que los formatos se
+   repitan. Si aparece una forma nueva se agrega un bloque en CuerpoPanel y su
    dibujante en tablero.js, una sola vez, y queda disponible para todas.
 
    Tres disposiciones (deciden los specs con `tablero.disposicion`, no este archivo):
      - "mockup" CON selector grande (zona `selector`): el tablero de cultivos extensivos,
-       CALCADO del mockup Modelo 2 de JC (tercera tanda del 10-ago-2026). Columna izquierda:
-       mapa GRANDE + UTILIDADES. Columna derecha: chips de cultivo, tarjeta de contexto + KPIs,
-       fila de graficos (tendencia | anillo) y fila de tablas (datos por campaña | ranking).
+       CALCADO de la hoja "Agri 1" de JC. Columna izquierda: el mapa GRANDE, el solo. Columna
+       derecha: chips de cultivo, tarjeta de contexto + KPIs, fila de graficos
+       (tendencia | anillo) y fila de tablas (datos por campaña | ranking), con las dos
+       acciones del pie SUELTAS debajo de la tabla de campañas ("Más información →" y
+       "Generar PDF"), alineadas a la derecha como las dibuja JC.
+       Los paneles "UTILIDADES" e "Información relacionada" del mockup Modelo 2 de agosto se
+       SACARON el 2-oct-2026: no estan en ninguna hoja de JC (Francisco, "apegate al 100% a
+       la estructura que plantea JC en las maquetas").
        SIN links "ver detalle": las unicas salidas son los botones de cabecera y el click del
        mapa.
      - "grilla-2x2": la maqueta "Agri 2" de JC (cultivos intensivos). Cuatro paneles en dos
        filas de a dos y nada mas. SIN indicadores (la maqueta va de los chips directo a los
-       paneles), SIN selector grande arriba -los chips de producto viven ADENTRO de los dos
-       paneles que los dibuja JC, manejados por el mismo filtro- y SIN tira de utilidades al
-       final: "Más información →" y "Generar PDF" son el pie de cada cuadro
-       (Francisco, 23-sep-2026).
+       paneles) y SIN selector grande arriba: los chips de producto viven ADENTRO de los dos
+       paneles que los dibuja JC, manejados por el mismo filtro. Ahi "Más información →" y
+       "Generar PDF" son el pie de CADA cuadro (Francisco, 23-sep-2026), no una tira suelta.
      - SIN selector: grilla de 12 columnas con `data-ancho`/`data-alto` del spec (hacienda,
        stock), con los indicadores arriba y "Ver detalle" donde el spec lo declare.
 
@@ -410,25 +414,6 @@ function PanelMockup({ panel, filtro }: { panel: Panel; filtro?: Filtro }) {
   );
 }
 
-/* "Información relacionada (abre en nueva ventana)": panel ESTATICO del mockup, dibujado con
-   sus links deshabilitados y "Próximamente" (cuarta tanda). Sin data-panel: no muestra datos,
-   tablero.js no lo toca y no lleva pie de fuente. */
-function PanelInformacion({ panel }: { panel: Panel }) {
-  return (
-    <section className="panel panel-info">
-      <h2 className="info-titulo">{panel.titulo}</h2>
-      <ul className="info-items">
-        {(panel.items || []).map((item) => (
-          <li key={item.etiqueta} className="info-item" title="Próximamente">
-            <span className="info-nombre">{item.etiqueta}</span>
-            <span className="prox">Próximamente</span>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
 /* Panel con filtros y datos PROPIOS: hoy es uno solo, el cuadro de precios del MCBA que JC
    dibuja en su maqueta "Agri 2" (chart8), alimentado por la base 8.
 
@@ -553,41 +538,6 @@ function PanelPrecios({ panel }: { panel: Panel }) {
    `accion` es un boton de verdad, que engancha comun.js por su data-utilidad (hoy solo
    "Exportar como PDF"); sin `accion` queda deshabilitado con "Proximamente" (Asistente IA).
    En el mockup los paneles no declaran ancho/alto; en la grilla generica los declara el spec. */
-function PanelUtilidades({ panel }: { panel: Panel }) {
-  return (
-    <section
-      className="panel panel-utilidades"
-      data-ancho={panel.ancho ?? ""}
-      data-alto={panel.alto ?? ""}
-    >
-      <h2 className="utilidades-titulo">{panel.titulo}</h2>
-      <div className="utilidades-items">
-        {(panel.items || []).map((item) =>
-          item.accion ? (
-            <button
-              key={item.etiqueta}
-              type="button"
-              className="utilidad utilidad-activa"
-              data-utilidad={item.accion}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={item.icono} alt="" />
-              <span className="utilidad-nombre">{item.etiqueta}</span>
-            </button>
-          ) : (
-            <span key={item.etiqueta} className="utilidad" title="Próximamente">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={item.icono} alt="" />
-              <span className="utilidad-nombre">{item.etiqueta}</span>
-              <span className="prox">Próximamente</span>
-            </span>
-          ),
-        )}
-      </div>
-    </section>
-  );
-}
-
 function SelectorCultivo({ filtro }: { filtro: Filtro }) {
   return (
     <div className="panel panel-selector">
@@ -638,7 +588,13 @@ function SelectorCultivo({ filtro }: { filtro: Filtro }) {
 }
 
 export default function Tablero({ pagina }: { pagina: PaginaTablero }) {
-  const { tablero, paneles, filtros_panel: filtros, filtro_selector: selector } = pagina;
+  const {
+    tablero,
+    paneles,
+    filtros_panel: filtros,
+    filtro_selector: selector,
+    acciones_tablero: accionesDelPie,
+  } = pagina;
   const porId = Object.fromEntries(paneles.map((panel) => [panel.id, panel]));
 
   /* Las tarjetas de indicadores viven ARRIBA del tablero y solo en la disposicion generica
@@ -701,7 +657,6 @@ export default function Tablero({ pagina }: { pagina: PaginaTablero }) {
         >
           <div className="col-mapa">
             <PanelMockup panel={porId["mapa"]} filtro={filtros["mapa"]} />
-            <PanelUtilidades panel={porId["utilidades"]} />
           </div>
           <div className="col-datos">
             <SelectorCultivo filtro={selector} />
@@ -714,11 +669,15 @@ export default function Tablero({ pagina }: { pagina: PaginaTablero }) {
               <PanelMockup panel={porId["anillo"]} filtro={filtros["anillo"]} />
             </div>
             <div className="fila-tablero fila-tablas">
-              {/* La celda izquierda apila la tabla de campañas y "Información relacionada",
-                  como el mockup, y llena el hueco que dejaba la tabla sola */}
+              {/* La celda izquierda apila la tabla de campañas y, debajo, las dos acciones
+                  del pie SUELTAS y alineadas a la derecha, que es exactamente donde las
+                  dibuja JC en su hoja "Agri 1". No van adentro de ningun panel: en la maqueta
+                  no hay ninguna caja alrededor. */}
               <div className="pila-tablas">
                 <PanelMockup panel={porId["tabla-datos"]} filtro={filtros["tabla-datos"]} />
-                <PanelInformacion panel={porId["informacion-relacionada"]} />
+                <div className="acciones-tablero">
+                  <AccionesDeCuadro acciones={accionesDelPie} />
+                </div>
               </div>
               <PanelMockup panel={porId["top"]} filtro={filtros["top"]} />
             </div>
@@ -727,13 +686,9 @@ export default function Tablero({ pagina }: { pagina: PaginaTablero }) {
       ) : (
         // ---- Disposicion generica en grilla de 12 (hacienda, stock) ----
         <div className={clasesTablero("tablero")} id="tablero" data-datos={tablero.ruta_datos}>
-          {paneles.map((panel) =>
-            panel.id === "utilidades" ? (
-              <PanelUtilidades key={panel.id} panel={panel} />
-            ) : (
-              <PanelComun key={panel.id} panel={panel} filtro={filtros[panel.id]} />
-            ),
-          )}
+          {paneles.map((panel) => (
+            <PanelComun key={panel.id} panel={panel} filtro={filtros[panel.id]} />
+          ))}
         </div>
       )}
 

@@ -86,9 +86,20 @@ ETIQUETA_VARIABLE = {"sup_sembrada_ha": "Superficie sembrada",
 # toggle vive adentro del panel del mapa- y ese motivo se cayo solo: al sacar SEMBRADA del
 # mapa quedaron tres botones en vez de cuatro. La maqueta de JC no dice nada al respecto (su
 # mapa no tiene toggle), asi que no hay regla suya que lo ate.
-ETIQUETA_CORTA = {"sup_sembrada_ha": "Sembrada", "sup_cosechada_ha": "Cosechada",
+# 2-oct-2026 (Francisco, mirando el toggle: "ahi debe decir superficie"): la cosechada se
+# nombra por su TIPO DE VARIABLE y no por su recorte, que es como se nombran las otras dos.
+# "Cosechada" sola no decia de que, y los tres botones tienen que leerse como una misma
+# serie: Superficie / Produccion / Rendimiento. No se pierde precision: el rotulo completo
+# ("Superficie cosechada") viaja igual en el `aria-label` del boton -el `title` no sirve
+# para esto, lo usa comun.js para el motivo de una opcion sin datos-, y la sembrada no esta
+# en el mapa (regla de JC), asi que no hay con que confundirla.
+ETIQUETA_CORTA = {"sup_sembrada_ha": "Sembrada", "sup_cosechada_ha": "Superficie",
                   "produccion_tn": "Producción", "rendimiento_kg_ha": "Rendimiento"}
 NOMBRE_EJE = {"ha": "Hectáreas", "tn": "Toneladas", "kg/ha": "Kilos por hectárea", "%": "Porcentaje"}
+# Como se nombra la estacion DENTRO de un titulo de la seccion 5. JC la escribe en
+# mayusculas ("cartera de cultivos de VERANO"), que es lo unico que la distingue a simple
+# vista de la cartera de invierno cuando los dos cuadros estan uno al lado del otro.
+ESTACION_EN_TITULO = {"verano": "VERANO", "invierno": "INVIERNO"}
 ESTACIONES = {"verano": "Cultivos de verano", "invierno": "Cultivos de invierno",
               "todos": "Todos los cultivos"}
 
@@ -689,33 +700,13 @@ def copiar_iconos(escritor, theme):
                          pngs.sin_fondo(crudo, origen))
 
 
-# Acciones que el sitio sabe hacer desde el panel de UTILIDADES y desde el pie de cada cuadro
-# (las engancha src/tableros/cliente/comun.js). Un spec que declare otra cosa es un error de
-# protocolo: la regla es que no se dibujan botones que no hacen nada.
-#   exportar-pdf  imprime el tablero entero con la seleccion vigente (el PDF lo arma el navegador)
-#   zoom          abre ESE cuadro a pantalla completa, con sus controles en grande
-ACCIONES_UTILIDAD = ("exportar-pdf", "zoom")
-
-
-def item_utilidad(item):
-    """Un item del panel UTILIDADES, con su icono resuelto.
-
-    El item que declara `accion` se dibuja como boton de verdad; el que no la declara sigue
-    deshabilitado con "Proximamente" (excepcion acotada del backlog 33, hoy solo el Asistente
-    IA). El nombre de la accion se valida aca para que un spec no pueda pedir un boton que el
-    cliente no sabe atender.
-    """
-    accion = item.get("accion")
-    if accion is not None and accion not in ACCIONES_UTILIDAD:
-        raise pr.ErrorDeProtocolo(
-            "La utilidad %r declara la accion %r, que el sitio no sabe hacer. "
-            "Acciones disponibles: %s" % (item["id"], accion, ", ".join(ACCIONES_UTILIDAD)))
-    return dict(item, icono=ruta_icono("color", item["icono"]))
-
-
-# Paneles que NO llevan el pie de acciones aunque el tablero lo declare: los estaticos, que
-# no son cuadros de datos (la tira de utilidades y la lista de informacion relacionada).
-PANELES_SIN_PIE_DE_ACCIONES = ("utilidades", "informacion-relacionada")
+# Acciones que el sitio sabe hacer desde el pie de un cuadro y desde la tira suelta del pie
+# del tablero (las engancha src/tableros/cliente/comun.js). Un spec que declare otra cosa es un
+# error de protocolo: la regla es que no se dibujan botones que no hacen nada.
+#   exportar-pdf     imprime el tablero entero con la seleccion vigente (el PDF lo arma el navegador)
+#   zoom             abre ESE cuadro a pantalla completa, con sus controles en grande
+#   mas-informacion  abre el popup con la seccion 5 de la maqueta (bloques 5.1 a 5.4)
+ACCIONES_UTILIDAD = ("exportar-pdf", "zoom", "mas-informacion")
 
 
 def accion_de_cuadro(item, destino, url_de, slug_tablero, id_panel):
@@ -5374,6 +5365,216 @@ def panel_top_sembrada(ctx, spec, campania, cultivos, todos, pie):
     }
 
 
+def _info_columnas_campania(ctx, encabezado):
+    """Las columnas de una tabla resumen: el rotulo de la primera y una por campaña."""
+    columnas = [{"etiqueta": encabezado, "num": False}]
+    for campania in ctx.ventana:
+        columnas.append({"etiqueta": campania, "num": True})
+    return columnas
+
+
+def _info_cartera(ctx, spec, geo, estacion, porcentual, pie):
+    """Un bloque 5.1 / 5.2: produccion por cartera de cultivos de una estacion, apilada por
+    campaña, en toneladas o en porcentaje, con su tabla resumen debajo.
+
+    Es el cuadro que JC dibuja en la seccion 5 de su hoja "Agri 1" ("Evolucion de la produccion
+    por cartera de cultivos de VERANO"). Se emite con el contrato de la forma `apiladas` del
+    tablero, que el navegador ya sabe dibujar: no hace falta una forma nueva.
+
+    Verano e invierno van SEPARADOS porque comparten lote: sumarlos contaria las mismas
+    hectareas dos veces (regla de JC, nota `verano-invierno` de _comunes-base-9).
+    """
+    hechos = ctx.hechos
+    declarado = spec["paneles"]["mas-informacion"]["cartera"]
+    medida = "produccion_tn"
+    nivel = hechos.nivel(geo)
+    visibles = set(cultivos_visibles(ctx))
+    lista = [c for c in cultivos_con_datos(ctx)
+             if hechos.estacion.get(c, "verano") == estacion]
+    crudos, totales = {}, [0.0] * len(ctx.ventana)
+    for cultivo in lista:
+        valores, _ = serie_por_campania(ctx, geo, cultivo, medida, ctx.ventana)
+        if all(v is None for v in valores):
+            continue
+        crudos[cultivo] = valores
+        for i, valor in enumerate(valores):
+            totales[i] += valor or 0.0
+    plantilla = declarado["titulo_porcentual"] if porcentual else declarado["titulo_absoluto"]
+    titulo = titulo_literal(plantilla, Estacion=ESTACION_EN_TITULO[estacion],
+                            Area=_info_area(ctx, geo),
+                            desde=ctx.ventana[0], hasta=ctx.ventana[-1])
+    if not crudos:
+        return panel_vacio(titulo, "No hay producción informada de estos cultivos.")
+    series, filas = [], []
+    for cultivo in sorted(crudos, key=pr.clave_alfabetica):
+        if cultivo not in visibles:
+            continue
+        valores = crudos[cultivo]
+        if porcentual:
+            puntos = [0.0 if v is None or not totales[i] else v / totales[i] * 100
+                      for i, v in enumerate(valores)]
+            textos = [pr.fmt_pct(v, 1) if v else "S/D" for v in puntos]
+        else:
+            puntos = [v if v is not None else 0.0 for v in valores]
+            textos = [ctx.precision.texto(v, medida, nivel) + " " + UNIDAD[medida]
+                      if v is not None else "S/D" for v in valores]
+        series.append({"nombre": hechos.cultivo_para_titulo(cultivo),
+                       "color": ctx.color_cultivo[cultivo],
+                       "puntos": puntos, "textos": textos})
+        filas.append({"celdas": [hechos.cultivo_para_titulo(cultivo)] + textos})
+    if not series:
+        return panel_vacio(titulo, "Ningún cultivo del catálogo tiene datos en esta estación.")
+    if porcentual:
+        eje = ctx._con_etiquetas(pr.marcas_eje(0, 100), "%", 0, "%")
+        subtitulo = declarado["subtitulo_porcentual"]
+        total_fila = ["100,0%"] * len(ctx.ventana)
+    else:
+        eje = ctx.eje(totales, UNIDAD[medida])
+        subtitulo = ctx.subtitulo_unidad(UNIDAD[medida])
+        total_fila = [ctx.precision.texto(v, medida, nivel) for v in totales]
+    return {
+        "titulo": titulo,
+        "subtitulo": subtitulo,
+        "pie": pie,
+        "x": [c[2:4] + "/" + c[5:7] for c in ctx.ventana],
+        "etiquetas": list(ctx.ventana),
+        "series": series,
+        "totales": [ctx.precision.texto(v, medida, nivel) + " " + UNIDAD[medida]
+                    for v in totales],
+        "eje": eje,
+        # La tabla resumen DEBAJO del grafico: JC lo pide explicito en su hoja ("Debajo de cada
+        # grafico la tabla resumen"). Una fila por cultivo, una columna por campaña, con el
+        # total de la estacion primero y marcado.
+        "tabla": {"columnas": _info_columnas_campania(ctx,
+                                                      declarado["encabezado_primera_columna"]),
+                  "filas": [{"celdas": ["Total " + ESTACION_EN_TITULO[estacion].lower()]
+                             + total_fila, "actual": True}] + filas},
+    }
+
+
+def _info_prod_rendimiento(ctx, spec, geo, cultivo, pie):
+    """El bloque 5.3: produccion (barras) y rendimiento (linea), para UN cultivo.
+
+    "Muestra el impacto del Rendimiento", escribe JC al lado de su grafico. Son dos unidades
+    distintas, asi que van dos ejes rotulados: la regla de siempre (nunca dos escalas sobre el
+    mismo eje).
+    """
+    declarado = spec["paneles"]["mas-informacion"]["produccion_rendimiento"]
+    nivel = ctx.hechos.nivel(geo)
+    produccion, _ = serie_por_campania(ctx, geo, cultivo, "produccion_tn", ctx.ventana)
+    rendimiento, _ = serie_por_campania(ctx, geo, cultivo, "rendimiento_kg_ha", ctx.ventana)
+    titulo = titulo_literal(declarado["titulo"],
+                            Cultivo=ctx.hechos.cultivo_para_titulo(cultivo),
+                            Area=_info_area(ctx, geo),
+                            desde=ctx.ventana[0], hasta=ctx.ventana[-1])
+    if all(v is None for v in produccion) and all(v is None for v in rendimiento):
+        return panel_vacio(titulo, "No hay datos de este cultivo en esta área.")
+
+    def textos_de(valores, medida):
+        return [ctx.precision.texto(v, medida, nivel) + " " + UNIDAD[medida]
+                if v is not None else "S/D" for v in valores]
+
+    return {
+        "titulo": titulo,
+        "subtitulo": "",
+        "pie": pie,
+        "x": [c[2:4] + "/" + c[5:7] for c in ctx.ventana],
+        "etiquetas": list(ctx.ventana),
+        # El contrato de la forma `combo` del tablero: una serie de BARRAS y una de LINEA,
+        # cada una con su eje. No es una lista `series` generica.
+        "barras": {"nombre": ETIQUETA_VARIABLE["produccion_tn"],
+                   "color": ctx.colores.solido("produccion_tn"),
+                   "puntos": list(produccion),
+                   "textos": textos_de(produccion, "produccion_tn")},
+        "linea": {"nombre": ETIQUETA_VARIABLE["rendimiento_kg_ha"],
+                  "color": ctx.colores.solido("rendimiento_kg_ha"),
+                  "puntos": list(rendimiento),
+                  "textos": textos_de(rendimiento, "rendimiento_kg_ha")},
+        "eje": ctx.eje([v for v in produccion if v is not None], UNIDAD["produccion_tn"]),
+        "eje2": ctx.eje([v for v in rendimiento if v is not None],
+                        UNIDAD["rendimiento_kg_ha"]),
+        "tabla": {"columnas": _info_columnas_campania(
+            ctx, declarado["encabezado_primera_columna"]), "filas": [
+                {"celdas": [ETIQUETA_VARIABLE["produccion_tn"]]
+                 + [ctx.precision.texto(v, "produccion_tn", nivel) for v in produccion]},
+                {"celdas": [ETIQUETA_VARIABLE["rendimiento_kg_ha"]]
+                 + [ctx.precision.texto(v, "rendimiento_kg_ha", nivel) for v in rendimiento]},
+        ]},
+    }
+
+
+def _info_rankings(ctx, spec, pie):
+    """El bloque 5.4: los rankings por departamento. SOLO a nivel provincial, que es como lo
+    acota JC: "RANKINGS POR DEPARTAMENTO - ESTO SOLO EN EL AREA PROVINCIAL"."""
+    declarado = spec["paneles"]["mas-informacion"]["rankings"]
+    campania = ctx.campania_defecto
+    cultivos = cultivos_con_datos(ctx)
+    salida = []
+    for medida in declarado["medidas"]:
+        filas = []
+        for geo in ctx.hechos.deptos:
+            valor = medida_provincial(ctx, campania, cultivos, medida, [geo])
+            if valor is not None:
+                filas.append((valor, ctx.hechos.nombre[geo]))
+        if not filas:
+            continue
+        filas.sort(key=lambda f: (-f[0], pr.clave_alfabetica(f[1])))
+        salida.append({
+            "titulo": titulo_literal(declarado["titulo"],
+                                     Variable=ETIQUETA_VARIABLE[medida], campania=campania),
+            "subtitulo": ctx.subtitulo_unidad(UNIDAD[medida]),
+            "pie": pie,
+            "columnas": [{"etiqueta": "Puesto", "num": False},
+                         {"etiqueta": "Departamento", "num": False},
+                         {"etiqueta": ETIQUETA_VARIABLE[medida], "num": True}],
+            "filas": [{"celdas": [str(i + 1) + "\u00b0", nombre,
+                                  ctx.precision.texto(valor, medida, "departamento")]}
+                      for i, (valor, nombre) in enumerate(filas)],
+        })
+    return salida
+
+
+def _info_area(ctx, geo):
+    """Como se nombra el area en los titulos de la seccion 5."""
+    if geo == "provincia":
+        return "Total"
+    return "Departamento " + ctx.hechos.nombre[geo]
+
+
+def capa_mas_informacion(ctx, spec, pie):
+    """La seccion 5 de la maqueta de JC, por area geografica.
+
+    Que es: "Se refiere a la ampliacion de graficos y datos, tanto provinciales como
+    departamentales. NO CONTIENE OPCIONES DE SELECCION, ES ESTATICO". Cuatro bloques:
+    5.1 cartera de verano (en tn y en %), 5.2 lo mismo de invierno, 5.3 el impacto del
+    rendimiento del cultivo elegido y 5.4 los rankings por departamento, que van SOLO en el
+    area provincial.
+
+    Por que en archivos aparte, uno por area: es contenido que solo se mira cuando se abre el
+    popup y meterlo en el payload del tablero lo haria pesar de mas para todos. Mismo criterio
+    que la capa departamental y que el panel de precios.
+    """
+    capa = {}
+    for geo in ["provincia"] + list(ctx.hechos.deptos):
+        bloques = []
+        for estacion in ["verano", "invierno"]:
+            bloques.append({"id": estacion + "-tn", "forma": "apiladas",
+                            "panel": _info_cartera(ctx, spec, geo, estacion, False, pie)})
+            bloques.append({"id": estacion + "-pct", "forma": "apiladas",
+                            "panel": _info_cartera(ctx, spec, geo, estacion, True, pie)})
+        por_cultivo = {}
+        for cultivo in cultivos_visibles(ctx):
+            por_cultivo[cultivo] = _info_prod_rendimiento(ctx, spec, geo, cultivo, pie)
+        capa[geo] = {
+            "nombre": _info_area(ctx, geo),
+            "bloques": bloques,
+            "produccion_rendimiento": por_cultivo,
+            # Los rankings son provinciales por regla de JC: en un departamento no se dibujan.
+            "rankings": _info_rankings(ctx, spec, pie) if geo == "provincia" else [],
+        }
+    return capa
+
+
 def construir_tablero_cultivos(ctx, spec):
     """El tablero del mockup Modelo 2 de JC, LITERAL (tercera tanda del 10-ago-2026,
     reconstruido de cero tras el rechazo del commit 41df326): tarjeta de contexto, KPIs sin
@@ -5400,8 +5601,8 @@ def construir_tablero_cultivos(ctx, spec):
          "opciones": opciones_cultivo,
          "defecto": spec["selectores"]["cultivo"]["default"]},
         filtro_campania(ctx),
-        # El toggle vive DENTRO del panel del mapa y compite por lugar con el titulo: va con
-        # rotulos cortos ("Prod." y no "Producción"), como en el mockup.
+        # El toggle vive DENTRO del panel del mapa. Lleva el rotulo CORTO de cada variable
+        # (ETIQUETA_CORTA) y el largo viaja igual en el `title` del boton.
         {"id": "variable", "etiqueta": "Variable", "zona": "panel", "panel": "mapa",
          "opciones": [{"v": v, "t": ETIQUETA_VARIABLE[v], "corto": ETIQUETA_CORTA[v]}
                       for v in variables],
@@ -5442,6 +5643,7 @@ def construir_tablero_cultivos(ctx, spec):
                 }
     tablero["capa_departamental"] = capa_departamental_cultivos(ctx, spec, cultivos, etiquetas,
                                                                 pie)
+    tablero["capa_informacion"] = capa_mas_informacion(ctx, spec, pie)
     return tablero
 
 
@@ -6398,6 +6600,9 @@ def payload_json(vista):
         # El navegador baja el archivo del departamento elegido y superpone sus cuadros sobre
         # el combo provincial (ver `capa_departamental_cultivos`). None en todo lo demas.
         "capa_departamental": vista.get("indice_departamental"),
+        # El indice del popup "Mas informacion" (seccion 5 de la maqueta): {archivos, nombres}
+        # por area. El contenido se baja recien al abrir el popup.
+        "capa_informacion": vista.get("indice_informacion"),
         "combos": vista["combos"],
         # Las combinaciones que EXISTEN, ordenadas. Es lo que le permite al navegador apagar
         # las opciones sin datos sin bajar ninguna particion (protocolo,
@@ -6471,6 +6676,27 @@ def escribir_capa_departamental(escritor, tablero, carpeta_datos, ruta_publica, 
             # El texto del ultimo tramo de la miga ("Dto ALBERDI"): plantilla con un slot, que
             # el navegador sustituye. Es como lo escribe JC en su hoja "Agri 1 Dto".
             "miga": miga}
+
+
+def escribir_capa_informacion(escritor, tablero, carpeta_datos, ruta_publica):
+    """Un archivo por area con el contenido del popup "Mas informacion" (seccion 5).
+
+    Mismo criterio que la capa departamental y que el panel de precios: el navegador baja el
+    area que esta mirando y recien cuando abre el popup. El tablero no carga nada de esto para
+    dibujarse.
+    """
+    capa = tablero["capa_informacion"]
+    archivos, nombres = {}, {}
+    for geo in sorted(capa):
+        nombre = "%s/%s-info/%s.json" % (carpeta_datos, tablero["slug"], geo)
+        escritor.texto(nombre, json_determinista({
+            "bloques": capa[geo]["bloques"],
+            "produccion_rendimiento": capa[geo]["produccion_rendimiento"],
+            "rankings": capa[geo]["rankings"],
+        }))
+        archivos[geo] = "%s/%s-info/%s.json" % (ruta_publica, tablero["slug"], geo)
+        nombres[geo] = capa[geo]["nombre"]
+    return {"archivos": archivos, "nombres": nombres}
 
 
 def escribir_datos_precios(escritor, tablero, carpeta_datos, ruta_publica):
@@ -6895,6 +7121,9 @@ def escribir_sitio(ctx, vistas, tableros):
         seccion = next(s for s in secciones if s["id"] == tablero["seccion"])
         # La capa departamental se escribe ANTES que el payload: su indice viaja adentro
         # (`payload_json` lo lee de `tablero["indice_departamental"]`).
+        if tablero.get("capa_informacion"):
+            tablero["indice_informacion"] = escribir_capa_informacion(
+                escritor, tablero, "public/plataforma/data", PREFIJO + "/data")
         if tablero.get("capa_departamental"):
             seleccion = ((tablero["spec"].get("paneles") or {}).get("mapa") or {})                 .get("seleccion_departamento") or {}
             tablero["indice_departamental"] = escribir_capa_departamental(
@@ -6927,11 +7156,6 @@ def escribir_sitio(ctx, vistas, tableros):
             # combinacion (los pinta tablero.js desde el JSON).
             panel = dict(declarado, titulo=definicion.get("titulo", ""),
                          detalle=url_de[destino] if destino else None)
-            if declarado["id"] == "utilidades":
-                # Panel del Modelo 2 (backlog 33): iconos en variante color. El item que
-                # declara `accion` es un boton de verdad (hoy "Exportar como PDF"); el que no
-                # la declara sigue deshabilitado con "Proximamente" (Asistente IA).
-                panel["items"] = [item_utilidad(item) for item in definicion["items"]]
             if definicion.get("forma") == "precios":
                 # Panel con filtros PROPIOS y datos propios (precios del MCBA, base 8). Se
                 # dibuja como cualquier otro panel del tablero, pero su cascara y sus controles
@@ -6940,13 +7164,6 @@ def escribir_sitio(ctx, vistas, tableros):
                 panel["precios"] = precios
                 panel["pie"] = precios["pie"]
                 panel["subtitulo"] = definicion.get("subtitulo", "")
-            if declarado["id"] == "informacion-relacionada":
-                # Panel estatico del mockup, DIBUJADO con sus links deshabilitados y
-                # "Proximamente" (cuarta tanda, informacion_relacionada_se_dibuja: "tiene que
-                # estar aunque no lleve a ningun lado"). Misma excepcion acotada a la regla
-                # de botones muertos que utilidades y banderas; cada link se activa cuando
-                # entre su base (backlog 8).
-                panel["items"] = list(definicion["items"])
             # Pie de cuadro (maqueta "Agri 2", tercera vuelta): "Más información →" y
             # "Generar PDF" al pie de CADA panel, no en una tira de utilidades al final. Se
             # declara una sola vez en el spec y se le pega a todos los paneles de la grilla.
@@ -6954,11 +7171,12 @@ def escribir_sitio(ctx, vistas, tableros):
             # Dos lugares para declararlas, y no es lo mismo:
             #   `paneles.acciones_de_cuadro`  las que llevan TODOS los cuadros de ese tablero
             #                                 ("Más información" y "Generar PDF" de la maqueta)
+            #   `paneles.acciones_de_tablero` las que NO van en ningun cuadro: la tira suelta
+            #                                 del pie de la hoja "Agri 1" (ver mas abajo)
             #   `paneles.<id>.acciones`       las de ESE cuadro y nada mas. Es por donde entra
             #                                 el "Zoom" (Francisco, 24-sep-2026): un cuadro sin
-            #                                 grafico -la tabla de superficies, la lista de
-            #                                 informacion relacionada- no tiene nada que
-            #                                 ampliar y no lo declara. No se prende solo.
+            #                                 grafico -una tabla- no tiene nada que ampliar y no
+            #                                 lo declara. No se prende solo.
             # Las propias van DESPUES de las comunes: el "Zoom" queda al lado del "Generar PDF",
             # como en la maqueta de pasturas y forrajes de JC.
             # Cruzar datos: los dos controles que el zoom le pone a este cuadro, si su spec
@@ -6969,16 +7187,27 @@ def escribir_sitio(ctx, vistas, tableros):
                 definicion, tablero["filtros"], declarado["id"], tablero["slug"])
             comunes = tablero["paneles"].get("acciones_de_cuadro") or []
             propias = definicion.get("acciones") or []
-            if (comunes or propias) and declarado["id"] not in PANELES_SIN_PIE_DE_ACCIONES:
+            if comunes or propias:
                 destinos = tablero["paneles"].get("destinos_de_mas_informacion") or {}
                 panel["acciones"] = [
                     accion_de_cuadro(item, destinos.get(declarado["id"], {}).get(item["id"]),
                                      url_de, tablero["slug"], declarado["id"])
                     for item in list(comunes) + list(propias)]
             paneles.append(panel)
+        # La tira SUELTA del pie de la hoja "Agri 1": "Más información →" y "Generar PDF",
+        # una debajo de la otra y alineadas a la derecha, abajo de la tabla de campañas. No
+        # van adentro de ningun panel porque en la maqueta no hay ninguna caja alrededor: el
+        # panel "UTILIDADES" que las contenia (y el de "Información relacionada") se sacaron
+        # el 2-oct-2026 porque no estan en ninguna hoja de JC. Se arman con el mismo
+        # `accion_de_cuadro` que el pie de los cuadros de la hoja "Agri 2": misma validacion
+        # de la accion, mismo contrato para el sitio.
+        acciones_tablero = [
+            accion_de_cuadro(item, None, url_de, tablero["slug"], "(pie del tablero)")
+            for item in tablero["paneles"].get("acciones_de_tablero") or []]
         escribir_pagina("%s/index" % seccion["url"], pagina(
             "tablero",
             tablero=tablero_para_pagina(tablero), paneles=paneles,
+            acciones_tablero=acciones_tablero,
             terminos_datos=tablero.get("terminos") or (),
             miga=miga_de_tablero(seccion, tablero["spec"]),
             filtros_panel=filtros_por_panel(tablero["filtros"]),
@@ -7058,7 +7287,7 @@ def escribir_sitio(ctx, vistas, tableros):
         titulo_pestania=theme["titulo_sitio"]))
 
     # Iconos: al deploy van SOLO los que el sitio usa (los referencio algun filtro, la tarjeta
-    # de contexto o el panel de utilidades). El catalogo completo queda en site/assets/iconos/.
+    # de contexto o una accion del pie). El catalogo completo queda en site/assets/iconos/.
     copiar_iconos(escritor, theme)
 
     return escritor

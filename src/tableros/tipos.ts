@@ -190,6 +190,10 @@ export type PaginaTablero = Comun & {
   paneles: Panel[];
   filtros_panel: Record<string, Filtro>;
   filtro_selector: Filtro | null;
+  // Las acciones SUELTAS del pie de la hoja "Agri 1" ("Más información →" y "Generar PDF").
+  // No cuelgan de ningun panel: en la maqueta de JC no hay ninguna caja alrededor. Los
+  // tableros que no las declaran (hacienda, stock) mandan la lista vacia.
+  acciones_tablero: AccionDeCuadro[];
 };
 
 export type Ficha = {

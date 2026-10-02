@@ -891,21 +891,26 @@ export default function crearPivotal() {
        hay que darles a mano es el enganche del click (escucharControl) y el dibujo del valor
        vigente (dibujarValor), que cloneNode no copia en un <select>.
      - Abre y cierra ANIMADO: el cuadro crece desde donde estaba y vuelve a su lugar. Esta
-       abajo, en moverCaja(). */
+       abajo, en el animador de dialogos (animadorDeDialogo). */
   var zoom = { dialogo: null, caja: null, marco: null, controles: null, panel: null,
-               hueco: null, tituloPropio: null, fin: null, cerrando: false,
-               base: null, comparar: null, dondeComparar: null };
+               hueco: null, tituloPropio: null, cerrando: false, anim: null,
+               comparar: null, dondeComparar: null };
 
-  /* -------- la animacion de apertura y cierre (Francisco, 24-sep-2026) --------
-     Aparecia de golpe. Ahora el cuadro CRECE desde donde estaba hasta la pantalla y al cerrar
+  /* -------- la animacion de apertura y cierre de un <dialog> (Francisco, 24-sep-2026) ------
+     Aparecia de golpe. Ahora la caja CRECE desde donde estaba hasta la pantalla y al cerrar
      VUELVE A SU LUGAR, que es el gesto que hace entender de donde salio y a donde vuelve.
 
-     Como: se mide el rectangulo del panel antes de mudarlo (el mismo con el que se le fija el
-     alto al hueco) y se anima la caja del dialogo DESDE ese rectangulo HASTA la pantalla
-     entera, con `transform` y nada mas. Dos motivos: es lo unico que el navegador mueve sin
-     rehacer la pagina en cada cuadro, y -mas importante aca- el transform NO cambia el
-     layout, asi que la caja mide lo mismo que a pantalla completa desde el primer cuadro y
-     ningun grafico llega a medir una caja intermedia. Animar alto/ancho romperia justo eso.
+     Como: se mide el rectangulo de donde sale (el panel, en el zoom; el boton, en el popup) y
+     se anima la caja del dialogo DESDE ese rectangulo HASTA la pantalla entera, con
+     `transform` y nada mas. Dos motivos: es lo unico que el navegador mueve sin rehacer la
+     pagina en cada cuadro, y -mas importante aca- el transform NO cambia el layout, asi que la
+     caja mide lo mismo que a pantalla completa desde el primer cuadro y ningun grafico llega a
+     medir una caja intermedia. Animar alto/ancho romperia justo eso.
+
+     Esto es una FABRICA porque lo usan DOS dialogos: el zoom de un cuadro y el popup "Mas
+     informacion" (Francisco, 2-oct-2026: "la misma animacion que el zoom"). El gesto es el
+     mismo, asi que vive una sola vez. Cada dialogo trae su caja y el prefijo de sus dos clases
+     de estado -`<prefijo>-animando` y `<prefijo>-visible`-, que es lo unico que cambia.
 
      La duracion y la curva estan en el CSS (--zoom-dur); ZOOM_MS es el mismo numero, que aca
      se necesita para la red de seguridad del transitionend. Si se cambia uno, se cambia el
@@ -917,85 +922,114 @@ export default function crearPivotal() {
               window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   }
 
-  /* El rectangulo que ocupa la caja del dialogo cuando NO tiene transform puesto, que es el
-     destino real de la animacion. Se mide y se guarda al abrir, y se vuelve a medir cada vez
-     que la caja esta quieta (por si cambio el tamanio de la ventana con el zoom abierto).
-     Durante una animacion no se mide: ahi getBoundingClientRect devuelve el rectangulo YA
-     transformado, que es justamente lo que no se busca. */
-  function baseDeLaCaja() {
-    if (!zoom.fin && getComputedStyle(zoom.caja).transform === "none") {
-      zoom.base = zoom.caja.getBoundingClientRect();
+  function animadorDeDialogo(dialogo, caja, prefijo) {
+    var est = { base: null, fin: null };
+    var ANIMANDO = prefijo + "-animando";
+    var VISIBLE = prefijo + "-visible";
+
+    /* El rectangulo que ocupa la caja cuando NO tiene transform puesto, que es el destino real
+       de la animacion. Se mide y se guarda al abrir, y se vuelve a medir cada vez que la caja
+       esta quieta (por si cambio el tamanio de la ventana con el dialogo abierto). Durante una
+       animacion no se mide: ahi getBoundingClientRect devuelve el rectangulo YA transformado,
+       que es justamente lo que no se busca. */
+    function baseDeLaCaja() {
+      if (!est.fin && getComputedStyle(caja).transform === "none") {
+        est.base = caja.getBoundingClientRect();
+      }
+      return est.base;
     }
-    return zoom.base;
-  }
 
-  /* El transform que encoge la caja del dialogo hasta el rectangulo `r` de la pantalla. Con
-     transform-origin en 0 0: primero se lleva la esquina superior izquierda a su lugar y
-     despues se escala.
-     Se calcula contra la CAJA y no contra la ventana. Desde que el dialogo lleva un marco de
-     fondo (el `padding: 2vmin` que hace clickeable el afuera), la caja ya no mide lo mismo
-     que la ventana ni arranca en su esquina: con las medidas de la ventana el cuadro
-     terminaba corrido y escalado de menos, justo en el cuadro final de la animacion. */
-  function encajarEn(r) {
-    var c = baseDeLaCaja();
-    return "translate(" + (r.left - c.left) + "px," + (r.top - c.top) + "px) scale(" +
-           (Math.max(r.width, 1) / Math.max(c.width, 1)) + "," +
-           (Math.max(r.height, 1) / Math.max(c.height, 1)) + ")";
-  }
+    /* El transform que encoge la caja hasta el rectangulo `r` de la pantalla. Con
+       transform-origin en 0 0: primero se lleva la esquina superior izquierda a su lugar y
+       despues se escala.
+       Se calcula contra la CAJA y no contra la ventana. Desde que el dialogo lleva un marco de
+       fondo (el `padding: 2vmin` que hace clickeable el afuera), la caja ya no mide lo mismo
+       que la ventana ni arranca en su esquina: con las medidas de la ventana el cuadro
+       terminaba corrido y escalado de menos, justo en el cuadro final de la animacion. */
+    function encajarEn(r) {
+      var c = baseDeLaCaja();
+      return "translate(" + (r.left - c.left) + "px," + (r.top - c.top) + "px) scale(" +
+             (Math.max(r.width, 1) / Math.max(c.width, 1)) + "," +
+             (Math.max(r.height, 1) / Math.max(c.height, 1)) + ")";
+    }
 
-  /* Corta la animacion en curso: la caja queda donde iba a terminar (el valor final ya esta
-     escrito en el estilo en linea). Con `cancelar` se saltea su remate -el repintado-, porque
-     el movimiento que la interrumpe va a hacer el suyo al final. */
-  function cortarAnimacion(cancelar) {
-    if (zoom.fin) { zoom.fin(cancelar); }
-  }
+    /* Vuelve a medir la caja LIMPIA. Se llama justo despues de showModal(): al cerrar quedo
+       con el transform de vuelta escrito en linea y sin este borrado se mediria el rectangulo
+       encogido de la apertura anterior. */
+    function remedir() {
+      caja.style.transition = "none";
+      caja.style.transform = "none";
+      est.base = caja.getBoundingClientRect();
+    }
 
-  /* Lleva la caja de `desde` a `hasta`. `visible` prende o apaga el fondo oscuro.
-     `alFin` corre CUANDO LA GEOMETRIA SE ASENTO, nunca durante: ahi adentro va el repintado
-     de los graficos, y un repintado a mitad de camino dejaria al mapa calculado con una caja
-     que no es la final.
+    /* Corta la animacion en curso: la caja queda donde iba a terminar (el valor final ya esta
+       escrito en el estilo en linea). Con `cancelar` se saltea su remate -el repintado-,
+       porque el movimiento que la interrumpe va a hacer el suyo al final. */
+    function cortar(cancelar) {
+      if (est.fin) { est.fin(cancelar); }
+    }
 
-     El orden de las tres lineas del medio no es decorativo: se escribe el estado INICIAL sin
-     transicion, se fuerza un reflow para que el navegador lo registre, y recien despues se
-     pide el final. Sin ese reflow el navegador ve un solo cambio de estilo y no hay nada que
-     animar. Y es la unica manera de que el ::backdrop -que nace junto con showModal()- tenga
-     un estado anterior del que partir. */
-  function moverCaja(desde, hasta, visible, alFin) {
-    var caja = zoom.caja;
-    cortarAnimacion(true);
-    if (sinMovimiento()) {
-      zoom.dialogo.classList.toggle("zoom-visible", visible);
+    /* Lleva la caja de `desde` a `hasta`. `visible` prende o apaga el fondo oscuro.
+       `alFin` corre CUANDO LA GEOMETRIA SE ASENTO, nunca durante: ahi adentro va el repintado
+       de los graficos, y un repintado a mitad de camino dejaria al mapa calculado con una caja
+       que no es la final.
+
+       El orden de las tres lineas del medio no es decorativo: se escribe el estado INICIAL sin
+       transicion, se fuerza un reflow para que el navegador lo registre, y recien despues se
+       pide el final. Sin ese reflow el navegador ve un solo cambio de estilo y no hay nada que
+       animar. Y es la unica manera de que el ::backdrop -que nace junto con showModal()- tenga
+       un estado anterior del que partir. */
+    function mover(desde, hasta, visible, alFin) {
+      cortar(true);
+      if (sinMovimiento()) {
+        dialogo.classList.toggle(VISIBLE, visible);
+        caja.style.transform = hasta;
+        alFin();
+        return;
+      }
+      dialogo.classList.add(ANIMANDO);
+      caja.style.transition = "none";
+      caja.style.transform = desde;
+      dialogo.classList.toggle(VISIBLE, !visible);
+      void caja.offsetWidth;
+      dialogo.classList.toggle(VISIBLE, visible);
+      caja.style.transition = "";
       caja.style.transform = hasta;
-      alFin();
-      return;
-    }
-    zoom.dialogo.classList.add("zoom-animando");
-    caja.style.transition = "none";
-    caja.style.transform = desde;
-    zoom.dialogo.classList.toggle("zoom-visible", !visible);
-    void caja.offsetWidth;
-    zoom.dialogo.classList.toggle("zoom-visible", visible);
-    caja.style.transition = "";
-    caja.style.transform = hasta;
 
-    var reloj = null;
-    var terminar = function (cancelado) {
-      if (zoom.fin !== terminar) { return; }
-      zoom.fin = null;
-      clearTimeout(reloj);
-      caja.removeEventListener("transitionend", alTerminar);
-      zoom.dialogo.classList.remove("zoom-animando");
-      if (!cancelado) { alFin(); }
-    };
-    var alTerminar = function (evento) {
-      if (evento.target === caja && evento.propertyName === "transform") { terminar(false); }
-    };
-    caja.addEventListener("transitionend", alTerminar);
-    /* Red de seguridad por tiempo: hay casos en que el aviso no llega (transicion
-       interrumpida, pestania en segundo plano, un navegador que decide no animar). El
-       repintado tiene que ocurrir igual. */
-    reloj = setTimeout(function () { terminar(false); }, ZOOM_MS + 150);
-    zoom.fin = terminar;
+      var reloj = null;
+      var porTiempo = false;
+      var terminar = function (cancelado) {
+        if (est.fin !== terminar) { return; }
+        est.fin = null;
+        clearTimeout(reloj);
+        caja.removeEventListener("transitionend", alTerminar);
+        dialogo.classList.remove(ANIMANDO);
+        /* Si llegamos por la red de seguridad y no por el aviso del navegador, la caja puede
+           haber quedado A MITAD DE CAMINO: una pestania en segundo plano no avanza las
+           transiciones, y ahi el dialogo queda encogido sobre el boton del que salio, o sea
+           practicamente invisible. Se la planta en su valor final. Se pierde el gesto, no el
+           resultado: es la misma regla que ya costo cara con la animacion de opacidad del
+           popup (una animacion no puede decidir si algo se ve o no). */
+        if (porTiempo && !cancelado) {
+          caja.style.transition = "none";
+          caja.style.transform = hasta;
+          void caja.offsetWidth;
+          caja.style.transition = "";
+        }
+        if (!cancelado) { alFin(); }
+      };
+      var alTerminar = function (evento) {
+        if (evento.target === caja && evento.propertyName === "transform") { terminar(false); }
+      };
+      caja.addEventListener("transitionend", alTerminar);
+      /* Red de seguridad por tiempo: hay casos en que el aviso no llega (transicion
+         interrumpida, pestania en segundo plano, un navegador que decide no animar). El
+         repintado tiene que ocurrir igual, y la caja tiene que terminar donde iba. */
+      reloj = setTimeout(function () { porTiempo = true; terminar(false); }, ZOOM_MS + 150);
+      est.fin = terminar;
+    }
+
+    return { encajarEn: encajarEn, mover: mover, cortar: cortar, remedir: remedir };
   }
 
   function crearDialogo() {
@@ -1003,6 +1037,7 @@ export default function crearPivotal() {
     dialogo.className = "zoom";
     var caja = document.createElement("div");
     caja.className = "zoom-caja";
+    zoom.anim = animadorDeDialogo(dialogo, caja, "zoom");
     var barra = document.createElement("div");
     barra.className = "zoom-barra";
     var controles = document.createElement("div");
@@ -1139,16 +1174,14 @@ export default function crearPivotal() {
     /* La geometria de destino de la animacion, medida con la caja LIMPIA: al cerrar quedo con
        el transform de vuelta escrito en linea y sin este borrado se mediria el rectangulo
        encogido de la apertura anterior. */
-    zoom.caja.style.transition = "none";
-    zoom.caja.style.transform = "none";
-    zoom.base = zoom.caja.getBoundingClientRect();
+    zoom.anim.remedir();
     /* Los graficos se redimensionan ACA, antes de que la caja se empiece a mover, y no es una
        contradiccion con lo de arriba: el transform no toca el layout, asi que el panel ya mide
        lo que va a medir a pantalla completa y ECharts mide bien desde el primer cuadro. Lo que
        crece es entonces el dibujo definitivo y no el viejo estirado. El repintado completo
        -el que vuelve a calcular el mapa con el tamanio de su caja- va igual al final. */
     estado.graficos.forEach(function (g) { g.resize(); });
-    moverCaja(encajarEn(desde), "none", true, reacomodar);
+    zoom.anim.mover(zoom.anim.encajarEn(desde), "none", true, reacomodar);
   }
 
   /* Las tres maneras de cerrar (la cruz, el click afuera y Escape) pasan por aca. La caja
@@ -1165,7 +1198,8 @@ export default function crearPivotal() {
        matriz de este instante y la vuelta sigue desde ahi sin saltos. Hay que leerlo antes de
        cortar la animacion, que deja la caja en su valor final. */
     var desde = getComputedStyle(zoom.caja).transform;
-    moverCaja(desde, encajarEn(zoom.hueco.getBoundingClientRect()), false, function () {
+    var hasta = zoom.anim.encajarEn(zoom.hueco.getBoundingClientRect());
+    zoom.anim.mover(desde, hasta, false, function () {
       zoom.cerrando = false;
       zoom.dialogo.close();
       devolverPanel();
@@ -1176,7 +1210,7 @@ export default function crearPivotal() {
      cada panel en su celda ANTES de medir y de sacar las fotos de los graficos. */
   function cerrarZoomYa() {
     if (!zoom.panel) { return; }
-    cortarAnimacion(true);
+    zoom.anim.cortar(true);
     zoom.cerrando = false;
     zoom.dialogo.close();
     devolverPanel();
@@ -1353,6 +1387,14 @@ export default function crearPivotal() {
     vaciar: vaciar,
     tamanioMapa: tamanioMapa,
 
+    /* El payload de la pagina. Lo usa el popup "Mas informacion" para encontrar el indice de
+       su propia capa (`capa_informacion`). */
+    datos: function () { return estado.datos; },
+
+    /* Limpia el DIBUJO de un grafico sin vaciar su nodo: adentro vive el canvas de ECharts y
+       la instancia queda registrada contra ese nodo (ver `limpiarGrafico`). */
+    limpiarGrafico: limpiarGrafico,
+
     /* Registra un dibujo que NO sale de la combinacion de filtros de la pagina, para que se
        repinte junto con el resto (ver `refrescar`). */
     alRepintar: function (fn) { estado.extras.push(fn); },
@@ -1418,6 +1460,22 @@ export default function crearPivotal() {
     /* El departamento elegido y como cambiarlo. Lo usa el mapa del tablero: su clic ya no
        navega a otra pagina, cambia los datos de esta (ver "capa departamental"). */
     departamento: function () { return estado.dto; },
+
+    /* El valor vigente de un filtro, por id. Lo usa el popup "Mas informacion" para saber que
+       cultivo mostrar en su bloque 5.3. */
+    valorDeFiltro: valor,
+
+    /* Registra una accion de boton (`data-utilidad`) desde otro archivo. Existe para que el
+       popup "Mas informacion" pueda vivir en tablero.js, que es donde estan los dibujantes de
+       cada forma de cuadro, sin tener que traerlos a comun.js. El build valida los nombres
+       contra site_build.ACCIONES_UTILIDAD, asi que no hay botones sin dueño. */
+    registrarAccion: function (nombre, hacer) { ACCIONES[nombre] = hacer; },
+
+    /* El motor de la animacion de un <dialog>: la caja crece desde el rectangulo que se le
+       pase y vuelve ahi al cerrar. Lo usa el zoom de un cuadro y lo usa el popup "Mas
+       informacion", que vive en tablero.js. Se exporta para que el gesto sea UNO SOLO: dos
+       dialogos del mismo sitio no se pueden mover distinto (Francisco, 2-oct-2026). */
+    animadorDeDialogo: animadorDeDialogo,
     nombreDepartamento: nombreDepartamento,
     elegirDepartamento: elegirDepartamento,
 

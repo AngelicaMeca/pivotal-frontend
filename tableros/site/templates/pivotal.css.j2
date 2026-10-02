@@ -495,7 +495,6 @@ a { color: var(--enlace); }
   flex: 0 0 29%; min-width: 0; display: flex; flex-direction: column; gap: .55rem;
 }
 .tablero.con-selector > .col-mapa > .panel[data-panel="mapa"] { flex: 1 1 auto; min-height: 0; }
-.tablero.con-selector > .col-mapa > .panel-utilidades { flex: 0 0 auto; }
 .tablero.con-selector > .col-datos {
   flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: .55rem;
 }
@@ -508,17 +507,75 @@ a { color: var(--enlace); }
    derecho de campañas perdia su ultima columna. */
 .tablero.con-selector .fila-tablas { grid-template-columns: minmax(0, 12fr) minmax(0, 8fr); }
 .tablero.con-selector .fila-tablero > .panel { min-width: 0; }
-/* Celda izquierda de la fila de tablas: la tabla de campañas arriba y el panel estatico
-   "Información relacionada" debajo, como en el mockup. La pila LLENA la celda: es lo que
-   tapa el hueco en blanco que dejaba la tabla sola (cuarta tanda, proporciones_sin_huecos,
-   sin estirar nada: la tabla mide lo suyo y el panel de links completa el resto). */
+/* Celda izquierda de la fila de tablas: la tabla de campañas arriba y, debajo, las dos
+   acciones del pie SUELTAS, que es donde las dibuja JC en su hoja "Agri 1". La tabla se queda
+   con todo el alto y las acciones miden lo suyo.
+   Aca vivia el panel "Información relacionada" (y arriba, bajo el mapa, el de "UTILIDADES"):
+   se sacaron los dos el 2-oct-2026 porque no estan en ninguna hoja de JC. */
 .tablero.con-selector .pila-tablas {
-  display: flex; flex-direction: column; gap: .55rem; min-width: 0; min-height: 0;
+  display: flex; flex-direction: column; gap: .35rem; min-width: 0; min-height: 0;
 }
 .tablero.con-selector .pila-tablas > .panel[data-panel="tabla-datos"] {
   flex: 1 1 auto; min-height: 0;
 }
-.tablero.con-selector .pila-tablas > .panel-info { flex: 0 0 auto; }
+/* Las dos acciones del pie, en PILDORA (Francisco, 2-oct-2026: "hace estos dos botones mas
+   esteticos"). Antes eran dos renglones de versalita monoespaciada, apilados: se leian como
+   una nota al pie y no como dos cosas en las que se hace clic.
+   Que se conserva de la maqueta: el lugar (abajo de la tabla de campañas, alineados a la
+   derecha), el orden y las palabras de JC. Que cambia: van en una FILA y no uno debajo del
+   otro -con pildoras entran de sobra en el ancho de la celda y dos botones en fila se leen
+   como una barra de acciones, que es lo que son- y el texto va en caja normal, no en
+   versalita: la versalita es para los rotulos de dato, no para un boton.
+   Jerarquia: "Más información" es la accion principal de la pagina (abre la seccion 5 entera)
+   y va MACIZA en el cromo del area; "Generar PDF" la acompaña delineada. Los dos pares de
+   color estan medidos: crema #f1dccb sobre verde #22502c = 7,03:1 y verde #2f6238 sobre crema
+   #fbf4ec = 6,58:1. */
+.acciones-tablero {
+  flex: 0 0 auto; display: flex; justify-content: flex-end; padding: .1rem .15rem .15rem 0;
+}
+.acciones-tablero .panel-acciones { gap: .45rem; }
+.acciones-tablero .panel-accion {
+  /* Se desarma el tratamiento de "pie de cuadro" que trae `.panel-accion`: aca no es una nota
+     al pie de una cita de fuente, es un boton. */
+  font-family: inherit; font-size: .72rem; font-weight: 650;
+  text-transform: none; letter-spacing: 0;
+  gap: .35rem; padding: .25rem .9rem; border-radius: var(--radio-pildora);
+  border: 1px solid transparent; cursor: pointer;
+  /* Alto COMUN a las dos: una lleva icono y la otra una flecha, y sin un piso la del icono
+     salia 3 px mas alta. Dos botones que son un par tienen que medir lo mismo. */
+  min-height: 1.75rem; line-height: 1.2;
+  transition: background-color 120ms ease-out, border-color 120ms ease-out;
+}
+/* El subrayado del pie de cuadro no va adentro de una pildora: el relieve ya lo da el relleno. */
+.acciones-tablero .panel-accion:hover .accion-nombre { text-decoration: none; }
+.acciones-tablero .panel-accion:focus-visible {
+  outline: 2px solid var(--enlace); outline-offset: 2px;
+}
+.acciones-tablero .panel-accion img { width: .95rem; height: .95rem; }
+
+/* La principal: maciza en el cromo del area (verde en agricultura, marron en ganaderia). */
+.acciones-tablero [data-utilidad="mas-informacion"] {
+  background: var(--cromo); color: var(--sobre-cromo); border-color: var(--cromo);
+}
+.acciones-tablero [data-utilidad="mas-informacion"]:hover {
+  background: var(--cromo-oscuro); border-color: var(--cromo-oscuro);
+}
+/* La flecha que dibuja JC, que se corre un poco al pasar por encima: es el unico adorno y
+   cuenta algo (esto lleva a otro lado). Se apaga con `prefers-reduced-motion`. */
+.acciones-tablero .accion-flecha {
+  font-size: .78rem; transition: transform 120ms ease-out;
+}
+.acciones-tablero .panel-accion:hover .accion-flecha { transform: translateX(2px); }
+
+/* La secundaria: delineada sobre la caja, como los chips apagados del sitio. */
+.acciones-tablero [data-utilidad="exportar-pdf"] {
+  background: var(--fondo-cuadro); color: var(--enlace); border-color: var(--borde-panel);
+}
+.acciones-tablero [data-utilidad="exportar-pdf"]:hover { background: var(--fondo-apoyo); }
+
+@media (prefers-reduced-motion: reduce) {
+  .acciones-tablero .panel-accion, .acciones-tablero .accion-flecha { transition: none; }
+}
 .tablero.con-selector.alto-fijo .fila-tablero > .pila-tablas { min-height: 0; }
 /* Con el alto fijado por tablero.js (una pantalla): chips y KPIs miden lo suyo y el alto
    sobrante se lo reparten las dos filas de paneles en partes iguales. */
@@ -1095,63 +1152,9 @@ a { color: var(--enlace); }
   .chip-grande { align-self: auto; padding: .16rem .6rem; }
 }
 
-/* ---------- panel UTILIDADES (estatico, iconos "Proximamente") ----------
-   Tira BAJA y ancha, como en la captura del 10-ago: titulo centrado y los dos items LADO A
-   LADO. El alto lo pone el contenido (en .col-alta el panel no se estira: flex 0 0 auto). */
-.panel-utilidades {
-  justify-content: flex-start; padding: .45rem .55rem .5rem;
-}
-.utilidades-titulo {
-  text-align: center; font-size: .88rem; font-weight: 700; letter-spacing: .06em;
-  color: var(--texto-apoyo); margin: 0 0 .35rem;
-}
-.utilidades-items {
-  flex: 1 1 auto; display: flex; flex-direction: row; align-items: center;
-  justify-content: space-between; gap: .4rem 0; flex-wrap: wrap;
-}
-.utilidad {
-  display: flex; align-items: center; gap: .25rem; font-weight: 650; font-size: .7rem;
-  opacity: .6; cursor: not-allowed; white-space: nowrap; min-width: 0;
-}
-.utilidad img { width: 1.4rem; height: 1.4rem; object-fit: contain; }
-/* El item ACTIVO del panel (hoy solo "Exportar como PDF"): es un <button> de verdad, asi que
-   hay que sacarle el cromo que le pone el navegador. Va sin el apagado ni el cursor tachado
-   del resto y sin rotulo "Proximamente": se ve como lo que es, algo en lo que se hace clic. */
-.utilidad-activa {
-  font: inherit; font-size: .7rem; font-weight: 650; color: inherit;
-  background: none; border: 0; padding: 0; opacity: 1; cursor: pointer;
-}
-.utilidad-activa:hover .utilidad-nombre { text-decoration: underline; }
-.utilidad-activa:focus-visible { outline: 2px solid var(--enlace); outline-offset: 2px; }
 /* Copia del grafico a alta resolucion para imprimir: vive escondida hasta que se imprime
    (la cuelga comun.js al lado del canvas). */
 .grafico-impreso { display: none; }
-.utilidad .prox {
-  color: var(--texto-apoyo); font-size: .48rem; padding: .04rem .18rem;
-  letter-spacing: .02em;
-}
-
-/* ---------- panel "Información relacionada" (estatico, links "Proximamente") ----------
-   El bloque del mockup, dibujado deshabilitado (cuarta tanda,
-   informacion_relacionada_se_dibuja): titulo a la izquierda y los cinco links del mockup en
-   dos columnas, con la flechita verde con que JC los dibuja. */
-.panel-info { justify-content: flex-start; padding: .35rem .6rem .4rem; }
-.info-titulo { margin: 0 0 .22rem; font-size: .74rem; font-weight: 700; }
-/* Columna izquierda mas ancha, como en el mockup: ahi caen los rotulos largos ("Calendario
-   de siembra y cosecha") y con mitades iguales se truncaban. */
-.info-items {
-  margin: 0; padding: 0; list-style: none;
-  display: grid; grid-template-columns: 1.3fr 1fr; gap: .08rem .6rem;
-}
-.info-item {
-  display: flex; align-items: center; gap: .3rem; font-size: .66rem; font-weight: 650;
-  opacity: .6; cursor: not-allowed; min-width: 0; white-space: nowrap;
-}
-.info-nombre { overflow: hidden; text-overflow: ellipsis; }
-.info-nombre::before { content: "› "; color: var(--seleccion); font-weight: 700; }
-.info-item .prox {
-  color: var(--texto-apoyo); font-size: .44rem; padding: .03rem .14rem; letter-spacing: .02em;
-}
 
 /* Anillo con total al centro (hacienda, stock). El total va en HTML y no dibujado por
    ECharts: asi se puede leer con lector de pantalla y no se pixela al reescalar. En cultivos
@@ -1185,6 +1188,121 @@ a { color: var(--enlace); }
   flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .anillo-leyenda .pct { font-variant-numeric: tabular-nums; font-weight: 650; }
+
+/* ================= popup "Mas informacion" (seccion 5 de la maqueta) =================
+   MISMO diseno y MISMO gesto que el zoom (Francisco, 2-oct-2026: "que el pop up tenga ese
+   mismo diseño, con las esquinas redondeadas" y "la misma animacion que el zoom"). Las reglas
+   de abajo son las del zoom con otro nombre de clase, a proposito: son dos dialogos del mismo
+   sitio y tienen que verse y moverse igual.
+
+   La UNICA diferencia de fondo entre los dos: el zoom MUDA el panel real adentro del dialogo
+   y lo devuelve al cerrar; aca no hay ningun panel que mudar, el contenido se arma de cero.
+
+   El marco de 2vmin alrededor de la caja es el mismo del zoom y es FUNCIONAL antes que
+   decorativo: es el unico pedazo del <dialog> que queda a la vista y es lo que hace que el
+   clic afuera cierre. Sin el, la caja taparia el 100% y `target === dialogo` no se cumpliria
+   nunca. */
+dialog.info {
+  position: fixed; inset: 0; width: 100%; height: 100%; max-width: 100%; max-height: 100%;
+  margin: 0; border: 0; overflow: hidden;
+  background: transparent; color: var(--texto);
+  padding: 2vmin;
+}
+.info-caja {
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column; overflow: hidden;
+  background: var(--fondo);
+  /* Una tarjeta mas del sitio: el mismo radio y el mismo borde fino que los paneles y que la
+     caja del zoom. OJO: el token es `--radio`. La primera version pedia `--radio-panel`, que
+     NO existe en el tema, asi que el navegador descartaba la linea y el popup salia con las
+     esquinas en angulo recto. Era justo lo que se veia mal. */
+  border: 1px solid var(--borde-panel); border-radius: var(--radio);
+}
+
+/* ---- apertura y cierre: la caja CRECE desde el boton que la abrio ----
+   El mismo FLIP del zoom, con las mismas variables (`--zoom-dur`, `--zoom-curva`) y el mismo
+   motor: `comun.animadorDeDialogo`. Se anima `transform` y NADA mas, por los dos motivos de
+   siempre: es lo unico que el navegador mueve sin rehacer la pagina, y el transform no cambia
+   el layout, asi que la caja mide lo mismo que a pantalla completa desde el primer cuadro y
+   ECharts nunca ve una medida intermedia.
+   Antes era un @keyframes de translateY. Se reemplaza por el gesto del zoom a pedido de
+   Francisco. La regla de no animar NUNCA la opacidad sigue en pie y este gesto la cumple:
+   si la animacion no corre, la caja aparece quieta y a pantalla completa, nunca invisible. */
+.info-caja {
+  transform-origin: 0 0;
+  transition: transform var(--zoom-dur) var(--zoom-curva);
+}
+/* Mientras la caja se mueve el dialogo no recibe clicks (pointer-events se hereda). Sin esto,
+   el segundo click de un doble click sobre "Más información" cae sobre el fondo del dialogo
+   recien abierto y lo cierra en el acto. */
+dialog.info.info-animando { pointer-events: none; }
+/* El fondo oscuro acompania con su propia transicion. El ::backdrop nace junto con
+   showModal(), o sea sin estado anterior del que partir: por eso el animador fuerza un reflow
+   con la clase afuera y recien despues la pone. */
+dialog.info::backdrop {
+  background: color-mix(in srgb, var(--cromo) 78%, transparent);
+  opacity: 0;
+  transition: opacity var(--zoom-dur) var(--zoom-curva);
+}
+dialog.info.info-visible::backdrop { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .info-caja, dialog.info::backdrop { transition: none; }
+}
+
+/* La barra de arriba: el titulo y la cruz, sobre el fondo de la caja. Es la del zoom
+   (`.zoom-barra` + `.zoom-cerrar`), no una banda de cromo propia. */
+.info-cab {
+  flex: 0 0 auto; display: flex; align-items: center; gap: 1rem;
+  padding: .9rem 1.1rem .7rem;
+}
+.info-cab h2 {
+  flex: 1 1 auto; min-width: 0; margin: 0;
+  font-family: var(--serif); font-size: 1.05rem; font-weight: 700;
+}
+.info-cerrar {
+  flex: 0 0 auto; width: 2.4rem; height: 2.4rem; border-radius: var(--radio-pildora);
+  border: 1px solid var(--borde-panel); background: var(--fondo-cuadro); color: var(--texto);
+  font: inherit; font-size: 1.1rem; line-height: 1; cursor: pointer;
+}
+.info-cerrar:hover { background: var(--fondo-apoyo); }
+
+/* El cuerpo SCROLLEA y los cuadros van grandes: es lo que pidio Francisco ("que se pueda
+   scrollear para que los graficos se vean grandes y claros"). Son nueve cuadros, no entran en
+   una pantalla ni tiene sentido apretarlos. */
+.info-cuerpo {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+  padding: 0 1.1rem 1.6rem;
+  display: flex; flex-direction: column; gap: 1.1rem;
+}
+.info-cuadro {
+  margin: 0; padding: .9rem 1rem 1rem;
+  border: 1px solid var(--borde-panel); border-radius: var(--radio);
+  background: var(--fondo-cuadro);
+}
+.info-cuadro h3 {
+  margin: 0 0 .15rem; font-family: var(--serif); font-size: .95rem; font-weight: 700;
+  text-align: center;
+}
+.info-sub { margin: 0 0 .5rem; text-align: center; font-size: .78rem; color: var(--texto-apoyo); }
+.info-sub:empty { display: none; }
+/* Alto FIJO y generoso para cada grafico del popup: aca no compite con nada, la pagina
+   scrollea. `flex-basis` no aplica porque el cuadro no es un contenedor flex. */
+.info-cuadro > .grafico { height: 380px; }
+.info-cuadro.info-ranking { padding-bottom: .6rem; }
+.info-tabla { margin-top: .6rem; overflow-x: auto; }
+.info-tabla table { width: 100%; border-collapse: collapse; font-size: .76rem; }
+.info-nota { margin: .5rem 0 0; font-size: .74rem; color: var(--texto-apoyo); }
+.info-nota:empty { display: none; }
+.info-vacio { margin: .6rem 0 0; font-size: .8rem; color: var(--texto-apoyo); text-align: center; }
+
+@media (max-width: 1000px) {
+  dialog.info { padding: 0; }
+  .info-caja { border-radius: 0; border: 0; }
+  .info-cuadro > .grafico { height: 300px; }
+}
+
+/* En la hoja impresa el popup no existe: el PDF es siempre el tablero completo. */
+.imprimiendo .info { display: none; }
 
 /* Rotulo de accion del mapa del tablero ("Seleccione departamento", mockup de JC). */
 .mapa-accion { margin: 0 0 .3rem; }
@@ -1532,7 +1650,7 @@ table.matriz-od th.esquina { font-weight: 500; color: var(--texto-apoyo); }
 .imprimiendo .menu-lateral, .imprimiendo .pestanias, .imprimiendo .barra-filtros,
 .imprimiendo .periodo, .imprimiendo .borrar-filtros, .imprimiendo .boton-cabecera,
 .imprimiendo .cabecera-banderas, .imprimiendo .panel-selector,
-.imprimiendo .panel-utilidades, .imprimiendo .panel-info,
+.imprimiendo .acciones-tablero,
 /* Las aclaraciones son ayuda de PANTALLA: en papel no hay mouseover ni foco, y el subrayado
    punteado quedaria como una mancha en un cuadro que ya esta apretado. */
 .imprimiendo .glosa, .imprimiendo .glosa-datos,

@@ -1500,6 +1500,267 @@ export default function iniciar(PIVOTAL) {
     return elegirEspecie(pestania.dataset.especie);
   }
 
+  /* ================= popup "Mas informacion" (seccion 5 de la maqueta) =================
+     JC lo define asi en su hoja "Agri 1": "Se refiere a la ampliacion de graficos y datos,
+     tanto provinciales como departamentales. NO CONTIENE OPCIONES DE SELECCION, ES ESTATICO".
+     Cuatro bloques: 5.1 cartera de verano (en tn y en %), 5.2 lo mismo de invierno, 5.3 el
+     impacto del rendimiento del cultivo elegido y 5.4 los rankings por departamento, que van
+     solo en el area provincial.
+
+     Por que un <dialog> propio y no el mecanismo del zoom: el zoom MUDA el panel real adentro
+     del dialogo y lo devuelve al cerrar. Aca no hay ningun panel que mudar, el contenido se
+     arma de cero, asi que alcanza con un dialogo simple. Todo lo DEMAS se comparte, a pedido
+     de Francisco (2-oct-2026: "que el pop up tenga ese mismo diseño... la misma animacion"):
+     <dialog> nativo con showModal() -Escape, foco atrapado y fondo inerte sin dependencias-,
+     el marco de 2vmin que hace que el clic afuera cierre, la caja con el borde y las esquinas
+     redondeadas de los paneles, y el MISMO motor de animacion (PIVOTAL.animadorDeDialogo): la
+     caja crece desde el boton que la abrio y vuelve ahi al cerrar. */
+  var info = { dialogo: null, caja: null, cuerpo: null, titulo: null, bajados: {},
+               graficos: [], anim: null, desde: null, cerrando: false };
+
+  function infoCrearDialogo() {
+    var dialogo = document.createElement("dialog");
+    dialogo.className = "info";
+    var caja = document.createElement("div");
+    caja.className = "info-caja";
+    var cab = document.createElement("header");
+    cab.className = "info-cab";
+    info.titulo = document.createElement("h2");
+    var cerrar = document.createElement("button");
+    cerrar.type = "button";
+    cerrar.className = "info-cerrar";
+    /* La cruz del zoom, no un boton "Cerrar": es el mismo dialogo del mismo sitio. */
+    cerrar.textContent = "\u2715";
+    cerrar.setAttribute("aria-label", "Cerrar");
+    cerrar.addEventListener("click", function () { infoCerrar(); });
+    cab.appendChild(info.titulo);
+    cab.appendChild(cerrar);
+    info.cuerpo = document.createElement("div");
+    info.cuerpo.className = "info-cuerpo";
+    caja.appendChild(cab);
+    caja.appendChild(info.cuerpo);
+    dialogo.appendChild(caja);
+    /* El clic AFUERA de la caja cierra. Funciona porque el dialogo deja un marco visible
+       alrededor (CSS): sin ese marco la caja taparia el 100% y `target === dialogo` no se
+       cumpliria nunca. Es la misma trampa que ya habia pasado con el zoom. */
+    dialogo.addEventListener("click", function (evento) {
+      if (evento.target === dialogo) { infoCerrar(); }
+    });
+    /* Escape: el navegador cerraria el dialogo en el acto y se perderia el camino de vuelta.
+       Se le pide que no lo cierre el (el evento `cancel` es cancelable) y se cierra por el
+       mismo camino que la cruz, animacion incluida. Mismo criterio que el zoom. */
+    dialogo.addEventListener("cancel", function (evento) {
+      if (info.cerrando) { return; }
+      evento.preventDefault();
+      infoCerrar();
+    });
+    dialogo.addEventListener("close", infoLimpiar);
+    document.body.appendChild(dialogo);
+    info.dialogo = dialogo;
+    info.caja = caja;
+    /* El motor de la animacion es el MISMO del zoom (comun.animadorDeDialogo): la caja crece
+       desde el rectangulo del boton que la abrio y vuelve ahi al cerrar, animando `transform`
+       y nada mas. Lo pidio Francisco el 2-oct-2026 ("la misma animacion que el zoom"); antes
+       era un @keyframes propio que solo deslizaba la caja hacia arriba. */
+    info.anim = PIVOTAL.animadorDeDialogo(dialogo, caja, "info");
+    return dialogo;
+  }
+
+  /* El armazon de un cuadro del popup: los mismos huecos que usan los dibujantes del tablero
+     (`[data-grafico]`, `[data-leyenda]`, `[data-tabla-datos]`), asi que no hay que escribir
+     ningun dibujante nuevo: se reusan `apiladas` y `combo` tal cual. */
+  function infoCuadro(forma) {
+    var fig = document.createElement("figure");
+    fig.className = "info-cuadro";
+    fig.dataset.panel = "info-" + forma;
+    var h = document.createElement("h3");
+    h.dataset.titulo = "";
+    var sub = document.createElement("p");
+    sub.className = "info-sub";
+    sub.dataset.subtitulo = "";
+    var graf = document.createElement("div");
+    graf.className = "grafico";
+    graf.dataset.grafico = "";
+    var ley = document.createElement("ul");
+    /* `leyenda-series` es la clase que ya tiene estilo (cuadradito de color + nombre en
+       una fila). La primera version escribia "leyenda-apiladas", que no existe en el CSS:
+       la leyenda salia como una lista con viñetas. */
+    ley.className = "leyenda-series";
+    ley.dataset.leyenda = "";
+    var tabla = document.createElement("div");
+    tabla.className = "info-tabla";
+    tabla.dataset.tablaDatos = "";
+    var nota = document.createElement("p");
+    nota.className = "info-nota";
+    nota.dataset.nota = "";
+    var pie = document.createElement("p");
+    pie.className = "panel-fuente";
+    pie.dataset.pie = "";
+    [h, sub, graf, ley, tabla, nota, pie].forEach(function (n) { fig.appendChild(n); });
+    return fig;
+  }
+
+  function infoDibujarCuadro(forma, panel) {
+    var fig = infoCuadro(forma);
+    info.cuerpo.appendChild(fig);
+    if (!panel || panel.vacio) {
+      fig.classList.add("sin-datos");
+      texto(fig, "[data-titulo]", (panel && panel.titulo) || "");
+      var aviso = document.createElement("p");
+      aviso.className = "info-vacio";
+      aviso.textContent = (panel && panel.vacio) || "No hay datos para este cuadro.";
+      fig.appendChild(aviso);
+      return;
+    }
+    PIVOTAL.glosa(fig, "[data-titulo]", panel.titulo, panel.titulo_partes);
+    PIVOTAL.glosa(fig, "[data-subtitulo]", panel.subtitulo, panel.subtitulo_partes);
+    texto(fig, "[data-nota]", panel.nota);
+    texto(fig, "[data-pie]", panel.pie);
+    DIBUJANTES[forma](fig, panel);
+    info.graficos.push(fig.querySelector("[data-grafico]"));
+  }
+
+  /* Los rankings (5.4) son TABLAS, no graficos: van sin caja de dibujo. */
+  function infoDibujarRanking(panel) {
+    var fig = document.createElement("figure");
+    fig.className = "info-cuadro info-ranking";
+    var h = document.createElement("h3");
+    h.textContent = panel.titulo;
+    var sub = document.createElement("p");
+    sub.className = "info-sub";
+    sub.textContent = panel.subtitulo || "";
+    var caja = document.createElement("div");
+    caja.className = "info-tabla";
+    caja.appendChild(armarTablaCampanias(panel.columnas, panel.filas));
+    var pie = document.createElement("p");
+    pie.className = "panel-fuente";
+    pie.textContent = panel.pie || "";
+    [h, sub, caja, pie].forEach(function (n) { fig.appendChild(n); });
+    info.cuerpo.appendChild(fig);
+  }
+
+  function infoBajar(ruta) {
+    if (!info.bajados[ruta]) {
+      info.bajados[ruta] = fetch(ruta)
+        .then(function (r) {
+          if (!r.ok) { throw new Error("HTTP " + r.status + " al bajar " + ruta); }
+          return r.json();
+        })
+        .catch(function (error) {
+          delete info.bajados[ruta];   // un fracaso no se cachea (misma regla que comun.bajar)
+          throw error;
+        });
+    }
+    return info.bajados[ruta];
+  }
+
+  function infoPintar(datos, capa, area) {
+    /* La limpieza va al ABRIR y no al cerrar. Suena al reves y tiene motivo: el evento `close`
+       del <dialog> no dispara en todos los navegadores (verificado en el que viene embebido en
+       el entorno de desarrollo), y colgar de el la unica limpieza dejaba las instancias de
+       ECharts vivas contra nodos que ya no existen. Limpiando al abrir, cada apertura arranca
+       de cero pase lo que pase. El `close` sigue enganchado, pero como refuerzo. */
+    infoLimpiar();
+    info.graficos = [];
+    info.titulo.textContent = "Más información · " + (capa.nombres[area] || "");
+    return infoBajar(capa.archivos[area]).then(function (contenido) {
+      contenido.bloques.forEach(function (bloque) {
+        infoDibujarCuadro(bloque.forma, bloque.panel);
+      });
+      /* 5.3 sigue al cultivo que esta puesto en el tablero: es el unico bloque que depende de
+         la seleccion. El resto es igual siempre, como pide JC ("ES ESTATICO"). */
+      var cultivo = PIVOTAL.valorDeFiltro("cultivo");
+      var prod = contenido.produccion_rendimiento[cultivo];
+      if (prod) { infoDibujarCuadro("combo", prod); }
+      contenido.rankings.forEach(infoDibujarRanking);
+      /* Los graficos se midieron mientras el dialogo recien se abria: una vez que el layout
+         quedo quieto hay que redimensionarlos o salen con la caja equivocada. */
+      info.graficos.forEach(function (nodo) {
+        var g = PIVOTAL.grafico(nodo);
+        if (g) { g.resize(); }
+      });
+    }, function (error) {
+      if (window.console && window.console.warn) { window.console.warn(error); }
+      PIVOTAL.vaciar(info.cuerpo);
+      var aviso = document.createElement("p");
+      aviso.className = "info-vacio";
+      aviso.textContent = "No se pudieron cargar los datos. Probá de nuevo en unos segundos.";
+      info.cuerpo.appendChild(aviso);
+    });
+  }
+
+  function abrirMasInformacion(boton) {
+    var datos = PIVOTAL.datos();
+    var capa = datos && datos.capa_informacion;
+    if (!capa) { return; }
+    var area = PIVOTAL.departamento() || "provincia";
+    if (!capa.archivos[area]) { area = "provincia"; }
+    /* De donde SALE y a donde VUELVE la caja: el rectangulo del boton "Más información". Se
+       mide ANTES de abrir, mientras el boton sigue en su lugar. Si por lo que sea no hay boton
+       (una accion disparada desde otro lado), se usa el centro de la ventana: el gesto queda
+       como un crecer desde el medio, que es feo pero nunca roto. */
+    info.desde = boton ? boton.getBoundingClientRect() : centroDeLaVentana();
+    var dialogo = info.dialogo || infoCrearDialogo();
+    dialogo.showModal();
+    /* La geometria de destino, medida con la caja LIMPIA: al cerrar quedo con el transform de
+       vuelta escrito en linea y sin este borrado se mediria el rectangulo encogido de la
+       apertura anterior. */
+    info.anim.remedir();
+    info.cuerpo.scrollTop = 0;
+    /* El contenido se pinta YA, sin esperar a que termine la animacion: el transform no toca
+       el layout, asi que la caja mide lo que va a medir a pantalla completa desde el primer
+       cuadro y los graficos nacen con el tamanio bueno. Lo que crece es el dibujo definitivo.
+       La animacion de la opacidad NO existe aca, ni en esta ni en ninguna otra entrada del
+       sitio: si el movimiento no llega a correr, lo peor que pasa es que el popup aparezca
+       quieto y a pantalla completa, nunca abierto e invisible. */
+    info.anim.mover(info.anim.encajarEn(info.desde), "none", true, function () {});
+    return infoPintar(datos, capa, area);
+  }
+
+  function centroDeLaVentana() {
+    var w = window.innerWidth, h = window.innerHeight;
+    return { left: w / 2, top: h / 2, width: 1, height: 1 };
+  }
+
+  /* Las tres maneras de cerrar (la cruz, el clic afuera y Escape) pasan por aca: la caja
+     vuelve encogiendose hasta el boton del que salio y recien al terminar se cierra el
+     dialogo. Igual que el zoom. */
+  function infoCerrar() {
+    if (!info.dialogo || !info.dialogo.open || info.cerrando) { return; }
+    info.cerrando = true;
+    /* Se arranca de donde esta la caja AHORA: si la apertura venia a medio camino, esto es su
+       matriz de este instante y la vuelta sigue desde ahi sin saltos. Hay que leerlo antes de
+       cortar la animacion, que deja la caja en su valor final. */
+    var desde = getComputedStyle(info.caja).transform;
+    var hasta = info.anim.encajarEn(info.desde || centroDeLaVentana());
+    info.anim.mover(desde, hasta, false, function () {
+      info.cerrando = false;
+      info.dialogo.close();
+    });
+  }
+
+  /* Al cerrar se sueltan los dibujos y se vacia el cuerpo: cada apertura arma su contenido de
+     cero. Va en try porque esto corre en el evento `close` y una excepcion aca dejaria el
+     popup a medio limpiar sin que nadie se entere. */
+  function infoLimpiar() {
+    if (!info.cuerpo) { return; }
+    /* Las clases de estado del dialogo NO se tocan aca: `infoLimpiar` corre tambien al ABRIR
+       (el evento `close` no dispara en todos los navegadores y colgar de el la unica limpieza
+       dejaba instancias de ECharts vivas), y en ese momento la animacion de entrada ya esta en
+       curso. Borrarlas ahi apagaria el fondo oscuro a mitad de camino. Las apaga el propio
+       animador: `info-animando` al terminar y `info-visible` en el movimiento de vuelta. */
+    info.cerrando = false;
+    try {
+      info.graficos.forEach(function (nodo) { PIVOTAL.limpiarGrafico(nodo); });
+    } catch (error) {
+      if (window.console && window.console.warn) { window.console.warn(error); }
+    }
+    info.graficos = [];
+    PIVOTAL.vaciar(info.cuerpo);
+  }
+
+  PIVOTAL.registrarAccion("mas-informacion", abrirMasInformacion);
+
   PIVOTAL.arrancar(contenedor.dataset.datos, function (combo, datos) {
     var paneles = Array.prototype.slice.call(contenedor.querySelectorAll("[data-panel]"));
     if (!combo) {

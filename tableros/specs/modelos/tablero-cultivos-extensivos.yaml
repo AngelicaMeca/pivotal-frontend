@@ -56,7 +56,7 @@ cabecera:
       - {codigo: es, estado: activa}
       - {codigo: en, estado: deshabilitada, rotulo: "Próximamente"}
       - {codigo: pt, estado: deshabilitada, rotulo: "Próximamente"}
-    nota: "misma excepción acotada a la regla de botones muertos que las utilidades"
+    nota: "excepción acotada a la regla de botones muertos: JC dibuja las tres banderas"
   sin_titulo_duplicado: true
 
 # El breadcrumb del mockup: barra VERDE bajo la cabecera, cada nivel linkea a SU nivel.
@@ -132,7 +132,7 @@ zoom_de_los_cuadros:
     Panel por panel (`paneles.<id>.acciones`), nunca a nivel del tablero: es lo unico que
     garantiza que no aparezca en un cuadro que no tiene nada que ampliar. No se prende sola.
   que_cuadros_la_llevan: "mapa, tendencia y anillo (los tres cuadros con grafico)"
-  que_cuadros_no: "tabla-datos y top son tablas, y utilidades e informacion-relacionada no son cuadros de datos"
+  que_cuadros_no: "tabla-datos y top son tablas: no hay nada que ampliar"
   animacion: >
     Abre y cierra con movimiento, pedido de Francisco (24-sep-2026: "una animacion para
     hacerlo mas fluido"). El cuadro CRECE desde el lugar que ocupaba en el tablero hasta la
@@ -418,46 +418,76 @@ paneles:
     cuantos: 10
     transformaciones_de: 09-ranking-cultivo-sup-sembrada
 
-  utilidades:
-    # Panel estático bajo el mapa, como el mockup. El ítem que declara `accion` es un botón
-    # de verdad; el que no la declara sigue deshabilitado con "Próximamente" (excepción
-    # acotada a la regla de botones muertos, backlog 33).
-    titulo: "UTILIDADES"
-    items:
-      - {id: asistente-ia, etiqueta: "Asistente IA", icono: ia}
-      # Exportar como PDF: ACTIVO desde el 22-sep-2026. Imprime el tablero con la selección
-      # vigente y el PDF lo arma el navegador ("Guardar como PDF"), así que no entra ninguna
-      # librería nueva y en el PDF las tablas siguen siendo texto. Qué entra y qué queda
-      # afuera lo decide la hoja de impresión (site/templates/pivotal.css.j2, @media print).
-      - {id: exportar-pdf, etiqueta: "Exportar como PDF", icono: exportar-como-pdf,
-         accion: exportar-pdf}
+  # ---------------------------------------------------------------------------
+  # LAS DOS ACCIONES DEL PIE (hoja "Agri 1", al pie de la columna derecha)
+  # ---------------------------------------------------------------------------
+  # JC las dibuja SUELTAS, una debajo de la otra y alineadas a la derecha, justo abajo de la
+  # tabla de campañas: "Más información →" y "Generar PDF" con su ícono. No hay ninguna caja
+  # alrededor ni ningún título.
+  #
+  # Acá vivía el panel "UTILIDADES" (título "UTILIDADES" + "Asistente IA" + "Exportar como
+  # PDF") y más abajo el panel "Información relacionada". SE SACARON los dos el 2-oct-2026
+  # por pedido de Francisco ("apegate al 100% a la estructura que plantea JC en las
+  # maquetas"): ninguno de los dos está en ninguna hoja de JC. El "Asistente IA" venía del
+  # mockup Modelo 2 de agosto y nunca tuvo función; los cinco links de "Información
+  # relacionada" eran cinco promesas repetidas de lo que ya está en el backlog (8, 44, 45).
+  # Misma decisión que ya se había tomado en cultivos intensivos el 23-sep-2026.
+  acciones_de_tablero:
+    # "Más información": abre un POPUP con la sección 5 de la maqueta (bloques 5.1 a 5.4).
+    # JC lo define así: "Se refiere a la ampliación de gráficos y datos, tanto provinciales
+    # como departamentales. NO CONTIENE OPCIONES DE SELECCIÓN, ES ESTÁTICO".
+    - {id: mas-informacion, etiqueta: "Más información", flecha: true,
+       accion: mas-informacion}
+    # "Generar PDF" es la palabra de JC (antes el panel decía "Exportar como PDF"). ACTIVO
+    # desde el 22-sep-2026: imprime el tablero con la selección vigente y el PDF lo arma el
+    # navegador ("Guardar como PDF"), así que no entra ninguna librería nueva y las tablas
+    # siguen siendo texto. Qué entra y qué queda afuera lo decide la hoja de impresión
+    # (site/templates/pivotal.css.j2, @media print).
+    - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf,
+       accion: exportar-pdf}
+  quedaron_fuera_de_la_pagina:
+    - {id: utilidades, motivo: "no está en la hoja 'Agri 1'; sus dos acciones pasaron a `acciones_de_tablero` (Francisco, 2-oct-2026)"}
+    - {id: asistente-ia, motivo: "no está en ninguna hoja de JC y no hacía nada (venía del mockup Modelo 2 de agosto)"}
+    - {id: informacion-relacionada, motivo: "no está en la hoja 'Agri 1'; sus cinco links estaban todos deshabilitados y lo que prometían ya vive en el backlog 8, 44 y 45"}
 
-  informacion-relacionada:
-    # DESBLOQUEADO por la cuarta tanda ("tiene que estar aunque no lleve a ningún lado"):
-    # el panel del mockup SE DIBUJA, con los links deshabilitados y "Próximamente". Misma
-    # excepción acotada a la regla de botones muertos que utilidades y banderas. Regla:
-    # formato_v1.cuarta_tanda.informacion_relacionada_se_dibuja.
-    estado: dibujado-deshabilitado
-    titulo: "Información relacionada (abre en nueva ventana)"
-    items:
-      - {id: costos-margenes, etiqueta: "Costos y márgenes", estado: deshabilitado, rotulo: "Próximamente"}
-      - {id: precios, etiqueta: "Precios", estado: deshabilitado, rotulo: "Próximamente"}
-      - {id: exportaciones, etiqueta: "Exportaciones", estado: deshabilitado, rotulo: "Próximamente"}
-      - {id: vbp, etiqueta: "VBP del cultivo", estado: deshabilitado, rotulo: "Próximamente"}
-      - {id: calendario, etiqueta: "Calendario de siembra y cosecha", estado: deshabilitado, rotulo: "Próximamente"}
-    destinos_bloqueados_por: "faltan las bases de precios, costos y exportaciones (backlog 8); cada link se activa cuando entre su base"
+  # ---------------------------------------------------------------------------
+  # SECCIÓN 5 DE LA MAQUETA: el contenido del popup "Más información"
+  # ---------------------------------------------------------------------------
+  # Es ESTÁTICO: no lleva selectores propios. Lo único que sigue de la página es el área
+  # (provincia o el departamento elegido) y, para el bloque 5.3, el cultivo vigente.
+  mas-informacion:
+    titulo: "Más información"
+    # 5.1 y 5.2: la misma pareja de cuadros para los cultivos de verano y para los de
+    # invierno. Van SEPARADOS porque comparten lote: sumarlos contaría dos veces las mismas
+    # hectáreas (nota `verano-invierno` de _comunes-base-9).
+    cartera:
+      titulo_absoluto: "Sgo del Estero - {Area} - Evolución de la producción por cartera de cultivos de {Estacion} - Campañas {desde} a {hasta} - En tn"
+      titulo_porcentual: "Sgo del Estero - {Area} - Evolución de la producción por cartera de cultivos de {Estacion} - Campañas {desde} a {hasta} - En %"
+      # Títulos literales de los gráficos 3 y 4 de su hoja "Agri 1", con el área como único
+      # slot agregado (sus cuadros son provinciales; el popup también se abre en un
+      # departamento, y ahí el título tiene que decirlo).
+      subtitulo_porcentual: "En porcentaje sobre el total de la estación"
+      encabezado_primera_columna: "Cultivo"
+    # 5.3: "Muestra el impacto del Rendimiento". Barras de producción + línea de rendimiento.
+    produccion_rendimiento:
+      titulo: "Sgo del Estero - {Area} - {Cultivo} - Evolución de la producción y rendimientos - Campañas {desde} a {hasta}"
+      encabezado_primera_columna: "Variable"
+    # 5.4: "RANKINGS POR DEPARTAMENTO - ESTO SOLO EN EL AREA PROVINCIAL". Sus tres rankings:
+    # 5.3.1 superficies cosechadas (NO van las sembradas), 5.3.2 producción, 5.3.3 rendimientos.
+    rankings:
+      titulo: "Sgo del Estero - Ranking de {Variable} por departamento - Campaña {campania}"
+      medidas: [sup_cosechada_ha, produccion_tn, rendimiento_kg_ha]
 
-  # Disposición calcada de la captura: columna izquierda = mapa (a lo alto) + UTILIDADES +
+  # Disposición calcada de la hoja "Agri 1": columna izquierda = mapa (a lo alto, él solo) +
   # pie de tecnología; columna derecha = chips de cultivo, tarjeta + KPIs, fila de gráficos
-  # (tendencia | anillo), fila de tablas (tabla-datos + informacion-relacionada | top).
+  # (tendencia | anillo) y fila de tablas (tabla-datos | top), con las dos acciones sueltas
+  # debajo de la tabla de campañas.
   # SIN campo `detalle` en ningún panel: no existen páginas de detalle.
   orden:
     - {id: mapa,        columna: izquierda}
-    - {id: utilidades,  columna: izquierda, debajo_de: mapa}
     - {id: tendencia,   columna: derecha, fila: graficos}
     - {id: anillo,      columna: derecha, fila: graficos}
     - {id: tabla-datos, columna: derecha, fila: tablas}
-    - {id: informacion-relacionada, columna: derecha, fila: tablas, debajo_de: tabla-datos}
     - {id: top,         columna: derecha, fila: tablas}
 
 pie: "Tecnología Pivotal: B3, Minibox y ∞ Prompt"   # con logos de partners (backlog 35, aprobada)
@@ -496,7 +526,9 @@ pendientes_constructor_dashboards:
   - id: escala-legible
     que: "ajustar la escala del gráfico de líneas: paso más fino (0,50 de referencia, como dibujó JC) y/o rango ajustado al dato, manteniendo el eje único en 'Millones'. Las variaciones se tienen que poder leer (cuarta_tanda.escala_legible)."
   - id: informacion-relacionada-dibujada
+    estado: DEROGADA
     que: "dibujar el panel 'Información relacionada' con los links del mockup deshabilitados y 'Próximamente' (cuarta_tanda.informacion_relacionada_se_dibuja)."
+    derogada_por: "Francisco, 2-oct-2026: el panel no está en la hoja 'Agri 1' de JC y se sacó de la página (ver quedaron_fuera_de_la_pagina)."
   - id: home-sin-sidebar
     que: "sacar el menú lateral de la home raíz del sitio (index.html): aparece recién dentro de las secciones (cuarta_tanda.home_sin_menu_lateral)."
   - id: tooltip-mapa-nombre-y-datos
