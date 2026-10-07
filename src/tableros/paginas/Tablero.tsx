@@ -625,8 +625,15 @@ export default function Tablero({ pagina }: { pagina: PaginaTablero }) {
      cada cuadro un alto donde el dibujo se lea y deja que la pagina scrollee, y que tablero.js
      mira para no fijarle el alto de la ventana. Sin ella sigue el comportamiento de siempre
      (entra todo en una pantalla). */
-  const clasesTablero = (base: string) =>
-    tablero.alto === "fluye" ? base + " alto-fluido" : base;
+  /* El unico embudo de clases del nodo del tablero. `mapa-por-departamento` es la que
+     habilita la regla que esconde el mapa mientras no haya departamento elegido: va colgada
+     de ESTA clase y no de `#tablero`, que es el id de todos los tableros del sitio. */
+  const clasesTablero = (base: string) => {
+    const clases = [base];
+    if (tablero.alto === "fluye") { clases.push("alto-fluido"); }
+    if (tablero.mapa_por_departamento) { clases.push("mapa-por-departamento"); }
+    return clases.join(" ");
+  };
 
   return (
     <Cascara pagina={pagina}>

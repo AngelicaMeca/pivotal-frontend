@@ -97,6 +97,10 @@ indicadores:
 # departamental: "Desde el mapa se podrán seleccionar los departamentos a visualizar".
 paneles:
   alto: fluye
+  # El mapa se dibuja SOLO con un departamento elegido: ahi la pagina es la hoja
+  # "Agri 3-b" y sin el es la "Agri 3". Es propio de esta seccion: en cultivos
+  # extensivos el mapa esta siempre.
+  mapa_solo_con_departamento: true
 
   mapa:
     rotulo_accion: "Seleccione departamento para ver sus datos"

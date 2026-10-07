@@ -1205,10 +1205,16 @@ a { color: var(--enlace); }
    Las dos hojas de JC tienen el mismo contenido; la departamental suma el mapa, que ahi hace
    de SELECTOR ("Desde el mapa se podrán seleccionar los departamentos a visualizar"). Sin
    departamento elegido la pagina es la hoja "Agri 3" y el mapa no existe. */
-#tablero:not(.con-departamento) .panel[data-panel="mapa"] { display: none; }
+/* OJO con el alcance: `#tablero` es el id de TODOS los tableros del sitio. La primera
+   version de esta regla colgaba de ahi y le escondio el mapa a cultivos extensivos, que
+   lo tiene siempre. La clase `mapa-por-departamento` la pone solo el tablero que lo
+   declara en su spec. */
+#tablero.mapa-por-departamento:not(.con-departamento) .panel[data-panel="mapa"] {
+  display: none;
+}
 /* Con el mapa en la fila, la tabla que lo acompaña se queda con las 8 columnas que sobran: si
    no, la fila cierra en 10 de 12 y queda un hueco al costado. */
-#tablero.con-departamento .panel[data-panel="tabla-pct"] { grid-column: span 8; }
+#tablero.mapa-por-departamento.con-departamento .panel[data-panel="tabla-pct"] { grid-column: span 8; }
 
 /* ---------- tira de paginas de la seccion (banda del breadcrumb, a la derecha) ----------
    JC la dibuja en las cuatro hojas de su maqueta de pasturas y forrajes: la miga a la

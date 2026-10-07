@@ -7616,7 +7616,12 @@ def tablero_para_pagina(tablero):
             "ruta_datos": tablero["ruta_datos"],
             "disposicion": disposicion_de(tablero),
             "alto": alto_de(tablero),
-            "tarjeta_contexto": bool(tablero["spec"].get("tarjeta_contexto"))}
+            "tarjeta_contexto": bool(tablero["spec"].get("tarjeta_contexto")),
+            # Lo declara el spec del tablero, NO el sitio: el mapa de pasturas y forrajes se
+            # dibuja solo con un departamento elegido (hoja "Agri 3-b" de JC) y el de cultivos
+            # extensivos esta siempre. Viaja como una clase del nodo del tablero.
+            "mapa_por_departamento": bool(
+                tablero["paneles"].get("mapa_solo_con_departamento"))}
 
 
 def escribir_sitio(ctx, vistas, tableros):

@@ -205,6 +205,8 @@ export type PaginaTablero = Comun & {
     // que necesita y la pagina scrollea (pedido de JC del 30-sep-2026, hoy solo agricultura).
     alto: string;
     tarjeta_contexto: boolean;
+    // El mapa se dibuja solo con un departamento elegido (pasturas y forrajes).
+    mapa_por_departamento?: boolean;
   };
   paneles: Panel[];
   filtros_panel: Record<string, Filtro>;
