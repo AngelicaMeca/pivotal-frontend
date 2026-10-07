@@ -844,8 +844,20 @@ export default function iniciar(PIVOTAL) {
     PIVOTAL.vaciar(caja);
     var bloques = propios || panel.bloques
       || (panel.tabla ? [panel.tabla] : [{ columnas: panel.columnas, filas: panel.filas }]);
+    /* Un bloque con `titulo` es una TARJETA (pasturas y forrajes: una por año). La caja pasa a
+       apilarlas en vertical en vez de ponerlas lado a lado. */
+    var conTitulo = bloques.some(function (b) { return !!b.titulo; });
+    caja.classList.toggle("tabla-por-anio", conTitulo);
     bloques.forEach(function (bloque) {
-      caja.appendChild(armarTablaCampanias(bloque.columnas, bloque.filas));
+      var tabla = armarTablaCampanias(bloque.columnas, bloque.filas);
+      if (!bloque.titulo) { caja.appendChild(tabla); return; }
+      var tarjeta = document.createElement("section");
+      tarjeta.className = "tabla-anio";
+      var h = document.createElement("h4");
+      h.textContent = bloque.titulo;
+      tarjeta.appendChild(h);
+      tarjeta.appendChild(tabla);
+      caja.appendChild(tarjeta);
     });
   }
 
@@ -1716,9 +1728,9 @@ export default function iniciar(PIVOTAL) {
     return fig;
   }
 
-  function infoDibujarCuadro(forma, panel) {
+  function infoDibujarCuadro(forma, panel, destino) {
     var fig = infoCuadro(forma);
-    info.cuerpo.appendChild(fig);
+    (destino || info.cuerpo).appendChild(fig);
     if (!panel || panel.vacio) {
       fig.classList.add("sin-datos");
       texto(fig, "[data-titulo]", (panel && panel.titulo) || "");
@@ -1777,6 +1789,65 @@ export default function iniciar(PIVOTAL) {
     info.cuerpo.appendChild(fig);
   }
 
+  /* Un popup con muchos cuadros se parte en SECCIONES con pestañas (UX, 7-oct-2026): el que
+     abre ve de entrada un solo tema y elige a donde ir, en vez de recorrer nueve cuadros de
+     scroll. Cada seccion se dibuja recien al abrirla: ECharts no mide bien dentro de un nodo
+     escondido (queda con ancho cero), y de paso no se dibuja lo que nadie va a mirar. La barra
+     queda pegada arriba del cuerpo para poder cambiar de seccion desde cualquier altura. */
+  function infoDibujarSecciones(contenido) {
+    var barra = document.createElement("div");
+    barra.className = "info-pestanias";
+    barra.setAttribute("role", "tablist");
+    info.cuerpo.appendChild(barra);
+    var panes = {}, botones = {};
+    function mostrar(id) {
+      contenido.secciones.forEach(function (sec) {
+        var activa = sec.id === id;
+        botones[sec.id].setAttribute("aria-selected", activa ? "true" : "false");
+        botones[sec.id].tabIndex = activa ? 0 : -1;
+        panes[sec.id].hidden = !activa;
+      });
+      var pane = panes[id];
+      if (!pane.dataset.dibujado) {
+        pane.dataset.dibujado = "1";
+        contenido.bloques.filter(function (b) { return b.seccion === id; })
+          .forEach(function (b) { infoDibujarCuadro(b.forma, b.panel, pane); });
+      }
+      info.cuerpo.scrollTop = 0;
+      /* Ya visible, los graficos de la seccion se miden con su caja real. */
+      info.graficos.forEach(function (nodo) {
+        if (!pane.contains(nodo)) { return; }
+        var g = PIVOTAL.grafico(nodo);
+        if (g) { g.resize(); }
+      });
+    }
+    contenido.secciones.forEach(function (sec, i) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.setAttribute("role", "tab");
+      b.textContent = sec.rotulo;
+      b.addEventListener("click", function () { mostrar(sec.id); });
+      b.addEventListener("keydown", function (e) {
+        var d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+        if (!d) { return; }
+        var sig = contenido.secciones[(i + d + contenido.secciones.length)
+                                      % contenido.secciones.length];
+        mostrar(sig.id);
+        botones[sig.id].focus();
+        e.preventDefault();
+      });
+      barra.appendChild(b);
+      botones[sec.id] = b;
+      var pane = document.createElement("div");
+      pane.className = "info-seccion info-seccion-" + sec.id;
+      pane.setAttribute("role", "tabpanel");
+      pane.hidden = true;
+      info.cuerpo.appendChild(pane);
+      panes[sec.id] = pane;
+    });
+    mostrar(contenido.secciones[0].id);
+  }
+
   function infoBajar(ruta) {
     if (!info.bajados[ruta]) {
       info.bajados[ruta] = fetch(ruta)
@@ -1802,9 +1873,13 @@ export default function iniciar(PIVOTAL) {
     info.graficos = [];
     info.titulo.textContent = "Más información · " + (capa.nombres[clave] || "");
     return infoBajar(capa.archivos[clave]).then(function (contenido) {
-      contenido.bloques.forEach(function (bloque) {
-        infoDibujarCuadro(bloque.forma, bloque.panel);
-      });
+      if (contenido.secciones && contenido.secciones.length > 1) {
+        infoDibujarSecciones(contenido);
+      } else {
+        contenido.bloques.forEach(function (bloque) {
+          infoDibujarCuadro(bloque.forma, bloque.panel);
+        });
+      }
       /* Los bloques que siguen a un filtro de la PAGINA y no a la clave del archivo. Hoy el
          unico es el 5.3 de cultivos extensivos, que sigue al cultivo elegido; el resto es
          igual siempre, como pide JC ("ES ESTATICO"). */

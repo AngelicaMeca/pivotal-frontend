@@ -4635,7 +4635,7 @@ def _info_dtv_mapa(ctx, spec, producto, medida, pie):
         deptos.append({
             "id": geo, "nombre": nombres_mapa[geo], "v": valor,
             # El mouseover muestra el nombre y el detalle por año, nunca el geo_id.
-            "filas": [{"etiqueta": str(anio), "valor": ctx.con_unidad(v, medida)}
+            "filas": [[str(anio), ctx.con_unidad(v, medida)]
                       for anio, v in zip(ctx.anios, valores) if v is not None],
         })
         if valor is not None:
@@ -4767,14 +4767,23 @@ def capa_mas_informacion_intensivos(ctx, spec, pie):
       <producto>-estimaciones  el mapa de calor que pide agregarle a la tabla (F80)
     """
     capa = {}
+    rotulos = spec["paneles"]["mas-informacion"]["secciones"]
     for producto in ctx.productos:
         etiqueta = ctx.etiqueta_producto[producto]
+        bloques = ([dict(b, seccion="mapa") for b in
+                    [{"id": "mapa-volumen", "forma": "mapa",
+                      "panel": _info_dtv_mapa(ctx, spec, producto, "peso_tn", pie)}]]
+                   + [dict(b, seccion="departamentos") for b in
+                      _info_dtv_por_departamento(ctx, spec, producto, pie)]
+                   + [dict(b, seccion="movimientos") for b in
+                      _info_dtv_tipos_de_movimiento(ctx, spec, producto, pie)])
+        # Solo viajan las secciones que tienen algo que mostrar, en el orden de la lista.
+        presentes = [s for s in ("mapa", "departamentos", "movimientos")
+                     if any(b["seccion"] == s for b in bloques)]
         capa["%s-dtv" % producto] = {
             "nombre": "%s · DTV" % etiqueta,
-            "bloques": ([{"id": "mapa-volumen", "forma": "mapa",
-                          "panel": _info_dtv_mapa(ctx, spec, producto, "peso_tn", pie)}]
-                        + _info_dtv_por_departamento(ctx, spec, producto, pie)
-                        + _info_dtv_tipos_de_movimiento(ctx, spec, producto, pie)),
+            "secciones": [{"id": s, "rotulo": rotulos[s]} for s in presentes],
+            "bloques": bloques,
         }
         capa["%s-estimaciones" % producto] = {
             "nombre": "%s · Estimación de superficies" % etiqueta,
@@ -4896,18 +4905,17 @@ def panel_forraje_tabla(ctx, spec, medida, geo, pie):
     """
     declarado = spec["paneles"]["tabla-" + ("pct" if medida == "participacion" else "ha")]
     bandas = [b for b in ctx.bandas if medida == "superficie_ha" or b != "sin_dato"]
-    # DOS columnas de encabezado y no una: JC pone el AÑO en una columna propia, combinada
-    # verticalmente, y el mes al lado ("2023 | ene"). Un "ene 2023" en una sola celda se lee
-    # peor y no es lo que dibujo.
-    columnas = [{"etiqueta": "", "num": False}, {"etiqueta": "", "num": False}]
+    # Un RECUADRO por año (pedido de Francisco, 7-oct-2026): el año deja de ser una columna
+    # combinada y pasa a ser el título de su tarjeta, con su propio encabezado de bandas. JC
+    # dibuja "2023 | ene" en una tabla corrida; con 40 meses seguidos separar por año se lee
+    # mejor y el sitio ya sabe dibujar `bloques` (cada uno con su título).
+    columnas = [{"etiqueta": "", "num": False}]
     columnas += [{"etiqueta": ctx.etiqueta_banda[b], "num": True} for b in bandas]
     if declarado.get("columna_total"):
         columnas.append({"etiqueta": declarado["columna_total"], "num": True})
-    filas, anio_previo = [], None
+    por_anio = {}
     for anio, mes in ctx.meses:
-        # El año se escribe UNA vez por bloque, que es el efecto de su celda combinada.
-        celdas = [str(anio) if anio != anio_previo else "", MESES_CORTOS_FORRAJE[mes - 1]]
-        anio_previo = anio
+        celdas = [MESES_CORTOS_FORRAJE[mes - 1]]
         suma = 0.0
         for b in bandas:
             v = ctx.hechos.valor(anio, mes, ctx.quincena, b, medida, geo)
@@ -4916,16 +4924,16 @@ def panel_forraje_tabla(ctx, spec, medida, geo, pie):
                 suma += v
         if declarado.get("columna_total"):
             celdas.append(ctx.texto(suma, medida))
-        filas.append({"celdas": celdas})
+        por_anio.setdefault(anio, []).append({"celdas": celdas})
     return {
-        # SIN TITULO: las dos tablas de la hoja "Agri 3" arrancan directamente en su fila de
-        # encabezados. El titulo que habia aca estaba inventado.
+        # SIN TITULO de tabla: las de la hoja "Agri 3" arrancan en su fila de encabezados. El
+        # unico titulo es el de cada recuadro, que es el año.
         "titulo": "",
         "subtitulo": "",
         "pie": pie,
         "nota": limpiar(declarado.get("nota") or ""),
-        "columnas": columnas,
-        "filas": filas,
+        "bloques": [{"titulo": str(anio), "columnas": columnas, "filas": filas}
+                    for anio, filas in por_anio.items()],
     }
 
 

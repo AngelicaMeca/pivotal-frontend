@@ -1390,6 +1390,33 @@ dialog.info.info-visible::backdrop { opacity: 1; }
   padding: 0 1.1rem 1.6rem;
   display: flex; flex-direction: column; gap: 1.1rem;
 }
+/* Pestañas de seccion del popup (cuando trae mas de un tema). Pegadas arriba del cuerpo que
+   scrollea, con el mismo lenguaje de pildora que los botones de accion del tablero. */
+.info-pestanias {
+  position: sticky; top: 0; z-index: 2; flex: 0 0 auto;
+  display: flex; flex-wrap: wrap; gap: .4rem;
+  padding: .2rem 0 .6rem; background: var(--fondo);
+}
+.info-pestanias button {
+  font: inherit; font-size: .8rem; cursor: pointer; color: var(--texto);
+  padding: .35rem .9rem; border-radius: var(--radio-pildora);
+  border: 1px solid var(--borde-panel); background: var(--fondo-cuadro);
+}
+.info-pestanias button:hover { background: var(--fondo-apoyo); }
+.info-pestanias button[aria-selected="true"] {
+  background: var(--cromo); color: var(--cromo-texto, var(--fondo-cuadro)); border-color: var(--cromo);
+}
+.info-pestanias button:focus-visible { outline: 2px solid var(--cromo); outline-offset: 2px; }
+.info-seccion { display: flex; flex-direction: column; gap: 1.1rem; }
+.info-seccion[hidden] { display: none; }
+/* Los cuadros por departamento van de a dos: son cuatro a siete del mismo formato y en una
+   sola columna eran puro scroll. Las tablas y el mapa ocupan todo el ancho. */
+.info-seccion-departamentos {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.1rem;
+}
+@media (max-width: 1100px) {
+  .info-seccion-departamentos { grid-template-columns: minmax(0, 1fr); }
+}
 .info-cuadro {
   margin: 0; padding: .9rem 1rem 1rem;
   border: 1px solid var(--borde-panel); border-radius: var(--radio);
@@ -1524,6 +1551,17 @@ dialog.info.info-visible::backdrop { opacity: 1; }
   letter-spacing: .04em; color: var(--texto-apoyo); font-weight: 600;
 }
 .tabla-datos td.num, .tabla-datos th.num { text-align: right; font-variant-numeric: tabular-nums; }
+/* Una tarjeta por año (pasturas y forrajes, y su informacion por departamento): se apilan en
+   vertical, cada una con el año de titulo y su propio encabezado de bandas. */
+.tabla-datos.tabla-por-anio { flex-direction: column; align-items: stretch; gap: .7rem; }
+.tabla-anio {
+  min-width: 0; padding: .45rem .6rem .3rem;
+  background: var(--fondo); border: 1px solid var(--borde-panel); border-radius: var(--radio-chico);
+}
+.tabla-anio h4 {
+  margin: 0 0 .25rem; font-family: var(--serif); font-size: .85rem; font-weight: 700;
+}
+.tabla-anio table { width: 100%; }
 /* La campaña elegida en la barra verde queda marcada: el dato de la pantalla es ese. */
 .tabla-datos tr.actual td { background: var(--fondo-apoyo); font-weight: 650; }
 
