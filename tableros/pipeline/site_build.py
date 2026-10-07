@@ -4767,26 +4767,20 @@ def capa_mas_informacion_intensivos(ctx, spec, pie):
       <producto>-estimaciones  el mapa de calor que pide agregarle a la tabla (F80)
     """
     capa = {}
-    rotulos = spec["paneles"]["mas-informacion"]["secciones"]
     for producto in ctx.productos:
         etiqueta = ctx.etiqueta_producto[producto]
-        bloques = ([dict(b, seccion="mapa") for b in
-                    [{"id": "mapa-volumen", "forma": "mapa",
-                      "panel": _info_dtv_mapa(ctx, spec, producto, "peso_tn", pie)}]]
-                   + [dict(b, seccion="departamentos") for b in
-                      _info_dtv_por_departamento(ctx, spec, producto, pie)]
-                   + [dict(b, seccion="movimientos") for b in
-                      _info_dtv_tipos_de_movimiento(ctx, spec, producto, pie)])
-        # Solo viajan las secciones que tienen algo que mostrar, en el orden de la lista.
-        presentes = [s for s in ("mapa", "departamentos", "movimientos")
-                     if any(b["seccion"] == s for b in bloques)]
         capa["%s-dtv" % producto] = {
             "nombre": "%s · DTV" % etiqueta,
-            "secciones": [{"id": s, "rotulo": rotulos[s]} for s in presentes],
-            "bloques": bloques,
+            # El popup se dibuja como DASHBOARD (grilla de cuadros chicos), no como columna.
+            "disposicion": "tablero",
+            "bloques": ([{"id": "mapa-volumen", "forma": "mapa",
+                          "panel": _info_dtv_mapa(ctx, spec, producto, "peso_tn", pie)}]
+                        + _info_dtv_por_departamento(ctx, spec, producto, pie)
+                        + _info_dtv_tipos_de_movimiento(ctx, spec, producto, pie)),
         }
         capa["%s-estimaciones" % producto] = {
             "nombre": "%s · Estimación de superficies" % etiqueta,
+            "disposicion": "tablero",
             "bloques": [{"id": "mapa-superficie", "forma": "mapa",
                          "panel": _info_dtv_mapa(ctx, spec, producto, SUPERFICIE_ESTIMADA,
                                                  pie)}],

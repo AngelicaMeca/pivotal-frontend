@@ -418,13 +418,6 @@ paneles:
   # nada más.
   mas-informacion:
     titulo: "Más información"
-    # Las secciones del popup en DTV (UX, 7-oct-2026): un solo scroll con mapa, hasta siete
-    # cuadros por departamento y dos tablas era demasiado. El popup las muestra como pestañas y
-    # dibuja cada una recién al abrirla. Los rótulos nombran lo que JC lista en F72, F73 y F74.
-    secciones:
-      mapa: "Mapa por departamento"
-      departamentos: "Gráficos por departamento"
-      movimientos: "Por tipo de movimiento"
     # F72 y F80: el mismo mapa con dos medidas. JC ya anticipa que van a dibujar la misma
     # mancha ("en resumen será idéntico al de volumen porque tiene valores constantes"): la
     # superficie estimada son los kilos de las DTV sobre un rendimiento fijo por producto. Se
