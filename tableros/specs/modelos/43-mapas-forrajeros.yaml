@@ -1,0 +1,94 @@
+# Página "Mapas" de Pasturas y forrajes · hoja "Agri 3 - C" de la maqueta de JC
+#
+# Qué es: la galería de los mapas del Observatorio Forrajero Nacional. Son IMÁGENES, no datos:
+# cada quincena el Observatorio publica un mapa del país con la producción de materia seca
+# comparada contra su promedio histórico, con su propia leyenda y su período impresos adentro.
+# El sitio no los parsea: los publica.
+#
+# Lo que pide JC, textual de su hoja:
+#   celda E77: "Se incorporarán miniaturas de los mapas en orden descendente. A efectos de la
+#               versión Beta, sólo hasta el primer mapa de 2025"
+#   celda M80: "AUMENTA TAMAÑO DE MAPA EN UN POP UP"
+#   celda E74: "Base de Mapas en la Carpeta 'Mapas' de la carpeta '43 Recursos forrajeros SDE'"
+#
+# Su hoja "Agri 3 - C -Map2" es la MISMA página con las miniaturas un poco más separadas. No es
+# una decisión de contenido: se usa la grilla que mejor entre en el ancho real del sitio.
+
+# `familia` y no `base`: el contexto de la seccion es el de la familia, igual que en las
+# vistas de las DTV de hortalizas.
+familia: recursos-forrajeros
+base: 43
+slug: 43-mapas-forrajeros
+comunes: recursos-forrajeros
+protocolo: _protocolo-presentacion
+tipo: galeria
+
+titulo: "Mapas del Observatorio Forrajero"
+subtitulo: "Producción de materia seca comparada contra su promedio histórico, quincena a quincena"
+
+titulo_protocolo: "Sgo del Estero - Recursos forrajeros - Mapas del Observatorio Forrajero"
+subtitulo_cuadro: "De la quincena más reciente a la más antigua"
+
+# ---------------------------------------------------------------------------
+# CÓMO SE ROTULA CADA MAPA
+# ---------------------------------------------------------------------------
+# El nombre del archivo trae la quincena y el año ("F7_2026.png"), y el período se calcula:
+# la quincena N cubre los días [1 + 16*(N-1), 16*N] del año. Son tramos de 16 días, no medios
+# meses, así que la fecha se corre a lo largo del año.
+#
+# La fórmula está VERIFICADA dos veces, que es lo que la hace confiable:
+#   - contra los rótulos que JC escribe en su hoja: "Mapa 22 marzo al 6 abril" es la F6
+#     (días 81 a 96), "6 al 21 marzo" la F5, "18 febrero al 5 marzo" la F4, "2 al 17 febrero"
+#     la F3 y "17 enero al 1 febrero" la F2. Las cinco dan exacto.
+#   - contra el texto impreso DENTRO de las propias imágenes: la F7 de 2026 dice "Período:
+#     7 abril - 22 abril 2026", y la fórmula da 7 y 22 de abril.
+#
+# Se calcula y no se escribe a mano para que un mapa nuevo aparezca solo: se copia el PNG y
+# listo, igual que pasa con los Excels.
+rotulo: "Mapa {desde} al {hasta}"
+dias_por_quincena: 16
+
+orden: descendente        # el más reciente primero, como pide JC
+
+# ---------------------------------------------------------------------------
+# DE DÓNDE SALEN LOS ARCHIVOS
+# ---------------------------------------------------------------------------
+# NO son `raw/`: raw/ es para datos que el pipeline lee y transforma. Esto son assets que el
+# sitio publica tal cual, así que viven donde el logo de la provincia y los íconos de JC, y se
+# commitean una vez. Los nombres del origen venían desparejos ("F17-2025", "F3_2026-1",
+# "Mapas-F4_2025"); se normalizaron a `<año>-F<NN>` al copiarlos.
+#
+# De cada mapa hay DOS archivos:
+#   <año>-F<NN>.png        el mapa entero, 2001x944, ~1,2 MB. Es el que abre el popup.
+#   <año>-F<NN>-mini.png   la miniatura, 500x236. Es la que dibuja la grilla.
+# La miniatura existe porque son 28 mapas: con las grandes, la página bajaría 33 MB de una.
+# Se generó una sola vez con `pipeline/pngs` (promedio de bloque), sin dependencias nuevas.
+assets:
+  carpeta: "site/assets/mapas-forrajeros"
+  patron: "^(?P<anio>\\d{4})-F(?P<quincena>\\d{2})(?P<mini>-mini)?\\.png$"
+
+cobertura:
+  desde: "F1 de 2025"
+  hasta: "F7 de 2026"
+  cuantos: 28
+  faltan: "F6 y F23 de 2025 (no estaban en la carpeta)"
+  por_que_desde_2025: >
+    Es el corte que pide JC para la Beta: "sólo hasta el primer mapa de 2025".
+
+fuente:
+  pie: "Fuente: Observatorio Forrajero Nacional (INTA - CREA - Fauba - IPCVA)"
+  organismo_esperado: "Observatorio Forrajero Nacional (INTA - CREA - Fauba - IPCVA)"
+
+# La MISMA nota que el tablero: la pestaña "Metodología" tiene que decir lo mismo en
+# todas las páginas de la sección, que es como funciona en el Excel de JC (su hipervínculo
+# apunta al mismo bloque en las cuatro hojas).
+notas_metodologicas: [metodologia_de_jc]
+
+sensibilidad: normal
+estado: publicada
+
+origen:
+  tipo: maqueta de JC
+  archivo: "0000000000 Modelo 1 - Pasturas y forrajes.xlsx"
+  hojas: ["Agri 3 - C", "Agri 3 - C -Map2"]
+  recibido: 2026-10-06

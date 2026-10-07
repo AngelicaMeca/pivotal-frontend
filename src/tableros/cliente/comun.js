@@ -397,12 +397,37 @@ export default function crearPivotal() {
     });
   }
 
+  /* La entrada "Información por departamento" de la tira de paginas: elige el departamento
+     en el acto, igual que el clic en el mapa, en vez de recargar la pagina entera para mover
+     un filtro. Sigue siendo un `<a>` con su href: el que quiera abrirlo en otra pestaña lo
+     puede hacer, y por eso tampoco se atajan los clics con Ctrl, Cmd o el boton del medio. */
+  function engancharTiraDeDepartamento() {
+    Array.prototype.forEach.call(
+      document.querySelectorAll("a[data-elegir-departamento]"), function (a) {
+        a.addEventListener("click", function (evento) {
+          if (evento.metaKey || evento.ctrlKey || evento.shiftKey || evento.button !== 0) {
+            return;
+          }
+          if (!hayCapa()) { return; }
+          evento.preventDefault();
+          elegirDepartamento(a.dataset.elegirDepartamento, true);
+        });
+      });
+  }
+
   /* Los dos tramos que la hoja "Agri 1 Dto" agrega a la miga: "Provincia", que con un
      departamento elegido es el link de VUELTA, y "Dto ALBERDI". Con la provincia puesta el
      tramo del departamento no se dibuja (ni su separador) y "Provincia" no lleva a ningun
      lado, que es el estado de la hoja "Agri 1". */
   function pintarMigaDepartamental(parametros) {
     if (!hayCapa()) { return; }
+    /* El estado viaja al CSS: hay paginas cuyo contenido cambia con el departamento y no solo
+       sus numeros. En pasturas y forrajes el mapa existe solo con uno elegido, porque ahi la
+       pagina es la hoja "Agri 3-b" de JC y sin el es la "Agri 3". Es una clase y no un
+       `hidden` por panel para que la regla viva en la hoja de estilos, que es donde se decide
+       como se ve cada estado. */
+    var tablero = document.getElementById("tablero");
+    if (tablero) { tablero.classList.toggle("con-departamento", !!estado.dto); }
     var paso = document.querySelector("[data-miga-paso=\"departamento\"]");
     if (paso) {
       paso.hidden = !estado.dto;
@@ -1581,6 +1606,7 @@ export default function crearPivotal() {
         preseleccionarDepartamento();
         escuchar();
         escucharMigaProvincia();
+        engancharTiraDeDepartamento();
         engancharUtilidades();
         window.addEventListener("resize", reacomodar);
         return refrescar();

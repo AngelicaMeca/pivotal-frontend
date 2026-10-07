@@ -77,7 +77,10 @@ departamentos:
     "GENERAL TABOADA": 86077
     "GUASAYAN": 86084
     "JIMENEZ": 86091
-    "JUAN F. IBARRA": 86098
+    "JUAN F. IBARRA": 86098
+    # La base 43 (recursos forrajeros) lo escribe con COMA en 73 de sus 142 filas, y con
+    # punto en las otras 69, en los mismos anios: es tipeo, no un cambio de nombre.
+    "JUAN F, IBARRA": 86098
     "LORETO": 86105
     "MITRE": 86112
     "MORENO": 86119

@@ -143,7 +143,26 @@ const CUERPOS: Record<string, (props: { elementos: Elemento[] }) => ReactNode> =
   "flujo-od": FlujoOD,
   lista: SoloTabla,
   "tabla-variaciones": SoloTabla,
+  galeria: Galeria,
 };
+
+/* La grilla de miniaturas de la pagina "Mapas". El cuerpo es un hueco y nada mas: lo llena
+   galeria.js con lo que escribio el build, que es quien sabe que mapas hay y como se rotulan. */
+function Galeria({ elementos }: { elementos: Elemento[] }) {
+  return (
+    <>
+      {elementos.map((elemento, i) => (
+        <figure key={i} className="cuadro">
+          <h2>{elemento.titulo}</h2>
+          <p className="subtitulo">{elemento.subtitulo}</p>
+          <div className="galeria" data-galeria=""></div>
+          <p className="cuadro-nota">{elemento.nota}</p>
+          <figcaption className="fuente">{elemento.pie}</figcaption>
+        </figure>
+      ))}
+    </>
+  );
+}
 
 export default function Vista({ pagina }: { pagina: PaginaVista }) {
   const { vista } = pagina;
@@ -173,9 +192,11 @@ export default function Vista({ pagina }: { pagina: PaginaVista }) {
       </div>
 
       {vista.notas.length ? (
-        <div className="notas">
+        /* `id` para que la pestaña "Metodología" de la banda ancle acá tambien en las
+           vistas, no solo en el tablero. */
+        <div className="notas" id="metodologia">
           {vista.notas.map((nota, i) => (
-            <details key={i}>
+            <details key={i} className={nota.texto.length > 400 ? "nota-larga" : undefined}>
               <summary>{nota.titulo}</summary>
               <p>
                 <Glosa texto={nota.texto} partes={nota.texto_partes} />

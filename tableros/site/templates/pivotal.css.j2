@@ -235,6 +235,18 @@ a.boton-cabecera:hover { background: color-mix(in srgb, var(--sobre-cromo) 16%, 
 }
 .menu-sector li a:hover { background: color-mix(in srgb, var(--sobre-cromo) 14%, transparent); }
 .menu-sector li a[aria-current] { background: var(--cromo-oscuro); font-weight: 650; }
+/* Seccion ANUNCIADA en el menu: el rotulo esta, apagado, y al lado dice "Próximamente".
+   Se lee como lo que es -algo que va a estar- y no como un link roto. Mismo tratamiento que
+   el resto de lo deshabilitado del sitio. */
+.menu-seccion-prox {
+  display: flex; align-items: baseline; gap: .35rem;
+  opacity: .55; cursor: not-allowed;
+}
+.menu-seccion-prox .prox {
+  font-family: var(--rotulos); font-size: .5rem; text-transform: uppercase;
+  letter-spacing: .06em; white-space: nowrap;
+}
+
 .menu-prox {
   margin: 0 0 .3rem; padding-left: .85rem; font-family: var(--rotulos); font-size: .58rem;
   text-transform: uppercase; letter-spacing: .1em; color: color-mix(in srgb, var(--sobre-cromo) 75%, transparent);
@@ -1189,6 +1201,104 @@ a { color: var(--enlace); }
 }
 .anillo-leyenda .pct { font-variant-numeric: tabular-nums; font-weight: 650; }
 
+/* ---------- pasturas y forrajes: la hoja "Agri 3-b" es la misma pagina con el mapa ----------
+   Las dos hojas de JC tienen el mismo contenido; la departamental suma el mapa, que ahi hace
+   de SELECTOR ("Desde el mapa se podrán seleccionar los departamentos a visualizar"). Sin
+   departamento elegido la pagina es la hoja "Agri 3" y el mapa no existe. */
+#tablero:not(.con-departamento) .panel[data-panel="mapa"] { display: none; }
+/* Con el mapa en la fila, la tabla que lo acompaña se queda con las 8 columnas que sobran: si
+   no, la fila cierra en 10 de 12 y queda un hueco al costado. */
+#tablero.con-departamento .panel[data-panel="tabla-pct"] { grid-column: span 8; }
+
+/* ---------- tira de paginas de la seccion (banda del breadcrumb, a la derecha) ----------
+   JC la dibuja en las cuatro hojas de su maqueta de pasturas y forrajes: la miga a la
+   izquierda y los links a las otras paginas de la seccion a la derecha. `margin-left: auto`
+   la empuja al otro extremo de la banda sin tocar el orden del markup, que importa para el
+   lector de pantalla: primero donde estoy, despues a donde puedo ir. */
+.tira-paginas {
+  margin-left: auto; display: flex; align-items: center; gap: .15rem;
+  flex-wrap: wrap;
+}
+.tira-paginas a, .tira-paginas .tira-prox {
+  display: inline-flex; align-items: baseline; gap: .3rem;
+  padding: .2rem .7rem; border-radius: var(--radio-pildora);
+  font-size: .78rem; color: var(--sobre-cromo); text-decoration: none;
+  white-space: nowrap;
+}
+.tira-paginas a:hover,
+.tira-paginas a[aria-current="page"] {
+  background: color-mix(in srgb, var(--sobre-cromo) 16%, transparent);
+}
+.tira-paginas .tira-prox { opacity: .55; cursor: not-allowed; }
+.tira-paginas .prox {
+  font-family: var(--rotulos); font-size: .5rem; text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+/* ---------- pagina "Mapas" de pasturas y forrajes (tipo de vista `galeria`) ----------
+   Miniaturas en grilla, en orden descendente, que se amplian en el popup del sitio. Es lo que
+   pide JC en su hoja "Agri 3 - C": "Se incorporarán miniaturas de los mapas en orden
+   descendente" y "AUMENTA TAMAÑO DE MAPA EN UN POP UP".
+   `auto-fill` con un minimo y no un numero fijo de columnas: los mapas son apaisados (2001x944)
+   y en una pantalla angosta tres por fila no se leen. La grilla acomoda las que entren. */
+.galeria {
+  display: grid; gap: .9rem;
+  /* 300 px de minimo y no 260: el mapa trae tres paneles con su leyenda adentro, y abajo
+     de ese ancho no se distingue uno de otro y la grilla deja de servir para elegir. */
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  margin-top: .6rem;
+}
+.galeria-mapa { margin: 0; }
+.galeria-mapa button {
+  display: block; width: 100%; padding: 0; cursor: pointer;
+  background: var(--fondo); border: 1px solid var(--borde-panel);
+  border-radius: var(--radio-chico); overflow: hidden;
+  transition: border-color 120ms ease-out;
+}
+.galeria-mapa button:hover { border-color: var(--enlace); }
+.galeria-mapa button:focus-visible { outline: 2px solid var(--enlace); outline-offset: 2px; }
+/* La caja de la miniatura se reserva ANTES de que la imagen baje. Sin esto el `<img>` mide
+   cero de alto hasta que carga, las 28 figuras quedan de 21 px -solo el rotulo- y la pagina se
+   ve como una lista de textos sin mapas; despues, a medida que llegan, todo salta. Es el bug
+   que hizo preguntar "¿dónde están los mapas?".
+   La proporcion es la del archivo (2001x944) y va en el CSS y no en atributos width/height
+   porque la imagen es fluida: el ancho lo decide la grilla. */
+.galeria-mapa img {
+  display: block; width: 100%; height: auto; aspect-ratio: 2001 / 944;
+  background: var(--fondo-apoyo);
+}
+.galeria-mapa figcaption {
+  margin-top: .3rem; text-align: center;
+  font-family: var(--rotulos); font-size: .6rem; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--texto-apoyo);
+}
+/* El mapa ampliado: entero y centrado, sin recortar. Es un mapa con leyenda y texto chico, y
+   recortarlo para llenar la caja seria taparle justo la leyenda. */
+/* Las flechas del mapa ampliado: pasar al siguiente sin cerrar el popup. Van ENCIMA de la
+   imagen y pegadas al borde de la caja, que es el espacio que al mapa le sobra a los costados
+   (es apaisado y la caja es casi cuadrada). En la punta de la lista quedan apagadas: con 28
+   mapas en orden cronologico, dar la vuelta se lee como un salto y no como avanzar. */
+.galeria-grande { position: relative; }
+.galeria-flecha {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 2.6rem; height: 2.6rem; border-radius: var(--radio-pildora);
+  border: 1px solid var(--borde-panel); background: var(--fondo-cuadro); color: var(--texto);
+  font: inherit; font-size: 1.6rem; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background-color 120ms ease-out;
+}
+.galeria-flecha:hover:not(:disabled) { background: var(--fondo-apoyo); }
+.galeria-flecha:focus-visible { outline: 2px solid var(--enlace); outline-offset: 2px; }
+.galeria-flecha:disabled { opacity: .3; cursor: default; }
+.galeria-anterior { left: .4rem; }
+.galeria-siguiente { right: .4rem; }
+@media (prefers-reduced-motion: reduce) { .galeria-flecha { transition: none; } }
+
+.galeria-grande {
+  display: flex; align-items: center; justify-content: center; padding: .6rem 1.1rem 1.1rem;
+}
+.galeria-grande img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
 /* ================= popup "Mas informacion" (seccion 5 de la maqueta) =================
    MISMO diseno y MISMO gesto que el zoom (Francisco, 2-oct-2026: "que el pop up tenga ese
    mismo diseño, con las esquinas redondeadas" y "la misma animacion que el zoom"). Las reglas
@@ -1660,7 +1770,18 @@ table.matriz-od th.esquina { font-weight: 500; color: var(--texto-apoyo); }
   padding: .5rem .75rem; margin: 0 0 .35rem;
 }
 .notas summary { cursor: pointer; font-size: .85rem; font-weight: 650; }
-.notas p { margin: .5rem 0 0; font-size: .84rem; color: var(--texto-apoyo); max-width: 70ch; }
+/* El ancho de lectura: un parrafo de 1.400 px de ancho se lee mal, se pierde el renglon al
+   volver. Las 70ch son esa medida. Pero el recuadro ocupa todo el ancho de la pagina, asi que
+   con el texto pegado a la izquierda queda media caja vacia al costado y se lee como un error
+   de dibujo: la columna va CENTRADA en su caja. */
+.notas p {
+  margin: .5rem auto 0; font-size: .84rem; color: var(--texto-apoyo);
+  max-width: 70ch;
+}
+/* Cuando el texto es largo -la metodologia de pasturas y forrajes son 1.150 caracteres- la
+   columna se ensancha: con 70ch serian quince renglones en una caja que podria resolverlo en
+   seis, y el hueco al costado se nota mas que el beneficio de la medida corta. */
+.notas details.nota-larga p { max-width: 120ch; }
 .aviso {
   border-left: 3px solid var(--cromo); background: var(--fondo-apoyo);
   border-radius: 0 var(--radio-chico) var(--radio-chico) 0; padding: .6rem .8rem; margin: 0 0 .75rem; font-size: .84rem;

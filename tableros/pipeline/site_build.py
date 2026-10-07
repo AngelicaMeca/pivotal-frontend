@@ -44,6 +44,7 @@ from pipeline import hacienda as hac
 from pipeline import pngs
 from pipeline import precios as pc
 from pipeline import presentacion as pr
+from pipeline import forrajeras as forr
 from pipeline import stock as stk
 from pipeline import vegetales as veg
 
@@ -4784,6 +4785,421 @@ def capa_mas_informacion_intensivos(ctx, spec, pie):
     return capa
 
 
+# ==========================================================================
+# Base 43 · recursos forrajeros (Observatorio Forrajero Nacional)
+# ==========================================================================
+class ContextoForrajeras:
+    """El mismo papel que `Contexto`, para la base 43. Misma interfaz publica."""
+
+    familia = "recursos-forrajeros"
+
+    def __init__(self, hechos):
+        self.protocolo = pr.cargar_protocolo()
+        self.comunes = pr.cargar_comunes(self.familia)
+        self.theme = pr.cargar_theme()
+        self.navegacion = pr.cargar_yaml(os.path.join(DIR_SITE, "navegacion.yaml"))
+        self.hechos = hechos
+        self.colores = pr.Colores(self.protocolo, self.comunes, self.theme)
+        self.notas = self.comunes["notas_metodologicas"]
+
+        # QUE QUINCENA representa al mes. Es la regla de negocio mas importante de la seccion y
+        # vive en el spec, no aca: JC arma sus cuadros con la PRIMERA, y tiene un buen motivo
+        # que no escribe -la primera es la serie completa (los 12 meses de todos los anios) y a
+        # la segunda le falta un mes por anio-. Verificado contra su maqueta: enero de 2023,
+        # "Muy bajo", su cuadro dice 3.848.473 ha y la primera quincena da 3.848.473 clavado.
+        self.quincena = self.comunes["agregacion_mensual"]["quincena"]
+        # La ventana la decide el spec, no el dato: JC dibuja desde 2023 y la base trae desde
+        # 2020 (ver `ventana` en los comunes). Un `hasta` nulo es "hasta donde llegue la
+        # fuente", para que el mes nuevo aparezca solo en la proxima publicacion.
+        ventana = self.comunes["ventana"]
+        self.meses = [(a, m) for a, m in hechos.meses_de(self.quincena)
+                      if a >= ventana["desde"]
+                      and (ventana.get("hasta") is None or a <= ventana["hasta"])]
+        self.anios = sorted({a for a, _ in self.meses})
+
+        # El color de las seis bandas. NO es una rampa de magnitud ni una paleta libre: la
+        # escala esta ORDENADA y tiene centro ("Promedio"), asi que es una divergente, mas un
+        # gris propio para la sexta, que no es una banda sino el territorio sin clasificar.
+        declarado = self.comunes["presentacion"]["colores_de_las_bandas"]
+        self.color_banda = dict(declarado["hex"])
+        self.etiqueta_banda = {b["id"]: b["etiqueta"] for b in self.comunes["bandas"]}
+        self.bandas = [b["id"] for b in self.comunes["bandas"]]
+
+    def pie(self, spec):
+        esperado = (spec.get("fuente") or {}).get("organismo_esperado")
+        reales = sorted(self.hechos.fuentes)
+        if esperado and reales != [esperado]:
+            raise pr.ErrorDeProtocolo(
+                "%s espera fuente %r y el mart trae %r" % (spec["slug_vista"], esperado, reales))
+        return pr.pie_de_fuente(self.protocolo, reales,
+                                (spec.get("fuente") or {}).get("publicacion"))
+
+    def subtitulo_unidad(self, unidad):
+        return pr.subtitulo_por_unidad(self.protocolo, unidad)
+
+    def texto(self, valor, medida="superficie_ha"):
+        """Hectareas enteras y porcentajes con un decimal, como los escribe JC."""
+        if valor is None:
+            return "S/D"
+        if medida == "participacion":
+            return pr.fmt_numero(valor * 100.0, 1) + "%"
+        return pr.fmt_numero(valor, 0)
+
+    def eje(self, valores, unidad):
+        limpios = [v for v in valores if v is not None]
+        marcas = pr.marcas_eje(min(limpios + [0.0]), max(limpios + [0.0]))
+        return {"min": marcas["min"], "max": marcas["max"], "paso": marcas["paso"],
+                "etiquetas": {clave_js(m): pr.fmt_numero(m, 0) for m in marcas["marcas"]},
+                "nombre": FORRAJERAS_EJE[unidad], "minimo": minimo_rotuladas()}
+
+    def notas_de(self, spec, extra=()):
+        ids = list(spec.get("notas_metodologicas") or []) + list(extra)
+        vistas, salida = set(), []
+        for nota_id in ids:
+            if nota_id in vistas or nota_id not in self.notas:
+                continue
+            vistas.add(nota_id)
+            salida.append({"titulo": self.notas[nota_id]["titulo"],
+                           "texto": limpiar(self.notas[nota_id]["texto"])})
+        return salida
+
+
+FORRAJERAS_EJE = {"ha": "Hectáreas", "%": "Porcentaje"}
+FORRAJERAS_UNIDAD = {"superficie_ha": "ha", "participacion": "%"}
+
+
+def _forraje_area(ctx, geo):
+    return "Total" if geo is None else "Dto " + ctx.hechos.nombre[geo]
+
+
+def _forraje_categorias(ctx):
+    """Las etiquetas del eje horizontal: un mes, con el anio rotulado aparte."""
+    return [{"texto": MESES_CORTOS_FORRAJE[mes - 1], "grupo": str(anio)}
+            for anio, mes in ctx.meses]
+
+
+MESES_CORTOS_FORRAJE = ["ene", "feb", "mar", "abr", "may", "jun",
+                        "jul", "ago", "sep", "oct", "nov", "dic"]
+
+
+def _forraje_serie(ctx, banda, medida, geo):
+    return [ctx.hechos.valor(a, m, ctx.quincena, banda, medida, geo) for a, m in ctx.meses]
+
+
+def panel_forraje_tabla(ctx, spec, medida, geo, pie):
+    """Una de las dos tablas de JC: meses en las filas, bandas en las columnas.
+
+    La de PORCENTAJE lleva las cinco bandas y cierra en 100%; la de HECTAREAS lleva las seis,
+    porque la superficie sin clasificar se puede leer sin deformar el reparto. No es un
+    descuido de JC: son dos denominadores distintos y los dos estan bien
+    (_comunes-base-43.dos_denominadores).
+    """
+    declarado = spec["paneles"]["tabla-" + ("pct" if medida == "participacion" else "ha")]
+    bandas = [b for b in ctx.bandas if medida == "superficie_ha" or b != "sin_dato"]
+    # DOS columnas de encabezado y no una: JC pone el AÑO en una columna propia, combinada
+    # verticalmente, y el mes al lado ("2023 | ene"). Un "ene 2023" en una sola celda se lee
+    # peor y no es lo que dibujo.
+    columnas = [{"etiqueta": "", "num": False}, {"etiqueta": "", "num": False}]
+    columnas += [{"etiqueta": ctx.etiqueta_banda[b], "num": True} for b in bandas]
+    if declarado.get("columna_total"):
+        columnas.append({"etiqueta": declarado["columna_total"], "num": True})
+    filas, anio_previo = [], None
+    for anio, mes in ctx.meses:
+        # El año se escribe UNA vez por bloque, que es el efecto de su celda combinada.
+        celdas = [str(anio) if anio != anio_previo else "", MESES_CORTOS_FORRAJE[mes - 1]]
+        anio_previo = anio
+        suma = 0.0
+        for b in bandas:
+            v = ctx.hechos.valor(anio, mes, ctx.quincena, b, medida, geo)
+            celdas.append(ctx.texto(v, medida))
+            if v is not None:
+                suma += v
+        if declarado.get("columna_total"):
+            celdas.append(ctx.texto(suma, medida))
+        filas.append({"celdas": celdas})
+    return {
+        # SIN TITULO: las dos tablas de la hoja "Agri 3" arrancan directamente en su fila de
+        # encabezados. El titulo que habia aca estaba inventado.
+        "titulo": "",
+        "subtitulo": "",
+        "pie": pie,
+        "nota": limpiar(declarado.get("nota") or ""),
+        "columnas": columnas,
+        "filas": filas,
+    }
+
+
+def panel_forraje_apiladas(ctx, spec, geo, pie):
+    """El grafico de composicion: barras apiladas AL 100%, una serie por banda.
+
+    Lleva las SEIS, incluida la sin clasificar: la pregunta de este cuadro es como se reparte
+    TODO el territorio, y dejarla afuera haria que la barra mintiera sobre el tamanio del resto.
+    """
+    declarado = spec["paneles"]["grafico-pct"]
+    series, totales = [], []
+    for banda in ctx.bandas:
+        puntos = _forraje_serie(ctx, banda, "superficie_ha", geo)
+        series.append({"nombre": ctx.etiqueta_banda[banda],
+                       "color": ctx.color_banda[banda],
+                       "puntos": puntos,
+                       # El texto del tooltip lo compone el BUILD, como en todo el sitio: dice
+                       # las dos lecturas juntas, que parte del territorio es y cuanto es eso.
+                       "textos": []})
+    for i in range(len(ctx.meses)):
+        suma = sum(s["puntos"][i] or 0.0 for s in series)
+        totales.append(pr.fmt_numero(suma, 0) + " ha")
+        for s in series:
+            v = s["puntos"][i]
+            if v is None:
+                s["textos"].append("S/D")
+            else:
+                s["textos"].append("%s · %s ha" % (
+                    pr.fmt_numero(v / suma * 100.0, 1) + "%" if suma else "S/D",
+                    pr.fmt_numero(v, 0)))
+    categorias = _forraje_categorias(ctx)
+    return {
+        "titulo": titulo_literal(
+            declarado["titulo_protocolo_departamento"] if geo else declarado["titulo_protocolo"],
+            Departamento=ctx.hechos.nombre[geo] if geo else ""),
+        "subtitulo": declarado.get("subtitulo", ""),
+        "pie": pie,
+        "x": [c["texto"] for c in categorias],
+        "grupos": [c["grupo"] for c in categorias],
+        "etiquetas": ["%s %s" % (c["texto"], c["grupo"]) for c in categorias],
+        # Al 100%: el eje es porcentaje y cada barra reparte su propio total. El dibujante
+        # normaliza; el dato que viaja son las HECTAREAS, para que el tooltip pueda decir
+        # cuantas hectareas son ademas de que porcentaje representan.
+        "al_cien": True,
+        "eje": {"min": 0, "max": 1, "paso": 0.1,
+                "etiquetas": {clave_js(i / 10.0): "%d%%" % (i * 10) for i in range(11)},
+                "nombre": "Porcentaje", "minimo": minimo_rotuladas()},
+        "series": series,
+        "totales": totales,
+    }
+
+
+def panel_forraje_lineas(ctx, spec, geo, pie):
+    """El otro grafico de JC: seis lineas en hectareas, una por banda.
+
+    Sin apilar, a proposito: la pregunta de este cuadro es cuantas hectareas tuvo cada banda,
+    no como se repartio el total, que ya lo contesta el de porcentaje.
+    """
+    declarado = spec["paneles"]["grafico-ha"]
+    categorias = _forraje_categorias(ctx)
+    series, todos = [], []
+    for banda in ctx.bandas:
+        puntos = _forraje_serie(ctx, banda, "superficie_ha", geo)
+        todos.extend(v for v in puntos if v is not None)
+        series.append({"nombre": ctx.etiqueta_banda[banda],
+                       "color": ctx.color_banda[banda],
+                       "apilado": False,
+                       "puntos": puntos,
+                       "textos": [ctx.texto(v) + " ha" if v is not None else "S/D"
+                                  for v in puntos]})
+    return {
+        "titulo": titulo_literal(
+            declarado["titulo_protocolo_departamento"] if geo else declarado["titulo_protocolo"],
+            Departamento=ctx.hechos.nombre[geo] if geo else ""),
+        "subtitulo": ctx.subtitulo_unidad("ha"),
+        "pie": pie,
+        "nota": limpiar(declarado.get("nota") or ""),
+        "x": [c["texto"] for c in categorias],
+        "grupos": [c["grupo"] for c in categorias],
+        "etiquetas": ["%s %s" % (c["texto"], c["grupo"]) for c in categorias],
+        "eje": ctx.eje(todos, "ha"),
+        "series": series,
+    }
+
+
+def panel_forraje_mapa(ctx, spec, geo, pie):
+    """El mapa, que acá es SELECTOR y no mapa de calor.
+
+    Lo decide JC, hoja "Agri 3", celda E85: "NO se plantea mapa porque las variables son muchas
+    y la lectura sería compleja a nivel departamental". Y en la hoja departamental, celda E106:
+    "Desde el mapa se podrán seleccionar los departamentos a visualizar". O sea: el mapa está
+    para elegir, no para leer una variable. Por eso todos los departamentos con dato van del
+    mismo color y el elegido se marca con las reglas de siempre.
+    """
+    declarado = spec["paneles"]["mapa"]
+    nombres = dict(ctx.hechos.nombre)
+    for geo_id, nombre in nombres_extra_geojson().items():
+        nombres.setdefault(geo_id, nombre)
+    con_dato = set(ctx.hechos.deptos_con_dato())
+    color = ctx.colores.solido("superficie_ha")
+    deptos = []
+    for geo_id in sorted(nombres_mapa_solo_deptos(nombres)):
+        tiene = geo_id in con_dato
+        deptos.append({
+            "id": geo_id, "nombre": nombres[geo_id],
+            # `v` es lo que el cliente mira para saber si el clic hace algo. No es una
+            # magnitud: es "tiene datos o no". El mapa no pinta ninguna variable.
+            "v": 1 if tiene else None,
+            "t": "" if tiene else "Sin datos",
+            "color": color if tiene else ctx.colores.sin_dato,
+            "filas": [],
+        })
+    return {
+        "titulo": "",
+        "subtitulo": "",
+        "pie": pie,
+        "geojson": GEOJSON,
+        "accion": declarado.get("rotulo_accion"),
+        "accion_con_departamento": (declarado.get("seleccion_departamento") or {}).get(
+            "rotulo_cambiar"),
+        "rotulos": bool(declarado.get("rotulos_departamento")),
+        "selecciona": True,
+        "ficha": None,
+        "aspecto": aspecto_mapa(), "relacion": relacion_mapa(),
+        "deptos": deptos,
+        "unidad": "",
+        # Sin escala: no hay magnitud que escalar. El cuadro muestra el mapa y su invitacion.
+        "escala": {"tramos": [], "unidad": ""},
+        "total": "",
+    }
+
+
+def capa_departamental_forrajeras(ctx, spec, pie):
+    """Un archivo por departamento con los cuatro cuadros recortados a el.
+
+    Mismo criterio que en cultivos extensivos: el mapa no cambia con el departamento y pesa, asi
+    que no entra en la clave del combo. El navegador baja el departamento recien al clickearlo y
+    lo superpone sobre el combo provincial.
+    """
+    capa = {}
+    for geo in ctx.hechos.deptos_con_dato():
+        capa[geo] = {
+            "nombre": ctx.hechos.nombre[geo],
+            # Sin filtros, la clave del combo es la cadena vacia: la seccion no tiene producto
+            # ni campaña que elegir, el sujeto es el territorio.
+            "claves": [""],
+            "combos": {"": {"paneles": {
+                "tabla-pct": panel_forraje_tabla(ctx, spec, "participacion", geo, pie),
+                "tabla-ha": panel_forraje_tabla(ctx, spec, "superficie_ha", geo, pie),
+                "grafico-pct": panel_forraje_apiladas(ctx, spec, geo, pie),
+                "grafico-ha": panel_forraje_lineas(ctx, spec, geo, pie),
+            }}},
+        }
+    return capa
+
+
+# --------------------------------------------------------------------------
+# 43-mapas-forrajeros · la galeria de mapas del Observatorio
+# --------------------------------------------------------------------------
+MESES_FORRAJE_LARGOS = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
+                        "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
+
+
+def _periodo_de_quincena(anio, quincena, dias):
+    """(desde, hasta) de la quincena N del anio, en texto: ("7 abril", "22 abril").
+
+    La quincena N cubre los dias [1 + dias*(N-1), dias*N] del anio. Son tramos de `dias` dias
+    corridos -16, no medios meses-, asi que la fecha se corre a lo largo del anio.
+
+    Verificado dos veces y por eso se calcula en vez de escribirse a mano: contra los cinco
+    rotulos que JC escribe en su hoja ("Mapa 22 marzo al 6 abril" es la F6, etc.) y contra el
+    periodo impreso DENTRO de las imagenes (la F7 de 2026 dice "7 abril - 22 abril 2026").
+    Asi, un mapa nuevo aparece solo: se copia el PNG y listo.
+    """
+    import datetime
+    primero = datetime.date(anio, 1, 1) + datetime.timedelta(days=dias * (quincena - 1))
+    ultimo = datetime.date(anio, 1, 1) + datetime.timedelta(days=dias * quincena - 1)
+    return ("%d %s" % (primero.day, MESES_FORRAJE_LARGOS[primero.month - 1]),
+            "%d %s" % (ultimo.day, MESES_FORRAJE_LARGOS[ultimo.month - 1]))
+
+
+def mapas_forrajeros(spec):
+    """[{clave, anio, quincena, rotulo, mini, grande}] en el orden que pide el spec.
+
+    Lee la CARPETA, no una lista escrita a mano: el dia que entre la quincena siguiente alcanza
+    con copiar su PNG. Un archivo cuyo nombre no se entienda corta el build, para que un mapa
+    no se pierda en silencio.
+    """
+    import re
+    carpeta = os.path.join(RAIZ, spec["assets"]["carpeta"])
+    if not os.path.isdir(carpeta):
+        raise pr.ErrorDeProtocolo(
+            "Falta la carpeta de mapas %s que declara %s" % (carpeta, spec["slug_vista"]))
+    patron = re.compile(spec["assets"]["patron"])
+    salida = {}
+    for nombre in sorted(os.listdir(carpeta)):
+        if not nombre.lower().endswith(".png"):
+            continue
+        m = patron.match(nombre)
+        if not m:
+            raise pr.ErrorDeProtocolo(
+                "El archivo %s de la carpeta de mapas no sigue el patron %s. Renombralo: un "
+                "mapa no se descarta en silencio." % (nombre, spec["assets"]["patron"]))
+        anio, quincena = int(m.group("anio")), int(m.group("quincena"))
+        clave = "%d-F%02d" % (anio, quincena)
+        entrada = salida.setdefault(clave, {"anio": anio, "quincena": quincena})
+        entrada["mini" if m.group("mini") else "grande"] = (
+            "%s/mapas/%s" % (PREFIJO, nombre))
+    faltan = [c for c, e in salida.items() if "grande" not in e or "mini" not in e]
+    if faltan:
+        raise pr.ErrorDeProtocolo(
+            "Estos mapas no tienen su par imagen+miniatura: %s. La miniatura se genera una "
+            "vez y se commitea junto al mapa." % ", ".join(sorted(faltan)))
+    dias = spec["dias_por_quincena"]
+    lista = []
+    for clave in sorted(salida):
+        e = salida[clave]
+        desde, hasta = _periodo_de_quincena(e["anio"], e["quincena"], dias)
+        lista.append(dict(e, clave=clave,
+                          rotulo=titulo_literal(spec["rotulo"], desde=desde,
+                                                hasta="%s de %d" % (hasta, e["anio"]))))
+    if spec.get("orden") == "descendente":
+        lista.reverse()
+    return lista
+
+
+def construir_galeria_mapas(ctx, spec):
+    """La pagina "Mapas": un solo cuadro, con la grilla de miniaturas adentro.
+
+    SIN filtros. La pagina es estatica: JC la quiere como una galeria en orden descendente y
+    nada mas, asi que hay una sola combinacion.
+    """
+    vista = vista_base(ctx, spec, "galeria.html", [])
+    mapas = mapas_forrajeros(spec)
+    vista["combos"][""] = {"elementos": [{
+        "titulo": spec["titulo_protocolo"],
+        "subtitulo": spec["subtitulo_cuadro"],
+        "pie": ctx.pie(spec),
+        "nota": "",
+        "mapas": mapas,
+    }]}
+    vista["mapas_a_copiar"] = spec["assets"]["carpeta"]
+    return vista
+
+
+def construir_tablero_forrajeras(ctx, spec):
+    """La pagina de datos de Pasturas y forrajes (hojas "Agri 3" y "Agri 3-b" de JC).
+
+    Las dos hojas son la MISMA pagina con otro recorte, asi que se construyen como una sola y
+    el mapa hace de selector: es el mismo mecanismo de la hoja "Agri 1 Dto" de cultivos
+    extensivos y es lo que JC pide en la celda E106 ("Desde el mapa se podrán seleccionar los
+    departamentos a visualizar").
+
+    SIN filtros: la seccion no tiene producto que elegir -el sujeto es el territorio- y los
+    cuatro cuadros dibujan la serie entera. El unico "filtro" es el departamento, y lo mueve el
+    mapa.
+    """
+    tablero = tablero_base(ctx, spec, [])
+    pie = ctx.pie(spec)
+    # Los cuatro cuadros de la hoja "Agri 3" MAS el mapa, que es el unico panel que no se
+    # dibuja siempre: con un departamento elegido la pagina pasa a ser la hoja "Agri 3-b" y
+    # ahi el mapa hace de selector. Quien decide si se ve es el CSS, mirando la clase que el
+    # navegador le pone al tablero: el JSON es el mismo para los dos estados.
+    tablero["combos"][""] = {"paneles": {
+        "mapa": panel_forraje_mapa(ctx, spec, None, pie),
+        "tabla-pct": panel_forraje_tabla(ctx, spec, "participacion", None, pie),
+        "tabla-ha": panel_forraje_tabla(ctx, spec, "superficie_ha", None, pie),
+        "grafico-pct": panel_forraje_apiladas(ctx, spec, None, pie),
+        "grafico-ha": panel_forraje_lineas(ctx, spec, None, pie),
+    }}
+    tablero["capa_departamental"] = capa_departamental_forrajeras(ctx, spec, pie)
+    return tablero
+
+
 def construir_tablero_intensivos(ctx, spec):
     """El tablero de Agricultura > Cultivos intensivos: la grilla 2x2 de la hoja "Agri 2".
 
@@ -4927,6 +5343,7 @@ CONSTRUCTORES = {
     "09-cultivo-detalle-componentes": construir_detalle_componentes,
     "09-cartera-evolucion-absoluta": lambda ctx, spec: construir_cartera(ctx, spec, False),
     "09-cartera-evolucion-porcentual": lambda ctx, spec: construir_cartera(ctx, spec, True),
+    "43-mapas-forrajeros": construir_galeria_mapas,
     "09-departamento-datos": construir_datos_departamento,
     "09-departamento-ficha-cultivos": construir_ficha_departamento,
     "09-departamento-cartera": construir_cartera_departamento,
@@ -6207,6 +6624,12 @@ def tablero_base(ctx, spec, filtros):
         "combos": {},
         "seccion": spec["seccion"],
         "paneles": spec["paneles"],
+        # Las notas metodologicas del tablero. Hasta ahora solo las vistas las llevaban; el
+        # tablero las necesita desde que una seccion puede tener una pestaña "Metodología",
+        # que no es otra pagina sino un ancla al pie de esta (asi lo enlaza JC en su Excel).
+        # `getattr` porque no todos los contextos saben componerlas: los que no, no tienen
+        # seccion con esa pestaña y el bloque simplemente no se dibuja.
+        "notas": (ctx.notas_de(spec) if hasattr(ctx, "notas_de") else []),
         "publicable": True,
         "reservada": False,
         "spec": spec,
@@ -6473,6 +6896,7 @@ def construir_tablero_stock(ctx, spec):
 TABLEROS = {
     "tablero-cultivos-extensivos": construir_tablero_cultivos,
     "tablero-cultivos-intensivos": construir_tablero_intensivos,
+    "tablero-pasturas-forrajes": construir_tablero_forrajeras,
     "tablero-movimientos-hacienda": construir_tablero_hacienda,
     "tablero-stock-bovino": construir_tablero_stock,
 }
@@ -6912,7 +7336,12 @@ def escribir_capa_departamental(escritor, tablero, carpeta_datos, ruta_publica, 
         archivos[geo] = "%s/%s-dto/%s.json" % (ruta_publica, tablero["slug"], geo)
         nombres[geo] = capa[geo]["nombre"]
         claves[geo] = capa[geo]["claves"]
-    return {"filtros": ["cultivo", "campania"], "archivos": archivos,
+    # Los filtros que forman la clave del combo los dice el TABLERO, no este archivo: en
+    # cultivos extensivos son cultivo y campaña, y en pasturas y forrajes no hay ninguno (la
+    # clave es la cadena vacia). Estaban escritos a mano aca y el segundo tablero con capa
+    # departamental los heredaba mal.
+    return {"filtros": [f["id"] for f in tablero["filtros"] if f.get("zona") != "panel"],
+            "archivos": archivos,
             "nombres": nombres, "claves": claves,
             # El texto del ultimo tramo de la miga ("Dto ALBERDI"): plantilla con un slot, que
             # el navegador sustituye. Es como lo escribe JC en su hoja "Agri 1 Dto".
@@ -6991,6 +7420,11 @@ def construir_home(ctx, vistas_por_slug):
             pendientes.append("%s · %s" % (base["descripcion"], base["fuente"] or "sin fuente"))
         for seccion in secciones:
             if seccion["rama"] != declaracion["id"]:
+                continue
+            # Una seccion ANUNCIADA no entra en la lista de accesos directos de la home: su
+            # pagina no existe todavia y seria un link muerto. Sigue contandose como pendiente
+            # por el manifiesto del indice, que es de donde salen los "y N bases mas".
+            if seccion.get("proximamente"):
                 continue
             cantidad = sum(1 for grupo in seccion["grupos"] for slug in grupo["vistas"]
                            if slug in vistas_por_slug)
@@ -7071,8 +7505,14 @@ def menu_del_sitio(ctx, seccion_actual=None):
                 continue
             es_actual = seccion_actual is not None and seccion["id"] == seccion_actual
             actual = actual or es_actual
+            # Una seccion ANUNCIADA (`proximamente`) se dibuja en el menu pero sin link: su
+            # spec ya esta escrito y JC la tiene en su maqueta, pero todavia no hay datos para
+            # generarle las paginas. Es la misma excepcion acotada a la regla de botones
+            # muertos que ya usan las banderas de idioma y el sector sin secciones: el rotulo
+            # esta, y al lado dice que todavia no.
             secciones.append({"titulo": seccion["titulo"], "url": seccion["url"],
-                              "actual": es_actual})
+                              "actual": es_actual,
+                              "proximamente": bool(seccion.get("proximamente"))})
         salida.append({"id": entrada["rama"], "titulo": entrada["titulo"],
                        "actual": actual, "secciones": secciones})
     return salida
@@ -7191,7 +7631,9 @@ def escribir_sitio(ctx, vistas, tableros):
              "pestanias": [], "subtitulo_cabecera": None, "miga": None,
              "titulo_cabecera": theme["titulo_sitio"],
              "menu": menu_del_sitio(ctx), "con_menu": True,
-             "clase_cuerpo": "", "botones_cabecera": [], "banderas_idioma": [],
+             "clase_cuerpo": "", "botones_cabecera": [], "boton_proximamente": False,
+             "paginas_de_seccion": [],
+             "banderas_idioma": [],
              "base": PREFIJO, "inicio": INICIO}
 
     logo_pagina = dict(theme.get("logo_provincia") or {})
@@ -7242,7 +7684,10 @@ def escribir_sitio(ctx, vistas, tableros):
         escritor.copia(origen_logo, "public/plataforma/" + relativa)
 
     vistas_por_slug = {v["slug"]: v for v in vistas}
-    secciones = ctx.navegacion["secciones"]
+    # Las secciones que SE CONSTRUYEN. Una seccion `proximamente` esta declarada para que
+    # aparezca en el menu y en la home, pero no tiene datos todavia: no se le arma el tablero
+    # ni se le resuelven URLs, y pedirle un tablero cortaria el build.
+    secciones = [s for s in ctx.navegacion["secciones"] if not s.get("proximamente")]
     url_de = {}
     for seccion in secciones:
         for grupo in seccion["grupos"]:
@@ -7282,6 +7727,50 @@ def escribir_sitio(ctx, vistas, tableros):
         # (tercera tanda: "ahí iban las banderas de idiomas"; backlog 33, RESUELTA). Español
         # activa; ingles y portugues deshabilitadas con "Próximamente" (excepcion acotada a
         # la regla de botones muertos). Solo en las secciones que lo declaran (hoy cultivos).
+        # El boton deshabilitado "Datos por Departamento" del mockup: lo dibujan las
+        # secciones que lo declaran y nadie mas (ver Cascara.tsx).
+        extras["boton_proximamente"] = bool(seccion.get("boton_proximamente"))
+        # La tira de paginas de la seccion (banda del breadcrumb, a la derecha). Cada entrada
+        # nombra una vista; la que no este publicada viaja con href nulo y se dibuja apagada,
+        # que es la misma excepcion acotada a la regla de botones muertos de siempre.
+        tira = []
+        for entrada in seccion.get("paginas_de_seccion") or []:
+            destino = entrada.get("vista")
+            # `ancla` es una entrada que NO es otra pagina: lleva a un lugar de esta. Es como
+            # JC enlaza "Metodología" en su Excel, y es lo correcto: la metodologia es de la
+            # pagina que se esta mirando.
+            # `primer_departamento`: la entrada lleva a ESTA misma pagina con un
+            # departamento puesto. El cual lo decide el dato (el primero con dato de la capa
+            # departamental) y no una lista escrita a mano, para que no quede apuntando a un
+            # departamento que un dia deje de tener datos.
+            if entrada.get("primer_departamento"):
+                primero = next((sorted(tab["capa_departamental"])[0]
+                                for tab in tableros
+                                if tab["seccion"] == seccion["id"]
+                                and tab.get("capa_departamental")), None)
+                # El href va ABSOLUTO, al tablero de la seccion. Relativo ("?departamento=")
+                # resolvia contra la pagina en la que estabas: desde la galeria de mapas
+                # llevaba a `.../43-mapas-forrajeros?departamento=...`, que es la MISMA pagina
+                # de mapas con un parametro que ignora. Parecia que la tira no andaba y que no
+                # se podia salir de ahi.
+                destino_tablero = "%s/%s" % (PREFIJO, seccion["url"])
+                tira.append({"texto": entrada["texto"],
+                             "href": ("%s?departamento=%s" % (destino_tablero, primero))
+                                     if primero else None,
+                             # El geo_id viaja aparte para que el navegador pueda elegirlo en
+                             # el acto, sin recargar. El href queda igual, compartible.
+                             "departamento": primero,
+                             "actual": False})
+                continue
+            if entrada.get("ancla"):
+                tira.append({"texto": entrada["texto"],
+                             "href": "#" + entrada["ancla"], "actual": False})
+                continue
+            tira.append({"texto": entrada["texto"],
+                         "href": url_de.get(destino) if destino else None,
+                         "actual": False})
+        if tira:
+            extras["paginas_de_seccion"] = tira
         if seccion.get("cabecera_banderas"):
             # Desde el 22-sep-2026 van como SIGLA en monoespaciada (ES / EN / PT) y no como
             # banderita: a este tamaño las tres banderas no se distinguen, y la sigla es la
@@ -7481,6 +7970,7 @@ def escribir_sitio(ctx, vistas, tableros):
             "tablero",
             tablero=tablero_para_pagina(tablero), paneles=paneles,
             acciones_tablero=acciones_tablero,
+            notas=tablero.get("notas") or [],
             terminos_datos=tablero.get("terminos") or (),
             miga=miga_de_tablero(seccion, tablero["spec"]),
             filtros_panel=filtros_por_panel(tablero["filtros"]),
@@ -7562,6 +8052,15 @@ def escribir_sitio(ctx, vistas, tableros):
     # Iconos: al deploy van SOLO los que el sitio usa (los referencio algun filtro, la tarjeta
     # de contexto o una accion del pie). El catalogo completo queda en site/assets/iconos/.
     copiar_iconos(escritor, theme)
+    # Los mapas del Observatorio: se copian tal cual, como el logo y los iconos de JC. Son
+    # assets, no datos: el sitio los publica y no los lee.
+    carpetas_mapas = {v["mapas_a_copiar"] for v in vistas if v.get("mapas_a_copiar")}
+    for carpeta in sorted(carpetas_mapas):
+        origen = os.path.join(RAIZ, carpeta)
+        for nombre in sorted(os.listdir(origen)):
+            if nombre.lower().endswith(".png"):
+                escritor.copia(os.path.join(origen, nombre),
+                               "public/plataforma/mapas/" + nombre)
 
     return escritor
 
@@ -7626,13 +8125,16 @@ def main(args=None):
     # Base 8: los precios mayoristas del MCBA, que alimentan UN panel del tablero de cultivos
     # intensivos (el cuarto grafico de la maqueta "Agri 2").
     precios_mcba = pc.Precios(con)
+    # Base 43: los recursos forrajeros del Observatorio. Grano quincenal, seis bandas.
+    forrajeras = forr.Forrajeras(con)
     con.close()
     ctx = Contexto(hechos)
     # Un contexto por base (o por FAMILIA de bases): no comparten hecho, ni grano temporal, ni
     # medidas, ni redondeo. La vista se construye con el contexto que dice su spec en `familia`
     # o, si no la declara, en `base`.
     contextos = {9: ctx, 85: ContextoHacienda(hacienda), 48: ContextoStock(stock),
-                 ContextoVegetales.familia: ContextoVegetales(vegetales, precios_mcba)}
+                 ContextoVegetales.familia: ContextoVegetales(vegetales, precios_mcba),
+                 ContextoForrajeras.familia: ContextoForrajeras(forrajeras)}
 
     with open(os.path.join(DIR_SITE, "colores-cultivo.yaml"), "w", encoding="utf-8") as f:
         f.write(escribir_asignacion_colores(ctx))

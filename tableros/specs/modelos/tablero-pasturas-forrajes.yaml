@@ -1,0 +1,315 @@
+# Sección Agricultura > Pasturas y forrajes · base 43 (PB 11)
+#
+# ESTADO: ESPECIFICADA, NO CONSTRUIBLE TODAVÍA (6-oct-2026). Todo sale de la maqueta de JC
+# ("0000000000 Modelo 1 - Pasturas y forrajes.xlsx"), que es lo único que llegó. Falta el Excel
+# de datos (backlog 71) y faltan los mapas (backlog 72).
+#
+# POR ESO LA SECCIÓN NO ESTÁ EN site/navegacion.yaml. Ese archivo es el interruptor que la
+# publica: en cuanto se agregue, el build va a querer generar las cuatro páginas y va a cortar
+# porque no hay mart. Se agrega el día que entren los datos, no antes.
+#
+# ---------------------------------------------------------------------------
+# LAS CUATRO PÁGINAS
+# ---------------------------------------------------------------------------
+# JC dibuja una tira de pestañas en la cabecera de las cuatro hojas (celdas X5, AL5/AM5, AU5,
+# BD5) y cada hoja es una de ellas:
+#
+#   hoja "Agri 3"           -> Datos provincia
+#   hoja "Agri 3-b"         -> Información por departamento   ("Dto ALBERDI" en la cabecera)
+#   hoja "Agri 3 - C"       -> Mapas                          (y "Agri 3 - C -Map2" es una
+#                                                              variante de grilla de lo mismo)
+#   (sin hoja)              -> Metodología
+#
+# LA PUERTA DE LA SECCIÓN ES **MAPAS**. Lo propone el propio JC en la hoja "Agri 3",
+# celdas E87 a E89, textual:
+#
+#   "PREGUNTA: NO SERÍA MÁS 'MARKETINERO' QUE LA PAGINA DE ENTRADA A ESTA SECCIÓN SEA LA DE
+#    MAPAS???? Queda in your hands Angélica…
+#    Si fuese el caso, donde dice 'Provincia' como link, debería decir 'Datos provincia'
+#    DIGO PORQUE A ÉSTA SE LA VE 'ABURRIDA'… también podría ser la de Departamentos…"
+#
+# Francisco lo resolvió el 6-oct-2026: entra por Mapas, y la pestaña pasa a decir
+# "Datos provincia", que es el ajuste que JC mismo deja escrito.
+#
+# CONSECUENCIA ESTRUCTURAL, y es un desvío del resto del sitio que conviene tener claro: en
+# todas las demás secciones la puerta es el tablero de DATOS. Acá la puerta es una galería de
+# imágenes. El tablero de la sección (`/plataforma/agricultura/pasturas-y-forrajes`) es la
+# página de mapas; los datos viven en dos vistas sueltas que cuelgan de ella. La regla de
+# CLAUDE.md -"toda sección publicada necesita su tablero-<seccion>.yaml"- se sigue cumpliendo:
+# lo que cambia es qué dibuja ese tablero, no que exista.
+
+id: tablero-pasturas-forrajes
+tipo: tablero
+familia: recursos-forrajeros
+bases: [43]
+seccion: pasturas-y-forrajes
+comunes: _comunes-base-43
+protocolo: _protocolo-presentacion
+
+titulo: "Pasturas y forrajes"
+subtitulo: "Provincia de Santiago del Estero · recursos forrajeros"
+
+cabecera:
+  logo: "logo provincial arriba a la izquierda (site/theme.yaml)"
+  # La tira de pestañas de JC. En el sitio son los botones de cabecera que ya existen: desde
+  # cada página se llega a las otras tres, igual que "Santiago en el NOA" y "Datos por
+  # Departamento" en cultivos extensivos.
+  botones:
+    - {id: datos-provincia, etiqueta: "Datos provincia", destino: 43-provincia}
+    - {id: por-departamento, etiqueta: "Información por departamento", destino: 43-departamento}
+    - {id: metodologia, etiqueta: "Metodología", destino: 43-metodologia}
+  banderas_idioma: "igual que el resto del sitio"
+
+# La puerta de la seccion es la pagina de DATOS mientras no esten los mapas: una galeria
+# vacia no es una puerta. Cuando entren las imagenes se cambia este tramo por "Mapas" y la
+# pagina de datos pasa a ser la pestaña "Datos provincia", que es la decision de Francisco
+# del 6-oct-2026 (y el ajuste que el propio JC propone en la celda E88 de su hoja).
+# Sin tramo {departamento} en la miga: con la seccion sin filtros, el repintado no pasa por
+# el camino que sustituye los slots de la miga y el tramo quedaba mostrando la plantilla en
+# crudo ("Dto {departamento}"). Qué departamento está elegido se lee igual, y de sobra: está
+# en los cuatro títulos y marcado en el mapa. El `seleccion_departamento.miga` queda
+# declarado para el día que la miga se arregle para los tableros sin filtros.
+breadcrumb: "Agricultura - Pasturas y forrajes - Provincia - {departamento}"
+
+# ---------------------------------------------------------------------------
+# SIN SELECTOR DE PERIODO, SIN CHIPS DE PRODUCTO
+# ---------------------------------------------------------------------------
+# La sección no tiene filtros. No hay productos que elegir (el sujeto es el territorio) y los
+# cuadros son series completas: sus tablas van de ene-2023 a abr-2026 y sus gráficos dibujan
+# todos los meses. El único "filtro" es el DEPARTAMENTO, y no es una barra de chips: es el
+# mapa de la página departamental, que JC usa como selector (hoja "Agri 3-b", celda E106:
+# "Desde el mapa se podrán seleccionar los departamentos a visualizar").
+selectores: {}
+
+indicadores:
+  estado: fuera-de-esta-pagina
+  motivo: >
+    Ninguna de las cuatro hojas tiene tarjetas de indicadores. Y en esta base un KPI suelto
+    mentiría: el dato es una composición de seis bandas, así que "la superficie en Alto" sin
+    las otras cinco al lado no dice nada.
+
+# ---------------------------------------------------------------------------
+# LOS CUATRO CUADROS (lo que el build lee)
+# ---------------------------------------------------------------------------
+# Las hojas "Agri 3" (provincia) y "Agri 3-b" (departamento) son la MISMA pagina con otro
+# recorte, asi que se construyen como una sola y el mapa hace de selector. Es el mecanismo de
+# la hoja "Agri 1 Dto" de cultivos extensivos y es lo que JC pide en la celda E106 de su hoja
+# departamental: "Desde el mapa se podrán seleccionar los departamentos a visualizar".
+paneles:
+  alto: fluye
+
+  mapa:
+    rotulo_accion: "Seleccione departamento para ver sus datos"
+    rotulos_departamento: true
+    click_departamento: en-la-misma-vista
+    seleccion_departamento:
+      defecto: provincia
+      rotulo_provincia: "Provincia"
+      rotulo_cambiar: "Seleccione otro departamento, o volvé a Provincia"
+      # El tramo que la miga suma cuando hay un departamento elegido. Plantilla con un slot:
+      # el navegador sustituye, no compone.
+      # El slot va con mayuscula: es el que sustituye `pintarMigaDepartamental`. Con
+      # minuscula el tramo mostraba la plantilla en crudo.
+      miga: "Dto {Departamento}"
+    por_que_no_es_de_calor: >
+      Decisión de JC, hoja "Agri 3", celda E85: "NO se plantea mapa porque las variables son
+      muchas y la lectura sería compleja a nivel departamental". El mapa está para elegir, no
+      para leer una variable: todos los departamentos con dato van del mismo color.
+    ancho: 4
+    alto_panel: alto
+
+  tabla-pct:
+    forma: tabla-datos
+    # SIN TÍTULO: la tabla de JC arranca directamente en su fila de encabezados, igual que la
+    # de hectáreas. El título que había acá estaba inventado por nosotros.
+    columna_total: "Total"
+    # La nota al pie de JC, literal de su hoja (celda H49). Es la que explica qué significa
+    # cada número entre paréntesis, y sin ella los encabezados no dicen nada.
+    nota: >
+      (1): 5% de los años - (2): 25% de los años - (3): 40% de los años - (4): 25% de los años
+      - (5): 5% de los años. El porcentaje se calcula sobre esas cinco bandas: la superficie
+      sin dato o bajo uso agrícola no entra en el denominador y se lee en el cuadro en
+      hectáreas.
+    ancho: 8
+
+  tabla-ha:
+    forma: tabla-datos
+    # Sin título, igual que la de porcentaje.
+    nota: >
+      (6): sin datos o agricultura. La columna "Promedio (3)" repite el mismo valor hasta junio
+      de 2024: así lo entrega la fuente, y los valores propios de cada mes empiezan en julio de
+      2024.
+    ancho: 12
+
+  grafico-pct:
+    forma: apiladas
+    # LITERAL de JC, leído del título de su gráfico (imagen de la hoja "Agri 3"):
+    titulo_protocolo: "Sgo del Estero - Evolución del promedio mensual provincial recursos forrajeros en %"
+    # El de su hoja departamental dice "provincial" por arrastre de haber copiado el cuadro
+    # (él mismo avisa que los números departamentales de la maqueta son los provinciales). Se
+    # corrige la palabra, no la estructura.
+    titulo_protocolo_departamento: "Sgo del Estero - Dto {Departamento} - Evolución del promedio mensual departamental de recursos forrajeros en %"
+    subtitulo: ""
+    ancho: 12
+
+  grafico-ha:
+    forma: tendencia
+    titulo_protocolo: "Sgo del Estero - Evolución del promedio mensual provincial recursos forrajeros en ha"
+    titulo_protocolo_departamento: "Sgo del Estero - Dto {Departamento} - Evolución del promedio mensual departamental de recursos forrajeros en ha"
+    nota: >
+      La serie "Promedio (3)" es plana hasta junio de 2024 porque la fuente entrega el mismo
+      valor en todos esos meses. No es un problema del gráfico.
+    ancho: 12
+
+  # LA DISPOSICION DE LA HOJA "Agri 3", calcada de donde JC pega cada cuadro:
+  #   columna IZQUIERDA = el porcentaje   (tabla arriba, grafico abajo)
+  #   columna DERECHA   = las hectareas   (tabla arriba, grafico abajo)
+  # Verificado contra los anclajes de sus imagenes: tabla % en col6 fila7, tabla ha en col33
+  # fila7, grafico % en col6 fila51 y grafico ha en col33 fila50.
+  #
+  # SIN MAPA. La hoja provincial de JC no tiene mapa: el mapa esta en la hoja "Agri 3-b"
+  # (celda col9 fila7), que es la de "Informacion por departamento", y ahi hace de selector.
+  # Se habia puesto aca por arrastrar el patron de cultivos extensivos y era justamente lo que
+  # JC descarta en la celda E85 de esta misma hoja.
+  #
+  # El ancho va ACA y no en la definicion de cada panel: la grilla de 12 columnas lee `ancho`
+  # de la entrada de `orden` (es lo que termina en el `data-ancho` del panel).
+  # "Generar PDF" al pie y a la derecha, que es donde lo dibuja JC (celda BF77 de "Agri 3"
+  # y AD93 de "Agri 3-b"). Suelto, sin caja: igual que en la hoja "Agri 1" de extensivos.
+  acciones_de_tablero:
+    - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf,
+       accion: exportar-pdf}
+
+  orden:
+    # El mapa va PRIMERO y solo se dibuja con un departamento elegido: ahi la pagina es la
+    # hoja "Agri 3-b" y sin el es la "Agri 3". Lo esconde el CSS, no el build, porque es el
+    # mismo JSON para los dos estados.
+    - {id: mapa,        ancho: 4, alto: alto}
+    - {id: tabla-pct,   ancho: 6}
+    - {id: tabla-ha,    ancho: 6}
+    - {id: grafico-pct, ancho: 6}
+    - {id: grafico-ha,  ancho: 6}
+
+# ---------------------------------------------------------------------------
+# PÁGINA 2: DATOS PROVINCIA (hoja "Agri 3")  ->  vista 43-provincia
+# PÁGINA 3: POR DEPARTAMENTO (hoja "Agri 3-b")  ->  vista 43-departamento
+# ---------------------------------------------------------------------------
+# Las dos dibujan LOS MISMOS CUATRO CUADROS. Lo único que cambia es el ámbito y, en la
+# departamental, que además lleva el mapa de Santiago arriba como selector. Por eso se
+# describen una sola vez: son la misma página con otro recorte, igual que la hoja "Agri 1 Dto"
+# respecto de "Agri 1" en cultivos extensivos.
+cuadros_de_datos:
+  disposicion: >
+    Dos columnas. En la hoja provincial: a la izquierda la tabla en %, a la derecha la tabla en
+    hectáreas, y debajo de cada una su gráfico. En la departamental JC mueve el mapa a la
+    columna izquierda arriba y baja los dos gráficos; las dos tablas quedan a la derecha.
+
+  tabla-porcentual:
+    forma: tabla-datos
+    titulo_protocolo: "{Area} - Recursos forrajeros por banda de productividad - En %"
+    filas: "un renglón por mes, agrupados por año (la primera columna del año va combinada)"
+    columnas: ["Muy bajo (1)", "Bajo (2)", "Promedio (3)", "Alto (4)", "Muy alto (5)", "Total"]
+    sin_columna_6: >
+      A propósito: el porcentaje se calcula sobre las CINCO bandas y la fila cierra en 100,0%
+      (ver `_comunes-base-43.dos_denominadores`). La superficie sin clasificar va en la tabla
+      de hectáreas, que es donde se puede leer sin deformar el reparto.
+
+  tabla-hectareas:
+    forma: tabla-datos
+    titulo_protocolo: "{Area} - Recursos forrajeros por banda de productividad - En ha"
+    columnas: ["Muy bajo (1)", "Bajo (2)", "Promedio (3)", "Alto (4)", "Muy alto (5)", "SD/Agric.(6)"]
+    sin_total: "JC no pone columna de total acá; la suma de las seis es el territorio entero"
+
+  grafico-porcentual:
+    forma: apiladas
+    apilado_al: 100
+    # Literal de JC, sobre su gráfico de la hoja "Agri 3".
+    titulo_protocolo: "Sgo del Estero - Evolución del promedio mensual provincial recursos forrajeros en %"
+    titulo_protocolo_departamento: "Sgo del Estero - Dto {Departamento} - Evolución del promedio mensual departamental de recursos forrajeros en %"
+    ojo_con_el_titulo_departamental: >
+      En su hoja departamental el título sigue diciendo "provincial" ("Sgo del Estero - Dto
+      ALBERDI - evolución del promedio mensual PROVINCIAL recursos forrajeros en %"). Es un
+      arrastre de haber copiado el cuadro: él mismo avisa que los números departamentales de la
+      maqueta son los provinciales repetidos. Se corrige la palabra, no la estructura.
+    categorias: "los meses de la ventana, con el año rotulado abajo"
+    series: "las SEIS bandas, incluida SD/Agric.(6)"
+
+  grafico-hectareas:
+    forma: tendencia
+    titulo_protocolo: "Sgo del Estero - Evolución del promedio mensual provincial recursos forrajeros en ha"
+    titulo_protocolo_departamento: "Sgo del Estero - Dto {Departamento} - Evolución del promedio mensual departamental de recursos forrajeros en ha"
+    series: "una línea por banda, las seis"
+    sin_apilar: >
+      Son seis líneas sueltas, no un área apilada: la pregunta de este cuadro es cuántas
+      hectáreas tuvo cada banda, no cómo se repartió el total (eso ya lo contesta el de %).
+
+  mapa-selector:
+    solo_en: 43-departamento
+    forma: mapa
+    que_hace: >
+      Selecciona el departamento y nada más. NO es un mapa de calor: no hay una variable que
+      pintar, porque el dato son seis bandas a la vez. Se pinta con el color del área y marca
+      el elegido con las mismas reglas que ya están escritas (el elegido conserva su color, los
+      demás se atenúan y pierden el nombre).
+    por_que_no_es_de_calor: >
+      Es decisión de JC, hoja "Agri 3", celda E85, textual: "NO se plantea mapa porque las
+      variables son muchas y la lectura sería compleja a nivel departamental".
+
+# ---------------------------------------------------------------------------
+# PÁGINA 4: METODOLOGÍA  ->  vista 43-metodologia
+# ---------------------------------------------------------------------------
+metodologia:
+  estado: sin-dibujar-en-la-maqueta
+  que_lleva: >
+    JC le reserva la pestaña pero no dibuja la hoja. El contenido natural ya está escrito en
+    `_comunes-base-43.notas_metodologicas` (qué mide la sección, por qué las bandas no son
+    iguales, qué es la superficie sin clasificar) más la nota al pie de los porcentajes de cada
+    banda y la cita de la fuente. Se arma con eso y JC lo valida.
+
+# ---------------------------------------------------------------------------
+# LO QUE HAY QUE AGREGARLE AL SITIO ANTES DE CONSTRUIR
+# ---------------------------------------------------------------------------
+forma_nueva:
+  - id: galeria-de-mapas
+    que: >
+      Grilla de miniaturas de imagen que se amplían en el diálogo del sitio. No existe ninguna
+      forma parecida: todas las que hay dibujan datos. Es poco código -una grilla y un <dialog>
+      que ya está escrito- pero es un alta en `Tablero.tsx` y en `tablero.js`, con su
+      `disposicion` validada en el build, como manda la regla de las formas compartidas.
+  - id: apiladas-al-100
+    que: >
+      La forma `apiladas` ya existe (cultivos intensivos la usa en toneladas), pero siempre en
+      valor absoluto. Acá hace falta la variante al 100%, que es un `stack` con el eje en
+      porcentaje. Es una opción del mismo dibujante, no un dibujante nuevo.
+  - id: escala-divergente
+    que: >
+      El protocolo solo tiene rampas de un extremo y paleta categórica. Las seis bandas piden
+      una divergente con centro en "Promedio" más un gris para "sin clasificar"
+      (`_comunes-base-43.presentacion.colores_de_las_bandas`). Se decide en el protocolo, que
+      es regla de JC, y no en el código.
+
+# Las notas que se despliegan al pie, que son el destino de la pestaña "Metodología".
+notas_metodologicas: [metodologia_de_jc]
+
+pie: "Tecnología Pivotal: B3, Minibox y ∞ Prompt"
+fuente:
+  pie: "Fuente: Observatorio Forrajero Nacional (INTA - CREA - Fauba - IPCVA)"
+  organismo_esperado: "Observatorio Forrajero Nacional (INTA - CREA - Fauba - IPCVA)"
+
+sensibilidad: normal
+estado: especificada-sin-datos
+
+origen:
+  tipo: maqueta de JC
+  archivo: "0000000000 Modelo 1 - Pasturas y forrajes.xlsx"
+  hojas: ["Agri 3", "Agri 3-b", "Agri 3 - C", "Agri 3 - C -Map2"]
+  recibido: 2026-10-06
+  decisiones_de_francisco:
+    - {fecha: 2026-10-06, que: "la sección entra por MAPAS y la pestaña de datos dice 'Datos provincia' (responde la pregunta de JC, celdas E87-E89)"}
+
+pendientes_antes_de_construir:
+  - "El Excel de la base 43, para perfilarlo y escribir su config y su adapter (backlog 71)"
+  - "Los mapas del Observatorio, y cómo entran al repo (backlog 72)"
+  - "Qué grano trae la fuente, quincena o mes, y cómo se promedia si son quincenas"
+  - "La escala divergente de las seis bandas, en el protocolo"
+  - "Agregar la sección a site/navegacion.yaml: ese es el interruptor que la publica"

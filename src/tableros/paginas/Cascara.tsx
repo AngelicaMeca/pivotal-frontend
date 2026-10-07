@@ -142,11 +142,15 @@ export default function Cascara({ pagina, children }: { pagina: Comun; children:
                 {boton.texto}
               </a>
             ))
-          ) : (
+          ) : pagina.boton_proximamente ? (
+            /* El boton deshabilitado del mockup. Solo lo dibujan las secciones que LO ESPERAN:
+               antes salia en cualquier pagina sin botones declarados, y en pasturas y forrajes
+               -que no tiene vista departamental aparte porque su mapa es el selector- quedaba
+               prometiendo una pagina que no existe. */
             <button type="button" className="boton-cabecera" disabled title="Próximamente">
               Datos por Departamento <span className="prox">Próximamente</span>
             </button>
-          )}
+          ) : null}
           {pagina.banderas_idioma.length ? (
             // Donde estaba el titulo van las banderas es/en/pt (tercera tanda, backlog 33)
             <div className="cabecera-banderas" aria-label="Idiomas">
@@ -189,16 +193,28 @@ export default function Cascara({ pagina, children }: { pagina: Comun; children:
                 <details key={sector.id} className="menu-sector" open={sector.actual}>
                   <summary>{sector.titulo}</summary>
                   <ul>
-                    {sector.secciones.map((seccion) => (
-                      <li key={seccion.url}>
-                        <a
-                          href={`${pagina.base}/${seccion.url}`}
-                          aria-current={seccion.actual ? "page" : undefined}
-                        >
-                          {seccion.titulo}
-                        </a>
-                      </li>
-                    ))}
+                    {sector.secciones.map((seccion) =>
+                      /* Seccion ANUNCIADA: el rotulo esta -JC la tiene en el menu de su
+                         maqueta y el lector tiene que saber que la seccion existe- pero
+                         todavia no hay datos, asi que no se dibuja un link que lleve a una
+                         pagina que no se genero. Misma excepcion acotada a la regla de
+                         botones muertos que las banderas de idioma. */
+                      seccion.proximamente ? (
+                        <li key={seccion.url} className="menu-seccion-prox">
+                          <span>{seccion.titulo}</span>
+                          <span className="prox">Próximamente</span>
+                        </li>
+                      ) : (
+                        <li key={seccion.url}>
+                          <a
+                            href={`${pagina.base}/${seccion.url}`}
+                            aria-current={seccion.actual ? "page" : undefined}
+                          >
+                            {seccion.titulo}
+                          </a>
+                        </li>
+                      ),
+                    )}
                   </ul>
                 </details>
               ) : (
@@ -249,6 +265,37 @@ export default function Cascara({ pagina, children }: { pagina: Comun; children:
             ) : (
               <span className="banda-titulo">{titulo}</span>
             )}
+            {/* Las otras paginas de la seccion, a la derecha de la banda. Es donde las dibuja
+                JC en su maqueta de pasturas y forrajes. Una pagina todavia sin construir se
+                muestra apagada con "Próximamente": el rotulo esta -el lector tiene que saber
+                que la pagina existe en el plan- pero no se dibuja un link muerto. */}
+            {pagina.paginas_de_seccion.length ? (
+              <nav className="tira-paginas" aria-label="Páginas de la sección">
+                {pagina.paginas_de_seccion.map((entrada) =>
+                  entrada.href ? (
+                    <a
+                      key={entrada.texto}
+                      href={entrada.href}
+                      aria-current={entrada.actual ? "page" : undefined}
+                      /* `data-conserva` solo donde corresponde. Un ancla de la misma pagina
+                         no tiene navegacion que conservar, y una entrada que YA trae su propia
+                         query tampoco: comun.js reescribe el href partiendo por "?", asi que
+                         le borraria justo el parametro que la hace distinta. */
+                      data-conserva={
+                        entrada.href.startsWith("#") || entrada.departamento ? undefined : ""
+                      }
+                      data-elegir-departamento={entrada.departamento || undefined}
+                    >
+                      {entrada.texto}
+                    </a>
+                  ) : (
+                    <span key={entrada.texto} className="tira-prox" title="Próximamente">
+                      {entrada.texto} <span className="prox">Próximamente</span>
+                    </span>
+                  ),
+                )}
+              </nav>
+            ) : null}
             {pagina.filtros_periodo.map((filtro) => (
               <Periodo key={filtro.id} filtro={filtro} />
             ))}

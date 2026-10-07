@@ -337,6 +337,60 @@ def sql_hecho_dtv(rutas):
 DIMENSIONES_PRECIOS = ("grupo", "especie", "variedad", "envase", "calidad", "tamanio")
 
 
+def sql_geo_bandas(rutas):
+    """Familia bandas-periodo: una unidad geografica por fila, igual que stock y tidy.
+
+    Usa `geo_nombre`, el nombre canonico que normalizo el adapter, y no el que escribe el
+    Excel: la base 43 escribe "JUAN F, IBARRA" y "JUAN F. IBARRA" para el mismo departamento, y
+    con el nombre crudo la errata terminaria listada en dim_geo como si fuera un alias
+    legitimo.
+    """
+    return """
+        SELECT DISTINCT
+            geo_id,
+            nivel_geo,
+            geo_nombre AS nombre,
+            provincia,
+            provincia_id,
+            provincia_nombre,
+            CAST(geo_id AS BIGINT) - provincia_id * 1000 AS departamento_id,
+            es_agregado_geo
+        FROM read_parquet(%s)
+        WHERE geo_id IS NOT NULL
+    """ % lista_sql(rutas)
+
+
+def sql_hecho_bandas(rutas):
+    """Familia bandas-periodo: una fila por periodo, departamento, banda y medida.
+
+    El grano que llega al mart es el que trae la fuente -la QUINCENA- y no el mes. Agregar a
+    mes aca seria tomar una decision de negocio dentro del mart: en la base 43 el "promedio
+    mensual" que dibuja JC es en realidad la primera quincena de cada mes, y esa regla vive en
+    el spec, no en el SQL. Con el grano nativo se puede dibujar cualquiera de las dos lecturas
+    sin volver al Excel.
+
+    `orden_periodo` (AAAAMMQ) es lo que ordena la serie sin parsear texto, y por eso tambien es
+    la clave del ORDER BY: con (fila_origen, variable) alcanza para que no haya empates y el
+    parquet salga byte a byte igual entre corridas.
+    """
+    return """
+        SELECT
+            base_id, entrega, ambito, provincia,
+            grano_tiempo, anio, mes, mes_nombre, quincena, periodo, orden_periodo,
+            geo_id, nivel_geo, provincia_id, provincia_nombre,
+            -- `geo_nombre` es el canonico y `departamento` el que escribe el Excel con sus
+            -- erratas: los dos viajan para poder rastrear cualquier dato hasta su celda.
+            geo_nombre, departamento,
+            es_agregado_geo,
+            variable, banda, banda_numero, banda_etiqueta, banda_rol,
+            medida, unidad, agregable, valor,
+            fuente,
+            hoja, fila_origen
+        FROM read_parquet(%s)
+        ORDER BY base_id, fila_origen, variable
+    """ % lista_sql(rutas)
+
+
 def sql_hecho_precios(rutas):
     """Familia precios: una cotizacion diaria por fila del Excel.
 
@@ -385,6 +439,7 @@ HECHOS_POR_FAMILIA = {
     "dtv": sql_hecho_dtv,
     "stock": sql_hecho_stock,
     "precios": sql_hecho_precios,
+    "bandas-periodo": sql_hecho_bandas,
 }
 
 GEO_POR_FAMILIA = {
@@ -395,6 +450,7 @@ GEO_POR_FAMILIA = {
     "dtv": sql_geo_dte,
     "stock": sql_geo_stock,
     "precios": sql_geo_precios,
+    "bandas-periodo": sql_geo_bandas,
 }
 
 # Familias cuyo grano se agrega a mes y por lo tanto alimentan dim_tiempo_mes. La dtv y la

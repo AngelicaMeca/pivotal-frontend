@@ -39,7 +39,9 @@ export type SectorMenu = {
   id: string;
   titulo: string;
   actual: boolean;
-  secciones: { titulo: string; url: string; actual: boolean }[];
+  // `proximamente`: la seccion esta declarada y anunciada, pero todavia no tiene datos.
+  // Se dibuja en el menu sin link (ver Cascara.tsx).
+  secciones: { titulo: string; url: string; actual: boolean; proximamente?: boolean }[];
 };
 
 export type Enlace = { texto: string; href: string };
@@ -70,6 +72,20 @@ export type Comun = {
   filtros_barra: Filtro[];
   pestanias: { texto: string; href: string; actual: boolean }[];
   botones_cabecera: Enlace[];
+  // Las otras paginas de la seccion, dibujadas a la derecha de la banda del breadcrumb (es
+  // donde las pone JC). `href` vacio = declarada y todavia sin construir: se muestra apagada.
+  paginas_de_seccion: {
+    texto: string;
+    href: string | null;
+    actual: boolean;
+    // geo_id cuando la entrada elige un departamento: el navegador lo cambia en el acto en vez
+    // de recargar la pagina entera para mover un filtro.
+    departamento?: string | null;
+  }[];
+  // Si la sección dibuja el botón deshabilitado "Datos por Departamento" cuando no
+  // declara botones propios. Lo esperan las secciones del mockup Modelo 2; una sección
+  // que no lo espera no debe prometer una página que no existe.
+  boton_proximamente: boolean;
   banderas_idioma: { codigo: string; nombre: string; activa: boolean }[];
   // Definiciones de los terminos marcados en ESTA pagina (site/glosario.yaml). Vacio si no
   // hay ninguno: ahi la cascara no dibuja el recuadro de aclaraciones.
@@ -197,6 +213,9 @@ export type PaginaTablero = Comun & {
   // No cuelgan de ningun panel: en la maqueta de JC no hay ninguna caja alrededor. Los
   // tableros que no las declaran (hacienda, stock) mandan la lista vacia.
   acciones_tablero: AccionDeCuadro[];
+  // Las notas metodologicas, al pie. Son el destino de la pestaña "Metodología", que no es
+  // otra pagina: es un ancla a esta misma (asi lo enlaza JC en su Excel).
+  notas: { titulo: string; texto: string; texto_partes?: ParteDeTexto[] }[];
 };
 
 export type Ficha = {

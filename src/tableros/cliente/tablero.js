@@ -764,7 +764,10 @@ export default function iniciar(PIVOTAL) {
           return html;
         }
       },
-      xAxis: {
+      /* Con `panel.grupos` el eje va en dos niveles (mes arriba, año abajo), que es como lo
+         dibuja JC en los dos graficos de su hoja "Agri 3". Lo resuelve el mismo armador que
+         usan el combo y las apiladas: un solo eje agrupado para todo el sitio. */
+      xAxis: panel.grupos ? ejeDeCategoriasAgrupado(panel) : {
         type: "category",
         data: panel.x,
         axisTick: { show: false },
@@ -904,6 +907,46 @@ export default function iniciar(PIVOTAL) {
     });
   }
 
+  /* El eje de dos niveles: mes arriba, año abajo. Devuelve un ARRAY de ejes, que es lo que
+     ECharts acepta en `xAxis` cuando hay mas de uno. */
+  function ejeDeCategoriasAgrupado(panel) {
+    var vistos = {};
+    var bandaDeAnios = panel.grupos.map(function (grupo) {
+      if (vistos[grupo]) { return ""; }
+      vistos[grupo] = true;
+      return grupo;
+    });
+    return [
+      {
+        type: "category",
+        data: panel.x,
+        axisTick: { show: false },
+        axisLine: { lineStyle: { color: PIVOTAL.color("--borde") } },
+        /* Rotados 90 grados: son los doce meses de cada año y horizontales no entran. Es como
+           los escribe JC. */
+        axisLabel: {
+          interval: 0, rotate: 90, fontSize: 9, margin: 8,
+          color: PIVOTAL.color("--texto-apoyo")
+        }
+      },
+      {
+        type: "category",
+        data: bandaDeAnios,
+        position: "bottom",
+        offset: 30,
+        axisTick: { show: false },
+        axisLine: { show: false },
+        /* `interval: 0` con las repetidas en blanco: asi el año queda escrito una sola vez,
+           sobre la primera casilla de su bloque. Centrarlo exigiria calcular posiciones a
+           mano y moverlas en cada resize. */
+        axisLabel: {
+          interval: 0, fontSize: 10, fontWeight: 650,
+          color: PIVOTAL.color("--texto-apoyo")
+        }
+      }
+    ];
+  }
+
   /* -------- eje horizontal de las formas por categoria (combo y apiladas) --------
      El periodo elegido en la tira de la cabecera se DESTACA (panel.destacado): los dos cuadros
      de la maqueta "Agri 2" muestran la ventana entera de años a proposito -su sujeto es la
@@ -911,6 +954,12 @@ export default function iniciar(PIVOTAL) {
      Se marca la etiqueta, no la barra: pintar una barra distinta seria cambiarle el color a un
      dato, y el color lo manda el protocolo. */
   function ejeDeCategorias(panel) {
+    /* Con `panel.grupos` el eje va en DOS niveles, que es como lo dibuja JC en la hoja
+       "Agri 3": los meses rotados arriba y una banda con el año debajo, un rotulo por bloque.
+       Son dos ejes de categoria de ECharts sobre la misma grilla: el segundo repite el grupo
+       en todas las posiciones y esconde las repetidas, que es lo unico que ECharts sabe hacer
+       para un eje agrupado. Sin esto, 40 meses seguidos no dicen de que año es cada uno. */
+    if (panel.grupos) { return ejeDeCategoriasAgrupado(panel); }
     return {
       type: "category",
       data: panel.x,
@@ -920,7 +969,12 @@ export default function iniciar(PIVOTAL) {
          unico estilo de `axisLabel` que acepta una funcion es el color, asi que una funcion
          en `fontWeight` se ignora en silencio y el año elegido quedaba igual que los demas. */
       axisLabel: {
-        interval: 0,
+        /* `interval: 0` escribe TODAS las etiquetas, que es lo que hace falta cuando las
+           categorias son cinco años. Con 76 meses -la serie de recursos forrajeros- se pisan
+           unas con otras y no se lee ninguna, asi que ahi se deja que ECharts saltee las que
+           no entran. El corte es por cantidad y no por ancho medido: el ancho cambia con el
+           zoom y la hoja A4, y un umbral de cantidad da el mismo dibujo en los tres lados. */
+        interval: panel.x.length > 24 ? "auto" : 0,
         fontSize: 10,
         color: PIVOTAL.color("--texto-apoyo"),
         formatter: function (valor, i) {
@@ -1072,6 +1126,17 @@ export default function iniciar(PIVOTAL) {
      El segundo cuadro de la maqueta. La leyenda va ABAJO, como en el grafico de JC. El tooltip
      muestra todas las series del año mas el total de la pila, que es el numero que el ojo lee
      en el alto de la barra y que si no estaria en ningun lado. */
+  /* Cada punto de la serie dividido por el total de SU columna. Una columna en cero queda
+     en cero y no divide por cero: una barra sin dato no se dibuja, no se inventa. */
+  function proporciones(panel, serie) {
+    return serie.puntos.map(function (valor, i) {
+      if (valor === null || valor === undefined) { return null; }
+      var total = 0;
+      panel.series.forEach(function (s) { total += s.puntos[i] || 0; });
+      return total ? valor / total : null;
+    });
+  }
+
   function pintarApiladas(nodo, panel) {
     /* Igual que el combo: la tabla de datos de JC va debajo, un departamento por fila y un
        año por columna. */
@@ -1121,7 +1186,12 @@ export default function iniciar(PIVOTAL) {
           name: serie.nombre,
           type: "bar",
           stack: "total",
-          data: serie.puntos,
+          /* Al 100%: cada barra reparte SU PROPIO total, asi que el valor que se dibuja es la
+             proporcion y no la magnitud. El dato que viaja del build sigue siendo la magnitud
+             -las hectareas- para que el tooltip pueda decir las dos cosas: cuantas hectareas
+             son y que porcentaje representan. Normalizar en el build en vez de aca obligaria a
+             mandar las dos series. */
+          data: panel.al_cien ? proporciones(panel, serie) : serie.puntos,
           /* Mismo criterio que el combo: el ancho sale de la casilla, no de un numero de
              pixeles. Las apiladas aguantan un poco mas de barra que las agrupadas -no hay dos
              series compitiendo por el mismo lugar- y es lo que dibuja JC: en sus barras de
@@ -1142,7 +1212,15 @@ export default function iniciar(PIVOTAL) {
     "tabla-superficie": pintarTablaDatos,
     combo: pintarCombo,
     apiladas: pintarApiladas,
-    top: pintarTop
+    top: pintarTop,
+    /* Pasturas y forrajes (hojas "Agri 3" y "Agri 3-b"). El dibujante se busca por el ID del
+       panel, asi que una pagina con DOS tablas y DOS graficos necesita una entrada por cuadro:
+       sus ids no pueden ser los nombres de las formas porque se repetirian. Es lo mismo que ya
+       hacia `tabla-superficie` en cultivos intensivos. */
+    "tabla-pct": pintarTablaDatos,
+    "tabla-ha": pintarTablaDatos,
+    "grafico-pct": pintarApiladas,
+    "grafico-ha": pintarTendencia
   };
 
   /* Un panel sin datos dice por que no los tiene y se apaga entero: no se deja un grafico

@@ -1,0 +1,175 @@
+# Base 43 - Recursos forrajeros de Santiago del Estero (Observatorio Forrajero Nacional).
+# Produccion de materia seca comparada contra el promedio historico de cada quincena: el dato
+# no es un volumen sino una POSICION, cuanta superficie quedo en cada banda de productividad
+# respecto de su propia historia.
+# Escrito por ingestor-bases el 2026-10-06 sobre "43 - Recursos forrajeros SDE.xlsx".
+#
+# OJO con como se lee: "Alto" NO quiere decir mucho pasto. Quiere decir mas pasto que lo
+# habitual para esa epoca del anio en ese lugar. Las bandas reparten los ANIOS de la serie
+# historica (5% / 25% / 40% / 25% / 5%), no el territorio, asi que un 20% de superficie en
+# "Muy alto" es una noticia y no un dato mas.
+base: 43
+slug: recursos-forrajeros
+familia: bandas-periodo
+estado: activa
+demo_prioritaria: false
+
+archivo:
+  patron: "^43 - Recursos forrajeros"
+
+salida:
+  staging: "staging/base-43-recursos-forrajeros.parquet"
+  mart: "hecho_recursos_forrajeros"
+
+# ---------------------------------------------------------------------------
+# HOJAS
+# ---------------------------------------------------------------------------
+hojas:
+  datos:
+    - nombre: "Santiago 2"
+      header_fila: 1
+      ambito: sde
+      contenido: >
+        Santiago del Estero por departamento y por QUINCENA, de enero de 2020 a abril de 2026.
+        3.849 filas con dato (27 departamentos x 145 periodos, con huecos) mas 8 filas vacias
+        al pie, una de las cuales trae numeros sueltos (ver `anomalias`).
+      geo:
+        nivel: departamento
+        normalizar_nombre: true    # la fuente escribe "JUAN F, IBARRA" y "JUAN F. IBARRA"
+
+  ignorar:
+    - nombre: "Modelo analisis"
+      motivo: >
+        Es la tabla dinamica con la que JC armo su maqueta: meses x bandas, en ha y en %,
+        filtrada por quincena "1ra" (celda I2). No son datos nuevos, son los mismos de
+        "Santiago 2" agregados. Lo que SI aporta es una regla de negocio -que su "promedio
+        mensual" es en realidad la primera quincena- y eso ya esta escrito en
+        specs/modelos/_comunes-base-43.yaml.
+    - nombre: "Hoja2"
+      motivo: "hoja de trabajo suelta, 30 filas sin encabezado util"
+
+# ---------------------------------------------------------------------------
+# COLUMNAS: origen -> canonico
+# ---------------------------------------------------------------------------
+# "Deepartamento" esta mal escrito en el Excel, con dos 'e'. Se declara TAL CUAL viene: el
+# adapter compara contra el titulo real de la hoja, y corregirlo aca haria fallar la lectura.
+# Si en una entrega siguiente JC lo arregla, hay que cambiar esta linea y nada mas.
+columnas:
+  "año": anio
+  "n mes": mes
+  "mes": mes_nombre
+  "quincena": quincena
+  "Provincia": provincia_nombre
+  "Deepartamento": departamento
+  "Muy bajo  (5% de los años) en ha": muy_bajo_ha
+  "Bajo (25% de los años)  en ha": bajo_ha
+  "Promedio (40% de los años)  en ha": promedio_ha
+  "Alto  (25% de los años)  en ha": alto_ha
+  "Muy alto  (5% de los años)  en ha": muy_alto_ha
+  "Sin dato o agricultura -  en ha": sin_dato_ha
+  "Total -  en ha": total_ha
+  "Muy bajo  (5% de los años) en % de la superf.": muy_bajo_pct
+  "Bajo  (25% de los años)  en % de la superf.": bajo_pct
+  "Promedio (40% de los años)  en % de la superf.": promedio_pct
+  "Alto  (25% de los años)  en % de la superf.": alto_pct
+  "Muy alto  (5% de los años)  en % de la superf.": muy_alto_pct
+
+# ---------------------------------------------------------------------------
+# VALORES: lo que el adapter despivotea a filas
+# ---------------------------------------------------------------------------
+# Lo que abre a lo ancho es la BANDA, y cada banda viene en dos unidades. Por eso cada entrada
+# declara `banda` y `medida`: el parquet sale con una fila por (periodo, departamento, banda,
+# medida), que es el grano con el que se puede dibujar cualquiera de los cuatro cuadros.
+#
+# `rol` separa las cinco bandas de productividad de la sexta, que NO es una banda: es el resto
+# del territorio que la fuente no clasifica (sin dato o bajo uso agricola). Esa distincion es
+# la que evita el error de sumarla al denominador de los porcentajes.
+valores:
+  muy_bajo_ha:   {banda: muy_bajo,  numero: 1, etiqueta: "Muy bajo (1)",  rol: banda, medida: superficie_ha, unidad: ha, agregable: true}
+  bajo_ha:       {banda: bajo,      numero: 2, etiqueta: "Bajo (2)",      rol: banda, medida: superficie_ha, unidad: ha, agregable: true}
+  promedio_ha:   {banda: promedio,  numero: 3, etiqueta: "Promedio (3)",  rol: banda, medida: superficie_ha, unidad: ha, agregable: true}
+  alto_ha:       {banda: alto,      numero: 4, etiqueta: "Alto (4)",      rol: banda, medida: superficie_ha, unidad: ha, agregable: true}
+  muy_alto_ha:   {banda: muy_alto,  numero: 5, etiqueta: "Muy alto (5)",  rol: banda, medida: superficie_ha, unidad: ha, agregable: true}
+  sin_dato_ha:   {banda: sin_dato,  numero: 6, etiqueta: "SD/Agric.(6)",  rol: sin-clasificar, medida: superficie_ha, unidad: ha, agregable: true}
+  muy_bajo_pct:  {banda: muy_bajo,  numero: 1, etiqueta: "Muy bajo (1)",  rol: banda, medida: participacion, unidad: "%", agregable: false}
+  bajo_pct:      {banda: bajo,      numero: 2, etiqueta: "Bajo (2)",      rol: banda, medida: participacion, unidad: "%", agregable: false}
+  promedio_pct:  {banda: promedio,  numero: 3, etiqueta: "Promedio (3)",  rol: banda, medida: participacion, unidad: "%", agregable: false}
+  alto_pct:      {banda: alto,      numero: 4, etiqueta: "Alto (4)",      rol: banda, medida: participacion, unidad: "%", agregable: false}
+  muy_alto_pct:  {banda: muy_alto,  numero: 5, etiqueta: "Muy alto (5)",  rol: banda, medida: participacion, unidad: "%", agregable: false}
+
+# La columna "Total - en ha" NO se despivotea: es derivable (suma de las seis bandas) y ademas
+# viene rota en 100 filas, donde el valor llego como TEXTO con coma decimal ("605861,20"). El
+# total se calcula en marts, que es donde se calculan todos los totales del repo.
+columnas_ignoradas:
+  total_ha: "derivable y mal tipada en 100 filas; se calcula en marts (ver anomalias)"
+
+grano:
+  tiempo: quincena          # anio + mes + quincena ("1ra" / "2da")
+  geo: departamento
+  nota_provincial: >
+    No hay fila de provincia: el total provincial se calcula SUMANDO departamentos, igual que
+    en las bases 9, 48 y 85.
+
+# ---------------------------------------------------------------------------
+# ANOMALIAS DETECTADAS AL PERFILAR (van al reporte de JC, no se corrigen aca)
+# ---------------------------------------------------------------------------
+anomalias:
+  - id: promedio-ha-constante
+    gravedad: alta
+    que: >
+      La columna "Promedio (40% de los años) en ha" trae el MISMO valor, 2.397,55 ha, en 2.738
+      de las 3.849 filas: todas las de enero de 2020 a junio de 2024. Los valores reales
+      empiezan en julio de 2024. Se ve en la maqueta del propio JC: su columna "Promedio (3)"
+      dice 64.734 en todos los meses hasta julio de 2024, que es 27 x 2.397,55, o sea la suma
+      provincial de la constante.
+    efecto: >
+      El cuadro en HECTAREAS tiene una de sus seis series plana durante cuatro anios y medio.
+      El cuadro en PORCENTAJE no esta afectado: sus columnas son coherentes y cierran en 100%.
+    decide: JC
+  - id: pct-no-reconstruible-desde-ha
+    gravedad: media
+    que: >
+      Los dos bloques no se derivan uno del otro. Los porcentajes cierran en 100,0000% en todas
+      las filas, pero dividir las hectareas de una banda por la suma de las cinco da el mismo
+      numero solo en 120 de las 1.111 filas que no tienen la constante de arriba.
+    efecto: >
+      Hay que publicar cada bloque con su propia columna y NUNCA recalcular uno desde el otro.
+    decide: JC
+  - id: total-ha-como-texto
+    gravedad: baja
+    que: >
+      La columna "Total - en ha" llega como texto con coma decimal ("605861,20") en 100 filas.
+    efecto: "ninguno: la columna no se ingiere, el total se calcula en marts"
+  - id: fila-suelta-al-pie
+    gravedad: baja
+    que: >
+      La fila 3.853 no tiene anio, mes, quincena ni departamento, pero trae dos numeros
+      (227.310,06 y 490.677,03). Es un calculo que quedo al pie de la hoja.
+    efecto: "se descarta por no tener periodo ni geografia; queda registrada"
+  - id: juan-f-ibarra-dos-grafias
+    gravedad: baja
+    que: >
+      El departamento JUAN F. IBARRA aparece escrito de dos formas, con coma y con punto
+      ("JUAN F, IBARRA" en 73 filas y "JUAN F. IBARRA" en 69). Las dos conviven en los mismos
+      anios, asi que es tipeo y no un cambio de nombre.
+    efecto: "se resuelve en configs/dims/geo-alias.yaml; ninguna fila se dropea"
+  - id: quincenas-faltantes
+    gravedad: media
+    que: >
+      La PRIMERA quincena esta completa: los 12 meses de cada anio, todos los anios. A la
+      SEGUNDA le falta un mes por anio (11 de 12). Ademas hay 7 periodos que no traen los 27
+      departamentos: dos traen uno solo, uno trae 18, tres traen 26 y uno trae 25.
+    efecto: >
+      Explica por que JC arma sus cuadros con la primera quincena: es la serie completa. Los
+      huecos no se rellenan.
+    decide: JC
+
+fuente:
+  organismo: "Observatorio Forrajero Nacional (INTA - CREA - Fauba - IPCVA)"
+  pie: "Fuente: Observatorio Forrajero Nacional (INTA - CREA - Fauba - IPCVA)"
+
+cobertura:
+  desde: "2020-01 (1ra quincena)"
+  hasta: "2026-04 (1ra quincena)"
+  filas_con_dato: 3849
+  departamentos: 27

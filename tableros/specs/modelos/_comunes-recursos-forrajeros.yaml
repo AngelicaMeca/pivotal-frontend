@@ -1,0 +1,252 @@
+# Reglas comunes de la base 43 · Recursos forrajeros de Santiago del Estero
+#
+# ESTADO: ESPECIFICADA, NO INGERIDA (6-oct-2026). Todo lo de acá sale de la maqueta de JC
+# ("0000000000 Modelo 1 - Pasturas y forrajes.xlsx", hojas "Agri 3", "Agri 3-b", "Agri 3 - C" y
+# "Agri 3 - C -Map2"), que es lo único que llegó. El Excel de datos NO está en el repo: `raw/`
+# se baja de SharePoint en cada publicación y en el entorno donde se escribió esto no había
+# credenciales. Por eso acá NO hay `configs/bases/43-*.yaml`, ni familia de adapter, ni
+# columnas canónicas: eso se escribe perfilando el archivo, no adivinándolo (backlog 71).
+# Lo que sí se puede fijar sin el archivo es QUÉ cuenta la base y CÓMO se presenta, que es lo
+# que JC dibujó.
+#
+# Qué es: el Observatorio Forrajero Nacional estima, quincena a quincena, la producción de
+# MATERIA SECA de los recursos forrajeros y la compara contra el promedio histórico de esa
+# misma quincena. El resultado no es un volumen sino una POSICIÓN: cuánta superficie de la
+# provincia (o del departamento) quedó en cada banda de productividad respecto de su propia
+# historia. Por eso todos los cuadros de la sección son de composición y ninguno es un ranking.
+
+id: _comunes-base-43
+familia: recursos-forrajeros
+bases: [43]
+slug_base: recursos-forrajeros
+
+fuente_datos:
+  # Literal de JC, al pie de las cuatro hojas (celdas H50, AI51, H39).
+  pie: "Fuente: Observatorio Forrajero Nacional (INTA - CREA - Fauba - IPCVA)"
+  organismo_esperado: "Observatorio Forrajero Nacional (INTA - CREA - Fauba - IPCVA)"
+  indice_de_jc: "43 · PB 11 · Producción materia seca forraje por provincia y dto y promedio"
+
+# ---------------------------------------------------------------------------
+# LAS SEIS BANDAS: el corazón de la base
+# ---------------------------------------------------------------------------
+# JC las define en la nota al pie de la hoja "Agri 3" (celda H49) y en la de "Agri 3-b"
+# (celdas AI49 y AI50), textual:
+#
+#   "(1): (5% de los años) en ha y % - (2): (25% de los años) en ha y % - (3): (40% de los
+#    años) en ha y % - (4): (25% de los años) en ha y % - (5): (5% de los años) en ha y %
+#    - (6): Sin datos o agricultura - en ha"
+#
+# O sea: NO son quintiles iguales. Son los percentiles con que el Observatorio clasifica cada
+# quincena contra su propia serie histórica, y los cortes son 5 / 25 / 40 / 25 / 5. Las dos
+# colas son angostas a propósito: "muy bajo" y "muy alto" son excepcionales por definición.
+# Esto es importante y hay que no tocarlo: la escala de color del sitio reparte en QUINTILES
+# iguales (`_protocolo-presentacion.colores.rampas`), y acá NO se aplica esa regla, porque las
+# clases no las hace el sitio, las trae la fuente.
+bandas:
+  - {id: muy_bajo,  numero: 1, etiqueta: "Muy bajo (1)",  parte_de_los_anios: 5}
+  - {id: bajo,      numero: 2, etiqueta: "Bajo (2)",      parte_de_los_anios: 25}
+  - {id: promedio,  numero: 3, etiqueta: "Promedio (3)",  parte_de_los_anios: 40}
+  - {id: alto,      numero: 4, etiqueta: "Alto (4)",      parte_de_los_anios: 25}
+  - {id: muy_alto,  numero: 5, etiqueta: "Muy alto (5)",  parte_de_los_anios: 5}
+  # La sexta NO es una banda de productividad: es el resto del territorio que la fuente no
+  # clasifica. Por eso entra en los cuadros en hectáreas y en el gráfico de composición, pero
+  # NO en el denominador de la tabla porcentual (ver `dos_denominadores`).
+  - {id: sin_dato, numero: 6, etiqueta: "SD/Agric.(6)", parte_de_los_anios: null,
+     que_es: "superficie sin dato o bajo uso agrícola, no forrajero"}
+
+dos_denominadores:
+  # Esto se verificó contra los números de la maqueta y NO es un error de JC: son dos cuentas
+  # distintas y las dos están bien. Si alguien "corrige" una para que coincida con la otra,
+  # rompe el cuadro.
+  tabla_porcentual: >
+    El porcentaje de la tabla en % se calcula sobre las CINCO bandas, sin la (6). Verificado
+    con enero de 2023: 3.848.473 ha de "Muy bajo" sobre 8.971.809 ha de las cinco bandas da
+    42,9%, que es lo que escribe JC. Por eso su fila cierra en 100,0% y su tabla no tiene
+    columna (6).
+  grafico_de_composicion: >
+    El gráfico de barras apiladas al 100% SÍ incluye la (6) como sexta porción. Ahí la pregunta
+    es otra -cómo se reparte TODO el territorio- y dejar afuera la superficie sin clasificar
+    haría que la barra mintiera sobre el tamaño del resto.
+
+medidas:
+  superficie_ha:
+    etiqueta: "Superficie"
+    unidad: ha
+    agregable: true
+  participacion_pct:
+    etiqueta: "Participación"
+    unidad: "%"
+    agregable: false
+    nota: "no se suma ni se promedia entre áreas: se recalcula sobre las hectáreas"
+
+presentacion:
+  sujeto_de_la_base: "pasturas y forrajes"       # el "sector/subsector" de JC, de su índice
+  frase_en_titulo: "los recursos forrajeros"
+  tipos_de_variable:
+    superficie_ha: superficie    # hectáreas: rampa verde, igual que las de la base 9
+  # El color de las SEIS bandas no es una rampa de magnitud ni una paleta categórica libre: es
+  # una escala DIVERGENTE, porque las bandas están ordenadas y tienen un centro ("Promedio").
+  # JC ya la dibujó en su Excel y conviene respetarla, porque es la misma que usa el
+  # Observatorio en sus mapas y quien conozca el producto la va a reconocer.
+  # PENDIENTE: el protocolo del sitio todavía no tiene escalas divergentes
+  # (`_protocolo-presentacion.colores` solo define rampas de un extremo y paleta categórica).
+  # Hay que agregar el caso antes de construir, no improvisarlo en el código.
+  colores_de_las_bandas:
+    # Escala DIVERGENTE, no una rampa de magnitud ni una paleta categorica libre: las bandas
+    # estan ordenadas y tienen centro ("Promedio"). Va del marron seco de la sequia al verde
+    # profundo del pasto, que es la lectura natural del tema y ademas cae dentro de la familia
+    # verde que pide la hoja INDICACIONES de JC para lo agricola.
+    # La sexta NO es una banda: es el territorio que la fuente no clasifica, y por eso lleva el
+    # gris de "sin dato" del protocolo y no un paso de la escala.
+    hex:
+      muy_bajo: "#a6611a"
+      bajo: "#d8b365"
+      promedio: "#c9ccc0"
+      alto: "#7fbf7b"
+      muy_alto: "#1b7837"
+      sin_dato: "#bdbdbd"
+    contraste_medido:
+      - "marron #a6611a sobre crema #fbf4ec = 3,9:1"
+      - "verde #1b7837 sobre crema #fbf4ec = 5,8:1"
+
+grano:
+  # QUÉ GRANO TRAE LA BASE es la primera pregunta que hay que contestar con el Excel delante.
+  # Las dos cosas que dibuja JC no coinciden entre sí:
+  dibujado_en_los_cuadros: "año-mes (sus tablas y sus dos gráficos van mes a mes, de ene-2023 a abr-2026)"
+  dibujado_en_los_mapas: "quincena (sus rótulos dicen 'Mapa 22 marzo al 6 abril', '6 al 21 marzo', etc.)"
+  pendiente: >
+    Si la fuente entrega quincenas, el mes de los cuadros es un promedio nuestro y hay que
+    escribir cómo se promedia (¿media simple de las dos quincenas, o ponderada por hectáreas?).
+    Si entrega meses, los mapas son otra serie y no hay nada que promediar. No se resuelve sin
+    el archivo (backlog 71).
+
+# ---------------------------------------------------------------------------
+# COMO SE PASA DE QUINCENA A MES  (regla de negocio, no de codigo)
+# ---------------------------------------------------------------------------
+# La fuente entrega QUINCENAS y los cuadros de JC van mes a mes. El mes es, literalmente, la
+# PRIMERA quincena: verificado contra su maqueta, enero de 2023, banda "Muy bajo", su cuadro
+# dice 3.848.473 ha y la primera quincena da 3.848.473 clavado (la segunda da 3.033.720 y el
+# promedio de las dos daria 3.441.096).
+#
+# Y tiene un buen motivo, aunque no lo escriba: la primera quincena es la serie COMPLETA (los
+# 12 meses de los 7 años) y a la segunda le falta un mes en cada año. Promediar dos quincenas
+# donde una falta daria un mes mas bajo sin que pasara nada en el campo.
+#
+# Queda preguntado en el backlog 74 para que JC confirme o pida el promedio real.
+# La VENTANA que dibujan los cuadros. JC arma los suyos desde enero de 2023, y la base trae
+# desde enero de 2020: son 76 meses contra los 40 que el muestra.
+#
+# Se respeta su ventana por dos motivos. El primero es que es la suya, y la pagina tiene que
+# verse como su maqueta. El segundo lo destapo el dato: 2021 y 2022 traen meses en los que la
+# fuente no entrega ninguna banda real -solo la constante de "Promedio" que ya esta anotada en
+# el reporte de la base-, y esos meses salen con la fila entera en S/D y un 100% que es el
+# 100% de nada. No se recorta para esconderlos: se recorta porque es la ventana que eligio JC,
+# y de paso no se publica un tramo que no dice nada.
+ventana:
+  desde: 2023
+  hasta: null        # null = hasta donde llegue la fuente
+  por_que: "es la ventana que dibuja JC en su maqueta (ene-2023 a abr-2026)"
+  la_base_trae: "desde enero de 2020"
+
+agregacion_mensual:
+  quincena: "1ra"
+  por_que: >
+    es la serie completa y es la que reproduce los numeros de su maqueta
+
+precision_display:
+  superficie_ha: 0
+  participacion: 1
+
+ambito:
+  - provincia
+  - departamento
+nota_departamental: >
+  JC avisa en la hoja "Agri 3-b" (celda E104) que los números departamentales de su maqueta
+  SON LOS PROVINCIALES repetidos: "Los valores sólo referenciales, son los mismos provinciales
+  (reales) y colocados sólo a efectos de la distribución espacial de los componentes". O sea
+  que la hoja departamental muestra la FORMA, no el dato. No se usa para validar números.
+
+notas_metodologicas:
+  que_mide:
+    titulo: "Qué mide esta sección"
+    texto: >
+      No mide cuánto forraje se produjo, sino cómo le fue a la provincia respecto de su propia
+      historia. Cada quincena, el Observatorio Forrajero compara la producción de materia seca
+      estimada contra el promedio histórico de esa misma quincena y clasifica cada porción del
+      territorio en una de cinco bandas. "Alto" no quiere decir mucho pasto: quiere decir más
+      pasto que lo habitual para esa época del año en ese lugar.
+  metodologia_de_jc:
+    titulo: "Metodología"
+    # LITERAL de JC. No está en una celda: lo escribió en un cuadro de texto al pie de sus
+    # hojas "Agri 3" y "Agri 3-b" (el destino del hipervínculo de su pestaña "Metodología").
+    # Única corrección: el original repite "se calculó se calculó". Nada más se tocó, ni la
+    # cita bibliográfica ni la ortografía de "Collección", que es como él la escribe.
+    texto: >
+      Las tablas y gráficos "Evolución del promedio mensual de recursos forrajeros en ha/%"
+      muestran, para la provincia y cada departamento tomando como fecha la primera quincena de
+      cada mes sobre las imágenes MODIS correspondientes, la superficie total (ha) y relativa
+      (%) con distintos niveles de producción relativos a la producción promedio de los últimos
+      20 años. Los distintos niveles de producción calculados son: Muy bajo (5% de los años o 1
+      de cada 20 años), Bajo (25% de los años o 5 de cada 20 años), Promedio (40% de los años o
+      8 de cada 20 años), Alto (25% de los años o 5 de cada 20 años) y Muy alto (5% de los años
+      o 1 de cada 20 años). La producción de materia seca quincenal vs quincena promedio se
+      calculó para cada píxel (5,3 ha), a partir del IVN (índice verde normalizado, sensor
+      MODIS) como: (IVN actual – IVN promedio) / (desvío estándar IVN promedio). Las áreas bajo
+      “agricultura” están basadas en cartografía producida por de Abelleyra D, Banchero S,
+      Verón S, Mosciaro J, Volante J. 2019. Mapa Nacional de Cultivos campaña 2018/2019.
+      Collección 1. Versión 1. Informe. Instituto Nacional de Tecnología Agropecuaria (INTA),
+      Argentina.
+  bandas_desparejas:
+    titulo: "Por qué las bandas no son iguales"
+    texto: >
+      Las cinco bandas no reparten el territorio en quintos. Reparten los AÑOS de la serie
+      histórica: la banda "Promedio" cubre el 40% de los años, "Bajo" y "Alto" un 25% cada una,
+      y "Muy bajo" y "Muy alto" apenas un 5%. Por eso ver un 20% de superficie en "Muy alto" es
+      una noticia y no un dato más.
+  sin_dato_o_agricultura:
+    titulo: "La superficie sin clasificar"
+    texto: >
+      Una parte del territorio no entra en ninguna banda: o la fuente no tiene dato, o ese
+      suelo está bajo uso agrícola y no forrajero. Se informa aparte, en hectáreas, y no se
+      reparte entre las demás bandas.
+
+uniformidad:
+  regla_color_banda: >
+    El color de cada banda es FIJO en toda la sección: la misma banda tiene el mismo color en
+    el gráfico provincial, en el departamental y en la leyenda de los mapas. Es la misma regla
+    que el color por cultivo de la base 9.
+
+fuera_de_alcance:
+  - item: "Mapa de calor departamental de la sección"
+    referencia: "maqueta, hoja \"Agri 3\", celda E85"
+    estado: >
+      DESCARTADO por JC, textual: \"NO se plantea mapa porque las variables son muchas y la
+      lectura sería compleja a nivel departamental\". No es un olvido nuestro. El mapa de
+      Santiago sí aparece en la hoja departamental, pero como SELECTOR y no como mapa de calor
+      (celda E106: \"Desde el mapa se podrán seleccionar los departamentos a visualizar\").
+  - item: "Serie anterior a 2023"
+    estado: >
+      pendiente: la maqueta arranca en enero de 2023 y llega a abril de 2026, pero eso es lo
+      que JC pegó, no necesariamente lo que trae la base. La ventana real sale del archivo.
+  - item: "Mapas posteriores al primero de 2025"
+    referencia: "maqueta, hoja \"Agri 3 - C\", celda E77"
+    estado: >
+      acotado por JC para la Beta: \"Se incorporarán miniaturas de los mapas en orden
+      descendente. A efectos de la versión Beta, sólo hasta el primer mapa de 2025\".
+
+sensibilidad:
+  nivel: normal
+  nota: >
+    Es dato ambiental de la propia provincia, sin contraparte y sin personas. No hay acá nada
+    del tipo que CLAUDE.md manda reservar. Los mapas del Observatorio son nacionales y de
+    publicación abierta, pero muestran a todas las provincias a la vez: si en algún momento se
+    recortan o se comparan provincias, ahí sí aplica la regla y decide Francisco.
+
+estado: especificada-sin-datos
+origen:
+  tipo: maqueta de JC
+  archivo: "0000000000 Modelo 1 - Pasturas y forrajes.xlsx"
+  recibido: 2026-10-06
+  pendiente_de_humano: >
+    copiar ese .xlsx a specs/fuentes/ (acá escriben humanos, igual que en raw/) y dejar el
+    Excel de la base 43 donde el pipeline lo pueda leer.

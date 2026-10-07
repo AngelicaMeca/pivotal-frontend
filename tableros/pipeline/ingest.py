@@ -49,6 +49,9 @@ ADAPTERS = {
     "dtv": "adapters.dtv",
     "stock": "adapters.stock",
     "precios": "adapters.precios",
+    # Una fila por periodo y area, con una columna por BANDA de una escala ordenada
+    # y la misma banda repetida en dos unidades. Primera base: la 43 (forrajeros).
+    "bandas-periodo": "adapters.bandas",
 }
 
 

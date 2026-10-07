@@ -13,6 +13,8 @@ const MODULOS = {
   "flujo-od": () => import("@/tableros/cliente/flujo-od"),
   lista: () => import("@/tableros/cliente/lista"),
   "tabla-variaciones": () => import("@/tableros/cliente/tabla-variaciones"),
+  // Miniaturas que se amplian en un popup. No dibuja graficos: el contenido son imagenes.
+  galeria: () => import("@/tableros/cliente/galeria"),
 };
 
 export type TipoDePagina = keyof typeof MODULOS;

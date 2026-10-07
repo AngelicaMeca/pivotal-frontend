@@ -59,10 +59,15 @@ def leer_rgba(datos, nombre=""):
         if tipo == b"IHDR":
             ancho, alto, prof, color, comp, filtro, entrelazado = struct.unpack(
                 ">IIBBBBB", cuerpo[:13])
-            if prof != 8 or color != 6:
+            # Tipo 6 = RGBA y tipo 2 = RGB. El RGB entro con los mapas del Observatorio
+            # Forrajero, que vienen sin canal alfa: se leen igual y se les pone el alfa en
+            # opaco. Lo que sale de esta funcion es SIEMPRE RGBA, que es lo que esperan
+            # `sin_fondo` y `escribir_rgba`.
+            if prof != 8 or color not in (2, 6):
                 raise ErrorDePNG(
-                    "%s: solo se soportan PNG de 8 bits RGBA (este es profundidad %d, tipo %d)"
-                    % (nombre, prof, color))
+                    "%s: solo se soportan PNG de 8 bits RGB o RGBA (este es profundidad %d, "
+                    "tipo %d)" % (nombre, prof, color))
+            canales = 4 if color == 6 else 3
             if comp != 0 or filtro != 0:
                 raise ErrorDePNG("%s: compresion o filtrado no estandar" % nombre)
             if entrelazado:
@@ -75,7 +80,10 @@ def leer_rgba(datos, nombre=""):
         raise ErrorDePNG("%s: sin IHDR" % nombre)
 
     crudo = zlib.decompress(comprimido)
-    paso = ancho * 4                      # bytes por linea, sin el byte de filtro
+    # `paso` es el largo de la linea TAL COMO VIENE (3 o 4 bytes por pixel) y `canales` el
+    # salto del filtro, que mira al pixel de la izquierda: con RGB son 3 bytes, no 4. Confundir
+    # los dos da una imagen con bandas diagonales, que es el sintoma clasico.
+    paso = ancho * canales                # bytes por linea, sin el byte de filtro
     pixeles = bytearray(ancho * alto * 4)
     previa = bytearray(paso)
     pos = 0
@@ -84,20 +92,20 @@ def leer_rgba(datos, nombre=""):
         linea = bytearray(crudo[pos + 1:pos + 1 + paso])
         pos += 1 + paso
         if filtro == 1:                   # Sub
-            for i in range(4, paso):
-                linea[i] = (linea[i] + linea[i - 4]) & 0xFF
+            for i in range(canales, paso):
+                linea[i] = (linea[i] + linea[i - canales]) & 0xFF
         elif filtro == 2:                 # Up
             for i in range(paso):
                 linea[i] = (linea[i] + previa[i]) & 0xFF
         elif filtro == 3:                 # Average
             for i in range(paso):
-                izq = linea[i - 4] if i >= 4 else 0
+                izq = linea[i - canales] if i >= canales else 0
                 linea[i] = (linea[i] + ((izq + previa[i]) >> 1)) & 0xFF
         elif filtro == 4:                 # Paeth
             for i in range(paso):
-                izq = linea[i - 4] if i >= 4 else 0
+                izq = linea[i - canales] if i >= canales else 0
                 arriba = previa[i]
-                diag = previa[i - 4] if i >= 4 else 0
+                diag = previa[i - canales] if i >= canales else 0
                 p = izq + arriba - diag
                 pa, pb, pc = abs(p - izq), abs(p - arriba), abs(p - diag)
                 if pa <= pb and pa <= pc:
@@ -109,7 +117,17 @@ def leer_rgba(datos, nombre=""):
                 linea[i] = (linea[i] + pred) & 0xFF
         elif filtro != 0:
             raise ErrorDePNG("%s: filtro de linea desconocido (%d)" % (nombre, filtro))
-        pixeles[y * paso:(y + 1) * paso] = linea
+        if canales == 4:
+            pixeles[y * paso:(y + 1) * paso] = linea
+        else:
+            # RGB -> RGBA, con el alfa en opaco.
+            destino = y * ancho * 4
+            for x in range(ancho):
+                o, p = destino + x * 4, x * 3
+                pixeles[o] = linea[p]
+                pixeles[o + 1] = linea[p + 1]
+                pixeles[o + 2] = linea[p + 2]
+                pixeles[o + 3] = 255
         previa = linea
     return ancho, alto, pixeles
 

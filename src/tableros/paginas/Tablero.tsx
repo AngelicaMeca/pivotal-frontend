@@ -138,7 +138,21 @@ function CuerpoPanel({ id, mockup = false }: { id: string; mockup?: boolean }) {
         <div className="tabla-datos tabla-bajo-grafico" data-tabla-datos=""></div>
       </>
     );
-  } else if (id === "tabla-datos" || id === "tabla-superficie") {
+  } else if (id === "grafico-pct") {
+    /* Pasturas y forrajes: las barras apiladas AL 100% de JC. Mismo cuerpo que `apiladas` -el
+       dibujante es el mismo- pero sin la tabla debajo, porque acá la tabla es un cuadro aparte
+       (JC le da su propio recuadro en la hoja, al lado del gráfico). */
+    cuerpo = (
+      <>
+        <div className="grafico" data-grafico=""></div>
+        <ul className="leyenda-series" data-leyenda=""></ul>
+      </>
+    );
+  } else if (id === "grafico-ha") {
+    // Las seis líneas en hectáreas. Su leyenda la dibuja ECharts, como en `tendencia`.
+    cuerpo = <div className="grafico" data-grafico=""></div>;
+  } else if (id === "tabla-datos" || id === "tabla-superficie"
+             || id === "tabla-pct" || id === "tabla-ha") {
     // DOS bloques de campañas lado a lado, como los dibuja JC; los arma tablero.js
     cuerpo = <div className="tabla-datos" data-tabla-datos=""></div>;
   } else if (id === "top") {
@@ -695,6 +709,40 @@ export default function Tablero({ pagina }: { pagina: PaginaTablero }) {
           ))}
         </div>
       )}
+
+
+      {/* Las notas metodologicas, al pie y con su ancla. La pestaña "Metodología" de la
+          banda apunta acá: en el Excel de JC ese hipervínculo no salta a otra hoja, apunta a
+          una celda de la suya (la celda BD5 de "Agri 3" lleva a 'Agri 3'!H79). */}
+      {pagina.notas.length ? (
+        <div className="notas" id="metodologia">
+          {pagina.notas.map((nota, i) => (
+            /* ABIERTO: en la hoja de JC el texto de metodología está a la vista, en un
+               recuadro al pie, no plegado detrás de un título. Sigue siendo <details> para
+               que se pueda cerrar. */
+            <details key={i} open className={nota.texto.length > 400 ? "nota-larga" : undefined}>
+              <summary>{nota.titulo}</summary>
+              <p>
+                <Glosa texto={nota.texto} partes={nota.texto_partes} />
+              </p>
+            </details>
+          ))}
+        </div>
+      ) : null}
+
+      {/* Las acciones sueltas del pie, alineadas a la derecha. En la grilla generica van
+          DESPUES del tablero y no adentro, porque esa grilla reparte celdas de 12 columnas y
+          una tira de botones no es una celda. Es donde las dibuja JC en pasturas y forrajes
+          ("Generar PDF", celda BF77) igual que en la hoja "Agri 1" de extensivos. */}
+      {/* La condicion es la MISMA con la que se elige la grilla generica unas lineas mas
+          arriba, y no `disposicion !== "mockup"`: `mockup` es el valor por defecto y lo
+          traen tambien los tableros que caen en la grilla generica, asi que mirar eso
+          dejaba la tira sin dibujar. */}
+      {!selector && tablero.disposicion !== "grilla-2x2" && accionesDelPie?.length ? (
+        <div className="acciones-tablero">
+          <AccionesDeCuadro acciones={accionesDelPie} />
+        </div>
+      ) : null}
 
       <Arranque tipo="tablero" />
     </Cascara>

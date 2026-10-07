@@ -144,7 +144,44 @@ secciones:
       - dtv-departamento-movimientos
     grupos: []
 
+  # ANUNCIADA, todavia sin datos: sale en el menu lateral y en la home con "Próximamente",
+  # sin link. Su spec ya esta escrito (tablero-pasturas-forrajes.yaml + _comunes-base-43.yaml)
+  # a partir de la maqueta de JC "Modelo 1 - Pasturas y forrajes"; lo que falta es el Excel de
+  # la base 43 y los mapas del Observatorio (backlog 71 y 72). El dia que entren, se le saca
+  # `proximamente` y el build la genera.
+  # JC la tiene dibujada en el menu de las cuatro hojas de su maqueta (celda B11), que es el
+  # motivo de que se anuncie en vez de esconderse: la seccion existe para el lector.
+  - id: pasturas-y-forrajes
+    familia: recursos-forrajeros
+    bases: [43]
+    rama: agricultura
+    ruta: [Agricultura, Pasturas y forrajes]
+    url: agricultura/pasturas-y-forrajes
+    bajada_corta: "Cómo viene el forraje de cada zona contra su propia historia, quincena a quincena."
+    titulo: "Pasturas y forrajes"
+    # La tira de paginas que JC dibuja a la DERECHA de la banda del breadcrumb, en las
+    # cuatro hojas de su maqueta: "Información por departamento | Mapas | Metodología".
+    # La que no tiene `vista` todavia no esta construida y se dibuja apagada.
+    paginas_de_seccion:
+      # Lleva a ESTA misma pagina con un departamento puesto, que es la hoja "Agri 3-b" de
+      # JC: los mismos cuadros recortados, mas el mapa para cambiar de departamento. El
+      # departamento de arranque lo resuelve el build (el primero con dato).
+      - {texto: "Información por departamento", primer_departamento: true}
+      - {texto: "Mapas", vista: 43-mapas-forrajeros}
+      # NO es otra pagina: en el Excel de JC su hipervinculo (celda BD5) apunta a una celda
+      # de SU MISMA hoja, donde el pone las observaciones. Acá es el ancla del bloque de notas
+      # metodológicas, al pie.
+      - {texto: "Metodología", ancla: metodologia}
+    vistas_sueltas:
+      - 43-mapas-forrajeros
+    bajada: >
+      Producción de materia seca de los recursos forrajeros de Santiago del Estero, comparada
+      contra el promedio histórico de cada quincena. No mide cuánto pasto hubo: mide si hubo
+      más o menos que lo habitual para esa época del año en ese lugar.
+    grupos: []
+
   - id: movimientos-hacienda
+    boton_proximamente: true   # el boton del mockup, deshabilitado
     base: 85
     rama: ganaderia
     ruta: [Ganadería, Movimientos de hacienda]
@@ -183,6 +220,7 @@ secciones:
   # completo" todavia y la pestaña no se dibuja. Cuando se construyan las vistas se listan aca
   # y la seccion pasa a tener las dos pestañas, como las otras dos.
   - id: stock-bovino
+    boton_proximamente: true   # el boton del mockup, deshabilitado
     base: 48
     rama: ganaderia
     ruta: [Ganadería, Stock bovino]
