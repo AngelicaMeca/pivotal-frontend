@@ -1830,9 +1830,25 @@ export default function iniciar(PIVOTAL) {
       /* `disposicion: "tablero"` (cultivos intensivos): los cuadros se acomodan en una grilla
          tipo dashboard en vez de una columna de cuadros a todo el ancho. Cada cuadro lleva su
          `data-bloque` para que el CSS decida cuanto ocupa. */
-      info.cuerpo.classList.toggle("info-tablero", contenido.disposicion === "tablero");
+      var esTablero = contenido.disposicion === "tablero";
+      info.cuerpo.classList.toggle("info-tablero", esTablero);
+      /* Los cuadros por departamento van en su propia caja. El motivo es de layout y esta
+         explicado en el CSS: en una grilla de columnas fijas, el ultimo cuadro de una tanda
+         de siete queda solo con dos columnas en blanco al lado, y la grilla no sabe decir
+         "arranca donde te toque y termina al final de la fila". Una fila FLEX si: el ultimo
+         crece y llena lo que sobra. Son contiguos en el JSON, asi que alcanza con abrir la
+         caja en el primero y cerrarla en el primero que no lo sea. */
+      var cajaDtos = null;
       contenido.bloques.forEach(function (bloque) {
-        infoDibujarCuadro(bloque.forma, bloque.panel, null, bloque.id);
+        var esDto = esTablero && /^dto-/.test(bloque.id || "");
+        if (!esDto) {
+          cajaDtos = null;
+        } else if (!cajaDtos) {
+          cajaDtos = document.createElement("div");
+          cajaDtos.className = "info-dtos";
+          info.cuerpo.appendChild(cajaDtos);
+        }
+        infoDibujarCuadro(bloque.forma, bloque.panel, cajaDtos, bloque.id);
       });
       /* Los bloques que siguen a un filtro de la PAGINA y no a la clave del archivo. Hoy el
          unico es el 5.3 de cultivos extensivos, que sigue al cultivo elegido; el resto es

@@ -103,13 +103,17 @@ paneles:
   mapa_solo_con_departamento: true
 
   mapa:
-    rotulo_accion: "Seleccione departamento para ver sus datos"
+    # SIN rotulo de invitacion, ni el provincial ni el departamental (pedido de Francisco,
+    # 8-oct-2026: "sacá esta parte"). Acá no hacen falta: el mapa de esta sección solo se
+    # dibuja CON un departamento elegido, o sea que cuando se ve ya se eligió, el elegido
+    # está remarcado y la miga dice "Provincia - Dto X" con "Provincia" como link de
+    # vuelta. En cultivos extensivos los rótulos siguen, porque ahí son texto de JC y su
+    # mapa está siempre a la vista.
     rotulos_departamento: true
     click_departamento: en-la-misma-vista
     seleccion_departamento:
       defecto: provincia
       rotulo_provincia: "Provincia"
-      rotulo_cambiar: "Seleccione otro departamento, o volvé a Provincia"
       # El tramo que la miga suma cuando hay un departamento elegido. Plantilla con un slot:
       # el navegador sustituye, no compone.
       # El slot va con mayuscula: es el que sustituye `pintarMigaDepartamental`. Con
@@ -189,10 +193,15 @@ paneles:
     # hoja "Agri 3-b" y sin el es la "Agri 3". Lo esconde el CSS, no el build, porque es el
     # mismo JSON para los dos estados.
     - {id: mapa,        ancho: 4, alto: alto}
-    - {id: tabla-pct,   ancho: 6}
-    - {id: tabla-ha,    ancho: 6}
+    # Primero los GRÁFICOS y después las tablas (pedido de Francisco, 8-oct-2026: "para
+    # que no se vea tan aburrido"). Es un desvío de la maqueta: JC pega la tabla arriba y
+    # el gráfico abajo en cada columna. Lo que NO cambia es el pareo por columna -el
+    # porcentaje a la izquierda y las hectáreas a la derecha-, que es lo que hace que los
+    # dos cuadros de la misma unidad se lean juntos. Queda para que JC lo valide.
     - {id: grafico-pct, ancho: 6}
     - {id: grafico-ha,  ancho: 6}
+    - {id: tabla-pct,   ancho: 6}
+    - {id: tabla-ha,    ancho: 6}
 
 # ---------------------------------------------------------------------------
 # PÁGINA 2: DATOS PROVINCIA (hoja "Agri 3")  ->  vista 43-provincia
