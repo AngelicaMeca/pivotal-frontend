@@ -4635,7 +4635,7 @@ def _info_dtv_mapa(ctx, spec, producto, medida, pie):
         deptos.append({
             "id": geo, "nombre": nombres_mapa[geo], "v": valor,
             # El mouseover muestra el nombre y el detalle por año, nunca el geo_id.
-            "filas": [{"etiqueta": str(anio), "valor": ctx.con_unidad(v, medida)}
+            "filas": [[str(anio), ctx.con_unidad(v, medida)]
                       for anio, v in zip(ctx.anios, valores) if v is not None],
         })
         if valor is not None:
@@ -4818,6 +4818,7 @@ def capa_mas_informacion_intensivos(ctx, spec, pie):
                 secciones.append(seccion(id_seccion, bloques))
         capa["%s-dtv" % producto] = {
             "nombre": "%s · DTV" % etiqueta,
+<<<<<<< HEAD
             "secciones": secciones,
         }
         capa["%s-estimaciones" % producto] = {
@@ -4825,6 +4826,21 @@ def capa_mas_informacion_intensivos(ctx, spec, pie):
             "secciones": [seccion("mapa", [
                 {"id": "mapa-superficie", "forma": "mapa",
                  "panel": _info_dtv_mapa(ctx, spec, producto, SUPERFICIE_ESTIMADA, pie)}])],
+=======
+            # El popup se dibuja como DASHBOARD (grilla de cuadros chicos), no como columna.
+            "disposicion": "tablero",
+            "bloques": ([{"id": "mapa-volumen", "forma": "mapa",
+                          "panel": _info_dtv_mapa(ctx, spec, producto, "peso_tn", pie)}]
+                        + _info_dtv_por_departamento(ctx, spec, producto, pie)
+                        + _info_dtv_tipos_de_movimiento(ctx, spec, producto, pie)),
+        }
+        capa["%s-estimaciones" % producto] = {
+            "nombre": "%s · Estimación de superficies" % etiqueta,
+            "disposicion": "tablero",
+            "bloques": [{"id": "mapa-superficie", "forma": "mapa",
+                         "panel": _info_dtv_mapa(ctx, spec, producto, SUPERFICIE_ESTIMADA,
+                                                 pie)}],
+>>>>>>> ae9c3af6ccd47c666e0904676ce269ec5d366425
         }
     return capa
 
@@ -4940,15 +4956,17 @@ def panel_forraje_tabla(ctx, spec, medida, geo, pie):
     """
     declarado = spec["paneles"]["tabla-" + ("pct" if medida == "participacion" else "ha")]
     bandas = [b for b in ctx.bandas if medida == "superficie_ha" or b != "sin_dato"]
-    # DOS columnas de encabezado y no una: JC pone el AÑO en una columna propia, combinada
-    # verticalmente, y el mes al lado ("2023 | ene"). Un "ene 2023" en una sola celda se lee
-    # peor y no es lo que dibujo.
-    columnas = [{"etiqueta": "", "num": False}, {"etiqueta": "", "num": False}]
+    # Un RECUADRO por año (pedido de Francisco, 7-oct-2026): el año deja de ser una columna
+    # combinada y pasa a ser el título de su tarjeta, con su propio encabezado de bandas. JC
+    # dibuja "2023 | ene" en una tabla corrida; con 40 meses seguidos separar por año se lee
+    # mejor y el sitio ya sabe dibujar `bloques` (cada uno con su título).
+    columnas = [{"etiqueta": "", "num": False}]
     columnas += [{"etiqueta": ctx.etiqueta_banda[b], "num": True} for b in bandas]
     if declarado.get("columna_total"):
         columnas.append({"etiqueta": declarado["columna_total"], "num": True})
-    filas, anio_previo = [], None
+    por_anio = {}
     for anio, mes in ctx.meses:
+<<<<<<< HEAD
         # El año se escribe UNA vez por bloque, que es el efecto de su celda combinada.
         celdas = [str(anio) if anio != anio_previo else "", MESES_CORTOS_FORRAJE[mes - 1]]
         # Y el bloque se SEPARA, que es el otro efecto de esa celda: con doce renglones por año
@@ -4957,6 +4975,9 @@ def panel_forraje_tabla(ctx, spec, medida, geo, pie):
         # ya está la línea del encabezado.
         inicia = anio != anio_previo and anio_previo is not None
         anio_previo = anio
+=======
+        celdas = [MESES_CORTOS_FORRAJE[mes - 1]]
+>>>>>>> ae9c3af6ccd47c666e0904676ce269ec5d366425
         suma = 0.0
         for b in bandas:
             v = ctx.hechos.valor(anio, mes, ctx.quincena, b, medida, geo)
@@ -4965,19 +4986,23 @@ def panel_forraje_tabla(ctx, spec, medida, geo, pie):
                 suma += v
         if declarado.get("columna_total"):
             celdas.append(ctx.texto(suma, medida))
+<<<<<<< HEAD
         fila = {"celdas": celdas}
         if inicia:
             fila["inicia_grupo"] = True
         filas.append(fila)
+=======
+        por_anio.setdefault(anio, []).append({"celdas": celdas})
+>>>>>>> ae9c3af6ccd47c666e0904676ce269ec5d366425
     return {
-        # SIN TITULO: las dos tablas de la hoja "Agri 3" arrancan directamente en su fila de
-        # encabezados. El titulo que habia aca estaba inventado.
+        # SIN TITULO de tabla: las de la hoja "Agri 3" arrancan en su fila de encabezados. El
+        # unico titulo es el de cada recuadro, que es el año.
         "titulo": "",
         "subtitulo": "",
         "pie": pie,
         "nota": limpiar(declarado.get("nota") or ""),
-        "columnas": columnas,
-        "filas": filas,
+        "bloques": [{"titulo": str(anio), "columnas": columnas, "filas": filas}
+                    for anio, filas in por_anio.items()],
     }
 
 

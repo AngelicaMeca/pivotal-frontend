@@ -849,8 +849,20 @@ export default function iniciar(PIVOTAL) {
     PIVOTAL.vaciar(caja);
     var bloques = propios || panel.bloques
       || (panel.tabla ? [panel.tabla] : [{ columnas: panel.columnas, filas: panel.filas }]);
+    /* Un bloque con `titulo` es una TARJETA (pasturas y forrajes: una por año). La caja pasa a
+       apilarlas en vertical en vez de ponerlas lado a lado. */
+    var conTitulo = bloques.some(function (b) { return !!b.titulo; });
+    caja.classList.toggle("tabla-por-anio", conTitulo);
     bloques.forEach(function (bloque) {
-      caja.appendChild(armarTablaCampanias(bloque.columnas, bloque.filas));
+      var tabla = armarTablaCampanias(bloque.columnas, bloque.filas);
+      if (!bloque.titulo) { caja.appendChild(tabla); return; }
+      var tarjeta = document.createElement("section");
+      tarjeta.className = "tabla-anio";
+      var h = document.createElement("h4");
+      h.textContent = bloque.titulo;
+      tarjeta.appendChild(h);
+      tarjeta.appendChild(tabla);
+      caja.appendChild(tarjeta);
     });
   }
 
@@ -1724,8 +1736,14 @@ export default function iniciar(PIVOTAL) {
     return fig;
   }
 
+<<<<<<< HEAD
   function infoDibujarCuadro(forma, panel, destino, nivel) {
     var fig = infoCuadro(forma, nivel);
+=======
+  function infoDibujarCuadro(forma, panel, destino, id) {
+    var fig = infoCuadro(forma);
+    if (id) { fig.dataset.bloque = id; }
+>>>>>>> ae9c3af6ccd47c666e0904676ce269ec5d366425
     (destino || info.cuerpo).appendChild(fig);
     if (!panel || panel.vacio) {
       fig.classList.add("sin-datos");
@@ -1868,6 +1886,7 @@ export default function iniciar(PIVOTAL) {
     info.graficos = [];
     info.titulo.textContent = "Más información · " + (capa.nombres[clave] || "");
     return infoBajar(capa.archivos[clave]).then(function (contenido) {
+<<<<<<< HEAD
       /* Dos formas de contenido y las dos vigentes: `secciones` (cultivos intensivos, con el
          agrupado del spec) y la lista plana `bloques` (cultivos extensivos, cuyos cuatro
          bloques entran sin agrupar). La plana no se jubila: un popup corto no necesita
@@ -1878,6 +1897,14 @@ export default function iniciar(PIVOTAL) {
       }
       (contenido.bloques || []).forEach(function (bloque) {
         infoDibujarCuadro(bloque.forma, bloque.panel);
+=======
+      /* `disposicion: "tablero"` (cultivos intensivos): los cuadros se acomodan en una grilla
+         tipo dashboard en vez de una columna de cuadros a todo el ancho. Cada cuadro lleva su
+         `data-bloque` para que el CSS decida cuanto ocupa. */
+      info.cuerpo.classList.toggle("info-tablero", contenido.disposicion === "tablero");
+      contenido.bloques.forEach(function (bloque) {
+        infoDibujarCuadro(bloque.forma, bloque.panel, null, bloque.id);
+>>>>>>> ae9c3af6ccd47c666e0904676ce269ec5d366425
       });
       /* Los bloques que siguen a un filtro de la PAGINA y no a la clave del archivo. Hoy el
          unico es el 5.3 de cultivos extensivos, que sigue al cultivo elegido; el resto es
