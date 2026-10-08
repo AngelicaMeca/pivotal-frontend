@@ -435,32 +435,14 @@ paneles:
       rotulos_departamento: true
       sin_datos: >
         Ningún departamento registra DTV de este producto en la ventana de años.
-    # ---------------------------------------------------------------------
-    # CÓMO SE ORDENA EL POPUP
-    # ---------------------------------------------------------------------
-    # JC da la LISTA de los cortes (F72, F73, F74, F80) pero no dibuja la pantalla: sus
-    # observaciones son un enunciado, no una maqueta. El agrupado de abajo es nuestro y es
-    # una decisión de lectura, no de dato: ningún número cambia.
-    #
-    # El motivo: con los diez cuadros en una sola columna el popup de cebolla eran 6.790 px
-    # de scroll en una ventana de 625 px, casi once pantallas, y siete de esos diez eran el
-    # mismo gráfico repetido por departamento. Agrupados y en grilla, la sección por
-    # departamento se ve entera de un vistazo, que es para lo que existe.
-    secciones:
-      - id: mapa
-        titulo: "Mapa de origen"
-      - id: por-departamento
-        titulo: "Por departamento"
-        # En GRILLA y no apilados: son el mismo gráfico siete veces y lo que se quiere es
-        # compararlos. Uno abajo del otro no se comparan, se recuerdan.
-        disposicion: grilla
-        # Se dice en voz alta porque la grilla INVITA a comparar alturas y las alturas no son
-        # comparables: cada cuadro trae su propia escala, como en la maqueta.
-        nota: >
-          Cada departamento tiene su propia escala: las alturas se leen dentro de cada
-          cuadro, no entre cuadros. El orden va de mayor a menor volumen movido.
-      - id: tipos-de-movimiento
-        titulo: "Por tipo de movimiento"
+    # CÓMO SE ORDENA EL POPUP: no lo decide este spec, lo decide el CSS.
+    # JC da la LISTA de los cortes (F72, F73, F74, F80) pero no dibuja la pantalla, así que el
+    # acomodo es nuestro. Se resolvió como un DASHBOARD en grilla de 12 columnas y vive en
+    # `pivotal.css.j2` (bloque `.info-cuerpo.info-tablero`), que reparte el lugar mirando el
+    # `data-bloque` de cada cuadro: arriba el mapa y el resumen provincial, abajo los cuadros
+    # por departamento de a tres, y al final la tabla departamental a todo el ancho.
+    # El build solo marca la disposición (`disposicion: "tablero"` en la capa) y el id de cada
+    # bloque; acá no hay nada que declarar.
 
     # F73: el MISMO cuadro de la provincia (bultos en barras, toneladas en línea), uno por
     # departamento de origen con movimiento. Son pocos por definición: sólo hay DTV donde hubo

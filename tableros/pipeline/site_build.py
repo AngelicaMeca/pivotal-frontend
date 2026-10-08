@@ -4786,47 +4786,11 @@ def capa_mas_informacion_intensivos(ctx, spec, pie):
       <producto>-dtv           los tres cortes de DTV que se construyen (F72, F73 y F74)
       <producto>-estimaciones  el mapa de calor que pide agregarle a la tabla (F80)
     """
-    declaradas = {s["id"]: s for s in spec["paneles"]["mas-informacion"]["secciones"]}
-
-    def seccion(id_seccion, bloques):
-        """Una seccion del popup, con los cuadros que le tocan.
-
-        El agrupado es nuestro, no de JC: el da la LISTA de los cortes y no dibuja la pantalla.
-        Es una decision de LECTURA -ningun numero cambia- y por eso los titulos y la
-        disposicion viven en el spec y no aca.
-        """
-        d = declaradas[id_seccion]
-        return {"id": id_seccion, "titulo": d["titulo"],
-                "disposicion": d.get("disposicion", "columna"),
-                "nota": limpiar(d.get("nota") or ""),
-                "bloques": bloques}
-
     capa = {}
     for producto in ctx.productos:
         etiqueta = ctx.etiqueta_producto[producto]
-        # Las secciones VACIAS no se emiten: papa mueve en cuatro departamentos y hay productos
-        # sin ningun tipo de movimiento con dato. Una seccion con el titulo puesto y nada
-        # abajo promete algo que no esta.
-        secciones = [seccion("mapa", [{"id": "mapa-volumen", "forma": "mapa",
-                                       "panel": _info_dtv_mapa(ctx, spec, producto, "peso_tn",
-                                                               pie)}])]
-        for id_seccion, bloques in (
-                ("por-departamento", _info_dtv_por_departamento(ctx, spec, producto, pie)),
-                ("tipos-de-movimiento", _info_dtv_tipos_de_movimiento(ctx, spec, producto,
-                                                                      pie))):
-            if bloques:
-                secciones.append(seccion(id_seccion, bloques))
         capa["%s-dtv" % producto] = {
             "nombre": "%s · DTV" % etiqueta,
-<<<<<<< HEAD
-            "secciones": secciones,
-        }
-        capa["%s-estimaciones" % producto] = {
-            "nombre": "%s · Estimación de superficies" % etiqueta,
-            "secciones": [seccion("mapa", [
-                {"id": "mapa-superficie", "forma": "mapa",
-                 "panel": _info_dtv_mapa(ctx, spec, producto, SUPERFICIE_ESTIMADA, pie)}])],
-=======
             # El popup se dibuja como DASHBOARD (grilla de cuadros chicos), no como columna.
             "disposicion": "tablero",
             "bloques": ([{"id": "mapa-volumen", "forma": "mapa",
@@ -4840,7 +4804,6 @@ def capa_mas_informacion_intensivos(ctx, spec, pie):
             "bloques": [{"id": "mapa-superficie", "forma": "mapa",
                          "panel": _info_dtv_mapa(ctx, spec, producto, SUPERFICIE_ESTIMADA,
                                                  pie)}],
->>>>>>> ae9c3af6ccd47c666e0904676ce269ec5d366425
         }
     return capa
 
@@ -4966,18 +4929,7 @@ def panel_forraje_tabla(ctx, spec, medida, geo, pie):
         columnas.append({"etiqueta": declarado["columna_total"], "num": True})
     por_anio = {}
     for anio, mes in ctx.meses:
-<<<<<<< HEAD
-        # El año se escribe UNA vez por bloque, que es el efecto de su celda combinada.
-        celdas = [str(anio) if anio != anio_previo else "", MESES_CORTOS_FORRAJE[mes - 1]]
-        # Y el bloque se SEPARA, que es el otro efecto de esa celda: con doce renglones por año
-        # y el año escrito una sola vez, los 40 meses se leen como una lista corrida y hay que
-        # ir a buscar hacia arriba de qué año es cada fila. La raya no va en el primer año: ahí
-        # ya está la línea del encabezado.
-        inicia = anio != anio_previo and anio_previo is not None
-        anio_previo = anio
-=======
         celdas = [MESES_CORTOS_FORRAJE[mes - 1]]
->>>>>>> ae9c3af6ccd47c666e0904676ce269ec5d366425
         suma = 0.0
         for b in bandas:
             v = ctx.hechos.valor(anio, mes, ctx.quincena, b, medida, geo)
@@ -4986,14 +4938,7 @@ def panel_forraje_tabla(ctx, spec, medida, geo, pie):
                 suma += v
         if declarado.get("columna_total"):
             celdas.append(ctx.texto(suma, medida))
-<<<<<<< HEAD
-        fila = {"celdas": celdas}
-        if inicia:
-            fila["inicia_grupo"] = True
-        filas.append(fila)
-=======
         por_anio.setdefault(anio, []).append({"celdas": celdas})
->>>>>>> ae9c3af6ccd47c666e0904676ce269ec5d366425
     return {
         # SIN TITULO de tabla: las de la hoja "Agri 3" arrancan en su fila de encabezados. El
         # unico titulo es el de cada recuadro, que es el año.
@@ -7448,11 +7393,13 @@ def escribir_capa_informacion(escritor, tablero, carpeta_datos, ruta_publica):
     for clave in sorted(capa):
         nombre = "%s/%s-info/%s.json" % (carpeta_datos, tablero["slug"], clave)
         escritor.texto(nombre, json_determinista({
-            # Dos formas de contenido y las dos vigentes: `secciones` (cultivos intensivos,
-            # con el agrupado que declara su spec) y la lista plana `bloques` (cultivos
-            # extensivos, cuyos cuatro bloques entran sin agrupar y no necesitan indice).
-            "secciones": capa[clave].get("secciones"),
-            "bloques": capa[clave].get("bloques"),
+            # Como se acomodan los cuadros: "tablero" es la grilla tipo dashboard de cultivos
+            # intensivos y None es la columna de siempre (cultivos extensivos, que con cuatro
+            # bloques no necesita otra cosa). OJO: esto tiene que viajar SI O SI, porque es lo
+            # unico que le dice al navegador que ponga la clase `info-tablero`; sin el, el
+            # popup se dibuja como columna y la grilla del dashboard no aparece nunca.
+            "disposicion": capa[clave].get("disposicion"),
+            "bloques": capa[clave]["bloques"],
             # Bloques que dependen de un filtro de la PAGINA y no de la clave del archivo: el
             # 5.3 de extensivos sigue al cultivo elegido. None cuando no hay ninguno.
             "por_valor": capa[clave].get("por_valor"),

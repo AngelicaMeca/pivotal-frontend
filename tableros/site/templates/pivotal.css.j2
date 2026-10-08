@@ -1390,58 +1390,11 @@ dialog.info.info-visible::backdrop { opacity: 1; }
   padding: 0 1.1rem 1.6rem;
   display: flex; flex-direction: column; gap: 1.1rem;
 }
-/* ---------- el popup AGRUPADO en secciones (cultivos intensivos) ----------
-   JC da la lista de los cortes y no dibuja la pantalla, asi que el agrupado es nuestro. El
-   motivo esta medido: con los diez cuadros en una sola columna el popup de cebolla eran
-   6.790 px de scroll en una ventana de 625 px, casi once pantallas sin un punto de
-   referencia. */
-.info-indice {
-  position: sticky; top: 0; z-index: 2;
-  display: flex; flex-wrap: wrap; gap: .4rem;
-  margin: 0; padding: .35rem 0 .5rem;
-  /* El fondo es OPACO a proposito: queda pegado al tope mientras pasan los cuadros por abajo
-     y sin fondo se leerian los dos textos encimados. */
-  background: var(--fondo);
-}
-.info-indice button {
-  font: inherit; font-size: .76rem; cursor: pointer;
-  padding: .28rem .7rem; border-radius: var(--radio-pildora);
-  border: 1px solid var(--borde-panel); background: var(--fondo-cuadro); color: var(--texto);
-  transition: background-color 120ms ease-out;
-}
-.info-indice button:hover { background: var(--fondo-apoyo); }
-.info-indice button:focus-visible { outline: 2px solid var(--enlace); outline-offset: 2px; }
-
-.info-seccion { display: flex; flex-direction: column; gap: .6rem; }
-.info-seccion-titulo {
-  margin: 0; font-family: var(--rotulos); font-size: .7rem; font-weight: 600;
-  text-transform: uppercase; letter-spacing: .08em; color: var(--texto-apoyo);
-}
-.info-seccion-nota { margin: -.2rem 0 0; font-size: .76rem; color: var(--texto-apoyo); }
-.info-seccion-cuadros { display: flex; flex-direction: column; gap: 1.1rem; }
-/* La seccion "Por departamento" son SIETE veces el mismo grafico y lo que se quiere es
-   compararlos: uno abajo del otro no se comparan, se recuerdan. `min(26rem, 100%)` y no
-   `26rem` pelado porque con `auto-fit` un minimo fijo mas ancho que la caja desborda. */
-.info-seccion-cuadros.en-grilla {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(26rem, 100%), 1fr));
-  gap: 1.1rem;
-}
-/* En la grilla el cuadro es mas chico: el gigante de 380px existe para el cuadro unico que
-   ocupa todo el ancho, y a dos columnas lo unico que logra es que vuelva el scroll. */
-.info-seccion-cuadros.en-grilla .info-cuadro > .grafico { height: 260px; }
-.info-seccion-cuadros.en-grilla .info-cuadro h4 { font-size: .85rem; }
-
 .info-cuadro {
   margin: 0; padding: .9rem 1rem 1rem;
   border: 1px solid var(--borde-panel); border-radius: var(--radio);
   background: var(--fondo-cuadro);
 }
-<<<<<<< HEAD
-/* h3 cuando el cuadro va suelto en el popup; h4 cuando cuelga de una seccion, que es donde
-   el h3 pasa a ser el titulo de la seccion. Se ven igual: lo que cambia es el nivel, para el
-   lector de pantalla. */
-.info-cuadro h3, .info-cuadro h4 {
-=======
 /* DASHBOARD (cultivos intensivos, 7-oct-2026): el popup deja de ser una columna de cuadros a
    todo el ancho y pasa a una grilla de 12 columnas. Arriba, el mapa (5) junto al resumen
    provincial por tipo de movimiento (7); abajo, los cuadros por departamento de a tres (4
@@ -1471,7 +1424,6 @@ dialog.info.info-visible::backdrop { opacity: 1; }
   .info-tablero > .info-cuadro[data-bloque] { grid-column: span 12; }
 }
 .info-cuadro h3 {
->>>>>>> ae9c3af6ccd47c666e0904676ce269ec5d366425
   margin: 0 0 .15rem; font-family: var(--serif); font-size: .95rem; font-weight: 700;
   text-align: center;
 }

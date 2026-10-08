@@ -1689,14 +1689,11 @@ export default function iniciar(PIVOTAL) {
   /* El armazon de un cuadro del popup: los mismos huecos que usan los dibujantes del tablero
      (`[data-grafico]`, `[data-leyenda]`, `[data-tabla-datos]`), asi que no hay que escribir
      ningun dibujante nuevo: se reusan `apiladas` y `combo` tal cual. */
-  /* `nivel` es el tag del titulo del cuadro. Suelto en el popup es un h3, porque cuelga del
-     h2 de la barra; adentro de una seccion es un h4, porque el h3 pasa a ser el titulo de la
-     seccion. Es la misma escala que ya usaban los rankings de cultivos extensivos. */
-  function infoCuadro(forma, nivel) {
+  function infoCuadro(forma) {
     var fig = document.createElement("figure");
     fig.className = "info-cuadro";
     fig.dataset.panel = "info-" + forma;
-    var h = document.createElement(nivel || "h3");
+    var h = document.createElement("h3");
     h.dataset.titulo = "";
     var sub = document.createElement("p");
     sub.className = "info-sub";
@@ -1736,14 +1733,9 @@ export default function iniciar(PIVOTAL) {
     return fig;
   }
 
-<<<<<<< HEAD
-  function infoDibujarCuadro(forma, panel, destino, nivel) {
-    var fig = infoCuadro(forma, nivel);
-=======
   function infoDibujarCuadro(forma, panel, destino, id) {
     var fig = infoCuadro(forma);
     if (id) { fig.dataset.bloque = id; }
->>>>>>> ae9c3af6ccd47c666e0904676ce269ec5d366425
     (destino || info.cuerpo).appendChild(fig);
     if (!panel || panel.vacio) {
       fig.classList.add("sin-datos");
@@ -1774,57 +1766,6 @@ export default function iniciar(PIVOTAL) {
        sus 380px de alto -media pantalla en blanco entre el titulo y la tabla-. */
     var caja = fig.querySelector("[data-grafico]");
     if (caja && caja.childNodes.length) { info.graficos.push(caja); }
-  }
-
-  /* -------- el popup por SECCIONES --------
-     Un popup de diez cuadros en una sola columna son 6.790 px de scroll en una ventana de
-     625 px: once pantallas sin un solo punto de referencia. JC da la LISTA de los cortes y no
-     dibuja la pantalla, asi que el agrupado es nuestro y vive en el spec
-     (`mas-informacion.secciones`): titulo, disposicion y la nota que haga falta. */
-  function infoDibujarSeccion(seccion) {
-    var sec = document.createElement("section");
-    sec.className = "info-seccion";
-    sec.id = "info-sec-" + seccion.id;
-    var h = document.createElement("h3");
-    h.className = "info-seccion-titulo";
-    h.textContent = seccion.titulo;
-    sec.appendChild(h);
-    if (seccion.nota) {
-      var nota = document.createElement("p");
-      nota.className = "info-seccion-nota";
-      nota.textContent = seccion.nota;
-      sec.appendChild(nota);
-    }
-    var caja = document.createElement("div");
-    caja.className = "info-seccion-cuadros"
-      + (seccion.disposicion === "grilla" ? " en-grilla" : "");
-    sec.appendChild(caja);
-    info.cuerpo.appendChild(sec);
-    seccion.bloques.forEach(function (bloque) {
-      infoDibujarCuadro(bloque.forma, bloque.panel, caja, "h4");
-    });
-  }
-
-  /* El indice de arriba: una pastilla por seccion que baja hasta ella. Va PEGADO al tope del
-     cuerpo mientras se scrollea, que es lo unico que lo hace util -un indice que se va con el
-     scroll sirve para el primer salto y nada mas-. Con una sola seccion no se dibuja: seria un
-     indice de un solo item. */
-  function infoDibujarIndice(secciones) {
-    if (secciones.length < 2) { return; }
-    var nav = document.createElement("nav");
-    nav.className = "info-indice";
-    nav.setAttribute("aria-label", "Secciones");
-    secciones.forEach(function (seccion) {
-      var boton = document.createElement("button");
-      boton.type = "button";
-      boton.textContent = seccion.titulo;
-      boton.addEventListener("click", function () {
-        var destino = document.getElementById("info-sec-" + seccion.id);
-        if (destino) { destino.scrollIntoView({ behavior: "smooth", block: "start" }); }
-      });
-      nav.appendChild(boton);
-    });
-    info.cuerpo.appendChild(nav);
   }
 
   /* Los rankings (5.4) son TABLAS, no graficos: van sin caja de dibujo. Y van los TRES en UNA
@@ -1886,25 +1827,12 @@ export default function iniciar(PIVOTAL) {
     info.graficos = [];
     info.titulo.textContent = "Más información · " + (capa.nombres[clave] || "");
     return infoBajar(capa.archivos[clave]).then(function (contenido) {
-<<<<<<< HEAD
-      /* Dos formas de contenido y las dos vigentes: `secciones` (cultivos intensivos, con el
-         agrupado del spec) y la lista plana `bloques` (cultivos extensivos, cuyos cuatro
-         bloques entran sin agrupar). La plana no se jubila: un popup corto no necesita
-         indice ni titulos de seccion. */
-      if (contenido.secciones) {
-        infoDibujarIndice(contenido.secciones);
-        contenido.secciones.forEach(infoDibujarSeccion);
-      }
-      (contenido.bloques || []).forEach(function (bloque) {
-        infoDibujarCuadro(bloque.forma, bloque.panel);
-=======
       /* `disposicion: "tablero"` (cultivos intensivos): los cuadros se acomodan en una grilla
          tipo dashboard en vez de una columna de cuadros a todo el ancho. Cada cuadro lleva su
          `data-bloque` para que el CSS decida cuanto ocupa. */
       info.cuerpo.classList.toggle("info-tablero", contenido.disposicion === "tablero");
       contenido.bloques.forEach(function (bloque) {
         infoDibujarCuadro(bloque.forma, bloque.panel, null, bloque.id);
->>>>>>> ae9c3af6ccd47c666e0904676ce269ec5d366425
       });
       /* Los bloques que siguen a un filtro de la PAGINA y no a la clave del archivo. Hoy el
          unico es el 5.3 de cultivos extensivos, que sigue al cultivo elegido; el resto es
