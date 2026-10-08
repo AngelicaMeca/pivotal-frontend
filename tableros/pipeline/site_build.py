@@ -4688,9 +4688,23 @@ def _info_dtv_por_departamento(ctx, spec, producto, pie):
     departamento de origen con movimiento. Son pocos por definicion (8 en toda la familia):
     solo hay DTV donde hubo movimiento registrado.
     """
-    plantilla = spec["paneles"]["mas-informacion"]["por_departamento"]["titulo"]
+    declarado = spec["paneles"]["mas-informacion"]["por_departamento"]
+    # El corto, porque estos cuadros van en grilla: el largo repite siete veces lo que ya
+    # dicen el titulo del popup y el de la seccion. El largo sigue declarado por si algun dia
+    # vuelven a ir apilados.
+    plantilla = declarado.get("titulo_en_grilla") or declarado["titulo"]
+
+    def volumen(geo):
+        return sum(v for v in (dtv_valor(ctx, producto, a, "peso_tn", geo) for a in ctx.anios)
+                   if v is not None)
+
+    # De MAYOR a MENOR volumen movido, no alfabetico. Son siete cuadros iguales y van en una
+    # grilla: el orden es lo unico que le dice al lector por donde empezar, y con cada cuadro
+    # en su propia escala el alfabetico ponia primero al que menos mueve. Es el mismo criterio
+    # que ya usan los rankings y la tabla por tipo de movimiento.
     salida = []
-    for geo in ctx.hechos.deptos_con_movimiento(producto):
+    for geo in sorted(ctx.hechos.deptos_con_movimiento(producto),
+                      key=lambda g: (-volumen(g), pr.clave_alfabetica(ctx.hechos.nombre[g]))):
         panel = panel_combo_intensivos(ctx, spec, producto, None, pie, geo, plantilla)
         if panel.get("vacio"):
             continue
@@ -4746,6 +4760,12 @@ def _info_dtv_tipos_de_movimiento(ctx, spec, producto, pie):
     if filas_dto:
         filas_dto.sort(key=lambda t: (t[0], t[1], t[2]))
         salida.append({"id": "tipos-departamento", "forma": "tabla-datos", "panel": {
+            # La unica tabla del popup que no se puede leer entera de un saque: es
+            # departamento X tipo de movimiento y en cebolla son 1.063 px, un tercio de todo
+            # el popup. Se queda con su propio scroll y el encabezado fijo, asi que el lector
+            # la recorre sin perder de vista que columna es cada anio ni empujar lo que viene
+            # despues fuera de la pantalla.
+            "tabla_alta": True,
             "titulo": titulo_literal(declarado["titulo_departamental"],
                                      Producto=producto_con_recorte(ctx, producto),
                                      desde=str(anios[0]), hasta=str(anios[-1])),
@@ -4766,21 +4786,45 @@ def capa_mas_informacion_intensivos(ctx, spec, pie):
       <producto>-dtv           los tres cortes de DTV que se construyen (F72, F73 y F74)
       <producto>-estimaciones  el mapa de calor que pide agregarle a la tabla (F80)
     """
+    declaradas = {s["id"]: s for s in spec["paneles"]["mas-informacion"]["secciones"]}
+
+    def seccion(id_seccion, bloques):
+        """Una seccion del popup, con los cuadros que le tocan.
+
+        El agrupado es nuestro, no de JC: el da la LISTA de los cortes y no dibuja la pantalla.
+        Es una decision de LECTURA -ningun numero cambia- y por eso los titulos y la
+        disposicion viven en el spec y no aca.
+        """
+        d = declaradas[id_seccion]
+        return {"id": id_seccion, "titulo": d["titulo"],
+                "disposicion": d.get("disposicion", "columna"),
+                "nota": limpiar(d.get("nota") or ""),
+                "bloques": bloques}
+
     capa = {}
     for producto in ctx.productos:
         etiqueta = ctx.etiqueta_producto[producto]
+        # Las secciones VACIAS no se emiten: papa mueve en cuatro departamentos y hay productos
+        # sin ningun tipo de movimiento con dato. Una seccion con el titulo puesto y nada
+        # abajo promete algo que no esta.
+        secciones = [seccion("mapa", [{"id": "mapa-volumen", "forma": "mapa",
+                                       "panel": _info_dtv_mapa(ctx, spec, producto, "peso_tn",
+                                                               pie)}])]
+        for id_seccion, bloques in (
+                ("por-departamento", _info_dtv_por_departamento(ctx, spec, producto, pie)),
+                ("tipos-de-movimiento", _info_dtv_tipos_de_movimiento(ctx, spec, producto,
+                                                                      pie))):
+            if bloques:
+                secciones.append(seccion(id_seccion, bloques))
         capa["%s-dtv" % producto] = {
             "nombre": "%s · DTV" % etiqueta,
-            "bloques": ([{"id": "mapa-volumen", "forma": "mapa",
-                          "panel": _info_dtv_mapa(ctx, spec, producto, "peso_tn", pie)}]
-                        + _info_dtv_por_departamento(ctx, spec, producto, pie)
-                        + _info_dtv_tipos_de_movimiento(ctx, spec, producto, pie)),
+            "secciones": secciones,
         }
         capa["%s-estimaciones" % producto] = {
             "nombre": "%s · Estimación de superficies" % etiqueta,
-            "bloques": [{"id": "mapa-superficie", "forma": "mapa",
-                         "panel": _info_dtv_mapa(ctx, spec, producto, SUPERFICIE_ESTIMADA,
-                                                 pie)}],
+            "secciones": [seccion("mapa", [
+                {"id": "mapa-superficie", "forma": "mapa",
+                 "panel": _info_dtv_mapa(ctx, spec, producto, SUPERFICIE_ESTIMADA, pie)}])],
         }
     return capa
 
@@ -4907,6 +4951,11 @@ def panel_forraje_tabla(ctx, spec, medida, geo, pie):
     for anio, mes in ctx.meses:
         # El año se escribe UNA vez por bloque, que es el efecto de su celda combinada.
         celdas = [str(anio) if anio != anio_previo else "", MESES_CORTOS_FORRAJE[mes - 1]]
+        # Y el bloque se SEPARA, que es el otro efecto de esa celda: con doce renglones por año
+        # y el año escrito una sola vez, los 40 meses se leen como una lista corrida y hay que
+        # ir a buscar hacia arriba de qué año es cada fila. La raya no va en el primer año: ahí
+        # ya está la línea del encabezado.
+        inicia = anio != anio_previo and anio_previo is not None
         anio_previo = anio
         suma = 0.0
         for b in bandas:
@@ -4916,7 +4965,10 @@ def panel_forraje_tabla(ctx, spec, medida, geo, pie):
                 suma += v
         if declarado.get("columna_total"):
             celdas.append(ctx.texto(suma, medida))
-        filas.append({"celdas": celdas})
+        fila = {"celdas": celdas}
+        if inicia:
+            fila["inicia_grupo"] = True
+        filas.append(fila)
     return {
         # SIN TITULO: las dos tablas de la hoja "Agri 3" arrancan directamente en su fila de
         # encabezados. El titulo que habia aca estaba inventado.
@@ -7371,7 +7423,11 @@ def escribir_capa_informacion(escritor, tablero, carpeta_datos, ruta_publica):
     for clave in sorted(capa):
         nombre = "%s/%s-info/%s.json" % (carpeta_datos, tablero["slug"], clave)
         escritor.texto(nombre, json_determinista({
-            "bloques": capa[clave]["bloques"],
+            # Dos formas de contenido y las dos vigentes: `secciones` (cultivos intensivos,
+            # con el agrupado que declara su spec) y la lista plana `bloques` (cultivos
+            # extensivos, cuyos cuatro bloques entran sin agrupar y no necesitan indice).
+            "secciones": capa[clave].get("secciones"),
+            "bloques": capa[clave].get("bloques"),
             # Bloques que dependen de un filtro de la PAGINA y no de la clave del archivo: el
             # 5.3 de extensivos sigue al cultivo elegido. None cuando no hay ninguno.
             "por_valor": capa[clave].get("por_valor"),

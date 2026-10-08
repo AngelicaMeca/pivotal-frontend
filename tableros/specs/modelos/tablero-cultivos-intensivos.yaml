@@ -435,11 +435,45 @@ paneles:
       rotulos_departamento: true
       sin_datos: >
         Ningún departamento registra DTV de este producto en la ventana de años.
+    # ---------------------------------------------------------------------
+    # CÓMO SE ORDENA EL POPUP
+    # ---------------------------------------------------------------------
+    # JC da la LISTA de los cortes (F72, F73, F74, F80) pero no dibuja la pantalla: sus
+    # observaciones son un enunciado, no una maqueta. El agrupado de abajo es nuestro y es
+    # una decisión de lectura, no de dato: ningún número cambia.
+    #
+    # El motivo: con los diez cuadros en una sola columna el popup de cebolla eran 6.790 px
+    # de scroll en una ventana de 625 px, casi once pantallas, y siete de esos diez eran el
+    # mismo gráfico repetido por departamento. Agrupados y en grilla, la sección por
+    # departamento se ve entera de un vistazo, que es para lo que existe.
+    secciones:
+      - id: mapa
+        titulo: "Mapa de origen"
+      - id: por-departamento
+        titulo: "Por departamento"
+        # En GRILLA y no apilados: son el mismo gráfico siete veces y lo que se quiere es
+        # compararlos. Uno abajo del otro no se comparan, se recuerdan.
+        disposicion: grilla
+        # Se dice en voz alta porque la grilla INVITA a comparar alturas y las alturas no son
+        # comparables: cada cuadro trae su propia escala, como en la maqueta.
+        nota: >
+          Cada departamento tiene su propia escala: las alturas se leen dentro de cada
+          cuadro, no entre cuadros. El orden va de mayor a menor volumen movido.
+      - id: tipos-de-movimiento
+        titulo: "Por tipo de movimiento"
+
     # F73: el MISMO cuadro de la provincia (bultos en barras, toneladas en línea), uno por
     # departamento de origen con movimiento. Son pocos por definición: sólo hay DTV donde hubo
     # movimiento registrado (7 departamentos en cebolla, 6 en batata, 4 en papa).
     por_departamento:
       titulo: "{Producto} - Sgo del Estero - Departamento {Departamento} - DTV Envíos - Cant {bultos} y tn por año"
+      # El título CORTO, que es el que se usa en la grilla. Son siete cuadros iguales y el
+      # título largo repite siete veces lo mismo: lo único que cambia es el departamento, y
+      # el resto ya lo dicen el título del popup ("Más información · Cebolla · DTV") y el de
+      # la sección. Además entraba en dos renglones, o sea 39 px de título por cuadro.
+      # Se queda con la palabra del bulto porque esa SÍ cambia (BANDA dice "bultos" donde
+      # ROBLES dice "bolsas", regla 1 de pipeline/vegetales.py).
+      titulo_en_grilla: "Departamento {Departamento} - Cant {bultos} y tn por año"
     # F74: los informes por tipo de movimiento. Dos tablas, que es lo que pide: la provincial y
     # la departamental. SIN buscador y sin más grano que el año ("sin búsqueda, sólo resúmenes
     # totales anuales"): son resúmenes, no un explorador de las DTV.

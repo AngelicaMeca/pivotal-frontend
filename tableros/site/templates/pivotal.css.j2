@@ -1390,12 +1390,56 @@ dialog.info.info-visible::backdrop { opacity: 1; }
   padding: 0 1.1rem 1.6rem;
   display: flex; flex-direction: column; gap: 1.1rem;
 }
+/* ---------- el popup AGRUPADO en secciones (cultivos intensivos) ----------
+   JC da la lista de los cortes y no dibuja la pantalla, asi que el agrupado es nuestro. El
+   motivo esta medido: con los diez cuadros en una sola columna el popup de cebolla eran
+   6.790 px de scroll en una ventana de 625 px, casi once pantallas sin un punto de
+   referencia. */
+.info-indice {
+  position: sticky; top: 0; z-index: 2;
+  display: flex; flex-wrap: wrap; gap: .4rem;
+  margin: 0; padding: .35rem 0 .5rem;
+  /* El fondo es OPACO a proposito: queda pegado al tope mientras pasan los cuadros por abajo
+     y sin fondo se leerian los dos textos encimados. */
+  background: var(--fondo);
+}
+.info-indice button {
+  font: inherit; font-size: .76rem; cursor: pointer;
+  padding: .28rem .7rem; border-radius: var(--radio-pildora);
+  border: 1px solid var(--borde-panel); background: var(--fondo-cuadro); color: var(--texto);
+  transition: background-color 120ms ease-out;
+}
+.info-indice button:hover { background: var(--fondo-apoyo); }
+.info-indice button:focus-visible { outline: 2px solid var(--enlace); outline-offset: 2px; }
+
+.info-seccion { display: flex; flex-direction: column; gap: .6rem; }
+.info-seccion-titulo {
+  margin: 0; font-family: var(--rotulos); font-size: .7rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .08em; color: var(--texto-apoyo);
+}
+.info-seccion-nota { margin: -.2rem 0 0; font-size: .76rem; color: var(--texto-apoyo); }
+.info-seccion-cuadros { display: flex; flex-direction: column; gap: 1.1rem; }
+/* La seccion "Por departamento" son SIETE veces el mismo grafico y lo que se quiere es
+   compararlos: uno abajo del otro no se comparan, se recuerdan. `min(26rem, 100%)` y no
+   `26rem` pelado porque con `auto-fit` un minimo fijo mas ancho que la caja desborda. */
+.info-seccion-cuadros.en-grilla {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(26rem, 100%), 1fr));
+  gap: 1.1rem;
+}
+/* En la grilla el cuadro es mas chico: el gigante de 380px existe para el cuadro unico que
+   ocupa todo el ancho, y a dos columnas lo unico que logra es que vuelva el scroll. */
+.info-seccion-cuadros.en-grilla .info-cuadro > .grafico { height: 260px; }
+.info-seccion-cuadros.en-grilla .info-cuadro h4 { font-size: .85rem; }
+
 .info-cuadro {
   margin: 0; padding: .9rem 1rem 1rem;
   border: 1px solid var(--borde-panel); border-radius: var(--radio);
   background: var(--fondo-cuadro);
 }
-.info-cuadro h3 {
+/* h3 cuando el cuadro va suelto en el popup; h4 cuando cuelga de una seccion, que es donde
+   el h3 pasa a ser el titulo de la seccion. Se ven igual: lo que cambia es el nivel, para el
+   lector de pantalla. */
+.info-cuadro h3, .info-cuadro h4 {
   margin: 0 0 .15rem; font-family: var(--serif); font-size: .95rem; font-weight: 700;
   text-align: center;
 }
@@ -1412,6 +1456,12 @@ dialog.info.info-visible::backdrop { opacity: 1; }
 /* El mapa va mas alto que un grafico de barras: es la silueta de la provincia, que es alargada
    (ver `aspecto_mapa`), y a 380px quedaba una tira finita en el medio de un cuadro vacio. */
 .info-cuadro[data-panel="info-mapa"] > .grafico { height: 560px; }
+/* El mapa NO se estira a lo ancho: la silueta de la provincia es alargada, asi que ECharts la
+   ajusta por el alto y lo que sobra a los costados queda vacio. Medido a 1440 px: el cuadro
+   media 1.337 px de ancho para un dibujo de unos 350, o sea mas de dos tercios de crema. El
+   mapa se dibuja igual de grande -lo manda el alto- en una caja que se lee como una figura y
+   no como un panel a medio llenar. */
+.info-cuadro[data-panel="info-mapa"] { max-width: 48rem; margin-inline: auto; width: 100%; }
 /* La escala de color del mapa y su total, debajo del dibujo. Mismo lenguaje que la del
    tablero, en una fila que se parte si no entra. Cuando el cuadro no es un mapa los tres
    nodos llegan vacios y desaparecen. */
@@ -1485,6 +1535,14 @@ dialog.info.info-visible::backdrop { opacity: 1; }
   text-align: right; font-variant-numeric: tabular-nums;
 }
 .info-tabla tbody tr:last-child th, .info-tabla tbody tr:last-child td { border-bottom: 0; }
+/* Una tabla que no entra de un saque se queda con su propio scroll en vez de empujar todo lo
+   que viene despues fuera de la pantalla (hoy: departamento X tipo de movimiento, que sola
+   medía 1.063 px, un tercio del popup). El encabezado va fijo: sin eso, a la quinta fila ya
+   no se sabe que columna es cada año. */
+.info-tabla.info-tabla-alta { max-height: 24rem; overflow-y: auto; }
+.info-tabla.info-tabla-alta thead th {
+  position: sticky; top: 0; z-index: 1; background: var(--fondo-cuadro);
+}
 .info-nota { margin: .5rem 0 0; font-size: .74rem; color: var(--texto-apoyo); }
 .info-nota:empty { display: none; }
 .info-vacio { margin: .6rem 0 0; font-size: .8rem; color: var(--texto-apoyo); text-align: center; }
@@ -1526,6 +1584,13 @@ dialog.info.info-visible::backdrop { opacity: 1; }
 .tabla-datos td.num, .tabla-datos th.num { text-align: right; font-variant-numeric: tabular-nums; }
 /* La campaña elegida en la barra verde queda marcada: el dato de la pantalla es ese. */
 .tabla-datos tr.actual td { background: var(--fondo-apoyo); font-weight: 650; }
+/* El corte entre bloques (hoy: entre años, en las dos tablas de pasturas y forrajes). JC los
+   separa con una celda combinada que abarca los doce meses; sin la raya, los 40 meses se leen
+   como una lista corrida y hay que ir a buscar hacia arriba de qué año es cada fila. La linea
+   es la del encabezado (--borde) y no la de las filas (--fondo-apoyo), que es justo lo que la
+   hace leerse como un corte y no como una fila más; el aire de arriba la termina de despegar.
+   Lo marca el build fila por fila, asi que ninguna tabla que no lo pida se entera. */
+.tabla-datos tbody tr.inicia-grupo td { border-top: 1px solid var(--borde); padding-top: .3rem; }
 
 /* ---------- tabla de datos DEBAJO de un grafico (maqueta "Agri 2") ----------
    JC pega bajo cada uno de los dos cuadros de la izquierda una tabla con los mismos años del
