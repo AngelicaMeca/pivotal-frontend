@@ -1,0 +1,110 @@
+# Base 178 · Existencias caprinos por categoría, serie provincial (SENASA)
+#
+# Alimenta "Sgo. del Estero - Evolución del stock caprino por categoría y totales - años 2.009
+# a 2.025" de la hoja "GanCaprST". Igual que la 156 en ovinos: serie anual provincial, sin
+# apertura departamental. La primera columna del Excel está vacía, por eso el header arranca
+# en la B y la fila de encabezados es la 3.
+
+base: 178
+slug: stocks-caprinos-serie
+familia: stock
+estado: activa
+
+archivo:
+  patron: "^178 - Existencias caprinos"
+
+hojas:
+  datos:
+    - nombre: "Data SDE"
+      header_fila: 3
+      ambito: sde
+      contenido: >
+        Santiago del Estero, serie anual 2009 a 2025, una fila por anio.
+      geo:
+        nivel: provincia
+  ignorar:
+    - nombre: "Modelo Análisis"
+      motivo: >
+        Hoja vacia (1x1).
+
+columnas:
+  "Año": anio
+  "Provincia": departamento
+  "CHIVOS": chivos
+  "CABRAS": cabras
+  "CABRITOS": cabritos
+  "CAPONES": capones
+  "CABRILLAS/CHIVITOS": cabrillas
+  "TOTAL CAPRINOS": total_caprinos
+
+valores:
+  chivos:
+    etiqueta: "Chivos"
+    medida: cabezas
+    especie: caprinos
+    categoria: "Chivos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  cabras:
+    etiqueta: "Cabras"
+    medida: cabezas
+    especie: caprinos
+    categoria: "Cabras"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  cabritos:
+    etiqueta: "Cabritos"
+    medida: cabezas
+    especie: caprinos
+    categoria: "Cabritos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  capones:
+    etiqueta: "Capones"
+    medida: cabezas
+    especie: caprinos
+    categoria: "Capones"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  cabrillas:
+    etiqueta: "Cabrillas/chivitos"
+    medida: cabezas
+    especie: caprinos
+    categoria: "Cabrillas/chivitos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  total_caprinos:
+    etiqueta: "Total caprinos"
+    medida: cabezas
+    especie: caprinos
+    categoria: "Total"
+    # Es la suma de las categorias y nunca se suma con ellas.
+    rol: agregado
+    unidad: cabezas
+    agregable: false
+
+geo:
+  nivel: departamento
+  usa_ids_indec: false
+  normalizar_nombre: true
+  particion: sde
+  provincia_propia: 86
+  resolver: [86]
+  # La hoja no trae columna de provincia: toda la tabla es Santiago del Estero.
+  provincia_fija: "SANTIAGO DEL ESTERO"
+  agregados:
+    nombres_total: ["SANTIAGO DEL ESTERO"]
+
+salida:
+  staging: "staging/base-178-stocks-caprinos-serie.parquet"
+  mart: hecho_stock_caprino
+  particiones: [provincia, anio]
+
+indice:
+  fuente: "SENASA"
+  titulo_en_el_indice: "Existencias caprinos por categoria"

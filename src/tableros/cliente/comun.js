@@ -397,6 +397,34 @@ export default function crearPivotal() {
     });
   }
 
+  /* Cual de las dos tiras de navegacion es la pagina que se esta mirando. Lo decide el
+     NAVEGADOR y no el build por un motivo concreto: el build arma la tira una sola vez
+     por seccion y la reusa en el tablero y en todas sus vistas, asi que ahi no sabe en
+     cual de ellas va a terminar dibujada. Aca alcanza con comparar el camino.
+     Se compara sin la barra final y sin la query: el tablero de una seccion se puede
+     estar mirando con filtros puestos (?campania=...) y sigue siendo la misma pagina. */
+  function marcarTiraActual() {
+    var aqui = location.pathname.replace(/\/+$/, "");
+    var puestos = new URLSearchParams(location.search);
+    Array.prototype.forEach.call(
+      document.querySelectorAll(".tira-paginas a, .tira-secciones a"), function (a) {
+        var href = a.getAttribute("href") || "";
+        var partes = href.split("?");
+        var destino = partes[0].replace(/\/+$/, "");
+        if (!destino || destino !== aqui) { return; }
+        /* Una entrada que trae su PROPIA query apunta a la misma pagina con otra cosa puesta
+           -"Información por departamento" es el mismo tablero con un departamento elegido- y
+           solo es la actual si eso que pide esta puesto. Sin esto quedaba marcada tambien en
+           la vista provincial, que es justo la que NO es. */
+        var pide = new URLSearchParams(partes[1] || "");
+        var coincide = true;
+        pide.forEach(function (valor, clave) {
+          if (puestos.get(clave) !== valor) { coincide = false; }
+        });
+        if (coincide) { a.setAttribute("aria-current", "page"); }
+      });
+  }
+
   /* La entrada "Información por departamento" de la tira de paginas: elige el departamento
      en el acto, igual que el clic en el mapa, en vez de recargar la pagina entera para mover
      un filtro. Sigue siendo un `<a>` con su href: el que quiera abrirlo en otra pestaña lo
@@ -1607,6 +1635,7 @@ export default function crearPivotal() {
         escuchar();
         escucharMigaProvincia();
         engancharTiraDeDepartamento();
+        marcarTiraActual();
         engancharUtilidades();
         window.addEventListener("resize", reacomodar);
         return refrescar();

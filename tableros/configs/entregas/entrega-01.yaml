@@ -2,10 +2,11 @@ descripcion: 'Manifiesto de la entrega: que archivos llegaron, con que hash, y q
   GENERADO por pipeline/ingest.py, no editar a mano. Vive en configs/ y no en raw/ porque raw/ es de solo
   lectura.'
 entrega: entrega-01
-archivos_recibidos: 28
+archivos_recibidos: 29
 bases_ingeridas:
 - 8
 - 9
+- 43
 - 48
 - 53
 - 56
@@ -108,11 +109,26 @@ archivos:
   filas_staging: null
   hojas: null
   valores_nulos: null
+- archivo: 43 - Recursos forrajeros SDE.xlsx
+  base: 43
+  sha256: a6403188501a44af14e5167a14be769928b93b3362b317d23deb071bba3fc1d7
+  bytes: 633115
+  fecha_archivo: '2026-10-02'
+  familia: bandas-periodo
+  config: configs/bases/43-recursos-forrajeros.yaml
+  estado: ingerida
+  staging: staging/base-43-recursos-forrajeros.parquet
+  filas_staging: 42339
+  hojas:
+    Santiago 2:
+      filas_staging: 42339
+      filas_excel: 3849
+  valores_nulos: 1687
 - archivo: 48 - Stocks bovinos por depto y categ - SDE.xlsx
   base: 48
-  sha256: d1d7da168cac3118df0118c793b98cd8bf224cc974e56c1e88cdd31712501bf2
-  bytes: 140311
-  fecha_archivo: '2026-07-17'
+  sha256: 5a47f4c90bce50955d83605c70d1d39a859184e8284251539272e393aad0e2e3
+  bytes: 139269
+  fecha_archivo: '2026-10-09'
   familia: stock
   config: configs/bases/48-stocks-bovinos.yaml
   estado: ingerida
@@ -227,9 +243,9 @@ archivos:
   valores_nulos: 0
 - archivo: 92 - Faena porcina mensual SDE.xlsx
   base: 92
-  sha256: 61e63e449ad08229dc2b869a39aa804d978c3d1e271afc4f1efa6cde44bd552a
-  bytes: 10788
-  fecha_archivo: '2026-07-19'
+  sha256: f31e6727e33ea53589ec19d9f41c17963627ef0dab4e4845636eb708ea001359
+  bytes: 9944
+  fecha_archivo: '2026-10-09'
   familia: null
   config: null
   estado: sin-config
@@ -359,9 +375,9 @@ archivos:
   valores_nulos: null
 - archivo: 144 - DTE porcinos SDE.xlsx
   base: 144
-  sha256: 0dd3e83443b11a7489a03e4e4e54a7829220fd5a2976ab3198e1e21565813e8d
-  bytes: 91083
-  fecha_archivo: '2026-07-19'
+  sha256: 96cec43ec24259a434d7ae3f848c706513b6fed7c2ec105d5e1447fc887799fb
+  bytes: 87042
+  fecha_archivo: '2026-10-06'
   familia: null
   config: null
   estado: sin-config
@@ -407,9 +423,9 @@ archivos:
   valores_nulos: null
 - archivo: 197 - Base Estaciones Servicio SDE.xlsx
   base: 197
-  sha256: 9ee30e03de020737737ba0443c4da379629a37280a785d80c43c09611e379247
-  bytes: 24293
-  fecha_archivo: '2026-07-18'
+  sha256: b785cafbcba6175fe83febe143a7aef1cfb502af9c09f580bbe245bf1418ba6b
+  bytes: 23510
+  fecha_archivo: '2026-09-23'
   familia: null
   config: null
   estado: sin-config

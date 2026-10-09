@@ -1,0 +1,150 @@
+# Base 184 · Datos de la Cuenca Lechera de Santiago del Estero (MAGyP)
+#
+# Es la base principal de la hoja "GanBov LACT": "Evolución de indicadores económicos de la
+# Cuenca Lechera Provincial". Una fila por mes, desde junio de 2022, con nueve indicadores
+# en columnas — el otro modo de la familia `serie-mensual` (`apertura: medidas`), frente a
+# las bases 185/186/188/194, que abren una columna por provincia.
+#
+# El período viene partido en dos columnas: el año en "año" y el MES POR SU NOMBRE en
+# "meses" ("junio", "julio"). El adapter lo resuelve; no hace falta tocar la planilla.
+#
+# LO QUE ESTA BASE NO TRAE, y conviene saberlo antes de armar los cuadros: no hay una columna
+# de LITROS. Los KPIs que JC muestra ("Total producido leche 83.472.039 Lts" y "Producc
+# mensual prom. 6.956.003 Lts") salen de combinar los litros por tambo por día, la cantidad
+# de tambos y los días del mes. Ese cálculo va en marts, con su fórmula escrita, nunca en la
+# ingesta. Lo mismo el VBP ($ 36.988 millones), que es esos litros por el $/litro.
+#
+# Las dos columnas de PORCENTAJE sobre el total nacional ("%TAMBOS" y "litros%") son la
+# participación de Santiago en el país. Son un cociente ya calculado, no datos de otras
+# provincias, así que no caen bajo la reserva de comparaciones interprovinciales; igual se
+# marcan como comparativas para que el spec decida.
+
+base: 184
+slug: cuenca-lechera
+familia: serie-mensual
+estado: activa
+apertura: medidas
+
+archivo:
+  patron: "^184 - Datos de Cuenca lechera"
+
+hojas:
+  datos:
+    - nombre: "Data SDE"
+      header_fila: 1
+      ambito: sde
+      contenido: >
+        Serie mensual de la cuenca lechera santiagueña desde junio de 2022, con calidad
+        (grasa, proteína, RCS, UFC), cantidad de tambos, litros por tambo y día, y el precio
+        pagado al productor.
+  ignorar:
+    - nombre: "Modelo Analisis"
+      motivo: >
+        Glosario que escribió JC con la definición de dos siglas: UFC (Unidad Formadora de
+        Colonias, "medida estándar de microbiología en una muestra de leche") y RCS
+        (Recuento de Células Somáticas). No son datos; las definiciones van al glosario del
+        sitio (site/glosario.yaml) para que aparezcan como aclaración al pasar el mouse.
+
+columnas:
+  "año": periodo
+  "meses": mes
+  # La cuenca es siempre Santiago del Estero: el ámbito lo declara `geo.provincia_fija`.
+  "CUENCA": null
+  "%GRASA": grasa
+  "%PROTEINA": proteina
+  "Promedio de RCS": rcs
+  "Promedio de UFC": ufc
+  "TAMBOS": tambos
+  "%TAMBOS": participacion_tambos
+  "litros%": participacion_litros
+  "Litros/tambo por dia": litros_por_tambo_dia
+  "$/litro": precio_litro
+
+valores:
+  grasa:
+    etiqueta: "Grasa butirosa"
+    medida: calidad
+    unidad: "%"
+    agregable: false
+    agregacion: promedio
+    ponderacion: >
+      Sin ponderar: la planilla no informa los litros de cada mes, así que el promedio de
+      varios meses es el promedio simple de los porcentajes mensuales.
+  proteina:
+    etiqueta: "Proteína"
+    medida: calidad
+    unidad: "%"
+    agregable: false
+    agregacion: promedio
+    ponderacion: "Sin ponderar, igual que la grasa."
+  rcs:
+    etiqueta: "Recuento de células somáticas"
+    medida: calidad
+    unidad: "miles/ml"
+    agregable: false
+    agregacion: promedio
+    ponderacion: "Sin ponderar: es el promedio de los promedios mensuales que informa la fuente."
+  ufc:
+    etiqueta: "Unidades formadoras de colonias"
+    medida: calidad
+    unidad: "miles/ml"
+    agregable: false
+    agregacion: promedio
+    ponderacion: "Sin ponderar, igual que el RCS."
+  tambos:
+    etiqueta: "Tambos en actividad"
+    medida: establecimientos
+    unidad: tambos
+    # NO se suma: son los mismos tambos mes a mes, no tambos distintos. Sumar doce meses
+    # daría doce veces la cuenca.
+    agregable: false
+    agregacion: promedio
+    ponderacion: "Promedio simple de los meses del período."
+  participacion_tambos:
+    etiqueta: "Participación en los tambos del país"
+    medida: participacion
+    unidad: "%"
+    agregable: false
+    agregacion: promedio
+    ponderacion: "Sin ponderar."
+  participacion_litros:
+    etiqueta: "Participación en los litros del país"
+    medida: participacion
+    unidad: "%"
+    agregable: false
+    agregacion: promedio
+    ponderacion: "Sin ponderar."
+  litros_por_tambo_dia:
+    etiqueta: "Litros por tambo por día"
+    medida: produccion
+    unidad: "litros/tambo/día"
+    agregable: false
+    agregacion: promedio
+    ponderacion: >
+      Sin ponderar por tamaño de tambo: la fuente informa el promedio de la cuenca, no el
+      dato por establecimiento.
+  precio_litro:
+    etiqueta: "Precio pagado al productor"
+    medida: precio
+    unidad: "$/litro"
+    agregable: false
+    agregacion: promedio
+    ponderacion: >
+      Sin ponderar por litros entregados. Es el mismo indicador que la base 185 para la
+      columna de Santiago del Estero y sirve de control cruzado entre las dos planillas.
+
+geo:
+  particion: sde
+  provincia_fija: "Santiago del Estero"
+
+tiempo:
+  grano: anio_mes
+
+salida:
+  staging: "staging/base-184-cuenca-lechera.parquet"
+  mart: hecho_lecheria_cuenca
+  particiones: [provincia, anio]
+
+indice:
+  fuente: "MAGyP - Dirección Nacional de Lechería"
+  titulo_en_el_indice: "Datos de Cuenca lechera"

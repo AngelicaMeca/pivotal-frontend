@@ -1,0 +1,150 @@
+# Base 176 - Equinos por estrato y departamento (SENASA, 2025)
+#
+# Alimenta "Sgo. del Estero - Estratos del stock equino, totales, Establecimientos y UP -
+# anio 2.025" (hoja "GanEqui").
+#
+# Las categorias aca son siete (potrillo/a, yegua, padrillo, caballo, burro, asno y mula) y
+# en la base 229, que es la serie, son seis: esta separa BURRO de ASNO y la otra los junta en
+# "BURROS/ASNOS". No se unifican en la ingesta -cada base entra con lo que dice su planilla-
+# y el cruce, si hace falta, lo resuelve el spec de la vista.
+
+base: 176
+slug: stocks-equinos-estrato
+familia: stock
+estado: activa
+
+archivo:
+  patron: "^176 - Equinos por estrato"
+
+hojas:
+  datos:
+    - nombre: "DATA"
+      header_fila: 2
+      anio_fijo: 2025
+      ambito: sde
+      contenido: >
+        Una fila por departamento y estrato, con las siete categorias equinas y el total.
+      geo:
+        nivel: departamento
+  ignorar:
+    - nombre: "Hoja3"
+      motivo: >
+        Copia de la hoja DATA con el encabezado una fila mas arriba. Se lee una sola.
+
+columnas:
+  "PROVINCIA": provincia_nombre
+  "DEPARTAMENTO": departamento
+  "TOTAL ESTABLEC": establecimientos
+  "RENSPAs": renspas
+  "ESTRATO EQUIDOS": estrato
+  "TOTAL EQUINOS": total_equinos
+  "POTRILLO/A": potrillos
+  "YEGUA": yeguas
+  "PADRILLO": padrillos
+  "CABALLO": caballos
+  "BURRO": burros
+  "ASNO": asnos
+  "MULA": mulas
+
+valores:
+  potrillos:
+    etiqueta: "Potrillos/as"
+    medida: cabezas
+    especie: equinos
+    categoria: "Potrillos/as"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  yeguas:
+    etiqueta: "Yeguas"
+    medida: cabezas
+    especie: equinos
+    categoria: "Yeguas"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  padrillos:
+    etiqueta: "Padrillos"
+    medida: cabezas
+    especie: equinos
+    categoria: "Padrillos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  caballos:
+    etiqueta: "Caballos"
+    medida: cabezas
+    especie: equinos
+    categoria: "Caballos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  burros:
+    etiqueta: "Burros"
+    medida: cabezas
+    especie: equinos
+    categoria: "Burros"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  asnos:
+    etiqueta: "Asnos"
+    medida: cabezas
+    especie: equinos
+    categoria: "Asnos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  mulas:
+    etiqueta: "Mulas"
+    medida: cabezas
+    especie: equinos
+    categoria: "Mulas"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  total_equinos:
+    etiqueta: "Total equidos"
+    medida: cabezas
+    especie: equinos
+    categoria: "Total"
+    # Es la suma de las categorias y nunca se suma con ellas.
+    rol: agregado
+    unidad: cabezas
+    agregable: false
+  establecimientos:
+    etiqueta: "Establecimientos"
+    medida: establecimientos
+    especie: equinos
+    categoria: null
+    rol: conteo
+    unidad: establecimientos
+    agregable: true
+  renspas:
+    etiqueta: "RENSPAs"
+    medida: renspas
+    especie: equinos
+    categoria: null
+    rol: conteo
+    unidad: renspas
+    agregable: true
+
+geo:
+  nivel: departamento
+  usa_ids_indec: false
+  normalizar_nombre: true
+  particion: sde
+  provincia_propia: 86
+  resolver: [86]
+  agregados:
+    # Filas de total embebidas entre el detalle. Se MARCAN, no se borran.
+    nombres_total: ["SANTIAGO DEL ESTERO", "Totales", "TOTALES", "Total"]
+
+salida:
+  staging: "staging/base-176-stocks-equinos-estrato.parquet"
+  mart: hecho_stock_equino_estrato
+  particiones: [provincia, anio]
+
+indice:
+  fuente: "SENASA"
+  titulo_en_el_indice: "Equinos por estrato y departamento"

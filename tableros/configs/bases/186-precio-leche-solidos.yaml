@@ -1,0 +1,70 @@
+# Base 186 - Precio pagado al productor por kilo de solidos utiles, por provincia (MAGyP)
+#
+# El mismo precio de la base 185 pero medido por kilo de solidos (grasa + proteina) en vez de
+# por litro. Es la medida con la que se paga de verdad la leche: dos litros con distinto
+# contenido de solidos no valen lo mismo.
+
+base: 186
+slug: precio-leche-solidos
+familia: serie-mensual
+estado: activa
+apertura: provincias
+
+archivo:
+  patron: "^186 - PPP x kg solidos utiles"
+
+hojas:
+  datos:
+    - nombre: "Precios"
+      header_fila: 5
+      ambito: comparativo
+      contenido: "Serie mensual desde 2017-01, una columna por provincia."
+  ignorar:
+    - nombre: "FUENTE"
+      motivo: "Dos filas con el link a la pagina de MAGyP de donde sale la serie."
+
+columnas:
+  # Lo unico que se mapea es la columna de periodo: todas las demas son provincias y las
+  # reconoce el adapter contra geo-alias.yaml. Una columna que no sea ni una ni otra corta la
+  # ingesta, asi que una provincia nueva en el origen no se pierde en silencio.
+  "Período": periodo
+
+medida:
+  variable: precio_solidos
+  etiqueta: "Precio por kilo de solidos utiles"
+  medida: precio
+  unidad: "$/kg"
+  # NO se suma: es un precio.
+  agregable: false
+  agregacion: promedio
+  ponderacion: >
+    Sin ponderar: la planilla no informa los kilos de solidos de cada provincia.
+
+# Cuatro celdas de esta planilla quedaron guardadas como TEXTO con el simbolo de moneda
+# adelante ("$ 235.39"). No es un dato roto -el numero se lee sin ambiguedad, con punto
+# decimal- sino un formato, asi que se declara el prefijo que se saca. Cualquier otro
+# texto en una columna de valor sigue cortando la ingesta.
+limpieza:
+  quitar_prefijos: ["$"]
+
+geo:
+  particion: sde
+
+tiempo:
+  grano: anio_mes
+
+salida:
+  staging: "staging/base-186-precio-leche-solidos.parquet"
+  mart: hecho_lecheria_precios
+  particiones: [provincia, anio]
+
+sensibilidad: >
+  La planilla abre una COLUMNA POR PROVINCIA (Nacional, Buenos Aires, Cordoba, Entre Rios,
+  La Pampa, Salta, San Luis, Santa Fe y Santiago del Estero), o sea que es material de
+  comparacion interprovincial. Entra entera al mart -el dato es el dato- y QUE COLUMNAS SE
+  PUBLICAN lo decide el spec de cada vista con el criterio de CLAUDE.md: sin decision de
+  Francisco, a la vista va solo Santiago del Estero.
+
+indice:
+  fuente: "MAGyP - Direccion Nacional de Lecheria"
+  titulo_en_el_indice: "PPP por kg de solidos utiles"

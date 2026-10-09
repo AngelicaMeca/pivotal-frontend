@@ -1,0 +1,149 @@
+# Base 91 - Stocks y estratos porcinos por departamento (SENASA, 2025)
+#
+# Alimenta la hoja "GanPorcESTR" y aporta las Unidades Productivas que la hoja "GanPorcST"
+# muestra como KPI (6.273), que la base 232 no trae.
+#
+# JC avisa en su maqueta que los valores del cuadro de estratos porcinos estan simulados
+# ("EN ESTE CASO TODOS LOS VALORES NO SON REALES, CAMBIO DE FORMATO TOMADO DE OVINOS"): lo
+# simulado es su DIBUJO, no esta base, que es el dato real de SENASA.
+
+base: 91
+slug: stocks-porcinos-estrato
+familia: stock
+estado: activa
+
+archivo:
+  patron: "^91 - Stocks y estratos porcinos"
+
+hojas:
+  datos:
+    - nombre: "DATA SDE"
+      header_fila: 2
+      anio_fijo: 2025
+      ambito: sde
+      contenido: >
+        Una fila por departamento y estrato, con las siete categorias porcinas y el total.
+      geo:
+        nivel: departamento
+  ignorar:
+    - nombre: "Hoja2"
+      motivo: >
+        Vacia (1x1).
+
+columnas:
+  "PROVINCIA": provincia_nombre
+  "DEPARTAMENTO": departamento
+  "TOTAL ESTABLECIMIENTOS": establecimientos
+  "TOTAL RENSPAs": renspas
+  "ESTRATO PORCINOS": estrato
+  "TOTAL PORCINOS": total_porcinos
+  "CACHORRA": cachorras
+  "CACHORRO": cachorros
+  "CAPÓN/HEMBRA SIN SERVICIO": capones
+  "CERDA": cerdas
+  "LECHÓN": lechones
+  "M.E.I.": mei
+  "PADRILLO": padrillos
+
+valores:
+  cachorras:
+    etiqueta: "Cachorras"
+    medida: cabezas
+    especie: porcinos
+    categoria: "Cachorras"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  cachorros:
+    etiqueta: "Cachorros"
+    medida: cabezas
+    especie: porcinos
+    categoria: "Cachorros"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  capones:
+    etiqueta: "Capones"
+    medida: cabezas
+    especie: porcinos
+    categoria: "Capones"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  cerdas:
+    etiqueta: "Cerdas"
+    medida: cabezas
+    especie: porcinos
+    categoria: "Cerdas"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  lechones:
+    etiqueta: "Lechones"
+    medida: cabezas
+    especie: porcinos
+    categoria: "Lechones"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  mei:
+    etiqueta: "M.E.I."
+    medida: cabezas
+    especie: porcinos
+    categoria: "M.E.I."
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  padrillos:
+    etiqueta: "Padrillos"
+    medida: cabezas
+    especie: porcinos
+    categoria: "Padrillos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  total_porcinos:
+    etiqueta: "Total porcinos"
+    medida: cabezas
+    especie: porcinos
+    categoria: "Total"
+    # Es la suma de las categorias y nunca se suma con ellas.
+    rol: agregado
+    unidad: cabezas
+    agregable: false
+  establecimientos:
+    etiqueta: "Establecimientos"
+    medida: establecimientos
+    especie: porcinos
+    categoria: null
+    rol: conteo
+    unidad: establecimientos
+    agregable: true
+  renspas:
+    etiqueta: "RENSPAs"
+    medida: renspas
+    especie: porcinos
+    categoria: null
+    rol: conteo
+    unidad: renspas
+    agregable: true
+
+geo:
+  nivel: departamento
+  usa_ids_indec: false
+  normalizar_nombre: true
+  particion: sde
+  provincia_propia: 86
+  resolver: [86]
+  agregados:
+    # Filas de total embebidas entre el detalle. Se MARCAN, no se borran.
+    nombres_total: ["SANTIAGO DEL ESTERO", "Totales", "TOTALES", "Total"]
+
+salida:
+  staging: "staging/base-91-stocks-porcinos-estrato.parquet"
+  mart: hecho_stock_porcino_estrato
+  particiones: [provincia, anio]
+
+indice:
+  fuente: "SENASA"
+  titulo_en_el_indice: "Stocks y estratos porcinos"

@@ -1,0 +1,144 @@
+# Base 89 - Siocarnes bovinos: hacienda vendida para faena (SENASA, 2022 a 2026)
+#
+# Alimenta la hoja "GanBov RAZ" de la maqueta: "Bovinos - Evolucion de las categorias y
+# subcategorias vendidas para faena - Tns, precio promedio y VBP - Anio 2025" y "Distribucion
+# de las tn enviadas a faena por raza y departamento de origen".
+#
+# UNA HOJA POR ANIO y ninguna trae columna de anio: lo declara cada hoja. El encabezado esta
+# en la fila 2 (la 1 queda vacia); en la base 90, que es la misma planilla para porcinos,
+# esta en la 1. Son 152.000 lineas en total.
+#
+# El VBP que JC muestra como KPI ("$ 686.473 millones") NO viene en la planilla: sale de
+# multiplicar los kilos por el precio por kilo de cada linea. Se computa en marts, que es
+# donde van los calculos, nunca en la ingesta.
+
+base: 89
+slug: siocarnes-bovinos
+familia: comercializacion
+estado: activa
+especie: bovinos
+
+archivo:
+  patron: "^89 - Siocarnes SDE"
+
+hojas:
+  datos:
+    - nombre: "2026"
+      header_fila: 2
+      anio_fijo: 2026
+      ambito: sde
+      contenido: "Lineas de comercializacion de 2026."
+    - nombre: "2025"
+      header_fila: 2
+      anio_fijo: 2025
+      ambito: sde
+      contenido: "Lineas de comercializacion de 2025."
+    - nombre: "2024"
+      header_fila: 2
+      anio_fijo: 2024
+      ambito: sde
+      contenido: "Lineas de comercializacion de 2024."
+    - nombre: "2023"
+      header_fila: 2
+      anio_fijo: 2023
+      ambito: sde
+      contenido: "Lineas de comercializacion de 2023."
+    - nombre: "2022"
+      header_fila: 2
+      anio_fijo: 2022
+      ambito: sde
+      contenido: "Lineas de comercializacion de 2022."
+  ignorar:
+    - nombre: "Modelo analisis"
+      motivo: >
+        Especificacion de negocio de JC: los pivoteos que quiere ver (cabezas y toneladas
+        comercializadas por departamento y por raza, con su participacion sobre el total).
+        No son datos, y los pivoteos los computa el pipeline. Sirven de control.
+
+columnas:
+  "Fecha Comprobante": fecha
+  "mes": mes
+  # Columna que aparece SOLO en algunas hojas (la 2022 de bovinos, las 2022 y 2023 de
+  # porcinos) y que en todas sus filas dice SANTIAGO DEL ESTERO, o sea lo mismo que ya
+  # declara `geo.provincia_fija`. Se mapea a null para que el adapter la reconozca y la
+  # ignore: una columna sin mapear corta la ingesta a proposito, asi que esta tiene que
+  # estar declarada aunque no aporte nada.
+  "Provincia Origen": null
+  "Partido Origen": origen_departamento
+  "Zona Destino": zona_destino
+  "Raza": raza
+  "Categoria": categoria
+  "Cabezas Comercializadas": cabezas
+  "Unidad de Medida": um
+  "Precio cabeza": precio_cabeza
+  "Precio Kg": precio_kg
+  "Cantidad de Kg": kilos
+
+valores:
+  operaciones:
+    etiqueta: "Operaciones"
+    medida: operaciones
+    unidad: operaciones
+    agregable: true
+    origen: constante
+    valor: 1
+  cabezas:
+    etiqueta: "Cabezas comercializadas"
+    medida: cabezas
+    unidad: cabezas
+    agregable: true
+    origen: columna
+    columna: cabezas
+  peso_tn:
+    etiqueta: "Toneladas comercializadas"
+    medida: peso
+    unidad: tn
+    agregable: true
+    # La fuente declara kilos y el sitio habla en toneladas, como en toda la plataforma.
+    origen: kg_a_tn
+    columna: kilos
+  precio_kg:
+    etiqueta: "Precio por kilo en pie"
+    medida: precio
+    unidad: "$/kg"
+    # NO se suma y NO se promedia a secas: el promedio de un precio va ponderado por los
+    # kilos de cada operacion. Es lo que obliga a que esta familia exista aparte.
+    agregable: false
+    origen: columna
+    columna: precio_kg
+  precio_cabeza:
+    etiqueta: "Precio por cabeza"
+    medida: precio
+    unidad: "$/cab"
+    agregable: false
+    origen: columna
+    columna: precio_cabeza
+
+unidades:
+  # Las unicas unidades de medida que la fuente declara. Una nueva corta la ingesta: cambia
+  # como se convierten los kilos y no se adivina.
+  esperadas: ["Kg. Vivo"]
+  kg_a_tn: 1000
+
+geo:
+  # La planilla no trae columna de provincia: todo el archivo es Santiago del Estero y la
+  # columna geografica es el PARTIDO DE ORIGEN de la hacienda.
+  provincia_fija: "SANTIAGO DEL ESTERO"
+  particion: sde
+  nivel: departamento
+
+tiempo:
+  grano: anio_mes
+
+salida:
+  staging: "staging/base-89-siocarnes-bovinos.parquet"
+  mart: hecho_comercializacion_bovinos
+  particiones: [provincia, anio]
+
+sensibilidad: >
+  La "Zona Destino" es una zona sanitaria de SENASA, no una provincia, asi que no identifica
+  contraparte interprovincial. Se ingiere y se publica como cualquier otra dimension.
+
+indice:
+  fuente: "SENASA - Siocarnes"
+  titulo_en_el_indice: "Siocarnes bovinos"

@@ -6,6 +6,11 @@ comunes: _comunes-base-85
 
 igual_que: 85-extraccion-por-provincia-destino
 
+# Despublicada el 9-oct-2026 junto con el resto de las vistas de la base 85: la maqueta
+# de ganaderia reorganiza el area por ESPECIE y reemplaza la seccion de la que colgaban.
+# Hereda de otra vista con `igual_que`, pero el estado NO se hereda: se declara aca.
+estado: no-publicada
+
 titulo: "De qué provincias viene la hacienda que entra"
 subtitulo: "Cabezas que ingresan a Santiago del Estero, por provincia de origen"
 

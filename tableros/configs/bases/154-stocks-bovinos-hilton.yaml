@@ -1,0 +1,165 @@
+# Base 154 · Existencias y UP de Cuota Hilton por departamento (SENASA, 2025)
+#
+# El segundo de los tres regímenes de la hoja "GanBov FLHT": "Sgo. del Estero - Stocks bovinos
+# Cuota Hilton por categoría, totales y UP por departamento - año 2.025".
+#
+# Mismo criterio que los tambos (base 152): mart propio, no se suma al stock general de la
+# base 48 porque son los mismos animales con otro recorte.
+
+base: 154
+slug: stocks-bovinos-hilton
+familia: stock
+estado: activa
+
+archivo:
+  patron: "^154 - Existencias y UP Cuota Hilton"
+
+hojas:
+  datos:
+    - nombre: "Data SDE"
+      header_fila: 1
+      anio_fijo: 2025
+      ambito: sde
+      contenido: >
+        Los departamentos con establecimientos de Cuota Hilton, con nueve categorias bovinas, el total, establecimientos y UP.
+      geo:
+        nivel: departamento
+  ignorar:
+    - nombre: "Modelo Analisis"
+      motivo: >
+        Hoja vacia (1x1).
+
+columnas:
+  "PROVINCIA": provincia_nombre
+  "DEPARTAMENTO": departamento
+  "ESTABLECIMIENTOS": establecimientos
+  "UPs": unidades_productivas
+  "TOTAL DE BOVINOS": total_bovinos
+  "TERNEROS": terneros
+  "TERNERAS": terneras
+  "NOVILLITOS": novillitos
+  "TORITOS": toritos
+  "NOVILLOS": novillos
+  "VAQUILLONAS": vaquillonas
+  "VACAS": vacas
+  "TOROS": toros
+  "BUEYES": bueyes
+
+valores:
+  terneros:
+    etiqueta: "Terneros"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Terneros"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  terneras:
+    etiqueta: "Terneras"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Terneras"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  novillitos:
+    etiqueta: "Novillitos"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Novillitos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  toritos:
+    etiqueta: "Toritos"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Toritos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  novillos:
+    etiqueta: "Novillos"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Novillos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  vaquillonas:
+    etiqueta: "Vaquillonas"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Vaquillonas"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  vacas:
+    etiqueta: "Vacas"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Vacas"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  toros:
+    etiqueta: "Toros"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Toros"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  bueyes:
+    etiqueta: "Bueyes"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Bueyes"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  total_bovinos:
+    etiqueta: "Total bovinos"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Total"
+    # Es la suma de las categorias y nunca se suma con ellas.
+    rol: agregado
+    unidad: cabezas
+    agregable: false
+  establecimientos:
+    etiqueta: "Establecimientos"
+    medida: establecimientos
+    especie: bovinos
+    categoria: null
+    rol: conteo
+    unidad: establecimientos
+    agregable: true
+  unidades_productivas:
+    etiqueta: "Unidades productivas"
+    medida: unidades_productivas
+    especie: bovinos
+    categoria: null
+    rol: conteo
+    unidad: unidades
+    agregable: true
+
+geo:
+  nivel: departamento
+  usa_ids_indec: false
+  normalizar_nombre: true
+  particion: sde
+  provincia_propia: 86
+  resolver: [86]
+  agregados:
+    # Por si la fuente agrega la fila de total provincial en una entrega futura.
+    nombres_total: ["SANTIAGO DEL ESTERO", "Total"]
+
+salida:
+  staging: "staging/base-154-stocks-bovinos-hilton.parquet"
+  mart: hecho_stock_bovino_hilton
+  particiones: [provincia, anio]
+
+indice:
+  fuente: "SENASA"
+  titulo_en_el_indice: "Existencias y UP Cuota Hilton"

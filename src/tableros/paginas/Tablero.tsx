@@ -151,8 +151,19 @@ function CuerpoPanel({ id, mockup = false }: { id: string; mockup?: boolean }) {
   } else if (id === "grafico-ha") {
     // Las seis líneas en hectáreas. Su leyenda la dibuja ECharts, como en `tendencia`.
     cuerpo = <div className="grafico" data-grafico=""></div>;
+  } else if (id === "evolucion-total" || id === "evolucion-categorias") {
+    // Ganadería, hoja "GanBov ST": barras apiladas por año. Su leyenda la dibuja el sitio
+    // (es la lista de categorías), igual que en `apiladas` de cultivos intensivos.
+    cuerpo = (
+      <>
+        <div className="grafico" data-grafico=""></div>
+        <ul className="leyenda-series" data-leyenda=""></ul>
+      </>
+    );
   } else if (id === "tabla-datos" || id === "tabla-superficie"
-             || id === "tabla-pct" || id === "tabla-ha") {
+             || id === "tabla-pct" || id === "tabla-ha"
+             || id === "tabla-departamentos" || id === "tabla-evolucion"
+             || id === "tabla-departamento-anios") {
     // DOS bloques de campañas lado a lado, como los dibuja JC; los arma tablero.js
     cuerpo = <div className="tabla-datos" data-tabla-datos=""></div>;
   } else if (id === "top") {

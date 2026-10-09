@@ -1,0 +1,109 @@
+# Base 156 · Existencias ovinos por categoría, serie provincial (SENASA)
+#
+# Alimenta el cuadro de evolución de la hoja "GanOviSt": una fila por año, de 2008 a 2025, con
+# las cinco categorías y el total. NO abre por departamento -eso lo trae la base 157-, así que
+# todas sus filas son el agregado provincial y salen marcadas como tales.
+
+base: 156
+slug: stocks-ovinos-serie
+familia: stock
+estado: activa
+
+archivo:
+  patron: "^156 - Existencias ovinos por categor"
+
+hojas:
+  datos:
+    - nombre: "Data SDE"
+      header_fila: 3
+      ambito: sde
+      contenido: >
+        Santiago del Estero, serie anual 2008 a 2025, una fila por anio.
+      geo:
+        nivel: provincia
+  ignorar:
+    - nombre: "Modelo Análisis"
+      motivo: >
+        Hoja vacia (1x1): JC no escribio especificacion en esta base.
+
+columnas:
+  "Año": anio
+  "Provincia": departamento
+  "CARNEROS": carneros
+  "OVEJAS": ovejas
+  "BORREGOS": borregos
+  "CAPONES": capones
+  "CORDEROS/AS": corderos
+  "TOTAL OVINOS": total_ovinos
+
+valores:
+  carneros:
+    etiqueta: "Carneros"
+    medida: cabezas
+    especie: ovinos
+    categoria: "Carneros"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  ovejas:
+    etiqueta: "Ovejas"
+    medida: cabezas
+    especie: ovinos
+    categoria: "Ovejas"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  borregos:
+    etiqueta: "Borregos"
+    medida: cabezas
+    especie: ovinos
+    categoria: "Borregos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  capones:
+    etiqueta: "Capones"
+    medida: cabezas
+    especie: ovinos
+    categoria: "Capones"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  corderos:
+    etiqueta: "Corderos/as"
+    medida: cabezas
+    especie: ovinos
+    categoria: "Corderos/as"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  total_ovinos:
+    etiqueta: "Total ovinos"
+    medida: cabezas
+    especie: ovinos
+    categoria: "Total"
+    # Es la suma de las categorias y nunca se suma con ellas.
+    rol: agregado
+    unidad: cabezas
+    agregable: false
+
+geo:
+  nivel: departamento
+  usa_ids_indec: false
+  normalizar_nombre: true
+  particion: sde
+  provincia_propia: 86
+  resolver: [86]
+  # La hoja no trae columna de provincia: toda la tabla es Santiago del Estero.
+  provincia_fija: "SANTIAGO DEL ESTERO"
+  agregados:
+    nombres_total: ["SANTIAGO DEL ESTERO"]
+
+salida:
+  staging: "staging/base-156-stocks-ovinos-serie.parquet"
+  mart: hecho_stock_ovino
+  particiones: [provincia, anio]
+
+indice:
+  fuente: "SENASA"
+  titulo_en_el_indice: "Existencias ovinos por categoria"

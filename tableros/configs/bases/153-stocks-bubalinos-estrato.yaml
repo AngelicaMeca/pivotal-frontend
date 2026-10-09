@@ -1,0 +1,175 @@
+# Base 153 - Existencias bubalinos por departamento y estrato (SENASA)
+#
+# Alimenta "Sgo. del Estero - Stock Bubalino por departamento, categoria, totales y estrato.
+# UP y Establecim. - anio 2.025" (hoja "GanBuba ST").
+#
+# DOS hojas, una por anio: "Data SDE-2025" y "2026". Ninguna trae columna de anio, asi que lo
+# declara cada una. La de 2026 ya esta completa en el origen aunque la maqueta llegue hasta
+# 2025: se ingiere igual y el recorte lo decide el spec de la vista.
+
+base: 153
+slug: stocks-bubalinos-estrato
+familia: stock
+estado: activa
+
+archivo:
+  patron: "^153 - Existencias Bubalinos por depto"
+
+hojas:
+  datos:
+    - nombre: "Data SDE-2025"
+      header_fila: 1
+      anio_fijo: 2025
+      ambito: sde
+      contenido: >
+        Una fila por departamento y estrato, con las nueve categorias bubalinas y el total.
+      geo:
+        nivel: departamento
+    - nombre: "2026"
+      header_fila: 1
+      anio_fijo: 2026
+      ambito: sde
+      contenido: >
+        Lo mismo para 2026.
+      geo:
+        nivel: departamento
+  ignorar:
+    - nombre: "Analisis"
+      motivo: >
+        Hoja vacia (1x1).
+
+columnas:
+  "PROVINCIA": provincia_nombre
+  "DEPARTAMENTO": departamento
+  "TOTAL ESTABLECIMIENTOS": establecimientos
+  "TOTAL RENSPAs": renspas
+  "ESTRATO BUBALINOS": estrato
+  "TOTAL BUBALINOS": total_bubalinos
+  "TERNERA": terneras
+  "TERNERO": terneros
+  "NOVILLO": novillos
+  "NOVILLITO": novillitos
+  "VAQUILLONA": vaquillonas
+  "TORITO": toritos
+  "VACA": vacas
+  "TORO": toros
+  "BUEYES": bueyes
+
+valores:
+  terneras:
+    etiqueta: "Terneras"
+    medida: cabezas
+    especie: bubalinos
+    categoria: "Terneras"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  terneros:
+    etiqueta: "Terneros"
+    medida: cabezas
+    especie: bubalinos
+    categoria: "Terneros"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  novillos:
+    etiqueta: "Novillos"
+    medida: cabezas
+    especie: bubalinos
+    categoria: "Novillos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  novillitos:
+    etiqueta: "Novillitos"
+    medida: cabezas
+    especie: bubalinos
+    categoria: "Novillitos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  vaquillonas:
+    etiqueta: "Vaquillonas"
+    medida: cabezas
+    especie: bubalinos
+    categoria: "Vaquillonas"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  toritos:
+    etiqueta: "Toritos"
+    medida: cabezas
+    especie: bubalinos
+    categoria: "Toritos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  vacas:
+    etiqueta: "Vacas"
+    medida: cabezas
+    especie: bubalinos
+    categoria: "Vacas"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  toros:
+    etiqueta: "Toros"
+    medida: cabezas
+    especie: bubalinos
+    categoria: "Toros"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  bueyes:
+    etiqueta: "Bueyes"
+    medida: cabezas
+    especie: bubalinos
+    categoria: "Bueyes"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  total_bubalinos:
+    etiqueta: "Total bubalinos"
+    medida: cabezas
+    especie: bubalinos
+    categoria: "Total"
+    # Es la suma de las categorias y nunca se suma con ellas.
+    rol: agregado
+    unidad: cabezas
+    agregable: false
+  establecimientos:
+    etiqueta: "Establecimientos"
+    medida: establecimientos
+    especie: bubalinos
+    categoria: null
+    rol: conteo
+    unidad: establecimientos
+    agregable: true
+  renspas:
+    etiqueta: "RENSPAs"
+    medida: renspas
+    especie: bubalinos
+    categoria: null
+    rol: conteo
+    unidad: renspas
+    agregable: true
+
+geo:
+  nivel: departamento
+  usa_ids_indec: false
+  normalizar_nombre: true
+  particion: sde
+  provincia_propia: 86
+  resolver: [86]
+  agregados:
+    # Filas de total embebidas entre el detalle. Se MARCAN, no se borran.
+    nombres_total: ["SANTIAGO DEL ESTERO", "Totales", "TOTALES", "Total"]
+
+salida:
+  staging: "staging/base-153-stocks-bubalinos-estrato.parquet"
+  mart: hecho_stock_bubalino_estrato
+  particiones: [provincia, anio]
+
+indice:
+  fuente: "SENASA"
+  titulo_en_el_indice: "Existencias bubalinos por depto y estrato"

@@ -74,6 +74,10 @@ export type Comun = {
   botones_cabecera: Enlace[];
   // Las otras paginas de la seccion, dibujadas a la derecha de la banda del breadcrumb (es
   // donde las pone JC). `href` vacio = declarada y todavia sin construir: se muestra apagada.
+  // La tira de SECCIONES HERMANAS (en ganadería, las especies). Va arriba de la de
+  // páginas y está siempre a la vista: es lo que hace que no haga falta un botón de
+  // "volver", porque nunca te fuiste del lugar. Vacía en las ramas que no la declaran.
+  tira_de_secciones: { texto: string; href: string | null; actual: boolean }[];
   paginas_de_seccion: {
     texto: string;
     href: string | null;

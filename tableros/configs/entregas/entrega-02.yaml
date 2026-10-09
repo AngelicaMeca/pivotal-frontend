@@ -1,0 +1,481 @@
+descripcion: 'Manifiesto de la entrega: que archivos llegaron, con que hash, y que dejo cada uno en staging.
+  GENERADO por pipeline/ingest.py, no editar a mano. Vive en configs/ y no en raw/ porque raw/ es de solo
+  lectura.'
+entrega: entrega-02
+archivos_recibidos: 24
+bases_ingeridas:
+- 48
+- 89
+- 90
+- 91
+- 152
+- 153
+- 154
+- 156
+- 157
+- 158
+- 176
+- 177
+- 178
+- 179
+- 183
+- 184
+- 185
+- 186
+- 188
+- 194
+- 228
+- 229
+- 230
+- 232
+bases_sin_config: []
+bases_diferidas: []
+archivos_ignorados: []
+archivos:
+- archivo: 48 - Stocks bovinos por depto y categ - SDE.xlsx
+  base: 48
+  sha256: 415c50d6eea7118c51bb532e763be59e3d597b79544035eac829e1412ec40f5a
+  bytes: 73563
+  fecha_archivo: '2026-09-17'
+  familia: stock
+  config: configs/bases/48-stocks-bovinos.yaml
+  estado: ingerida
+  staging: staging/base-48-stocks-bovinos.parquet
+  filas_staging: 4312
+  hojas:
+    Data stock SDE:
+      filas_staging: 4312
+      filas_excel: 392
+  valores_nulos: 280
+- archivo: 89 - Siocarnes SDE - 2.xlsx
+  base: 89
+  sha256: 73bdce2a276d5769bd0045ce1e113eb33d2d20ca66a432e5dca56d9d43a871e0
+  bytes: 7316083
+  fecha_archivo: '2026-09-26'
+  familia: comercializacion
+  config: configs/bases/89-siocarnes-bovinos.yaml
+  estado: ingerida
+  staging: staging/base-89-siocarnes-bovinos.parquet
+  filas_staging: 758345
+  hojas:
+    '2026':
+      filas_staging: 34190
+      filas_excel: 6838
+    '2025':
+      filas_staging: 210830
+      filas_excel: 42166
+    '2024':
+      filas_staging: 172870
+      filas_excel: 34574
+    '2023':
+      filas_staging: 190785
+      filas_excel: 38157
+    '2022':
+      filas_staging: 149670
+      filas_excel: 29934
+  valores_nulos: 151670
+- archivo: 90 - Siocarnes PORCINOS SDE - 2.xlsx
+  base: 90
+  sha256: dea20a72706b87551ac443a832be9f0af9e53dbf5511822441afa45326d3fee7
+  bytes: 587773
+  fecha_archivo: '2026-10-07'
+  familia: comercializacion
+  config: configs/bases/90-siocarnes-porcinos.yaml
+  estado: ingerida
+  staging: staging/base-90-siocarnes-porcinos.parquet
+  filas_staging: 37150
+  hojas:
+    '2026':
+      filas_staging: 2930
+      filas_excel: 586
+    '2025':
+      filas_staging: 13155
+      filas_excel: 2631
+    '2024':
+      filas_staging: 11105
+      filas_excel: 2221
+    '2023':
+      filas_staging: 6715
+      filas_excel: 1343
+    '2022':
+      filas_staging: 3245
+      filas_excel: 649
+  valores_nulos: 7430
+- archivo: 91 - Stocks y estratos porcinos SDE - 2025.xlsx
+  base: 91
+  sha256: eb20d301119555ca8d8541c0bc59832abc2d228c21aba4c4776961ab67b31c15
+  bytes: 14153
+  fecha_archivo: '2026-10-08'
+  familia: stock
+  config: configs/bases/91-stocks-porcinos-estrato.yaml
+  estado: ingerida
+  staging: staging/base-91-stocks-porcinos-estrato.parquet
+  filas_staging: 610
+  hojas:
+    DATA SDE:
+      filas_staging: 610
+      filas_excel: 61
+  valores_nulos: 0
+- archivo: 152 - Existencias bovinos en tambos - SDE.xlsx
+  base: 152
+  sha256: d7bd0b886293719de25b1d67938e17210e6e5aed00415866ba02a025b5606cb7
+  bytes: 10084
+  fecha_archivo: '2026-09-18'
+  familia: stock
+  config: configs/bases/152-stocks-bovinos-tambos.yaml
+  estado: ingerida
+  staging: staging/base-152-stocks-bovinos-tambos.parquet
+  filas_staging: 104
+  hojas:
+    Data SDE:
+      filas_staging: 104
+      filas_excel: 8
+  valores_nulos: 0
+- archivo: 153 - Existencias Bubalinos por depto y estrato - SDE -.xlsx
+  base: 153
+  sha256: ebbe416d237153808ad099113deba8514d0382fef7fc8507903e6464888f4460
+  bytes: 14756
+  fecha_archivo: '2026-09-26'
+  familia: stock
+  config: configs/bases/153-stocks-bubalinos-estrato.yaml
+  estado: ingerida
+  staging: staging/base-153-stocks-bubalinos-estrato.parquet
+  filas_staging: 636
+  hojas:
+    Data SDE-2025:
+      filas_staging: 348
+      filas_excel: 29
+    '2026':
+      filas_staging: 288
+      filas_excel: 24
+  valores_nulos: 0
+- archivo: 154 - Existencias y UP Cuota Hilton SDE.xlsx
+  base: 154
+  sha256: d6023f8f2f12fe90280a64603419dbbe24b40f01210df26ed79b779263d065e0
+  bytes: 10910
+  fecha_archivo: '2026-09-18'
+  familia: stock
+  config: configs/bases/154-stocks-bovinos-hilton.yaml
+  estado: ingerida
+  staging: staging/base-154-stocks-bovinos-hilton.parquet
+  filas_staging: 216
+  hojas:
+    Data SDE:
+      filas_staging: 216
+      filas_excel: 18
+  valores_nulos: 0
+- archivo: 156 - Existencias ovinos por categoría - SDE.xlsx
+  base: 156
+  sha256: 5db387164b6c5358e1a5f3a8a1a8703e76d229a834465b891ed1122d9fde1978
+  bytes: 11200
+  fecha_archivo: '2026-10-04'
+  familia: stock
+  config: configs/bases/156-stocks-ovinos-serie.yaml
+  estado: ingerida
+  staging: staging/base-156-stocks-ovinos-serie.parquet
+  filas_staging: 108
+  hojas:
+    Data SDE:
+      filas_staging: 108
+      filas_excel: 18
+  valores_nulos: 0
+- archivo: 157 - Existencias ovinos por departamento marzo 2025 - SDE.xlsx
+  base: 157
+  sha256: 12d0ab2baffad6b05de179dfccf754b1b40b0eb3caf4bfca3659408b8fd0a4e0
+  bytes: 11342
+  fecha_archivo: '2026-10-04'
+  familia: stock
+  config: configs/bases/157-stocks-ovinos-departamento.yaml
+  estado: ingerida
+  staging: staging/base-157-stocks-ovinos-departamento.parquet
+  filas_staging: 224
+  hojas:
+    Data SDE:
+      filas_staging: 224
+      filas_excel: 28
+  valores_nulos: 0
+- archivo: 158 - Existencias ovinos por departamento y estrato - SDE.xlsx
+  base: 158
+  sha256: d5d5257ab0686c28940e4731a690760ca92b0d7bb1b5eacb5c8b5dab9e134666
+  bytes: 16447
+  fecha_archivo: '2026-10-04'
+  familia: stock
+  config: configs/bases/158-stocks-ovinos-estrato.yaml
+  estado: ingerida
+  staging: staging/base-158-stocks-ovinos-estrato.parquet
+  filas_staging: 904
+  hojas:
+    Data SDE:
+      filas_staging: 904
+      filas_excel: 113
+  valores_nulos: 0
+- archivo: 176 - Equinos por estrato y dto SDE - 2025.xlsx
+  base: 176
+  sha256: bbcd42e1de2596b41d6b0694e12d5cc737fb6e7c3e425ad94819c8a48cf65067
+  bytes: 32723
+  fecha_archivo: '2026-09-26'
+  familia: stock
+  config: configs/bases/176-stocks-equinos-estrato.yaml
+  estado: ingerida
+  staging: staging/base-176-stocks-equinos-estrato.parquet
+  filas_staging: 1530
+  hojas:
+    DATA:
+      filas_staging: 1530
+      filas_excel: 153
+  valores_nulos: 0
+- archivo: 177 - Existencias y establecimientos caprinos SDE.xlsx
+  base: 177
+  sha256: e64467589cf6ac489d25a66a3d02eaa88880806986eb7b3d65d288882640f10a
+  bytes: 11342
+  fecha_archivo: '2026-10-04'
+  familia: stock
+  config: configs/bases/177-stocks-caprinos-departamento.yaml
+  estado: ingerida
+  staging: staging/base-177-stocks-caprinos-departamento.parquet
+  filas_staging: 224
+  hojas:
+    Data SDE:
+      filas_staging: 224
+      filas_excel: 28
+  valores_nulos: 0
+- archivo: 178 - Existencias caprinos - SDE.xlsx
+  base: 178
+  sha256: 2c15dbbfddc4c97606cadb9bcd3f134cf9750d9f0f59a9509ce0c628ee0e17ba
+  bytes: 10615
+  fecha_archivo: '2026-10-04'
+  familia: stock
+  config: configs/bases/178-stocks-caprinos-serie.yaml
+  estado: ingerida
+  staging: staging/base-178-stocks-caprinos-serie.parquet
+  filas_staging: 102
+  hojas:
+    Data SDE:
+      filas_staging: 102
+      filas_excel: 17
+  valores_nulos: 0
+- archivo: 179 - Estratificación caprinos - SDE.xlsx
+  base: 179
+  sha256: 92d94b03ca8e9a13dbb1f780fbead8573749ba6c22841092f8f1d3d8c019173e
+  bytes: 19577
+  fecha_archivo: '2026-10-05'
+  familia: stock
+  config: configs/bases/179-stocks-caprinos-estrato.yaml
+  estado: ingerida
+  staging: staging/base-179-stocks-caprinos-estrato.parquet
+  filas_staging: 1304
+  hojas:
+    Data SDE:
+      filas_staging: 1304
+      filas_excel: 163
+  valores_nulos: 0
+- archivo: 183 - Existencias bubalinos 2015 a 2025 - SDE.xlsx
+  base: 183
+  sha256: dc9f7c2d5e8b25ab000f41517815ad120b61f0c3380317570b750856324bc035
+  bytes: 10310
+  fecha_archivo: '2026-09-26'
+  familia: stock
+  config: configs/bases/183-stocks-bubalinos-serie.yaml
+  estado: ingerida
+  staging: staging/base-183-stocks-bubalinos-serie.parquet
+  filas_staging: 88
+  hojas:
+    Data SDE:
+      filas_staging: 88
+      filas_excel: 11
+  valores_nulos: 0
+- archivo: 184 - Datos de Cuenca lechera SDE.xlsx
+  base: 184
+  sha256: 0c87682148cbf25a4fc007b910751160883a347bee1806bfe0860753ce226499
+  bytes: 17125
+  fecha_archivo: '2026-09-23'
+  familia: serie-mensual
+  config: configs/bases/184-cuenca-lechera.yaml
+  estado: ingerida
+  staging: staging/base-184-cuenca-lechera.parquet
+  filas_staging: 414
+  hojas:
+    Data SDE:
+      filas_staging: 414
+      filas_excel: 46
+  valores_nulos: 25
+- archivo: 185 - Precio leche pagado al productor SDE.xlsx
+  base: 185
+  sha256: 62deff3101c742bafb73156960ed802be4fb1e9e59e956a85056a7b380d7a1a4
+  bytes: 26068
+  fecha_archivo: '2026-09-23'
+  familia: serie-mensual
+  config: configs/bases/185-precio-leche-productor.yaml
+  estado: ingerida
+  staging: staging/base-185-precio-leche-productor.parquet
+  filas_staging: 1017
+  hojas:
+    precios:
+      filas_staging: 1017
+      filas_excel: 113
+  valores_nulos: 0
+- archivo: 186 - PPP x kg solidos utiles  - SDE.xlsx
+  base: 186
+  sha256: 73fbcc3d22e55363e540c603611baa3b2b5480cd2bb6799cdb3c33674f98ce12
+  bytes: 26391
+  fecha_archivo: '2026-09-23'
+  familia: serie-mensual
+  config: configs/bases/186-precio-leche-solidos.yaml
+  estado: ingerida
+  staging: staging/base-186-precio-leche-solidos.parquet
+  filas_staging: 999
+  hojas:
+    Precios:
+      filas_staging: 999
+      filas_excel: 111
+  valores_nulos: 48
+- archivo: 188 - porcentaje grasa butirosa por provincia - SDE.xlsx
+  base: 188
+  sha256: 0078b993ac4b188ae8a86d2f60c6d3ead7525d954b6ed0f79b646eec9b1bf77c
+  bytes: 44590
+  fecha_archivo: '2026-09-23'
+  familia: serie-mensual
+  config: configs/bases/188-calidad-leche.yaml
+  estado: ingerida
+  staging: staging/base-188-calidad-leche.parquet
+  filas_staging: 2058
+  hojas:
+    grasa:
+      filas_staging: 1029
+      filas_excel: 147
+    proteína:
+      filas_staging: 1029
+      filas_excel: 147
+  valores_nulos: 0
+- archivo: 194 - Precio pagado al productor por proteina -SDE.xlsx
+  base: 194
+  sha256: 92f4ece684776671c3f61069e9570d983b507e72ccb0986d262b95c601d68019
+  bytes: 26993
+  fecha_archivo: '2026-09-23'
+  familia: serie-mensual
+  config: configs/bases/194-precio-leche-proteina.yaml
+  estado: ingerida
+  staging: staging/base-194-precio-leche-proteina.parquet
+  filas_staging: 1008
+  hojas:
+    Proteína:
+      filas_staging: 1008
+      filas_excel: 112
+  valores_nulos: 16
+- archivo: 228 - Vacunacion SDE.xlsx
+  base: 228
+  sha256: 8e4b7d3ed6e071382ff79a1d73eb5e556ec2616695c9b23dfed8d0196fd666c8
+  bytes: 70948
+  fecha_archivo: '2026-09-20'
+  familia: stock
+  config: configs/bases/228-vacunacion-bovina.yaml
+  estado: ingerida
+  staging: staging/base-228-vacunacion-bovina.parquet
+  filas_staging: 2772
+  hojas:
+    '2025':
+      filas_staging: 252
+      filas_excel: 28
+    '2024':
+      filas_staging: 252
+      filas_excel: 28
+    '2023':
+      filas_staging: 252
+      filas_excel: 28
+    '2022':
+      filas_staging: 252
+      filas_excel: 28
+    '2021':
+      filas_staging: 252
+      filas_excel: 28
+    '2020':
+      filas_staging: 252
+      filas_excel: 28
+    '2019':
+      filas_staging: 252
+      filas_excel: 28
+    '2018':
+      filas_staging: 252
+      filas_excel: 28
+    '2017':
+      filas_staging: 252
+      filas_excel: 28
+    '2016':
+      filas_staging: 252
+      filas_excel: 28
+    '2015':
+      filas_staging: 252
+      filas_excel: 28
+  valores_nulos: 11
+- archivo: 229 - Existencias equinos SDE 2008 a 2025.xlsx
+  base: 229
+  sha256: f9689b1854bad88f6764be8f5b24da08354cce2b3f62c55061f3e5ab3aa7eb9f
+  bytes: 48013
+  fecha_archivo: '2026-09-26'
+  familia: stock
+  config: configs/bases/229-stocks-equinos.yaml
+  estado: ingerida
+  staging: staging/base-229-stocks-equinos.parquet
+  filas_staging: 3528
+  hojas:
+    Data:
+      filas_staging: 3528
+      filas_excel: 504
+  valores_nulos: 0
+- archivo: 230 - DTE Equinos SDE.xlsx
+  base: 230
+  sha256: 0e6f463fdebd30b0452927c8503c95e58f36ccaf840b1ecafbccf48b3baf3ba0
+  bytes: 91137089
+  fecha_archivo: '2026-09-27'
+  familia: dte
+  config: configs/bases/230-dte-equinos.yaml
+  estado: ingerida
+  staging: staging/base-230-dte-equinos.parquet
+  filas_staging: 2412
+  hojas:
+    Egreso SDE:
+      filas_staging: 2412
+      filas_excel: 268
+  valores_nulos: 0
+- archivo: 232 - Existencias Porcinas por Departamento SDE.xlsx
+  base: 232
+  sha256: 525be3f4e83aa1c007584973269f6e7daed5467c69849dda91aa7ac891c7764d
+  bytes: 42312
+  fecha_archivo: '2026-10-08'
+  familia: stock
+  config: configs/bases/232-stocks-porcinos.yaml
+  estado: ingerida
+  staging: staging/base-232-stocks-porcinos.parquet
+  filas_staging: 2240
+  hojas:
+    SDE-2017:
+      filas_staging: 224
+      filas_excel: 28
+    SDE-2018:
+      filas_staging: 224
+      filas_excel: 28
+    SDE-2019:
+      filas_staging: 224
+      filas_excel: 28
+    SDE-2020:
+      filas_staging: 224
+      filas_excel: 28
+    SDE-2021:
+      filas_staging: 224
+      filas_excel: 28
+    SDE-2022:
+      filas_staging: 224
+      filas_excel: 28
+    SDE-2023:
+      filas_staging: 224
+      filas_excel: 28
+    SDE-2024:
+      filas_staging: 224
+      filas_excel: 28
+    SDE-2025:
+      filas_staging: 224
+      filas_excel: 28
+    SDE-2026:
+      filas_staging: 224
+      filas_excel: 28
+  valores_nulos: 0

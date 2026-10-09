@@ -64,7 +64,13 @@ notas_metodologicas: [que-es-un-dte, datos-al-mes-de-emision, sin-introduccion]
 fuente:
   pie: "Fuente: SENASA"
   organismo_esperado: "SENASA"
-estado: publicada
+# Despublicada el 9-oct-2026: la maqueta "Maqueta Ganad VF" reorganiza ganaderia por
+# ESPECIE y reemplaza la seccion "Movimientos de hacienda", de la que esta vista
+# colgaba (Francisco: "las que tenemos actualmente no sirven"). El spec queda como
+# REGISTRO de la regla: no se construye pagina propia ni se linkea desde ningun lado.
+# Su contenido se replantea dentro de la pagina "Movimientos" de bovinos, que es la
+# hoja "GanBov DTE" de JC (cinco cuadros, con la matriz origen-destino solo interna).
+estado: no-publicada
 
 origen: {tipo: modelo-analisis, detalle: "hoja 'Modelo Analisis' base 85, filas 45 y 195 a 210", fecha: 2026-07-31}
 nota_interpretacion: >

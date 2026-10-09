@@ -1,0 +1,270 @@
+# Base 228 · Primera vacunación antiaftosa bovina por departamento, 2015 a 2025 (SENASA)
+#
+# Alimenta la hoja "GanBov VAC" entera: el mapa por departamento y los dos cuadros de
+# evolución ("por categoría y totales" y "por departamento y totales", 2015 a 2025).
+#
+# UNA HOJA POR AÑO y ninguna trae columna de año: lo declara cada hoja con `anio_fijo`.
+#
+# El encabezado CAMBIA de un año a otro: la columna de departamento aparece con ocho grafías
+# distintas ("Departamento", "PARTIDO", "Partido / Departamento", "Departamento/ Partido",
+# "Partido/departamento"...), las categorías van en singular o en plural según el año, y el
+# 2024 trae además una errata, "Noviílito" con i acentuada. Todas las variantes se declaran
+# acá y apuntan al mismo campo canónico: el adapter falla si una columna no está mapeada, así
+# que una grafía nueva corta la ingesta en vez de perder la columna en silencio.
+#
+# El stock vacunado NO es el stock existente: la base 48 cuenta existencias y ésta cuenta
+# animales vacunados. Van a marts distintos y no se suman.
+
+base: 228
+slug: vacunacion-bovina
+familia: stock
+estado: activa
+
+archivo:
+  patron: "^228 - Vacunacion"
+
+hojas:
+  datos:
+    - nombre: "2025"
+      header_fila: 2
+      anio_fijo: 2025
+      ambito: sde
+      contenido: >
+        Primera vacunacion antiaftosa del anio 2025, por departamento.
+      geo:
+        nivel: departamento
+    - nombre: "2024"
+      header_fila: 2
+      anio_fijo: 2024
+      ambito: sde
+      contenido: >
+        Primera vacunacion antiaftosa del anio 2024, por departamento.
+      geo:
+        nivel: departamento
+    - nombre: "2023"
+      header_fila: 2
+      anio_fijo: 2023
+      ambito: sde
+      contenido: >
+        Primera vacunacion antiaftosa del anio 2023, por departamento.
+      geo:
+        nivel: departamento
+    - nombre: "2022"
+      header_fila: 2
+      anio_fijo: 2022
+      ambito: sde
+      contenido: >
+        Primera vacunacion antiaftosa del anio 2022, por departamento.
+      geo:
+        nivel: departamento
+    - nombre: "2021"
+      header_fila: 2
+      anio_fijo: 2021
+      ambito: sde
+      contenido: >
+        Primera vacunacion antiaftosa del anio 2021, por departamento.
+      geo:
+        nivel: departamento
+    - nombre: "2020"
+      header_fila: 2
+      anio_fijo: 2020
+      ambito: sde
+      contenido: >
+        Primera vacunacion antiaftosa del anio 2020, por departamento.
+      geo:
+        nivel: departamento
+    - nombre: "2019"
+      header_fila: 2
+      anio_fijo: 2019
+      ambito: sde
+      contenido: >
+        Primera vacunacion antiaftosa del anio 2019, por departamento.
+      geo:
+        nivel: departamento
+    - nombre: "2018"
+      header_fila: 2
+      anio_fijo: 2018
+      ambito: sde
+      contenido: >
+        Primera vacunacion antiaftosa del anio 2018, por departamento.
+      geo:
+        nivel: departamento
+    - nombre: "2017"
+      header_fila: 2
+      anio_fijo: 2017
+      ambito: sde
+      contenido: >
+        Primera vacunacion antiaftosa del anio 2017, por departamento.
+      geo:
+        nivel: departamento
+    - nombre: "2016"
+      header_fila: 2
+      anio_fijo: 2016
+      ambito: sde
+      contenido: >
+        Primera vacunacion antiaftosa del anio 2016, por departamento.
+      geo:
+        nivel: departamento
+    - nombre: "2015"
+      header_fila: 2
+      anio_fijo: 2015
+      ambito: sde
+      contenido: >
+        Primera vacunacion antiaftosa del anio 2015, por departamento.
+      geo:
+        nivel: departamento
+  ignorar:
+    - nombre: "SDE 1a Vac"
+      motivo: >
+        Resumen provincial por anio que arma JC sumando las hojas de cada anio.
+        No se ingiere: los agregados los computa el pipeline sobre el detalle
+        departamental, nunca se leen de la planilla. Sirve igual como control -la suma
+        de cada anio tiene que dar su fila-.
+
+# Lo que la fuente escribe cuando NO hay dato. SENASA usa el guion en las celdas sin
+# informar. Se traduce a NULO, nunca a cero: "no vacuno ningun novillo" y "no informo
+# cuantos novillos vacuno" son dos cosas distintas, y los promedios por departamento salen
+# mal si se confunden. Cualquier otro texto en una columna de valor sigue cortando la
+# ingesta.
+marcas_de_nulo: ["-", "--", "s/d", "S/D"]
+
+# Celdas rotas en el origen. UNA sola en toda la base: hoja 2024, Juan F. Ibarra, columna
+# "Vaca", que dice 28£81 -un simbolo de libra esterlina en lugar de un digito-. El resto de
+# la fila es coherente, asi que el numero real esta entre 28.081 y 28.981 y NO se adivina:
+# entra como nulo y la anomalia queda en el reporte de la entrega para que JC la resuelva
+# (backlog 80). Se declara por el texto exacto: si reexporta el archivo arreglado, el
+# marcador deja de coincidir solo y el valor bueno entra sin tocar este config.
+valores_ilegibles: ["28£81"]
+
+columnas:
+  # La columna de provincia se ignora a proposito. Todo el archivo es Santiago del Estero
+  # ("228 - Vacunacion SDE") y su nombre viene escrito de cinco formas distintas segun el
+  # anio -"Santiago del Estero", "SANTIAGO DEL ESTERO", con doble espacio, y en 2024 con la
+  # errata "Santiaqo"-. En vez de meter esas cinco grafias (y la errata) en geo-alias.yaml,
+  # que es la dimension canonica de todo el repo, el ambito lo declara `provincia_fija`.
+  "PROVINCIA": null
+  "Provincia": null
+  "Departamento": departamento
+  "PARTIDO": departamento
+  "Partido / Departamento": departamento
+  "Departamento/ Partido": departamento
+  "Partido/departamento": departamento
+  "Ternero": terneros
+  "Terneros": terneros
+  "Ternera": terneras
+  "Terneras": terneras
+  "Novillito": novillitos
+  "Noviílito": novillitos
+  "Novillitos": novillitos
+  "Novillo": novillos
+  "Novillos": novillos
+  "Torito": toritos
+  "Toritos": toritos
+  "Toro": toros
+  "Toros": toros
+  "Vaquillona": vaquillonas
+  "Vaquillon": vaquillonas
+  "Vaquillonas": vaquillonas
+  "Vaca": vacas
+  "Vacas": vacas
+  "TOTAL BOVINOS": total_bovinos
+  "Total Bovinos": total_bovinos
+  "Total Bovino": total_bovinos
+  "Total": total_bovinos
+
+valores:
+  terneros:
+    etiqueta: "Terneros"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Terneros"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  terneras:
+    etiqueta: "Terneras"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Terneras"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  novillitos:
+    etiqueta: "Novillitos"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Novillitos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  novillos:
+    etiqueta: "Novillos"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Novillos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  toritos:
+    etiqueta: "Toritos"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Toritos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  toros:
+    etiqueta: "Toros"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Toros"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  vaquillonas:
+    etiqueta: "Vaquillonas"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Vaquillonas"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  vacas:
+    etiqueta: "Vacas"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Vacas"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  total_bovinos:
+    etiqueta: "Total vacunado"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Total"
+    # Es la suma de las categorias y nunca se suma con ellas.
+    rol: agregado
+    unidad: cabezas
+    agregable: false
+
+geo:
+  nivel: departamento
+  usa_ids_indec: false
+  normalizar_nombre: true
+  particion: sde
+  provincia_propia: 86
+  resolver: [86]
+  provincia_fija: "Santiago del Estero"
+  agregados:
+    # Cada hoja cierra con una fila "TOTALES" sin provincia. Se MARCA como agregado, no se
+    # borra: sirve de control contra la suma de los departamentos.
+    nombres_total: ["TOTALES", "Total", "TOTAL"]
+
+salida:
+  staging: "staging/base-228-vacunacion-bovina.parquet"
+  mart: hecho_vacunacion_bovina
+  particiones: [provincia, anio]
+
+indice:
+  fuente: "SENASA"
+  titulo_en_el_indice: "Vacunacion antiaftosa bovina"

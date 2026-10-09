@@ -1114,6 +1114,14 @@ def unidades_declaradas(ctx, base):
         # tidy, `valores` en dte. Se miran las dos.
         declaradas = dict(base.config.get("medidas") or {})
         declaradas.update(base.config.get("valores") or {})
+        # La familia `serie-mensual` con apertura por provincias declara UNA medida para
+        # todas las columnas, en singular (`medida:`), porque las columnas son provincias y
+        # no medidas. Sin mirarla aca, `admitidas` quedaba vacia y el check marcaba como
+        # bloqueante cada unidad legitima de esas bases ("$/litro", "%"): un bloqueante falso,
+        # que es peor que ninguno porque ensenia a no leer el reporte.
+        una_sola = base.config.get("medida") or {}
+        if una_sola:
+            declaradas = dict(declaradas, **{"_medida_unica": una_sola})
         admitidas = sorted({m.get("unidad") for m in declaradas.values() if m.get("unidad")})
     # Una unidad rara que YA esta entendida no es lo mismo que una que nadie sabe que
     # significa. `unidades_explicadas` en reglas.yaml lleva las que se verificaron y

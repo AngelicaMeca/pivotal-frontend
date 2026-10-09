@@ -5,17 +5,18 @@ resumen:
   bases_ingeridas:
   - 8
   - 9
+  - 43
   - 48
   - 53
   - 56
   - 57
   - 75
   - 85
-  filas_revisadas: 1469333
-  checks_corridos: 197
+  filas_revisadas: 1511672
+  checks_corridos: 221
   bloqueantes: 8
   observaciones: 36
-  informativos: 27
+  informativos: 49
 hallazgos:
 - check: totales-embebidos
   severidad: bloqueante
@@ -48,18 +49,18 @@ hallazgos:
   detalle: Media cabeza de ganado no existe. Suele pasar cuando la planilla trae un promedio en la columna
     de cantidad.
   ejemplos:
-  - 'Data stock SDE / AGUIRRE / Aguirre / cabezas / fila 259 del Excel: 44.954,20'
-  - 'Data stock SDE / AGUIRRE / Aguirre / cabezas / fila 259 del Excel: 89.636,20'
+  - 'Data stock SDE / AGUIRRE / Aguirre / cabezas / fila 256 del Excel: 44.954,20'
+  - 'Data stock SDE / AGUIRRE / Aguirre / cabezas / fila 256 del Excel: 89.636,20'
   - 'Data stock SDE / ALBERDI / Alberdi / cabezas / fila 257 del Excel: 52.131,01'
   - 'Data stock SDE / ALBERDI / Alberdi / cabezas / fila 257 del Excel: 139.955,00'
-  - 'Data stock SDE / AVELLANEDA / Avellaneda / cabezas / fila 276 del Excel: 5.005,64'
-  - 'Data stock SDE / AVELLANEDA / Avellaneda / cabezas / fila 276 del Excel: 10.199,63'
-  - 'Data stock SDE / BELGRANO / Belgrano / cabezas / fila 267 del Excel: 22.737,97'
-  - 'Data stock SDE / BELGRANO / Belgrano / cabezas / fila 267 del Excel: 51.180,97'
-  - 'Data stock SDE / CAPITAL / Capital / cabezas / fila 278 del Excel: 2.837,53'
-  - 'Data stock SDE / CAPITAL / Capital / cabezas / fila 278 del Excel: 7.721,53'
-  - 'Data stock SDE / CHOYA / Choya / cabezas / fila 270 del Excel: 17.195,24'
-  - 'Data stock SDE / CHOYA / Choya / cabezas / fila 270 del Excel: 41.989,24'
+  - 'Data stock SDE / AVELLANEDA / Avellaneda / cabezas / fila 259 del Excel: 5.005,64'
+  - 'Data stock SDE / AVELLANEDA / Avellaneda / cabezas / fila 259 del Excel: 10.199,63'
+  - 'Data stock SDE / BANDA / La Banda / cabezas / fila 269 del Excel: 15.330,00'
+  - 'Data stock SDE / BANDA / La Banda / cabezas / fila 269 del Excel: 30.989,00'
+  - 'Data stock SDE / BELGRANO / Belgrano / cabezas / fila 260 del Excel: 22.737,97'
+  - 'Data stock SDE / BELGRANO / Belgrano / cabezas / fila 260 del Excel: 51.180,97'
+  - 'Data stock SDE / CAPITAL / Capital / cabezas / fila 261 del Excel: 2.837,53'
+  - 'Data stock SDE / CAPITAL / Capital / cabezas / fila 261 del Excel: 7.721,53'
   propuesta: No publicar esa columna hasta saber que significa.
   pregunta_jc: Hay cantidades de cabezas con decimales. Es un promedio o un error?
 - check: unidades
@@ -138,8 +139,8 @@ hallazgos:
   severidad: observacion
   base: null
   titulo: Archivos que llegaron sin estar en la lista de la entrega
-  casos: 1
-  detalle: 'Numeros de base: 8'
+  casos: 2
+  detalle: 'Numeros de base: 8, 43'
   propuesta: Confirmar con JC si entran en esta entrega o quedan para la siguiente.
 - check: drift
   severidad: observacion
@@ -292,7 +293,7 @@ hallazgos:
   - 'en el archivo aparecen: AGUIRRE, ALBERDI, ATAMISQUI, AVELLANEDA, BANDA, BELGRANO, CAPITAL, CHOYA,
     COPO, FIGUEROA, GENERAL TABOADA, GUASAYAN, JIMENEZ, JUAN F. IBARRA, LORETO, MITRE, MORENO, OJO DE
     AGUA, PELLEGRINI, QUEBRACHOS, RIO HONDO, RIVADAVIA, ROBLES, SAN MARTIN, SARMIENTO, SILIPICA'
-  - en la tabla de departamentos conocidos hay 28 nombres
+  - en la tabla de departamentos conocidos hay 32 nombres
   propuesta: Pintar el departamento faltante como 'sin datos' en el mapa, nunca como cero.
   pregunta_jc: En esta base falta 1 departamento(s) de Santiago del Estero. Es porque ahi no se siembra
     este tipo de cultivo, o falta el dato en la fuente?
@@ -783,6 +784,18 @@ hallazgos:
   titulo: Totales de provincia que si cierran contra la suma de departamentos
   casos: 450
   detalle: De 471 comparaciones, 450 cierran dentro del 0,50%.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 43
+  titulo: Hojas del archivo que no se leyeron
+  casos: 2
+  ejemplos:
+  - 'Modelo analisis: Es la tabla dinamica con la que JC armo su maqueta: meses x bandas, en ha y en %,
+    filtrada por quincena "1ra" (celda I2). No son datos nuevos, son los mismos de "Santiago 2" agregados.
+    Lo que SI aporta es una regla de negocio -que su "promedio mensual" es en realidad la primera quincena-
+    y eso ya esta escrito en specs/modelos/_comunes-base-43.yaml.'
+  - 'Hoja2: hoja de trabajo suelta, 30 filas sin encabezado util'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
 - check: agregado-vs-partes
   severidad: informativo
   base: 48
@@ -1029,3 +1042,185 @@ hallazgos:
   titulo: Columnas donde la fila de totales del pie si cierra
   casos: 16
   detalle: De 48 columnas comparadas, 16 coinciden con la suma del detalle.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 89
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo analisis: Especificacion de negocio de JC: los pivoteos que quiere ver (cabezas y toneladas
+    comercializadas por departamento y por raza, con su participacion sobre el total). No son datos, y
+    los pivoteos los computa el pipeline. Sirven de control.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 90
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Analisis: Especificacion de negocio de JC: los pivoteos que quiere ver (cabezas y toneladas
+    comercializadas por departamento y por raza, con su participacion sobre el total). No son datos, y
+    los pivoteos los computa el pipeline. Sirven de control.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 91
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Hoja2: Vacia (1x1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 152
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Analisis: Hoja vacia (1x1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 153
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Analisis: Hoja vacia (1x1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 154
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Analisis: Hoja vacia (1x1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 156
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Análisis: Hoja vacia (1x1): JC no escribio especificacion en esta base.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 157
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Análisis: Hoja vacía (1x1). En las otras bases de JC esta hoja trae su especificación de negocio;
+    en ésta no escribió nada.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 158
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Analisis: Hoja vacia (1x1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 176
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Hoja3: Copia de la hoja DATA con el encabezado una fila mas arriba. Se lee una sola.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 177
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Análisis: Hoja vacia (1x1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 178
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Análisis: Hoja vacia (1x1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 179
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Análisis: Hoja vacia (1x1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 183
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Análisis: Hoja vacia (1x1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 184
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Analisis: Glosario que escribió JC con la definición de dos siglas: UFC (Unidad Formadora
+    de Colonias, "medida estándar de microbiología en una muestra de leche") y RCS (Recuento de Células
+    Somáticas). No son datos; las definiciones van al glosario del sitio (site/glosario.yaml) para que
+    aparezcan como aclaración al pasar el mouse.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 185
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Hoja2: Vacia (1x1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 186
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'FUENTE: Dos filas con el link a la pagina de MAGyP de donde sale la serie.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 188
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'FUENTE: Dos filas con el link a la pagina de MAGyP.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 228
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'SDE 1a Vac: Resumen provincial por anio que arma JC sumando las hojas de cada anio. No se ingiere:
+    los agregados los computa el pipeline sobre el detalle departamental, nunca se leen de la planilla.
+    Sirve igual como control -la suma de cada anio tiene que dar su fila-.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 229
+  titulo: Hojas del archivo que no se leyeron
+  casos: 2
+  ejemplos:
+  - 'Hoja1: Pivoteo que arma JC sobre la misma tabla: la serie provincial a la izquierda y la matriz departamento
+    x anio a la derecha. Los pivoteos los hace el pipeline.'
+  - 'Hoja3: Vacia (1x1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 232
+  titulo: Hojas del archivo que no se leyeron
+  casos: 2
+  ejemplos:
+  - 'Analisis: Pivoteos que arma JC sobre las hojas de datos (matriz departamento x anio y composicion
+    por categoria). Los pivoteos los hace el pipeline.'
+  - 'Hoja11: Vacia.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.

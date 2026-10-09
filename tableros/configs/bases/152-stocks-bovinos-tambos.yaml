@@ -1,0 +1,175 @@
+# Base 152 · Existencias bovinas en TAMBOS por departamento (SENASA, 2025)
+#
+# Uno de los tres regímenes de la hoja "GanBov FLHT" (Feed Lots, Cuota Hilton y Tambos):
+# "Sgo. del Estero - Stocks bovinos en Tambos por categoría, totales y UP por departamento".
+#
+# Va a su propio mart y NO se mezcla con el stock bovino general de la base 48: son los
+# mismos animales contados con otro recorte -solo los establecimientos con tambo-, así que
+# sumarlos daría doble conteo. Son 8 departamentos, no 27: solo donde hay tambos.
+
+base: 152
+slug: stocks-bovinos-tambos
+familia: stock
+estado: activa
+
+archivo:
+  patron: "^152 - Existencias bovinos en tambos"
+
+hojas:
+  datos:
+    - nombre: "Data SDE"
+      header_fila: 1
+      anio_fijo: 2025
+      ambito: sde
+      contenido: >
+        Los departamentos con tambo (8), con nueve categorias bovinas, el total, establecimientos, UP y titulares.
+      geo:
+        nivel: departamento
+  ignorar:
+    - nombre: "Modelo Analisis"
+      motivo: >
+        Hoja vacia (1x1).
+
+columnas:
+  "PROVINCIA": provincia_nombre
+  "DEPARTAMENTO": departamento
+  "ESTABLECIMIENTOS": establecimientos
+  "UP": unidades_productivas
+  "TITULARES": titulares
+  "TOTAL BOVINOS": total_bovinos
+  "TERNEROS": terneros
+  "TERNERAS": terneras
+  "NOVILLITOS": novillitos
+  "TORITOS": toritos
+  "NOVILLOS": novillos
+  "VAQUILLONAS": vaquillonas
+  "VACAS": vacas
+  "TOROS": toros
+  "BUEYES": bueyes
+
+valores:
+  terneros:
+    etiqueta: "Terneros"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Terneros"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  terneras:
+    etiqueta: "Terneras"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Terneras"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  novillitos:
+    etiqueta: "Novillitos"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Novillitos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  toritos:
+    etiqueta: "Toritos"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Toritos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  novillos:
+    etiqueta: "Novillos"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Novillos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  vaquillonas:
+    etiqueta: "Vaquillonas"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Vaquillonas"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  vacas:
+    etiqueta: "Vacas"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Vacas"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  toros:
+    etiqueta: "Toros"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Toros"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  bueyes:
+    etiqueta: "Bueyes"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Bueyes"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  total_bovinos:
+    etiqueta: "Total bovinos"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Total"
+    # Es la suma de las categorias y nunca se suma con ellas.
+    rol: agregado
+    unidad: cabezas
+    agregable: false
+  establecimientos:
+    etiqueta: "Establecimientos"
+    medida: establecimientos
+    especie: bovinos
+    categoria: null
+    rol: conteo
+    unidad: establecimientos
+    agregable: true
+  unidades_productivas:
+    etiqueta: "Unidades productivas"
+    medida: unidades_productivas
+    especie: bovinos
+    categoria: null
+    rol: conteo
+    unidad: unidades
+    agregable: true
+  titulares:
+    etiqueta: "Titulares"
+    medida: titulares
+    especie: bovinos
+    categoria: null
+    rol: conteo
+    unidad: titulares
+    agregable: true
+
+geo:
+  nivel: departamento
+  usa_ids_indec: false
+  normalizar_nombre: true
+  particion: sde
+  provincia_propia: 86
+  resolver: [86]
+  agregados:
+    # Por si la fuente agrega la fila de total provincial en una entrega futura.
+    nombres_total: ["SANTIAGO DEL ESTERO", "Total"]
+
+salida:
+  staging: "staging/base-152-stocks-bovinos-tambos.parquet"
+  mart: hecho_stock_bovino_tambos
+  particiones: [provincia, anio]
+
+indice:
+  fuente: "SENASA"
+  titulo_en_el_indice: "Existencias bovinos en tambos"

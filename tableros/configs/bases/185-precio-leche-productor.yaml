@@ -1,0 +1,64 @@
+# Base 185 - Precio de la leche pagado al productor, por provincia (MAGyP)
+#
+# Una de las cinco bases que alimentan la hoja "GanBov LACT": "Evolucion de indicadores
+# economicos de la Cuenca Lechera Provincial". Es el PPP ($ por litro) que JC define en su
+# propio cuadro de notas: "Precio promedio mensual pagado al productor para Santiago del
+# Estero".
+
+base: 185
+slug: precio-leche-productor
+familia: serie-mensual
+estado: activa
+apertura: provincias
+
+archivo:
+  patron: "^185 - Precio leche pagado al productor"
+
+hojas:
+  datos:
+    - nombre: "precios"
+      header_fila: 6
+      ambito: comparativo
+      contenido: "Serie mensual desde 2016-11, una columna por provincia."
+  ignorar:
+    - nombre: "Hoja2"
+      motivo: "Vacia (1x1)."
+
+columnas:
+  # Lo unico que se mapea es la columna de periodo: todas las demas son provincias y las
+  # reconoce el adapter contra geo-alias.yaml. Una columna que no sea ni una ni otra corta la
+  # ingesta, asi que una provincia nueva en el origen no se pierde en silencio.
+  "Período": periodo
+
+medida:
+  variable: precio_litro
+  etiqueta: "Precio pagado al productor"
+  medida: precio
+  unidad: "$/litro"
+  # NO se suma: es un precio. El promedio de un periodo va ponderado por los litros entregados.
+  agregable: false
+  agregacion: promedio
+  ponderacion: >
+    Sin ponderar: la planilla no informa los litros de cada provincia, asi que el promedio de varios meses es el promedio simple de los precios mensuales y no el precio medio de la leche entregada. La limitacion viaja con el dato hasta el pie del grafico.
+
+geo:
+  particion: sde
+
+tiempo:
+  grano: anio_mes
+
+salida:
+  staging: "staging/base-185-precio-leche-productor.parquet"
+  mart: hecho_lecheria_precios
+  particiones: [provincia, anio]
+
+sensibilidad: >
+  La planilla abre una COLUMNA POR PROVINCIA (Nacional, Buenos Aires, Cordoba, Entre Rios,
+  La Pampa, Salta, San Luis, Santa Fe y Santiago del Estero), o sea que es material de
+  comparacion interprovincial. Entra entera al mart -el dato es el dato- y QUE COLUMNAS SE
+  PUBLICAN lo decide el spec de cada vista con el criterio de CLAUDE.md: sin decision de
+  Francisco, a la vista va solo Santiago del Estero.
+
+indice:
+  fuente: "MAGyP - Direccion Nacional de Lecheria"
+  titulo_en_el_indice: "Precio leche pagado al productor"

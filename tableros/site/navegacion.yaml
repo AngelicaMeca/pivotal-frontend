@@ -19,6 +19,10 @@ ramas:
     bajada: "Qué se siembra, dónde y con qué resultado."
   - id: ganaderia
     bloque: acceso-por-tema
+    # Las secciones de esta rama (las especies) se dibujan ademas como una TIRA
+    # horizontal arriba de la banda del breadcrumb, siempre a la vista. Es la fila 6
+    # de las 21 hojas de la maqueta de ganaderia. Ninguna otra rama la lleva.
+    tira_de_secciones: true
     rama: Ganadería
     titulo: Ganadería
     bajada: "Existencias, movimientos y faena por departamento."
@@ -180,64 +184,148 @@ secciones:
       más o menos que lo habitual para esa época del año en ese lugar.
     grupos: []
 
-  - id: movimientos-hacienda
-    boton_proximamente: true   # el boton del mockup, deshabilitado
-    base: 85
-    rama: ganaderia
-    ruta: [Ganadería, Movimientos de hacienda]
-    url: ganaderia/movimientos-hacienda
-    # La frase de una linea que muestra la landing en "Entra directo a la vista que
-    # necesitas" (src/lib/dashboard.ts la lee del contenido generado).
-    bajada_corta: "Movimientos por categoría, por departamento y mes a mes."
-    titulo: "Movimientos de hacienda"
-    bajada: >
-      Cómo circula la hacienda bovina de Santiago del Estero: cuánta se mueve, desde y hacia qué
-      departamentos, hacia qué provincias sale y desde cuáles entra, en qué meses y para qué.
-      Cada movimiento es un documento de tránsito electrónico (DTE) emitido por SENASA.
-    grupos:
-      - titulo: "Cuánto se mueve"
-        vistas:
-          - 85-evolucion-movimientos
-          - 85-evolucion-internos
-          - 85-evolucion-extraccion
-          - 85-evolucion-introduccion
-          - 85-balance-introduccion-extraccion
-      - titulo: "Dónde y para qué"
-        vistas:
-          - 85-mapa-movimientos-departamento
-          - 85-ranking-departamento-origen
-          - 85-departamento-evolucion
-          - 85-matriz-od-interna
-          - 85-movimientos-por-motivo
-      - titulo: "Qué y cuándo"
-        vistas:
-          - 85-participacion-categorias
-          - 85-estacionalidad-mensual
-          - 85-tambos-engorde-corral
+  # ---------------------------------------------------------------------------
+  # GANADERÍA · siete especies, 21 páginas (maqueta "Maqueta Ganad VF", 9-oct-2026)
+  # ---------------------------------------------------------------------------
+  # Reemplaza a las dos secciones que había (`stock-bovino` y `movimientos-hacienda`):
+  # Francisco fue explícito, "las que tenemos actualmente no sirven". Sus specs quedan en el
+  # repo como registro, igual que las vistas de la base 9 que la tercera tanda dejó fuera.
+  #
+  # La estructura es la de JC y tiene DOS tiras, una arriba de la otra: la de ESPECIE (fila 6
+  # de sus 21 hojas, que acá es `ramas.ganaderia.tira_de_secciones`) y la de PÁGINA dentro de
+  # la especie (fila 10, que es `paginas_de_seccion`). Las dos están siempre a la vista: es la
+  # respuesta a lo que el propio JC pregunta en la celda E62 de "GanBov IN", "analizar cómo
+  # sería el mejor regreso de las páginas internas a la principal de ganadería bovina".
+  #
+  # Hoy solo BOVINOS tiene su tablero construido (base 48, ya ingerida). Las otras seis
+  # especies van `proximamente`: se anuncian en el menú y en la tira, apagadas, porque para el
+  # lector la sección existe y un menú que no la nombra se lee como que nos la olvidamos. Sus
+  # datos YA están ingeridos (las 24 bases de la entrega-02); lo que falta es el spec de cada
+  # página.
 
-  # Seccion SOLO TABLERO. Francisco pidio el 5-ago-2026 construir el tablero de la base 48 y
-  # dejar las vistas de detalle en stand by, asi que `grupos` va vacio: no hay "Analisis
-  # completo" todavia y la pestaña no se dibuja. Cuando se construyan las vistas se listan aca
-  # y la seccion pasa a tener las dos pestañas, como las otras dos.
-  - id: stock-bovino
-    boton_proximamente: true   # el boton del mockup, deshabilitado
+  - id: bovinos
     base: 48
     rama: ganaderia
-    ruta: [Ganadería, Stock bovino]
-    url: ganaderia/stock-bovino
-    # La frase de una linea que muestra la landing en "Entra directo a la vista que
-    # necesitas" (src/lib/dashboard.ts la lee del contenido generado).
-    bajada_corta: "Existencias por zona y por departamento, y su evolución."
-    titulo: "Stock bovino"
+    ruta: [Ganadería, Bovinos]
+    url: ganaderia/bovinos
+    titulo: "Bovinos"
+    bajada_corta: "Existencias, movimientos, vacunación, leche y faena del rodeo bovino."
     bajada: >
-      Cuánta hacienda bovina hay en Santiago del Estero y cómo está compuesto el rodeo: por
-      departamento, por categoría y por zona productiva, al cierre de cada año. El stock se
-      releva con la vacunación antiaftosa.
+      El rodeo bovino de Santiago del Estero: cuántas cabezas hay y de qué categoría, cómo se
+      mueven, cuántas se vacunan, qué produce la cuenca lechera y qué sale a faena. Por
+      departamento y año a año.
+    # Las ocho páginas de la tira de JC. La primera ES esta página (el tablero de la
+    # sección); las otras siete esperan su spec y se dibujan apagadas con "Próximamente".
+    # La quinta dice "Producc Leche" y no "Faena": en cuatro de sus hojas figura como
+    # "Faena" y en tres como "Producc Leche", y la quinta página es la de leche. Además la
+    # faena bovina, según el propio JC, es una imagen de SENASA y no una página (backlog 78).
+    paginas_de_seccion:
+      - {texto: "Stocks", tablero: true}
+      - {texto: "Indicadores"}
+      - {texto: "Movimientos"}
+      - {texto: "Vacunaciones"}
+      - {texto: "Producc. Leche"}
+      - {texto: "Estratos y UP"}
+      - {texto: "Razas"}
+      - {texto: "Feed Lots, Hilton y Tambos"}
     grupos: []
 
-# --- Vistas que quedan fuera de la navegacion hasta que Francisco decida ---
-# No se listan en ningun menu. Se generan en /plataforma/_privado/
-# (src/tableros/contenido/paginas/_privado/ del sitio, gitignoreado: no viaja al deploy).
+  - id: bubalinos
+    proximamente: true
+    base: 183
+    rama: ganaderia
+    ruta: [Ganadería, Bubalinos]
+    url: ganaderia/bubalinos
+    titulo: "Bubalinos"
+    bajada_corta: "Existencias de búfalos por categoría, departamento y estrato."
+    bajada: >
+      Las existencias bubalinas de Santiago del Estero: poco más de dos mil cabezas en una
+      cuarentena de establecimientos, por categoría, departamento y tamaño de rodeo.
+    # Página única: la maqueta no le pone tira de páginas.
+    grupos: []
+
+  - id: porcinos
+    proximamente: true
+    base: 232
+    rama: ganaderia
+    ruta: [Ganadería, Porcinos]
+    url: ganaderia/porcinos
+    titulo: "Porcinos"
+    bajada_corta: "Existencias, estratos, movimientos y faena porcina."
+    bajada: >
+      El stock porcino de Santiago del Estero por categoría y departamento, su evolución desde
+      2017, el tamaño de los establecimientos y lo que sale a faena por raza.
+    paginas_de_seccion:
+      - {texto: "Stocks", tablero: true}
+      - {texto: "Estratos y UP"}
+      - {texto: "Movimientos"}
+      - {texto: "Razas"}
+    grupos: []
+
+  - id: equinos
+    proximamente: true
+    base: 229
+    rama: ganaderia
+    ruta: [Ganadería, Equinos]
+    url: ganaderia/equinos
+    titulo: "Equinos"
+    bajada_corta: "Existencias de équidos por categoría, estrato y departamento."
+    bajada: >
+      Caballos, yeguas, potrillos, mulas, burros y asnos de Santiago del Estero: existencias
+      desde 2008, tamaño de los establecimientos y movimientos con DTE.
+    paginas_de_seccion:
+      - {texto: "Stocks, UP y Estratos", tablero: true}
+      - {texto: "Movimientos"}
+    grupos: []
+
+  - id: ovinos
+    proximamente: true
+    base: 157
+    rama: ganaderia
+    ruta: [Ganadería, Ovinos]
+    url: ganaderia/ovinos
+    titulo: "Ovinos"
+    bajada_corta: "Existencias ovinas por categoría, departamento y estrato."
+    bajada: >
+      Las existencias ovinas de Santiago del Estero por categoría y departamento, su serie
+      desde 2008 y el tamaño de los rebaños.
+    paginas_de_seccion:
+      - {texto: "Stocks, Establec. y UP", tablero: true}
+      - {texto: "Movimientos"}
+      - {texto: "Estratos"}
+    grupos: []
+
+  - id: caprinos
+    proximamente: true
+    base: 177
+    rama: ganaderia
+    ruta: [Ganadería, Caprinos]
+    url: ganaderia/caprinos
+    titulo: "Caprinos"
+    bajada_corta: "Existencias caprinas por categoría, departamento y estrato."
+    bajada: >
+      Casi medio millón de cabezas caprinas en más de ocho mil unidades productivas: por
+      categoría, por departamento y por tamaño de majada.
+    paginas_de_seccion:
+      - {texto: "Stocks, Establecim. y UP", tablero: true}
+      - {texto: "Estratos"}
+    grupos: []
+
+  - id: apicola
+    proximamente: true
+    base: 30
+    rama: ganaderia
+    ruta: [Ganadería, Apícola]
+    url: ganaderia/apicola
+    titulo: "Apícola"
+    bajada_corta: "Apiarios y colmenas por departamento."
+    bajada: >
+      La producción apícola de Santiago del Estero: cuántos apiarios y cuántas colmenas hay en
+      cada departamento, y cuántas colmenas tiene en promedio cada apiario.
+    # JC no la pone en la tira de especies de su maqueta aunque le dedica una hoja. Se suma
+    # igual: dejarla afuera de la tira la volvería inalcanzable salvo por el menú lateral.
+    grupos: []
+
 privadas:
   titulo: "Material comparativo (sin publicar)"
   bajada: >

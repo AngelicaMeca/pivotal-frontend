@@ -261,6 +261,14 @@ a.boton-cabecera:hover { background: color-mix(in srgb, var(--sobre-cromo) 16%, 
   background: var(--cromo); color: var(--sobre-cromo); display: flex; align-items: center;
   gap: .9rem; padding: .28rem .8rem; flex-wrap: wrap;
 }
+/* Con tira de secciones (ganaderia) la banda son DOS filas: arriba las especies y abajo
+   la miga con la tira de paginas y el selector de periodo. Las dos viven adentro del
+   cromo, que es donde el sitio pone su navegacion. */
+.banda.banda-dos-filas { flex-direction: column; align-items: stretch; gap: 0; }
+.banda-fila {
+  display: flex; align-items: center; gap: .9rem; flex-wrap: wrap;
+  flex: 1 1 auto; min-width: 0;
+}
 .miga { flex: 1 1 auto; min-width: 0; font-size: .92rem; }
 .miga a { color: color-mix(in srgb, var(--sobre-cromo) 92%, transparent); text-decoration: none; }
 .miga a:hover { text-decoration: underline; color: var(--sobre-cromo); }
@@ -464,8 +472,19 @@ a { color: var(--enlace); }
 .tablero > [data-ancho="3"] { grid-column: span 3; }
 .tablero > [data-ancho="4"] { grid-column: span 4; }
 .tablero > [data-ancho="5"] { grid-column: span 5; }
+/* LAS DOCE, no las que fueron haciendo falta. Faltaban 1, 2, 7, 9, 10 y 11, y como la
+   regla de arriba cae a `span 4`, un `ancho: 7` en un spec se dibujaba de 4 SIN AVISAR:
+   la fila cerraba en 9 de 12 y quedaba un hueco de tres columnas al costado. El build
+   ahora ademas valida el valor (`ANCHOS_DE_PANEL`), asi que un ancho que no exista corta
+   la corrida en vez de dibujarse mal. */
+.tablero > [data-ancho="1"] { grid-column: span 1; }
+.tablero > [data-ancho="2"] { grid-column: span 2; }
 .tablero > [data-ancho="6"] { grid-column: span 6; }
+.tablero > [data-ancho="7"] { grid-column: span 7; }
 .tablero > [data-ancho="8"] { grid-column: span 8; }
+.tablero > [data-ancho="9"] { grid-column: span 9; }
+.tablero > [data-ancho="10"] { grid-column: span 10; }
+.tablero > [data-ancho="11"] { grid-column: span 11; }
 .tablero > [data-ancho="12"] { grid-column: span 12; }
 /* `alto: 2` deja dos paneles apilados al lado de uno alto; `alto: 3` es el mapa del tablero
    de cultivos, que ocupa la columna izquierda a lo alto del selector, los indicadores y la
@@ -1230,6 +1249,34 @@ a { color: var(--enlace); }
   grid-column: span 8;
 }
 
+/* La tira de SECCIONES del area (en ganaderia, las especies). Va ADENTRO de la banda
+   de cromo y con el mismo lenguaje que la tira de paginas -pildoras sobre el cromo, sin
+   recuadro propio-, nada mas que una fila arriba. La primera version se dibujaba sobre una
+   banda crema propia entre la cabecera y el breadcrumb, y se leia como un pedazo pegado:
+   la navegacion de este sitio vive sobre el cromo, no al lado. */
+.tira-secciones {
+  display: flex; flex-wrap: wrap; gap: .1rem;
+  padding: .1rem 0 .3rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--sobre-cromo) 18%, transparent);
+  margin-bottom: .25rem;
+}
+.tira-secciones a, .tira-secciones .tira-prox {
+  display: inline-flex; align-items: baseline; gap: .3rem;
+  font-family: var(--rotulos); font-size: .68rem; letter-spacing: .08em;
+  text-transform: uppercase; text-decoration: none; white-space: nowrap;
+  padding: .22rem .7rem; border-radius: var(--radio-pildora);
+  color: var(--sobre-cromo);
+}
+.tira-secciones a:hover {
+  background: color-mix(in srgb, var(--sobre-cromo) 16%, transparent);
+}
+/* La seccion que se esta mirando: maciza, que es el unico elemento del sitio que invierte
+   el cromo. Es lo que hace que de un vistazo se sepa en que especie estas. */
+.tira-secciones a[aria-current="page"] {
+  background: var(--sobre-cromo); color: var(--cromo); font-weight: 700;
+}
+.tira-secciones .tira-prox { opacity: .5; cursor: not-allowed; }
+
 /* ---------- tira de paginas de la seccion (banda del breadcrumb, a la derecha) ----------
    JC la dibuja en las cuatro hojas de su maqueta de pasturas y forrajes: la miga a la
    izquierda y los links a las otras paginas de la seccion a la derecha. `margin-left: auto`
@@ -1250,9 +1297,13 @@ a { color: var(--enlace); }
   background: color-mix(in srgb, var(--sobre-cromo) 16%, transparent);
 }
 .tira-paginas .tira-prox { opacity: .55; cursor: not-allowed; }
-.tira-paginas .prox {
+/* El rotulo "Próximamente" de las dos tiras va SIN recuadro. El `.prox` general lo lleva
+   -sirve para una o dos banderas de idioma- pero en una tira donde casi todas las
+   entradas estan por venir son catorce recuadros en dos renglones y el ojo no encuentra
+   donde estan las que si andan. Apagado y en chico dice lo mismo sin gritar. */
+.tira-paginas .prox, .tira-secciones .prox {
   font-family: var(--rotulos); font-size: .5rem; text-transform: uppercase;
-  letter-spacing: .06em;
+  letter-spacing: .06em; border: 0; padding: 0; opacity: .8;
 }
 
 /* ---------- pagina "Mapas" de pasturas y forrajes (tipo de vista `galeria`) ----------
@@ -1615,6 +1666,14 @@ dialog.info.info-visible::backdrop { opacity: 1; }
    se llena con el panel "Información relacionada" apilado debajo (cuarta tanda,
    proporciones_sin_huecos). */
 .tabla-datos { display: flex; gap: .6rem; align-items: flex-start; }
+/* Una tabla mas ancha que su panel scrollea ADENTRO del panel. Sin esto estira la
+   grilla, y con la grilla estirada se desborda la pagina entera: aparece una barra
+   horizontal abajo de todo y el tablero deja de calzar con el menu. Pasa de verdad con
+   la matriz departamento x anio de bovinos, que son doce columnas de numeros. El tope
+   es `min-width: 0`, que es lo que habilita a un item de flex/grid a ser mas chico que
+   su contenido; sin el, `overflow` no tiene efecto. */
+.tablero .tabla-datos { overflow-x: auto; min-width: 0; }
+.tablero .panel { min-width: 0; }
 .tabla-datos table { flex: 1 1 0; border-collapse: collapse; width: 100%; font-size: .72rem; }
 .tabla-datos th, .tabla-datos td {
   padding: .16rem .3rem; border-bottom: 1px solid var(--fondo-apoyo); white-space: nowrap;

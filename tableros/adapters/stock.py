@@ -58,6 +58,7 @@ COLUMNAS_SALIDA = [
     "geo_nombre",
     "geo_id",
     "es_agregado_geo",
+    "estrato",
     "variable",
     "especie",
     "categoria",
@@ -86,6 +87,7 @@ ESQUEMA_SALIDA = {
     "geo_nombre": pl.Utf8,
     "geo_id": pl.Utf8,
     "es_agregado_geo": pl.Boolean,
+    "estrato": pl.Utf8,
     "variable": pl.Utf8,
     "especie": pl.Utf8,
     "categoria": pl.Utf8,
@@ -132,6 +134,12 @@ def _parsear_hoja(config, libro, hoja_cfg, entrega, alias):
     valores = config["valores"]
     fuente = (config.get("indice") or {}).get("fuente")
     grano = (config.get("tiempo") or {}).get("grano", "anio")
+    # `anio_fijo`: la hoja es la foto de UN anio y no trae la columna. Lo declara el config
+    # -nunca se deduce del nombre del archivo- y entonces la columna geografica pasa a ser la
+    # que decide si una fila es un dato.
+    clave_de_fila = "anio"
+    if hoja_cfg.get("anio_fijo") is not None:
+        clave_de_fila = "departamento" if "departamento" in mapeo.values() else "provincia_nombre"
 
     filas = []
     posiciones = None
@@ -144,8 +152,12 @@ def _parsear_hoja(config, libro, hoja_cfg, entrega, alias):
         if all(_es_vacia(c) for c in celdas):
             continue  # fila totalmente vacia (relleno del Excel), no es un dato
         cruda = {campo: _celda(celdas, pos) for campo, pos in posiciones.items()}
-        if _es_vacia(cruda.get("anio")):
-            continue  # pie de tabla del Excel (ej. "Fuente: SENASA"), no es una observacion
+        # Que celda decide si la fila es un dato o el pie de tabla del Excel (ej.
+        # "Fuente: SENASA"). Normalmente el anio; en las hojas que NO traen columna de anio
+        # -una foto de un solo anio, como las existencias de ovinos a marzo de 2025- el anio
+        # lo declara el config y la que manda es la columna geografica.
+        if _es_vacia(cruda.get(clave_de_fila)):
+            continue
         filas.extend(
             _filas_de_observacion(config, hoja_cfg, cruda, nro_fila, entrega, valores,
                                   fuente, grano, alias)
@@ -177,7 +189,9 @@ def _mapear_header(celdas, mapeo, nombre_hoja):
 def _filas_de_observacion(config, hoja_cfg, cruda, nro_fila, entrega, valores,
                           fuente, grano, alias):
     """Una fila del Excel -> una fila de salida por cada columna de valor declarada."""
-    anio = _entero(cruda.get("anio"))
+    marcas_de_nulo = tuple(config.get("marcas_de_nulo") or ())
+    ilegibles = tuple(config.get("valores_ilegibles") or ())
+    anio = _entero(cruda.get("anio")) if hoja_cfg.get("anio_fijo") is None         else _entero(hoja_cfg["anio_fijo"])
     if anio is None:
         raise ValueError(
             "Fila %d de la hoja %r: el anio %r no es un numero."
@@ -197,6 +211,10 @@ def _filas_de_observacion(config, hoja_cfg, cruda, nro_fila, entrega, valores,
             "fila_origen": nro_fila,
             "grano_tiempo": grano,
             "anio": anio,
+            # El ESTRATO del establecimiento ("1. Hasta 20 ovinos."). Es una dimension mas de
+            # la fila, no una medida: la misma categoria aparece una vez por estrato. Las
+            # bases que no estratifican lo dejan en nulo y el schema no cambia.
+            "estrato": _texto(cruda.get("estrato")) or None,
             # `variable` es el nombre canonico de la columna del Excel de la que sale este
             # valor. Junto con fila_origen identifica la celda de origen, asi que es la clave
             # unica de la fila de salida y el criterio de orden de los marts.
@@ -210,7 +228,8 @@ def _filas_de_observacion(config, hoja_cfg, cruda, nro_fila, entrega, valores,
             "agregable": bool(meta.get("agregable", True)),
             # Nulo y cero NO son lo mismo: "Cantidad de UP" viene vacia en los anios que la
             # fuente no informa, y eso tiene que llegar al mart como nulo.
-            "valor": _numero(cruda.get(campo), nro_fila, campo, hoja_cfg["nombre"]),
+            "valor": _numero(cruda.get(campo), nro_fila, campo, hoja_cfg["nombre"],
+                             marcas_de_nulo, ilegibles),
             "fuente": fuente,
         }
         fila.update(geo)
@@ -233,6 +252,12 @@ def _resolver_geo(config, cruda, nro_fila, nombre_hoja, alias):
 
     provincia = _texto(cruda.get("provincia_nombre"))
     departamento = _texto(cruda.get("departamento"))
+    # `provincia_fija`: la hoja no trae columna de provincia porque es toda de una sola, y la
+    # columna geografica mezcla el total provincial con sus departamentos ("Provincia/
+    # Departamento" en las existencias de ovinos y caprinos). El nombre lo declara el config,
+    # nunca se deduce del nombre del archivo ni se asume SDE por defecto.
+    if provincia is None:
+        provincia = _texto(geo_cfg.get("provincia_fija"))
 
     if provincia is None:
         raise ValueError(
@@ -285,6 +310,15 @@ def _resolver_geo(config, cruda, nro_fila, nombre_hoja, alias):
         }
 
     deptos = (alias.get("departamentos") or {}).get(provincia_id) or {}
+    # El nombre CANONICO de cada codigo: la primera entrada que lo declara en geo-alias.yaml.
+    # Es lo que se publica como `geo_nombre`, y no la grafia de esta base, porque dim_geo
+    # colapsa por el minimo alfabetico entre TODAS las familias: si una base aporta su propia
+    # errata, se la impone al resto del repo. Pasa de verdad -la hoja 2024 de vacunacion
+    # escribe "Belqrano" y la 2020 corta "GENERAL TABOAD", que alfabeticamente le gana a
+    # "GENERAL TABOADA"-. Es la misma regla que ya aplicaba el adapter de la base 43.
+    canonico = {}
+    for nombre_alias, codigo in deptos.items():
+        canonico.setdefault(str(codigo), _normalizar(nombre_alias))
     if normalizar:
         # La tabla de alias ya esta escrita en mayusculas y sin tildes, asi que normalizar el
         # nombre de la fuente lo hace matchear sin agregar una entrada por cada errata.
@@ -305,7 +339,9 @@ def _resolver_geo(config, cruda, nro_fila, nombre_hoja, alias):
         "provincia_id": provincia_id,
         "nivel_geo": "departamento",
         "departamento": departamento,
-        "geo_nombre": _normalizar(departamento),
+        # `departamento` guarda lo que dice el Excel, con su errata, para poder rastrear el
+        # dato hasta su celda; `geo_nombre` es el canonico, que es el vocabulario comun.
+        "geo_nombre": canonico.get(str(indice[clave]), _normalizar(departamento)),
         "geo_id": str(indice[clave]),
         "es_agregado_geo": False,
     }
@@ -349,9 +385,24 @@ def _entero(valor):
         return None
 
 
-def _numero(valor, nro_fila, campo, nombre_hoja):
-    """Numero o nulo. Un texto en una columna de valor FALLA: no se convierte a cero."""
+def _numero(valor, nro_fila, campo, nombre_hoja, marcas_de_nulo=(), ilegibles=()):
+    """Numero o nulo. Un texto en una columna de valor FALLA: no se convierte a cero.
+
+    `marcas_de_nulo` son los textos que la FUENTE usa para decir "sin dato" y que el config
+    declara uno por uno (en las planillas de SENASA es el guion). Se traducen a NULO, nunca a
+    cero: que no haya dato y que el dato sea cero son dos cosas distintas y el mart las tiene
+    que poder distinguir. Lo que no este declarado sigue cortando la ingesta.
+    """
     if _es_vacia(valor):
+        return None
+    if isinstance(valor, str) and valor.strip() in marcas_de_nulo:
+        return None
+    # Celdas que vienen ROTAS en el origen y que no se pueden recuperar: el config las declara
+    # por su TEXTO exacto, no por su coordenada. Dos motivos: queda a la vista cual es el dato
+    # podrido, y si el dia de maniana JC reexporta el archivo arreglado el marcador deja de
+    # coincidir solo y el valor bueno entra sin que nadie se acuerde de borrar nada.
+    # Van a NULO -nunca a cero, nunca adivinadas- y al reporte de anomalias de la entrega.
+    if isinstance(valor, str) and valor.strip() in ilegibles:
         return None
     if isinstance(valor, bool):
         raise ValueError(

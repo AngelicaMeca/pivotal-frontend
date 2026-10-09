@@ -1237,7 +1237,15 @@ export default function iniciar(PIVOTAL) {
     "tabla-pct": pintarTablaDatos,
     "tabla-ha": pintarTablaDatos,
     "grafico-pct": pintarApiladas,
-    "grafico-ha": pintarTendencia
+    "grafico-ha": pintarTendencia,
+    /* Ganaderia, hoja "GanBov ST" de la maqueta: tres pares de grafico + tabla. Los dos
+       graficos usan `apiladas` -el del total con UNA sola serie, que es como el sitio dibuja
+       barras: la forma `tendencia` dibuja una linea y JC lo pinta en barras-. */
+    "tabla-departamentos": pintarTablaDatos,
+    "tabla-evolucion": pintarTablaDatos,
+    "tabla-departamento-anios": pintarTablaDatos,
+    "evolucion-total": pintarApiladas,
+    "evolucion-categorias": pintarApiladas
   };
 
   /* Un panel sin datos dice por que no los tiene y se apaga entero: no se deja un grafico

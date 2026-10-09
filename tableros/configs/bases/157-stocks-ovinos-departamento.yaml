@@ -1,0 +1,138 @@
+# Base 157 · Existencias ovinos por departamento (SENASA, marzo 2025)
+#
+# Alimenta la hoja "GanOviSt" de la maqueta de ganadería: "Sgo. del Estero - Stocks ovinos por
+# categoría, totales y cantidad de Establecimientos y UP por departamento - año 2.025".
+#
+# Dos cosas que la distinguen de la base 48 y que son las que estrenan los dos agregados del
+# adapter de la familia:
+#   - NO trae columna de año: es la foto de un relevamiento puntual (marzo de 2025), así que
+#     el año lo declara el config (`anio_fijo`) y nunca se deduce del nombre del archivo.
+#   - La columna geográfica se llama "Provincia/Departamento" y mezcla los dos niveles: la
+#     primera fila es SANTIAGO DEL ESTERO (el total provincial) y las 27 siguientes son los
+#     departamentos. Es el mismo caso que la fila "Total" de la base 48.
+
+base: 157
+slug: stocks-ovinos-departamento
+familia: stock
+estado: activa
+
+archivo:
+  patron: "^157 - Existencias ovinos por departamento"
+
+hojas:
+  datos:
+    - nombre: "Data SDE"
+      header_fila: 2
+      anio_fijo: 2025
+      ambito: sde
+      contenido: >
+        Santiago del Estero: el total provincial y sus 27 departamentos, con las cinco
+        categorías ovinas, el total, los establecimientos y las unidades productivas.
+      geo:
+        nivel: departamento
+  ignorar:
+    - nombre: "Modelo Análisis"
+      motivo: >
+        Hoja vacía (1x1). En las otras bases de JC esta hoja trae su especificación de
+        negocio; en ésta no escribió nada.
+
+columnas:
+  "Provincia/Departamento": departamento
+  "ESTABLECIMIENTOS": establecimientos
+  "UNIDADES PRODUCTIVAS": unidades_productivas
+  "CARNEROS": carneros
+  "OVEJAS": ovejas
+  "BORREGOS": borregos
+  "CAPONES": capones
+  "CORDEROS/AS": corderos
+  "TOTAL OVINOS": total_ovinos
+
+valores:
+  carneros:
+    etiqueta: "Carneros"
+    medida: cabezas
+    especie: ovinos
+    categoria: "Carneros"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  ovejas:
+    etiqueta: "Ovejas"
+    medida: cabezas
+    especie: ovinos
+    categoria: "Ovejas"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  borregos:
+    etiqueta: "Borregos"
+    medida: cabezas
+    especie: ovinos
+    categoria: "Borregos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  capones:
+    etiqueta: "Capones"
+    medida: cabezas
+    especie: ovinos
+    categoria: "Capones"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  corderos:
+    etiqueta: "Corderos/as"
+    medida: cabezas
+    especie: ovinos
+    categoria: "Corderos/as"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  total_ovinos:
+    etiqueta: "Total ovinos"
+    medida: cabezas
+    especie: ovinos
+    categoria: "Total"
+    # `agregado` y no `componente`: es la suma de las cinco categorías y nunca se suma con
+    # ellas. Mismo criterio que "Total" en la base 48.
+    rol: agregado
+    unidad: cabezas
+    agregable: false
+  establecimientos:
+    etiqueta: "Establecimientos"
+    medida: establecimientos
+    especie: ovinos
+    categoria: null
+    rol: conteo
+    unidad: establecimientos
+    agregable: true
+  unidades_productivas:
+    etiqueta: "Unidades productivas"
+    medida: unidades_productivas
+    especie: ovinos
+    categoria: null
+    rol: conteo
+    unidad: unidades
+    agregable: true
+
+geo:
+  nivel: departamento
+  usa_ids_indec: false
+  normalizar_nombre: true
+  particion: sde
+  provincia_propia: 86
+  resolver: [86]
+  # La hoja no trae columna de provincia: toda la tabla es Santiago del Estero.
+  provincia_fija: "SANTIAGO DEL ESTERO"
+  agregados:
+    # La primera fila es el total provincial, embebido entre el detalle. Se MARCA, no se borra.
+    nombres_total: ["SANTIAGO DEL ESTERO"]
+
+salida:
+  staging: "staging/base-157-stocks-ovinos-departamento.parquet"
+  mart: hecho_stock_ovino
+  particiones: [provincia, anio]
+
+indice:
+  fuente: "SENASA"
+  titulo_en_el_indice: "Existencias ovinos por departamento"

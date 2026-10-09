@@ -70,11 +70,19 @@ departamentos:
     "BANDA": 86035
     "LA BANDA": 86035          # así lo nombra SENASA en la base 85; la base 9 dice "BANDA"
     "BELGRANO": 86042
+    # Erratas de tipeo de la hoja 2024 de la base 228 (vacunacion): la g salio q, igual
+    # que en "Santiaqo Del Estero" de la misma hoja. Van DESPUES del nombre bueno: la
+    # primera entrada de cada codigo es la canonica y es la que usa dim_geo.
+    "BELQRANO": 86042
     "CAPITAL": 86049
     "COPO": 86056
     "CHOYA": 86063
     "FIGUEROA": 86070
+    # Errata de tipeo de la hoja 2024 de la base 228.
+    "FIQUEROA": 86070
     "GENERAL TABOADA": 86077
+    # Nombre cortado en la hoja 2020 de la base 228.
+    "GENERAL TABOAD": 86077
     "GUASAYAN": 86084
     "JIMENEZ": 86091
     "JUAN F. IBARRA": 86098

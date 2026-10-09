@@ -18,6 +18,11 @@ carpeta: "Pivotal Repositorio/Bases de datos"
 # entrega del pipeline -> carpeta en SharePoint (dentro de `carpeta`)
 entregas:
   entrega-01: "00000 1ra entrega bases"
+  # Ganaderia (9-oct-2026). 24 archivos: los stocks, estratos y movimientos de las siete
+  # especies de la maqueta "Maqueta Ganad VF", mas vacunacion, Siocarnes y la cuenca
+  # lechera. Incluye de nuevo la base 48, que ya estaba en la entrega-01: gana la mas
+  # reciente. La lectura de la maqueta esta en docs/maqueta-ganaderia.md.
+  entrega-02: "00000 Entrega Beta Ganaderia"
 
 # Carpeta con las versiones del indice de JC ("Bases para Beta - N.xlsx"), dentro de `carpeta`.
 # Opcional: el build no la usa (solo la etapa `indice`). null = no se baja.

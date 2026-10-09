@@ -1,0 +1,128 @@
+# Base 229 · Existencias equinos por departamento, 2008 a 2025 (SENASA)
+#
+# Alimenta los dos primeros cuadros de la hoja "GanEqui": "Evolución de stocks equinos por
+# categoría y totales - años 2008 a 2.025" y "Evolución del stock equino total por
+# departamento - años 2.015 a 2.025".
+#
+# Se lee la hoja "Data", que es la tabla larga (año × departamento). Las otras dos hojas son
+# vistas armadas por JC sobre esa misma tabla y no se ingieren: los pivoteos los hace el
+# pipeline, nunca se leen de la planilla.
+#
+# La columna geográfica se llama "Departamento" y trae también la fila de SANTIAGO DEL ESTERO
+# con el total provincial, que se marca como agregado.
+
+base: 229
+slug: stocks-equinos
+familia: stock
+estado: activa
+
+archivo:
+  patron: "^229 - Existencias equinos"
+
+hojas:
+  datos:
+    - nombre: "Data"
+      header_fila: 2
+      ambito: sde
+      contenido: >
+        Serie 2008 a 2025: por cada anio, el total provincial y sus departamentos.
+      geo:
+        nivel: departamento
+  ignorar:
+    - nombre: "Hoja1"
+      motivo: >
+        Pivoteo que arma JC sobre la misma tabla: la serie provincial a la izquierda y la matriz departamento x anio a la derecha. Los pivoteos los hace el pipeline.
+    - nombre: "Hoja3"
+      motivo: >
+        Vacia (1x1).
+
+columnas:
+  "Año": anio
+  "Departamento": departamento
+  "PADRILLOS": padrillos
+  "CABALLOS": caballos
+  "YEGUAS": yeguas
+  "POTRILLOS/AS": potrillos
+  "MULAS": mulas
+  "BURROS/ASNOS": burros
+  "TOTAL ÉQUIDOS": total_equinos
+
+valores:
+  padrillos:
+    etiqueta: "Padrillos"
+    medida: cabezas
+    especie: equinos
+    categoria: "Padrillos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  caballos:
+    etiqueta: "Caballos"
+    medida: cabezas
+    especie: equinos
+    categoria: "Caballos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  yeguas:
+    etiqueta: "Yeguas"
+    medida: cabezas
+    especie: equinos
+    categoria: "Yeguas"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  potrillos:
+    etiqueta: "Potrillos/as"
+    medida: cabezas
+    especie: equinos
+    categoria: "Potrillos/as"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  mulas:
+    etiqueta: "Mulas"
+    medida: cabezas
+    especie: equinos
+    categoria: "Mulas"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  burros:
+    etiqueta: "Burros/asnos"
+    medida: cabezas
+    especie: equinos
+    categoria: "Burros/asnos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  total_equinos:
+    etiqueta: "Total équidos"
+    medida: cabezas
+    especie: equinos
+    categoria: "Total"
+    # Es la suma de las categorias y nunca se suma con ellas.
+    rol: agregado
+    unidad: cabezas
+    agregable: false
+
+geo:
+  nivel: departamento
+  usa_ids_indec: false
+  normalizar_nombre: true
+  particion: sde
+  provincia_propia: 86
+  resolver: [86]
+  # Las hojas no traen columna de provincia: toda la tabla es Santiago del Estero.
+  provincia_fija: "SANTIAGO DEL ESTERO"
+  agregados:
+    nombres_total: ["SANTIAGO DEL ESTERO"]
+
+salida:
+  staging: "staging/base-229-stocks-equinos.parquet"
+  mart: hecho_stock_equino
+  particiones: [provincia, anio]
+
+indice:
+  fuente: "SENASA"
+  titulo_en_el_indice: "Existencias equinos 2008 a 2025"

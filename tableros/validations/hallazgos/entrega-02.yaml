@@ -1,0 +1,664 @@
+descripcion: Hallazgos de las validaciones. GENERADO por pipeline/validations.py, no editar a mano. El
+  reporte para JC se escribe a partir de esto en validations/reportes/entrega-02.md
+entrega: entrega-02
+resumen:
+  bases_ingeridas:
+  - 48
+  - 89
+  - 90
+  - 91
+  - 152
+  - 153
+  - 154
+  - 156
+  - 157
+  - 158
+  - 176
+  - 177
+  - 178
+  - 179
+  - 183
+  - 184
+  - 185
+  - 186
+  - 188
+  - 194
+  - 228
+  - 229
+  - 230
+  - 232
+  filas_revisadas: 822305
+  checks_corridos: 581
+  bloqueantes: 2
+  observaciones: 13
+  informativos: 34
+hallazgos:
+- check: cobertura-entrega
+  severidad: bloqueante
+  base: null
+  titulo: Bases prometidas en el indice que no llegaron en los archivos
+  casos: 21
+  detalle: 'Numeros de base: 8, 12, 13, 14, 24, 25, 31, 40, 199, 203, 207, 208, 209, 210, 211, 213, 214,
+    215, 216, 217, 218'
+  propuesta: Pedirle los archivos a JC antes de publicar la entrega.
+  pregunta_jc: 'Estas bases estaban en la lista de la entrega y no vinieron: 8, 12, 13, 14, 24, 25, 31,
+    40, 199, 203, 207, 208, 209, 210, 211, 213, 214, 215, 216, 217, 218. Las mandas o las pasamos a la
+    proxima?'
+- check: valores-imposibles
+  severidad: bloqueante
+  base: 48
+  titulo: Cantidades con decimales donde solo puede haber numeros enteros
+  casos: 54
+  detalle: Media cabeza de ganado no existe. Suele pasar cuando la planilla trae un promedio en la columna
+    de cantidad.
+  ejemplos:
+  - 'Data stock SDE / AGUIRRE / Aguirre / cabezas / fila 256 del Excel: 44.954,20'
+  - 'Data stock SDE / AGUIRRE / Aguirre / cabezas / fila 256 del Excel: 89.636,20'
+  - 'Data stock SDE / ALBERDI / Alberdi / cabezas / fila 257 del Excel: 52.131,01'
+  - 'Data stock SDE / ALBERDI / Alberdi / cabezas / fila 257 del Excel: 139.955,00'
+  - 'Data stock SDE / AVELLANEDA / Avellaneda / cabezas / fila 259 del Excel: 5.005,64'
+  - 'Data stock SDE / AVELLANEDA / Avellaneda / cabezas / fila 259 del Excel: 10.199,63'
+  - 'Data stock SDE / BANDA / La Banda / cabezas / fila 269 del Excel: 15.330,00'
+  - 'Data stock SDE / BANDA / La Banda / cabezas / fila 269 del Excel: 30.989,00'
+  - 'Data stock SDE / BELGRANO / Belgrano / cabezas / fila 260 del Excel: 22.737,97'
+  - 'Data stock SDE / BELGRANO / Belgrano / cabezas / fila 260 del Excel: 51.180,97'
+  - 'Data stock SDE / CAPITAL / Capital / cabezas / fila 261 del Excel: 2.837,53'
+  - 'Data stock SDE / CAPITAL / Capital / cabezas / fila 261 del Excel: 7.721,53'
+  propuesta: No publicar esa columna hasta saber que significa.
+  pregunta_jc: Hay cantidades de cabezas con decimales. Es un promedio o un error?
+- check: cobertura-entrega
+  severidad: observacion
+  base: null
+  titulo: Archivos que llegaron sin estar en la lista de la entrega
+  casos: 24
+  detalle: 'Numeros de base: 48, 89, 90, 91, 152, 153, 154, 156, 157, 158, 176, 177, 178, 179, 183, 184,
+    185, 186, 188, 194, 228, 229, 230, 232'
+  propuesta: Confirmar con JC si entran en esta entrega o quedan para la siguiente.
+- check: drift
+  severidad: observacion
+  base: 8
+  titulo: Cambio de formato respecto de lo declarado en el indice
+  casos: 1
+  detalle: 'Dos diferencias contra el índice de JC (configs/manifiesto-indice.yaml, base 8), las dos registradas
+    y ninguna corregida. (1) El índice la da por PROMETIDA PARA LA ENTREGA-02 y sin archivo recibido;
+    el archivo llegó igual con la entrega-01 y el pipeline ya lo baja de SharePoint en cada publicación.
+    El manifiesto del índice va a seguir listándola como "prometida-no-recibida" hasta que indexador-contexto
+    lo regenere: NO es un problema de datos. (2) El índice declara frecuencia MENSUAL y el archivo trae
+    observaciones DIARIAS (5.655 fechas distintas entre 2017 y 2026). El grano bueno es el del archivo;
+    el mensual se calcula. El rango sí coincide: el índice promete 2017-01-01 a 2026-04-30 y el archivo
+    va de 2017-01-02 a 2026-04-09.'
+  propuesta: 'No se corrige el archivo: el pipeline ya sabe leerlo como viene.'
+- check: drift
+  severidad: observacion
+  base: 9
+  titulo: Cambio de formato respecto de lo declarado en el indice
+  casos: 1
+  detalle: 'El indice declara la hoja "CR" y el archivo la trae como "Calculos Ranking". Ademas el archivo
+    trae dos hojas no declaradas en el indice: "Modelo Analisis" (con dos espacios entre las palabras)
+    y "Hoja1" (vacia). No se corrige nada: queda registrado aca.'
+  propuesta: 'No se corrige el archivo: el pipeline ya sabe leerlo como viene.'
+- check: cobertura-temporal
+  severidad: observacion
+  base: 48
+  titulo: El archivo cubre mucho menos que lo que declara el indice
+  casos: 1
+  detalle: El indice dice que la fuente tiene datos desde 2007 hasta 2025. El archivo que llego arranca
+    en 2012 y termina en 2025.
+  propuesta: Publicar lo que llego y aclarar el periodo cubierto al pie.
+  pregunta_jc: El indice dice que esta base va desde 2007, pero el archivo arranca en 2012. Nos mandas
+    la serie larga o trabajamos con este recorte?
+- check: cobertura-temporal
+  severidad: observacion
+  base: 48
+  titulo: La columna unidades_productivas viene cargada solo en algunos periodos
+  casos: 10
+  detalle: De 14 periodos del archivo, unidades_productivas tiene dato en 4. En los otros la celda viene
+    vacia, que no es lo mismo que cero.
+  ejemplos:
+  - 'con dato: 2022, 2023, 2024, 2025'
+  propuesta: Mostrar esa medida solo en los periodos que la tienen, nunca como cero en los demas.
+  pregunta_jc: La columna unidades_productivas esta cargada solo en 2022, 2023, 2024, 2025. La fuente
+    empezo a informarla ahi o se puede conseguir para los anios anteriores?
+- check: drift
+  severidad: observacion
+  base: 48
+  titulo: Cambio de formato respecto de lo declarado en el indice
+  casos: 1
+  detalle: 'El indice declara la hoja "Data SDE" y el archivo la trae como "Data stock SDE". Ademas el
+    archivo suma dos hojas no declaradas: "Modelo An 01" y "Estratificación".'
+  propuesta: 'No se corrige el archivo: el pipeline ya sabe leerlo como viene.'
+- check: serie
+  severidad: observacion
+  base: 48
+  titulo: El mismo numero repetido en 5 o mas periodos seguidos
+  casos: 1
+  detalle: Para un mismo lugar y una misma categoria, el valor no cambia nunca en varios periodos seguidos.
+    Suele indicar una estimacion fija mas que una medicion.
+  ejemplos:
+  - 'QUEBRACHOS, Bueyes: cabezas = 2 en 6 periodos (2018, 2019, 2021, 2022, 2024, 2025)'
+  propuesta: Publicar igual, con nota al pie de que hay valores estimados.
+  pregunta_jc: Hay lugares donde el mismo valor se repite exactamente todos los anos. Son estimaciones
+    de la fuente?
+- check: drift
+  severidad: observacion
+  base: 53
+  titulo: Cambio de formato respecto de lo declarado en el indice
+  casos: 1
+  detalle: 'El perfil con el que se planificó la ingesta decía 3 hojas de datos (Sgo 23, 24 y 25), 53.512
+    filas y "NRO. DTV" en la segunda columna. El archivo trae CINCO hojas (Sgo 21 a Sgo 25), 102.380 filas
+    de detalle y en la segunda columna "mes", no el número de DTV. Además las hojas Sgo 21 y Sgo 22 titulan
+    la primera columna "FECHA " (con espacio) y las otras tres "FECHA EMISIÓN". Todo se resuelve en este
+    config; el Excel no se toca. El número de DTV no existe en esta base: `nro_dtv` queda nulo en las
+    102.380 filas.'
+  propuesta: 'No se corrige el archivo: el pipeline ya sabe leerlo como viene.'
+- check: drift
+  severidad: observacion
+  base: 56
+  titulo: Cambio de formato respecto de lo declarado en el indice
+  casos: 1
+  detalle: 'En la posición donde las otras DTV traen "NRO. DTV" esta base trae "AÑO". El número de DTV
+    no existe en el archivo: `nro_dtv` queda nulo en las 635 filas, así que en esta base no se puede chequear
+    si una misma declaración aparece repetida. Se resuelve en el config; el Excel no se toca.'
+  propuesta: 'No se corrige el archivo: el pipeline ya sabe leerlo como viene.'
+- check: drift
+  severidad: observacion
+  base: 57
+  titulo: Cambio de formato respecto de lo declarado en el indice
+  casos: 1
+  detalle: 'El header no está en la misma fila en las cinco hojas. "Sgo 25" lleva en la fila 1 un rótulo
+    suelto ("Cebolla Santiago 2025", en la columna 7) y el header en la 2. "Sgo 21" tiene la fila 1 completamente
+    vacía y el header también en la 2: esto último NO estaba en el perfil con el que se planificó la ingesta
+    y se descubrió al perfilar el archivo. Las otras tres tienen el header en la fila 1. Cada hoja declara
+    su `header_fila`.'
+  propuesta: 'No se corrige el archivo: el pipeline ya sabe leerlo como viene.'
+- check: drift
+  severidad: observacion
+  base: 75
+  titulo: Cambio de formato respecto de lo declarado en el indice
+  casos: 1
+  detalle: 'La hoja "Data" tiene la fila 1 completamente vacía y el header en la fila 2. El perfil con
+    el que se planificó la ingesta la daba con header en la fila 1. Se resuelve con `header_fila: 2`;
+    el Excel no se toca.'
+  propuesta: 'No se corrige el archivo: el pipeline ya sabe leerlo como viene.'
+- check: duplicados
+  severidad: observacion
+  base: 89
+  titulo: Filas exactamente iguales, repetidas en el archivo
+  casos: 87250
+  detalle: 'Son filas donde todo coincide: mismo lugar, mismo periodo, mismo producto y mismo numero.'
+  ejemplos:
+  - base_id=89 | hoja=2025 | ambito=sde | grano_tiempo=anio_mes | anio=2025 | mes=2 | provincia=sde |
+    provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=MORENO
+    | geo_nombre=MORENO | geo_id=86119 | es_agregado_geo=False | zona_destino=ZONA 10                        B
+    | raza=Bovino Criollo | especie=bovinos | categoria=Bovino Vaca Regular (6 o más dientes) | variable=precio_cabeza
+    | medida=precio | medida_etiqueta=Precio por cabeza | unidad=$/cab | agregable=False | fuente=SENASA
+    - Siocarnes | veces=1521
+  - base_id=89 | hoja=2025 | ambito=sde | grano_tiempo=anio_mes | anio=2025 | mes=2 | provincia=sde |
+    provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=MORENO
+    | geo_nombre=MORENO | geo_id=86119 | es_agregado_geo=False | zona_destino=ZONA 10                        B
+    | raza=Bovino Criollo | especie=bovinos | categoria=Bovino Vaca Regular (6 o más dientes) | variable=operaciones
+    | medida=operaciones | medida_etiqueta=Operaciones | unidad=operaciones | agregable=True | valor=1.0
+    | fuente=SENASA - Siocarnes | veces=1521
+  - base_id=89 | hoja=2024 | ambito=sde | grano_tiempo=anio_mes | anio=2024 | mes=3 | provincia=sde |
+    provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=ROBLES
+    | geo_nombre=ROBLES | geo_id=86161 | es_agregado_geo=False | zona_destino=ZONA 10                        B
+    | raza=Bovino Criollo | especie=bovinos | categoria=Bovino Vaca Especial Joven Liviana hasta 430 kilos
+    (6 dientes) | variable=operaciones | medida=operaciones | medida_etiqueta=Operaciones | unidad=operaciones
+    | agregable=True | valor=1.0 | fuente=SENASA - Siocarnes | veces=990
+  - base_id=89 | hoja=2024 | ambito=sde | grano_tiempo=anio_mes | anio=2024 | mes=3 | provincia=sde |
+    provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=ROBLES
+    | geo_nombre=ROBLES | geo_id=86161 | es_agregado_geo=False | zona_destino=ZONA 10                        B
+    | raza=Bovino Criollo | especie=bovinos | categoria=Bovino Vaca Especial Joven Liviana hasta 430 kilos
+    (6 dientes) | variable=precio_cabeza | medida=precio | medida_etiqueta=Precio por cabeza | unidad=$/cab
+    | agregable=False | fuente=SENASA - Siocarnes | veces=990
+  - base_id=89 | hoja=2025 | ambito=sde | grano_tiempo=anio_mes | anio=2025 | mes=2 | provincia=sde |
+    provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=MORENO
+    | geo_nombre=MORENO | geo_id=86119 | es_agregado_geo=False | zona_destino=ZONA 10                        B
+    | raza=Bovino Criollo | especie=bovinos | categoria=Bovino Vaca Regular (6 o más dientes) | variable=cabezas
+    | medida=cabezas | medida_etiqueta=Cabezas comercializadas | unidad=cabezas | agregable=True | valor=1.0
+    | fuente=SENASA - Siocarnes | veces=975
+  - base_id=89 | hoja=2025 | ambito=sde | grano_tiempo=anio_mes | anio=2025 | mes=2 | provincia=sde |
+    provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=AGUIRRE
+    | geo_nombre=AGUIRRE | geo_id=86007 | es_agregado_geo=False | zona_destino=ZONA 10                        B
+    | raza=Bovino Criollo | especie=bovinos | categoria=Bovino Vaca Regular (6 o más dientes) | variable=operaciones
+    | medida=operaciones | medida_etiqueta=Operaciones | unidad=operaciones | agregable=True | valor=1.0
+    | fuente=SENASA - Siocarnes | veces=905
+  - base_id=89 | hoja=2025 | ambito=sde | grano_tiempo=anio_mes | anio=2025 | mes=2 | provincia=sde |
+    provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=AGUIRRE
+    | geo_nombre=AGUIRRE | geo_id=86007 | es_agregado_geo=False | zona_destino=ZONA 10                        B
+    | raza=Bovino Criollo | especie=bovinos | categoria=Bovino Vaca Regular (6 o más dientes) | variable=precio_cabeza
+    | medida=precio | medida_etiqueta=Precio por cabeza | unidad=$/cab | agregable=False | fuente=SENASA
+    - Siocarnes | veces=905
+  - base_id=89 | hoja=2022 | ambito=sde | grano_tiempo=anio | anio=2022 | provincia=sde | provincia_nombre=SANTIAGO
+    DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=JIMENEZ | geo_nombre=JIMENEZ
+    | geo_id=86091 | es_agregado_geo=False | zona_destino=ZONA 10                        B | raza=Braford
+    | especie=bovinos | categoria=Bovino Vaquillona Regular (4 dientes) | variable=precio_cabeza | medida=precio
+    | medida_etiqueta=Precio por cabeza | unidad=$/cab | agregable=False | fuente=SENASA - Siocarnes |
+    veces=860
+  - base_id=89 | hoja=2022 | ambito=sde | grano_tiempo=anio | anio=2022 | provincia=sde | provincia_nombre=SANTIAGO
+    DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=JIMENEZ | geo_nombre=JIMENEZ
+    | geo_id=86091 | es_agregado_geo=False | zona_destino=ZONA 10                        B | raza=Braford
+    | especie=bovinos | categoria=Bovino Vaquillona Regular (4 dientes) | variable=operaciones | medida=operaciones
+    | medida_etiqueta=Operaciones | unidad=operaciones | agregable=True | valor=1.0 | fuente=SENASA -
+    Siocarnes | veces=860
+  - base_id=89 | hoja=2023 | ambito=sde | grano_tiempo=anio_mes | anio=2023 | mes=5 | provincia=sde |
+    provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=ROBLES
+    | geo_nombre=ROBLES | geo_id=86161 | es_agregado_geo=False | zona_destino=ZONA 10                        B
+    | raza=Bovino Criollo | especie=bovinos | categoria=Bovino Vaca Especial Joven Liviana hasta 430 kilos
+    (6 dientes) | variable=operaciones | medida=operaciones | medida_etiqueta=Operaciones | unidad=operaciones
+    | agregable=True | valor=1.0 | fuente=SENASA - Siocarnes | veces=822
+  propuesta: 'Publicar sin ellas seria corregir en silencio: se dejan y se pregunta.'
+  pregunta_jc: Hay filas repetidas identicas. Se pueden descartar las copias?
+- check: duplicados
+  severidad: observacion
+  base: 90
+  titulo: Filas exactamente iguales, repetidas en el archivo
+  casos: 3163
+  detalle: 'Son filas donde todo coincide: mismo lugar, mismo periodo, mismo producto y mismo numero.'
+  ejemplos:
+  - base_id=90 | hoja=2024 | ambito=sde | grano_tiempo=anio_mes | anio=2024 | mes=10 | provincia=sde |
+    provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=JUAN
+    F. IBARRA | geo_nombre=JUAN F. IBARRA | geo_id=86098 | es_agregado_geo=False | zona_destino=ZONA 6                         P
+    | raza=LÍNEA HÍBRIDA MATERNA | especie=porcinos | categoria=Porcina Capón | variable=precio_cabeza
+    | medida=precio | medida_etiqueta=Precio por cabeza | unidad=$/cab | agregable=False | fuente=SENASA
+    - Siocarnes | veces=289
+  - base_id=90 | hoja=2024 | ambito=sde | grano_tiempo=anio_mes | anio=2024 | mes=10 | provincia=sde |
+    provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=JUAN
+    F. IBARRA | geo_nombre=JUAN F. IBARRA | geo_id=86098 | es_agregado_geo=False | zona_destino=ZONA 6                         P
+    | raza=LÍNEA HÍBRIDA MATERNA | especie=porcinos | categoria=Porcina Capón | variable=operaciones |
+    medida=operaciones | medida_etiqueta=Operaciones | unidad=operaciones | agregable=True | valor=1.0
+    | fuente=SENASA - Siocarnes | veces=289
+  - base_id=90 | hoja=2025 | ambito=sde | grano_tiempo=anio_mes | anio=2025 | mes=1 | provincia=sde |
+    provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=SAN
+    MARTIN | geo_nombre=SAN MARTIN | geo_id=86175 | es_agregado_geo=False | zona_destino=ZONA 6                         P
+    | raza=LÍNEA HÍBRIDA MATERNA | especie=porcinos | categoria=Porcina Capón | variable=precio_cabeza
+    | medida=precio | medida_etiqueta=Precio por cabeza | unidad=$/cab | agregable=False | fuente=SENASA
+    - Siocarnes | veces=241
+  - base_id=90 | hoja=2025 | ambito=sde | grano_tiempo=anio_mes | anio=2025 | mes=1 | provincia=sde |
+    provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=SAN
+    MARTIN | geo_nombre=SAN MARTIN | geo_id=86175 | es_agregado_geo=False | zona_destino=ZONA 6                         P
+    | raza=LÍNEA HÍBRIDA MATERNA | especie=porcinos | categoria=Porcina Capón | variable=operaciones |
+    medida=operaciones | medida_etiqueta=Operaciones | unidad=operaciones | agregable=True | valor=1.0
+    | fuente=SENASA - Siocarnes | veces=241
+  - base_id=90 | hoja=2023 | ambito=sde | grano_tiempo=anio | anio=2023 | provincia=sde | provincia_nombre=SANTIAGO
+    DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=JUAN F. IBARRA | geo_nombre=JUAN
+    F. IBARRA | geo_id=86098 | es_agregado_geo=False | zona_destino=ZONA 6                         P |
+    raza=YORKSHIRE / LARGE-WHITE | especie=porcinos | categoria=Porcina Capón | variable=precio_cabeza
+    | medida=precio | medida_etiqueta=Precio por cabeza | unidad=$/cab | agregable=False | fuente=SENASA
+    - Siocarnes | veces=232
+  - base_id=90 | hoja=2023 | ambito=sde | grano_tiempo=anio | anio=2023 | provincia=sde | provincia_nombre=SANTIAGO
+    DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=JUAN F. IBARRA | geo_nombre=JUAN
+    F. IBARRA | geo_id=86098 | es_agregado_geo=False | zona_destino=ZONA 6                         P |
+    raza=YORKSHIRE / LARGE-WHITE | especie=porcinos | categoria=Porcina Capón | variable=operaciones |
+    medida=operaciones | medida_etiqueta=Operaciones | unidad=operaciones | agregable=True | valor=1.0
+    | fuente=SENASA - Siocarnes | veces=232
+  - base_id=90 | hoja=2023 | ambito=sde | grano_tiempo=anio | anio=2023 | provincia=sde | provincia_nombre=SANTIAGO
+    DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=SAN MARTIN | geo_nombre=SAN MARTIN
+    | geo_id=86175 | es_agregado_geo=False | zona_destino=ZONA 6                         P | raza=LÍNEA
+    HÍBRIDA MATERNA | especie=porcinos | categoria=Porcina Capón | variable=precio_cabeza | medida=precio
+    | medida_etiqueta=Precio por cabeza | unidad=$/cab | agregable=False | fuente=SENASA - Siocarnes |
+    veces=220
+  - base_id=90 | hoja=2023 | ambito=sde | grano_tiempo=anio | anio=2023 | provincia=sde | provincia_nombre=SANTIAGO
+    DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=SAN MARTIN | geo_nombre=SAN MARTIN
+    | geo_id=86175 | es_agregado_geo=False | zona_destino=ZONA 6                         P | raza=LÍNEA
+    HÍBRIDA MATERNA | especie=porcinos | categoria=Porcina Capón | variable=operaciones | medida=operaciones
+    | medida_etiqueta=Operaciones | unidad=operaciones | agregable=True | valor=1.0 | fuente=SENASA -
+    Siocarnes | veces=220
+  - base_id=90 | hoja=2024 | ambito=sde | grano_tiempo=anio_mes | anio=2024 | mes=10 | provincia=sde |
+    provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=JUAN
+    F. IBARRA | geo_nombre=JUAN F. IBARRA | geo_id=86098 | es_agregado_geo=False | zona_destino=ZONA 6                         P
+    | raza=LÍNEA HÍBRIDA MATERNA | especie=porcinos | categoria=Porcina Capón | variable=precio_kg | medida=precio
+    | medida_etiqueta=Precio por kilo en pie | unidad=$/kg | agregable=False | valor=960.0 | fuente=SENASA
+    - Siocarnes | veces=202
+  - base_id=90 | hoja=2023 | ambito=sde | grano_tiempo=anio | anio=2023 | provincia=sde | provincia_nombre=SANTIAGO
+    DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=JUAN F. IBARRA | geo_nombre=JUAN
+    F. IBARRA | geo_id=86098 | es_agregado_geo=False | zona_destino=ZONA 6                         P |
+    raza=LÍNEA HÍBRIDA MATERNA | especie=porcinos | categoria=Porcina Capón | variable=precio_cabeza |
+    medida=precio | medida_etiqueta=Precio por cabeza | unidad=$/cab | agregable=False | fuente=SENASA
+    - Siocarnes | veces=197
+  propuesta: 'Publicar sin ellas seria corregir en silencio: se dejan y se pregunta.'
+  pregunta_jc: Hay filas repetidas identicas. Se pueden descartar las copias?
+- check: cobertura-hojas
+  severidad: informativo
+  base: 8
+  titulo: Hojas del archivo que no se leyeron
+  casos: 2
+  ejemplos:
+  - 'Modelo analisis: Especificación de negocio escrita por JC, 6 filas. Define los cuatro niveles de
+    filtrado del panel de precios (Hortalizas/Frutas, Especie, rango de meses "sólo donde aparece la especie
+    para evitar resultados vacíos", Variedad con opción "todas"), la salida ("Genera tabla y gráficos
+    de líneas") y el alcance diferenciado de la INTRANET (ahí también se consultan VARIEDAD y TAMAÑO).
+    No son datos: va a constructor-reglas para convertirse en specs/modelos/.'
+  - 'Zana Mes: Ejemplo trabajado por JC: 43 valores de precio/kg mensual de Zanahoria Chantenay agrupados
+    por año, de julio 2017 a noviembre 2025, tipeados a mano (las celdas no tienen fórmula ni tabla dinámica
+    detrás). NO es dato de la fuente y no se ingiere; se usó como control de la agregación. Ver la nota
+    `control` al pie: la verificación NO cerró y quedó una pregunta abierta para JC.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 9
+  titulo: Hojas del archivo que no se leyeron
+  casos: 3
+  ejemplos:
+  - 'Calculos Ranking: Hoja de calculo del propio Excel: replica las filas de "Soja total" de la hoja
+    A y arma rankings de departamentos con tablas lado a lado. Los rankings y variaciones se computan
+    en marts, nunca se ingieren de la planilla (CLAUDE.md). Verificado el 2026-07-30.'
+  - 'Modelo  Analisis: Especificacion de negocio escrita por JC (que graficos, que rankings, que variaciones,
+    y la clasificacion verano/invierno de cada cultivo). No son datos: va a constructor-reglas para convertirse
+    en specs/modelos/base-9-*.yaml.'
+  - 'Hoja1: Hoja vacia (dims A1:A1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 43
+  titulo: Hojas del archivo que no se leyeron
+  casos: 2
+  ejemplos:
+  - 'Modelo analisis: Es la tabla dinamica con la que JC armo su maqueta: meses x bandas, en ha y en %,
+    filtrada por quincena "1ra" (celda I2). No son datos nuevos, son los mismos de "Santiago 2" agregados.
+    Lo que SI aporta es una regla de negocio -que su "promedio mensual" es en realidad la primera quincena-
+    y eso ya esta escrito en specs/modelos/_comunes-base-43.yaml.'
+  - 'Hoja2: hoja de trabajo suelta, 30 filas sin encabezado util'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: agregado-vs-partes
+  severidad: informativo
+  base: 48
+  titulo: '''bovinos total'' coincide con la suma de sus partes'
+  casos: 392
+  detalle: Verificado en 392 combinaciones de lugar y periodo.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 48
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo An 01: Especificacion de negocio escrita por JC: la tabla de composicion del stock por categoria
+    comparando dos anios, con participaciones, y una columna ZONA que agrupa los departamentos en zonas
+    productivas. No son datos: va a constructor-reglas para convertirse en specs/modelos/48-*.yaml. La
+    zonificacion NO existe en ninguna otra parte del repo y hay que levantarla de ahi.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-temporal
+  severidad: informativo
+  base: 48
+  titulo: Periodos que trae el archivo
+  casos: 14
+  detalle: De 2012 a 2025.
+  ejemplos:
+  - '2012: 308 filas'
+  - '2013: 308 filas'
+  - '2014: 308 filas'
+  - '2015: 308 filas'
+  - '2016: 308 filas'
+  - '2017: 308 filas'
+  - '2018: 308 filas'
+  - '2019: 308 filas'
+  - '2020: 308 filas'
+  - '2021: 308 filas'
+  - '2022: 308 filas'
+  - '2023: 308 filas'
+- check: serie
+  severidad: informativo
+  base: 48
+  titulo: Saltos grandes de un periodo al siguiente (mas de 5x)
+  casos: 66
+  detalle: 'Saltos asi suelen ser reales: en agricultura se cambia de cultivo segun el precio y la lluvia,
+    y en ganaderia se mueve o se recategoriza la hacienda. Se listan para que JC confirme los mas grandes.'
+  ejemplos:
+  - 'JIMENEZ, Toritos: cabezas pasa de 635 en 2020 a 4.098 en 2021'
+  - 'JIMENEZ, Toritos: cabezas pasa de 4.098 en 2021 a 781 en 2022'
+  - 'GUASAYAN, Novillitos: cabezas pasa de 406 en 2013 a 2.779 en 2014'
+  - 'CAPITAL, Terneros: cabezas pasa de 259 en 2015 a 2.039 en 2016'
+  - 'GUASAYAN, Novillitos: cabezas pasa de 2.085 en 2012 a 406 en 2013'
+  - 'CAPITAL, Novillitos: cabezas pasa de 232 en 2014 a 1.700 en 2015'
+  - 'CAPITAL, Terneras: cabezas pasa de 1.703 en 2018 a 270 en 2019'
+  - 'LORETO, Terneros: cabezas pasa de 255 en 2014 a 1.645 en 2015'
+  - 'CHOYA, Toritos: cabezas pasa de 1.232 en 2024 a 121 en 2025'
+  - 'COPO, Toritos: cabezas pasa de 46 en 2020 a 945 en 2021'
+  - 'SALAVINA, Toritos: cabezas pasa de 828 en 2021 a 54 en 2022'
+  - 'GUASAYAN, Novillos: cabezas pasa de 916 en 2016 a 154 en 2017'
+  propuesta: Publicar sin tocar. Es informacion de contexto para leer los graficos.
+- check: totales-embebidos
+  severidad: informativo
+  base: 48
+  titulo: Totales de provincia que si cierran contra la suma de departamentos
+  casos: 154
+  detalle: De 154 comparaciones, 154 cierran dentro del 0,50%.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 53
+  titulo: Hojas del archivo que no se leyeron
+  casos: 2
+  ejemplos:
+  - 'Modelo analisis: Especificación de negocio escrita por JC, y la más completa de todo el repo para
+    esta familia: define el modelo de TODAS las DTV ("ESTO ES APLICABLE A TODOS LOS PRODUCTOS POR DTV").
+    Pide convertir los kg a toneladas, unidad temporal mes y año, unidades geográficas "a) Total provincia
+    (sumatoria) b) Total x departamento", visualización por producto con mapa y selección desde una lista,
+    total provincial abajo, selector de año y variaciones. Trae además tablas 2021 ya calculadas a mano
+    que sirven de control de la ingesta: ver nota `control`. No son datos: va a constructor-reglas para
+    convertirse en specs/modelos/base-53-*.yaml.'
+  - 'Hoja1: Hoja vacía (1 fila x 1 columna).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 56
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo analisis: Hoja de especificación de JC. Acá solo dice "MISMO MODELO QUE DTV DE ALGODÓN": la
+    regla completa está en la hoja Modelo analisis de la base 53. Va a constructor-reglas como herencia
+    de spec (`igual_que: base-53`), no como datos.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 57
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Analisis: Hoja de especificación de JC (acá escrita "Modelo Analisis", con A mayúscula y sin
+    tilde). Solo dice "MISMO MODELO QUE DTV DE ALGODÓN": la regla completa está en la base 53. Va a constructor-reglas
+    como herencia de spec, no como datos.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 75
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo analisis: Hoja de especificación de JC. Solo dice "MISMO MODELO QUE DTV DE ALGODÓN": la regla
+    completa está en la base 53. Va a constructor-reglas como herencia de spec.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 85
+  titulo: Hojas del archivo que no se leyeron
+  casos: 2
+  ejemplos:
+  - 'Modelo Analisis: Especificacion de negocio escrita por JC: que cortes quiere ver (movimientos totales
+    sin introduccion, movimientos internos, participacion por categoria sobre el total) y la instruccion
+    "AGREGAR TODAS LAS OPERACIONES DE VARIACIONES COMO EN AGRICOLA". No son datos: va a constructor-reglas
+    para convertirse en specs/modelos/base-85-*.yaml. Sus tablas ya estan calculadas a mano y sirven de
+    control: ver nota `control`.'
+  - 'Hoja2: Hoja vacia (1 fila x 1 columna).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 89
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo analisis: Especificacion de negocio de JC: los pivoteos que quiere ver (cabezas y toneladas
+    comercializadas por departamento y por raza, con su participacion sobre el total). No son datos, y
+    los pivoteos los computa el pipeline. Sirven de control.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 90
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Analisis: Especificacion de negocio de JC: los pivoteos que quiere ver (cabezas y toneladas
+    comercializadas por departamento y por raza, con su participacion sobre el total). No son datos, y
+    los pivoteos los computa el pipeline. Sirven de control.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 91
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Hoja2: Vacia (1x1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 152
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Analisis: Hoja vacia (1x1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 153
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Analisis: Hoja vacia (1x1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 154
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Analisis: Hoja vacia (1x1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 156
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Análisis: Hoja vacia (1x1): JC no escribio especificacion en esta base.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 157
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Análisis: Hoja vacía (1x1). En las otras bases de JC esta hoja trae su especificación de negocio;
+    en ésta no escribió nada.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 158
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Analisis: Hoja vacia (1x1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 176
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Hoja3: Copia de la hoja DATA con el encabezado una fila mas arriba. Se lee una sola.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 177
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Análisis: Hoja vacia (1x1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 178
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Análisis: Hoja vacia (1x1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 179
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Análisis: Hoja vacia (1x1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 183
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Análisis: Hoja vacia (1x1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 184
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Analisis: Glosario que escribió JC con la definición de dos siglas: UFC (Unidad Formadora
+    de Colonias, "medida estándar de microbiología en una muestra de leche") y RCS (Recuento de Células
+    Somáticas). No son datos; las definiciones van al glosario del sitio (site/glosario.yaml) para que
+    aparezcan como aclaración al pasar el mouse.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 185
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Hoja2: Vacia (1x1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 186
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'FUENTE: Dos filas con el link a la pagina de MAGyP de donde sale la serie.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 188
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'FUENTE: Dos filas con el link a la pagina de MAGyP.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 228
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'SDE 1a Vac: Resumen provincial por anio que arma JC sumando las hojas de cada anio. No se ingiere:
+    los agregados los computa el pipeline sobre el detalle departamental, nunca se leen de la planilla.
+    Sirve igual como control -la suma de cada anio tiene que dar su fila-.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 229
+  titulo: Hojas del archivo que no se leyeron
+  casos: 2
+  ejemplos:
+  - 'Hoja1: Pivoteo que arma JC sobre la misma tabla: la serie provincial a la izquierda y la matriz departamento
+    x anio a la derecha. Los pivoteos los hace el pipeline.'
+  - 'Hoja3: Vacia (1x1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 232
+  titulo: Hojas del archivo que no se leyeron
+  casos: 2
+  ejemplos:
+  - 'Analisis: Pivoteos que arma JC sobre las hojas de datos (matriz departamento x anio y composicion
+    por categoria). Los pivoteos los hace el pipeline.'
+  - 'Hoja11: Vacia.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.

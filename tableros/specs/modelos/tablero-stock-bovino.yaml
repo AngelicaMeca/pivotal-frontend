@@ -12,10 +12,14 @@
 id: tablero-stock-bovino
 tipo: tablero
 base: 48
-seccion: stock-bovino
+# La seccion paso a llamarse `bovinos` con la maqueta de ganaderia del 9-oct-2026: el
+# area se reorganizo por ESPECIE y esta pagina es la primera de las ocho de bovinos
+# ("Stocks"). El id del spec no se renombra para no perder la trazabilidad de su
+# historia; lo que manda es `seccion`.
+seccion: bovinos
 comunes: _comunes-base-48
 
-titulo: "Stock bovino"
+titulo: "Bovinos"
 subtitulo: "Provincia de Santiago del Estero · existencias al cierre de cada año"
 
 # ---------------------------------------------------------------------------
@@ -28,16 +32,23 @@ subtitulo: "Provincia de Santiago del Estero · existencias al cierre de cada a�
 # Ninguno se promedia entre departamentos: los ratios se recalculan sobre los totales
 # provinciales, que es la unica forma correcta de agregarlos.
 indicadores:
+  # Los dos primeros son los de JC, textuales de su banda de KPIs: "Stock 1.083.349 cab" y
+  # "Unidades Productivas 9.009". Los otros dos de su hoja son el departamento LIDER en
+  # stock (Moreno) y en UP (Copo), que necesitan un tipo de indicador que el sitio todavia
+  # no tiene -el maximo sobre una dimension- y quedan en el backlog 83. Mientras tanto van
+  # dos de su propia lectura del rodeo (el bloque "RELACIONES ENTRE CATEGORIAS"), que es
+  # mejor que dejar dos tarjetas vacias.
   - medida: cabezas
     categoria: "Total"
     etiqueta: "Stock total"
+  - medida: unidades_productivas
+    categoria: "Total"
+    etiqueta: "Unidades productivas"
   - medida: cabezas
     categoria: "Vacas"
     etiqueta: "Vientres"
   - relacion: destete
     etiqueta: "Terneros por vaca"
-  - relacion: participacion_vientres
-    etiqueta: "Vacas sobre el stock"
 
 # ---------------------------------------------------------------------------
 # CRUZAR DATOS: la comparacion adentro del zoom (Francisco, 24-sep-2026)
@@ -149,75 +160,77 @@ zoom_de_los_cuadros:
     imprime: el PDF es siempre el tablero completo con la seleccion vigente.
 
 # ---------------------------------------------------------------------------
-# PANELES
+# PANELES - la hoja "GanBov ST" de la maqueta de ganaderia
 # ---------------------------------------------------------------------------
+# La hoja se lee por los anclajes de sus imagenes, y son TRES PARES: a la izquierda un
+# grafico y a la derecha su tabla. Arriba de todo, el mapa a la izquierda y la tabla por
+# departamento a la derecha. No es una grilla de cuatro cuadros como los tableros
+# anteriores: es una pagina de lectura, grafico y numero al lado.
+#
+# El cuarto cuadro de JC, "Bovinos, caravanas en existencia y promedio de solicitudes"
+# (fila 91 de su hoja), NO se construye: no hay base de caravanas en la entrega. Backlog 84.
 paneles:
-  anillo:
-    titulo: "Participación por zona"
-    # Las seis zonas productivas de JC (_comunes-base-48.zonas). Es la unica vista del sitio
-    # que usa su zonificacion, y es justamente lo que el pidio que "va al texto".
-    agrupar_por: zona
-    # Zoom: este cuadro se puede ampliar a pantalla completa (ver `zoom_de_los_cuadros`).
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  alto: fluye
 
   mapa:
     titulo: "Stock por departamento"
-    # Zoom: este cuadro se puede ampliar a pantalla completa (ver `zoom_de_los_cuadros`).
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
     # El color lo fija el protocolo por TIPO de variable: cabezas va en la rampa marron, la
     # misma que usa la base 85. No se elige aca.
     medida: cabezas
-
-  tendencia:
-    # CRUZAR DATOS (ver `cruzar_datos`): los dos desplegables que el zoom le pone a
-    # este cuadro. Se compara por CATEGORÍA: vacas contra novillos sobre los mismos años.
-    comparacion:
-      filtro: categoria
-      rotulo: "Comparar con"
-      ninguno: "Sin comparación"
-      # Plantillas de texto con slots. El navegador SUSTITUYE, no escribe: la leyenda,
-      # el título y la nota del cuadro comparado salen de acá.
-      plantilla_serie: "{valor} · {medida}"
-      plantilla_titulo: "{titulo} · comparado con {otro}"
-      plantilla_titulo_medida: "{titulo} · con {medida}"
-      plantilla_nota: "{nota} {otra}"
-      nota: "La comparación se ve solo acá: «Generar PDF» imprime siempre el tablero completo."
-      # Sin segunda medida: esta base informa una sola variable, las existencias en cabezas. Un desplegable con una sola opción no se dibuja.
-    titulo: "Evolución del stock"
-    medida: cabezas
-    medida_nombre: "Cabezas"    # como se llama la línea en la leyenda al comparar
-    # 14 anios (2012-2025) dan una serie con forma propia, asi que va anual y no mensual como
-    # en el tablero de hacienda: ahi el problema era que la base tenia solo cuatro anios.
-    grano: anio
-    # Zoom: este cuadro se puede ampliar a pantalla completa (ver `zoom_de_los_cuadros`).
+    rotulo_accion: "Seleccione departamento"
     acciones:
       - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
 
-  top:
-    titulo: "Top 5 departamentos"
-    medida: cabezas
-    cuantos: 5
+  tabla-departamentos:
+    # Titulo literal de JC (cuadro de texto de la fila 16 de su hoja).
+    titulo: "Sgo. del Estero - Stocks bovinos por categoría, totales y cantidad de UP por departamento - año {anio}"
+    encabezado_geo: "Departamento"
+    encabezado_total: "Total Cab"
+    encabezado_up: "Total UP"
+    # La primera fila de su tabla, resaltada.
+    rotulo_total: "TOTAL PROV"
+    nota: >
+      El guion marca las categorías sin existencias en ese departamento, que no es lo mismo
+      que un dato que la fuente no informó (ése sale como S/D).
 
-  # Misma disposicion que los otros dos tableros: la forma se mantiene entre bases (JC f39-f41,
-  # "los formatos se mantienen SIEMPRE, sino seria un carnaval"). Lo que cambia es que muestra
-  # cada panel, no como se ven.
-  # Los `badge` de tipo de gráfico se sacaron el 10-ago-2026 por regla de JC
-  # (_protocolo-presentacion.formato_v1.sin_leyendas_de_tipo_de_grafico).
+  evolucion-total:
+    # Titulo que JC escribe DENTRO de la imagen del gráfico, no en una celda.
+    titulo: "Sgo del Estero - Evolución del stock total bovinos - años {desde} a {hasta}"
+    medida_nombre: "Stock total"
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+
+  tabla-evolucion:
+    titulo: "Sgo. del Estero - Evolución del stock bovino por categoría y totales - años {desde} a {hasta}"
+    encabezado_anio: ""
+    encabezado_total: "Total Cab"
+
+  evolucion-categorias:
+    titulo: "Sgo del Estero - Evolución del stock por categoría años {desde} a {hasta}"
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+
+  tabla-departamento-anios:
+    titulo: "Sgo. del Estero - Evolución del stock bovino total por departamento - años {desde} a {hasta}"
+    encabezado_geo: "Departamento"
+    rotulo_total: "TOTAL PROV"
+    # JC arranca esta tabla en 2015 y no en 2012 como las otras dos: son 27 filas y con
+    # catorce columnas no entra. Se respeta su recorte.
+    desde: 2015
+
+  # Grafico a la izquierda, tabla a la derecha, que es como los pega JC. El 5/7 sale de sus
+  # anclajes: el mapa ocupa las columnas 7 a 24 de su hoja y las tablas de la 30 a la 60.
+  # 4/8 y no 5/7: la tabla mas ancha de las tres es la matriz departamento x anio, que mide
+  # 836 px con sus doce columnas, y con 7 de 12 (747 px) se desbordaba y estiraba el ancho de
+  # toda la pagina. El reparto es el mismo en los tres pares a proposito: tres divisiones
+  # distintas en la misma pantalla se leen como un error de dibujo.
   orden:
-    - id: anillo
-      ancho: 4
-      alto: 2
-    - id: mapa
-      ancho: 5
-      alto: 2
-    - id: tendencia
-      ancho: 3
-      alto: 1
-    - id: top
-      ancho: 3
-      alto: 1
+    - {id: mapa, ancho: 4, alto: alto}
+    - {id: tabla-departamentos, ancho: 8}
+    - {id: evolucion-total, ancho: 4}
+    - {id: tabla-evolucion, ancho: 8}
+    - {id: evolucion-categorias, ancho: 4}
+    - {id: tabla-departamento-anios, ancho: 8}
 
 # ---------------------------------------------------------------------------
 # FILTROS

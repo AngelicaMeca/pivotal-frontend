@@ -10,6 +10,12 @@
 id: tablero-movimientos-hacienda
 tipo: tablero
 base: 85
+# Despublicado el 9-oct-2026. La maqueta "Maqueta Ganad VF" reorganiza ganaderia por
+# ESPECIE: los movimientos de hacienda dejan de ser una seccion propia y pasan a ser la
+# pagina "Movimientos" de bovinos (hoja "GanBov DTE" de JC, cinco cuadros). El spec
+# queda como REGISTRO de lo que ya estaba resuelto -los cortes, los titulos, la matriz
+# origen-destino- y es la materia prima de esa pagina.
+estado: no-publicada
 seccion: movimientos-hacienda
 
 titulo: "Movimientos de hacienda"

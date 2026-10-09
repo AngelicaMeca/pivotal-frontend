@@ -1,0 +1,132 @@
+# Base 183 · Existencias bubalinos, serie provincial 2015 a 2025 (SENASA)
+#
+# Alimenta "Sgo. del Estero - Stocks bubalinos por categoría y totales - años 2.015 a 2.025"
+# (hoja "GanBuba ST"). Las categorías bubalinas tienen nombre propio y no son las bovinas:
+# búfala, bubilla, bubillo, bubillito, búfalo, bucerro y bucerra.
+#
+# La columna "Participación (%)" del Excel NO se ingiere: es la parte de Santiago sobre el
+# total del país, o sea un cálculo sobre datos de otras provincias que esta base no trae. Los
+# porcentajes se computan en marts, nunca se leen de la planilla (regla del repo).
+
+base: 183
+slug: stocks-bubalinos-serie
+familia: stock
+estado: activa
+
+archivo:
+  patron: "^183 - Existencias bubalinos"
+
+hojas:
+  datos:
+    - nombre: "Data SDE"
+      header_fila: 2
+      ambito: sde
+      contenido: >
+        Santiago del Estero, serie anual 2015 a 2025.
+      geo:
+        nivel: provincia
+  ignorar:
+    - nombre: "Modelo Análisis"
+      motivo: >
+        Hoja vacia (1x1).
+
+columnas:
+  "Año": anio
+  "PROVINCIA": departamento
+  "Búfala": bufala
+  "Bubilla": bubilla
+  "Bubillo": bubillo
+  "Bubillito": bubillito
+  "Búfalo": bufalo
+  "Bucerro": bucerro
+  "Bucerra": bucerra
+  "Total Búfalos": total_bubalinos
+  "Participación (%)": None
+
+valores:
+  bufala:
+    etiqueta: "Búfala"
+    medida: cabezas
+    especie: bubalinos
+    categoria: "Búfala"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  bubilla:
+    etiqueta: "Bubilla"
+    medida: cabezas
+    especie: bubalinos
+    categoria: "Bubilla"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  bubillo:
+    etiqueta: "Bubillo"
+    medida: cabezas
+    especie: bubalinos
+    categoria: "Bubillo"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  bubillito:
+    etiqueta: "Bubillito"
+    medida: cabezas
+    especie: bubalinos
+    categoria: "Bubillito"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  bufalo:
+    etiqueta: "Búfalo"
+    medida: cabezas
+    especie: bubalinos
+    categoria: "Búfalo"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  bucerro:
+    etiqueta: "Bucerro"
+    medida: cabezas
+    especie: bubalinos
+    categoria: "Bucerro"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  bucerra:
+    etiqueta: "Bucerra"
+    medida: cabezas
+    especie: bubalinos
+    categoria: "Bucerra"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  total_bubalinos:
+    etiqueta: "Total bubalinos"
+    medida: cabezas
+    especie: bubalinos
+    categoria: "Total"
+    # Es la suma de las categorias y nunca se suma con ellas.
+    rol: agregado
+    unidad: cabezas
+    agregable: false
+
+geo:
+  nivel: departamento
+  usa_ids_indec: false
+  normalizar_nombre: true
+  particion: sde
+  provincia_propia: 86
+  resolver: [86]
+  # La hoja no trae columna de provincia: toda la tabla es Santiago del Estero.
+  provincia_fija: "SANTIAGO DEL ESTERO"
+  agregados:
+    nombres_total: ["SANTIAGO DEL ESTERO"]
+
+salida:
+  staging: "staging/base-183-stocks-bubalinos-serie.parquet"
+  mart: hecho_stock_bubalino
+  particiones: [provincia, anio]
+
+indice:
+  fuente: "SENASA"
+  titulo_en_el_indice: "Existencias bubalinos 2015 a 2025"

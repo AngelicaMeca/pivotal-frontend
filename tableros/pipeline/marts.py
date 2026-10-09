@@ -433,6 +433,85 @@ def sql_hecho_precios(rutas):
     """ % (dims, lista_sql(rutas))
 
 
+def sql_hecho_comercializacion(rutas):
+    """Familia comercializacion (Siocarnes): una linea de venta para faena.
+
+    Lo que la distingue de las demas y hay que no perder de vista: trae RAZA y PRECIO. El
+    precio viaja con `agregable = false` y NINGUN mart ni vista lo puede sumar; el promedio
+    va ponderado por los kilos de cada linea, que es lo unico que lo hace significar algo.
+    """
+    return """
+        SELECT
+            base_id, entrega, ambito, provincia,
+            anio, mes, grano_tiempo,
+            geo_id, nivel_geo, provincia_id, provincia_nombre,
+            geo_nombre, departamento,
+            es_agregado_geo,
+            zona_destino, raza,
+            variable, especie, categoria,
+            medida, unidad, agregable, valor,
+            fuente,
+            hoja, fila_origen
+        FROM read_parquet(%s)
+        ORDER BY base_id, hoja, fila_origen, variable
+    """ % lista_sql(rutas)
+
+
+def sql_geo_comercializacion(rutas):
+    """La geografia de la familia es el DEPARTAMENTO DE ORIGEN de la hacienda, una por fila.
+
+    Misma forma que stock y tidy, y por el mismo motivo usa `geo_nombre` (el canonico que ya
+    resolvio el adapter) y no el nombre crudo del Excel.
+    """
+    return """
+        SELECT DISTINCT
+            geo_id,
+            nivel_geo,
+            geo_nombre AS nombre,
+            provincia,
+            provincia_id,
+            provincia_nombre,
+            CAST(geo_id AS BIGINT) - provincia_id * 1000 AS departamento_id,
+            es_agregado_geo
+        FROM read_parquet(%s)
+        WHERE geo_id IS NOT NULL
+    """ % lista_sql(rutas)
+
+
+def sql_hecho_serie_mensual(rutas):
+    """Familia serie-mensual (lecheria): una fila por mes, provincia y medida.
+
+    `agregacion` y `ponderacion` viajan pegadas al dato, igual que en la familia precios:
+    ninguna medida de esta familia es aditiva y el mart no tiene que adivinar como se agrega.
+    """
+    return """
+        SELECT
+            base_id, entrega, ambito, provincia,
+            anio, mes, grano_tiempo,
+            provincia_id, provincia_nombre, nivel_geo, geo_id, es_agregado_geo,
+            variable, medida, medida_etiqueta, unidad,
+            agregable, agregacion, ponderacion,
+            valor, fuente,
+            hoja, fila_origen
+        FROM read_parquet(%s)
+        ORDER BY base_id, hoja, fila_origen, variable, provincia_nombre
+    """ % lista_sql(rutas)
+
+
+def sql_geo_serie_mensual(rutas):
+    """No aporta geografia: su grano es la PROVINCIA, no el departamento, y dim_geo se arma
+    con departamentos. El filtro deja el resultado vacio a proposito."""
+    return """
+        SELECT DISTINCT
+            geo_id, nivel_geo, provincia_nombre AS nombre, provincia,
+            provincia_id, provincia_nombre,
+            CAST(NULL AS BIGINT) AS departamento_id,
+            es_agregado_geo
+        FROM read_parquet(%s)
+        WHERE geo_id IS NOT NULL
+    """ % lista_sql(rutas)
+
+
 HECHOS_POR_FAMILIA = {
     "tidy": sql_hecho_tidy,
     "dte": sql_hecho_dte,
@@ -440,6 +519,8 @@ HECHOS_POR_FAMILIA = {
     "stock": sql_hecho_stock,
     "precios": sql_hecho_precios,
     "bandas-periodo": sql_hecho_bandas,
+    "comercializacion": sql_hecho_comercializacion,
+    "serie-mensual": sql_hecho_serie_mensual,
 }
 
 GEO_POR_FAMILIA = {
@@ -451,6 +532,8 @@ GEO_POR_FAMILIA = {
     "stock": sql_geo_stock,
     "precios": sql_geo_precios,
     "bandas-periodo": sql_geo_bandas,
+    "comercializacion": sql_geo_comercializacion,
+    "serie-mensual": sql_geo_serie_mensual,
 }
 
 # Familias cuyo grano se agrega a mes y por lo tanto alimentan dim_tiempo_mes. La dtv y la

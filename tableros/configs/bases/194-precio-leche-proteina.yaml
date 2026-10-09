@@ -1,0 +1,59 @@
+# Base 194 - Precio basico por kilogramo de proteina, por provincia (MAGyP)
+#
+# La tercera forma de medir el mismo pago al productor, junto con las bases 185 (por litro) y
+# 186 (por kilo de solidos). Las tres van al mismo mart y se distinguen por `variable`.
+
+base: 194
+slug: precio-leche-proteina
+familia: serie-mensual
+estado: activa
+apertura: provincias
+
+archivo:
+  patron: "^194 - Precio pagado al productor por proteina"
+
+hojas:
+  datos:
+    - nombre: "Proteína"
+      header_fila: 8
+      ambito: comparativo
+      contenido: "Serie mensual desde 2016-12, una columna por provincia."
+
+columnas:
+  # Lo unico que se mapea es la columna de periodo: todas las demas son provincias y las
+  # reconoce el adapter contra geo-alias.yaml. Una columna que no sea ni una ni otra corta la
+  # ingesta, asi que una provincia nueva en el origen no se pierde en silencio.
+  "Período": periodo
+
+medida:
+  variable: precio_proteina
+  etiqueta: "Precio por kilo de proteina"
+  medida: precio
+  unidad: "$/kg"
+  # NO se suma: es un precio.
+  agregable: false
+  agregacion: promedio
+  ponderacion: >
+    Sin ponderar: la planilla no informa los kilos de proteina de cada provincia.
+
+geo:
+  particion: sde
+
+tiempo:
+  grano: anio_mes
+
+salida:
+  staging: "staging/base-194-precio-leche-proteina.parquet"
+  mart: hecho_lecheria_precios
+  particiones: [provincia, anio]
+
+sensibilidad: >
+  La planilla abre una COLUMNA POR PROVINCIA (Nacional, Buenos Aires, Cordoba, Entre Rios,
+  La Pampa, Salta, San Luis, Santa Fe y Santiago del Estero), o sea que es material de
+  comparacion interprovincial. Entra entera al mart -el dato es el dato- y QUE COLUMNAS SE
+  PUBLICAN lo decide el spec de cada vista con el criterio de CLAUDE.md: sin decision de
+  Francisco, a la vista va solo Santiago del Estero.
+
+indice:
+  fuente: "MAGyP - Direccion Nacional de Lecheria"
+  titulo_en_el_indice: "Precio pagado al productor por proteina"

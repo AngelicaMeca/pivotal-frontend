@@ -6771,12 +6771,20 @@ def indicadores_stock(ctx, spec, anio, categoria):
         # Los dos indicadores de volumen siguen la categoria elegida en la barra de chips
         # cuando el spec pide el agregado; los que declaran una categoria fija no se mueven.
         cual = decl["categoria"]
-        if cual == ctx.agregado and categoria != ctx.agregado:
+        # La MEDIDA la puede declarar el indicador: la base 48 trae cabezas y unidades
+        # productivas, y JC muestra las dos como KPI en su hoja "GanBov ST". Por defecto
+        # cabezas, que es lo que miraban los tres tableros anteriores.
+        medida = decl.get("medida", "cabezas")
+        unidad = decl.get("unidad", "cabezas" if medida == "cabezas" else "UP")
+        # Los indicadores de CABEZAS siguen la categoria elegida en la barra de chips cuando
+        # el spec pide el agregado. Los de unidades productivas no: una UP es un
+        # establecimiento y no se abre por categoria de animal.
+        if medida == "cabezas" and cual == ctx.agregado and categoria != ctx.agregado:
             cual = categoria
             etiqueta = categoria
         salida.append(indicador(
-            etiqueta, hechos.total_anual(anio, cual), "cabezas", "cabezas",
-            hechos.total_anual(previo, cual) if previo else None, previo))
+            etiqueta, hechos.total_anual(anio, cual, medida), unidad, medida,
+            hechos.total_anual(previo, cual, medida) if previo else None, previo))
     return salida
 
 
@@ -6897,6 +6905,193 @@ def panel_top_stock(ctx, spec, anio, categoria, pie):
     }
 
 
+# ---------------------------------------------------------------------------
+# Bovinos - Stocks (hoja "GanBov ST" de la maqueta de ganaderia, 9-oct-2026)
+# ---------------------------------------------------------------------------
+# La hoja se lee por los anclajes de sus imagenes y son TRES PARES: a la izquierda un
+# grafico, a la derecha su tabla. Arriba de todo, el mapa a la izquierda y la tabla por
+# departamento a la derecha. Las columnas de las tablas van en el orden de JC -Vacas,
+# Vaquillonas, Novillos, Novillitos, Terneros, Terneras, Toros, Toritos, Bueyes- que NO es
+# el alfabetico ni el del mart: es el orden en que se lee un rodeo, de la vaca al buey.
+
+CATEGORIAS_BOVINAS_JC = ["Vacas", "Vaquillonas", "Novillos", "Novillitos", "Terneros",
+                         "Terneras", "Toros", "Toritos", "Bueyes"]
+
+
+def _cat_bovinas(ctx):
+    """Las categorias de JC que la base realmente trae, en SU orden."""
+    return [c for c in CATEGORIAS_BOVINAS_JC if c in ctx.categorias]
+
+
+def _celda_cab(ctx, valor):
+    """Una celda de cabezas. El guion es el de JC: en su tabla los ceros van como '-'."""
+    if valor is None:
+        return "S/D"
+    if not valor:
+        return "-"
+    return ctx.texto(valor)
+
+
+def panel_stock_tabla_departamentos(ctx, spec, anio, pie):
+    """Cuadro 1: los 27 departamentos por categoria, con el total provincial arriba.
+
+    Es la tabla que JC pega en la fila 16 de su hoja. La fila TOTAL PROV va PRIMERA y
+    resaltada, como en su dibujo: la lectura arranca por el total y despues baja al detalle.
+    """
+    declarado = spec["paneles"]["tabla-departamentos"]
+    cats = _cat_bovinas(ctx)
+    columnas = [{"etiqueta": declarado["encabezado_geo"], "num": False}]
+    columnas += [{"etiqueta": c, "num": True} for c in cats]
+    columnas += [{"etiqueta": declarado["encabezado_total"], "num": True},
+                 {"etiqueta": declarado["encabezado_up"], "num": True}]
+
+    def fila(nombre, geo):
+        celdas = [nombre]
+        for c in cats:
+            celdas.append(_celda_cab(ctx, ctx.hechos.total_depto(anio, geo, c) if geo
+                                     else ctx.hechos.total_anual(anio, c)))
+        celdas.append(_celda_cab(ctx, ctx.hechos.total_depto(anio, geo, ctx.agregado) if geo
+                                 else ctx.hechos.total_anual(anio, ctx.agregado)))
+        up = (ctx.hechos.total_depto(anio, geo, ctx.agregado, "unidades_productivas") if geo
+              else ctx.hechos.total_anual(anio, ctx.agregado, "unidades_productivas"))
+        celdas.append(_celda_cab(ctx, up))
+        return celdas
+
+    filas = [{"celdas": fila(declarado["rotulo_total"], None), "actual": True}]
+    for geo in sorted(ctx.hechos.deptos_con_stock(anio),
+                      key=lambda g: pr.clave_alfabetica(ctx.hechos.nombre[g])):
+        filas.append({"celdas": fila(ctx.hechos.nombre[geo], geo)})
+    return {
+        "titulo": titulo_literal(declarado["titulo"], anio=str(anio)),
+        "subtitulo": ctx.subtitulo_unidad("cabezas"),
+        "pie": pie,
+        "nota": limpiar(declarado.get("nota") or ""),
+        "columnas": columnas,
+        "filas": filas,
+    }
+
+
+def panel_stock_tabla_evolucion(ctx, spec, anio, pie):
+    """Cuadro 2: un anio por fila y una categoria por columna, toda la serie.
+
+    El anio elegido en la barra queda marcado: el dato de la pantalla es ese.
+    """
+    declarado = spec["paneles"]["tabla-evolucion"]
+    cats = _cat_bovinas(ctx)
+    columnas = [{"etiqueta": declarado["encabezado_anio"], "num": False}]
+    columnas += [{"etiqueta": c, "num": True} for c in cats]
+    columnas += [{"etiqueta": declarado["encabezado_total"], "num": True}]
+    filas = []
+    for a in ctx.anios:
+        celdas = [str(a)] + [_celda_cab(ctx, ctx.hechos.total_anual(a, c)) for c in cats]
+        celdas.append(_celda_cab(ctx, ctx.hechos.total_anual(a, ctx.agregado)))
+        filas.append({"celdas": celdas, "actual": a == anio})
+    return {
+        "titulo": titulo_literal(declarado["titulo"],
+                                 desde=str(ctx.anios[0]), hasta=str(ctx.anios[-1])),
+        "subtitulo": ctx.subtitulo_unidad("cabezas"),
+        "pie": pie,
+        "columnas": columnas,
+        "filas": filas,
+    }
+
+
+def panel_stock_tabla_departamento_anios(ctx, spec, anio, pie):
+    """Cuadro 3: la matriz departamento x anio del total de cabezas."""
+    declarado = spec["paneles"]["tabla-departamento-anios"]
+    desde = int(declarado.get("desde") or ctx.anios[0])
+    anios = [a for a in ctx.anios if a >= desde]
+    columnas = [{"etiqueta": declarado["encabezado_geo"], "num": False}]
+    columnas += [{"etiqueta": str(a), "num": True} for a in anios]
+    filas = [{"celdas": [declarado["rotulo_total"]]
+                        + [_celda_cab(ctx, ctx.hechos.total_anual(a, ctx.agregado))
+                           for a in anios],
+              "actual": True}]
+    for geo in sorted(ctx.hechos.deptos_con_stock(),
+                      key=lambda g: pr.clave_alfabetica(ctx.hechos.nombre[g])):
+        filas.append({"celdas": [ctx.hechos.nombre[geo]]
+                                + [_celda_cab(ctx, ctx.hechos.total_depto(a, geo, ctx.agregado))
+                                   for a in anios]})
+    return {
+        "titulo": titulo_literal(declarado["titulo"],
+                                 desde=str(anios[0]), hasta=str(anios[-1])),
+        "subtitulo": ctx.subtitulo_unidad("cabezas"),
+        "pie": pie,
+        "columnas": columnas,
+        "filas": filas,
+    }
+
+
+def panel_stock_barras_total(ctx, spec, anio, pie):
+    """El grafico de la izquierda del primer par: el stock total, un barra por anio.
+
+    Se emite con el contrato de `apiladas` y UNA sola serie, que es como el sitio dibuja
+    barras: la forma `tendencia` dibuja una linea y JC lo pinta en barras.
+    """
+    declarado = spec["paneles"]["evolucion-total"]
+    puntos = [ctx.hechos.total_anual(a, ctx.agregado) for a in ctx.anios]
+    return {
+        "titulo": titulo_literal(declarado["titulo"],
+                                 desde=str(ctx.anios[0]), hasta=str(ctx.anios[-1])),
+        "subtitulo": ctx.subtitulo_unidad("cabezas"),
+        "pie": pie,
+        # El eje va con DOS DIGITOS y el tooltip con el anio entero, que es lo que ya hacia
+        # `panel_tendencia_stock`. Con catorce anios en un cuadro de 423 px los "2012" se
+        # pegan unos con otros y el eje se lee como una tira de numeros sin separacion.
+        "x": [str(a)[2:] for a in ctx.anios],
+        "etiquetas": [str(a) for a in ctx.anios],
+        "series": [{
+            "nombre": declarado["medida_nombre"],
+            # El MISMO color que el mapa de al lado. Es la regla que fijo Francisco el
+            # 2-oct-2026 en agricultura ("el color del mapa de produccion y la linea del
+            # grafico de produccion debe ser del mismo color"): el color es lo que dice de
+            # que variable se esta hablando, y tener la misma en marron en el mapa y en
+            # verde en el grafico de al lado no se sostiene. `solido` lo resuelve por TIPO
+            # de variable, asi que no se elige a mano: cabezas es la rampa marron de
+            # ganaderia.
+            "color": ctx.colores.solido("cabezas"),
+            "puntos": puntos,
+            "textos": [(ctx.texto(p) + " cabezas") if p is not None else "S/D"
+                       for p in puntos],
+        }],
+        "totales": [(ctx.texto(p) + " cabezas") if p is not None else "S/D" for p in puntos],
+        "eje": ctx.eje([p for p in puntos if p is not None], "cabezas"),
+    }
+
+
+def panel_stock_barras_categorias(ctx, spec, anio, pie):
+    """El grafico del segundo par: las nueve categorias apiladas, un anio por barra."""
+    declarado = spec["paneles"]["evolucion-categorias"]
+    cats = _cat_bovinas(ctx)
+    series, totales = [], []
+    for c in cats:
+        puntos = [ctx.hechos.total_anual(a, c) for a in ctx.anios]
+        series.append({"nombre": c, "color": ctx.color_categoria[c],
+                       "puntos": puntos, "textos": []})
+    for i, a in enumerate(ctx.anios):
+        suma = sum(s["puntos"][i] or 0.0 for s in series)
+        totales.append(ctx.texto(suma) + " cabezas")
+        for s in series:
+            v = s["puntos"][i]
+            s["textos"].append("S/D" if v is None else "%s · %s cabezas" % (
+                pr.fmt_numero(v / suma * 100.0, 1) + "%" if suma else "S/D",
+                pr.fmt_numero(v, 0)))
+    return {
+        "titulo": titulo_literal(declarado["titulo"],
+                                 desde=str(ctx.anios[0]), hasta=str(ctx.anios[-1])),
+        "subtitulo": ctx.subtitulo_unidad("cabezas"),
+        "pie": pie,
+        # El eje va con DOS DIGITOS y el tooltip con el anio entero, que es lo que ya hacia
+        # `panel_tendencia_stock`. Con catorce anios en un cuadro de 423 px los "2012" se
+        # pegan unos con otros y el eje se lee como una tira de numeros sin separacion.
+        "x": [str(a)[2:] for a in ctx.anios],
+        "etiquetas": [str(a) for a in ctx.anios],
+        "series": series,
+        "totales": totales,
+        "eje": ctx.eje([t for s in series for t in s["puntos"] if t is not None], "cabezas"),
+    }
+
+
 def construir_tablero_stock(ctx, spec):
     tablero = tablero_base(ctx, spec, [s_filtro_anio(ctx), s_filtro_categoria(ctx, spec)])
     pie = ctx.pie(spec)
@@ -6906,10 +7101,15 @@ def construir_tablero_stock(ctx, spec):
             tablero["combos"]["|".join([str(anio), categoria])] = {
                 "kpis": indicadores_stock(ctx, spec, anio, categoria),
                 "paneles": {
-                    "anillo": panel_anillo_stock(ctx, spec, anio, categoria, pie),
                     "mapa": panel_mapa_stock(ctx, spec, anio, categoria, pie),
-                    "tendencia": panel_tendencia_stock(ctx, spec, anio, categoria, pie),
-                    "top": panel_top_stock(ctx, spec, anio, categoria, pie),
+                    "tabla-departamentos": panel_stock_tabla_departamentos(
+                        ctx, spec, anio, pie),
+                    "evolucion-total": panel_stock_barras_total(ctx, spec, anio, pie),
+                    "tabla-evolucion": panel_stock_tabla_evolucion(ctx, spec, anio, pie),
+                    "evolucion-categorias": panel_stock_barras_categorias(
+                        ctx, spec, anio, pie),
+                    "tabla-departamento-anios": panel_stock_tabla_departamento_anios(
+                        ctx, spec, anio, pie),
                 },
             }
     return tablero
@@ -7627,6 +7827,11 @@ def disposicion_de(tablero):
 # Esto NO afecta al PDF: "Generar PDF" sigue armando la hoja A4 con el reparto de `alto-fijo`,
 # que comun.js le pone al tablero mientras imprime y le saca al terminar. La hoja mide siempre
 # lo mismo y ahi el tablero SI tiene que entrar entero.
+# Los anchos que la grilla del tablero sabe dibujar: las doce columnas. El CSS define una
+# regla por cada uno (`.tablero > [data-ancho="N"]`), y lo que no reconoce cae a `span 4`,
+# asi que un valor fuera de esta lista se dibujaria mal en silencio.
+ANCHOS_DE_PANEL = tuple(range(1, 13))
+
 ALTOS_DE_TABLERO = ("una-pantalla", "fluye")
 
 
@@ -7665,7 +7870,7 @@ def escribir_sitio(ctx, vistas, tableros):
              "titulo_cabecera": theme["titulo_sitio"],
              "menu": menu_del_sitio(ctx), "con_menu": True,
              "clase_cuerpo": "", "botones_cabecera": [], "boton_proximamente": False,
-             "paginas_de_seccion": [],
+             "paginas_de_seccion": [], "tira_de_secciones": [],
              "banderas_idioma": [],
              "base": PREFIJO, "inicio": INICIO}
 
@@ -7795,6 +8000,15 @@ def escribir_sitio(ctx, vistas, tableros):
                              "departamento": primero,
                              "actual": False})
                 continue
+            # `tablero: true` es la entrada que apunta a la PAGINA DE LA SECCION, o sea a
+            # esta misma. Es la primera de la tira en las siete especies de ganaderia
+            # ("Stocks" en bovinos): la pagina existe, asi que lleva su link y no el rotulo
+            # apagado de "Próximamente", que prometeria algo que ya esta.
+            if entrada.get("tablero"):
+                tira.append({"texto": entrada["texto"],
+                             "href": "%s/%s" % (PREFIJO, seccion["url"]),
+                             "actual": False})
+                continue
             if entrada.get("ancla"):
                 tira.append({"texto": entrada["texto"],
                              "href": "#" + entrada["ancla"], "actual": False})
@@ -7804,6 +8018,35 @@ def escribir_sitio(ctx, vistas, tableros):
                          "actual": False})
         if tira:
             extras["paginas_de_seccion"] = tira
+        # La tira de SECCIONES HERMANAS, arriba de la de paginas. Es la fila 6 de todas las
+        # hojas de la maqueta de ganaderia: Bovinos | Bubalinos | Porcinos | Equinos | Ovinos
+        # | Caprinos, siempre a la vista y con la especie actual marcada.
+        #
+        # Es la respuesta a la pregunta que hace el propio JC en la celda E62 de "GanBov IN"
+        # ("analizar como seria el mejor regreso de las paginas internas a la principal"): el
+        # regreso no es un boton aparte, es que las dos tiras nunca se van, asi que nunca te
+        # fuiste del lugar y ademas se ve a donde mas se puede ir.
+        #
+        # La lista NO se escribe a mano: sale de las secciones de la misma rama, en el orden
+        # en que estan declaradas. Una seccion `proximamente` figura apagada, igual que en el
+        # menu lateral: el rotulo esta y al lado dice que todavia no.
+        rama_cfg = next((r for r in (ctx.navegacion.get("ramas") or [])
+                         if r.get("id") == seccion.get("rama")), None)
+        if rama_cfg and rama_cfg.get("tira_de_secciones"):
+            hermanas = []
+            for otra in ctx.navegacion["secciones"]:
+                if otra.get("rama") != seccion.get("rama"):
+                    continue
+                if otra.get("oculta"):
+                    continue
+                hermanas.append({
+                    "texto": otra.get("titulo_corto") or otra["titulo"],
+                    "href": None if otra.get("proximamente")
+                            else "%s/%s" % (PREFIJO, otra["url"]),
+                    "actual": otra["id"] == seccion["id"],
+                })
+            if len(hermanas) > 1:
+                extras["tira_de_secciones"] = hermanas
         if seccion.get("cabecera_banderas"):
             # Desde el 22-sep-2026 van como SIGLA en monoespaciada (ES / EN / PT) y no como
             # banderita: a este tamaño las tres banderas no se distinguen, y la sigla es la
@@ -7927,6 +8170,17 @@ def escribir_sitio(ctx, vistas, tableros):
                     "El panel %s del tablero %s enlaza a la vista %s, que no esta en ninguna "
                     "seccion de site/navegacion.yaml"
                     % (declarado["id"], tablero["slug"], destino))
+            # El ANCHO tiene que ser una de las doce columnas de la grilla. Se valida acá
+            # porque el CSS, si no reconoce el valor, cae a `span 4` SIN AVISAR: un `ancho: 7`
+            # se dibujaba de 4, la fila cerraba en 9 de 12 y quedaba un hueco de tres columnas
+            # al costado. Un layout mal declarado tiene que cortar la corrida, no salir torcido.
+            ancho = declarado.get("ancho")
+            if ancho is not None and ancho not in ANCHOS_DE_PANEL:
+                raise pr.ErrorDeProtocolo(
+                    "El panel %s del tablero %s declara `ancho: %r`, que no es una de las doce "
+                    "columnas de la grilla (%s)."
+                    % (declarado["id"], tablero["slug"], ancho,
+                       ", ".join(str(a) for a in ANCHOS_DE_PANEL)))
             definicion = tablero["paneles"][declarado["id"]]
             # `titulo` puede faltar: en el tablero de cultivos (mockup literal) el mapa y la
             # tabla de datos no llevan titulo de panel, y los titulos de los graficos son por

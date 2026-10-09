@@ -1,0 +1,136 @@
+# Base 158 - Existencias ovinos por departamento y ESTRATO (SENASA, 2025)
+#
+# Alimenta la hoja "GanOviEstr": "Sgo. del Estero - Stocks ovinos por categoria, estrato,
+# cantidad de Establecimientos y UP por departamento - anio 2.025".
+#
+# Estrena la dimension `estrato` de la familia: cada departamento aparece una vez POR TRAMO
+# de tamanio del rebanio ("1. Hasta 10 ovinos.", "2. Entre 11 y 25 ovinos.", ...), asi que el
+# mismo departamento y la misma categoria se repiten en varias filas y solo se distinguen por
+# ahi. Un departamento no trae todos los estratos: aparece el que tiene.
+#
+# El conteo de establecimientos viene como "Count(DISTINCT IDESTAB)", que es el nombre que
+# dejo la consulta SQL con la que SENASA exporto la planilla. Se mapea como cualquier otra
+# columna; el nombre crudo queda registrado aca y no se "arregla" en el Excel.
+
+base: 158
+slug: stocks-ovinos-estrato
+familia: stock
+estado: activa
+
+archivo:
+  patron: "^158 - Existencias ovinos por departamento y estrato"
+
+hojas:
+  datos:
+    - nombre: "Data SDE"
+      header_fila: 2
+      anio_fijo: 2025
+      ambito: sde
+      contenido: >
+        Una fila por departamento y estrato, con las cinco categorias ovinas y el total.
+      geo:
+        nivel: departamento
+  ignorar:
+    - nombre: "Modelo Analisis"
+      motivo: >
+        Hoja vacia (1x1).
+
+columnas:
+  "PROVINCIA": provincia_nombre
+  "DEPARTAMENTO": departamento
+  "Count(DISTINCT IDESTAB)": establecimientos
+  "TOTAL RENSPAs": renspas
+  "ESTRATO OVINOS": estrato
+  "TOTAL OVINOS": total_ovinos
+  "OVEJAS": ovejas
+  "CARNEROS": carneros
+  "BORREGOS": borregos
+  "CAPONES": capones
+  "CORDEROS": corderos
+
+valores:
+  ovejas:
+    etiqueta: "Ovejas"
+    medida: cabezas
+    especie: ovinos
+    categoria: "Ovejas"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  carneros:
+    etiqueta: "Carneros"
+    medida: cabezas
+    especie: ovinos
+    categoria: "Carneros"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  borregos:
+    etiqueta: "Borregos"
+    medida: cabezas
+    especie: ovinos
+    categoria: "Borregos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  capones:
+    etiqueta: "Capones"
+    medida: cabezas
+    especie: ovinos
+    categoria: "Capones"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  corderos:
+    etiqueta: "Corderos/as"
+    medida: cabezas
+    especie: ovinos
+    categoria: "Corderos/as"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  total_ovinos:
+    etiqueta: "Total ovinos"
+    medida: cabezas
+    especie: ovinos
+    categoria: "Total"
+    # Es la suma de las categorias y nunca se suma con ellas.
+    rol: agregado
+    unidad: cabezas
+    agregable: false
+  establecimientos:
+    etiqueta: "Establecimientos"
+    medida: establecimientos
+    especie: ovinos
+    categoria: null
+    rol: conteo
+    unidad: establecimientos
+    agregable: true
+  renspas:
+    etiqueta: "RENSPAs"
+    medida: renspas
+    especie: ovinos
+    categoria: null
+    rol: conteo
+    unidad: renspas
+    agregable: true
+
+geo:
+  nivel: departamento
+  usa_ids_indec: false
+  normalizar_nombre: true
+  particion: sde
+  provincia_propia: 86
+  resolver: [86]
+  agregados:
+    # Filas de total embebidas entre el detalle. Se MARCAN, no se borran.
+    nombres_total: ["SANTIAGO DEL ESTERO", "Totales", "TOTALES", "Total"]
+
+salida:
+  staging: "staging/base-158-stocks-ovinos-estrato.parquet"
+  mart: hecho_stock_ovino_estrato
+  particiones: [provincia, anio]
+
+indice:
+  fuente: "SENASA"
+  titulo_en_el_indice: "Existencias ovinos por departamento y estrato"

@@ -1,0 +1,76 @@
+# Base 188 - Calidad de la leche: grasa butirosa y proteina, por provincia (MAGyP)
+#
+# Alimenta "Sgo. del Estero - Evolucion de indicadores de calidad de la leche de la Cuenca
+# Lechera Provincial y comparado nacional" (hoja "GanBov LACT"). Es la UNICA pagina de la
+# maqueta donde JC pide explicitamente la comparacion contra el pais ("y comparado nacional"),
+# asi que ahi la columna Nacional tiene su aval; el resto de las provincias sigue el criterio
+# general y no se publica sin decision de Francisco.
+#
+# DOS HOJAS con la misma forma, una por indicador: "grasa" y "proteina". Las dos usan la
+# misma medida (un porcentaje) y se distinguen por la hoja, que viaja en cada fila.
+#
+# OJO con la escala: los valores vienen en TANTO POR UNO (0,0345 = 3,45%), no en porcentaje.
+# No se multiplica por 100 en la ingesta -el dato entra como esta- y el formato lo pone la
+# vista; asi un cambio de criterio de JC no obliga a reingerir.
+
+base: 188
+slug: calidad-leche
+familia: serie-mensual
+estado: activa
+apertura: provincias
+
+archivo:
+  patron: "^188 - porcentaje grasa butirosa"
+
+hojas:
+  datos:
+    - nombre: "grasa"
+      header_fila: 3
+      ambito: comparativo
+      contenido: "Porcentaje de grasa butirosa, serie mensual desde 2014-01, una columna por provincia."
+    - nombre: "proteína"
+      header_fila: 3
+      ambito: comparativo
+      contenido: "Porcentaje de proteina, misma serie y mismas provincias."
+  ignorar:
+    - nombre: "FUENTE"
+      motivo: "Dos filas con el link a la pagina de MAGyP."
+
+columnas:
+  # Lo unico que se mapea es la columna de periodo: todas las demas son provincias y las
+  # reconoce el adapter contra geo-alias.yaml. Una columna que no sea ni una ni otra corta la
+  # ingesta, asi que una provincia nueva en el origen no se pierde en silencio.
+  "Año": periodo
+
+medida:
+  variable: porcentaje
+  etiqueta: "Porcentaje sobre el total de la leche"
+  medida: calidad
+  unidad: "%"
+  # NO se suma: es un porcentaje: el promedio de varios meses no es la suma dividida por la cantidad de meses salvo que todos los meses tengan los mismos litros.
+  agregable: false
+  agregacion: promedio
+  ponderacion: >
+    Sin ponderar: la planilla no informa los litros de cada mes.
+
+geo:
+  particion: sde
+
+tiempo:
+  grano: anio_mes
+
+salida:
+  staging: "staging/base-188-calidad-leche.parquet"
+  mart: hecho_lecheria_calidad
+  particiones: [provincia, anio]
+
+sensibilidad: >
+  La planilla abre una COLUMNA POR PROVINCIA (Nacional, Buenos Aires, Cordoba, Entre Rios,
+  La Pampa, Salta, San Luis, Santa Fe y Santiago del Estero), o sea que es material de
+  comparacion interprovincial. Entra entera al mart -el dato es el dato- y QUE COLUMNAS SE
+  PUBLICAN lo decide el spec de cada vista con el criterio de CLAUDE.md: sin decision de
+  Francisco, a la vista va solo Santiago del Estero.
+
+indice:
+  fuente: "MAGyP - Direccion Nacional de Lecheria"
+  titulo_en_el_indice: "Porcentaje de grasa butirosa y proteina"

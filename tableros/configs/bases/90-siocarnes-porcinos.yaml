@@ -1,0 +1,139 @@
+# Base 90 - Siocarnes porcinos: hacienda vendida para faena (SENASA, 2022 a 2026)
+#
+# Alimenta la hoja "GanPorcRAZ", que son SEIS cuadros: cabezas y toneladas por departamento,
+# cabezas y toneladas por raza, peso promedio por cabeza y por raza, y la serie mensual de
+# precios por kilo en pie por raza y categoria.
+#
+# Misma planilla que la base 89 pero para porcinos y con el encabezado en la fila 1. Son
+# 7.445 lineas.
+
+base: 90
+slug: siocarnes-porcinos
+familia: comercializacion
+estado: activa
+especie: porcinos
+
+archivo:
+  patron: "^90 - Siocarnes PORCINOS"
+
+hojas:
+  datos:
+    - nombre: "2026"
+      header_fila: 1
+      anio_fijo: 2026
+      ambito: sde
+      contenido: "Lineas de comercializacion de 2026."
+    - nombre: "2025"
+      header_fila: 1
+      anio_fijo: 2025
+      ambito: sde
+      contenido: "Lineas de comercializacion de 2025."
+    - nombre: "2024"
+      header_fila: 1
+      anio_fijo: 2024
+      ambito: sde
+      contenido: "Lineas de comercializacion de 2024."
+    - nombre: "2023"
+      header_fila: 1
+      anio_fijo: 2023
+      ambito: sde
+      contenido: "Lineas de comercializacion de 2023."
+    - nombre: "2022"
+      header_fila: 1
+      anio_fijo: 2022
+      ambito: sde
+      contenido: "Lineas de comercializacion de 2022."
+  ignorar:
+    - nombre: "Modelo Analisis"
+      motivo: >
+        Especificacion de negocio de JC: los pivoteos que quiere ver (cabezas y toneladas
+        comercializadas por departamento y por raza, con su participacion sobre el total).
+        No son datos, y los pivoteos los computa el pipeline. Sirven de control.
+
+columnas:
+  "Fecha Comprobante": fecha
+  "mes": mes
+  # Columna que aparece SOLO en algunas hojas (la 2022 de bovinos, las 2022 y 2023 de
+  # porcinos) y que en todas sus filas dice SANTIAGO DEL ESTERO, o sea lo mismo que ya
+  # declara `geo.provincia_fija`. Se mapea a null para que el adapter la reconozca y la
+  # ignore: una columna sin mapear corta la ingesta a proposito, asi que esta tiene que
+  # estar declarada aunque no aporte nada.
+  "Provincia Origen": null
+  "Partido Origen": origen_departamento
+  "Zona Destino": zona_destino
+  "Raza": raza
+  "Categoria": categoria
+  "Cabezas Comercializadas": cabezas
+  "Unidad de Medida": um
+  "Precio cabeza": precio_cabeza
+  "Precio Kg": precio_kg
+  "Cantidad de Kg": kilos
+
+valores:
+  operaciones:
+    etiqueta: "Operaciones"
+    medida: operaciones
+    unidad: operaciones
+    agregable: true
+    origen: constante
+    valor: 1
+  cabezas:
+    etiqueta: "Cabezas comercializadas"
+    medida: cabezas
+    unidad: cabezas
+    agregable: true
+    origen: columna
+    columna: cabezas
+  peso_tn:
+    etiqueta: "Toneladas comercializadas"
+    medida: peso
+    unidad: tn
+    agregable: true
+    # La fuente declara kilos y el sitio habla en toneladas, como en toda la plataforma.
+    origen: kg_a_tn
+    columna: kilos
+  precio_kg:
+    etiqueta: "Precio por kilo en pie"
+    medida: precio
+    unidad: "$/kg"
+    # NO se suma y NO se promedia a secas: el promedio de un precio va ponderado por los
+    # kilos de cada operacion. Es lo que obliga a que esta familia exista aparte.
+    agregable: false
+    origen: columna
+    columna: precio_kg
+  precio_cabeza:
+    etiqueta: "Precio por cabeza"
+    medida: precio
+    unidad: "$/cab"
+    agregable: false
+    origen: columna
+    columna: precio_cabeza
+
+unidades:
+  # Las unicas unidades de medida que la fuente declara. Una nueva corta la ingesta: cambia
+  # como se convierten los kilos y no se adivina.
+  esperadas: ["Kg. Vivo"]
+  kg_a_tn: 1000
+
+geo:
+  # La planilla no trae columna de provincia: todo el archivo es Santiago del Estero y la
+  # columna geografica es el PARTIDO DE ORIGEN de la hacienda.
+  provincia_fija: "SANTIAGO DEL ESTERO"
+  particion: sde
+  nivel: departamento
+
+tiempo:
+  grano: anio_mes
+
+salida:
+  staging: "staging/base-90-siocarnes-porcinos.parquet"
+  mart: hecho_comercializacion_porcinos
+  particiones: [provincia, anio]
+
+sensibilidad: >
+  La "Zona Destino" es una zona sanitaria de SENASA, no una provincia, asi que no identifica
+  contraparte interprovincial. Se ingiere y se publica como cualquier otra dimension.
+
+indice:
+  fuente: "SENASA - Siocarnes"
+  titulo_en_el_indice: "Siocarnes porcinos"

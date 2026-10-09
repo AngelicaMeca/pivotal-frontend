@@ -229,7 +229,43 @@ export default function Cascara({ pagina, children }: { pagina: Comun; children:
         ) : null}
 
         <div className="contenido">
-          <div className="banda">
+          {/* La banda del breadcrumb lleva DOS filas cuando la rama tiene tira de
+              secciones (ganaderia): arriba las especies, abajo la miga con la tira de
+              paginas. Las dos viven ADENTRO de la banda de cromo, que es donde el sitio
+              pone su navegacion; una banda clara propia arriba se leia como un pedazo
+              pegado entre la cabecera y el breadcrumb. */}
+          <div className={"banda" + (pagina.tira_de_secciones.length ? " banda-dos-filas" : "")}>
+            {/* La tira de SECCIONES HERMANAS, arriba de la banda del breadcrumb. En ganaderia
+              son las especies, que es como las dibuja JC en la fila 6 de las 21 hojas de su
+              maqueta: siempre a la vista y con la actual marcada.
+              Es la respuesta a lo que el mismo pregunta en la celda E62 de "GanBov IN"
+              ("analizar como seria el mejor regreso de las paginas internas a la principal"):
+              el regreso no es un boton aparte, es que la tira nunca se va. Una especie sin
+              datos todavia se dibuja apagada con "Próximamente", igual que en el menu. */}
+            {pagina.tira_de_secciones.length ? (
+              <nav className="tira-secciones" aria-label="Secciones del área">
+                {pagina.tira_de_secciones.map((entrada) =>
+                entrada.href ? (
+                  <a
+                    key={entrada.texto}
+                    href={entrada.href}
+                    aria-current={entrada.actual ? "page" : undefined}
+                  >
+                    {entrada.texto}
+                  </a>
+                ) : (
+                  <span key={entrada.texto} className="tira-prox" title="Próximamente">
+                    {entrada.texto} <span className="prox">Próximamente</span>
+                  </span>
+                ),
+              )}
+            </nav>
+            ) : null}
+            {/* Segunda fila: la miga a la izquierda, la tira de paginas a la derecha y
+                el selector de periodo, que es como estan en todas las secciones. Sin
+                tira de especies la banda sigue siendo una fila sola y esto no cambia
+                nada. */}
+            <div className="banda-fila">
             {pagina.miga ? (
               <nav className="miga" aria-label="Ruta">
                 {pagina.miga.map((paso, i) => (
@@ -304,6 +340,7 @@ export default function Cascara({ pagina, children }: { pagina: Comun; children:
             <button type="button" className="borrar-filtros" data-borrar="" hidden>
               Volver
             </button>
+            </div>
           </div>
 
           {pagina.filtros_barra.length ? (

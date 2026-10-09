@@ -52,6 +52,13 @@ ADAPTERS = {
     # Una fila por periodo y area, con una columna por BANDA de una escala ordenada
     # y la misma banda repetida en dos unidades. Primera base: la 43 (forrajeros).
     "bandas-periodo": "adapters.bandas",
+    # Una fila por LINEA DE COMERCIALIZACION: raza, categoria, cabezas, kilos y precio.
+    # Es la unica familia que trae un valor no agregable (el precio) junto a los
+    # agregables. Primeras bases: 89 (bovinos) y 90 (porcinos), ambas Siocarnes.
+    "comercializacion": "adapters.comercializacion",
+    # Una fila por MES: las columnas son provincias (una medida, varias provincias) o
+    # medidas (una provincia, varias medidas). Bases 184, 185, 186, 188 y 194 (lecheria).
+    "serie-mensual": "adapters.serie_mensual",
 }
 
 

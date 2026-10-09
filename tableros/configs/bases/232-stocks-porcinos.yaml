@@ -1,0 +1,209 @@
+# Base 232 · Existencias porcinas por departamento, 2017 a 2026 (SENASA)
+#
+# Alimenta la hoja "GanPorcST": el mapa por departamento y los dos cuadros de evolución
+# ("Evolución del stock porcino por categoría y totales - años 2.017 a 2.025" y "... total por
+# departamento").
+#
+# UNA HOJA POR AÑO ("SDE-2017" a "SDE-2026") y ninguna trae columna de año: lo declara cada
+# hoja con `anio_fijo`. No se deduce del nombre de la hoja a propósito — si mañana JC agrega
+# una hoja con otro criterio de nombre, el config tiene que decirlo y no adivinarlo.
+#
+# La hoja trae 2026, que la maqueta todavía no muestra (sus cuadros llegan hasta 2025). Se
+# ingiere igual: el recorte de la ventana lo decide el spec de la vista, no la ingesta.
+
+base: 232
+slug: stocks-porcinos
+familia: stock
+estado: activa
+
+archivo:
+  patron: "^232 - Existencias Porcinas por Departamento"
+
+hojas:
+  datos:
+    - nombre: "SDE-2017"
+      header_fila: 2
+      anio_fijo: 2017
+      ambito: sde
+      contenido: >
+        Existencias porcinas del anio 2017: el total provincial y sus departamentos.
+      geo:
+        nivel: departamento
+    - nombre: "SDE-2018"
+      header_fila: 2
+      anio_fijo: 2018
+      ambito: sde
+      contenido: >
+        Existencias porcinas del anio 2018: el total provincial y sus departamentos.
+      geo:
+        nivel: departamento
+    - nombre: "SDE-2019"
+      header_fila: 2
+      anio_fijo: 2019
+      ambito: sde
+      contenido: >
+        Existencias porcinas del anio 2019: el total provincial y sus departamentos.
+      geo:
+        nivel: departamento
+    - nombre: "SDE-2020"
+      header_fila: 2
+      anio_fijo: 2020
+      ambito: sde
+      contenido: >
+        Existencias porcinas del anio 2020: el total provincial y sus departamentos.
+      geo:
+        nivel: departamento
+    - nombre: "SDE-2021"
+      header_fila: 2
+      anio_fijo: 2021
+      ambito: sde
+      contenido: >
+        Existencias porcinas del anio 2021: el total provincial y sus departamentos.
+      geo:
+        nivel: departamento
+    - nombre: "SDE-2022"
+      header_fila: 2
+      anio_fijo: 2022
+      ambito: sde
+      contenido: >
+        Existencias porcinas del anio 2022: el total provincial y sus departamentos.
+      geo:
+        nivel: departamento
+    - nombre: "SDE-2023"
+      header_fila: 2
+      anio_fijo: 2023
+      ambito: sde
+      contenido: >
+        Existencias porcinas del anio 2023: el total provincial y sus departamentos.
+      geo:
+        nivel: departamento
+    - nombre: "SDE-2024"
+      header_fila: 2
+      anio_fijo: 2024
+      ambito: sde
+      contenido: >
+        Existencias porcinas del anio 2024: el total provincial y sus departamentos.
+      geo:
+        nivel: departamento
+    - nombre: "SDE-2025"
+      header_fila: 2
+      anio_fijo: 2025
+      ambito: sde
+      contenido: >
+        Existencias porcinas del anio 2025: el total provincial y sus departamentos.
+      geo:
+        nivel: departamento
+    - nombre: "SDE-2026"
+      header_fila: 2
+      anio_fijo: 2026
+      ambito: sde
+      contenido: >
+        Existencias porcinas del anio 2026: el total provincial y sus departamentos.
+      geo:
+        nivel: departamento
+  ignorar:
+    - nombre: "Analisis"
+      motivo: >
+        Pivoteos que arma JC sobre las hojas de datos (matriz departamento x anio y composicion por categoria). Los pivoteos los hace el pipeline.
+    - nombre: "Hoja11"
+      motivo: >
+        Vacia.
+
+columnas:
+  "Provincia/Departamento": departamento
+  "Padrillo": padrillos
+  "Cerda": cerdas
+  "Lechon": lechones
+  "Capones": capones
+  "Cachorro": cachorros
+  "M.E.I.": mei
+  "Cachorra": cachorras
+  "Total Porcinos": total_porcinos
+
+valores:
+  padrillos:
+    etiqueta: "Padrillos"
+    medida: cabezas
+    especie: porcinos
+    categoria: "Padrillos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  cerdas:
+    etiqueta: "Cerdas"
+    medida: cabezas
+    especie: porcinos
+    categoria: "Cerdas"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  lechones:
+    etiqueta: "Lechones"
+    medida: cabezas
+    especie: porcinos
+    categoria: "Lechones"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  capones:
+    etiqueta: "Capones"
+    medida: cabezas
+    especie: porcinos
+    categoria: "Capones"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  cachorros:
+    etiqueta: "Cachorros"
+    medida: cabezas
+    especie: porcinos
+    categoria: "Cachorros"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  mei:
+    etiqueta: "M.E.I."
+    medida: cabezas
+    especie: porcinos
+    categoria: "M.E.I."
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  cachorras:
+    etiqueta: "Cachorras"
+    medida: cabezas
+    especie: porcinos
+    categoria: "Cachorras"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  total_porcinos:
+    etiqueta: "Total porcinos"
+    medida: cabezas
+    especie: porcinos
+    categoria: "Total"
+    # Es la suma de las categorias y nunca se suma con ellas.
+    rol: agregado
+    unidad: cabezas
+    agregable: false
+
+geo:
+  nivel: departamento
+  usa_ids_indec: false
+  normalizar_nombre: true
+  particion: sde
+  provincia_propia: 86
+  resolver: [86]
+  # Las hojas no traen columna de provincia: toda la tabla es Santiago del Estero.
+  provincia_fija: "SANTIAGO DEL ESTERO"
+  agregados:
+    nombres_total: ["SANTIAGO DEL ESTERO"]
+
+salida:
+  staging: "staging/base-232-stocks-porcinos.parquet"
+  mart: hecho_stock_porcino
+  particiones: [provincia, anio]
+
+indice:
+  fuente: "SENASA"
+  titulo_en_el_indice: "Existencias porcinas por departamento"

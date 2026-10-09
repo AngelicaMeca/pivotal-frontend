@@ -1,0 +1,167 @@
+# Base 230 · DTE equinos, movimientos con origen en Santiago del Estero (SENASA)
+#
+# Alimenta la hoja "GanEquiDTE" de la maqueta: "Movimientos cabezas equinas por categoría y
+# DTE Totales provincia - años 2.024 a 2.026 (parcial)" y "Movimientos equinos por categoría
+# y DTE por Departamento - año 2.025". JC lo resume en la celda E88: "MISMA ESTRUCTURA Y
+# ORGANIZACIÓN QUE TODOS LOS DTE ANIMALES (BASE BOVINOS)".
+#
+# EL ARCHIVO PESA 91 MB Y TIENE 471 FILAS. El resto es formato vacío que arrastra el Excel;
+# openpyxl reporta 1.034.739 filas por hoja y son 268 + 203 con dato. No es un problema -el
+# adapter salta las filas vacías- pero explica por qué la bajada de SharePoint tarda.
+#
+# SOLO SE LEE LA HOJA DE EGRESOS. La de ingresos viene rota y está en `pendientes` con el
+# detalle; es la pregunta 82 del backlog.
+#
+# Esta base NO trae PARTIDO ORIGEN: el origen se conoce a nivel provincia (siempre Santiago)
+# y el detalle departamental está del lado del destino. Para los movimientos INTERNOS -los
+# 43 que tienen destino en la propia provincia- eso alcanza para el cuadro por departamento
+# que pide JC; para los que salen de la provincia, el departamento de origen no existe en la
+# fuente y no se inventa.
+
+base: 230
+slug: dte-equinos
+familia: dte
+estado: activa
+
+archivo:
+  patron: "^230 - DTE Equinos"
+
+hojas:
+  datos:
+    - nombre: "Egreso SDE"
+      header_fila: 1
+      sentido: salida
+      ambito: sde
+      contenido: >
+        268 movimientos con origen en Santiago del Estero, 2024 a 2026 (2026 parcial).
+        Incluye los internos (43 filas con destino en la propia provincia). Las siete
+        categorías suman el total declarado en LAS 268 FILAS: la hoja cierra.
+  pendientes:
+    - nombre: "Ingreso SDE"
+      motivo: >
+        La hoja viene ROTA y no se puede leer sin inventar. Tres cosas, todas verificadas
+        sobre las 203 filas: (1) la última columna, "CANTIDAD DE ÉQUIDOS (INGRESO)", está
+        VACÍA en las 203; (2) los valores están corridos un lugar a la izquierda, así que lo
+        que figura bajo "YEGUA" es en realidad el total, y aun leyéndola corrida solo cierra
+        en 156 de 203 filas; (3) las 203 filas dicen PROVINCIA ORIGEN = SANTIAGO DEL ESTERO
+        y destino en otra provincia, que es un EGRESO y no un ingreso.
+        No se ingiere hasta que JC confirme cómo se lee o reexporte la hoja (backlog 82).
+      ambito: sde
+
+columnas:
+  "PROVINCIA ORIGEN": origen_provincia
+  "AÑO EGRESO": anio
+  "MES EGRESO": mes
+  "PROVINCIA DESTINO": destino_provincia
+  "PARTIDO DESTINO": destino_departamento
+  "TIPO DE DESTINO": tipo_destino
+  "CANTIDAD DTE": dte_equinos
+  "ASNO": asnos
+  "BURRO": burros
+  "CABALLO": caballos
+  "MULA": mulas
+  "PADRILLO": padrillos
+  "POTRILLO/A": potrillos
+  "YEGUA": yeguas
+  "CANTIDAD DE ÉQUIDOS (SALIDAS)": total_equinos
+
+valores:
+  dte_equinos:
+    etiqueta: "DTE emitidos"
+    medida: documentos
+    especie: equinos
+    categoria: "Total"
+    rol: simple
+    unidad: dte
+    agregable: true
+  total_equinos:
+    etiqueta: "Cabezas movidas"
+    medida: cabezas
+    especie: equinos
+    categoria: "Total"
+    rol: agregado
+    unidad: cabezas
+    agregable: true
+  asnos:
+    etiqueta: "Asnos"
+    medida: cabezas
+    especie: equinos
+    categoria: "Asnos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  burros:
+    etiqueta: "Burros"
+    medida: cabezas
+    especie: equinos
+    categoria: "Burros"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  caballos:
+    etiqueta: "Caballos"
+    medida: cabezas
+    especie: equinos
+    categoria: "Caballos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  mulas:
+    etiqueta: "Mulas"
+    medida: cabezas
+    especie: equinos
+    categoria: "Mulas"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  padrillos:
+    etiqueta: "Padrillos"
+    medida: cabezas
+    especie: equinos
+    categoria: "Padrillos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  potrillos:
+    etiqueta: "Potrillos/as"
+    medida: cabezas
+    especie: equinos
+    categoria: "Potrillos/as"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  yeguas:
+    etiqueta: "Yeguas"
+    medida: cabezas
+    especie: equinos
+    categoria: "Yeguas"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+
+geo:
+  nivel: departamento
+  usa_ids_indec: false
+  normalizar_nombre: true
+  particion: sde
+  provincia_propia: 86
+  # Se resuelve a código solo el departamento de Santiago; los partidos de las otras
+  # provincias se guardan por nombre, igual que en la base 85.
+  resolver: [86]
+
+tiempo:
+  grano: anio_mes
+
+salida:
+  staging: "staging/base-230-dte-equinos.parquet"
+  mart: hecho_movimientos_equinos
+  particiones: [provincia, anio]
+
+sensibilidad: >
+  Trae la provincia de DESTINO de cada movimiento, o sea material de contraparte
+  interprovincial. Mismo criterio que la base 85: el dato entra al mart y qué se publica de
+  las otras provincias lo decide Francisco.
+
+indice:
+  fuente: "SENASA"
+  titulo_en_el_indice: "DTE Equinos"

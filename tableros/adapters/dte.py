@@ -316,6 +316,14 @@ def _resolver_punta(provincia, departamento, resolver, alias, nro_fila, nombre_h
                 "departamento": departamento, "geo_id": None}
 
     deptos = (alias.get("departamentos") or {}).get(provincia_id) or {}
+    # La fuente puede conocer una punta SOLO a nivel provincia. Pasa de verdad: la base 230
+    # (DTE equinos) no trae PARTIDO ORIGEN, nada mas la provincia, y el detalle departamental
+    # esta del lado del destino. Se guarda el geo_id en nulo y se sigue; lo que NO se hace es
+    # inventarle un departamento ni dropear la fila. Distinto es que la columna EXISTA y venga
+    # vacia en una fila suelta: ahi sigue cortando, porque eso es un dato faltante.
+    if departamento is None:
+        return {"provincia_nombre": provincia, "provincia_id": provincia_id,
+                "departamento": None, "geo_id": None}
     if departamento not in deptos:
         raise ValueError(
             "Fila %d de la hoja %r: el departamento de %s %r (provincia %s) no esta en "

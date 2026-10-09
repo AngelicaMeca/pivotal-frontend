@@ -8,7 +8,7 @@
 // Sin credenciales (una computadora de desarrollo) usa lo que ya haya generado `make build` en
 // tableros/, y si no hay nada, compila el sitio sin tableros y lo avisa.
 import { spawnSync } from "node:child_process";
-import { copyFileSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
@@ -38,6 +38,28 @@ function pythonDelSistema() {
   console.error("[tableros] No hay Python en esta maquina: el pipeline de tableros lo necesita.");
   process.exit(1);
 }
+
+// En Vercel las credenciales llegan como variables de entorno del proyecto. En una maquina de
+// desarrollo se leen de .env.local, que es el archivo que Next ya usa para lo suyo y que
+// .gitignore ignora. Se parsea a mano -cuatro lineas- en vez de sumar `dotenv`: este script
+// corre como `prebuild`, ANTES de `next build`, asi que Next todavia no cargo nada, y el repo
+// no suma dependencias sin motivo. Lo que ya este en el entorno MANDA: asi una corrida puntual
+// con las variables adelante (o Vercel) nunca queda pisada por el archivo.
+function cargarEnvLocal() {
+  const archivo = path.join(RAIZ, ".env.local");
+  if (!existsSync(archivo)) return;
+  for (const linea of readFileSync(archivo, "utf-8").split("\n")) {
+    const limpia = linea.trim();
+    if (!limpia || limpia.startsWith("#")) continue;
+    const corte = limpia.indexOf("=");
+    if (corte < 1) continue;
+    const clave = limpia.slice(0, corte).trim();
+    const valor = limpia.slice(corte + 1).trim();
+    if (valor && process.env[clave] === undefined) process.env[clave] = valor;
+  }
+}
+
+cargarEnvLocal();
 
 const hayCredenciales = ["MS_TENANT_ID", "MS_CLIENT_ID", "MS_CLIENT_SECRET"].every(
   (v) => process.env[v],
