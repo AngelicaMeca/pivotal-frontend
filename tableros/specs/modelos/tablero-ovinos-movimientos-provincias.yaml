@@ -1,0 +1,9 @@
+# RESERVADO. Ganaderia > Ovinos > Movimientos por provincia de destino y de origen. Mismo
+# criterio y mismo formato que tablero-bovinos-movimientos-provincias (decision del
+# 12-oct-2026: lo que va por provincia queda en privado). Se escribe en _privado/, no la
+# enlaza ninguna pagina y no sale al sitio publicado.
+id: tablero-ovinos-movimientos-provincias
+igual_que: tablero-bovinos-movimientos-provincias
+familia: movimientos-ovinos
+seccion: ovinos
+titulo: "Ovinos"

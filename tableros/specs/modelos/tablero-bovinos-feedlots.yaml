@@ -1,0 +1,86 @@
+# Ganaderia > Bovinos > Feed Lots, Hilton y Tambos. Hoja "GanBov FLHT" de la maqueta
+# "Maqueta Ganad VF" (9-oct-2026). Bases 151 (engorde a corral), 154 (Cuota Hilton) y 152
+# (tambos), SENASA, datos a marzo de 2025. JC: "VALORES REALES, NO SIMULADOS" (celda E97).
+#
+# El mapa lleva arriba los tres botones de JC (EAC | Cuota Hilton | Tambo) y cambia con el
+# regimen ("Cambia mapa por variable", E77); el anillo de participacion por departamento
+# cambia con el (E86). Las tres tablas estan siempre a la vista.
+#
+# Desde la pagina de leche se llega con el regimen Tambo puesto (clic en su mapa de tambos,
+# celda E105 de "GanBov LACT"); el regreso es la tira de paginas.
+id: tablero-bovinos-feedlots
+tipo: tablero
+familia: regimenes-bovinos
+seccion: bovinos
+pagina: feed-lots-hilton-y-tambos
+titulo_pagina: "Feed Lots, Hilton y Tambos"
+
+titulo: "Bovinos"
+subtitulo: "Provincia de Santiago del Estero · stocks en engorde a corral, Cuota Hilton y tambos"
+
+# La banda de JC, textual: "Stock EAC 98.324 cab", "Stock Cuota Hilton 173.670 cab", "Stock
+# Tambos 41.453 cab" y "Unidades Productivas 393" (77 + 143 + 173). Las cuatro dan exactas.
+indicadores:
+  - regimen: eac
+    medida: cabezas
+    etiqueta: "Stock EAC"
+  - regimen: hilton
+    medida: cabezas
+    etiqueta: "Stock Cuota Hilton"
+  - regimen: tambo
+    medida: cabezas
+    etiqueta: "Stock Tambos"
+  - medida: unidades_productivas
+    etiqueta: "Unidades productivas"
+
+paneles:
+  alto: fluye
+  mapa:
+    titulo: "Stock por departamento - {regimen}"
+    medida: cabezas
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  anillo-departamentos:
+    titulo: "Sgo del Estero - Participación departamentos en el stock total {regimen} - 2025"
+    cuantos: 6
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  tabla-eac:
+    titulo: "Sgo. del Estero - Stocks bovinos en Engorde a Corral (EAC) por categoría, totales y UP por departamento - año {anio}"
+    encabezado_geo: "Departamento"
+    encabezado_total: "Total Cab"
+    rotulo_total: "TOTAL PROV"
+    columnas_extra:
+      - {medida: unidades_productivas, encabezado: "Total UP"}
+  tabla-hilton:
+    titulo: "Sgo. del Estero - Stocks bovinos Cuota Hilton por categoría, totales y UP por departamento - año {anio}"
+    encabezado_geo: "Departamento"
+    encabezado_total: "Total Cab"
+    rotulo_total: "TOTAL PROV"
+    columnas_extra:
+      - {medida: unidades_productivas, encabezado: "Total UP"}
+  tabla-tambo:
+    titulo: "Sgo. del Estero - Stocks bovinos en Tambos por categoría, totales y UP por departamento - año {anio}"
+    encabezado_geo: "Departamento"
+    encabezado_total: "Total Cab"
+    rotulo_total: "TOTAL PROV"
+    columnas_extra:
+      - {medida: unidades_productivas, encabezado: "Total UP"}
+    nota: >
+      El guion marca las categorías sin existencias en ese departamento. Las UP son los
+      RENSPA registrados.
+  # Disposicion en COLUMNAS (12-oct-2026, "reacomoda... para que no haya espacios vacios"):
+  # cada banda tiene dos columnas que se apilan a su ritmo, como las hojas de JC (graficos a
+  # la izquierda, tablas a la derecha). Las bandas agrupan cuadros de alto parecido; los
+  # altos se midieron a 1600 px.
+  disposicion: columnas
+  orden:
+    - {id: mapa, ancho: 4, columna: izq}
+    - {id: anillo-departamentos, ancho: 4, columna: izq}
+    - {id: tabla-eac, ancho: 8, columna: der}
+    - {id: tabla-hilton, ancho: 8, columna: der}
+    - {id: tabla-tambo, ancho: 8, columna: der}
+
+filtros:
+  - id: regimen
+    zona: panel

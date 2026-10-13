@@ -1,0 +1,30 @@
+# Comunes del tablero de EQUINOS (Ganaderia > Equinos > "Stocks, UP y Estratos", hoja
+# "GanEqui" de la maqueta "Maqueta Ganad VF", 9-oct-2026). Lo lee
+# site_build.ContextoStockEspecie.
+id: _comunes-stock-equinos
+especie: equinos
+
+# `principal`: base 229, serie 2008-2025 con los 27 departamentos todos los anios.
+# `estrato`: base 176, la foto 2025 por tramo de tamanio con establecimientos y RENSPA.
+marts:
+  principal: hecho_stock_equino
+  estrato: hecho_stock_equino_estrato
+
+presentacion:
+  subsector: "ganado equino"
+  tipos_de_variable:
+    cabezas: cabezas
+
+categorias:
+  orden: [Padrillos, Caballos, Yeguas, Potrillos/as, Mulas, Burros/asnos]
+  # La base por estrato separa burros y asnos, que la serie junta en una sola categoria.
+  orden_estratos: [Padrillos, Caballos, Yeguas, Potrillos/as, Mulas, Burros, Asnos]
+  agregado: "Total"
+
+tiempo:
+  ventana_anios:
+    desde: 2008
+    hasta: 2025
+
+fuente:
+  organismo_esperado: "SENASA"

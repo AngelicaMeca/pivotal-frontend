@@ -1,0 +1,26 @@
+# Comunes de Ganaderia > Ovinos > Movimientos (hoja "GanOviDTE" de la maqueta "Maqueta Ganad
+# VF", 9-oct-2026: "PROCESAR IDEM DTE BOVINOS, mismo formato y contenidos"). Base 145 (DTE
+# ovinos, SENASA). Lo lee site_build.ContextoMovimientos.
+#
+# La base no abre por categoria: las tablas van con DTE y total de cabezas, y no hay anillo
+# por categoria. Son volumenes chicos (88 cabezas movidas en 2025).
+id: _comunes-movimientos-ovinos
+mart: hecho_movimientos_ovinos
+especie: ovinos
+
+presentacion:
+  tipos_de_variable:
+    cabezas: cabezas
+    documentos: documentos
+
+categorias:
+  orden: []
+
+tiempo:
+  ventana_anios:
+    desde: 2022
+    hasta: 2026
+  anio_parcial: 2026
+
+fuente:
+  organismo_esperado: "SENASA"

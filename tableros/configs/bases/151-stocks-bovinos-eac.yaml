@@ -1,0 +1,193 @@
+# Base 151 · Existencias bovinas en ENGORDE A CORRAL (EAC, feed lots) por departamento
+# (SENASA, datos a marzo de 2025)
+#
+# Uno de los tres regímenes de la hoja "GanBov FLHT" (Feed Lots, Cuota Hilton y Tambos):
+# "Sgo. del Estero - Stocks bovinos en Engorde a Corral (EAC) por categoría, totales y UP
+# por departamento - año 2.025". Llegó en la entrega-01 y quedó sin configurar hasta el
+# 12-oct-2026, cuando se armó esa página.
+#
+# Misma forma que la 152 (tambos): establecimientos, RENSPA y titulares, y despues las nueve
+# categorias y el total. Tres diferencias con ella, todas declaradas aca:
+# - El encabezado esta en la fila 2: la 1 trae el titulo de la planilla.
+# - Cierra con una fila "TOTALES" SIN provincia (de ahi `provincia_fija`) y, debajo, la
+#   nota "DATOS A MARZO DE 2025", que no es un dato (no trae departamento y se saltea).
+# - Trae una columna "%" (la participacion de cada departamento en el total), que es un
+#   calculo de la planilla: se mapea para que el header cierre pero NO se ingiere; los
+#   porcentajes se calculan en el sitio.
+#
+# Los RENSPA son las UP: es lo que JC muestra como "Total UP" (77 en el total, que da exacto).
+# Va a su propio mart y NO se mezcla con el stock general de la base 48: son los mismos
+# animales contados con otro recorte, y sumarlos daria doble conteo.
+
+base: 151
+slug: stocks-bovinos-eac
+familia: stock
+estado: activa
+
+archivo:
+  patron: "^151 - Stocks y establ Engorde A Corral"
+
+hojas:
+  datos:
+    - nombre: "Data SDE"
+      header_fila: 2
+      # "DATOS A MARZO DE 2025", al pie de la hoja. El anio lo declara el config, nunca el
+      # nombre del archivo.
+      anio_fijo: 2025
+      ambito: sde
+      contenido: >
+        Los departamentos con engorde a corral (15), con nueve categorias bovinas, el total,
+        establecimientos, RENSPA y titulares, y la fila TOTALES.
+      geo:
+        nivel: departamento
+  ignorar:
+    - nombre: "Modelo análisis"
+      motivo: >
+        Las indicaciones de JC para la vista (tabla simple, volcado a mapas y torta de los 5
+        principales + resto), no datos. Estan reflejadas en tablero-bovinos-feedlots.
+
+columnas:
+  "PROVINCIA": provincia_nombre
+  "DEPARTAMENTO": departamento
+  "ESTABLECIMIENTOS": establecimientos
+  "RENSPAS": unidades_productivas
+  "TITULARES": titulares
+  "TOTAL": total_bovinos
+  "%": participacion_de_la_planilla
+  "TERNEROS": terneros
+  "TERNERAS": terneras
+  "NOVILLITOS": novillitos
+  "TORITOS": toritos
+  "NOVILLOS": novillos
+  "VAQUILLONAS": vaquillonas
+  "VACAS": vacas
+  "TOROS": toros
+  "BUEYES": bueyes
+
+valores:
+  terneros:
+    etiqueta: "Terneros"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Terneros"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  terneras:
+    etiqueta: "Terneras"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Terneras"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  novillitos:
+    etiqueta: "Novillitos"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Novillitos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  toritos:
+    etiqueta: "Toritos"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Toritos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  novillos:
+    etiqueta: "Novillos"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Novillos"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  vaquillonas:
+    etiqueta: "Vaquillonas"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Vaquillonas"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  vacas:
+    etiqueta: "Vacas"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Vacas"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  toros:
+    etiqueta: "Toros"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Toros"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  bueyes:
+    etiqueta: "Bueyes"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Bueyes"
+    rol: componente
+    unidad: cabezas
+    agregable: true
+  total_bovinos:
+    etiqueta: "Total bovinos"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Total"
+    # Es la suma de las categorias y nunca se suma con ellas.
+    rol: agregado
+    unidad: cabezas
+    agregable: false
+  establecimientos:
+    etiqueta: "Establecimientos"
+    medida: establecimientos
+    especie: bovinos
+    categoria: null
+    rol: conteo
+    unidad: establecimientos
+    agregable: true
+  unidades_productivas:
+    etiqueta: "Unidades productivas (RENSPA)"
+    medida: unidades_productivas
+    especie: bovinos
+    categoria: null
+    rol: conteo
+    unidad: unidades
+    agregable: true
+  titulares:
+    etiqueta: "Titulares"
+    medida: titulares
+    especie: bovinos
+    categoria: null
+    rol: conteo
+    unidad: titulares
+    agregable: true
+
+geo:
+  nivel: departamento
+  usa_ids_indec: false
+  normalizar_nombre: true
+  particion: sde
+  provincia_propia: 86
+  resolver: [86]
+  # La fila TOTALES no trae provincia: toda la planilla es de Santiago del Estero.
+  provincia_fija: "SANTIAGO DEL ESTERO"
+  agregados:
+    nombres_total: ["TOTALES", "SANTIAGO DEL ESTERO", "Total"]
+
+salida:
+  staging: "staging/base-151-stocks-bovinos-eac.parquet"
+  mart: hecho_stock_bovino_eac
+  particiones: [provincia, anio]
+
+indice:
+  fuente: "SENASA"
+  titulo_en_el_indice: "Stocks y establecimientos Engorde a Corral (EAC)"

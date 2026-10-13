@@ -1,0 +1,120 @@
+# Ganaderia > Bovinos > Producc. Leche. Hoja "GanBov LACT" de la maqueta "Maqueta Ganad VF"
+# (9-oct-2026).
+#
+# Arriba el mapa de tambos y la tabla de indicadores economicos de la cuenca; debajo la de
+# calidad de la leche comparada con el promedio nacional; al costado los dos graficos de
+# precio; al pie la captura del tablero de SENASA de existencias en tambos (JC, celda E147:
+# "Se baja directo el JPG de SENASA el tablero de control").
+#
+# Dos desvios de la maqueta, con su motivo:
+# - El grafico de PPP de JC compara Santiago con CORDOBA y con el promedio nacional. La serie
+#   de Cordoba no va: las comparaciones con otras provincias son material sensible y no se
+#   publican sin decision de Francisco (CLAUDE.md). Sumarla es agregar una entrada en
+#   `precios-leche-1.series` (provincia: "CORDOBA").
+id: tablero-bovinos-leche
+tipo: tablero
+familia: leche-bovinos
+seccion: bovinos
+pagina: produccion-de-leche
+titulo_pagina: "Producc. Leche"
+
+titulo: "Bovinos"
+subtitulo: "Provincia de Santiago del Estero · cuenca lechera"
+
+# La banda de JC, textual: "Total producido leche 83.472.039 Lts", "Producc mensual prom.
+# 6.956.003 Lts", "VBP (millones $ corr.) $ 36.988" y "Mejor PPP $ 452,67 /Lt". Dan exactas
+# para 2025 con sus cuentas (pipeline/lecheria.py), incluido el mes de 30 dias.
+indicadores:
+  - indicador: litros_total
+    etiqueta: "Total producido leche"
+  - indicador: litros_promedio
+    etiqueta: "Producc. mensual prom."
+  - indicador: vbp
+    etiqueta: "VBP (millones $ corr.)"
+  - indicador: mejor_precio
+    etiqueta: "Mejor PPP"
+
+paneles:
+  alto: fluye
+  mapa:
+    titulo: "Tambos"
+    subtitulo: "Cabezas en tambos por departamento"
+    medida: cabezas
+    # JC, celda E105: el clic lleva a la pagina de existencias de tambo, con el regimen Tambo
+    # puesto. El regreso es la tira de paginas.
+    lleva_a: "ganaderia/bovinos/feed-lots-hilton-y-tambos?regimen=tambo&departamento="
+    rotulo_accion: "Seleccione departamento para ver las existencias en tambos"
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  tabla-cuenca:
+    titulo: "Sgo. del Estero - Evolución de indicadores económicos de la Cuenca Lechera Provincial"
+    subtitulo: "Tambos, litros, pesos por litro y pesos corrientes"
+    encabezados: ["Mes", "Cantidad tambos", "Litros tambo/día", "Litros por día",
+                  "Litros mensuales", "Precio por litro (*)", "Valor bruto de la producción (VBP)/mes (**)"]
+    # Texto de JC (cuadro de texto de su hoja, celda Z17), mas la convencion de los 30 dias.
+    nota: >
+      (*) Precio Pagado al Productor (PPP) por litro de leche: precio promedio mensual pagado al
+      productor para Santiago del Estero. (**) VBP - Valor Bruto de la Producción mensual ($
+      corrientes): surge de multiplicar el precio pagado al productor por la cantidad de litros
+      de leche mensuales entregados a la industria. ($ corrientes) implica que el precio
+      expresado no fue actualizado mediante ningún método y corresponde a valores históricos.
+      Los litros por día son la cantidad de tambos por los litros por tambo y por día, y los
+      litros mensuales, los litros por día por 30.
+  tabla-calidad:
+    titulo: "Sgo. del Estero - Evolución de indicadores de calidad de la leche de la Cuenca Lechera Provincial y comparado nacional"
+    subtitulo: "En miles por mililitro y porcentaje"
+    # Los de JC, acortados para que las siete columnas entren en el cuadro: "Sgo. del Estero"
+    # pasa a "SDE" y "Prom Nacional" a "Nacional".
+    encabezados: ["Mes", "Prom. RCS (a)", "Prom. UFC (b)", "% Grasa But. SDE",
+                  "% Grasa But. Nacional", "% Proteína SDE", "% Proteína Nacional"]
+    # Texto de JC (cuadro de texto de su hoja, celda Z46).
+    nota: >
+      (a) RCS - Recuento de Células Somáticas: mide la cantidad de células (principalmente
+      glóbulos blancos) por mililitro de leche. Es un indicador clave de la salud de la ubre
+      del animal y de la calidad sanitaria de la leche cruda. (b) UFC - Unidad Formadora de
+      Colonias: medida estándar de microbiología utilizada para cuantificar la cantidad de
+      microorganismos vivos (bacterias, hongos o levaduras) capaces de multiplicarse en una
+      muestra de leche.
+  precios-leche-1:
+    titulo: "Precio Pagado al Productor (PPP) comparado Sgo del Estero y promedio Nacional, en $ corrientes/Lt"
+    subtitulo: "En pesos corrientes por litro"
+    eje: "$/Lt"
+    series:
+      - {nombre: "Sgo Estero", variable: precio_litro, provincia: "Santiago del Estero"}
+      - {nombre: "Prom Nacional", variable: precio_litro, provincia: "Total del pais"}
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  precios-leche-2:
+    titulo: "Precio Pagado al Productor (PPP) por proteína y sólidos útiles en leche - Sgo del Estero, en $ corrientes/Kg"
+    subtitulo: "En pesos corrientes por kilo"
+    eje: "$/Kg"
+    series:
+      - {nombre: "Proteína", variable: precio_proteina, provincia: "Santiago del Estero"}
+      - {nombre: "Sólidos útiles", variable: precio_solidos, provincia: "Santiago del Estero"}
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  imagen-tambos:
+    titulo: "Sgo. del Estero - Existencias bovinas en tambos"
+    subtitulo: "Captura del tablero de control de SENASA"
+    imagen: "ganaderia/tambos-senasa-2025.png"
+    alt: >-
+      Tablero de SENASA de existencias en tambos: 41.799 bovinos, 20.203 vacas, 134
+      establecimientos y 168 RENSPA; promedios por establecimiento y por RENSPA; relación
+      vaquillona/vaca 0,48; y la composición por categoría y por estrato.
+    fuente: "Fuente: SENASA"
+  # Disposicion en COLUMNAS (12-oct-2026, "reacomoda... para que no haya espacios vacios"):
+  # cada banda tiene dos columnas que se apilan a su ritmo, como las hojas de JC (graficos a
+  # la izquierda, tablas a la derecha). Las bandas agrupan cuadros de alto parecido; los
+  # altos se midieron a 1600 px.
+  disposicion: columnas
+  orden:
+    - {id: mapa, ancho: 4, columna: izq}
+    - {id: tabla-cuenca, ancho: 8, columna: der, scroll_interno: true}
+    - {id: precios-leche-1, ancho: 4, columna: izq, nueva_banda: true}
+    - {id: precios-leche-2, ancho: 4, columna: izq}
+    - {id: tabla-calidad, ancho: 8, columna: der}
+    - {id: imagen-tambos, ancho: 12}
+
+filtros:
+  - id: anio
+    zona: periodo

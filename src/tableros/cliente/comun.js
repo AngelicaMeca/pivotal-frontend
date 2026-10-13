@@ -24,7 +24,7 @@ export default function crearPivotal() {
   /* `dto` es el departamento elegido ("" = la provincia) y `dtoCombos` lo que se bajo de
      cada uno. Ver "capa departamental", mas abajo. */
   var estado = { datos: null, pintar: null, graficos: [], bajadas: {}, historial: [],
-                 colores: {}, extras: [], claves: [], dto: "", dtoCombos: {}, fallo: false,
+                 colores: {}, extras: [], claves: [], dto: "", dtoCombos: {}, dtoComunes: {}, fallo: false,
                  comparar: { panel: null, nodo: null, filtro: null, valor: "", medida: "" } };
 
   /* -------- controles de filtro -------- */
@@ -288,7 +288,12 @@ export default function crearPivotal() {
   function bajarDepartamento(geo) {
     var ruta = estado.datos.capa_departamental.archivos[geo];
     if (!ruta) { return Promise.resolve(); }
-    return bajar(ruta, function (parte) { estado.dtoCombos[geo] = parte.combos; });
+    return bajar(ruta, function (parte) {
+      estado.dtoCombos[geo] = parte.combos;
+      /* Los cuadros que no dependen de la combinacion (ganaderia: la evolucion del
+         departamento) viajan UNA vez por archivo y no repetidos en cada combo. */
+      estado.dtoComunes[geo] = parte.comunes || {};
+    });
   }
 
   function asegurarDepartamento() {
@@ -306,7 +311,9 @@ export default function crearPivotal() {
     var extra = (estado.dtoCombos[estado.dto] || {})[claveDepartamental()];
     if (!extra) { return undefined; }
     var paneles = {};
+    var comunes = estado.dtoComunes[estado.dto] || {};
     Object.keys(base.paneles).forEach(function (k) { paneles[k] = base.paneles[k]; });
+    Object.keys(comunes).forEach(function (k) { paneles[k] = comunes[k]; });
     Object.keys(extra.paneles).forEach(function (k) { paneles[k] = extra.paneles[k]; });
     return { contexto: extra.contexto, kpis: extra.kpis, paneles: paneles };
   }

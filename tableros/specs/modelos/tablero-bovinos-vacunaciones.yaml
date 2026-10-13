@@ -1,0 +1,107 @@
+# Ganaderia > Bovinos > Vacunaciones. Hoja "GanBov VAC" de la maqueta "Maqueta Ganad VF"
+# (9-oct-2026). Base 228 (1ra vacunacion, SENASA).
+#
+# Misma anatomia que Stocks: el mapa y la tabla por departamento arriba, y debajo dos pares
+# de grafico + tabla. El segundo grafico es el unico propio de esta hoja: la vacunacion
+# comparada con el stock (base 48), en barras agrupadas.
+id: tablero-bovinos-vacunaciones
+tipo: tablero
+familia: stock-vacunacion-bovinos
+seccion: bovinos
+pagina: vacunaciones
+titulo_pagina: "Vacunaciones"
+
+titulo: "Bovinos"
+subtitulo: "Provincia de Santiago del Estero · 1ra vacunación bovina por categoría y departamento"
+
+breadcrumb: "Ganadería - Bovinos - Provincia - {departamento}"
+
+# La banda de JC, textual: "Total vacunado 1.164.191 cab", "Terneros vacunados 176.969 cab",
+# "Vacunac. Dto Moreno 152.609 cab" y "Vacas vacunadas 471.447 cab". Las cuatro dan exacto.
+indicadores:
+  - medida: cabezas
+    categoria: "Total"
+    etiqueta: "Total vacunado"
+  - medida: cabezas
+    categoria: "Terneros"
+    etiqueta: "Terneros vacunados"
+  - lider: cabezas
+    etiqueta: "Vacunac. Dto {departamento}"
+  - medida: cabezas
+    categoria: "Vacas"
+    etiqueta: "Vacas vacunadas"
+
+paneles:
+  alto: fluye
+  mapa:
+    titulo: "1ra vacunación por departamento"
+    medida: cabezas
+    rotulo_accion: "Seleccione departamento"
+    # JC, celda E94: "Seleccionando un departamento del mapa lleva a página de datos (como en
+    # agri)". Mismo mecanismo que Stocks.
+    click_departamento: en-la-misma-vista
+    seleccion_departamento:
+      defecto: provincia
+      rotulo_provincia: "Provincia"
+      rotulo_cambiar: "Seleccione otro departamento si desea visualizar"
+      miga: "Dto {Departamento}"
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  tabla-departamentos:
+    titulo: "Sgo. del Estero - Evolución de 1ra vacunación bovina por categoría y totales por departamento - año {anio}"
+    encabezado_geo: "Departamento"
+    encabezado_total: "Total"
+    rotulo_total: "TOTAL PROV"
+    columnas_extra: []
+    nota: >
+      El guion marca las categorías sin vacunados en ese departamento, que no es lo mismo que
+      un dato que la fuente no informó (ése sale como S/D).
+  evolucion-total:
+    titulo: "Sgo del Estero - Evolución de la 1a vacunación total bovinos años {desde} a {hasta}"
+    medida_nombre: "1ra vacunación"
+    nota: >
+      2024 queda por debajo del real: la fuente trae dos celdas rotas ese año (Sarmiento y
+      Juan F. Ibarra) que no se corrigen hasta que SENASA o JC las confirmen.
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  tabla-evolucion:
+    titulo: "Sgo. del Estero - Evolución de 1ra vacunación bovina por categoría y totales - años {desde} a {hasta}"
+    encabezado_anio: ""
+    encabezado_total: "Total"
+    nota: >
+      2024: Sarmiento figura con 7,94 cabezas en el total y 4,57 en vacas, y la celda de vacas
+      de Juan F. Ibarra viene ilegible. Se publican como los trae la fuente.
+  evolucion-vs-otra:
+    titulo: "Sgo del Estero - Evolución de la cantidad de bovinos 1ra vacunación comparado a stocks - {desde} a {hasta}"
+    nombre_propia: "1ra Vacunación"
+    nombre_otra: "Stock"
+    nota: >
+      El stock es la existencia al cierre del año que publica el MAGyP (página Stocks); la
+      vacunación, las cabezas vacunadas en la 1ra campaña según SENASA. Son dos fuentes y no se
+      suman ni se restan.
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  tabla-departamento-anios:
+    titulo: "Sgo. del Estero - Evolución de 1ra vacunación bovina por departamento y totales - años {desde} a {hasta}"
+    encabezado_geo: "Departamento"
+    rotulo_total: "TOTAL PROV"
+  # Disposicion en COLUMNAS (12-oct-2026, "reacomoda... para que no haya espacios vacios"):
+  # cada banda tiene dos columnas que se apilan a su ritmo, como las hojas de JC (graficos a
+  # la izquierda, tablas a la derecha). Las bandas agrupan cuadros de alto parecido; los
+  # altos se midieron a 1600 px.
+  disposicion: columnas
+  orden:
+    - {id: mapa, ancho: 4, columna: izq}
+    - {id: tabla-departamentos, ancho: 8, columna: der}
+    - {id: evolucion-total, ancho: 4, columna: izq, nueva_banda: true}
+    - {id: evolucion-vs-otra, ancho: 4, columna: izq}
+    - {id: tabla-evolucion, ancho: 8, columna: der}
+    - {id: tabla-departamento-anios, ancho: 8, columna: der}
+
+filtros:
+  - id: anio
+    zona: periodo
+  - id: categoria
+    zona: barra
+    incluye_total: true
+    defecto: "Total"

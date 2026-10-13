@@ -1,0 +1,28 @@
+# Comunes de Ganaderia > Equinos > Movimientos (hoja "GanEquiDTE" de la maqueta "Maqueta
+# Ganad VF", 9-oct-2026). Base 230 (DTE de equidos de SENASA). JC: "MISMA ESTRUCTURA Y
+# ORGANIZACION QUE TODOS LOS DTE ANIMALES (BASE BOVINOS)"; su hoja es la de bovinos con los
+# numeros simulados.
+#
+# Solo entran las SALIDAS (movimientos internos y extraccion): la hoja "Ingreso SDE" de la
+# base 230 no se puede leer (backlog 82), asi que no hay bloque de introduccion ni balance
+# hasta que llegue corregida.
+id: _comunes-movimientos-equinos
+mart: hecho_movimientos_equinos
+especie: equinos
+
+presentacion:
+  tipos_de_variable:
+    cabezas: cabezas
+    documentos: documentos
+
+categorias:
+  orden: [Padrillos, Caballos, Yeguas, Potrillos/as, Mulas, Burros, Asnos]
+
+tiempo:
+  ventana_anios:
+    desde: 2024
+    hasta: 2026
+  anio_parcial: 2026
+
+fuente:
+  organismo_esperado: "SENASA"

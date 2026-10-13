@@ -1,0 +1,131 @@
+# Ganaderia > Bubalinos (pagina unica). Hoja "GanBuba ST" de la maqueta "Maqueta Ganad VF"
+# (9-oct-2026).
+#
+# JC: "NO se selecciona departamento, sólo se visualiza la escala" (celda E112). Por eso no
+# hay chips de categoria y el mapa solo pinta. La faena (tabla y precios) sale de Siocarnes.
+#
+# Lo unico de su hoja que no se construye es la tabla de EQUIVALENCIAS de categorias
+# (Resolucion MAGyP 470/2012): en la maqueta es una imagen, no un dato.
+id: tablero-bubalinos
+tipo: tablero
+familia: stock-bubalinos
+seccion: bubalinos
+
+titulo: "Bubalinos"
+subtitulo: "Provincia de Santiago del Estero · existencias por categoría, departamento y estrato"
+
+# La banda de JC: "Stock 2.386 cab", "Unidades Productivas 48", "VBP (millones $ corr.)
+# $ 3.581" y "% Dto Guasayán 29,38 %". Stock, UP y Guasayan dan exacto. El VBP da distinto
+# porque JC promedia el precio de las ventas sin ponderar (ver tabla-faena).
+indicadores:
+  - medida: cabezas
+    categoria: "Total"
+    etiqueta: "Stock"
+  - medida: renspas
+    origen: estrato
+    etiqueta: "Unidades productivas"
+  - faena: vbp
+    etiqueta: "VBP faena (millones $ corr.)"
+  - lider: cabezas
+    como: participacion
+    etiqueta: "% Dto {departamento}"
+
+paneles:
+  alto: fluye
+  mapa:
+    titulo: "Stock por departamento"
+    medida: cabezas
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  tabla-evolucion:
+    titulo: "Sgo. del Estero - Stocks bubalinos por categoría y totales - años {desde} a {hasta}"
+    encabezado_anio: ""
+    encabezado_total: "Total Cab"
+  evolucion-categorias:
+    titulo: "Sgo del Estero - Evolución del stock bubalino por categoría años {desde} a {hasta}"
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  tabla-departamentos:
+    titulo: "Sgo. del Estero - Stock Bubalino por departamento, categoría y totales. UP y Establecim. - año {anio}"
+    encabezado_geo: "Departamento"
+    encabezado_total: "Total Cab"
+    rotulo_total: "TOTAL PROV"
+    columnas_extra:
+      - {medida: establecimientos, encabezado: "Establec."}
+      - {medida: renspas, encabezado: "UP"}
+    # Texto de JC (cuadro de texto de su hoja), con la errata "normbrar" corregida.
+    nota: >
+      Equivalencias entre las categorías de bovinos y bubalinos: a efectos de ir
+      acostumbrando al sector a nombrar adecuadamente a las categorías de los bubalinos,
+      empleamos en algunos cuadros las de bovinos y en otros las de bubalinos, porque así
+      figuran formalmente en las bases de datos.
+  evolucion-total:
+    titulo: "Sgo del Estero - Evolución del stock total bubalinos - años {desde} a {hasta}"
+    medida_nombre: "Stock total"
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  tabla-estratos:
+    titulo: "Sgo. del Estero - Stock Bubalino por estrato, categoría, totales, UP y Establecim. - año {anio}"
+    encabezado_estrato: "Estrato"
+    encabezado_total: "Total Cab"
+    rotulo_total: "TOTAL PROV"
+    columnas_extra:
+      - {medida: establecimientos, encabezado: "Establec."}
+      - {medida: renspas, encabezado: "UP"}
+  anillo-estratos:
+    titulo: "Sgo del Estero - Bubalinos, Participación por estrato en el total de cabezas - año {anio}"
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  anillo-estratos-up:
+    titulo: "Sgo del Estero - Bubalinos, Participación por estrato en el total de U.P. - año {anio}"
+    subtitulo: "En unidades productivas (RENSPA)"
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  # La faena sale de Siocarnes (base 89): los bubalinos vienen en el mismo archivo que los
+  # bovinos (`faena` en _comunes-stock-bubalinos).
+  tabla-faena:
+    titulo: "Sgo. del Estero - Bubalinos - Evolución de las categorías vendidas para faena - Tns, precio promedio y VBP (*) - Año {anio}"
+    encabezados: ["Categorías", "Tn", "%/Total", "Precio prom $/Kg", "VBP (*) Millones $ corr", "%/Total"]
+    rotulo_total: "Bubalinos TOTAL"
+    prefijo_fila: "Bubalino "
+    # Texto de JC (cuadro de texto al lado de su tabla). Se agrega como se calcula aca el
+    # precio, que no es como lo calcula su maqueta (backlog).
+    nota: >
+      (*) VBP - Valor Bruto de la Producción ($ corrientes). Surge de multiplicar el precio
+      pagado al productor por la cantidad de toneladas vendidas a faena. El precio es
+      declarado por el productor ganadero. Si bien técnicamente no representaría de manera
+      exacta el VBP, es una estimación en base a datos comprobables ($ corrientes). El precio
+      promedio está ponderado por los kilos de cada venta.
+  precios-faena-1:
+    titulo: "Sgo del Estero - Bubalinos Precio declarado venta a faena - Novillo y Novillito - $/Kg en pie"
+    categorias: ["Bubalino Novillito", "Bubalino Novillo"]
+    desde: 2025
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  precios-faena-2:
+    titulo: "Sgo del Estero - Bubalinos Precio declarado venta a faena - Ternero y Torito - $/Kg en pie"
+    categorias: ["Bubalino Ternero", "Bubalino Torito"]
+    desde: 2025
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  # Disposicion en COLUMNAS (12-oct-2026, "reacomoda... para que no haya espacios vacios"):
+  # cada banda tiene dos columnas que se apilan a su ritmo, como las hojas de JC (graficos a
+  # la izquierda, tablas a la derecha). Las bandas agrupan cuadros de alto parecido; los
+  # altos se midieron a 1600 px.
+  disposicion: columnas
+  orden:
+    - {id: mapa, ancho: 4, columna: izq}
+    - {id: evolucion-total, ancho: 4, columna: izq}
+    - {id: evolucion-categorias, ancho: 4, columna: izq}
+    - {id: tabla-evolucion, ancho: 8, columna: der}
+    - {id: tabla-departamentos, ancho: 8, columna: der}
+    - {id: tabla-estratos, ancho: 8, columna: der}
+    - {id: tabla-faena, ancho: 8, columna: der}
+    - {id: anillo-estratos, ancho: 6, columna: fila}
+    - {id: anillo-estratos-up, ancho: 6, columna: fila}
+    - {id: precios-faena-1, ancho: 6, columna: izq, nueva_banda: true}
+    - {id: precios-faena-2, ancho: 6, columna: der}
+
+filtros:
+  - id: anio
+    zona: periodo

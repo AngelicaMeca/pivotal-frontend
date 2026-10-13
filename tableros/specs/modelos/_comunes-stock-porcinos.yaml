@@ -1,0 +1,32 @@
+# Comunes del tablero de PORCINOS (Ganaderia > Porcinos > Stocks, hoja "GanPorcST" de la
+# maqueta "Maqueta Ganad VF", 9-oct-2026). Lo lee site_build.ContextoStockEspecie.
+id: _comunes-stock-porcinos
+especie: porcinos
+
+# De donde sale cada dato. `principal` trae la serie provincial y los 27 departamentos todos
+# los anios (base 232); `estrato` trae los tramos de tamanio con establecimientos y RENSPA
+# (base 91), que es de donde salen las UP de la banda de JC ("Unidades Productivas 6.273").
+marts:
+  principal: hecho_stock_porcino
+  estrato: hecho_stock_porcino_estrato
+
+presentacion:
+  subsector: "ganado porcino"
+  tipos_de_variable:
+    cabezas: cabezas
+
+categorias:
+  # El orden de las columnas de la planilla de la fuente, que es el de las tablas de JC.
+  orden: [Padrillos, Cerdas, Lechones, Capones, Cachorros, M.E.I., Cachorras]
+  agregado: "Total"
+
+tiempo:
+  ventana_anios:
+    desde: 2017
+    # La base trae 2026, pero es una foto parcial del anio en curso (103.167 cabezas contra
+    # 135.715 de 2025) y JC titula sus cuadros "años 2.017 a 2.025".
+    hasta: 2025
+
+fuente:
+  # La maqueta cita MAGyP al pie, pero la base 232 es de SENASA: se cita lo que dice el dato.
+  organismo_esperado: "SENASA"

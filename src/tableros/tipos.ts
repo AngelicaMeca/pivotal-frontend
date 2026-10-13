@@ -180,6 +180,14 @@ export type Panel = {
   subtitulo_partes?: ParteDeTexto[];
   ancho?: string | number;
   alto?: string | number;
+  // La tabla scrollea adentro de su cuadro en vez de estirar las filas que ocupa (ganaderia,
+  // paginas de Estratos). Lo declara el spec en `paneles.orden`.
+  scroll_interno?: boolean;
+  // Disposicion "columnas": en que columna de su banda va el cuadro ("izq" o "der"). Si el
+  // spec no lo dice, lo decide el ancho (ver bandasEnColumnas en Tablero.tsx).
+  columna?: "izq" | "der" | "fila";
+  // Disposicion "columnas": este panel abre una banda nueva.
+  nueva_banda?: boolean;
   detalle?: string | null;
   rotulo?: string;
   rotulo_partes?: ParteDeTexto[];

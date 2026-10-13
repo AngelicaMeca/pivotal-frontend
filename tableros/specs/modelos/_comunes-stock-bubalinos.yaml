@@ -1,0 +1,45 @@
+# Comunes del tablero de BUBALINOS (Ganaderia > Bubalinos, pagina unica, hoja "GanBuba ST"
+# de la maqueta "Maqueta Ganad VF", 9-oct-2026). Lo lee site_build.ContextoStockEspecie.
+id: _comunes-stock-bubalinos
+especie: bubalinos
+
+# `principal`: base 183, la serie PROVINCIAL 2015-2025 (sin departamentos).
+# `estrato`: base 153, la foto por departamento y tramo de tamanio (2025 y 2026).
+# No hay base por departamento sin estrato: el detalle departamental sale de SUMAR los
+# tramos de la 153 (`departamentos_desde_estrato`).
+marts:
+  principal: hecho_stock_bubalino
+  estrato: hecho_stock_bubalino_estrato
+  departamentos_desde_estrato: true
+
+# La venta a faena (Siocarnes, base 89): los bubalinos viajan en el mismo mart que los
+# bovinos y se reconocen porque su categoria empieza con "Bubalino".
+faena:
+  mart: hecho_comercializacion_bovinos
+  prefijo: "Bubalino"
+
+presentacion:
+  subsector: "ganado bubalino"
+  tipos_de_variable:
+    cabezas: cabezas
+
+categorias:
+  # La serie (base 183) usa los nombres bubalinos.
+  orden: [Búfala, Bubilla, Bubillo, Bubillito, Búfalo, Bucerro, Bucerra]
+  # La base por estrato (153) los nombra COMO BOVINOS, porque asi figuran formalmente en el
+  # registro de SENASA. JC lo explica en su hoja y lo mantiene a proposito ("emplearemos en
+  # algunos cuadros y graficos la de Bovinos y en otros las de Bubalinos"): no se traducen.
+  orden_departamentos: [Vacas, Vaquillonas, Novillos, Novillitos, Terneros, Terneras, Toros,
+                        Toritos, Bueyes]
+  orden_estratos: [Vacas, Vaquillonas, Novillos, Novillitos, Terneros, Terneras, Toros,
+                   Toritos, Bueyes]
+  agregado: "Total"
+
+tiempo:
+  ventana_anios:
+    desde: 2015
+    # La 153 trae tambien 2026, que la serie todavia no tiene: JC titula "a 2.025".
+    hasta: 2025
+
+fuente:
+  organismo_esperado: "SENASA"

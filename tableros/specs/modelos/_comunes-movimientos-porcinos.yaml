@@ -1,0 +1,29 @@
+# Comunes de Ganaderia > Porcinos > Movimientos (hoja "GanPorcDTE" de la maqueta "Maqueta
+# Ganad VF", 9-oct-2026, que JC arma con el molde de bovinos: "PROCESAR IDEM DTE BOVINOS").
+# Base 144 (DTE porcinos, SENASA). Lo lee site_build.ContextoMovimientos.
+#
+# La base trae la categoria LONG y no tiene columna de total: el total de cabezas se arma
+# sumando las categorias (`total_desde_componentes`). Los DTE vienen por categoria, asi que un
+# documento que ampara dos categorias se cuenta dos veces (nota en la pagina).
+id: _comunes-movimientos-porcinos
+mart: hecho_movimientos_porcinos
+especie: porcinos
+total_desde_componentes: true
+
+presentacion:
+  tipos_de_variable:
+    cabezas: cabezas
+    documentos: documentos
+
+categorias:
+  # El orden de la pagina de stocks de porcinos.
+  orden: [Padrillos, Cerdas, Lechones, Capones, Cachorros, M.E.I., Cachorras]
+
+tiempo:
+  ventana_anios:
+    desde: 2022
+    hasta: 2026
+  anio_parcial: 2026
+
+fuente:
+  organismo_esperado: "SENASA"

@@ -1,0 +1,117 @@
+# Ganaderia > Bovinos > Razas. Hoja "GanBov RAZ" de la maqueta "Maqueta Ganad VF"
+# (9-oct-2026). Base 89 (Siocarnes): hacienda vendida para faena.
+#
+# Contra la planilla de JC: las toneladas dan con una diferencia de 0,05% (304.182 contra
+# 304.034 en 2025), que viene de la version del archivo. El PRECIO y el VBP no coinciden:
+# JC promedia las ventas sin ponderar y aca va ponderado por los kilos (backlog 85).
+id: tablero-bovinos-razas
+tipo: tablero
+familia: faena-bovinos
+seccion: bovinos
+pagina: razas
+titulo_pagina: "Razas"
+
+titulo: "Bovinos"
+subtitulo: "Provincia de Santiago del Estero · hacienda vendida para faena por categoría, raza y departamento"
+
+breadcrumb: "Ganadería - Bovinos - Provincia - {departamento}"
+
+# La banda de JC: "Total enviado a faena 304.034 Tns", "Particip. Dto. Jiménez 19,3 %",
+# "VBP (millones $ corr.) $ 686.473" y "% enviado Bovino Criollo 28,1 %". La raza lider
+# saltea "Otra 99", que no es una raza sino el resto sin clasificar (JC hace lo mismo: pone
+# Bovino Criollo aunque "Otras" sea apenas mayor).
+indicadores:
+  - indicador: toneladas
+    etiqueta: "Total enviado a faena"
+  - indicador: departamento_lider
+    etiqueta: "Particip. Dto. {departamento}"
+  - indicador: vbp
+    etiqueta: "VBP (millones $ corr.)"
+  - indicador: raza_lider
+    excluir: ["Otra 99"]
+    etiqueta: "% enviado {raza}"
+
+paneles:
+  alto: fluye
+  mapa:
+    titulo: "Razas y categorías"
+    rotulo_accion: "Seleccione departamento"
+    click_departamento: en-la-misma-vista
+    seleccion_departamento:
+      defecto: provincia
+      rotulo_provincia: "Provincia"
+      rotulo_cambiar: "Seleccione otro departamento si desea visualizar"
+      miga: "Dto {Departamento}"
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  tabla-categorias:
+    titulo: "Sgo. del Estero - Bovinos - Evolución de las categorías y subcategorías vendidas para faena - Tns, precio promedio y VBP (*) - Año {anio}"
+    subtitulo: "En toneladas, pesos por kilo y millones de pesos corrientes"
+    encabezados: ["Categorías", "Tn", "%/Total", "Precio prom $/Kg", "VBP (*) Millones $ corr", "%/Total"]
+    rotulo_total: "TOTALES"
+    # Texto de JC (cuadro de texto de su hoja), con "paraa" corregido en el titulo y una
+    # oracion sobre como se promedia el precio.
+    nota: >
+      (*) VBP - Valor Bruto de la Producción ($ corrientes): surge de multiplicar el precio
+      pagado al productor por la cantidad de toneladas vendidas a faena. El precio es declarado
+      por el productor ganadero. Si bien técnicamente no representaría de manera exacta el VBP,
+      es una estimación en base a datos comprobables. ($ corrientes) implica que el precio
+      expresado no fue actualizado mediante ningún método y corresponde a valores históricos.
+      El precio promedio está ponderado por los kilos de cada venta.
+  anillo-categorias:
+    titulo: "Sgo del Estero - Participación por categoría total en la venta para faena - año {anio}"
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  tabla-razas:
+    titulo: "Sgo. del Estero - Distribución de las tn enviadas a faena por raza - Año {anio}"
+    # Texto de JC (cuadro de texto de su hoja).
+    nota: >
+      XD - Decomisado: es una categoría técnica de clasificación (equivalente a las razas en el
+      sistema) que se utiliza para registrar aquellos animales o lotes de hacienda que fueron
+      retirados o confiscados por las autoridades sanitarias por no cumplir con los requisitos
+      sanitarios o de documentación. XZ - Golpeado: código de clasificación que se utiliza
+      para registrar animales que llegan a la faena con traumatismos o contusiones físicas
+      visibles. "Otras" es la hacienda sin raza declarada.
+  anillo-razas:
+    titulo: "Sgo del Estero - Participación por raza en la venta para faena - año {anio}"
+    cuantos: 5
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  tabla-departamentos:
+    titulo: "Sgo. del Estero - Distribución de las tn enviadas a faena por departamento de origen. % del total y peso promedio - Año {anio}"
+  anillo-departamentos:
+    titulo: "Sgo del Estero - Participación por Departamento en la venta para faena - año {anio}"
+    cuantos: 5
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  precios-razas-1:
+    titulo: "Precio declarado venta a faena - Aberdeen Angus y Braford - $/Kg en pie"
+    razas: ["Aberdeen Angus", "Braford"]
+    desde: 2025
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  precios-razas-2:
+    titulo: "Precio declarado venta a faena - Bovino Criollo y Otras razas - $/Kg en pie"
+    razas: ["Bovino Criollo", "Otra 99"]
+    desde: 2025
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  # Disposicion en COLUMNAS (12-oct-2026, "reacomoda... para que no haya espacios vacios"):
+  # cada banda tiene dos columnas que se apilan a su ritmo, como las hojas de JC (graficos a
+  # la izquierda, tablas a la derecha). Las bandas agrupan cuadros de alto parecido; los
+  # altos se midieron a 1600 px.
+  disposicion: columnas
+  orden:
+    - {id: mapa, ancho: 4, columna: izq}
+    - {id: tabla-categorias, ancho: 8, columna: der}
+    - {id: anillo-categorias, ancho: 4, columna: fila}
+    - {id: anillo-razas, ancho: 4, columna: fila}
+    - {id: anillo-departamentos, ancho: 4, columna: fila}
+    - {id: tabla-razas, ancho: 6, columna: izq}
+    - {id: tabla-departamentos, ancho: 6, columna: der, scroll_interno: true}
+    - {id: precios-razas-1, ancho: 6, columna: fila}
+    - {id: precios-razas-2, ancho: 6, columna: fila}
+
+filtros:
+  - id: anio
+    zona: periodo

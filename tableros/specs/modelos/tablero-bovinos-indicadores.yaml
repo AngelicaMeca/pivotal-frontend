@@ -1,0 +1,119 @@
+# Ganaderia > Bovinos > Indicadores. Hoja "GanBov IN" de la maqueta "Maqueta Ganad VF"
+# (9-oct-2026). Base 48 (stock bovino, MAGyP).
+#
+# Las relaciones entre categorias del stock, de la provincia y de cada departamento, con la
+# metodologia de JC al costado. JC aclara que los numeros de su maqueta "NO SON REALES,
+# FUERON TOMADOS DE UN TRABAJO DE 2014" (E55): aca se calculan con el stock real, como el
+# indica en E57 ("vaca/stock se divide el total de vacas por el stock total para ese
+# departamento o provincia"). Se suma un selector de anio: la base trae de 2012 a 2025.
+#
+# Dos definiciones que salen de su propia metodologia:
+# - "Ternero/Vaca" es la tasa de destete y sus cortes (0,5 y 0,6) solo tienen sentido con
+#   terneros Y terneras: con machos solos la provincia daria la mitad.
+# - "Toro/Vaca" son los "toros en servicio": van los toros, no los toritos.
+#
+# Lo que NO se construye: el mapa de "sistemas imperantes" por departamento (E59), que JC
+# deja para la etapa de implementacion.
+id: tablero-bovinos-indicadores
+tipo: tablero
+base: 48
+# El contexto es el de la base 48 (ContextoStock) y los cuadros, los del motor de stock.
+constructor: stock
+seccion: bovinos
+pagina: indicadores
+titulo_pagina: "Indicadores"
+
+titulo: "Bovinos"
+subtitulo: "Provincia de Santiago del Estero · relaciones entre categorías del stock"
+
+# JC no dibuja banda de KPIs en esta hoja (solo el titulo "Indicadores bovinos 2025
+# Provincia y departamentos"); van las cuatro relaciones principales de la provincia.
+indicadores:
+  - etiqueta: "Vaca / Stock"
+    numerador: [Vacas]
+    denominador: [Total]
+  - etiqueta: "Vaquillona / Vaca"
+    numerador: [Vaquillonas]
+    denominador: [Vacas]
+  - etiqueta: "Ternero / Vaca"
+    numerador: [Terneros, Terneras]
+    denominador: [Vacas]
+  - etiqueta: "Nvto + Novillo / Vaca"
+    numerador: [Novillitos, Novillos]
+    denominador: [Vacas]
+
+paneles:
+  alto: fluye
+  texto-metodologia:
+    titulo: "Metodología de cálculo e interpretación de los indicadores"
+    # Texto de JC (cuadro de texto de su hoja, columna 8, fila 12), sin cambiar una idea.
+    parrafos:
+      - titulo: "Vaca / Stock"
+        texto: >
+          Permite definir la actividad predominante en cada departamento, en cuanto a la
+          cantidad de vientres, considerando que: cuando es superior a 0,45 define a una zona
+          de cría; menos de 0,45 es zona de cría en ambientes de mejor aptitud ganadera con
+          buena incorporación de tecnología; superior a 0,5, zona de cría en ambientes con
+          menor aptitud ganadera y en forma más extensiva, con escasa incorporación de
+          tecnología.
+      - titulo: "Vaquillona / Vaca"
+        texto: >
+          Esta relación hace referencia al porcentaje de reposición del plantel de madres, es
+          decir, vaquillonas que entran al rodeo para reposición de vacas que salen del mismo
+          por viejas, vacías o enfermas. En la medida que sea inferior a 0,2 indica una alta
+          vida útil de los vientres, son longevas, por lo tanto la cantidad de vaquillonas de
+          reemplazo por año es menor. Cabe aclarar que este índice sobreestima el porcentaje de
+          reposición, pues una alta proporción de dichas vaquillonas son destinadas a engorde y
+          venta.
+      - titulo: "Ternero / Vaca"
+        texto: >
+          Este indicador aproxima la posible tasa de destete del departamento, es decir, es una
+          medida de eficiencia de la actividad, considerando que: hasta 0,5 caracteriza a una
+          zona de baja producción de terneros; entre 0,5 y 0,6 es índice de moderada producción
+          de terneros; superior a 0,6, buena producción de terneros. Se calcula con terneros y
+          terneras.
+      - titulo: "Novillito + Novillo / Vaca"
+        texto: >
+          Calcula la relación entre la suma de novillitos y novillos en el departamento sobre el
+          total de vacas existentes en el mismo. Refleja el tipo de actividad ganadera
+          predominante según los siguientes criterios: hasta 0,4 se presume que predomina la
+          actividad de cría; entre 0,4 y 1,2 se estima que la actividad es de ciclo completo;
+          superior a 1,2 la actividad desarrollada es de invernada, engorde y terminación.
+      - titulo: "Toro / Vaca"
+        texto: >
+          Este índice refleja el porcentaje de toros en servicio que posee cada departamento:
+          por ejemplo, un índice de 0,04 significa un 4% de toros en servicio. La cantidad de
+          toros utilizados varía según las condiciones agroecológicas y de infraestructura de
+          la explotación, y es ajustada en cada sistema ganadero tratando de asegurar el mejor
+          porcentaje de preñez posible.
+    fuente: >-
+      Fuente: "Análisis de la actividad ganadera bovina Provincial y Regional por estratos de
+      productores y composición del stock - Años 2008 a 2014" - Fumagalli Arnaldo - INTA - EEA
+      Sgo del Estero, RIAN - Observatorio Estratégico - 2015.
+  tabla-relaciones:
+    titulo: "Relaciones entre categorías del stock - Año {anio} - Santiago del Estero"
+    subtitulo: "Cocientes entre cabezas de cada categoría"
+    encabezado_geo: "Departamento"
+    rotulo_total: "PROVINCIA"
+    relaciones:
+      - {etiqueta: "Vaca/Stock", numerador: [Vacas], denominador: [Total]}
+      - {etiqueta: "Vaquillona/Vaca", numerador: [Vaquillonas], denominador: [Vacas]}
+      - {etiqueta: "Ternero/Vaca", numerador: [Terneros, Terneras], denominador: [Vacas]}
+      - {etiqueta: "Nvto+Novillo/Vaca", numerador: [Novillitos, Novillos], denominador: [Vacas]}
+      - {etiqueta: "Toro/Vaca", numerador: [Toros], denominador: [Vacas]}
+    nota: >
+      Cada relación se calcula sobre las cabezas de ese departamento (o de la provincia), nunca
+      promediando las de los departamentos.
+  # Como en la hoja de JC: la metodologia a la izquierda y la tabla a la derecha.
+  # Disposicion en COLUMNAS (12-oct-2026, "vuelve a revisar, hay tableros donde todavia hay
+  # tarjetas que se ven asi"): la grilla de filas estiraba cada cuadro al alto del mas alto
+  # de su fila. En columnas cada cuadro mide lo suyo y tablero.js nivela el final de las dos
+  # columnas estirando o achicando los graficos (nunca las tablas).
+  disposicion: columnas
+  orden:
+    - {id: texto-metodologia, ancho: 5, columna: izq}
+    - {id: tabla-relaciones, ancho: 7, columna: der}
+
+filtros:
+  - id: anio
+    zona: periodo

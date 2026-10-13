@@ -1,0 +1,30 @@
+# Comunes del tablero de OVINOS (Ganaderia > Ovinos > "Stocks, Establec. y UP", hoja
+# "GanOviSt" de la maqueta "Maqueta Ganad VF", 9-oct-2026). Lo lee
+# site_build.ContextoStockEspecie.
+id: _comunes-stock-ovinos
+especie: ovinos
+
+# `principal` junta DOS bases en el mismo mart: la 156 (serie PROVINCIAL 2008-2025, sin
+# departamentos) y la 157 (la foto 2025 por departamento, con establecimientos y UP). Por eso
+# el selector de periodo tiene un solo anio y los graficos de evolucion tienen dieciocho.
+# `estrato`: base 158.
+marts:
+  principal: hecho_stock_ovino
+  estrato: hecho_stock_ovino_estrato
+
+presentacion:
+  subsector: "ganado ovino"
+  tipos_de_variable:
+    cabezas: cabezas
+
+categorias:
+  orden: [Carneros, Ovejas, Borregos, Capones, Corderos/as]
+  agregado: "Total"
+
+tiempo:
+  ventana_anios:
+    desde: 2008
+    hasta: 2025
+
+fuente:
+  organismo_esperado: "SENASA"

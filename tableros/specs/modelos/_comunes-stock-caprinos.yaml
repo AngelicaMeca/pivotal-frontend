@@ -1,0 +1,28 @@
+# Comunes del tablero de CAPRINOS (Ganaderia > Caprinos > "Stocks, Establecim. y UP", hoja
+# "GanCaprST" de la maqueta "Maqueta Ganad VF", 9-oct-2026). Lo lee
+# site_build.ContextoStockEspecie.
+id: _comunes-stock-caprinos
+especie: caprinos
+
+# Igual que ovinos: `principal` junta la serie provincial 2009-2025 (base 178) con la foto
+# 2025 por departamento (base 177, con establecimientos y UP). `estrato`: base 179.
+marts:
+  principal: hecho_stock_caprino
+  estrato: hecho_stock_caprino_estrato
+
+presentacion:
+  subsector: "ganado caprino"
+  tipos_de_variable:
+    cabezas: cabezas
+
+categorias:
+  orden: [Chivos, Cabras, Cabritos, Capones, Cabrillas/chivitos]
+  agregado: "Total"
+
+tiempo:
+  ventana_anios:
+    desde: 2009
+    hasta: 2025
+
+fuente:
+  organismo_esperado: "SENASA"

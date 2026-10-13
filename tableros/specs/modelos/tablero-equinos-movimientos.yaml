@@ -1,0 +1,73 @@
+# Ganaderia > Equinos > Movimientos. Hoja "GanEquiDTE" de la maqueta "Maqueta Ganad VF"
+# (9-oct-2026). Base 230.
+#
+# JC: "MISMA ESTRUCTURA Y ORGANIZACIÓN QUE TODOS LOS DTE ANIMALES (BASE BOVINOS)". Es la
+# pagina de movimientos de bovinos con los datos de equinos. Solo entran las salidas: la hoja
+# "Ingreso SDE" de la base 230 no se puede leer (backlog 82), asi que no va ni el bloque de
+# introduccion ni el balance, y el cuarto KPI son los DTE.
+# Las tablas por provincia de destino quedan fuera por la misma razon que en bovinos.
+id: tablero-equinos-movimientos
+tipo: tablero
+familia: movimientos-equinos
+seccion: equinos
+pagina: movimientos
+titulo_pagina: "Movimientos"
+
+titulo: "Equinos"
+subtitulo: "Provincia de Santiago del Estero · movimientos de équidos con DTE"
+
+
+indicadores:
+  - recorte: totales_sin_introduccion
+    etiqueta: "Totales movidos"
+  - recorte: internos
+    etiqueta: "Movimientos internos"
+  - recorte: extraccion
+    etiqueta: "Extracción"
+  - recorte: totales_sin_introduccion
+    medida: documentos
+    unidad: "DTE"
+    etiqueta: "DTE emitidos"
+
+paneles:
+  alto: fluye
+  mapa:
+    titulo: "Movimientos por departamento"
+    rotulo_accion: "Seleccione departamento"
+    click_departamento: en-la-misma-vista
+    seleccion_departamento:
+      defecto: provincia
+      rotulo_provincia: "Provincia"
+      rotulo_cambiar: "Seleccione otro departamento si desea visualizar"
+      miga: "Dto {Departamento}"
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  tabla-tipos:
+    titulo: "Sgo. del Estero - Movimientos cabezas equinas por categoría y DTE Totales provincia - años {desde} a {hasta}"
+    nota: >
+      Todavía no se muestran los movimientos que entran a la provincia: la hoja de ingresos de
+      la planilla de SENASA llegó con problemas y está en revisión.
+  tabla-departamentos:
+    titulo: "Sgo. del Estero - Movimientos equinos por categoría y DTE por Departamento - año {anio}"
+    rotulo_total: "PROVINCIA"
+  anillo-categorias:
+    titulo: "Sgo del Estero - Participación por categoría en movimientos totales año {anio}"
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  anillo-departamentos:
+    titulo: "Sgo del Estero - Participación de departamentos de origen en los movimientos totales año {anio}"
+    cuantos: 5
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  # Sin mapa ni cuadros por departamento: la base 230 NO trae el departamento de ORIGEN
+  # (solo la provincia, ver su config), asi que lo que JC pide "por Departamento" no se puede
+  # armar con este dato (backlog 89). Quedan la serie por tipo y la composicion por categoria,
+  # a todo el ancho porque no hay con que emparejarlas.
+  disposicion: columnas
+  orden:
+    - {id: tabla-tipos, ancho: 12}
+    - {id: anillo-categorias, ancho: 12}
+
+filtros:
+  - id: anio
+    zona: periodo

@@ -68,6 +68,139 @@ export default function iniciar(PIVOTAL) {
      alto ya esta corregido cuando ECharts vuelve a medir su contenedor. */
   window.addEventListener("resize", ajustarAlto);
 
+  /* Disposicion "columnas" (ganaderia): las columnas de una banda terminan a la MISMA altura
+     (12-oct-2026, Francisco, con capturas: una columna cerraba 50-240 px antes que la otra y
+     quedaba fondo crema entre bandas). Lo que se estira o se achica son los GRAFICOS, cuyo
+     alto es elegible; una tabla mide lo que mide su contenido y no se toca, asi no vuelve la
+     tarjeta de tabla con media pantalla vacia.
+
+     La meta es el alto de la columna sin graficos (si hay una): la de graficos se achica
+     hasta ahi o crece hasta ahi. Achicar tiene piso (PISO_GRAFICO del alto natural, y nunca
+     menos de PISO_MINIMO px), para que un mapa o un anillo no queden en miniatura; lo que no
+     se alcanza con eso lo absorbe el ultimo cuadro de la columna corta (`.banda-nivelada`
+     en el CSS). Una banda en fila (`.banda-en-fila`) se nivela igual: cada cuadro es una
+     columna.
+
+     Es sincronico (borra, mide, fija): si el resultado es el mismo que el anterior, los
+     ResizeObserver de los graficos no se enteran y no hay repintado en cadena. */
+  var PISO_GRAFICO = 0.72;
+  var PISO_MINIMO = 220;
+  var TOPE_CRECER = 1.6;     /* un grafico crece hasta 1,6 veces su alto natural */
+  var PISO_TABLA = 300;      /* una tabla con scroll propio no baja de esto */
+
+  function cajaElastica(panel) {
+    var graf = panel.querySelector("[data-grafico]");
+    if (!graf || !graf.childNodes.length) { return null; }
+    /* El anillo dibuja dentro de su caja, que lleva encima la cifra central: se mueve la caja
+       y el grafico la sigue (alto 100%). */
+    return graf.parentElement.classList.contains("anillo-caja") ? graf.parentElement : graf;
+  }
+
+  /* En el anillo se fija tambien el grafico de adentro: si no, conserva su min-height del CSS,
+     se sale de la caja achicada y se monta sobre la leyenda. */
+  function cajasDe(caja) {
+    var graf = caja.classList.contains("anillo-caja") && caja.querySelector("[data-grafico]");
+    return graf ? [caja, graf] : [caja];
+  }
+
+  function soltarCaja(caja) {
+    cajasDe(caja).forEach(function (c) {
+      c.style.removeProperty("height");
+      c.style.removeProperty("min-height");
+      c.style.removeProperty("flex");
+    });
+  }
+
+  function fijarCaja(caja, alto) {
+    cajasDe(caja).forEach(function (c) {
+      c.style.flex = "0 0 auto";
+      c.style.height = alto + "px";
+      c.style.minHeight = alto + "px";
+    });
+  }
+
+  function nivelarBandas() {
+    if (!contenedor || !contenedor.classList.contains("tablero-columnas")) { return; }
+    var bandas = contenedor.querySelectorAll(":scope > .banda-columnas, :scope > .banda-en-fila");
+    Array.prototype.forEach.call(bandas, function (banda) {
+      var columnas = banda.classList.contains("banda-en-fila")
+        ? Array.prototype.slice.call(banda.querySelectorAll(":scope > .panel"))
+        : Array.prototype.slice.call(banda.querySelectorAll(":scope > .columna"));
+      var grupos = columnas.map(function (col) {
+        var paneles = col.classList.contains("panel")
+          ? [col] : Array.prototype.slice.call(col.querySelectorAll(":scope > .panel"));
+        var cajas = [];
+        var tablas = [];
+        paneles.forEach(function (p) {
+          var caja = cajaElastica(p);
+          if (caja) { soltarCaja(caja); cajas.push(caja); }
+          var tabla = p.hasAttribute("data-scroll-interno") && p.querySelector(".tabla-datos");
+          /* Se mide con la tabla ENTERA: el tope lo pone esta funcion, no el CSS. */
+          if (tabla) { tabla.style.maxHeight = "none"; tablas.push(tabla); }
+        });
+        return { col: col, cajas: cajas, tablas: tablas };
+      });
+      banda.classList.remove("banda-nivelada");
+      /* Apiladas (angosto, o la banda se partio en una sola columna): nada que nivelar, y las
+         tablas de scroll propio vuelven al tope del CSS. */
+      var tope = grupos.length && grupos[0].col.getBoundingClientRect().top;
+      if (grupos.length < 2 || ANGOSTO.matches
+          || grupos.some(function (g) { return Math.abs(g.col.getBoundingClientRect().top - tope) > 2; })) {
+        grupos.forEach(function (g) {
+          g.tablas.forEach(function (t) { t.style.removeProperty("max-height"); });
+        });
+        return;
+      }
+
+      grupos.forEach(function (g) { g.alto = g.col.getBoundingClientRect().height; });
+      /* Una columna con tabla de scroll propio (`scroll_interno`) se recorta al alto de la de
+         al lado si es mas larga; si es mas corta, cuenta como una columna de tablas. */
+      var conGraficos = grupos.filter(function (g) { return g.cajas.length; });
+      var altoGraficos = conGraficos.length
+        ? Math.max.apply(null, conGraficos.map(function (g) { return g.alto; })) : 0;
+      var rigidas = grupos.filter(function (g) {
+        return !g.cajas.length && (!g.tablas.length || g.alto < altoGraficos);
+      });
+      var meta = rigidas.length ? Math.max.apply(null, rigidas.map(function (g) { return g.alto; }))
+        : conGraficos.length ? altoGraficos
+        : Math.max.apply(null, grupos.map(function (g) { return g.alto; }));
+
+      grupos.forEach(function (g) {
+        if (g.cajas.length || !g.tablas.length || g.alto <= meta) { return; }
+        var sobra = g.alto - meta;
+        g.tablas.forEach(function (tabla) {
+          if (sobra <= 0) { return; }
+          var h = tabla.getBoundingClientRect().height;
+          var nuevo = Math.max(PISO_TABLA, h - sobra);
+          tabla.style.maxHeight = Math.round(nuevo) + "px";
+          sobra -= h - nuevo;
+        });
+      });
+
+      grupos.forEach(function (g) {
+        var falta = meta - g.alto;
+        if (!g.cajas.length || Math.abs(falta) < 2) { return; }
+        var altos = g.cajas.map(function (c) { return c.getBoundingClientRect().height; });
+        var margen = altos.map(function (h) {
+          return falta > 0 ? h * (TOPE_CRECER - 1) : Math.max(0, h - Math.max(PISO_MINIMO, h * PISO_GRAFICO));
+        });
+        var total = margen.reduce(function (a, b) { return a + b; }, 0);
+        if (!total) { return; }
+        var mover = Math.min(Math.abs(falta), total) * (falta > 0 ? 1 : -1);
+        g.cajas.forEach(function (caja, i) {
+          fijarCaja(caja, Math.round(altos[i] + mover * margen[i] / total));
+        });
+      });
+      banda.classList.add("banda-nivelada");
+    });
+  }
+
+  var esperaNivelar = null;
+  window.addEventListener("resize", function () {
+    if (esperaNivelar) { clearTimeout(esperaNivelar); }
+    esperaNivelar = setTimeout(nivelarBandas, 150);
+  });
+
   function cargarGeo(ruta) {
     if (!geoListo) {
       geoListo = fetch(ruta).then(function (r) { return r.json(); }).then(function (geo) {
@@ -847,8 +980,16 @@ export default function iniciar(PIVOTAL) {
     var caja = nodo.querySelector("[data-tabla-datos]");
     if (!caja) { return; }
     PIVOTAL.vaciar(caja);
+    /* Las filas que traen `geo` (tablas por departamento de ganaderia) remarcan la del
+       departamento elegido en el mapa, como el ranking de agricultura: la tabla sigue siendo
+       provincial. Se copian en vez de tocarse: el panel se reusa en cada repintado. */
+    var elegido = PIVOTAL.departamento();
+    var filasPlanas = (panel.filas || []).map(function (fila) {
+      if (!elegido || fila.geo !== elegido) { return fila; }
+      return Object.assign({}, fila, { actual: true });
+    });
     var bloques = propios || panel.bloques
-      || (panel.tabla ? [panel.tabla] : [{ columnas: panel.columnas, filas: panel.filas }]);
+      || (panel.tabla ? [panel.tabla] : [{ columnas: panel.columnas, filas: filasPlanas }]);
     /* Un bloque con `titulo` es una TARJETA (pasturas y forrajes: una por año). La caja pasa a
        apilarlas en vertical en vez de ponerlas lado a lado. */
     var conTitulo = bloques.some(function (b) { return !!b.titulo; });
@@ -1202,7 +1343,10 @@ export default function iniciar(PIVOTAL) {
         return {
           name: serie.nombre,
           type: "bar",
-          stack: "total",
+          /* `agrupadas`: las series van LADO A LADO y no una encima de la otra (vacunacion
+             comparada con stock, hoja "GanBov VAC"): son dos magnitudes que se comparan, no
+             partes de un total. */
+          stack: panel.agrupadas ? undefined : "total",
           /* Al 100%: cada barra reparte SU PROPIO total, asi que el valor que se dibuja es la
              proporcion y no la magnitud. El dato que viaja del build sigue siendo la magnitud
              -las hectareas- para que el tooltip pueda decir las dos cosas: cuantas hectareas
@@ -1244,9 +1388,112 @@ export default function iniciar(PIVOTAL) {
     "tabla-departamentos": pintarTablaDatos,
     "tabla-evolucion": pintarTablaDatos,
     "tabla-departamento-anios": pintarTablaDatos,
+    // Los tramos de tamanio del establecimiento (equinos, bubalinos): una tabla mas.
+    "tabla-estratos": pintarTablaDatos,
+    // Ganaderia, el resto de las hojas de stock: los anillos de participacion (por
+    // departamento y por estrato) y la faena de bubalinos (tabla y precios por mes).
+    "anillo-departamentos": pintarAnillo,
+    "anillo-estratos": pintarAnillo,
+    "anillo-estratos-up": pintarAnillo,
+    "tabla-faena": pintarTablaDatos,
+    "evolucion-vs-otra": pintarApiladas,
+    "tabla-departamento-estratos": pintarTablaDatos,
+    // Movimientos (DTE): la tabla por tipo va en un bloque por universo.
+    "tabla-tipos": pintarTablaDatos,
+    "tabla-balance": pintarTablaDatos,
+    "tabla-provincias-destino": pintarTablaDatos,
+    "tabla-provincias-origen": pintarTablaDatos,
+    "anillo-categorias": pintarAnillo,
+    "anillo-provincias-destino": pintarAnillo,
+    "anillo-provincias-origen": pintarAnillo,
+    "precios-faena-1": pintarTendencia,
+    "precios-faena-2": pintarTendencia,
+    // Produccion de leche: dos tablas mensuales (una tarjeta por anio) y dos de precios.
+    "tabla-cuenca": pintarTablaDatos,
+    "tabla-calidad": pintarTablaDatos,
+    "precios-leche-1": pintarTendencia,
+    // Razas (venta a faena): categorias, razas y departamentos, y precios por raza.
+    "precios-razas-1": pintarTendencia,
+    "precios-razas-2": pintarTendencia,
+    "tabla-categorias": pintarTablaDatos,
+    // Feed Lots, Hilton y Tambos: una tabla por regimen.
+    "tabla-eac": pintarTablaDatos,
+    "tabla-relaciones": pintarTablaDatos,
+    // Apicola: el ranking de colmenas por departamento.
+    "tabla-ranking": pintarTablaDatos,
+    // Razas de porcinos: tablas con los anios lado a lado y precios por categoria.
+    "tabla-anios-deptos-cab": pintarTablaDatos,
+    "tabla-anios-deptos-tn": pintarTablaDatos,
+    "tabla-anios-razas-cab": pintarTablaDatos,
+    "tabla-anios-razas-tn": pintarTablaDatos,
+    "tabla-peso-razas": pintarTablaDatos,
+    "precios-categorias": pintarTendencia,
+    "tabla-hilton": pintarTablaDatos,
+    "tabla-tambo": pintarTablaDatos,
+    "tabla-razas": pintarTablaDatos,
+    "anillo-razas": pintarAnillo,
+    "precios-leche-2": pintarTendencia,
     "evolucion-total": pintarApiladas,
     "evolucion-categorias": pintarApiladas
   };
+
+  /* Un cuadro que es una captura de otro organismo (`imagen-*`): solo la imagen. */
+  function pintarImagen(nodo, panel) {
+    var img = nodo.querySelector("[data-imagen]");
+    if (!img) { return; }
+    if (img.getAttribute("src") !== panel.imagen) { img.setAttribute("src", panel.imagen); }
+    img.setAttribute("alt", panel.alt || "");
+  }
+
+  /* Un cuadro de texto (`texto-*`): un parrafo por entrada, con su titulo en negrita. */
+  function pintarTexto(nodo, panel) {
+    var caja = nodo.querySelector("[data-texto]");
+    if (!caja) { return; }
+    PIVOTAL.vaciar(caja);
+    (panel.parrafos || []).forEach(function (parrafo) {
+      var p = document.createElement("p");
+      if (parrafo.titulo) {
+        var b = document.createElement("strong");
+        b.textContent = parrafo.titulo + ". ";
+        p.appendChild(b);
+      }
+      p.appendChild(document.createTextNode(parrafo.texto));
+      caja.appendChild(p);
+    });
+  }
+
+  /* Un cuadro de cifras (`cifras-*`): una tarjeta por cifra y la serie con el dibujante de
+     lineas de siempre. */
+  function pintarCifras(nodo, panel) {
+    var caja = nodo.querySelector("[data-cifras]");
+    if (caja) {
+      PIVOTAL.vaciar(caja);
+      (panel.cifras || []).forEach(function (cifra) {
+        var tarjeta = document.createElement("div");
+        tarjeta.className = "cifra";
+        var rotulo = document.createElement("span");
+        rotulo.className = "cifra-rotulo";
+        rotulo.textContent = cifra.etiqueta;
+        var valor = document.createElement("span");
+        valor.className = "cifra-valor";
+        valor.textContent = cifra.valor;
+        tarjeta.appendChild(rotulo);
+        tarjeta.appendChild(valor);
+        caja.appendChild(tarjeta);
+      });
+    }
+    texto(nodo, "[data-cifras-serie]", panel.subtitulo_serie);
+    pintarTendencia(nodo, panel);
+  }
+
+  /* El dibujante de un panel: por su id; los `imagen-*`, `texto-*` y `cifras-*` comparten. */
+  function dibujanteDe(id) {
+    if (DIBUJANTES[id]) { return DIBUJANTES[id]; }
+    if (id.indexOf("imagen-") === 0) { return pintarImagen; }
+    if (id.indexOf("texto-") === 0) { return pintarTexto; }
+    if (id.indexOf("cifras-") === 0) { return pintarCifras; }
+    return null;
+  }
 
   /* Un panel sin datos dice por que no los tiene y se apaga entero: no se deja un grafico
      vacio ni un pie de fuente citando una fuente que no informo nada.
@@ -2005,8 +2252,17 @@ export default function iniciar(PIVOTAL) {
       PIVOTAL.glosa(nodo, "[data-subtitulo]", panel.subtitulo, panel.subtitulo_partes);
       texto(nodo, "[data-pie]", panel.pie);
       texto(nodo, "[data-nota]", panel.nota);
-      DIBUJANTES[nodo.dataset.panel](nodo, panel);
+      /* Un id de panel sin dibujante es un error de programacion (falta registrarlo en
+         DIBUJANTES): se avisa con el id y se saltea ESE cuadro, sin cortar el pintado de los
+         demas. Antes tiraba una excepcion y la pagina quedaba a medio dibujar. */
+      var dibujante = dibujanteDe(nodo.dataset.panel);
+      if (!dibujante) {
+        console.error("[tableros] El panel '" + nodo.dataset.panel + "' no tiene dibujante.");
+        return;
+      }
+      dibujante(nodo, panel);
     });
+    nivelarBandas();
   });
 
   /* El panel de precios del MCBA no tiene combinacion en el JSON del tablero: arranca solo,

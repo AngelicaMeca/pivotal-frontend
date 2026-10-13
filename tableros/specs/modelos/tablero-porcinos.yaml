@@ -1,0 +1,104 @@
+# Ganaderia > Porcinos > Stocks. Hoja "GanPorcST" de la maqueta "Maqueta Ganad VF"
+# (9-oct-2026). Misma anatomia que bovinos (tablero-stock-bovino): el mapa a la izquierda y
+# la tabla por departamento a la derecha, y debajo dos pares de grafico + tabla.
+id: tablero-porcinos
+tipo: tablero
+familia: stock-porcinos
+seccion: porcinos
+
+titulo: "Porcinos"
+subtitulo: "Provincia de Santiago del Estero · existencias por categoría y departamento"
+
+# Los cuatro de la banda de JC, textuales: "Stock 135.715 cab", "Unidades Productivas
+# 6.273", "Stock Dto Juan F Ibarra 24.849 cab" y "U.P. Dto Figueroa 550". Los cuatro dan
+# exacto contra la base. Las UP son los RENSPA de la base por estrato (91): es el unico lugar
+# donde la especie las cuenta.
+indicadores:
+  - medida: cabezas
+    categoria: "Total"
+    etiqueta: "Stock"
+  - medida: renspas
+    origen: estrato
+    etiqueta: "Unidades productivas"
+  - lider: cabezas
+    etiqueta: "Stock Dto {departamento}"
+  - lider: renspas
+    origen: estrato
+    etiqueta: "U.P. Dto {departamento}"
+
+# La miga de agricultura: "Provincia" es el link de vuelta cuando hay un departamento elegido.
+breadcrumb: "Ganadería - Porcinos - Provincia - {departamento}"
+
+paneles:
+  alto: fluye
+  mapa:
+    titulo: "Stock por departamento"
+    medida: cabezas
+    rotulo_accion: "Seleccione departamento"
+    # JC, celda E121 de su hoja: "Seleccionando un departamento del mapa lleva a página de
+    # datos (como en agri)". Es el mecanismo de cultivos extensivos: la MISMA página con los
+    # datos del departamento (KPIs de volumen, los dos gráficos de evolución y la tabla por
+    # categoría); el mapa, los anillos y las tablas por departamento siguen provinciales y
+    # remarcan el elegido. El mapa en miniatura de JC con "Departamento ALBERDI" arriba no va:
+    # mismo desvío que agricultura (Francisco, 2-oct-2026), el elegido ya se lee en el mapa y
+    # en la miga.
+    click_departamento: en-la-misma-vista
+    seleccion_departamento:
+      defecto: provincia
+      rotulo_provincia: "Provincia"
+      rotulo_cambiar: "Seleccione otro departamento si desea visualizar"
+      miga: "Dto {Departamento}"
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  tabla-departamentos:
+    titulo: "Sgo. del Estero - Stocks porcinos por categoría y totales por departamento - año {anio}"
+    encabezado_geo: "Departamento"
+    encabezado_total: "Total Cab"
+    rotulo_total: "TOTAL PROV"
+    columnas_extra: []
+    nota: >
+      El guion marca las categorías sin existencias en ese departamento, que no es lo mismo
+      que un dato que la fuente no informó (ése sale como S/D).
+  evolucion-total:
+    titulo: "Sgo del Estero - Evolución del stock total porcinos - años {desde} a {hasta}"
+    medida_nombre: "Stock total"
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  tabla-evolucion:
+    titulo: "Sgo. del Estero - Evolución del stock porcino por categoría y totales - años {desde} a {hasta}"
+    encabezado_anio: ""
+    encabezado_total: "Total Cab"
+  evolucion-categorias:
+    titulo: "Sgo del Estero - Evolución del stock porcino por categoría años {desde} a {hasta}"
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  tabla-departamento-anios:
+    titulo: "Sgo. del Estero - Evolución del stock porcino total por departamento - años {desde} a {hasta}"
+    encabezado_geo: "Departamento"
+    rotulo_total: "TOTAL PROV"
+  anillo-departamentos:
+    titulo: "Sgo del Estero - Porcinos, Participación por departamento en el stock total año {anio}"
+    cuantos: 7
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  # Disposicion en COLUMNAS (12-oct-2026, "reacomoda... para que no haya espacios vacios"):
+  # cada banda tiene dos columnas que se apilan a su ritmo, como las hojas de JC (graficos a
+  # la izquierda, tablas a la derecha). Las bandas agrupan cuadros de alto parecido; los
+  # altos se midieron a 1600 px.
+  disposicion: columnas
+  orden:
+    - {id: mapa, ancho: 4, columna: izq}
+    - {id: tabla-departamentos, ancho: 8, columna: der}
+    - {id: evolucion-total, ancho: 4, columna: izq, nueva_banda: true}
+    - {id: anillo-departamentos, ancho: 4, columna: izq}
+    - {id: tabla-evolucion, ancho: 8, columna: der}
+    - {id: tabla-departamento-anios, ancho: 8, columna: der}
+    - {id: evolucion-categorias, ancho: 12}
+
+filtros:
+  - id: anio
+    zona: periodo
+  - id: categoria
+    zona: barra
+    incluye_total: true
+    defecto: "Total"

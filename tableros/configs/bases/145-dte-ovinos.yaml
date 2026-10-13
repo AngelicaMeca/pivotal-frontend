@@ -1,0 +1,94 @@
+# Base 145 · DTE OVINOS (SENASA): movimientos de ovinos con documento de transito, origen y
+# destino, 2022 a 2026 (2026 parcial).
+#
+# Alimenta la pagina "Movimientos" de ovinos (hoja "GanOviDTE" de la maqueta de ganaderia:
+# "PROCESAR IDEM DTE BOVINOS, mismo formato y contenidos"). Llego en la entrega-01 y quedo
+# sin configurar hasta el 12-oct-2026.
+#
+# Misma familia que la 85 y la 144, pero SIN categoria: cada fila es un movimiento con sus
+# DTE y su total de animales. Las cabezas entran como el Total y la pagina no abre por
+# categoria. Son pocas filas (59 de salida y 43 de entrada). Sin fila de total al pie.
+#
+# OJO: la hoja de DESTINO trae tambien los movimientos INTERNOS (9 filas con origen y destino
+# en Santiago), que ya estan en la de origen. Se ingieren como vienen (nunca se borra una
+# fila) y pipeline/hacienda.py toma los internos solo de las salidas, asi que no se cuentan
+# dos veces. Anotado para JC en el backlog (88).
+
+base: 145
+slug: dte-ovinos
+familia: dte
+estado: activa
+
+archivo:
+  patron: "^145 - DTE Ovinos"
+
+hojas:
+  datos:
+    - nombre: "Data ORIGEN SDE"
+      header_fila: 1
+      sentido: salida
+      ambito: sde
+      contenido: >
+        59 movimientos con origen en Santiago del Estero (internos y salidas), 2022 a 2026
+        (2026 parcial).
+    - nombre: "Data DESTINO SDE"
+      header_fila: 1
+      sentido: entrada
+      ambito: sde
+      contenido: >
+        43 movimientos con destino en Santiago del Estero y origen en otra provincia, 2022 a
+        2025.
+  ignorar:
+    - nombre: "Modelo Análisis"
+      motivo: >
+        Indicaciones de JC para la vista, no datos ("PROCESAR IDEM DTE BOVINOS").
+
+columnas:
+  "MOTIVO": motivo
+  "TIPO ORIGEN": tipo_origen
+  "TIPO DESTINO": tipo_destino
+  "AÑO": anio
+  "MES": mes
+  "MES_INICIO": mes_inicio
+  "PROVINCIA ORIGEN": origen_provincia
+  "PARTIDO ORIGEN": origen_departamento
+  "PROVINCIA DESTINO": destino_provincia
+  "PARTIDO DESTINO": destino_departamento
+  "TOTAL DE DTe": dte_ovinos
+  "TOTAL DE ANIMALES": total_ovinos
+
+valores:
+  dte_ovinos:
+    etiqueta: "DTE emitidos"
+    medida: documentos
+    especie: ovinos
+    categoria: "Total"
+    rol: simple
+    unidad: dte
+    agregable: true
+  total_ovinos:
+    etiqueta: "Cabezas movidas"
+    medida: cabezas
+    especie: ovinos
+    categoria: "Total"
+    rol: agregado
+    unidad: cabezas
+    agregable: true
+
+geo:
+  particion: sde
+  provincia_propia: 86
+  resolver: [86]
+  nivel: departamento
+  agregados:
+    fila_total_al_pie: false
+
+salida:
+  staging: "staging/base-145-dte-ovinos.parquet"
+  mart: hecho_movimientos_ovinos
+  particiones: [provincia, anio]
+
+indice:
+  fuente: "SENASA"
+  cita_fuente_al_pie: "Fuente: SENASA"
+  titulo_en_el_indice: "DTE ovinos"

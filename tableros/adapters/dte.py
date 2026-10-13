@@ -5,8 +5,8 @@ Cada fila del Excel es una combinacion motivo + tipo de origen + tipo de destino
 mes + par de departamentos (origen -> destino), y las cabezas vienen WIDE, una
 columna por categoria (TERNEROS, TERNERAS, NOVILLITOS, ...). Primera base que la
 usa: 85 (bovinos). Las bases 144 (porcinos) y 145 (ovinos) son de la misma familia
-pero traen la categoria LONG; cuando entren, el config declara `categoria_long` y
-este mismo adapter las lee sin tocar codigo.
+pero traen la categoria LONG: el valor declara `categoria_desde: <campo>` y el config
+traduce cada texto en `categorias_long`; este mismo adapter las lee sin tocar codigo.
 
 Que hace el adapter, y solo eso:
 
@@ -206,6 +206,19 @@ def _filas_de_observacion(config, hoja_cfg, cruda, nro_fila, entrega, valores,
     for campo, meta in valores.items():
         if campo not in cruda:
             continue  # la hoja no trae esa columna; se anota por ausencia, no se inventa
+        # Categoria LONG (bases 144 porcinos): la categoria no es una columna de valor sino
+        # una columna de la FILA ("CATEGORIA": Capón, Cerda...). El valor la declara con
+        # `categoria_desde: <campo>` y el config traduce cada texto en `categorias_long`. Un
+        # texto que el config no declara corta la ingesta: no se inventa una categoria.
+        categoria = meta.get("categoria")
+        if meta.get("categoria_desde"):
+            texto = _texto(cruda.get(meta["categoria_desde"]))
+            traduccion = config.get("categorias_long") or {}
+            if texto not in traduccion:
+                raise ValueError(
+                    "Fila %d de la hoja %r: la categoria %r no esta en `categorias_long` del "
+                    "config. Agregala antes de ingerir." % (nro_fila, hoja_cfg["nombre"], texto))
+            categoria = traduccion[texto]
         fila = {
             "base_id": int(config["base"]),
             "entrega": entrega,
@@ -230,7 +243,7 @@ def _filas_de_observacion(config, hoja_cfg, cruda, nro_fila, entrega, valores,
             # es la clave unica de la fila de salida y el criterio de orden de los marts.
             "variable": campo,
             "especie": meta.get("especie"),
-            "categoria": meta.get("categoria"),
+            "categoria": categoria,
             "categoria_rol": meta.get("rol"),
             "medida": meta.get("medida"),
             "medida_etiqueta": meta.get("etiqueta"),

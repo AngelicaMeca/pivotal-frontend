@@ -1,0 +1,91 @@
+# Base 30 · APIARIOS Y COLMENAS por departamento (Santiago del Estero)
+#
+# Alimenta la pagina de Ganaderia > Apicola (hoja "GanApi" de la maqueta de ganaderia):
+# "Producción apícola - Cantidad de apiarios y colmenas por departamento - año 2.025" y el
+# ranking de colmenas. Llego en la entrega-01 y quedo sin configurar hasta el 12-oct-2026.
+#
+# Una foto por departamento, como la familia `stock`: dos medidas (apiarios y colmenas), sin
+# categorias. Lo que hay que saber de la planilla, todo declarado aca:
+# - El encabezado esta en la fila 2 (la 1 viene vacia).
+# - La fecha de la planilla es la de ACTUALIZACION (17-mar-2026) y no hay columna de anio;
+#   JC titula sus cuadros "año 2.025", asi que el anio lo declara el config.
+# - Trae los codigos INDEC del departamento, pero el adapter resuelve por el nombre contra
+#   geo-alias.yaml, igual que el resto de la familia; los codigos se mapean para que el
+#   header cierre.
+# - La columna "%" es la participacion calculada en la planilla: no se ingiere, se calcula en
+#   el sitio.
+# - Cierra con la fila "TOTAL PROVINCIA" sin provincia (de ahi `provincia_fija`).
+
+base: 30
+slug: apiarios-colmenas
+familia: stock
+estado: activa
+
+archivo:
+  patron: "^30 - Apiarios y colmenas"
+
+hojas:
+  datos:
+    - nombre: "Data SDE"
+      header_fila: 2
+      anio_fijo: 2025
+      ambito: sde
+      contenido: >
+        Los 27 departamentos con sus apiarios y colmenas, y la fila TOTAL PROVINCIA.
+      geo:
+        nivel: departamento
+  ignorar:
+    - nombre: "Modelo Analisis"
+      motivo: >
+        Las indicaciones de JC para la vista (ranking por departamento, participacion de los 6
+        principales y el resto, volcado a mapa), no datos.
+
+columnas:
+  "fecha_actualizacion": fecha_actualizacion
+  "provincia_id": provincia_id_de_la_planilla
+  "provincia": provincia_nombre
+  "departamento_id": departamento_id_de_la_planilla
+  "departamento": departamento
+  "apiarios": apiarios
+  "colmenas": colmenas
+  "%": participacion_de_la_planilla
+
+valores:
+  apiarios:
+    etiqueta: "Apiarios"
+    medida: apiarios
+    especie: abejas
+    categoria: null
+    rol: conteo
+    unidad: apiarios
+    agregable: true
+  colmenas:
+    etiqueta: "Colmenas"
+    medida: colmenas
+    especie: abejas
+    categoria: null
+    rol: conteo
+    unidad: colmenas
+    agregable: true
+
+geo:
+  nivel: departamento
+  usa_ids_indec: false
+  normalizar_nombre: true
+  particion: sde
+  provincia_propia: 86
+  resolver: [86]
+  provincia_fija: "Santiago del Estero"
+  agregados:
+    nombres_total: ["TOTAL PROVINCIA"]
+
+salida:
+  staging: "staging/base-30-apiarios-colmenas.parquet"
+  mart: hecho_apicola
+  particiones: [provincia, anio]
+
+indice:
+  # El indice de JC: "Cantidad de apiarios y colmenas por provincia y departamento RENAPA",
+  # fuente MAGyP (el Registro Nacional de Productores Apicolas). La planilla no lo dice.
+  fuente: "MAGyP"
+  titulo_en_el_indice: "Cantidad de apiarios y colmenas por provincia y departamento RENAPA"

@@ -32,23 +32,21 @@ subtitulo: "Provincia de Santiago del Estero · existencias al cierre de cada a�
 # Ninguno se promedia entre departamentos: los ratios se recalculan sobre los totales
 # provinciales, que es la unica forma correcta de agregarlos.
 indicadores:
-  # Los dos primeros son los de JC, textuales de su banda de KPIs: "Stock 1.083.349 cab" y
-  # "Unidades Productivas 9.009". Los otros dos de su hoja son el departamento LIDER en
-  # stock (Moreno) y en UP (Copo), que necesitan un tipo de indicador que el sitio todavia
-  # no tiene -el maximo sobre una dimension- y quedan en el backlog 83. Mientras tanto van
-  # dos de su propia lectura del rodeo (el bloque "RELACIONES ENTRE CATEGORIAS"), que es
-  # mejor que dejar dos tarjetas vacias.
+  # Los cuatro de JC, textuales de su banda de KPIs: "Stock 1.083.349 cab", "Unidades
+  # Productivas 9.009", "Stock Dto Moreno 127.858 cab" y "U.P. Dto Copo 936". Los dos del
+  # departamento LIDER esperaban un tipo de indicador que el sitio no tenia (backlog 83); desde
+  # el 12-oct-2026 existe (`lider`, site_build.indicador_de_departamento) y reemplazan a los
+  # dos de relaciones entre categorias que iban provisoriamente.
   - medida: cabezas
     categoria: "Total"
     etiqueta: "Stock total"
   - medida: unidades_productivas
     categoria: "Total"
     etiqueta: "Unidades productivas"
-  - medida: cabezas
-    categoria: "Vacas"
-    etiqueta: "Vientres"
-  - relacion: destete
-    etiqueta: "Terneros por vaca"
+  - lider: cabezas
+    etiqueta: "Stock Dto {departamento}"
+  - lider: unidades_productivas
+    etiqueta: "U.P. Dto {departamento}"
 
 # ---------------------------------------------------------------------------
 # CRUZAR DATOS: la comparacion adentro del zoom (Francisco, 24-sep-2026)
@@ -169,6 +167,9 @@ zoom_de_los_cuadros:
 #
 # El cuarto cuadro de JC, "Bovinos, caravanas en existencia y promedio de solicitudes"
 # (fila 91 de su hoja), NO se construye: no hay base de caravanas en la entrega. Backlog 84.
+# La miga de agricultura: "Provincia" es el link de vuelta cuando hay un departamento elegido.
+breadcrumb: "Ganadería - Bovinos - Provincia - {departamento}"
+
 paneles:
   alto: fluye
 
@@ -178,6 +179,19 @@ paneles:
     # misma que usa la base 85. No se elige aca.
     medida: cabezas
     rotulo_accion: "Seleccione departamento"
+    # JC, celda E121 de su hoja: "Seleccionando un departamento del mapa lleva a página de
+    # datos (como en agri)". Es el mecanismo de cultivos extensivos: la MISMA página con los
+    # datos del departamento (KPIs de volumen, los dos gráficos de evolución y la tabla por
+    # categoría); el mapa, los anillos y las tablas por departamento siguen provinciales y
+    # remarcan el elegido. El mapa en miniatura de JC con "Departamento ALBERDI" arriba no va:
+    # mismo desvío que agricultura (Francisco, 2-oct-2026), el elegido ya se lee en el mapa y
+    # en la miga.
+    click_departamento: en-la-misma-vista
+    seleccion_departamento:
+      defecto: provincia
+      rotulo_provincia: "Provincia"
+      rotulo_cambiar: "Seleccione otro departamento si desea visualizar"
+      miga: "Dto {Departamento}"
     acciones:
       - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
 
@@ -224,13 +238,63 @@ paneles:
   # 836 px con sus doce columnas, y con 7 de 12 (747 px) se desbordaba y estiraba el ancho de
   # toda la pagina. El reparto es el mismo en los tres pares a proposito: tres divisiones
   # distintas en la misma pantalla se leen como un error de dibujo.
+  # El anillo al pie de la columna izquierda de JC ("Participación departamentos en el stock
+  # total - 2025"): sus siete primeros y el resto.
+  anillo-departamentos:
+    titulo: "Sgo del Estero - Participación departamentos en el stock total - {anio}"
+    cuantos: 7
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+
+  # El cuarto cuadro de la hoja (fila 90 a 151): "Bovinos, caravanas en existencia y promedio
+  # de solicitudes". No hay base de caravanas en la entrega (backlog 84): JC pega la captura
+  # del tablero de control de SENASA. Por pedido de Francisco (12-oct-2026: "hardcodealo y no
+  # lo pongas como imagen") las cifras se TRANSCRIBIERON de esa captura y viven aca, en el
+  # spec: cuatro tarjetas y la curva mensual de solicitudes 2025, dibujadas como el resto del
+  # sitio (tooltip y zoom). NO se actualizan con los Excels: si SENASA publica otro corte hay
+  # que cambiar estos numeros a mano, y si llega la base este cuadro pasa a leerla.
+  # El rotulo de la tercera tarjeta esta cortado en la captura ("Promedio caravanas bovinas
+  # solicitadas p..."): va hasta donde se lee, sin adivinar el final.
+  cifras-caravanas:
+    titulo: "Sgo. del Estero - Bovinos, caravanas en existencia y promedio de solicitudes - año 2.025"
+    subtitulo: "En caravanas y unidades productivas"
+    cifras:
+      - {etiqueta: "Caravanas visuales bovinas", valor: 216425}
+      - {etiqueta: "Caravanas electrónicas bovinas", valor: 70294}
+      - {etiqueta: "Promedio caravanas bovinas solicitadas", valor: 324}
+      - {etiqueta: "UPs RENSPA", valor: 886}
+    serie:
+      titulo: "Solicitudes de caravanas a través del tiempo"
+      nombre: "2025"
+      unidad: "caravanas"
+      eje: "Caravanas"
+      rotulos: [ene, feb, mar, abr, may, jun, jul, ago, sep, oct, nov, dic]
+      etiquetas: [enero 2025, febrero 2025, marzo 2025, abril 2025, mayo 2025, junio 2025,
+                  julio 2025, agosto 2025, septiembre 2025, octubre 2025, noviembre 2025,
+                  diciembre 2025]
+      valores: [15775, 24175, 32250, 39925, 31675, 29825, 20475, 13475, 18950, 15950, 17250,
+                26994]
+    nota: >
+      Cifras del tablero de control de SENASA para Santiago del Estero, año 2025, transcriptas
+      a mano: no se actualizan con el resto de la página.
+    fuente: "Fuente: SENASA"
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+
+  # Disposicion en COLUMNAS (12-oct-2026, "reacomoda... para que no haya espacios vacios"):
+  # cada banda tiene dos columnas que se apilan a su ritmo, como las hojas de JC (graficos a
+  # la izquierda, tablas a la derecha). Las bandas agrupan cuadros de alto parecido; los
+  # altos se midieron a 1600 px.
+  disposicion: columnas
   orden:
-    - {id: mapa, ancho: 4, alto: alto}
-    - {id: tabla-departamentos, ancho: 8}
-    - {id: evolucion-total, ancho: 4}
-    - {id: tabla-evolucion, ancho: 8}
-    - {id: evolucion-categorias, ancho: 4}
-    - {id: tabla-departamento-anios, ancho: 8}
+    - {id: mapa, ancho: 4, columna: izq}
+    - {id: tabla-departamentos, ancho: 8, columna: der}
+    - {id: evolucion-total, ancho: 4, columna: izq, nueva_banda: true}
+    - {id: tabla-evolucion, ancho: 8, columna: der}
+    - {id: evolucion-categorias, ancho: 4, columna: izq, nueva_banda: true}
+    - {id: tabla-departamento-anios, ancho: 8, columna: der, scroll_interno: true}
+    - {id: anillo-departamentos, ancho: 4, columna: izq, nueva_banda: true}
+    - {id: cifras-caravanas, ancho: 8, columna: der}
 
 # ---------------------------------------------------------------------------
 # FILTROS

@@ -1,0 +1,31 @@
+# Comunes de Ganaderia > Porcinos > Razas (hoja "GanPorcRAZ" de la maqueta "Maqueta Ganad
+# VF", 9-oct-2026). Base 90, Siocarnes porcinos: lo que se vendio para faena, linea por
+# linea. Lo lee site_build.ContextoFaena (datos: pipeline/comercializacion.py).
+#
+# Contra la planilla de JC da exacto: 2025 son 115.499 cabezas, 14.404 tn y 124,7 kg por
+# cabeza; Hibrida Materna 104.102 cabezas (90,13%) y Juan F. Ibarra 78.755 (68,19%).
+id: _comunes-faena-porcinos
+mart: hecho_comercializacion_porcinos
+prefijo_categoria: "Porcina "
+
+presentacion:
+  # Las toneladas y cabezas van en la rampa marron de ganaderia (el color es del area).
+  tipos_de_variable:
+    toneladas: cabezas
+
+razas:
+  # Como las nombra JC en sus tablas. Los asteriscos remiten a la nota de Caidos y XD.
+  etiquetas:
+    "LÍNEA HÍBRIDA MATERNA": "Híbrida Materna"
+    "LÍNEA HÍBRIDA PATERNA": "Híbrida Paterna"
+    "YORKSHIRE / LARGE-WHITE": "Yorkshire / Large-White"
+    "PIETRAIN": "Pietrain"
+    "HAMPSHIRE": "Hampshire"
+    "DUROC HERSEY": "Duroc Jersey"
+    "LANDRACE (DANÉS)": "Landrace (danés)"
+    "Caídos": "Caídos *"
+    "OTRAS PURO o CRUZA (Detalle)": "Otras o Cruza"
+    "XD - Decomisado": "XD - Decomisado **"
+
+fuente:
+  organismo_esperado: "SENASA"

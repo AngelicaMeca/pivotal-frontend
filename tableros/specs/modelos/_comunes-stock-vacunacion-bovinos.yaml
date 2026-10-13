@@ -1,0 +1,43 @@
+# Comunes de Ganaderia > Bovinos > Vacunaciones (hoja "GanBov VAC" de la maqueta "Maqueta
+# Ganad VF", 9-oct-2026). Base 228, 1ra vacunacion antiaftosa por departamento y categoria
+# (SENASA). La base es de la familia stock -una foto por anio, departamento y categoria-, asi
+# que se arma con el mismo motor que las existencias (site_build.ContextoStockEspecie).
+#
+# Verificado contra la planilla de JC: 2025 da 1.164.191 vacunados en total, 176.969
+# terneros, 471.447 vacas y 152.609 en Moreno, exactos. 2024 NO: ver `tiempo.anomalias`.
+id: _comunes-stock-vacunacion-bovinos
+especie: bovinos
+
+marts:
+  principal: hecho_vacunacion_bovina
+
+# El grafico "1ra vacunación comparado a stocks" pone al lado la existencia de la base 48.
+comparar_con:
+  marts:
+    principal: hecho_stock_bovino
+
+presentacion:
+  subsector: "ganado bovino"
+  tipos_de_variable:
+    cabezas: cabezas
+
+categorias:
+  # El orden de las columnas de JC en su hoja: Ternero, Ternera, Novillito, Novillo, Torito,
+  # Toro, Vaca, Vaquillona.
+  orden: [Terneros, Terneras, Novillitos, Novillos, Toritos, Toros, Vacas, Vaquillonas]
+  agregado: "Total"
+
+tiempo:
+  ventana_anios:
+    desde: 2015
+    hasta: 2025
+  anomalias:
+    "2024": >
+      La hoja 2024 de la fuente trae dos celdas rotas: Sarmiento informa 7,94 cabezas en el
+      total y 4,57 en vacas (JC muestra 7.944: es un separador de miles leido como coma
+      decimal) y Juan F. Ibarra trae "28£81" en vacas, ilegible (backlog 80). Entran como
+      vienen y como nulo, sin corregir: el total provincial de 2024 queda por debajo del real
+      (1.275.463 contra 1.282.549 de la planilla de JC). Backlog 87.
+
+fuente:
+  organismo_esperado: "SENASA"

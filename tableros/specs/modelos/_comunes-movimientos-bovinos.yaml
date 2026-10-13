@@ -1,0 +1,34 @@
+# Comunes de Ganaderia > Bovinos > Movimientos (hoja "GanBov DTE" de la maqueta "Maqueta
+# Ganad VF", 9-oct-2026). Base 85 (DTE de SENASA). Lo lee site_build.ContextoMovimientos.
+#
+# Los cuatro universos (totales sin introduccion, internos, extraccion, introduccion) son los
+# de _comunes-base-85 y los resuelve pipeline/hacienda.py. Verificados contra la planilla de
+# JC: 2025 da 966.161 cabezas y 27.844 DTE en total, 391.248 internos, 574.913 de extraccion
+# y 489.284 de introduccion, exactos.
+id: _comunes-movimientos-bovinos
+mart: hecho_movimientos_hacienda
+# El archivo trae tambien bufalos: son otra especie y no entran.
+especie: bovinos
+
+presentacion:
+  tipos_de_variable:
+    cabezas: cabezas
+    documentos: documentos
+
+categorias:
+  # El orden de las columnas de JC en su hoja.
+  orden: [Terneros, Terneras, Novillitos, Novillos, "Toritos / mejoradores", Toros, Vacas,
+          Vaquillonas]
+  etiquetas:
+    "Toritos / mejoradores": "Toritos"
+
+tiempo:
+  ventana_anios:
+    desde: 2022
+    hasta: 2026
+  # JC lo marca con asterisco: "años 2.022 a 2.026 (parcial)". Se ofrece en el selector pero
+  # no es el de arranque, no se compara contra el anterior y no entra en el balance.
+  anio_parcial: 2026
+
+fuente:
+  organismo_esperado: "SENASA"

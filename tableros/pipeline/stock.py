@@ -123,3 +123,134 @@ class Stock:
         if nombre == "servicio":
             return (cab("Toros") + cab("Toritos")) / vacas
         raise KeyError("relacion desconocida: %r (ver _comunes-base-48.relaciones)" % nombre)
+
+
+# ==========================================================================
+# Las otras especies de ganaderia (maqueta "Maqueta Ganad VF", 9-oct-2026)
+# ==========================================================================
+def _orden_de_estrato(texto):
+    """'10. Mas de 5.000 caprinos' -> 10. El numero que JC le pone adelante ES el orden."""
+    cabeza = (texto or "").split(".", 1)[0].strip()
+    return (int(cabeza) if cabeza.isdigit() else 999, texto or "")
+
+
+class StockEspecie:
+    """Los agregados de UNA especie, con la misma interfaz publica que `Stock`.
+
+    Cada especie llega en hasta tres marts (`_comunes-stock-<especie>.yaml`, bloque `marts`):
+
+    - `principal`: la serie provincial y, si la trae, el detalle por departamento. En ovinos
+      y caprinos son DOS bases en el mismo mart (la serie provincial desde 2008/2009 y la foto
+      por departamento de 2025); en porcinos y equinos es una sola con los 27 departamentos
+      todos los anios.
+    - `estrato`: el tramo de tamanio del establecimiento, con establecimientos y RENSPA.
+    - `departamentos_desde_estrato`: en bubalinos no hay base por departamento sin estrato, asi
+      que el detalle departamental sale de SUMAR los estratos de la base 153.
+
+    El total provincial sigue la regla de la base 48: si hay departamentos se SUMAN (asi el
+    numero de la cabecera coincide con el del mapa); si no, se usa la fila provincial de la
+    fuente. Si dos filas provinciales del mismo anio dijeran cosas distintas el build corta:
+    no se elige una en silencio.
+    """
+
+    def __init__(self, con, marts, agregado="Total"):
+        self.agregado = agregado
+        self.anual, self.depto, self.fuentes = {}, {}, set()
+        self.estrato = {}          # (anio, geo, estrato, categoria, medida) -> valor
+        self.estratos_por_anio = {}
+        provinciales = {}          # (anio, categoria, medida) -> {valores}
+
+        principal = self._tabla(marts["principal"])
+        for fuente, in con.execute("SELECT DISTINCT fuente FROM %s" % principal).fetchall():
+            self.fuentes.add(fuente)
+        # Las filas de CONTEO (establecimientos, UP) no tienen categoria: son del
+        # establecimiento entero, que es lo mismo que el agregado.
+        for anio, geo, agregada, categoria, medida, valor in con.execute("""
+                SELECT anio, geo_id, es_agregado_geo, coalesce(categoria, '%s'), medida,
+                       sum(valor)
+                FROM %s
+                WHERE valor IS NOT NULL
+                GROUP BY ALL
+                ORDER BY ALL
+                """ % (agregado, principal)).fetchall():
+            if agregada:
+                provinciales.setdefault((anio, categoria, medida), set()).add(valor)
+            else:
+                self.depto[(anio, geo, categoria, medida)] = valor
+
+        if marts.get("estrato"):
+            tabla = self._tabla(marts["estrato"])
+            for fuente, in con.execute("SELECT DISTINCT fuente FROM %s" % tabla).fetchall():
+                self.fuentes.add(fuente)
+            for anio, geo, estrato, categoria, medida, valor in con.execute("""
+                    SELECT anio, geo_id, estrato, coalesce(categoria, '%s'), medida, sum(valor)
+                    FROM %s
+                    WHERE valor IS NOT NULL AND NOT es_agregado_geo
+                    GROUP BY ALL
+                    ORDER BY ALL
+                    """ % (agregado, tabla)).fetchall():
+                self.estrato[(anio, geo, estrato, categoria, medida)] = valor
+                self.estratos_por_anio.setdefault(anio, set()).add(estrato)
+                if marts.get("departamentos_desde_estrato"):
+                    clave = (anio, geo, categoria, medida)
+                    self.depto[clave] = self.depto.get(clave, 0.0) + valor
+
+        # Total provincial: suma de departamentos, y la fila de la fuente donde no los hay.
+        for (anio, geo, categoria, medida), valor in sorted(self.depto.items()):
+            clave = (anio, categoria, medida)
+            self.anual[clave] = self.anual.get(clave, 0.0) + valor
+        for clave, valores in sorted(provinciales.items()):
+            if clave in self.anual:
+                continue
+            if len(valores) > 1:
+                raise ValueError(
+                    "%s trae %d totales provinciales distintos para %r: %s"
+                    % (marts["principal"], len(valores), clave, sorted(valores)))
+            self.anual[clave] = valores.pop()
+
+        self.anios = sorted({a for (a, c, m) in self.anual if m == "cabezas"})
+        self.anios_depto = sorted({a for (a, g, c, m) in self.depto if m == "cabezas"})
+        self.categorias = sorted({c for (a, c, m) in self.anual
+                                  if m == "cabezas" and c != agregado})
+        self.categorias_depto = sorted({c for (a, g, c, m) in self.depto
+                                        if m == "cabezas" and c != agregado})
+        self.categorias_estrato = sorted({k[3] for k in self.estrato
+                                          if k[4] == "cabezas" and k[3] != agregado})
+        self.medidas_depto = sorted({m for (a, g, c, m) in self.depto})
+        Stock._cargar_geo(self, con)
+
+    @staticmethod
+    def _tabla(mart):
+        ruta = os.path.join(DIR_MARTS, "%s.parquet" % mart)
+        if not os.path.exists(ruta):
+            sys.exit("[site] Falta marts/%s.parquet. Corre antes: make ingest && make marts"
+                     % mart)
+        return "read_parquet('%s')" % ruta.replace("'", "''")
+
+    total_anual = Stock.total_anual
+    total_depto = Stock.total_depto
+    deptos_con_stock = Stock.deptos_con_stock
+
+    # -- estratos ----------------------------------------------------------
+    def estratos(self, anio):
+        """Los tramos del anio, en el orden que les pone la fuente (el numero de adelante)."""
+        return sorted(self.estratos_por_anio.get(anio, ()), key=_orden_de_estrato)
+
+    def total_estrato(self, anio, estrato, categoria, medida="cabezas", geo=None):
+        """Un tramo en la provincia (suma de departamentos) o en un departamento."""
+        if geo:
+            return self.estrato.get((anio, geo, estrato, categoria, medida))
+        valores = [v for (a, g, e, c, m), v in self.estrato.items()
+                   if a == anio and e == estrato and c == categoria and m == medida]
+        return sum(valores) if valores else None
+
+    def total_estratos_depto(self, anio, geo, medida):
+        """Una medida de conteo (RENSPA, establecimientos) del departamento, sumando tramos."""
+        valores = [v for (a, g, e, c, m), v in self.estrato.items()
+                   if a == anio and g == geo and c == self.agregado and m == medida]
+        return sum(valores) if valores else None
+
+    def total_estratos_provincia(self, anio, medida):
+        valores = [v for (a, g, e, c, m), v in self.estrato.items()
+                   if a == anio and c == self.agregado and m == medida]
+        return sum(valores) if valores else None

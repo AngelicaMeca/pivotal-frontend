@@ -1,0 +1,33 @@
+# Comunes de Ganaderia > Bovinos > Razas (hoja "GanBov RAZ" de la maqueta "Maqueta Ganad
+# VF", 9-oct-2026). Base 89, Siocarnes: lo que se vendio para faena, linea por linea. Lo lee
+# site_build.ContextoFaena (datos: pipeline/comercializacion.py).
+id: _comunes-faena-bovinos
+mart: hecho_comercializacion_bovinos
+
+presentacion:
+  # Las toneladas van en la rampa marron de ganaderia, la misma del stock: el color es del
+  # AREA (regla de JC), no de la unidad.
+  tipos_de_variable:
+    toneladas: cabezas
+
+grupos:
+  # Las categorias de JC, en su orden. Cada subcategoria del archivo ("Bovino Novillo Regular
+  # Liviano...") cae en su grupo por la segunda palabra; los bubalinos van en un solo grupo.
+  etiquetas:
+    MEJ: "MEJ (Macho Entero Joven)"
+    Novillito: "Novillito"
+    Novillo: "Novillo"
+    Toro: "Toro"
+    Vaca: "Vaca"
+    Vaquillona: "Vaquillona"
+    Bubalinos: "Bubalinos"
+  # JC muestra los bubalinos en una sola fila, sin abrir sus categorias (las abre en la pagina
+  # de bubalinos).
+  sin_detalle: [Bubalinos]
+
+razas:
+  etiquetas:
+    "Otra 99": "Otras"
+
+fuente:
+  organismo_esperado: "SENASA"

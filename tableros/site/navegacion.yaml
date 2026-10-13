@@ -19,10 +19,11 @@ ramas:
     bajada: "Qué se siembra, dónde y con qué resultado."
   - id: ganaderia
     bloque: acceso-por-tema
-    # Las secciones de esta rama (las especies) se dibujan ademas como una TIRA
-    # horizontal arriba de la banda del breadcrumb, siempre a la vista. Es la fila 6
-    # de las 21 hojas de la maqueta de ganaderia. Ninguna otra rama la lleva.
-    tira_de_secciones: true
+    # Sin `tira_de_secciones` desde el 12-oct-2026: la tira de especies arriba de la banda
+    # del breadcrumb (fila 6 de la maqueta) repetia el menu lateral, que ya lista las mismas
+    # especies. Pedido explicito: "saca el menu superior porque repite el lateral". El
+    # mecanismo sigue en el build y en Cascara.tsx: se vuelve a prender con
+    # `tira_de_secciones: true`.
     rama: Ganadería
     titulo: Ganadería
     bajada: "Existencias, movimientos y faena por departamento."
@@ -197,11 +198,10 @@ secciones:
   # respuesta a lo que el propio JC pregunta en la celda E62 de "GanBov IN", "analizar cómo
   # sería el mejor regreso de las páginas internas a la principal de ganadería bovina".
   #
-  # Hoy solo BOVINOS tiene su tablero construido (base 48, ya ingerida). Las otras seis
-  # especies van `proximamente`: se anuncian en el menú y en la tira, apagadas, porque para el
-  # lector la sección existe y un menú que no la nombra se lee como que nos la olvidamos. Sus
-  # datos YA están ingeridos (las 24 bases de la entrega-02); lo que falta es el spec de cada
-  # página.
+  # Desde el 12-oct-2026 cada especie con datos ingeridos tiene construida su PRIMERA página
+  # (la de stocks, `tablero-<especie>.yaml` sobre `_comunes-stock-<especie>.yaml`). Las otras
+  # páginas de cada tira esperan su spec y se dibujan apagadas con "Próximamente". Apícola
+  # se construyó el 12-oct-2026, cuando se configuró su base (30).
 
   - id: bovinos
     base: 48
@@ -221,17 +221,20 @@ secciones:
     # faena bovina, según el propio JC, es una imagen de SENASA y no una página (backlog 78).
     paginas_de_seccion:
       - {texto: "Stocks", tablero: true}
-      - {texto: "Indicadores"}
-      - {texto: "Movimientos"}
-      - {texto: "Vacunaciones"}
-      - {texto: "Producc. Leche"}
+      - {texto: "Indicadores", vista: tablero-bovinos-indicadores}
+      - {texto: "Movimientos", vista: tablero-bovinos-movimientos}
+      - {texto: "Vacunaciones", vista: tablero-bovinos-vacunaciones}
+      - {texto: "Producc. Leche", vista: tablero-bovinos-leche}
       - {texto: "Estratos y UP"}
-      - {texto: "Razas"}
-      - {texto: "Feed Lots, Hilton y Tambos"}
+      - {texto: "Razas", vista: tablero-bovinos-razas}
+      - {texto: "Feed Lots, Hilton y Tambos", vista: tablero-bovinos-feedlots}
+    # La matriz origen-destino de los movimientos internos: pagina suelta, se llega por el
+    # boton "Matrices Origen Destino (OD)" de Movimientos (hoja "GanBov DTE").
+    vistas_sueltas:
+      - 85-matriz-od-interna
     grupos: []
 
   - id: bubalinos
-    proximamente: true
     base: 183
     rama: ganaderia
     ruta: [Ganadería, Bubalinos]
@@ -245,7 +248,6 @@ secciones:
     grupos: []
 
   - id: porcinos
-    proximamente: true
     base: 232
     rama: ganaderia
     ruta: [Ganadería, Porcinos]
@@ -257,13 +259,12 @@ secciones:
       2017, el tamaño de los establecimientos y lo que sale a faena por raza.
     paginas_de_seccion:
       - {texto: "Stocks", tablero: true}
-      - {texto: "Estratos y UP"}
-      - {texto: "Movimientos"}
-      - {texto: "Razas"}
+      - {texto: "Estratos y UP", vista: tablero-porcinos-estratos}
+      - {texto: "Movimientos", vista: tablero-porcinos-movimientos}
+      - {texto: "Razas", vista: tablero-porcinos-razas}
     grupos: []
 
   - id: equinos
-    proximamente: true
     base: 229
     rama: ganaderia
     ruta: [Ganadería, Equinos]
@@ -275,11 +276,10 @@ secciones:
       desde 2008, tamaño de los establecimientos y movimientos con DTE.
     paginas_de_seccion:
       - {texto: "Stocks, UP y Estratos", tablero: true}
-      - {texto: "Movimientos"}
+      - {texto: "Movimientos", vista: tablero-equinos-movimientos}
     grupos: []
 
   - id: ovinos
-    proximamente: true
     base: 157
     rama: ganaderia
     ruta: [Ganadería, Ovinos]
@@ -291,12 +291,11 @@ secciones:
       desde 2008 y el tamaño de los rebaños.
     paginas_de_seccion:
       - {texto: "Stocks, Establec. y UP", tablero: true}
-      - {texto: "Movimientos"}
-      - {texto: "Estratos"}
+      - {texto: "Movimientos", vista: tablero-ovinos-movimientos}
+      - {texto: "Estratos", vista: tablero-ovinos-estratos}
     grupos: []
 
   - id: caprinos
-    proximamente: true
     base: 177
     rama: ganaderia
     ruta: [Ganadería, Caprinos]
@@ -308,11 +307,10 @@ secciones:
       categoría, por departamento y por tamaño de majada.
     paginas_de_seccion:
       - {texto: "Stocks, Establecim. y UP", tablero: true}
-      - {texto: "Estratos"}
+      - {texto: "Estratos", vista: tablero-caprinos-estratos}
     grupos: []
 
   - id: apicola
-    proximamente: true
     base: 30
     rama: ganaderia
     ruta: [Ganadería, Apícola]

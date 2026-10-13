@@ -73,10 +73,131 @@ function TarjetasKpi({ contexto }: { contexto: boolean }) {
   );
 }
 
+/* Disposicion "columnas" (ganaderia): los paneles se reparten en BANDAS. Cada banda tiene
+   dos columnas que se apilan cada una a su ritmo, asi una tabla corta no deja un hueco al
+   lado de un mapa alto (en la grilla de 12, la fila tomaba el alto del cuadro mas alto). Un
+   panel de ancho 12 corta la banda y va solo, a todo el ancho.
+   La columna la dice el spec (`columna: izq | der`); si no, el ancho: hasta 5 va a la
+   izquierda y de 6 en adelante a la derecha. El ancho de la izquierda es el mayor de sus
+   paneles y la derecha se queda con el resto de las 12. */
+type Banda =
+  | { ancha: Panel }
+  | { fila: Panel[] }
+  | { izq: Panel[]; der: Panel[]; anchoIzq: number };
+
+function bandasEnColumnas(paneles: Panel[]): Banda[] {
+  const bandas: Banda[] = [];
+  let actual: { izq: Panel[]; der: Panel[]; anchoIzq: number } | null = null;
+  let fila: Panel[] | null = null;
+  for (const panel of paneles) {
+    const ancho = Number(panel.ancho ?? 4);
+    // `columna: fila`: los paneles consecutivos que lo declaran van LADO A LADO, cada uno con
+    // su ancho (tres anillos, dos graficos de precio). Es una banda aparte.
+    if (panel.columna === "fila") {
+      if (actual) bandas.push(actual);
+      actual = null;
+      if (!fila) fila = [];
+      fila.push(panel);
+      continue;
+    }
+    if (fila) {
+      bandas.push({ fila });
+      fila = null;
+    }
+    if (ancho >= 12) {
+      if (actual) bandas.push(actual);
+      actual = null;
+      bandas.push({ ancha: panel });
+      continue;
+    }
+    // `nueva_banda` (spec): este panel abre una banda nueva. Sirve para emparejar alturas:
+    // un grafico con su tabla en una banda, el siguiente par en otra.
+    if (panel.nueva_banda && actual) {
+      bandas.push(actual);
+      actual = null;
+    }
+    if (!actual) actual = { izq: [], der: [], anchoIzq: 0 };
+    const columna = panel.columna ?? (ancho <= 5 ? "izq" : "der");
+    if (columna === "izq") {
+      actual.izq.push(panel);
+      actual.anchoIzq = Math.max(actual.anchoIzq, ancho);
+    } else {
+      actual.der.push(panel);
+    }
+  }
+  if (fila) bandas.push({ fila });
+  if (actual) bandas.push(actual);
+  return bandas;
+}
+
 // El CUERPO de cada forma de panel: compartido por las dos disposiciones
-function CuerpoPanel({ id, mockup = false }: { id: string; mockup?: boolean }) {
+// Ids de panel que se dibujan con una FORMA que ya existe. El dibujante se busca por id
+// (una pagina puede tener dos anillos o dos graficos de lineas), pero el cuerpo es el de su
+// forma: asi no se repite el markup por cada id nuevo.
+const FORMA_DEL_PANEL: Record<string, string> = {
+  "anillo-departamentos": "anillo",
+  "anillo-estratos": "anillo",
+  "anillo-estratos-up": "anillo",
+  "precios-faena-1": "lineas",
+  "evolucion-vs-otra": "evolucion-total",
+  "precios-faena-2": "lineas",
+  "precios-leche-1": "lineas",
+  "precios-razas-1": "lineas",
+  "precios-razas-2": "lineas",
+  "tabla-categorias": "tabla-estratos",
+  "tabla-eac": "tabla-estratos",
+  "tabla-relaciones": "tabla-estratos",
+  "tabla-ranking": "tabla-estratos",
+  "tabla-anios-deptos-cab": "tabla-estratos",
+  "tabla-anios-deptos-tn": "tabla-estratos",
+  "tabla-anios-razas-cab": "tabla-estratos",
+  "tabla-anios-razas-tn": "tabla-estratos",
+  "tabla-peso-razas": "tabla-estratos",
+  "precios-categorias": "lineas",
+  "tabla-hilton": "tabla-estratos",
+  "tabla-tambo": "tabla-estratos",
+  "tabla-razas": "tabla-estratos",
+  "anillo-razas": "anillo",
+  "precios-leche-2": "lineas",
+  "tabla-cuenca": "tabla-estratos",
+  "tabla-calidad": "tabla-estratos",
+  "tabla-faena": "tabla-estratos",
+  "tabla-departamento-estratos": "tabla-estratos",
+  "tabla-tipos": "tabla-estratos",
+  "tabla-balance": "tabla-estratos",
+  "tabla-provincias-destino": "tabla-estratos",
+  "tabla-provincias-origen": "tabla-estratos",
+  "anillo-categorias": "anillo",
+  "anillo-provincias-destino": "anillo",
+  "anillo-provincias-origen": "anillo",
+};
+
+function CuerpoPanel({ id: idPanel, mockup = false }: { id: string; mockup?: boolean }) {
+  const id = idPanel.startsWith("imagen-") ? "imagen"
+    : idPanel.startsWith("texto-") ? "texto"
+    : idPanel.startsWith("cifras-") ? "cifras" : (FORMA_DEL_PANEL[idPanel] ?? idPanel);
   let cuerpo = null;
-  if (id === "anillo") {
+  if (id === "cifras") {
+    // Tarjetas de cifras y, debajo, una serie en lineas (caravanas bovinas de SENASA).
+    cuerpo = (
+      <>
+        <div className="cifras" data-cifras=""></div>
+        <p className="cifras-serie" data-cifras-serie=""></p>
+        <div className="grafico" data-grafico=""></div>
+      </>
+    );
+  } else if (id === "texto") {
+    // Un texto de JC (metodologia de la hoja "GanBov IN"). Los parrafos los pinta tablero.js.
+    cuerpo = <div className="cuadro-texto" data-texto=""></div>;
+  } else if (id === "imagen") {
+    // Una captura publicada por otro organismo (caravanas de SENASA). La pinta tablero.js.
+    cuerpo = (
+      <figure className="cuadro-imagen">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img data-imagen="" alt="" />
+      </figure>
+    );
+  } else if (id === "anillo") {
     cuerpo = (
       <>
         <div className="anillo-caja">
@@ -148,6 +269,9 @@ function CuerpoPanel({ id, mockup = false }: { id: string; mockup?: boolean }) {
         <ul className="leyenda-series" data-leyenda=""></ul>
       </>
     );
+  } else if (id === "lineas") {
+    // Varias lineas con su leyenda dibujada por ECharts (precios de faena de bubalinos).
+    cuerpo = <div className="grafico" data-grafico=""></div>;
   } else if (id === "grafico-ha") {
     // Las seis líneas en hectáreas. Su leyenda la dibuja ECharts, como en `tendencia`.
     cuerpo = <div className="grafico" data-grafico=""></div>;
@@ -163,7 +287,7 @@ function CuerpoPanel({ id, mockup = false }: { id: string; mockup?: boolean }) {
   } else if (id === "tabla-datos" || id === "tabla-superficie"
              || id === "tabla-pct" || id === "tabla-ha"
              || id === "tabla-departamentos" || id === "tabla-evolucion"
-             || id === "tabla-departamento-anios") {
+             || id === "tabla-departamento-anios" || id === "tabla-estratos") {
     // DOS bloques de campañas lado a lado, como los dibuja JC; los arma tablero.js
     cuerpo = <div className="tabla-datos" data-tabla-datos=""></div>;
   } else if (id === "top") {
@@ -366,6 +490,7 @@ function PanelComun({ panel, filtro }: { panel: Panel; filtro?: Filtro }) {
       data-panel={panel.id}
       data-ancho={panel.ancho}
       data-alto={panel.alto}
+      data-scroll-interno={panel.scroll_interno ? "" : undefined}
     >
       <div className="panel-cab">
         <div>
@@ -718,6 +843,49 @@ export default function Tablero({ pagina }: { pagina: PaginaTablero }) {
               <PanelMockup panel={porId["top"]} filtro={filtros["top"]} />
             </div>
           </div>
+        </div>
+      ) : tablero.disposicion === "columnas" ? (
+        // ---- Disposicion en COLUMNAS (ganaderia): bandas de dos columnas independientes ----
+        <div className={clasesTablero("tablero tablero-columnas")} id="tablero"
+             data-datos={tablero.ruta_datos}>
+          {bandasEnColumnas(paneles).map((banda, i) =>
+            "fila" in banda ? (
+              <div className="banda-en-fila" key={i}>
+                {banda.fila.map((panel) => (
+                  <PanelComun key={panel.id} panel={panel} filtro={filtros[panel.id]} />
+                ))}
+              </div>
+            ) : "ancha" in banda ? (
+              <div className="banda-ancha" key={i}>
+                <PanelComun panel={banda.ancha} filtro={filtros[banda.ancha.id]} />
+              </div>
+            ) : (
+              <div
+                className="banda-columnas"
+                key={i}
+                style={{
+                  gridTemplateColumns: banda.izq.length && banda.der.length
+                    ? `minmax(0, ${banda.anchoIzq || 4}fr) minmax(0, ${12 - (banda.anchoIzq || 4)}fr)`
+                    : "minmax(0, 1fr)",
+                }}
+              >
+                {banda.izq.length ? (
+                  <div className="columna">
+                    {banda.izq.map((panel) => (
+                      <PanelComun key={panel.id} panel={panel} filtro={filtros[panel.id]} />
+                    ))}
+                  </div>
+                ) : null}
+                {banda.der.length ? (
+                  <div className="columna">
+                    {banda.der.map((panel) => (
+                      <PanelComun key={panel.id} panel={panel} filtro={filtros[panel.id]} />
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ),
+          )}
         </div>
       ) : (
         // ---- Disposicion generica en grilla de 12 (hacienda, stock) ----

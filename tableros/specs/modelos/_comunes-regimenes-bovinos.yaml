@@ -1,0 +1,22 @@
+# Comunes de Ganaderia > Bovinos > Feed Lots, Hilton y Tambos (hoja "GanBov FLHT" de la
+# maqueta "Maqueta Ganad VF", 9-oct-2026). Lo lee site_build.ContextoRegimenes.
+#
+# Tres bases de SENASA con la misma forma (departamento x categoria, total y UP), una por
+# regimen. El orden es el de los botones de JC sobre el mapa: EAC, Cuota Hilton, Tambo.
+id: _comunes-regimenes-bovinos
+
+regimenes:
+  - {id: eac, etiqueta: "EAC", nombre: "Engorde a corral", mart: hecho_stock_bovino_eac}
+  - {id: hilton, etiqueta: "Cuota Hilton", nombre: "Cuota Hilton", mart: hecho_stock_bovino_hilton}
+  - {id: tambo, etiqueta: "Tambo", nombre: "Tambos", mart: hecho_stock_bovino_tambos}
+
+presentacion:
+  tipos_de_variable:
+    cabezas: cabezas
+
+categorias:
+  # El orden de las columnas de JC en sus tres tablas.
+  orden: [Terneros, Terneras, Novillitos, Toritos, Novillos, Vaquillonas, Vacas, Toros, Bueyes]
+
+fuente:
+  organismo_esperado: "SENASA"

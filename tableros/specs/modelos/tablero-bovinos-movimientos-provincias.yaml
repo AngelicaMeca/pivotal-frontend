@@ -1,0 +1,50 @@
+# RESERVADO. Ganaderia > Bovinos > Movimientos por provincia de destino y de origen: las dos
+# tablas y los dos anillos de la hoja "GanBov DTE" que muestran a que provincias vende
+# hacienda Santiago y de cuales la recibe.
+#
+# Es informacion comercial interprovincial: el repo la trata como material sensible
+# (navegacion.yaml, `privadas`; CLAUDE.md, "comparaciones interprovinciales ... nunca
+# públicas sin decisión de Francisco"). El 12-oct-2026 se pidio dejarla en privado: se arma
+# en _privado/ (`reservado: true`), no la enlaza ninguna pagina y scripts/tableros.mjs la
+# borra antes de publicar. Para publicarla hace falta la decision escrita de Francisco aca
+# (`aprobado_por`) y sacarle `reservado`.
+id: tablero-bovinos-movimientos-provincias
+tipo: tablero
+familia: movimientos-bovinos
+seccion: bovinos
+pagina: movimientos-provincias
+titulo_pagina: "Movimientos por provincia (reservado)"
+reservado: true
+
+titulo: "Bovinos"
+subtitulo: "Material reservado · movimientos de hacienda por provincia de destino y de origen"
+
+indicadores:
+  - recorte: extraccion
+    etiqueta: "Extracción"
+  - recorte: introduccion
+    etiqueta: "Introducción"
+
+paneles:
+  alto: fluye
+  tabla-provincias-destino:
+    titulo: "Sgo. del Estero - Movimientos hacienda de EXTRACCIÓN, categoría y DTE por Provincia de destino - año {anio}"
+    encabezado: "Pcia. Destino"
+  anillo-provincias-destino:
+    titulo: "Sgo del Estero - Participación de las provincias de destino en los movimientos de EXTRACCIÓN año {anio}"
+    cuantos: 4
+  tabla-provincias-origen:
+    titulo: "Sgo. del Estero - Movimientos hacienda de INTRODUCCIÓN, categoría y DTE por Provincia de origen - año {anio}"
+    encabezado: "Pcia. Origen"
+  anillo-provincias-origen:
+    titulo: "Sgo del Estero - Participación de las provincias de origen en los movimientos de INTRODUCCIÓN año {anio}"
+    cuantos: 5
+  orden:
+    - {id: anillo-provincias-destino, ancho: 4}
+    - {id: tabla-provincias-destino, ancho: 8}
+    - {id: anillo-provincias-origen, ancho: 4}
+    - {id: tabla-provincias-origen, ancho: 8}
+
+filtros:
+  - id: anio
+    zona: periodo

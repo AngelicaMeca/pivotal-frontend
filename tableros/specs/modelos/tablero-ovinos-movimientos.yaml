@@ -1,0 +1,75 @@
+# Ganaderia > Ovinos > Movimientos. Hoja "GanOviDTE" de la maqueta "Maqueta Ganad VF"
+# (9-oct-2026). Base 145 (DTE ovinos).
+#
+# JC: "PROCESAR IDEM DTE BOVINOS, mismo formato y contenidos". Lo unico que no se puede
+# repetir es la apertura por categoria: la base de ovinos no la trae, asi que las tablas van
+# con DTE y total de cabezas y no hay anillo por categoria. Lo que va por provincia queda en
+# la pagina reservada, como en bovinos.
+id: tablero-ovinos-movimientos
+tipo: tablero
+familia: movimientos-ovinos
+seccion: ovinos
+pagina: movimientos
+titulo_pagina: "Movimientos"
+
+titulo: "Ovinos"
+subtitulo: "Provincia de Santiago del Estero · movimientos de ovinos con DTE"
+
+breadcrumb: "Ganadería - Ovinos - Provincia - {departamento}"
+
+indicadores:
+  - recorte: totales_sin_introduccion
+    etiqueta: "Totales movidos"
+  - recorte: internos
+    etiqueta: "Movimientos internos"
+  - recorte: extraccion
+    etiqueta: "Extracción"
+  - recorte: introduccion
+    etiqueta: "Introducción"
+
+paneles:
+  alto: fluye
+  mapa:
+    titulo: "Movimientos por departamento"
+    rotulo_accion: "Seleccione departamento"
+    click_departamento: en-la-misma-vista
+    seleccion_departamento:
+      defecto: provincia
+      rotulo_provincia: "Provincia"
+      rotulo_cambiar: "Seleccione otro departamento si desea visualizar"
+      miga: "Dto {Departamento}"
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  tabla-tipos:
+    titulo: "Sgo. del Estero - Movimientos ovinos por tipo y DTE Totales provincia - años {desde} a {hasta}"
+    nota: >
+      La planilla de SENASA no abre los movimientos de ovinos por categoría. La extracción es
+      la diferencia entre los movimientos totales y los internos.
+  tabla-balance:
+    titulo: "Sgo. del Estero - Balance de movimientos ovinos (extracción - introducción) - años {desde} a {hasta}"
+    nota: >
+      Un número negativo quiere decir que salieron de la provincia más cabezas que las que
+      entraron; uno positivo, que entraron más.
+  tabla-departamentos:
+    titulo: "Sgo. del Estero - Movimientos ovinos por tipo y DTE por Departamento - año {anio}"
+    rotulo_total: "PROVINCIA"
+  anillo-departamentos:
+    titulo: "Sgo del Estero - Participación de departamentos de origen en los movimientos totales año {anio}"
+    cuantos: 5
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  # Disposicion en COLUMNAS (12-oct-2026, "vuelve a revisar, hay tableros donde todavia hay
+  # tarjetas que se ven asi"): la grilla de filas estiraba cada cuadro al alto del mas alto
+  # de su fila. En columnas cada cuadro mide lo suyo y tablero.js nivela el final de las dos
+  # columnas estirando o achicando los graficos (nunca las tablas).
+  disposicion: columnas
+  orden:
+    - {id: mapa, ancho: 4, columna: izq}
+    - {id: tabla-tipos, ancho: 8, columna: der}
+    - {id: anillo-departamentos, ancho: 4, columna: izq, nueva_banda: true}
+    - {id: tabla-balance, ancho: 8, columna: der}
+    - {id: tabla-departamentos, ancho: 8, columna: der}
+
+filtros:
+  - id: anio
+    zona: periodo

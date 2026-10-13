@@ -69,13 +69,12 @@ notas_metodologicas: [que-es-un-dte, total-no-suma-categorias, anio-en-curso]
 fuente:
   pie: "Fuente: SENASA"
   organismo_esperado: "SENASA"
-# Despublicada el 9-oct-2026: la maqueta "Maqueta Ganad VF" reorganiza ganaderia por
-# ESPECIE y reemplaza la seccion "Movimientos de hacienda", de la que esta vista
-# colgaba (Francisco: "las que tenemos actualmente no sirven"). El spec queda como
-# REGISTRO de la regla: no se construye pagina propia ni se linkea desde ningun lado.
-# Su contenido se replantea dentro de la pagina "Movimientos" de bovinos, que es la
-# hoja "GanBov DTE" de JC (cinco cuadros, con la matriz origen-destino solo interna).
-estado: no-publicada
+# Despublicada el 9-oct-2026 con la reorganizacion de ganaderia por especie (la seccion
+# "Movimientos de hacienda" de la que colgaba dejo de existir).
+# Publicada de nuevo el 12-oct-2026: es la "Matrices Origen Destino (OD)" de la hoja "GanBov
+# DTE" de la maqueta de ganaderia, y JC la pide asi en la celda E126 ("Sólo se incluirá el
+# cuadro de movimientos INTERNOS (departamentos en filas y columnas como origen y destino)").
+# Vive en Ganaderia > Bovinos como pagina suelta y se llega por el boton de Movimientos.
 
 origen: {tipo: modelo-analisis, detalle: "hoja 'Modelo Analisis' base 85, filas 84 a 113", fecha: 2026-07-31}
 nota_interpretacion: >

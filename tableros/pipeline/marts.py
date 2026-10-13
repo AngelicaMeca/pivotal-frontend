@@ -290,6 +290,10 @@ def sql_hecho_stock(rutas):
             -- rastrear cualquier dato hasta su celda de origen.
             geo_nombre, departamento,
             es_agregado_geo,
+            -- El tramo de tamanio del establecimiento ("1. Hasta 10 ovinos."). Nulo en las
+            -- bases que no estratifican; sin el, las filas de un mismo departamento y
+            -- categoria de las bases por estrato se confunden entre si.
+            estrato,
             variable, especie, categoria, categoria_rol,
             medida, unidad, agregable, valor,
             fuente,

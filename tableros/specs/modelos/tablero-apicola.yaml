@@ -1,0 +1,69 @@
+# Ganaderia > Apicola (pagina unica). Hoja "GanApi" de la maqueta "Maqueta Ganad VF"
+# (9-oct-2026). Base 30 (RENAPA, MAGyP), datos a 2025.
+#
+# Lo que pide JC en la hoja "Modelo Analisis" de la base: "Dado que son datos de solo 2
+# variables (apiarios y colmenas) en 1 variable geografica (departamento) y Totales
+# provinciales, solo amerita: 1. Ranking por departamento (listado, sin grafico); 2. Grafico
+# de participacion porcentual de los 6 [...] mas relevantes y el resto agrupados en 'resto';
+# 3. Volcado de datos en cada departamento". Y en la maqueta (E66): "SIN SELECCION DE
+# DEPARTAMENTO, SOLO MOSTRANDO ESCALAS DE COLMENAS Y APIARIOS".
+id: tablero-apicola
+tipo: tablero
+familia: apicola
+seccion: apicola
+
+titulo: "Apícola"
+subtitulo: "Provincia de Santiago del Estero · apiarios y colmenas por departamento"
+
+# La banda de JC, textual: "Total colmenas 93.618", "Colm. prom. por apiario 77,3",
+# "Apiarios Dto Rivadavia 102" y "Colmenas Dto Choya 12.023". Las cuatro dan exactas.
+indicadores:
+  - indicador: total
+    medida: colmenas
+    etiqueta: "Total colmenas"
+  - indicador: cociente
+    numerador: colmenas
+    denominador: apiarios
+    etiqueta: "Colm. prom. por apiario"
+  - indicador: lider
+    medida: apiarios
+    etiqueta: "Apiarios Dto {departamento}"
+  - indicador: lider
+    medida: colmenas
+    etiqueta: "Colmenas Dto {departamento}"
+
+paneles:
+  alto: fluye
+  mapa:
+    titulo: "{variable} por departamento"
+    variables: [colmenas, apiarios]
+    nombres: {colmenas: "Colmenas", apiarios: "Apiarios"}
+    unidades: {colmenas: "colmenas", apiarios: "apiarios"}
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  tabla-departamentos:
+    titulo: "Sgo. del Estero - Producción apícola - Cantidad de apiarios y colmenas por departamento - año {anio}"
+    rotulo_total: "TOTAL PROVINCIA"
+  tabla-ranking:
+    titulo: "Sgo. del Estero - Producción apícola - Ranking en cantidad de colmenas por departamento - año {anio}"
+    rotulo_total: "TOTAL PROVINCIA"
+  anillo-departamentos:
+    # Titulo de JC, con la errata "colmenaas" corregida.
+    titulo: "Sgo del Estero - Cantidad de colmenas, Participación por departamento en el total año {anio}"
+    cuantos: 6
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  # Disposicion en COLUMNAS (12-oct-2026, "reacomoda... para que no haya espacios vacios"):
+  # cada banda tiene dos columnas que se apilan a su ritmo, como las hojas de JC (graficos a
+  # la izquierda, tablas a la derecha). Las bandas agrupan cuadros de alto parecido; los
+  # altos se midieron a 1600 px.
+  disposicion: columnas
+  orden:
+    - {id: mapa, ancho: 4, columna: izq}
+    - {id: anillo-departamentos, ancho: 4, columna: izq}
+    - {id: tabla-departamentos, ancho: 8, columna: der}
+    - {id: tabla-ranking, ancho: 8, columna: der, scroll_interno: true}
+
+filtros:
+  - id: variable
+    zona: panel

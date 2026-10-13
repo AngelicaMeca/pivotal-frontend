@@ -6,6 +6,7 @@ archivos_recibidos: 29
 bases_ingeridas:
 - 8
 - 9
+- 30
 - 43
 - 48
 - 53
@@ -13,8 +14,10 @@ bases_ingeridas:
 - 57
 - 75
 - 85
+- 144
+- 145
+- 151
 bases_sin_config:
-- 30
 - 33
 - 38
 - 92
@@ -28,9 +31,6 @@ bases_sin_config:
 - 135
 - 136
 - 137
-- 144
-- 145
-- 151
 - 196
 - 197
 - 198
@@ -78,13 +78,16 @@ archivos:
   sha256: cc1a2a6b2890208b313da8971b3c8cdea1ef0f67e5d8fcee47a0598a6d5c72ef
   bytes: 11898
   fecha_archivo: '2026-07-16'
-  familia: null
-  config: null
-  estado: sin-config
-  staging: null
-  filas_staging: null
-  hojas: null
-  valores_nulos: null
+  familia: stock
+  config: configs/bases/30-apiarios-colmenas.yaml
+  estado: ingerida
+  staging: staging/base-30-apiarios-colmenas.parquet
+  filas_staging: 56
+  hojas:
+    Data SDE:
+      filas_staging: 56
+      filas_excel: 28
+  valores_nulos: 0
 - archivo: 33 - Registrados SISA - SDE.xlsx
   base: 33
   sha256: 1f2ffd0ec30a4febc8b7503f6a11fcafab12ce1abda294b06c4aa9da37b873b2
@@ -378,37 +381,52 @@ archivos:
   sha256: 96cec43ec24259a434d7ae3f848c706513b6fed7c2ec105d5e1447fc887799fb
   bytes: 87042
   fecha_archivo: '2026-10-06'
-  familia: null
-  config: null
-  estado: sin-config
-  staging: null
-  filas_staging: null
-  hojas: null
-  valores_nulos: null
+  familia: dte
+  config: configs/bases/144-dte-porcinos.yaml
+  estado: ingerida
+  staging: staging/base-144-dte-porcinos.parquet
+  filas_staging: 2384
+  hojas:
+    Data ORIGEN SDE:
+      filas_staging: 2218
+      filas_excel: 1109
+    Data DESTINO SDE:
+      filas_staging: 166
+      filas_excel: 83
+  valores_nulos: 0
 - archivo: 145 - DTE Ovinos - Origen y Destino SDE.xlsx
   base: 145
   sha256: af569e66cdb5accb4e7570942e575fe854bc0f1ab755d17ce574a108c8a4c732
   bytes: 17017
   fecha_archivo: '2026-07-19'
-  familia: null
-  config: null
-  estado: sin-config
-  staging: null
-  filas_staging: null
-  hojas: null
-  valores_nulos: null
+  familia: dte
+  config: configs/bases/145-dte-ovinos.yaml
+  estado: ingerida
+  staging: staging/base-145-dte-ovinos.parquet
+  filas_staging: 206
+  hojas:
+    Data ORIGEN SDE:
+      filas_staging: 120
+      filas_excel: 60
+    Data DESTINO SDE:
+      filas_staging: 86
+      filas_excel: 43
+  valores_nulos: 0
 - archivo: 151 - Stocks y establ Engorde A Corral (EAC) - SDE.xlsx
   base: 151
   sha256: 5e3034bc6a4de1c2efec1cb8336e2258e97d50947dfc8e3a4cab2f5f3c1d8423
   bytes: 12350
   fecha_archivo: '2026-07-19'
-  familia: null
-  config: null
-  estado: sin-config
-  staging: null
-  filas_staging: null
-  hojas: null
-  valores_nulos: null
+  familia: stock
+  config: configs/bases/151-stocks-bovinos-eac.yaml
+  estado: ingerida
+  staging: staging/base-151-stocks-bovinos-eac.parquet
+  filas_staging: 208
+  hojas:
+    Data SDE:
+      filas_staging: 208
+      filas_excel: 16
+  valores_nulos: 0
 - archivo: 196 - Lista productos RNPA - SDE.xlsx
   base: 196
   sha256: 1275c57b9ab3dc26e27037d8daa3d1e415816f0790fae47dc3c6ff261c444b13

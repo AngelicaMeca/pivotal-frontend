@@ -1,0 +1,28 @@
+# Comunes de Ganaderia > Bovinos > Producc. Leche (hoja "GanBov LACT" de la maqueta "Maqueta
+# Ganad VF", 9-oct-2026). Lo lee site_build.ContextoLeche (datos: pipeline/lecheria.py).
+#
+# Bases: 184 (cuenca lechera de la provincia), 185 (precio por litro por provincia), 186
+# (precio por kg de solidos utiles), 188 (grasa y proteina por provincia) y 194 (precio por kg
+# de proteina). El mapa de tambos sale de la 152 (existencias en tambos, SENASA).
+id: _comunes-leche-bovinos
+
+# Como nombra la fuente a la provincia y al promedio del pais en las bases por provincia.
+provincia: "Santiago del Estero"
+nacional: "Total del pais"
+
+presentacion:
+  tipos_de_variable:
+    cabezas: cabezas
+
+mapa:
+  mart: hecho_stock_bovino_tambos
+
+tiempo:
+  # La ventana de JC: sus tablas y graficos van de marzo de 2024 al ultimo mes informado.
+  ventana:
+    desde: {anio: 2024, mes: 3}
+
+fuente:
+  # Las cinco bases son de la Direccion Nacional de Lecheria (MAGyP); cada cuadro cita la de
+  # su propio mart (ContextoLeche.fuente).
+  organismo_esperado: null

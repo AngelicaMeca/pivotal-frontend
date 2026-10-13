@@ -1,0 +1,127 @@
+# Ganaderia > Equinos > "Stocks, UP y Estratos". Hoja "GanEqui" de la maqueta "Maqueta
+# Ganad VF" (9-oct-2026). JC no dibuja tabla de categorias por departamento: la pagina es la
+# serie por categoria, la serie por departamento y los estratos.
+#
+# El cuadro "Resumen de faena equino, totales - año 2.025" de su hoja no se construye: no hay
+# base de faena equina en la entrega.
+id: tablero-equinos
+tipo: tablero
+familia: stock-equinos
+seccion: equinos
+
+titulo: "Equinos"
+subtitulo: "Provincia de Santiago del Estero · existencias por categoría, departamento y estrato"
+
+# La banda de JC: "Stock total 116.597 cab", "Stock Dto. Mitre 9.162 cab", "+ caida Dto
+# Salavina - 53,41%" y "+ increm. Dto Sn Martin + 177,87%". Las dos variaciones se calculan
+# contra 2015, que es donde arranca su tabla por departamento (San Martin da +177,87% exacto).
+# La caida mas grande en ese periodo es la de ATAMISQUI (-62,68%), no la de SALAVINA: se
+# publica la que dice el dato.
+indicadores:
+  - medida: cabezas
+    categoria: "Total"
+    etiqueta: "Stock total"
+  - lider: cabezas
+    etiqueta: "Stock Dto {departamento}"
+  - variacion_extrema: min
+    desde: 2015
+    etiqueta: "Mayor caída Dto {departamento}"
+  - variacion_extrema: max
+    desde: 2015
+    etiqueta: "Mayor incremento Dto {departamento}"
+
+# La miga de agricultura: "Provincia" es el link de vuelta cuando hay un departamento elegido.
+breadcrumb: "Ganadería - Equinos - Provincia - {departamento}"
+
+paneles:
+  alto: fluye
+  mapa:
+    titulo: "Stock por departamento"
+    medida: cabezas
+    rotulo_accion: "Seleccione departamento"
+    # JC, celda E121 de su hoja: "Seleccionando un departamento del mapa lleva a página de
+    # datos (como en agri)". Es el mecanismo de cultivos extensivos: la MISMA página con los
+    # datos del departamento (KPIs de volumen, los dos gráficos de evolución y la tabla por
+    # categoría); el mapa, los anillos y las tablas por departamento siguen provinciales y
+    # remarcan el elegido. El mapa en miniatura de JC con "Departamento ALBERDI" arriba no va:
+    # mismo desvío que agricultura (Francisco, 2-oct-2026), el elegido ya se lee en el mapa y
+    # en la miga.
+    click_departamento: en-la-misma-vista
+    seleccion_departamento:
+      defecto: provincia
+      rotulo_provincia: "Provincia"
+      rotulo_cambiar: "Seleccione otro departamento si desea visualizar"
+      miga: "Dto {Departamento}"
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  tabla-evolucion:
+    titulo: "Sgo. del Estero - Evolución de stocks equinos por categoría y totales - años {desde} a {hasta}"
+    encabezado_anio: ""
+    encabezado_total: "Total Cab"
+  evolucion-categorias:
+    titulo: "Sgo del Estero - Evolución del stock equino por categoría años {desde} a {hasta}"
+    # JC arranca este grafico en 2012, aunque la serie total venga desde 2008.
+    desde: 2012
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  tabla-departamento-anios:
+    titulo: "Sgo. del Estero - Evolución del stock equino total por departamento - años {desde} a {hasta}"
+    encabezado_geo: "Departamento"
+    rotulo_total: "TOTAL PROV"
+    # JC arranca en 2015: con dieciocho columnas no entra.
+    desde: 2015
+  evolucion-total:
+    titulo: "Sgo del Estero - Evolución del stock total equinos - años {desde} a {hasta}"
+    medida_nombre: "Stock total"
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  tabla-estratos:
+    titulo: "Sgo. del Estero - Estratos del stock equino, totales, Establecimientos y UP - año {anio}"
+    encabezado_estrato: "Estrato"
+    encabezado_total: "Total Cab"
+    rotulo_total: "TOTAL PROV"
+    columnas_extra:
+      - {medida: establecimientos, encabezado: "Establec."}
+      - {medida: renspas, encabezado: "UP"}
+    nota: >
+      La base por estrato separa burros y asnos, que la serie provincial informa juntos. Las
+      UP son los RENSPA registrados en cada tramo.
+  # Los tres anillos de la hoja de JC: por departamento (nueve y el resto), y los estratos en
+  # el stock y en las UP.
+  anillo-departamentos:
+    titulo: "Sgo del Estero - Equinos, Participación por departamento en el stock total año {anio}"
+    cuantos: 9
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  anillo-estratos:
+    titulo: "Sgo del Estero - Participación de los estratos en el stock total año {anio}"
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  anillo-estratos-up:
+    titulo: "Sgo del Estero - Participación de los estratos en la cantidad de UP - año {anio}"
+    subtitulo: "En unidades productivas (RENSPA)"
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  # Disposicion en COLUMNAS (12-oct-2026, "reacomoda... para que no haya espacios vacios"):
+  # cada banda tiene dos columnas que se apilan a su ritmo, como las hojas de JC (graficos a
+  # la izquierda, tablas a la derecha). Las bandas agrupan cuadros de alto parecido; los
+  # altos se midieron a 1600 px.
+  disposicion: columnas
+  orden:
+    - {id: mapa, ancho: 4, columna: izq}
+    - {id: evolucion-total, ancho: 4, columna: izq}
+    - {id: tabla-evolucion, ancho: 8, columna: der}
+    - {id: tabla-departamento-anios, ancho: 8, columna: der}
+    - {id: evolucion-categorias, ancho: 12}
+    - {id: tabla-estratos, ancho: 12}
+    - {id: anillo-departamentos, ancho: 4, columna: fila}
+    - {id: anillo-estratos, ancho: 4, columna: fila}
+    - {id: anillo-estratos-up, ancho: 4, columna: fila}
+
+filtros:
+  - id: anio
+    zona: periodo
+  - id: categoria
+    zona: barra
+    incluye_total: true
+    defecto: "Total"

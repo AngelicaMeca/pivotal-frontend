@@ -1,0 +1,51 @@
+# Ganaderia > Porcinos > Estratos y UP. Hoja "GanPorcESTR" de la maqueta "Maqueta Ganad VF"
+# (9-oct-2026), base 91.
+#
+# JC la arma copiando la de ovinos ("EN ESTE CASO TODOS LOS VALORES NO SON REALES, CAMBIO DE
+# FORMATO TOMADO DE OVINOS", celda E167): se usa la misma estructura con los datos reales de
+# la base 91. Las UP de porcinos son los RENSPA de esta misma base, que es de donde salen las
+# de la pagina de stocks.
+id: tablero-porcinos-estratos
+igual_que: tablero-porcinos
+pagina: estratos-y-up
+titulo_pagina: "Estratos y UP"
+# El stock por departamento viene desde 2017, pero los estratos son solo 2025.
+periodo: estrato
+
+# Esta pagina no cambia con el departamento: la tabla ya los abre a todos. Se apaga el clic
+# del mapa y la miga departamental que hereda de la pagina de stocks.
+breadcrumb: null
+
+paneles:
+  mapa:
+    click_departamento: null
+  tabla-departamento-estratos:
+    titulo: "Sgo. del Estero - Stocks porcinos por categoría, estrato, cantidad de Establecimientos y UP por departamento - año {anio}"
+    encabezado_geo: "Departamento"
+    encabezado_estrato: "Estrato"
+    encabezado_total: "Total Porcinos"
+    rotulo_total: "TOTAL PROV"
+    columnas_extra:
+      - {medida: establecimientos, encabezado: "Establ"}
+      - {medida: renspas, encabezado: "UP"}
+    nota: >
+      Las UP son los RENSPA registrados en cada estrato.
+  anillo-estratos:
+    titulo: "Sgo del Estero - Porcinos - Participación de los estratos en la cantidad de cabezas - año {anio}"
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  anillo-estratos-up:
+    titulo: "Sgo del Estero - Porcinos - Participación de los estratos en la cantidad de UP - año {anio}"
+    subtitulo: "En unidades productivas (RENSPA)"
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  # Disposicion en COLUMNAS (12-oct-2026, "vuelve a revisar, hay tableros donde todavia hay
+  # tarjetas que se ven asi"): la grilla de filas estiraba cada cuadro al alto del mas alto
+  # de su fila. En columnas cada cuadro mide lo suyo y tablero.js nivela el final de las dos
+  # columnas estirando o achicando los graficos (nunca las tablas).
+  disposicion: columnas
+  orden:
+    - {id: mapa, ancho: 4, columna: izq}
+    - {id: anillo-estratos, ancho: 4, columna: izq}
+    - {id: anillo-estratos-up, ancho: 4, columna: izq}
+    - {id: tabla-departamento-estratos, ancho: 8, columna: der, scroll_interno: true}

@@ -1,0 +1,55 @@
+# Ganaderia > Caprinos > Estratos. Hoja "GanCaprEstr" de la maqueta "Maqueta Ganad VF"
+# (9-oct-2026), base 179.
+#
+# Como la de ovinos, mas la tabla resumen que JC pone debajo del mapa ("Participación del
+# stock caprino y cantidad de UP por estrato": Estrato | UP | Cabezas).
+id: tablero-caprinos-estratos
+igual_que: tablero-caprinos
+pagina: estratos
+titulo_pagina: "Estratos"
+periodo: estrato
+
+paneles:
+  tabla-departamento-estratos:
+    titulo: "Sgo. del Estero - Stock caprino por categoría, estrato, cantidad de Establecimientos y UP por departamento - año {anio}"
+    encabezado_geo: "Departamento"
+    encabezado_estrato: "Estrato"
+    encabezado_total: "Total Caprinos"
+    rotulo_total: "TOTAL PROV"
+    columnas_extra:
+      - {medida: establecimientos, encabezado: "Establ"}
+      - {medida: renspas, encabezado: "UP"}
+    nota: >
+      Las UP son los RENSPA registrados en cada estrato. La base por estrato y la de stock por
+      departamento son dos relevamientos distintos de SENASA: sus totales no tienen por qué
+      coincidir.
+  tabla-estratos:
+    titulo: "Sgo. del Estero - Participación del stock caprino y cantidad de UP por estrato - año {anio}"
+    con_categorias: false
+    encabezado_estrato: "Estrato"
+    encabezado_total: "Cabezas"
+    rotulo_total: "TOTAL PROV"
+    columnas_extra:
+      - {medida: renspas, encabezado: "UP"}
+  anillo-estratos-up:
+    titulo: "Sgo del Estero - Caprinos - Participación de los estratos en la cantidad de UP - año {anio}"
+    subtitulo: "En unidades productivas (RENSPA)"
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  anillo-estratos:
+    titulo: "Sgo del Estero - Caprinos - Participación de los estratos en la cantidad de cabezas - año {anio}"
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  # La tabla grande ocupa cuatro filas; a su izquierda, en el orden de JC: el mapa, la tabla
+  # resumen y los dos anillos (primero el de UP).
+  # Disposicion en COLUMNAS (12-oct-2026, "vuelve a revisar, hay tableros donde todavia hay
+  # tarjetas que se ven asi"): la grilla de filas estiraba cada cuadro al alto del mas alto
+  # de su fila. En columnas cada cuadro mide lo suyo y tablero.js nivela el final de las dos
+  # columnas estirando o achicando los graficos (nunca las tablas).
+  disposicion: columnas
+  orden:
+    - {id: mapa, ancho: 4, columna: izq}
+    - {id: tabla-estratos, ancho: 4, columna: izq}
+    - {id: anillo-estratos-up, ancho: 4, columna: izq}
+    - {id: anillo-estratos, ancho: 4, columna: izq}
+    - {id: tabla-departamento-estratos, ancho: 8, columna: der, scroll_interno: true}

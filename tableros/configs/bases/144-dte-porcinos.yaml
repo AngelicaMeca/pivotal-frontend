@@ -1,0 +1,109 @@
+# Base 144 · DTE PORCINOS (SENASA): movimientos de porcinos con documento de transito,
+# origen y destino, 2022 a 2026 (2026 parcial).
+#
+# Alimenta la pagina "Movimientos" de porcinos (hoja "GanPorcDTE" de la maqueta de
+# ganaderia, que JC arma con los titulos de bovinos: "PROCESAR IDEM DTE BOVINOS"). Llego en la
+# entrega-01 y quedo sin configurar hasta el 12-oct-2026.
+#
+# Misma familia que la 85 (bovinos), con la categoria LONG: cada fila es un movimiento de UNA
+# categoria ("CATEGORIA": Capón, Cerda...), con sus DTE y sus animales. Por eso:
+# - las cabezas se declaran una sola vez con `categoria_desde` y el texto se traduce en
+#   `categorias_long` (al plural, como las nombra JC en la pagina de stocks);
+# - no hay columna de total: el total de cabezas lo arma pipeline/hacienda.py sumando las
+#   categorias (`total_desde_componentes` en el comunes de la pagina);
+# - los DTE vienen por fila, o sea por categoria: un DTE que ampara dos categorias aparece
+#   en dos filas y se cuenta dos veces. Queda anotado en la pagina.
+# Ninguna de las dos hojas trae fila de total al pie.
+
+base: 144
+slug: dte-porcinos
+familia: dte
+estado: activa
+
+archivo:
+  patron: "^144 - DTE porcinos"
+
+hojas:
+  datos:
+    - nombre: "Data ORIGEN SDE"
+      header_fila: 2
+      sentido: salida
+      ambito: sde
+      contenido: >
+        1.109 movimientos con origen en Santiago del Estero (internos y salidas), 2022 a 2026
+        (2026 parcial), uno por categoria.
+    - nombre: "Data DESTINO SDE"
+      # Arriba lleva el rotulo "INTRODUCCION", como la hoja de destino de la 85.
+      header_fila: 2
+      sentido: entrada
+      ambito: sde
+      contenido: >
+        83 movimientos con destino en Santiago del Estero y origen en otra provincia, 2022 a
+        2026, uno por categoria.
+  ignorar:
+    - nombre: "Modelo analisis"
+      motivo: >
+        Indicaciones de JC para la vista, no datos (su pagina es la de bovinos: "PROCESAR IDEM
+        DTE BOVINOS").
+
+columnas:
+  "MOTIVO": motivo
+  "TIPO ORIGEN": tipo_origen
+  "TIPO DESTINO": tipo_destino
+  "AÑO": anio
+  "MES": mes
+  # El primer dia del mes: redundante con anio + mes. Se mapea para que el header cierre.
+  "MES_INICIO": mes_inicio
+  "PROVINCIA ORIGEN": origen_provincia
+  "PARTIDO ORIGEN": origen_departamento
+  "PROVINCIA DESTINO": destino_provincia
+  "PARTIDO DESTINO": destino_departamento
+  "CATEGORIA": categoria_origen
+  "TOTAL DE DTe": dte_porcinos
+  "TOTAL DE ANIMALES": cabezas_porcinos
+
+# Los textos de la columna CATEGORIA, al nombre que usa la pagina de stocks de porcinos.
+categorias_long:
+  "Capón": "Capones"
+  "Cerda": "Cerdas"
+  "M.E.I.": "M.E.I."
+  "Cachorro": "Cachorros"
+  "Cachorra": "Cachorras"
+  "Padrillo": "Padrillos"
+  "Lechón": "Lechones"
+
+valores:
+  dte_porcinos:
+    etiqueta: "DTE emitidos"
+    medida: documentos
+    especie: porcinos
+    categoria: "Total"
+    rol: simple
+    unidad: dte
+    agregable: true
+  cabezas_porcinos:
+    etiqueta: "Cabezas movidas"
+    medida: cabezas
+    especie: porcinos
+    categoria_desde: categoria_origen
+    rol: componente
+    unidad: cabezas
+    agregable: true
+
+geo:
+  particion: sde
+  provincia_propia: 86
+  resolver: [86]
+  nivel: departamento
+  agregados:
+    fila_total_al_pie: false
+
+salida:
+  staging: "staging/base-144-dte-porcinos.parquet"
+  mart: hecho_movimientos_porcinos
+  particiones: [provincia, anio]
+
+indice:
+  fuente: "SENASA"
+  cita_fuente_al_pie: "Fuente: SENASA"
+  titulo_en_el_indice: "DTE porcinos"

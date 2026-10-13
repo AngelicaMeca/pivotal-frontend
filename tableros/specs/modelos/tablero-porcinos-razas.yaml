@@ -1,0 +1,121 @@
+# Ganaderia > Porcinos > Razas. Hoja "GanPorcRAZ" de la maqueta "Maqueta Ganad VF"
+# (9-oct-2026). Base 90 (Siocarnes porcinos).
+#
+# JC cambia aca el planteo de bovinos (E114: "CAMBIAMOS EL PLANTEO DE MUESTRA DE DATOS POR LAS
+# CARACTERISTICAS"): en vez de un anio, las tablas ponen 2024, 2025 y 2026 lado a lado, por
+# departamento y por raza, en cabezas y en toneladas, mas el peso promedio. "TODO EL
+# CONTENIDO ES REAL, SALVO LOS GRAFICOS" (E132): sus dos anillos son los de bovinos
+# ("simulados... pero igual contenido y formato"), asi que aca van con los datos de porcinos.
+#
+# El selector de anio mueve los KPIs, el mapa y los anillos; las tablas con los tres anios y
+# los graficos de precio son la serie y no cambian.
+id: tablero-porcinos-razas
+tipo: tablero
+familia: faena-porcinos
+seccion: porcinos
+pagina: razas
+titulo_pagina: "Razas"
+
+titulo: "Porcinos"
+subtitulo: "Provincia de Santiago del Estero · porcinos enviados a faena por departamento y raza"
+
+# La banda de JC: "Cabezas a faena 115.499 cab", "Dto Juan F. Ibarra 68,19 %", "Raza Híbrida
+# Materna 90,13 %" y "Peso promedio/cab 124,7 Kg". Las cuatro dan exactas para 2025.
+indicadores:
+  - indicador: cabezas
+    etiqueta: "Cabezas a faena"
+  - indicador: departamento_lider
+    medida: cabezas
+    decimales: 2
+    etiqueta: "Dto {departamento}"
+  - indicador: raza_lider
+    medida: cabezas
+    decimales: 2
+    etiqueta: "Raza {raza}"
+  - indicador: peso_promedio
+    etiqueta: "Peso promedio/cab"
+
+paneles:
+  alto: fluye
+  mapa:
+    titulo: "Razas y categorías"
+    rotulo_accion: "Seleccione departamento"
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  tabla-anios-deptos-cab:
+    titulo: "Sgo. del Estero - Porcinos - Cabezas totales y % enviadas a faena por departamento - años {desde} a {hasta}"
+    dimension: geo
+    medida: cabezas
+    encabezado: "Departamento"
+  tabla-anios-deptos-tn:
+    titulo: "Sgo. del Estero - Porcinos - Tn totales y % enviadas a faena por departamento - años {desde} a {hasta}"
+    dimension: geo
+    medida: tn
+    encabezado: "Departamento"
+  tabla-anios-razas-cab:
+    titulo: "Sgo. del Estero - Porcinos - Cabezas totales y % enviadas a faena por raza - años {desde} a {hasta}"
+    dimension: raza
+    medida: cabezas
+    encabezado: "Raza"
+    # Texto de JC (cuadro de texto de su hoja, fila 39).
+    nota: >
+      (*) Caído hace referencia a los animales que llegan al establecimiento de faena o que se
+      encuentran dentro del predio con incapacidad para mantenerse en pie o movilizarse por
+      sus propios medios. (**) XD - Decomisado: es una categoría técnica de clasificación
+      (equivalente a las razas en el sistema) que se utiliza para registrar aquellos animales
+      o lotes de hacienda que fueron retirados o confiscados por las autoridades sanitarias por
+      no cumplir con los requisitos sanitarios o de documentación.
+  tabla-anios-razas-tn:
+    titulo: "Sgo. del Estero - Porcinos - Tn totales y % enviadas a faena por raza - años {desde} a {hasta}"
+    dimension: raza
+    medida: tn
+    encabezado: "Raza"
+  tabla-peso-razas:
+    titulo: "Sgo. del Estero - Porcinos - peso promedio por cabeza por raza enviadas a faena - años {desde} a {hasta}"
+    # Caidos y decomisados no son una raza: no tiene sentido su peso promedio.
+    excluir: ["Caídos", "XD - Decomisado"]
+    nota: >
+      Pietrain 2024: sólo 25 kg por cabeza, porque eran cachorras.
+  anillo-razas:
+    titulo: "Sgo del Estero - Participación por raza en la venta para faena - año {anio}"
+    cuantos: 3
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  anillo-departamentos:
+    titulo: "Sgo del Estero - Participación por Departamento en la venta para faena - año {anio}"
+    cuantos: 4
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  precios-razas-1:
+    titulo: "Precio promedio mensual por raza - SDE - todas las cat. - $/kg en pie"
+    razas: ["LÍNEA HÍBRIDA MATERNA", "YORKSHIRE / LARGE-WHITE"]
+    desde: 2025
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  precios-categorias:
+    titulo: "Precio promedio mensual Híbrida Materna - Capón y Cerda - SDE - $/kg en pie"
+    raza: "LÍNEA HÍBRIDA MATERNA"
+    categorias: ["Porcina Capón", "Porcina Cerda / Chancha"]
+    desde: 2025
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  # Disposicion en COLUMNAS (12-oct-2026, "reacomoda... para que no haya espacios vacios"):
+  # cada banda tiene dos columnas que se apilan a su ritmo, como las hojas de JC (graficos a
+  # la izquierda, tablas a la derecha). Las bandas agrupan cuadros de alto parecido; los
+  # altos se midieron a 1600 px.
+  disposicion: columnas
+  orden:
+    - {id: mapa, ancho: 4, columna: izq}
+    - {id: anillo-departamentos, ancho: 4, columna: izq}
+    - {id: anillo-razas, ancho: 4, columna: izq}
+    - {id: tabla-anios-deptos-cab, ancho: 8, columna: der}
+    - {id: tabla-anios-deptos-tn, ancho: 8, columna: der}
+    - {id: tabla-anios-razas-cab, ancho: 8, columna: der}
+    - {id: tabla-anios-razas-tn, ancho: 8, columna: der}
+    - {id: tabla-peso-razas, ancho: 8, columna: der}
+    - {id: precios-razas-1, ancho: 6, columna: fila}
+    - {id: precios-categorias, ancho: 6, columna: fila}
+
+filtros:
+  - id: anio
+    zona: periodo

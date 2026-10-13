@@ -491,9 +491,84 @@ a { color: var(--enlace); }
    fila de graficos (disposicion de la captura del 10-ago). */
 .tablero > [data-alto="2"] { grid-row: span 2; }
 .tablero > [data-alto="3"] { grid-row: span 3; }
+.tablero > [data-alto="4"] { grid-row: span 4; }
+/* `scroll_interno` (lo declara el spec, panel por panel): el cuadro NO le impone su alto a
+   las filas que ocupa. `contain: size` le saca el alto propio, asi que las filas las mide la
+   columna de al lado (el mapa y los anillos de las paginas de Estratos) y la tabla, que es
+   mucho mas larga, scrollea adentro de su cuadro. Sin esto la tabla de departamento x
+   estrato (160 filas) estiraba la primera fila y el mapa quedaba flotando en un panel de
+   3.000 px. */
+.tablero > [data-scroll-interno] { contain: size; overflow: hidden; }
+/* Un cuadro que es una captura de otro organismo (caravanas de SENASA): la imagen ocupa el
+   ancho del cuadro con su proporcion, sin deformarse, y nunca mas grande que su original. */
+.cuadro-imagen { margin: 0; display: flex; justify-content: center; }
+/* Ganaderia: la tarjeta de una TABLA mide lo que mide su tabla (12-oct-2026, pedido de
+   Francisco). En la grilla la fila toma el alto de su cuadro mas alto -el mapa, el anillo- y
+   la tarjeta de al lado se estiraba hasta ahi: una tabla de 5 renglones quedaba con media
+   pantalla de crema vacia debajo. Con `align-self: start` la tarjeta termina donde termina
+   la tabla. Las que declaran `scroll_interno` no cambian: esas SI ocupan su lugar en la grilla
+   y scrollean adentro. Scopeado a la rama: agricultura tiene sus altos medidos a mano. */
+.rama-ganaderia .tablero > .panel:has(> .panel-cuerpo > .tabla-datos):not([data-scroll-interno]) {
+  align-self: start;
+}
+/* Disposicion "columnas" (ganaderia, 12-oct-2026): bandas de dos columnas que se apilan
+   cada una a su ritmo. El tablero deja de ser una grilla de filas: es una pila de bandas, y
+   cada banda una grilla de dos columnas alineadas arriba. Las columnas reparten su ancho por
+   fr (lo calcula Tablero.tsx) y `minmax(0, ...)` deja que una tabla ancha scrollee adentro
+   en vez de ensanchar su columna. */
+.tablero.tablero-columnas { display: flex; flex-direction: column; gap: .55rem; }
+.banda-columnas { display: grid; gap: .55rem; align-items: start; }
+.banda-columnas > .columna { display: flex; flex-direction: column; gap: .55rem;
+                             min-width: 0; }
+.banda-columnas > .columna > .panel, .banda-ancha > .panel { min-width: 0; }
+/* Banda nivelada por tablero.js (`nivelarBandas`): los graficos ya se estiraron o achicaron
+   para que las columnas cierren juntas; las columnas se estiran a la altura de la banda y el
+   resto que no alcanzaron a cubrir los graficos (el piso de un mapa, dos tablas de distinto
+   alto en fila) lo toma el ULTIMO cuadro de la columna corta. Son unos pocos px: la tarjeta
+   cierra pareja con la de al lado en vez de dejar fondo crema. */
+.banda-columnas.banda-nivelada, .banda-en-fila.banda-nivelada { align-items: stretch; }
+.banda-nivelada > .columna > .panel:last-child { flex-grow: 1; }
+/* Una tabla muy larga dentro de una columna (`scroll_interno`): tope de alto y scroll propio,
+   con el encabezado fijo, para no estirar su columna muy por debajo de la otra. */
+.columna > [data-scroll-interno] .tabla-datos { max-height: 34rem; overflow: auto; }
+.columna > [data-scroll-interno] .tabla-datos thead th {
+  position: sticky; top: 0; background: var(--fondo-cuadro); z-index: 1;
+}
+/* Banda en fila (`columna: fila`): cuadros lado a lado, cada uno con su ancho de 12. OJO: NO
+   es `.banda-fila`, que es la fila de la banda de la CABECERA (miga, tira de paginas y
+   periodo); con ese nombre esta regla la convertia en una grilla y la miga se partia. */
+.banda-en-fila { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: .55rem;
+              align-items: start; }
+.banda-en-fila > .panel { grid-column: span 4; min-width: 0; }
+{% for n in range(1, 13) %}.banda-en-fila > [data-ancho="{{ n }}"] { grid-column: span {{ n }}; }
+{% endfor %}
+@media (max-width: 1000px) {
+  .banda-columnas { grid-template-columns: minmax(0, 1fr) !important; }
+  .banda-en-fila > .panel { grid-column: span 12; }
+}
+/* Un cuadro de texto de JC (metodologia): parrafos con aire, a la medida de lectura. */
+.cuadro-texto p { margin: 0 0 .7rem; line-height: 1.5; font-size: .9rem; }
+.cuadro-texto p:last-child { margin-bottom: 0; }
+/* Un cuadro de cifras (caravanas bovinas): las tarjetas en fila y la serie debajo. */
+.cifras { display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+          gap: .6rem; margin-bottom: .8rem; }
+.cifra { border: 1px solid var(--borde); border-radius: var(--radio); padding: .6rem .8rem;
+         display: flex; flex-direction: column; gap: .25rem; }
+.cifra-rotulo { font-size: .8rem; }
+.cifra-valor { font-size: 1.9rem; font-weight: 650; line-height: 1.1; }
+.cifras-serie { font-weight: 600; margin: 0 0 .3rem; }
+[data-panel^="cifras-"] .grafico { min-height: 280px; }
+.cuadro-imagen img { display: block; width: 100%; max-width: 1480px; height: auto; }
+.tablero > [data-scroll-interno] > .panel-cuerpo { min-height: 0; }
+.tablero > [data-scroll-interno] .tabla-datos { flex: 1 1 0; min-height: 0; overflow: auto; }
+.tablero > [data-scroll-interno] .tabla-datos thead th {
+  position: sticky; top: 0; background: var(--fondo-cuadro); z-index: 1;
+}
 @media (max-width: 1000px) {
   .tablero > [data-ancho], .tablero > .panel { grid-column: span 12; }
-  .tablero > [data-alto="2"], .tablero > [data-alto="3"] { grid-row: span 1; }
+  .tablero > [data-alto="2"], .tablero > [data-alto="3"],
+  .tablero > [data-alto="4"] { grid-row: span 1; }
+  .tablero > [data-scroll-interno] { contain: none; height: 80vh; }
   /* El tablero del mockup (cultivos) se apila en una sola columna. */
   .tablero.con-selector { flex-direction: column; }
   .tablero.con-selector .fila-tablero { grid-template-columns: minmax(0, 1fr); }
@@ -1871,7 +1946,10 @@ table.datos td.destacada { font-weight: 700; color: var(--enlace); }
 /* ---------- matriz origen-destino (tipo flujo-od) ---------- */
 /* 27 x 27 celdas. La primera columna y el encabezado quedan fijos al hacer scroll: sin eso,
    para leer una celda del medio hay que acordarse de que fila y que columna era. */
-.matriz-scroll { max-height: 32rem; overflow: auto; }
+/* El tope es el 80% de la ventana (12-oct-2026): desde que la matriz es una pagina propia
+   (Ganaderia > Bovinos, boton "Matrices OD") no comparte la pantalla con otros cuadros, y con
+   32rem cortaba en el departamento 17 de 27 y escondia el total. */
+.matriz-scroll { max-height: 80vh; overflow: auto; }
 table.matriz-od { font-size: .72rem; }
 table.matriz-od th, table.matriz-od td { padding: .18rem .35rem; }
 table.matriz-od thead th { position: sticky; top: 0; z-index: 2; }

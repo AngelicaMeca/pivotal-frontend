@@ -26,11 +26,17 @@ RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DIR_MARTS = os.path.join(RAIZ, "marts")
 
 # id de universo -> el WHERE que lo define. Ver _comunes-base-85.universos.
+#
+# Los internos se toman de las SALIDAS y la introduccion es solo lo que viene de OTRA
+# provincia (12-oct-2026). En bovinos, porcinos y equinos da exactamente lo mismo que antes,
+# pero la hoja de destino de los ovinos (base 145) REPITE los movimientos internos que ya
+# estan en la de origen: con `alcance = 'interno'` a secas se contaban dos veces, y la
+# introduccion sumaba hacienda que no habia entrado a la provincia.
 RECORTES = {
     "totales_sin_introduccion": "sentido = 'salida'",
-    "internos": "alcance = 'interno'",
+    "internos": "alcance = 'interno' AND sentido = 'salida'",
     "extraccion": "alcance = 'egreso'",
-    "introduccion": "sentido = 'entrada'",
+    "introduccion": "sentido = 'entrada' AND alcance = 'ingreso'",
 }
 
 # Los recortes cuyo ORIGEN es un departamento de Santiago. Son los unicos sobre los que tiene
@@ -59,22 +65,34 @@ PROVINCIA_PROPIA = 86      # INDEC Santiago del Estero. `provincia` es parametro
 CATEGORIA_DE_DOCUMENTOS = "Total"
 
 
-def _filtro(recorte):
-    return "especie = 'bovinos' AND NOT es_agregado_fila AND " + RECORTES[recorte]
+def _filtro(recorte, especie="bovinos"):
+    return "especie = '%s' AND NOT es_agregado_fila AND %s" % (especie, RECORTES[recorte])
 
 
 class Hacienda:
     """Todos los agregados que necesitan las 15 vistas de la base 85, resueltos en un init."""
 
-    def __init__(self, con):
-        ruta = os.path.join(DIR_MARTS, "hecho_movimientos_hacienda.parquet")
+    def __init__(self, con, mart="hecho_movimientos_hacienda", especie="bovinos",
+                 total_desde_componentes=False):
+        """`mart` y `especie` permiten usarla para otras especies con DTE (equinos, base
+        230): mismo esquema de la familia dte, otro archivo y otra especie.
+
+        `total_desde_componentes`: la base no trae columna de total de cabezas y el "Total" se
+        arma SUMANDO las categorias (porcinos, base 144, que viene con la categoria LONG).
+        """
+        self.especie = especie
+        self.total_desde_componentes = total_desde_componentes
+        ruta = os.path.join(DIR_MARTS, "%s.parquet" % mart)
         if not os.path.exists(ruta):
-            sys.exit("[site] Falta marts/hecho_movimientos_hacienda.parquet. "
-                     "Corre antes: make ingest && make marts")
+            sys.exit("[site] Falta marts/%s.parquet. Corre antes: make ingest && make marts"
+                     % mart)
         self.tabla = "read_parquet('%s')" % ruta.replace("'", "''")
 
         self.anual = {}         # (recorte, anio, categoria, medida) -> valor
         self.depto = {}         # (recorte, anio, geo_id, categoria, medida) -> valor
+        # La introduccion abierta por departamento de DESTINO (a que departamento santiagueño
+        # entro la hacienda de otras provincias). La vista departamental de ganaderia la usa.
+        self.depto_destino = {}  # (anio, geo_id, categoria, medida) -> valor
         self.mes = {}           # (recorte, anio, mes, categoria, medida) -> valor
         self.motivo = {}        # (recorte, anio, motivo, categoria, medida) -> valor
         self.contraparte = {}   # (recorte, anio, provincia, categoria, medida) -> valor
@@ -86,6 +104,8 @@ class Hacienda:
         self.fuentes = set()
 
         self._cargar(con)
+        if total_desde_componentes:
+            self._armar_totales()
         self._cargar_geo(con)
 
     # -- carga -----------------------------------------------------------
@@ -97,7 +117,7 @@ class Hacienda:
             FROM %s
             WHERE %s AND medida IN ('cabezas', 'documentos') %s
             GROUP BY ALL
-        """ % (lista, self.tabla, _filtro(recorte), extra)
+        """ % (lista, self.tabla, _filtro(recorte, self.especie), extra)
         return con.execute(sql).fetchall()
 
     def _cargar(self, con):
@@ -137,6 +157,13 @@ class Hacienda:
         # La contraparte del movimiento: a que provincia se fue la hacienda que salio, y de
         # cual vino la que entro. Es la unica apertura geografica posible fuera de Santiago:
         # los partidos de destino no se resuelven a codigo INDEC (son 122 y no hay padron).
+        for geo, anio, categoria, medida, valor in self._consulta(
+                con, "introduccion", ["destino_geo_id", "anio"],
+                "AND destino_provincia_id = %d AND destino_geo_id IS NOT NULL"
+                % PROVINCIA_PROPIA):
+            if anio is not None:
+                self.depto_destino[(anio, geo, categoria, medida)] = valor
+
         for recorte, columna in (("extraccion", "destino_provincia"),
                                  ("introduccion", "origen_provincia")):
             for nombre, anio, categoria, medida, valor in self._consulta(
@@ -160,7 +187,7 @@ class Hacienda:
             FROM %s
             WHERE %s AND medida IN ('ingreso_establecimiento', 'egreso_establecimiento')
             GROUP BY ALL
-        """ % (self.tabla, _filtro("totales_sin_introduccion"))).fetchall()
+        """ % (self.tabla, _filtro("totales_sin_introduccion", self.especie))).fetchall()
         for anio, tipo, geo, medida, valor in filas:
             if anio is None:
                 continue
@@ -173,6 +200,27 @@ class Hacienda:
         self.motivos = {r: self._por_volumen(self.motivo, r) for r in sorted(RECORTES)}
         self.contrapartes = {r: self._por_volumen(self.contraparte, r)
                              for r in ("extraccion", "introduccion")}
+
+    def _armar_totales(self):
+        """El "Total" de cabezas de cada apertura, sumando sus categorias.
+
+        En todas las tablas de agregados la categoria y la medida son las dos ultimas
+        posiciones de la clave, asi que la suma es la misma para todas. Solo se arma donde la
+        base no trae total propio: si lo trajera, manda el de la fuente.
+        """
+        for tabla in (self.anual, self.depto, self.depto_destino, self.mes, self.motivo,
+                      self.contraparte, self.od):
+            sumas = {}
+            for clave, valor in sorted(tabla.items(), key=lambda t: str(t[0])):
+                if clave[-1] != "cabezas" or clave[-2] == "Total" or valor is None:
+                    continue
+                total = clave[:-2] + ("Total", "cabezas")
+                sumas[total] = sumas.get(total, 0.0) + valor
+            for clave, valor in sumas.items():
+                tabla.setdefault(clave, valor)
+        self.contrapartes = {r: self._por_volumen(self.contraparte, r)
+                             for r in ("extraccion", "introduccion")}
+        self.motivos = {r: self._por_volumen(self.motivo, r) for r in sorted(RECORTES)}
 
     def _por_volumen(self, tabla, recorte):
         """Los valores de una apertura, ordenados por su volumen total en toda la serie.
@@ -210,6 +258,10 @@ class Hacienda:
     def total_depto(self, recorte, anio, geo, categoria, medida):
         return self.depto.get(
             (recorte, anio, geo, self.categoria_efectiva(medida, categoria), medida))
+
+    def total_depto_destino(self, anio, geo, categoria, medida):
+        return self.depto_destino.get(
+            (anio, geo, self.categoria_efectiva(medida, categoria), medida))
 
     def total_mes(self, recorte, anio, mes, categoria, medida):
         return self.mes.get(

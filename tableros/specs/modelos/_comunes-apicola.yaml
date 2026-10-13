@@ -1,0 +1,13 @@
+# Comunes de Ganaderia > Apicola (hoja "GanApi" de la maqueta "Maqueta Ganad VF",
+# 9-oct-2026). Base 30 (RENAPA, MAGyP). Lo lee site_build.ContextoApicola.
+id: _comunes-apicola
+mart: hecho_apicola
+
+presentacion:
+  # Colmenas y apiarios van en la rampa marron de ganaderia (el color es del area).
+  tipos_de_variable:
+    colmenas: cabezas
+    apiarios: cabezas
+
+fuente:
+  organismo_esperado: "MAGyP"
