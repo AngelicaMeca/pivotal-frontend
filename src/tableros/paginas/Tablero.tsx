@@ -41,7 +41,7 @@ import Arranque from "./Arranque";
 import Cascara from "./Cascara";
 import Glosa from "./Glosa";
 
-function TarjetasKpi({ contexto }: { contexto: boolean }) {
+function TarjetasKpi({ contexto, cantidad = 4 }: { contexto: boolean; cantidad?: number }) {
   return (
     <>
       {contexto ? (
@@ -59,7 +59,7 @@ function TarjetasKpi({ contexto }: { contexto: boolean }) {
       ) : null}
       {/* KPIs: valor y unidad. La variacion solo llega en las bases que la calculan; en
           cultivos esta PROHIBIDA (kpis_sin_variacion) y el build no la manda. */}
-      {[0, 1, 2, 3].map((indice) => (
+      {Array.from({ length: cantidad }, (_, indice) => indice).map((indice) => (
         <div key={indice} className="kpi" data-kpi={indice}>
           <span className="rotulo kpi-etiqueta" data-etiqueta=""></span>
           <span className="kpi-cifra">
@@ -82,13 +82,15 @@ function TarjetasKpi({ contexto }: { contexto: boolean }) {
    paneles y la derecha se queda con el resto de las 12. */
 type Banda =
   | { ancha: Panel }
-  | { fila: Panel[] }
-  | { izq: Panel[]; der: Panel[]; anchoIzq: number };
+  | { fila: Panel[]; titulo?: string }
+  | { izq: Panel[]; der: Panel[]; anchoIzq: number; centro: Panel[]; anchoCentro: number };
 
 function bandasEnColumnas(paneles: Panel[]): Banda[] {
   const bandas: Banda[] = [];
-  let actual: { izq: Panel[]; der: Panel[]; anchoIzq: number } | null = null;
+  let actual: { izq: Panel[]; der: Panel[]; anchoIzq: number; centro: Panel[];
+                anchoCentro: number } | null = null;
   let fila: Panel[] | null = null;
+  let tituloFila: string | undefined;
   for (const panel of paneles) {
     const ancho = Number(panel.ancho ?? 4);
     // `columna: fila`: los paneles consecutivos que lo declaran van LADO A LADO, cada uno con
@@ -96,12 +98,21 @@ function bandasEnColumnas(paneles: Panel[]): Banda[] {
     if (panel.columna === "fila") {
       if (actual) bandas.push(actual);
       actual = null;
-      if (!fila) fila = [];
+      // Un panel con `titulo_fila` abre una fila NUEVA con ese titulo encima (el que JC
+      // escribe sobre sus dos graficos de precio).
+      if (fila && panel.titulo_fila) {
+        bandas.push({ fila, titulo: tituloFila });
+        fila = null;
+      }
+      if (!fila) {
+        fila = [];
+        tituloFila = panel.titulo_fila;
+      }
       fila.push(panel);
       continue;
     }
     if (fila) {
-      bandas.push({ fila });
+      bandas.push({ fila, titulo: tituloFila });
       fila = null;
     }
     if (ancho >= 12) {
@@ -116,16 +127,20 @@ function bandasEnColumnas(paneles: Panel[]): Banda[] {
       bandas.push(actual);
       actual = null;
     }
-    if (!actual) actual = { izq: [], der: [], anchoIzq: 0 };
+    if (!actual) actual = { izq: [], der: [], anchoIzq: 0, centro: [], anchoCentro: 0 };
     const columna = panel.columna ?? (ancho <= 5 ? "izq" : "der");
     if (columna === "izq") {
       actual.izq.push(panel);
       actual.anchoIzq = Math.max(actual.anchoIzq, ancho);
+    } else if (columna === "centro") {
+      // Tercera columna (la hoja "GanApi" de JC tiene tres: mapa y anillo | tabla | ranking).
+      actual.centro.push(panel);
+      actual.anchoCentro = Math.max(actual.anchoCentro, ancho);
     } else {
       actual.der.push(panel);
     }
   }
-  if (fila) bandas.push({ fila });
+  if (fila) bandas.push({ fila, titulo: tituloFila });
   if (actual) bandas.push(actual);
   return bandas;
 }
@@ -157,6 +172,7 @@ const FORMA_DEL_PANEL: Record<string, string> = {
   "tabla-hilton": "tabla-estratos",
   "tabla-tambo": "tabla-estratos",
   "tabla-razas": "tabla-estratos",
+  "tabla-razas-departamentos": "tabla-estratos",
   "anillo-razas": "anillo",
   "precios-leche-2": "lineas",
   "tabla-cuenca": "tabla-estratos",
@@ -175,7 +191,12 @@ const FORMA_DEL_PANEL: Record<string, string> = {
 function CuerpoPanel({ id: idPanel, mockup = false }: { id: string; mockup?: boolean }) {
   const id = idPanel.startsWith("imagen-") ? "imagen"
     : idPanel.startsWith("texto-") ? "texto"
-    : idPanel.startsWith("cifras-") ? "cifras" : (FORMA_DEL_PANEL[idPanel] ?? idPanel);
+    // Una tabla escrita en el spec (equivalencias de categorias de "GanBuba ST").
+    : idPanel.startsWith("fija-") ? "tabla-estratos"
+    : idPanel.startsWith("cifras-") ? "cifras"
+    // Un anillo escrito en el spec (categorias de la faena equina de SENASA).
+    : idPanel.startsWith("anillo-fijo-") ? "anillo"
+    : (FORMA_DEL_PANEL[idPanel] ?? idPanel);
   let cuerpo = null;
   if (id === "cifras") {
     // Tarjetas de cifras y, debajo, una serie en lineas (caravanas bovinas de SENASA).
@@ -483,6 +504,36 @@ function TogglePanel({ filtro }: { filtro?: Filtro }) {
   );
 }
 
+/* Los paneles de UNA columna, de arriba abajo. Dos paneles seguidos con `en_par` van lado a
+   lado dentro de la columna (los dos anillos de estratos de "GanBuba ST", que JC pega uno al
+   lado del otro debajo de su tabla por departamento). */
+function PanelesDeColumna({ paneles, filtros }: { paneles: Panel[]; filtros: Record<string, Filtro> }) {
+  const grupos: Panel[][] = [];
+  for (const panel of paneles) {
+    const ultimo = grupos[grupos.length - 1];
+    if (panel.en_par && ultimo && ultimo.length === 1 && ultimo[0].en_par) {
+      ultimo.push(panel);
+    } else {
+      grupos.push([panel]);
+    }
+  }
+  return (
+    <>
+      {grupos.map((grupo) =>
+        grupo.length > 1 ? (
+          <div className="par-en-columna" key={grupo[0].id}>
+            {grupo.map((panel) => (
+              <PanelComun key={panel.id} panel={panel} filtro={filtros[panel.id]} />
+            ))}
+          </div>
+        ) : (
+          <PanelComun key={grupo[0].id} panel={grupo[0]} filtro={filtros[grupo[0].id]} />
+        ),
+      )}
+    </>
+  );
+}
+
 function PanelComun({ panel, filtro }: { panel: Panel; filtro?: Filtro }) {
   return (
     <section
@@ -491,6 +542,9 @@ function PanelComun({ panel, filtro }: { panel: Panel; filtro?: Filtro }) {
       data-ancho={panel.ancho}
       data-alto={panel.alto}
       data-scroll-interno={panel.scroll_interno ? "" : undefined}
+      data-compacta={panel.compacta ? "" : undefined}
+      data-solo-provincia={panel.solo_provincia ? "" : undefined}
+      data-nota-al-lado={panel.nota_al_lado || undefined}
     >
       <div className="panel-cab">
         <div>
@@ -776,7 +830,7 @@ export default function Tablero({ pagina }: { pagina: PaginaTablero }) {
       {conIndicadoresArriba ? (
         <>
           <div className="kpis" id="kpis">
-            <TarjetasKpi contexto={tablero.tarjeta_contexto} />
+            <TarjetasKpi contexto={tablero.tarjeta_contexto} cantidad={tablero.kpis ?? 4} />
           </div>
           {/* Aclaracion de las unidades abreviadas de los indicadores (formato_v1) */}
           <p className="kpis-nota" data-kpis-nota=""></p>
@@ -850,10 +904,13 @@ export default function Tablero({ pagina }: { pagina: PaginaTablero }) {
              data-datos={tablero.ruta_datos}>
           {bandasEnColumnas(paneles).map((banda, i) =>
             "fila" in banda ? (
-              <div className="banda-en-fila" key={i}>
-                {banda.fila.map((panel) => (
-                  <PanelComun key={panel.id} panel={panel} filtro={filtros[panel.id]} />
-                ))}
+              <div className="banda-con-titulo" key={i}>
+                {banda.titulo ? <h2 className="titulo-banda">{banda.titulo}</h2> : null}
+                <div className="banda-en-fila">
+                  {banda.fila.map((panel) => (
+                    <PanelComun key={panel.id} panel={panel} filtro={filtros[panel.id]} />
+                  ))}
+                </div>
               </div>
             ) : "ancha" in banda ? (
               <div className="banda-ancha" key={i}>
@@ -864,23 +921,26 @@ export default function Tablero({ pagina }: { pagina: PaginaTablero }) {
                 className="banda-columnas"
                 key={i}
                 style={{
-                  gridTemplateColumns: banda.izq.length && banda.der.length
+                  gridTemplateColumns: banda.centro.length
+                    ? `minmax(0, ${banda.anchoIzq || 4}fr) minmax(0, ${banda.anchoCentro}fr) minmax(0, ${12 - (banda.anchoIzq || 4) - banda.anchoCentro}fr)`
+                    : banda.izq.length && banda.der.length
                     ? `minmax(0, ${banda.anchoIzq || 4}fr) minmax(0, ${12 - (banda.anchoIzq || 4)}fr)`
                     : "minmax(0, 1fr)",
                 }}
               >
                 {banda.izq.length ? (
                   <div className="columna">
-                    {banda.izq.map((panel) => (
-                      <PanelComun key={panel.id} panel={panel} filtro={filtros[panel.id]} />
-                    ))}
+                    <PanelesDeColumna paneles={banda.izq} filtros={filtros} />
+                  </div>
+                ) : null}
+                {banda.centro.length ? (
+                  <div className="columna">
+                    <PanelesDeColumna paneles={banda.centro} filtros={filtros} />
                   </div>
                 ) : null}
                 {banda.der.length ? (
                   <div className="columna">
-                    {banda.der.map((panel) => (
-                      <PanelComun key={panel.id} panel={panel} filtro={filtros[panel.id]} />
-                    ))}
+                    <PanelesDeColumna paneles={banda.der} filtros={filtros} />
                   </div>
                 ) : null}
               </div>

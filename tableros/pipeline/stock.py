@@ -169,7 +169,7 @@ class StockEspecie:
                 SELECT anio, geo_id, es_agregado_geo, coalesce(categoria, '%s'), medida,
                        sum(valor)
                 FROM %s
-                WHERE valor IS NOT NULL
+                WHERE valor IS NOT NULL AND estrato IS NULL
                 GROUP BY ALL
                 ORDER BY ALL
                 """ % (agregado, principal)).fetchall():
@@ -182,13 +182,19 @@ class StockEspecie:
             tabla = self._tabla(marts["estrato"])
             for fuente, in con.execute("SELECT DISTINCT fuente FROM %s" % tabla).fetchall():
                 self.fuentes.add(fuente)
+            # `estrato_provincial`: la base por estrato es de la PROVINCIA entera, sin
+            # departamentos (la hoja "Estratificación" de la base 48). Sus filas son el
+            # agregado provincial de cada tramo y entran con geo nulo: los cuadros por tramo
+            # suman la provincia igual, y nada pretende abrirlos por departamento.
+            filtro = ("estrato IS NOT NULL" if marts.get("estrato_provincial")
+                      else "NOT es_agregado_geo")
             for anio, geo, estrato, categoria, medida, valor in con.execute("""
                     SELECT anio, geo_id, estrato, coalesce(categoria, '%s'), medida, sum(valor)
                     FROM %s
-                    WHERE valor IS NOT NULL AND NOT es_agregado_geo
+                    WHERE valor IS NOT NULL AND %s
                     GROUP BY ALL
                     ORDER BY ALL
-                    """ % (agregado, tabla)).fetchall():
+                    """ % (agregado, tabla, filtro)).fetchall():
                 self.estrato[(anio, geo, estrato, categoria, medida)] = valor
                 self.estratos_por_anio.setdefault(anio, set()).add(estrato)
                 if marts.get("departamentos_desde_estrato"):

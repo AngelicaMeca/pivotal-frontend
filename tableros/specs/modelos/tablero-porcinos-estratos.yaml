@@ -5,6 +5,13 @@
 # FORMATO TOMADO DE OVINOS", celda E167): se usa la misma estructura con los datos reales de
 # la base 91. Las UP de porcinos son los RENSPA de esta misma base, que es de donde salen las
 # de la pagina de stocks.
+#
+# 13-oct-2026 (revision contra la maqueta): el mapa se titula "Estratos" y no lleva "Seleccione
+# departamento" (no tiene clic y la hoja no lo pide); debajo, el texto de definiciones
+# ESTRATO / ESTABLECIMIENTO / UP literal (filas 40-50) y UN solo anillo, el de cabezas (la
+# hoja no tiene el de UP). La tabla grande no lleva la fila de la provincia (la copia de
+# ovinos de JC no la tiene), la fila "Total X" va solo en los departamentos con mas de un
+# estrato y entra entera a 1440 px (Cachorras incluida).
 id: tablero-porcinos-estratos
 igual_que: tablero-porcinos
 pagina: estratos-y-up
@@ -12,40 +19,49 @@ titulo_pagina: "Estratos y UP"
 # El stock por departamento viene desde 2017, pero los estratos son solo 2025.
 periodo: estrato
 
-# Esta pagina no cambia con el departamento: la tabla ya los abre a todos. Se apaga el clic
-# del mapa y la miga departamental que hereda de la pagina de stocks.
-breadcrumb: null
+breadcrumb: "Ganadería - Porcinos - Provincia - Estratos, Establecimientos y U.P."
 
 paneles:
   mapa:
+    titulo: "Estratos"
     click_departamento: null
+    rotulo_accion: null
+    fuente: "Fuente: SENASA"
+  texto-definiciones:
+    titulo: ""
+    parrafos:
+      - titulo: "ESTRATO"
+        texto: "Rango de cabezas que clasifica el tamaño del establecimiento o la unidad productiva ganadera."
+      - titulo: "ESTABLECIMIENTO"
+        texto: "El espacio físico donde se desarrolla la actividad ganadera."
+      - titulo: "UNIDAD PRODUCTIVA (UP)"
+        texto: >
+          Razón social (unipersonal o de cualquier tipo) que desarrolla la actividad ganadera
+          dentro de un establecimiento. En un establecimiento puede existir más de una UP, por
+          eso la cifra siempre es igual o mayor.
+    fuente: "Fuente: SENASA"
   tabla-departamento-estratos:
     titulo: "Sgo. del Estero - Stocks porcinos por categoría, estrato, cantidad de Establecimientos y UP por departamento - año {anio}"
     encabezado_geo: "Departamento"
     encabezado_estrato: "Estrato"
     encabezado_total: "Total Porcinos"
     rotulo_total: "TOTAL PROV"
+    total: "no"
+    subtotal: varios
     columnas_extra:
       - {medida: establecimientos, encabezado: "Establ"}
       - {medida: renspas, encabezado: "UP"}
+    fuente: "Fuente: SENASA"
     nota: >
       Las UP son los RENSPA registrados en cada estrato.
   anillo-estratos:
     titulo: "Sgo del Estero - Porcinos - Participación de los estratos en la cantidad de cabezas - año {anio}"
+    fuente: "Fuente: SENASA"
     acciones:
       - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
-  anillo-estratos-up:
-    titulo: "Sgo del Estero - Porcinos - Participación de los estratos en la cantidad de UP - año {anio}"
-    subtitulo: "En unidades productivas (RENSPA)"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
-  # Disposicion en COLUMNAS (12-oct-2026, "vuelve a revisar, hay tableros donde todavia hay
-  # tarjetas que se ven asi"): la grilla de filas estiraba cada cuadro al alto del mas alto
-  # de su fila. En columnas cada cuadro mide lo suyo y tablero.js nivela el final de las dos
-  # columnas estirando o achicando los graficos (nunca las tablas).
   disposicion: columnas
   orden:
     - {id: mapa, ancho: 4, columna: izq}
+    - {id: texto-definiciones, ancho: 4, columna: izq}
     - {id: anillo-estratos, ancho: 4, columna: izq}
-    - {id: anillo-estratos-up, ancho: 4, columna: izq}
-    - {id: tabla-departamento-estratos, ancho: 8, columna: der, scroll_interno: true}
+    - {id: tabla-departamento-estratos, ancho: 8, columna: der, scroll_interno: true, compacta: true}

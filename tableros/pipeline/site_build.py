@@ -6817,15 +6817,7 @@ def s_filtro_anio(ctx, anios=None):
             "defecto": str(defecto)}
 
 
-def s_filtro_categoria(ctx, spec):
-    """Total primero y despues las categorias en el orden del ciclo productivo, no alfabetico."""
-    valores = [ctx.agregado] + ctx.categorias
-    return {"id": "categoria", "etiqueta": "Categoría", "zona": "barra",
-            "opciones": [{"v": c, "t": c} for c in valores],
-            "defecto": ctx.agregado}
-
-
-def indicadores_stock(ctx, spec, anio, categoria, geo=None):
+def indicadores_stock(ctx, spec, anio, geo=None):
     """La banda de KPIs. Con `geo`, la del departamento elegido en el mapa: los de volumen
     (stock, UP) pasan a ser los del departamento; los que nombran a un departamento (lider,
     mayor suba) siguen siendo provinciales, porque son un ranking (regla de JC en "Agri 1 Dto":
@@ -6839,7 +6831,7 @@ def indicadores_stock(ctx, spec, anio, categoria, geo=None):
     for decl in spec["indicadores"]:
         etiqueta = decl["etiqueta"]
         if "lider" in decl or "variacion_extrema" in decl:
-            salida.append(indicador_de_departamento(ctx, decl, anio, categoria))
+            salida.append(indicador_de_departamento(ctx, decl, anio))
             continue
         if "numerador" in decl:
             # Una relacion entre categorias (pagina Indicadores), de la provincia o del
@@ -6878,20 +6870,16 @@ def indicadores_stock(ctx, spec, anio, categoria, geo=None):
                 etiqueta, hechos.relacion(anio, nombre), unidad, nombre,
                 hechos.relacion(previo, nombre) if previo else None, previo, formato=formato))
             continue
-        # Los dos indicadores de volumen siguen la categoria elegida en la barra de chips
-        # cuando el spec pide el agregado; los que declaran una categoria fija no se mueven.
+        # La categoria la fija el spec: el agregado ("Total") en los de volumen, o una
+        # categoria que JC dibuja el mismo en su banda ("Terneros vacunados", "Vacas
+        # vacunadas" en "GanBov VAC"). No hay selector de categoria que la cambie: un stock
+        # nunca se analiza separando categorias (JC, 13-oct-2026).
         cual = decl["categoria"]
         # La MEDIDA la puede declarar el indicador: la base 48 trae cabezas y unidades
         # productivas, y JC muestra las dos como KPI en su hoja "GanBov ST". Por defecto
         # cabezas, que es lo que miraban los tres tableros anteriores.
         medida = decl.get("medida", "cabezas")
         unidad = decl.get("unidad", "cabezas" if medida == "cabezas" else "UP")
-        # Los indicadores de CABEZAS siguen la categoria elegida en la barra de chips cuando
-        # el spec pide el agregado. Los de unidades productivas no: una UP es un
-        # establecimiento y no se abre por categoria de animal.
-        if medida == "cabezas" and cual == ctx.agregado and categoria != ctx.agregado:
-            cual = categoria
-            etiqueta = categoria
         # La cifra ENTERA, como la escribe JC en todas las bandas de ganaderia ("Total
         # vacunado 1.164.191 cab"), no compactada a "1,16 M".
         salida.append(indicador(
@@ -6901,7 +6889,7 @@ def indicadores_stock(ctx, spec, anio, categoria, geo=None):
     return salida
 
 
-def indicador_de_departamento(ctx, decl, anio, categoria):
+def indicador_de_departamento(ctx, decl, anio):
     """Un KPI que NOMBRA a un departamento: el lider, o el que mas crecio o cayo.
 
     Son los de la banda de JC en las hojas de cada especie ("Stock Dto Juan F Ibarra 24.849
@@ -6920,7 +6908,7 @@ def indicador_de_departamento(ctx, decl, anio, categoria):
     sin_nombre = decl["etiqueta"].replace(" {departamento}", "")
     if "lider" in decl:
         medida = decl["lider"]
-        cual = categoria if medida == "cabezas" else ctx.agregado
+        cual = ctx.agregado
         if decl.get("origen") == "estrato":
             def valor_de(g):
                 return hechos.total_estratos_depto(anio, g, medida)
@@ -6961,40 +6949,10 @@ def indicador_de_departamento(ctx, decl, anio, categoria):
                      formato=lambda v: (pr.fmt_numero(v * 100, 2, signo=True), "%"))
 
 
-def panel_anillo_stock(ctx, spec, anio, categoria, pie):
-    """Participacion por ZONA productiva: las seis que definio JC en su hoja Modelo An 01."""
+def panel_mapa_stock(ctx, spec, anio, pie):
+    """El mapa de stock: siempre el TOTAL de la especie, nunca una categoria suelta."""
     hechos = ctx.hechos
-    por_zona = {}
-    for geo in hechos.deptos:
-        valor = hechos.total_depto(anio, geo, categoria)
-        if not valor:
-            continue
-        zona = ctx.zona_de[hechos.nombre[geo]]
-        por_zona[zona] = por_zona.get(zona, 0.0) + valor
-    if not por_zona:
-        return panel_vacio(spec["paneles"]["anillo"]["titulo"],
-                           "No hay stock de esta categoría en el año elegido.")
-    total = sum(por_zona.values())
-    partes = sorted(por_zona.items(), key=lambda t: (-t[1], pr.clave_alfabetica(t[0])))
-    centro, prefijo = pr.fmt_compacto(total)
-    return {
-        "titulo": spec["paneles"]["anillo"]["titulo"],
-        "subtitulo": ctx.subtitulo_unidad("cabezas", categoria),
-        "pie": pie,
-        "centro": centro,
-        "centro_unidad": (prefijo + " cabezas").strip(),
-        "centro_nota": "suma de las zonas",
-        "porciones": [{"n": zona, "v": valor,
-                       "t": ctx.texto(valor) + " cabezas",
-                       "pct": pr.fmt_pct(valor / total * 100, 1),
-                       "color": ctx.color_zona[zona]}
-                      for zona, valor in partes],
-        "nota": "Zonas productivas definidas por Juan Carlos Antuña.",
-    }
-
-
-def panel_mapa_stock(ctx, spec, anio, categoria, pie):
-    hechos = ctx.hechos
+    categoria = ctx.agregado
     deptos, con_dato = [], []
     for geo in hechos.deptos:
         valor = hechos.total_depto(anio, geo, categoria)
@@ -7003,7 +6961,7 @@ def panel_mapa_stock(ctx, spec, anio, categoria, pie):
             con_dato.append(valor)
     if not con_dato:
         return panel_vacio(spec["paneles"]["mapa"]["titulo"],
-                           "No hay stock de esta categoría en el año elegido.")
+                           "No hay stock en el año elegido.")
     escala = pr.quintiles(con_dato)
     rampa = ctx.colores.rampa("cabezas")
     for fila in deptos:
@@ -7032,58 +6990,6 @@ def panel_mapa_stock(ctx, spec, anio, categoria, pie):
         "unidad": "cabezas",
         "escala": escala_del_panel_mapa(ctx, deptos, escala, rampa, "cabezas"),
         "total": "Total provincial: %s cabezas" % ctx.texto(total),
-    }
-
-
-def panel_tendencia_stock(ctx, spec, anio, categoria, pie):
-    """Los 14 anios de la serie. El anio elegido queda marcado sobre la linea."""
-    hechos = ctx.hechos
-    puntos = [hechos.total_anual(a, categoria) for a in ctx.anios]
-    if not [p for p in puntos if p is not None]:
-        return panel_vacio(spec["paneles"]["tendencia"]["titulo"],
-                           "No hay serie para esta categoría.")
-    return {
-        "titulo": spec["paneles"]["tendencia"]["titulo"],
-        "subtitulo": ctx.subtitulo_unidad("cabezas", categoria),
-        "pie": pie,
-        "x": [str(a)[2:] for a in ctx.anios],
-        "puntos": puntos,
-        "textos": [ctx.texto(p) + " cabezas" if p is not None else "S/D" for p in puntos],
-        "etiquetas": [str(a) for a in ctx.anios],
-        "actual": ctx.anios.index(anio) if anio in ctx.anios else None,
-        # Como se llama esta linea en la leyenda cuando el zoom pone otra categoria al lado.
-        # Sin comparacion el cuadro tiene una sola serie y no dibuja leyenda.
-        "medida_nombre": spec["paneles"]["tendencia"]["medida_nombre"],
-        "color": ctx.theme["colores"]["primario_medio"],
-        # Segundo verde del theme para la serie comparada: este cuadro no pinta por rampa de
-        # variable (su linea es cromo del tema), asi que su comparacion tampoco.
-        "color_comp": ctx.theme["colores"]["primario"],
-        "eje": ctx.eje([p for p in puntos if p is not None], "cabezas"),
-    }
-
-
-def panel_top_stock(ctx, spec, anio, categoria, pie):
-    hechos = ctx.hechos
-    cuantos = spec["paneles"]["top"]["cuantos"]
-    filas = []
-    for geo in hechos.deptos:
-        valor = hechos.total_depto(anio, geo, categoria)
-        if valor:
-            filas.append((geo, hechos.nombre[geo], valor))
-    if not filas:
-        return panel_vacio(spec["paneles"]["top"]["titulo"],
-                           "No hay stock de esta categoría en el año elegido.")
-    ordenados = ordenar_desc(filas)[:cuantos]
-    tope = ordenados[0][2]
-    total = hechos.total_anual(anio, categoria)
-    return {
-        "titulo": spec["paneles"]["top"]["titulo"],
-        "subtitulo": ctx.subtitulo_unidad("cabezas", categoria),
-        "pie": pie,
-        "barras": [{"n": nombre, "t": ctx.texto(valor),
-                    "pct": (valor / tope * 100.0) if tope else 0.0,
-                    "participacion": participacion_texto(valor, total)}
-                   for _, nombre, valor in ordenados],
     }
 
 
@@ -7125,6 +7031,21 @@ def _cat_bovinas(ctx, cual="serie"):
     return [c for c in orden if c in presentes]
 
 
+def _cats_del_panel(ctx, declarado, cual):
+    """Las categorias de una tabla: las que el spec nombre en el panel (`categorias`, con el
+    orden de las columnas de JC en ESA tabla) o las de la especie."""
+    if declarado.get("categorias"):
+        presentes = set(getattr(ctx, "categorias_de", {}).get(cual) or ctx.categorias)
+        return [c for c in declarado["categorias"] if c in presentes]
+    return _cat_bovinas(ctx, cual)
+
+
+def _rotulo_cat(declarado, categoria):
+    """El encabezado de una columna de categoria: el de JC en esa tabla (`etiquetas`), que a
+    veces va en singular ("Padrillo", "Cerda") aunque la fuente diga "Padrillos"."""
+    return (declarado.get("etiquetas") or {}).get(categoria, categoria)
+
+
 def _celda_cab(ctx, valor):
     """Una celda de cabezas. El guion es el de JC: en su tabla los ceros van como '-'."""
     if valor is None:
@@ -7164,10 +7085,10 @@ def panel_stock_tabla_departamentos(ctx, spec, anio, pie):
     resaltada, como en su dibujo: la lectura arranca por el total y despues baja al detalle.
     """
     declarado = spec["paneles"]["tabla-departamentos"]
-    cats = _cat_bovinas(ctx, "departamentos")
+    cats = _cats_del_panel(ctx, declarado, "departamentos")
     extras = _columnas_extra(declarado)
     columnas = [{"etiqueta": declarado["encabezado_geo"], "num": False}]
-    columnas += [{"etiqueta": c, "num": True} for c in cats]
+    columnas += [{"etiqueta": _rotulo_cat(declarado, c), "num": True} for c in cats]
     columnas += [{"etiqueta": declarado["encabezado_total"], "num": True}]
     columnas += [{"etiqueta": e["encabezado"], "num": True} for e in extras]
 
@@ -7205,7 +7126,18 @@ def panel_stock_tabla_departamento_estratos(ctx, spec, anio, pie):
     Es la tabla de JC "Stocks ovinos por categoría, estrato, cantidad de Establecimientos y UP
     por departamento": una fila por departamento y estrato con sus establecimientos, sus UP
     (RENSPA), el total de cabezas y las categorias, y debajo de cada departamento su fila
-    "Total <departamento>" resaltada. La fila TOTAL PROV va primera, como en las demas tablas.
+    "Total <departamento>" resaltada.
+
+    Lo que cada hoja de JC dibuja distinto lo declara el spec del panel (13-oct-2026):
+    - `total`: donde va la fila de la provincia: `arriba`, `abajo` o `no` (las copias de la
+      tabla de ovinos no la tienen, y en caprinos la suma de esta base -500.953- no cierra
+      con el stock de la pagina -484.091-, asi que mostrarla confunde).
+    - `subtotal: varios`: la fila "Total X" solo cuando el departamento tiene MAS de un
+      estrato (JC, "GanBuba ST" E115: "Se agrupan cuando un departamento tiene más de 1
+      estrato"); `rotulo_subtotal` es su texto ("Tot {departamento}").
+    - `columna_pct`: una ultima columna con el % del departamento en el total provincial,
+      escrita en la fila que cierra cada departamento ("% Depart." de bubalinos).
+    - `categorias`, `etiquetas` y `estrato_con_numero`: columnas y rotulos de JC.
     """
     declarado = spec["paneles"]["tabla-departamento-estratos"]
     titulo = titulo_literal(declarado["titulo"], anio=str(anio))
@@ -7213,52 +7145,76 @@ def panel_stock_tabla_departamento_estratos(ctx, spec, anio, pie):
     estratos = hechos.estratos(anio)
     if not estratos:
         return panel_vacio(titulo, "La base por estrato no trae el año elegido.")
-    cats = _cat_bovinas(ctx, "estratos")
+    cats = _cats_del_panel(ctx, declarado, "estratos")
     extras = declarado.get("columnas_extra") or []
+    pct_col = declarado.get("columna_pct")
     columnas = ([{"etiqueta": declarado["encabezado_geo"], "num": False}]
                 + [{"etiqueta": e["encabezado"], "num": True} for e in extras]
                 + [{"etiqueta": declarado.get("encabezado_estrato", "Estrato"), "num": False},
                    {"etiqueta": declarado["encabezado_total"], "num": True}]
-                + [{"etiqueta": c, "num": True} for c in cats])
+                + [{"etiqueta": _rotulo_cat(declarado, c), "num": True} for c in cats]
+                + ([{"etiqueta": pct_col, "num": True}] if pct_col else []))
+    total_prov = hechos.total_estratos_provincia(anio, "cabezas")
 
-    def celdas(rotulo, estrato_texto, conteos, cabezas):
+    def pct(valor):
+        if not pct_col:
+            return []
+        if valor is None:
+            return [""]
+        return [pr.fmt_pct(valor / total_prov * 100, 2) if total_prov else "S/D"]
+
+    def celdas(rotulo, estrato_texto, conteos, cabezas, porcentaje=None):
         return ([rotulo] + [_celda_cab(ctx, v) for v in conteos] + [estrato_texto]
-                + [_celda_cab(ctx, v) for v in cabezas])
+                + [_celda_cab(ctx, v) for v in cabezas] + pct(porcentaje))
 
     def suma(valores):
         reales = [v for v in valores if v is not None]
         return sum(reales) if reales else None
 
-    filas = [{"celdas": celdas(
-        declarado["rotulo_total"], "",
-        [hechos.total_estratos_provincia(anio, x["medida"]) for x in extras],
-        [hechos.total_estratos_provincia(anio, "cabezas")]
-        + [suma(hechos.total_estrato(anio, e, c) for e in estratos) for c in cats]),
-        "actual": True}]
+    def fila_provincia():
+        return {"celdas": celdas(
+            declarado["rotulo_total"], "",
+            [hechos.total_estratos_provincia(anio, x["medida"]) for x in extras],
+            [total_prov] + [suma(hechos.total_estrato(anio, e, c) for e in estratos)
+                            for c in cats],
+            total_prov), "actual": True}
+
+    donde_total = declarado.get("total", "arriba")
+    filas = [fila_provincia()] if donde_total == "arriba" else []
+    solo_varios = declarado.get("subtotal") == "varios"
+    plantilla_sub = declarado.get("rotulo_subtotal", "Total {departamento}")
     deptos = sorted({g for (a, g, e, c, m) in hechos.estrato if a == anio},
                     key=lambda g: pr.clave_alfabetica(hechos.nombre[g]))
     for geo in deptos:
         nombre = hechos.nombre[geo]
         propios = [e for e in estratos
                    if hechos.total_estrato(anio, e, ctx.agregado, "cabezas", geo) is not None]
+        total_dto = hechos.total_estratos_depto(anio, geo, "cabezas")
+        con_subtotal = not solo_varios or len(propios) > 1
         for i, estrato in enumerate(propios):
-            fila = {"celdas": celdas(
+            fila = {"geo": geo, "celdas": celdas(
                 nombre,
-                _rotulo_estrato(estrato),
+                _rotulo_estrato(estrato, declarado.get("estrato_con_numero")),
                 [hechos.total_estrato(anio, estrato, ctx.agregado, x["medida"], geo)
                  for x in extras],
                 [hechos.total_estrato(anio, estrato, ctx.agregado, "cabezas", geo)]
-                + [hechos.total_estrato(anio, estrato, c, "cabezas", geo) for c in cats])}
+                + [hechos.total_estrato(anio, estrato, c, "cabezas", geo) for c in cats],
+                None if con_subtotal else total_dto)}
             if i == 0:
                 fila["inicia_grupo"] = True
             filas.append(fila)
-        filas.append({"celdas": celdas(
-            "Total %s" % nombre, "",
+        if not con_subtotal:
+            continue
+        filas.append({"geo": geo, "celdas": celdas(
+            plantilla_sub.replace("{departamento}", nombre), "",
             [hechos.total_estratos_depto(anio, geo, x["medida"]) for x in extras],
-            [hechos.total_estratos_depto(anio, geo, "cabezas")]
+            [total_dto]
             + [suma(hechos.total_estrato(anio, e, c, "cabezas", geo) for e in propios)
-               for c in cats]),
+               for c in cats],
+            total_dto),
             "actual": True})
+    if donde_total == "abajo":
+        filas.append(fila_provincia())
     return {
         "titulo": titulo,
         "subtitulo": ctx.subtitulo_unidad("cabezas"),
@@ -7269,47 +7225,68 @@ def panel_stock_tabla_departamento_estratos(ctx, spec, anio, pie):
     }
 
 
-def panel_stock_tabla_estratos(ctx, spec, anio, pie):
+def panel_stock_tabla_estratos(ctx, spec, anio, pie, geo=None):
     """Los tramos de tamanio del establecimiento: uno por fila, en el orden de la fuente.
 
     Columnas: las categorias, el total de cabezas y los conteos (establecimientos, UP), que
     es como JC titula el cuadro ("Estratos del stock equino, totales, Establecimientos y UP").
     La fila TOTAL PROV va primera y resaltada, igual que en la tabla por departamento.
     El anio es el de la base por estrato: si el elegido no lo tiene, el cuadro lo dice.
+
+    Con `geo`, los tramos de UN departamento (el clic del mapa de equinos: JC, "GanEqui"
+    E184, "Datos de stocks y UP por categorías" del departamento).
+    `conteos_primero: true` pone Establec. y UP antes del total, como en la tabla de
+    equinos de JC; `sin_total: true` saca la fila de la provincia (caprinos, cuyo total de
+    esta base no cierra con el de la pagina).
     """
     declarado = spec["paneles"]["tabla-estratos"]
-    titulo = titulo_literal(declarado["titulo"], anio=str(anio))
+    titulo = _con_departamento(ctx, titulo_literal(declarado["titulo"], anio=str(anio)), geo)
     estratos = ctx.hechos.estratos(anio)
+    if geo:
+        estratos = [e for e in estratos
+                    if ctx.hechos.total_estrato(anio, e, ctx.agregado, "cabezas", geo)
+                    is not None]
     if not estratos:
-        return panel_vacio(titulo, "La base por estrato no trae el año elegido.")
+        return panel_vacio(titulo, "La base por estrato no trae el año elegido."
+                           if not geo else "El departamento no tiene datos por estrato.")
     # `con_categorias: false` es la version RESUMIDA de caprinos ("Participación del stock
     # caprino y cantidad de UP por estrato": Estrato | UP | Cabezas): sin categorias y con
     # los conteos ANTES del total, que es el orden de sus columnas.
     con_categorias = declarado.get("con_categorias", True)
-    cats = _cat_bovinas(ctx, "estratos") if con_categorias else []
+    conteos_primero = declarado.get("conteos_primero", not con_categorias)
+    cats = _cats_del_panel(ctx, declarado, "estratos") if con_categorias else []
     extras = declarado.get("columnas_extra") or []
     columnas = [{"etiqueta": declarado.get("encabezado_estrato", "Estrato"), "num": False}]
-    columnas += [{"etiqueta": c, "num": True} for c in cats]
+    cats_col = [{"etiqueta": _rotulo_cat(declarado, c), "num": True} for c in cats]
     total_col = [{"etiqueta": declarado["encabezado_total"], "num": True}]
     extras_col = [{"etiqueta": e["encabezado"], "num": True} for e in extras]
-    columnas += (total_col + extras_col) if con_categorias else (extras_col + total_col)
+    columnas += ((extras_col + total_col + cats_col) if conteos_primero
+                 else (cats_col + total_col + extras_col))
 
     def fila(rotulo, estrato):
-        if estrato is None:
-            cabezas = [ctx.hechos.total_estratos_provincia(anio, "cabezas")
-                       if c == ctx.agregado else
-                       sum(ctx.hechos.total_estrato(anio, e, c) or 0.0 for e in estratos)
-                       for c in cats + [ctx.agregado]]
+        if estrato is None and geo:
+            total = ctx.hechos.total_estratos_depto(anio, geo, "cabezas")
+            por_cat = [sum(ctx.hechos.total_estrato(anio, e, c, "cabezas", geo) or 0.0
+                           for e in estratos) for c in cats]
+            conteos = [ctx.hechos.total_estratos_depto(anio, geo, x["medida"]) for x in extras]
+        elif estrato is None:
+            total = ctx.hechos.total_estratos_provincia(anio, "cabezas")
+            por_cat = [sum(ctx.hechos.total_estrato(anio, e, c) or 0.0 for e in estratos)
+                       for c in cats]
             conteos = [ctx.hechos.total_estratos_provincia(anio, x["medida"]) for x in extras]
         else:
-            cabezas = [ctx.hechos.total_estrato(anio, estrato, c) for c in cats + [ctx.agregado]]
-            conteos = [ctx.hechos.total_estrato(anio, estrato, ctx.agregado, x["medida"])
+            total = ctx.hechos.total_estrato(anio, estrato, ctx.agregado, "cabezas", geo)
+            por_cat = [ctx.hechos.total_estrato(anio, estrato, c, "cabezas", geo) for c in cats]
+            conteos = [ctx.hechos.total_estrato(anio, estrato, ctx.agregado, x["medida"], geo)
                        for x in extras]
-        valores = (cabezas + conteos) if con_categorias else (conteos + cabezas)
+        valores = ((conteos + [total] + por_cat) if conteos_primero
+                   else (por_cat + [total] + conteos))
         return [rotulo] + [_celda_cab(ctx, v) for v in valores]
 
-    filas = [{"celdas": fila(declarado["rotulo_total"], None), "actual": True}]
-    filas += [{"celdas": fila(e, e)} for e in estratos]
+    filas = [] if declarado.get("sin_total") else [
+        {"celdas": fila(declarado["rotulo_total"] if not geo
+                        else "Total %s" % ctx.hechos.nombre[geo], None), "actual": True}]
+    filas += [{"celdas": fila(_rotulo_estrato(e), e)} for e in estratos]
     return {
         "titulo": titulo,
         "subtitulo": ctx.subtitulo_unidad("cabezas"),
@@ -7326,9 +7303,9 @@ def panel_stock_tabla_evolucion(ctx, spec, anio, pie, geo=None):
     El anio elegido en la barra queda marcado: el dato de la pantalla es ese.
     """
     declarado = spec["paneles"]["tabla-evolucion"]
-    cats = _cat_bovinas(ctx)
+    cats = _cats_del_panel(ctx, declarado, "serie")
     columnas = [{"etiqueta": declarado["encabezado_anio"], "num": False}]
-    columnas += [{"etiqueta": c, "num": True} for c in cats]
+    columnas += [{"etiqueta": _rotulo_cat(declarado, c), "num": True} for c in cats]
     columnas += [{"etiqueta": declarado["encabezado_total"], "num": True}]
     filas = []
     for a in ctx.anios:
@@ -7356,10 +7333,12 @@ def panel_stock_tabla_departamento_anios(ctx, spec, anio, pie):
     anios = [a for a in anios_depto if a >= desde]
     columnas = [{"etiqueta": declarado["encabezado_geo"], "num": False}]
     columnas += [{"etiqueta": str(a), "num": True} for a in anios]
-    filas = [{"celdas": [declarado["rotulo_total"]]
-                        + [_celda_cab(ctx, ctx.hechos.total_anual(a, ctx.agregado))
-                           for a in anios],
-              "actual": True}]
+    # `sin_total`: JC no pone la fila TOTAL PROV en esta matriz ("GanBov ST", "GanEqui"): el
+    # total por anio ya esta en la tabla de evolucion de al lado.
+    filas = [] if declarado.get("sin_total") else [
+        {"celdas": [declarado["rotulo_total"]]
+                   + [_celda_cab(ctx, ctx.hechos.total_anual(a, ctx.agregado)) for a in anios],
+         "actual": True}]
     for geo in sorted(ctx.hechos.deptos_con_stock(),
                       key=lambda g: pr.clave_alfabetica(ctx.hechos.nombre[g])):
         filas.append({"geo": geo,
@@ -7460,17 +7439,18 @@ def _porcion(ctx, nombre, valor, total, color, unidad):
             "pct": pr.fmt_pct(valor / total * 100, 1) if total else "S/D", "color": color}
 
 
-def panel_stock_anillo_departamentos(ctx, spec, anio, categoria, pie):
+def panel_stock_anillo_departamentos(ctx, spec, anio, pie):
     """Participacion por departamento en el stock: los N primeros y el "Resto".
 
     Es el anillo que JC pega al pie de la columna izquierda en las hojas de stock de cada
     especie ("Participación por departamento en el stock total año 2025"). Los N primeros
-    los decide el dato del anio y la categoria elegidos, de mayor a menor; cuantos son lo dice
+    los decide el dato del anio elegido (siempre el TOTAL), de mayor a menor; cuantos son lo dice
     el spec (`cuantos`), porque JC no muestra la misma cantidad en todas las especies.
     """
     declarado = spec["paneles"]["anillo-departamentos"]
     titulo = titulo_literal(declarado["titulo"], anio=str(anio))
     hechos = ctx.hechos
+    categoria = ctx.agregado
     valores = [(hechos.total_depto(anio, g, categoria), hechos.nombre[g]) for g in hechos.deptos]
     valores = sorted([(v, n) for v, n in valores if v],
                      key=lambda t: (-t[0], pr.clave_alfabetica(t[1])))
@@ -7495,10 +7475,20 @@ def panel_stock_anillo_departamentos(ctx, spec, anio, categoria, pie):
     }
 
 
-def _rotulo_estrato(texto):
-    """'2. Entre 6 y 15 equidos.' -> 'Entre 6 y 15 equidos': el numero ya da el orden."""
-    cuerpo = texto.split(".", 1)[1] if texto[:1].isdigit() and "." in texto else texto
-    return cuerpo.strip().rstrip(".").strip()
+def _rotulo_estrato(texto, con_numero=False):
+    """'2. Entre 6 y 15 equidos.' -> 'Entre 6 y 15', como los escribe JC en sus tablas y
+    anillos (13-oct-2026): sin el numero de orden (el orden ya lo da la fila), sin el nombre
+    de la especie al final y sin el punto. `con_numero` lo deja ("3. Entre 101 y 250"), que
+    es como JC los escribe en la tabla de bubalinos."""
+    numero = ""
+    cuerpo = texto
+    if texto[:1].isdigit() and "." in texto:
+        numero, cuerpo = texto.split(".", 1)
+    palabras = cuerpo.split()
+    while palabras and palabras[-1].strip(".").isalpha() and len(palabras) > 2:
+        palabras.pop()
+    limpio = " ".join(palabras).rstrip(".").strip()
+    return ("%s. %s" % (numero.strip(), limpio)) if con_numero and numero else limpio
 
 
 def panel_stock_anillo_estratos(ctx, spec, anio, id_panel, medida, unidad, pie):
@@ -7536,10 +7526,10 @@ def panel_stock_tabla_faena(ctx, spec, anio, pie):
     """Lo vendido para faena en el anio, por categoria: tn, precio promedio y VBP.
 
     Hoja "GanBuba ST" de JC ("Evolución de las categorías vendidas para faena - Tns, precio
-    promedio y VBP (*)"). El precio es el promedio PONDERADO POR LOS KILOS de cada linea de
-    venta y el VBP es kilos x precio sumado linea a linea (ver pipeline/comercializacion.py).
-    JC usa en su maqueta el promedio simple de las lineas, y por eso su precio no coincide
-    con este (las toneladas si, exactas): queda como pregunta en el backlog.
+    promedio y VBP (*)"). El precio es el PROMEDIO SIMPLE de las lineas de venta, que es la
+    cuenta de JC (decision del 13-oct-2026, backlog 85), y el VBP de cada categoria es sus tn
+    x 1.000 x ese precio (ver pipeline/comercializacion.py). Contra su maqueta da exacto:
+    novillito 2.518 $/kg y VBP total $ 3.581,2 millones.
     """
     declarado = spec["paneles"]["tabla-faena"]
     titulo = titulo_literal(declarado["titulo"], anio=str(anio))
@@ -7550,7 +7540,6 @@ def panel_stock_tabla_faena(ctx, spec, anio, pie):
         return panel_vacio(titulo, "No hay ventas para faena en el año elegido.")
     tn_total = sum(faena.tn(anio, c) for c in cats)
     vbp_total = sum(faena.vbp(anio, c) or 0.0 for c in cats)
-    kg_con_precio = sum(faena.anual[(anio, c)]["kg_con_precio"] for c in cats)
 
     def fila(rotulo, tn, precio, vbp):
         return [rotulo, pr.fmt_numero(tn, 0),
@@ -7559,13 +7548,17 @@ def panel_stock_tabla_faena(ctx, spec, anio, pie):
                 ("$ " + pr.fmt_numero(vbp / 1e6, 1)) if vbp is not None else "S/D",
                 pr.fmt_pct(vbp / vbp_total * 100, 2) if vbp is not None and vbp_total else "S/D"]
 
-    filas = [{"celdas": fila(declarado["rotulo_total"], tn_total,
-                             vbp_total / kg_con_precio if kg_con_precio else None, vbp_total),
+    # Como lo dibuja JC ("GanBuba ST", tabla de faena): arriba "Bubalinos TOTAL" con las
+    # toneladas solas, y el VBP total en un renglon propio al pie, debajo de su columna, con
+    # el 100%. El total no lleva precio: un promedio de promedios no es un precio.
+    filas = [{"celdas": [declarado["rotulo_total"], pr.fmt_numero(tn_total, 0), "", "", "", ""],
               "actual": True}]
     for c in cats:
         filas.append({"celdas": fila(declarado.get("prefijo_fila", "") + _sin_prefijo(c, prefijo),
                                      faena.tn(anio, c), faena.precio_promedio(anio, c),
                                      faena.vbp(anio, c))})
+    filas.append({"celdas": ["", "", "", "", "$ " + pr.fmt_numero(vbp_total / 1e6, 1),
+                             "100%"], "actual": True, "inicia_grupo": True})
     return {
         "titulo": titulo,
         "subtitulo": "En toneladas, pesos por kilo y millones de pesos corrientes",
@@ -7585,8 +7578,8 @@ def panel_stock_precios_faena(ctx, spec, id_panel, pie):
     """El precio mensual declarado en la venta a faena, una linea por categoria.
 
     Son los dos graficos de lineas al pie de la hoja de bubalinos ("Precio declarado venta a
-    faena - Novillo y Novillito - $/Kg en pie"). El precio de cada mes es el ponderado por los
-    kilos de las lineas de ese mes; un mes sin ventas de esa categoria queda como hueco.
+    faena - Novillo y Novillito - $/Kg en pie"). El precio de cada mes es el promedio simple
+    de las lineas de ese mes; un mes sin ventas de esa categoria queda como hueco.
     """
     declarado = spec["paneles"][id_panel]
     faena = ctx.faena
@@ -7669,27 +7662,39 @@ PANELES_DEPARTAMENTALES = {
 }
 
 
-def capa_departamental_stock(ctx, spec, anios, categorias, con_categoria, pie):
+# Los que cambian con el departamento Y dependen del anio elegido: van en cada combinacion de
+# la capa, no en `comunes`. Hoy la tabla de estratos de equinos (JC, "GanEqui" E184: "Datos de
+# stocks y UP por categorías" del departamento: sus UP solo estan en la base por estrato).
+PANELES_DEPARTAMENTALES_POR_ANIO = {
+    "tabla-estratos": panel_stock_tabla_estratos,
+}
+
+
+def capa_departamental_stock(ctx, spec, anios, pie):
     """Los mismos cuadros con los datos de UN departamento, un archivo por departamento.
 
     Mismo mecanismo que agricultura (`capa_departamental_cultivos`): el navegador baja el
     departamento que se clickeo y lo superpone sobre el combo provincial. Solo viaja lo que
-    cambia: la banda de KPIs y los cuadros de `PANELES_DEPARTAMENTALES` que el spec use.
+    cambia: la banda de KPIs y los cuadros de `PANELES_DEPARTAMENTALES` que el spec use. La
+    clave del combo es solo el anio, igual que en la capa provincial.
     """
     ids = [p["id"] for p in spec["paneles"]["orden"] if p["id"] in PANELES_DEPARTAMENTALES]
+    por_anio = [p["id"] for p in spec["paneles"]["orden"]
+                if p["id"] in PANELES_DEPARTAMENTALES_POR_ANIO
+                and (spec["paneles"].get(p["id"]) or {}).get("cambia_con_departamento")]
     capa = {}
     for geo in ctx.hechos.deptos_con_stock():
         combos, claves = {}, []
         for anio in anios:
-            for categoria in categorias:
-                clave = "|".join([str(anio), categoria]) if con_categoria else str(anio)
-                combos[clave] = {"kpis": indicadores_stock(ctx, spec, anio, categoria, geo),
-                                 "paneles": {}}
-                if ctx.hechos.total_depto(anio, geo, categoria):
-                    claves.append(clave)
+            clave = str(anio)
+            combos[clave] = {"kpis": indicadores_stock(ctx, spec, anio, geo),
+                             "paneles": {i: PANELES_DEPARTAMENTALES_POR_ANIO[i](
+                                 ctx, spec, anio, pie, geo) for i in por_anio}}
+            if ctx.hechos.total_depto(anio, geo, ctx.agregado):
+                claves.append(clave)
         # Los cuadros de evolucion son la serie ENTERA del departamento: no dependen del anio
-        # ni de la categoria elegidos, asi que van una sola vez (`comunes`) y no repetidos en
-        # las 140 combinaciones de bovinos (el archivo pasaba de 1,3 MB por departamento).
+        # elegido, asi que van una sola vez (`comunes`) y no repetidos en cada combinacion
+        # (con el viejo filtro de categoria eran 140 en bovinos y 1,3 MB por departamento).
         # Por eso la tabla de evolucion departamental no marca el anio elegido.
         comunes = {i: PANELES_DEPARTAMENTALES[i](ctx, spec, None, pie, geo) for i in ids}
         capa[geo] = {"nombre": ctx.hechos.nombre[geo], "combos": combos, "comunes": comunes,
@@ -7725,41 +7730,138 @@ def panel_cifras(ctx, spec, id_panel):
     transcribieron del tablero de control de SENASA que JC pega en su maqueta y viven en el
     spec, que es configuracion y no codigo. No se actualizan con los Excels: el dia que llegue
     la base, este cuadro pasa a leerla y las cifras salen del spec.
+
+    La faena equina de "GanEqui" (la usuaria, 13-oct-2026: "no quiero que sean imagenes,
+    hardcodealos") usa las dos mitades por separado: un cuadro con tarjetas y sin serie, y otro
+    con la serie y sin tarjetas. La serie puede ser UNA (`serie`) o VARIAS (`series`, una linea
+    por frigorifico). Un punto que SENASA dibuja sin numero se lee del grafico y se declara en
+    `aproximados` (indices): su texto sale con "≈" y la nota del cuadro lo explica.
     """
     declarado = spec["paneles"][id_panel]
-    serie = declarado["serie"]
-    puntos = [float(v) if v is not None else None for v in serie["valores"]]
-    marcas = pr.marcas_eje(0.0, max(v for v in puntos if v is not None))
-    color = ctx.colores.solido(serie.get("medida", "cabezas"))
-    return {
+    cifras = [{"etiqueta": c["etiqueta"],
+               "valor": (pr.fmt_numero(c["valor"], c.get("decimales", 0))
+                         + c.get("sufijo", ""))}
+              for c in declarado.get("cifras") or []]
+    salida = {
         "titulo": declarado["titulo"],
         "subtitulo": declarado.get("subtitulo", ""),
         "pie": declarado["fuente"],
         "nota": limpiar(declarado.get("nota") or ""),
-        "cifras": [{"etiqueta": c["etiqueta"],
-                    "valor": pr.fmt_numero(c["valor"], c.get("decimales", 0))}
-                   for c in declarado["cifras"]],
-        "subtitulo_serie": serie.get("titulo", ""),
-        "x": serie["rotulos"],
-        "etiquetas": serie.get("etiquetas") or serie["rotulos"],
-        "series": [{"nombre": serie["nombre"], "color": color, "apilado": False,
-                    "puntos": puntos,
-                    "textos": [("%s %s" % (pr.fmt_numero(v, 0), serie.get("unidad", "")))
-                               .strip() if v is not None else "S/D" for v in puntos]}],
+        "cifras": cifras,
+    }
+    series_decl = declarado.get("series") or ([declarado["serie"]] if declarado.get("serie")
+                                              else [])
+    if not series_decl:
+        return salida
+    comun = series_decl[0]
+    if len(series_decl) == 1:
+        colores = {comun["nombre"]: ctx.colores.solido(comun.get("medida", "cabezas"))}
+    else:
+        colores = ctx.colores.por_categoria([s["nombre"] for s in series_decl],
+                                            respetar_orden=True)
+    series = []
+    for s in series_decl:
+        puntos = [float(v) if v is not None else None for v in s["valores"]]
+        aproximados = set(s.get("aproximados") or [])
+        unidad = s.get("unidad", comun.get("unidad", ""))
+        textos = []
+        for i, v in enumerate(puntos):
+            if v is None:
+                textos.append("S/D")
+                continue
+            texto_v = ("%s %s" % (pr.fmt_numero(v, 0), unidad)).strip()
+            textos.append(("≈ " + texto_v + " (leído del gráfico)") if i in aproximados
+                          else texto_v)
+        series.append({"nombre": s["nombre"], "color": colores[s["nombre"]], "apilado": False,
+                       "puntos": puntos, "textos": textos})
+    maximo = max(v for s in series for v in s["puntos"] if v is not None)
+    marcas = pr.marcas_eje(0.0, maximo)
+    salida.update({
+        "subtitulo_serie": declarado.get("titulo_serie", comun.get("titulo", "")),
+        "x": comun["rotulos"],
+        "etiquetas": comun.get("etiquetas") or comun["rotulos"],
+        "series": series,
         "eje": {"min": marcas["min"], "max": marcas["max"], "paso": marcas["paso"],
                 "etiquetas": {clave_js(x): pr.fmt_numero(x, 0) for x in marcas["marcas"]},
-                "nombre": serie.get("eje", "")},
-    }
+                "nombre": comun.get("eje", "")},
+    })
+    return salida
+
+
+def panel_anillo_fijo(ctx, spec, id_panel):
+    """Un ANILLO escrito en el spec (`anillo-fijo-*`): porciones que no salen de ninguna base.
+
+    Es la torta de categorias de la faena equina que JC pega de SENASA en "GanEqui" (la
+    usuaria, 13-oct-2026: "no quiero que sean imagenes"). SENASA la publica SIN numeros, solo
+    con los nombres: las proporciones se midieron sobre el dibujo (el angulo de cada porcion,
+    con el borde en el medio del separador blanco) y van marcadas como aproximadas
+    (`aproximado: true`), con el "≈" en cada porcentaje y la nota del cuadro. El dia que haya
+    una base de faena equina, este cuadro pasa a leerla."""
+    declarado = spec["paneles"][id_panel]
+    partes = [(p["nombre"], float(p["valor"])) for p in declarado["porciones"]]
+    total = sum(v for _, v in partes)
+    aproximado = bool(declarado.get("aproximado"))
+    colores = ctx.colores.por_categoria([n for n, _ in partes], respetar_orden=True)
+    porciones = []
+    for nombre, valor in partes:
+        pct = pr.fmt_pct(valor / total * 100, 1)
+        porciones.append({"n": nombre, "v": valor,
+                          "t": ("≈ %s (proporción leída del gráfico)" % pct) if aproximado
+                          else pct,
+                          "pct": ("≈ " + pct) if aproximado else pct,
+                          "color": colores[nombre]})
+    return {"titulo": declarado["titulo"], "subtitulo": declarado.get("subtitulo", ""),
+            "pie": declarado["fuente"], "nota": limpiar(declarado.get("nota") or ""),
+            "porciones": porciones}
 
 
 def panel_texto(spec, id_panel):
-    """Un cuadro de TEXTO de JC (la metodologia de la hoja "GanBov IN"): titulo, parrafos y
-    la cita de donde sale. Literal del spec; el build no compone nada."""
+    """Un cuadro de TEXTO de JC (la metodologia de la hoja "GanBov IN", las definiciones de
+    ESTRATO / ESTABLECIMIENTO / UP de las hojas de Estratos): titulo, parrafos y la cita de
+    donde sale. Literal del spec; el build no compone nada.
+
+    Cada parrafo puede traer `items` (las vinetas ">" que JC escribe en su metodologia) y
+    `aparte: true` (el titulo en su propio renglon, como en su cuadro de texto)."""
     declarado = spec["paneles"][id_panel]
-    return {"titulo": declarado["titulo"], "subtitulo": declarado.get("subtitulo", ""),
-            "pie": declarado["fuente"],
-            "parrafos": [{"titulo": p.get("titulo", ""), "texto": limpiar(p["texto"])}
-                         for p in declarado["parrafos"]]}
+    parrafos = []
+    for p in declarado["parrafos"]:
+        parrafo = {"titulo": p.get("titulo", ""), "texto": limpiar(p.get("texto") or "")}
+        if p.get("items"):
+            parrafo["items"] = [limpiar(i) for i in p["items"]]
+        if p.get("aparte"):
+            parrafo["aparte"] = True
+        parrafos.append(parrafo)
+    return {"titulo": declarado.get("titulo", ""), "subtitulo": declarado.get("subtitulo", ""),
+            "pie": declarado["fuente"], "parrafos": parrafos}
+
+
+def panel_tabla_fija(spec, id_panel):
+    """Una TABLA escrita en el spec (`fija-*`): texto de JC que en su hoja vive en celdas y no
+    sale de ninguna base. Es el caso de las equivalencias entre categorias bovinas y bubalinas
+    y de la clasificacion por kilos vivos de la Resolucion 470/2012 ("GanBuba ST", celdas
+    BU64:BW71 y BW78:BX118). Se transcribe literal; no se actualiza con los Excels."""
+    declarado = spec["paneles"][id_panel]
+
+    def tabla(decl):
+        filas = []
+        for fila in decl["filas"]:
+            if isinstance(fila, dict):
+                filas.append({"celdas": [limpiar(str(c)) for c in fila["celdas"]],
+                              **({"actual": True} if fila.get("resaltada") else {})})
+            else:
+                filas.append({"celdas": [limpiar(str(c)) for c in fila]})
+        return {"columnas": [{"etiqueta": c, "num": False} for c in decl["columnas"]],
+                "filas": filas}
+
+    salida = {"titulo": declarado.get("titulo", ""), "subtitulo": declarado.get("subtitulo", ""),
+              "pie": declarado["fuente"], "nota": limpiar(declarado.get("nota") or "")}
+    # `tablas`: varias tablas en el mismo cuadro, una debajo de la otra, cada una con su
+    # titulo (las equivalencias y la clasificacion por kilos de bubalinos).
+    if declarado.get("tablas"):
+        salida["bloques"] = [dict(tabla(t), titulo=t["titulo"]) for t in declarado["tablas"]]
+    else:
+        salida.update(tabla(declarado))
+    return salida
 
 
 def _cociente(ctx, anio, geo, numerador, denominador):
@@ -7808,35 +7910,35 @@ def imagenes_de_paneles(tableros):
 # Los cuadros que sabe armar el tablero de stock, por id de panel. Cada spec elige cuales van
 # (y en que lugar) en `paneles.orden`: bovinos lleva seis, equinos suma el de estratos, etc.
 PANELES_STOCK = {
-    "mapa": lambda ctx, spec, anio, cat, pie: panel_mapa_stock(ctx, spec, anio, cat, pie),
-    "tabla-departamentos": lambda ctx, spec, anio, cat, pie:
+    "mapa": lambda ctx, spec, anio, pie: panel_mapa_stock(ctx, spec, anio, pie),
+    "tabla-departamentos": lambda ctx, spec, anio, pie:
         panel_stock_tabla_departamentos(ctx, spec, anio, pie),
-    "evolucion-total": lambda ctx, spec, anio, cat, pie:
+    "evolucion-total": lambda ctx, spec, anio, pie:
         panel_stock_barras_total(ctx, spec, anio, pie),
-    "tabla-evolucion": lambda ctx, spec, anio, cat, pie:
+    "tabla-evolucion": lambda ctx, spec, anio, pie:
         panel_stock_tabla_evolucion(ctx, spec, anio, pie),
-    "evolucion-categorias": lambda ctx, spec, anio, cat, pie:
+    "evolucion-categorias": lambda ctx, spec, anio, pie:
         panel_stock_barras_categorias(ctx, spec, anio, pie),
-    "tabla-departamento-anios": lambda ctx, spec, anio, cat, pie:
+    "tabla-departamento-anios": lambda ctx, spec, anio, pie:
         panel_stock_tabla_departamento_anios(ctx, spec, anio, pie),
-    "tabla-estratos": lambda ctx, spec, anio, cat, pie:
+    "tabla-estratos": lambda ctx, spec, anio, pie:
         panel_stock_tabla_estratos(ctx, spec, anio, pie),
-    "tabla-departamento-estratos": lambda ctx, spec, anio, cat, pie:
+    "tabla-departamento-estratos": lambda ctx, spec, anio, pie:
         panel_stock_tabla_departamento_estratos(ctx, spec, anio, pie),
     "anillo-departamentos": panel_stock_anillo_departamentos,
-    "evolucion-vs-otra": lambda ctx, spec, anio, cat, pie:
+    "evolucion-vs-otra": lambda ctx, spec, anio, pie:
         panel_stock_contra_otra_base(ctx, spec, anio, pie),
-    "tabla-relaciones": lambda ctx, spec, anio, cat, pie:
+    "tabla-relaciones": lambda ctx, spec, anio, pie:
         panel_stock_relaciones(ctx, spec, anio, pie),
-    "anillo-estratos": lambda ctx, spec, anio, cat, pie: panel_stock_anillo_estratos(
+    "anillo-estratos": lambda ctx, spec, anio, pie: panel_stock_anillo_estratos(
         ctx, spec, anio, "anillo-estratos", "cabezas", "cabezas", pie),
-    "anillo-estratos-up": lambda ctx, spec, anio, cat, pie: panel_stock_anillo_estratos(
+    "anillo-estratos-up": lambda ctx, spec, anio, pie: panel_stock_anillo_estratos(
         ctx, spec, anio, "anillo-estratos-up", "renspas", "UP", pie),
-    "tabla-faena": lambda ctx, spec, anio, cat, pie:
+    "tabla-faena": lambda ctx, spec, anio, pie:
         panel_stock_tabla_faena(ctx, spec, anio, pie),
-    "precios-faena-1": lambda ctx, spec, anio, cat, pie:
+    "precios-faena-1": lambda ctx, spec, anio, pie:
         panel_stock_precios_faena(ctx, spec, "precios-faena-1", pie),
-    "precios-faena-2": lambda ctx, spec, anio, cat, pie:
+    "precios-faena-2": lambda ctx, spec, anio, pie:
         panel_stock_precios_faena(ctx, spec, "precios-faena-2", pie),
 }
 
@@ -7844,40 +7946,71 @@ PANELES_STOCK = {
 def construir_tablero_stock(ctx, spec):
     """El tablero de stock de una especie (bovinos y las otras de la maqueta de ganaderia).
 
-    El filtro de categoria es optativo: en bubalinos JC no lo pone ("NO se selecciona
-    departamento, solo se visualiza la escala") y ahi la clave del combo es solo el anio.
+    El unico filtro es el anio (y el departamento, que se elige con un clic en el mapa): la
+    clave del combo es solo el anio. Un stock NUNCA se analiza separando categorias (JC,
+    13-oct-2026: "JAMAS SE PUEDE ANALIZAR UN STOCK SEPARANDO LAS CATEGORIAS"): las categorias
+    se ven solo juntas, en las tablas completas y en las barras apiladas.
     """
-    con_categoria = any(f["id"] == "categoria" for f in spec.get("filtros") or [])
+    verificar_stock_sin_categoria(spec)
     anios = anios_de_la_pagina(ctx, spec)
     if not anios:
         raise pr.ErrorDeProtocolo("El tablero %s no tiene ningun anio con datos para su periodo"
                                   % spec["slug_vista"])
-    filtros = [s_filtro_anio(ctx, anios)] + (
-        [s_filtro_categoria(ctx, spec)] if con_categoria else [])
+    filtros = [s_filtro_anio(ctx, anios)]
     tablero = tablero_base(ctx, spec, filtros)
     pie = ctx.pie(spec)
     ids = [p["id"] for p in spec["paneles"]["orden"]]
     desconocidos = [i for i in ids if i not in PANELES_STOCK
-                    and not i.startswith(("imagen-", "texto-", "cifras-"))]
+                    and not i.startswith(("imagen-", "texto-", "cifras-", "fija-",
+                                          "anillo-fijo-"))]
     if desconocidos:
         raise pr.ErrorDeProtocolo("El tablero %s pide paneles que el stock no sabe armar: %s"
                                   % (spec["slug_vista"], desconocidos))
     imagenes = {i: panel_imagen(spec, i) for i in ids if i.startswith("imagen-")}
     imagenes.update({i: panel_texto(spec, i) for i in ids if i.startswith("texto-")})
     imagenes.update({i: panel_cifras(ctx, spec, i) for i in ids if i.startswith("cifras-")})
-    categorias = ([ctx.agregado] + ctx.categorias) if con_categoria else [ctx.agregado]
+    imagenes.update({i: panel_tabla_fija(spec, i) for i in ids if i.startswith("fija-")})
+    imagenes.update({i: panel_anillo_fijo(ctx, spec, i) for i in ids
+                     if i.startswith("anillo-fijo-")})
     for anio in anios:
-        for categoria in categorias:
-            clave = "|".join([str(anio), categoria]) if con_categoria else str(anio)
-            tablero["combos"][clave] = {
-                "kpis": indicadores_stock(ctx, spec, anio, categoria),
-                "paneles": {i: imagenes[i] if i in imagenes
-                            else PANELES_STOCK[i](ctx, spec, anio, categoria, pie) for i in ids},
-            }
+        tablero["combos"][str(anio)] = {
+            "kpis": indicadores_stock(ctx, spec, anio),
+            "paneles": {i: imagenes[i] if i in imagenes
+                        else PANELES_STOCK[i](ctx, spec, anio, pie) for i in ids},
+        }
     if (spec["paneles"].get("mapa") or {}).get("click_departamento") == EN_LA_MISMA_VISTA:
-        tablero["capa_departamental"] = capa_departamental_stock(
-            ctx, spec, anios, categorias, con_categoria, pie)
+        tablero["capa_departamental"] = capa_departamental_stock(ctx, spec, anios, pie)
     return tablero
+
+
+def verificar_stock_sin_categoria(spec):
+    """Un tablero de stock (o de vacunacion) no puede declarar un filtro de categoria ni una
+    comparacion: corta la corrida, como cualquier layout mal declarado.
+
+    JC, 13-oct-2026: "JAMAS SE PUEDE ANALIZAR UN STOCK SEPARANDO LAS CATEGORIAS". El unico
+    selector de sus hojas de ganaderia es el departamento. Las categorias se ven solo juntas
+    (tabla completa, barras apiladas); los KPIs o cuadros que JC dibuja el mismo con una
+    categoria (vacunaciones, indicadores) se declaran con la categoria FIJA, no con un filtro.
+    """
+    slug = spec.get("slug_vista") or spec.get("id")
+    filtros = [f.get("id") for f in spec.get("filtros") or []]
+    if "categoria" in filtros:
+        raise pr.ErrorDeProtocolo(
+            "El tablero de stock %s declara un filtro `categoria`. Un stock nunca se analiza "
+            "separando categorias (JC, 13-oct-2026): el unico selector es el departamento "
+            "(clic en el mapa) y el anio. Ver tableros/CLAUDE.md." % slug)
+    otros = [f for f in filtros if f != "anio"]
+    if otros:
+        raise pr.ErrorDeProtocolo(
+            "El tablero de stock %s declara filtros que el motor de stock no sabe atender: %s. "
+            "Solo lleva `anio`." % (slug, otros))
+    comparan = sorted(i for i, d in (spec.get("paneles") or {}).items()
+                      if isinstance(d, dict) and d.get("comparacion"))
+    if comparan or spec.get("cruzar_datos"):
+        raise pr.ErrorDeProtocolo(
+            "El tablero de stock %s declara una comparacion (%s). En stock no se comparan "
+            "categorias ni se cruzan datos en el zoom (JC, 13-oct-2026)."
+            % (slug, ", ".join(comparan) or "cruzar_datos"))
 
 
 # ==========================================================================
@@ -7898,6 +8031,13 @@ RECORTES_MOV = [("totales_sin_introduccion", "Movimientos totales (sin introducc
                 ("introduccion", "Movimientos cabezas entradas a la provincia (introducción)")]
 
 
+def _recortes_con_rotulo(declarado):
+    """Los cuatro universos con el rotulo de su franja: el que escribe JC en su tabla
+    (`rotulos_franja` en el spec) o el generico."""
+    propios = declarado.get("rotulos_franja") or {}
+    return [(r, propios.get(r, t)) for r, t in RECORTES_MOV]
+
+
 class ContextoMovimientos(ContextoStock):
     """El contexto de los tableros de movimientos (`_comunes-movimientos-<especie>.yaml`)."""
 
@@ -7912,7 +8052,12 @@ class ContextoMovimientos(ContextoStock):
         cat = self.comunes["categorias"]
         self.agregado = "Total"
         presentes = {k[2] for k in self.hechos.anual if k[3] == "cabezas"}
-        self.categorias = [c for c in cat["orden"] if c in presentes]
+        # `juntar`: una columna de JC que en la base son dos categorias ("Burros/asnos" de la
+        # hoja "GanEquiDTE": la base 230 los separa). Se suman al leer, nunca en el mart.
+        self.juntar = cat.get("juntar") or {}
+        self.categorias = [c for c in cat["orden"]
+                           if c in presentes or any(p in presentes
+                                                    for p in self.juntar.get(c, []))]
         self.etiqueta_categoria = cat.get("etiquetas") or {}
         self.color_categoria = self.colores.por_categoria(self.categorias, respetar_orden=True)
         ventana = self.comunes["tiempo"]["ventana_anios"]
@@ -7936,10 +8081,20 @@ def _mov(ctx, recorte, anio, categoria, medida, geo=None):
     """Un universo de movimientos en la provincia o en un departamento. La introduccion de un
     departamento es la que ENTRO a el; los otros tres, lo que SALIO de el."""
     h = ctx.hechos
+    partes = getattr(ctx, "juntar", {}).get(categoria)
+    if partes:
+        valores = [_mov(ctx, recorte, anio, p, medida, geo) for p in partes]
+        return sum(v for v in valores if v is not None) if any(
+            v is not None for v in valores) else None
     if not geo:
         valor = h.total_anual(recorte, anio, categoria, medida)
     elif recorte == "introduccion":
         valor = h.total_depto_destino(anio, geo, categoria, medida)
+        # Un departamento al que no entro nada desde otra provincia tiene introduccion CERO,
+        # no "sin dato": la base trae el departamento de destino de todas las entradas
+        # (13-oct-2026; antes salia S/D en porcinos con Juan F. Ibarra elegido).
+        if valor is None and h.total_anual(recorte, anio, categoria, medida) is not None:
+            valor = 0.0
     else:
         valor = h.total_depto(recorte, anio, geo, categoria, medida)
     # En una base con la categoria LONG (porcinos), que una categoria no tenga fila quiere
@@ -7963,6 +8118,26 @@ def indicadores_movimientos(ctx, spec, anio, geo=None):
     salida = []
     for decl in spec["indicadores"]:
         medida = decl.get("medida", "cabezas")
+        if decl.get("provincia_lider"):
+            # La provincia que MAS recibe (extraccion) o MAS manda (introduccion), con su
+            # volumen: "Extracción a Santa Fe 157.595 cab" / "Introducción de Chaco 123.836
+            # cab" de la hoja "GanBov DTE". Comparacion entre provincias publicada por
+            # decision del 13-oct-2026 (Francisco OK). Es un ranking: sigue provincial aunque
+            # haya un departamento elegido, como los KPIs que nombran un departamento.
+            recorte = decl["recorte"]
+            candidatos = [(ctx.hechos.total_contraparte(recorte, anio, n, ctx.agregado, medida),
+                           n) for n in ctx.hechos.contrapartes.get(recorte, [])]
+            candidatos = sorted([(v, n) for v, n in candidatos if v],
+                                key=lambda t: (-t[0], pr.clave_alfabetica(t[1])))
+            if not candidatos:
+                salida.append(indicador(decl["etiqueta"].replace(" {provincia}", ""), None,
+                                        decl.get("unidad", "cab"), medida, None, None))
+                continue
+            valor, nombre = candidatos[0]
+            salida.append(indicador(decl["etiqueta"].replace("{provincia}", nombre), valor,
+                                    decl.get("unidad", "cab"), medida, None, None,
+                                    formato=lambda v: (pr.fmt_numero(v, 0), "")))
+            continue
         valor = _mov(ctx, decl["recorte"], anio, ctx.agregado, medida, geo)
         anterior = _mov(ctx, decl["recorte"], previo, ctx.agregado, medida, geo) if previo else None
         salida.append(indicador(decl["etiqueta"], valor, decl.get("unidad", "cab"), medida,
@@ -8010,7 +8185,7 @@ def panel_mov_mapa(ctx, spec, anio, pie):
 def _columnas_mov(ctx, primera):
     return ([{"etiqueta": primera, "num": False},
              {"etiqueta": "DTE", "num": True},
-             {"etiqueta": "Total Cab", "num": True}]
+             {"etiqueta": ctx.comunes.get("encabezado_total", "Total Cab"), "num": True}]
             + [{"etiqueta": ctx.cat_texto(c), "num": True} for c in ctx.categorias])
 
 
@@ -8022,20 +8197,35 @@ def _celdas_mov(ctx, rotulo, recorte, anio, geo):
                for c in ctx.categorias])
 
 
+def _titulo_departamental(ctx, declarado, geo, anio, **valores):
+    """El titulo de un cuadro recortado a un departamento. Si el spec declara
+    `titulo_departamento` (sin "Totales provincia", que con un departamento elegido se
+    contradice: JC, "GanBov DTE"), es esa plantilla; si no, el de la provincia + " - Dto X"."""
+    if geo and declarado.get("titulo_departamento"):
+        return titulo_literal(declarado["titulo_departamento"],
+                              departamento=ctx.hechos.nombre[geo],
+                              anio=ctx.rotulo_anio(anio) if anio else "", **valores)
+    return _con_departamento(ctx, titulo_literal(declarado["titulo"], **valores), geo)
+
+
 def panel_mov_tabla_tipos(ctx, spec, anio, pie, geo=None):
-    """Movimientos por tipo, categoria y DTE, un bloque por universo y un anio por fila."""
+    """Movimientos por tipo, categoria y DTE, un bloque por universo y un anio por fila.
+
+    Con un departamento elegido muestra SOLO el anio elegido (JC, "GanBov DTE" E121: "Datos
+    de los movimientos igual que en la actual (SOLO 2025)")."""
     declarado = spec["paneles"]["tabla-tipos"]
+    anios = [anio] if geo else ctx.anios
     bloques = []
-    for recorte, titulo in RECORTES_MOV:
+    for recorte, titulo in _recortes_con_rotulo(declarado):
         if recorte not in ctx.recortes:
             continue
         filas = [{"celdas": _celdas_mov(ctx, ctx.rotulo_anio(a), recorte, a, geo),
-                  "actual": a == anio} for a in ctx.anios]
+                  "actual": a == anio and not geo} for a in anios]
         bloques.append({"titulo": titulo, "columnas": _columnas_mov(ctx, "Año"),
                         "filas": filas})
     return {
-        "titulo": _con_departamento(ctx, titulo_literal(
-            declarado["titulo"], desde=str(ctx.anios[0]), hasta=str(ctx.anios[-1])), geo),
+        "titulo": _titulo_departamental(ctx, declarado, geo, anio, desde=str(ctx.anios[0]),
+                                        hasta=str(ctx.anios[-1])),
         "subtitulo": "En cabezas y documentos (DTE)",
         "pie": pie,
         "nota": " ".join(t for t in (_nota_parcial(ctx), limpiar(declarado.get("nota") or ""))
@@ -8045,12 +8235,14 @@ def panel_mov_tabla_tipos(ctx, spec, anio, pie, geo=None):
 
 
 def panel_mov_tabla_balance(ctx, spec, anio, pie, geo=None):
-    """Extraccion menos introduccion, por categoria y anio cerrado. Negativo = entra mas."""
+    """Extraccion menos introduccion, por categoria y anio cerrado. Negativo = entra mas.
+    Con un departamento elegido, solo el anio elegido (como la tabla por tipo)."""
     declarado = spec["paneles"]["tabla-balance"]
-    columnas = ([{"etiqueta": "Año", "num": False}, {"etiqueta": "Total Cab", "num": True}]
+    columnas = ([{"etiqueta": "Año", "num": False},
+                 {"etiqueta": ctx.comunes.get("encabezado_total", "Total Cab"), "num": True}]
                 + [{"etiqueta": ctx.cat_texto(c), "num": True} for c in ctx.categorias])
     filas = []
-    for a in ctx.anios_cerrados:
+    for a in ([anio] if geo else ctx.anios_cerrados):
         celdas = [str(a)]
         for c in [ctx.agregado] + ctx.categorias:
             ext = _mov(ctx, "extraccion", a, c, "cabezas", geo)
@@ -8061,11 +8253,11 @@ def panel_mov_tabla_balance(ctx, spec, anio, pie, geo=None):
             # entraron. La inconsistencia queda anotada en el spec para que JC la resuelva.
             celdas.append("S/D" if ext is None and intr is None else
                           pr.fmt_numero((intr or 0.0) - (ext or 0.0), 0))
-        filas.append({"celdas": celdas, "actual": a == anio})
+        filas.append({"celdas": celdas, "actual": a == anio and not geo})
     return {
-        "titulo": _con_departamento(ctx, titulo_literal(
-            declarado["titulo"], desde=str(ctx.anios_cerrados[0]),
-            hasta=str(ctx.anios_cerrados[-1])), geo),
+        "titulo": _titulo_departamental(ctx, declarado, geo, anio,
+                                        desde=str(ctx.anios_cerrados[0]),
+                                        hasta=str(ctx.anios_cerrados[-1])),
         "subtitulo": ctx.subtitulo_unidad("cabezas"),
         "pie": pie,
         "nota": limpiar(declarado.get("nota") or ""),
@@ -8216,8 +8408,11 @@ def construir_tablero_movimientos(ctx, spec):
     if (spec["paneles"].get("mapa") or {}).get("click_departamento") == EN_LA_MISMA_VISTA:
         # Lo que cambia con un departamento: la banda de KPIs y el anillo por categoria (por
         # anio), y las dos tablas por tipo y de balance, que son toda la serie y van una vez.
+        # Desde el 13-oct-2026 las dos tablas van por anio y con SOLO el anio elegido (JC,
+        # "GanBov DTE" E121: "Datos de los movimientos igual que en la actual (SOLO 2025)").
+        # El anillo de departamentos de origen no cambia ni se muestra: JC lo excluye ("salvo
+        # la departamental", E122) y el spec lo marca `solo_provincia`.
         capa = {}
-        comunes_ids = [i for i in ("tabla-tipos", "tabla-balance") if i in ids]
         for geo in ctx.hechos.deptos_con_movimiento("totales_sin_introduccion"):
             combos, claves = {}, []
             for anio in ctx.anios:
@@ -8225,16 +8420,21 @@ def construir_tablero_movimientos(ctx, spec):
                 if "anillo-categorias" in ids:
                     paneles["anillo-categorias"] = panel_mov_anillo_categorias(
                         ctx, spec, anio, pie, geo)
+                if "tabla-tipos" in ids:
+                    paneles["tabla-tipos"] = panel_mov_tabla_tipos(ctx, spec, anio, pie, geo)
+                if "tabla-balance" in ids and anio in ctx.anios_cerrados:
+                    paneles["tabla-balance"] = panel_mov_tabla_balance(ctx, spec, anio, pie, geo)
+                elif "tabla-balance" in ids:
+                    paneles["tabla-balance"] = panel_vacio(
+                        spec["paneles"]["tabla-balance"]["titulo"].split(" - años")[0],
+                        "%d es un año parcial: el balance se calcula con años cerrados."
+                        % anio)
                 combos[str(anio)] = {"kpis": indicadores_movimientos(ctx, spec, anio, geo),
                                      "paneles": paneles}
                 if _mov(ctx, "totales_sin_introduccion", anio, ctx.agregado, "cabezas", geo):
                     claves.append(str(anio))
-            comunes = {}
-            for i in comunes_ids:
-                funcion = panel_mov_tabla_tipos if i == "tabla-tipos" else panel_mov_tabla_balance
-                comunes[i] = funcion(ctx, spec, None, pie, geo)
             capa[geo] = {"nombre": ctx.hechos.nombre[geo], "combos": combos,
-                         "comunes": comunes, "claves": sorted(claves)}
+                         "claves": sorted(claves)}
         tablero["capa_departamental"] = capa
     return tablero
 
@@ -8272,6 +8472,9 @@ class ContextoLeche(ContextoStock):
         self.anio_parcial = ultimo if len(self.leche.meses_del_anio(ultimo)) < 12 else None
         if self.anio_parcial:
             self.anios.append(self.anio_parcial)
+        # Ningun anio anterior a la ventana de JC: sus tablas arrancan en marzo de 2024 y un
+        # chip de 2023 mostraba KPIs de un anio que no esta en ningun cuadro de la pagina.
+        self.anios = [a for a in self.anios if a >= desde["anio"]]
         self.anio_defecto = [a for a in self.anios if a != self.anio_parcial][-1]
         self.relaciones = {}
 
@@ -8346,13 +8549,19 @@ def panel_leche_calidad(ctx, spec, pie):
     columnas = [{"etiqueta": e, "num": i > 0} for i, e in enumerate(declarado["encabezados"])]
     pct = lambda v: "S/D" if v is None else pr.fmt_numero(v, 2) + "%"
 
+    # JC, "GanBov LACT" E113: la tabla "Combina datos de la base 184 (columnas F y G, RCS y
+    # UFC) y de la 188 (columnas C e I de las hojas de Grasa y Proteína)". O sea que la grasa
+    # y la proteina de SANTIAGO salen de la 188, igual que las nacionales, y no de la 184:
+    # con la 188 dan exactas contra su maqueta (jun-25 3,93%, dic-25 3,66%). 13-oct-2026.
+    provincia = ctx.comunes["provincia"]
+
     def fila(a, m):
         return [MESES_CORTOS_LECHE[m - 1],
                 _num(leche.valor(a, m, "rcs"), 2),
                 _num(leche.valor(a, m, "ufc"), 2),
-                pct(leche.valor(a, m, "grasa")),
+                pct(leche.porcentaje("grasa", provincia, a, m)),
                 pct(leche.porcentaje("grasa", ctx.comunes["nacional"], a, m)),
-                pct(leche.valor(a, m, "proteina")),
+                pct(leche.porcentaje("proteína", provincia, a, m)),
                 pct(leche.porcentaje("proteína", ctx.comunes["nacional"], a, m))]
 
     # La 184 escribe "Lechería" con tilde y la 188 sin ella: es el mismo organismo y se cita
@@ -8402,7 +8611,7 @@ def panel_leche_mapa_tambos(ctx, spec, pie):
     """El mapa "Tambos": las cabezas en tambos por departamento (base 152)."""
     declarado = spec["paneles"]["mapa"]
     anio = ctx.tambos.anios_depto[-1]
-    panel = panel_mapa_stock(ctx, spec, anio, ctx.agregado,
+    panel = panel_mapa_stock(ctx, spec, anio,
                              pr.pie_de_fuente(ctx.protocolo, sorted(ctx.tambos.fuentes)))
     if not panel.get("vacio"):
         panel["total"] = "Total en tambos %d: %s cabezas" % (
@@ -8493,6 +8702,14 @@ class ContextoFaena(ContextoStock):
     def rotulo_anio(self, anio):
         return "%d*" % anio if anio == self.anio_parcial else str(anio)
 
+    def fila_de_vbp(self, categoria):
+        """La FILA de JC a la que pertenece una categoria para calcular el VBP: la propia
+        subcategoria, o el grupo entero si JC lo muestra en una sola fila (los bubalinos en
+        la tabla de bovinos: "Bubalinos TOTAL 1.557 | $ 2.358 | $ 3.671,4"). El VBP de cada
+        fila es sus tn x 1.000 x su precio promedio simple (E129 de "GanBov RAZ")."""
+        grupo = self.grupo(categoria)
+        return grupo if grupo in self.sin_detalle else categoria
+
     def pie(self, spec):
         return pr.pie_de_fuente(self.protocolo, sorted(self.faena.fuentes))
 
@@ -8514,13 +8731,14 @@ class ContextoFaena(ContextoStock):
 
 
 def _faena_total(ctx, anio, geo=None):
-    datos = ctx.faena.por("categoria", anio, geo=geo)
-    return (sum(v["tn"] for v in datos.values()), sum(v["valor"] for v in datos.values()),
-            sum(v["kg_con_precio"] for v in datos.values()))
+    """Toneladas y VBP del anio. El VBP es la suma de los de las FILAS de la tabla de JC (cada
+    subcategoria, y los bubalinos como una sola), que es lo que suma su fila TOTALES."""
+    datos = ctx.faena.por("categoria", anio, grupo_de=ctx.fila_de_vbp, geo=geo)
+    return (sum(v["tn"] for v in datos.values()), sum(v["valor"] for v in datos.values()))
 
 
 def indicadores_faena(ctx, spec, anio, geo=None):
-    tn, valor, _kg = _faena_total(ctx, anio, geo)
+    tn, valor = _faena_total(ctx, anio, geo)
     salida = []
     for decl in spec["indicadores"]:
         tipo = decl["indicador"]
@@ -8612,23 +8830,29 @@ def panel_faena_categorias(ctx, spec, anio, pie, geo=None):
         return panel_vacio(titulo, "No hay ventas a faena en la selección.")
     columnas = [{"etiqueta": e, "num": i > 0} for i, e in enumerate(declarado["encabezados"])]
     pct = lambda v, t: pr.fmt_pct(v / t * 100, 2) if t else "S/D"
+    # El grupo que JC muestra en UNA fila (bubalinos) lleva SU precio promedio simple, el de
+    # todas sus lineas juntas, y su VBP es tn x ese precio: "$ 2.358 | $ 3.671,4 | 100,00%".
+    por_fila = ctx.faena.por("categoria", anio, grupo_de=ctx.fila_de_vbp, geo=geo)
     filas = []
-    tn_total = vbp_total = kg_total = 0.0
+    tn_total = vbp_total = 0.0
     for grupo in ctx.orden_grupos:
         subs = sorted(c for c in datos if ctx.grupo(c) == grupo and datos[c]["tn"])
         if not subs:
             continue
         tn_g = sum(datos[c]["tn"] for c in subs)
-        vbp_g = sum(datos[c]["valor"] for c in subs)
-        kg_g = sum(datos[c]["kg_con_precio"] for c in subs)
-        tn_total, vbp_total, kg_total = tn_total + tn_g, vbp_total + vbp_g, kg_total + kg_g
         if grupo in ctx.sin_detalle:
+            acum = por_fila.get(grupo)
+            precio = ctx.faena.precio_de(acum)
+            vbp_g = acum["valor"] if acum else 0.0
+            tn_total, vbp_total = tn_total + tn_g, vbp_total + vbp_g
             filas.append({"celdas": ["%s TOTAL" % ctx.etiqueta_grupo[grupo],
                                      pr.fmt_numero(tn_g, 0), "",
-                                     "$ " + pr.fmt_numero(vbp_g / kg_g, 0) if kg_g else "S/D",
-                                     "$ " + pr.fmt_numero(vbp_g / 1e6, 1), ""],
+                                     "$ " + pr.fmt_numero(precio, 0) if precio else "S/D",
+                                     "$ " + pr.fmt_numero(vbp_g / 1e6, 1), "100,00%"],
                           "actual": True, "inicia_grupo": True})
             continue
+        vbp_g = sum(datos[c]["valor"] for c in subs)
+        tn_total, vbp_total = tn_total + tn_g, vbp_total + vbp_g
         filas.append({"celdas": ["%s TOTAL" % ctx.etiqueta_grupo[grupo],
                                  pr.fmt_numero(tn_g, 0), "", "", "", ""],
                       "actual": True, "inicia_grupo": True})
@@ -8640,8 +8864,9 @@ def panel_faena_categorias(ctx, spec, anio, pie, geo=None):
                                      "$ " + pr.fmt_numero(precio, 0) if precio else "S/D",
                                      "$ " + pr.fmt_numero(acum["valor"] / 1e6, 1),
                                      pct(acum["valor"], vbp_g)]})
-    filas.append({"celdas": [declarado["rotulo_total"], pr.fmt_numero(tn_total, 0), "",
-                             "$ " + pr.fmt_numero(vbp_total / kg_total, 0) if kg_total else "",
+    # La fila TOTALES de JC no lleva precio: un promedio de precios de categorias distintas
+    # no es el precio de nada.
+    filas.append({"celdas": [declarado["rotulo_total"], pr.fmt_numero(tn_total, 0), "", "",
                              "$ " + pr.fmt_numero(vbp_total / 1e6, 1), ""],
                   "actual": True, "inicia_grupo": True})
     return {"titulo": titulo, "subtitulo": declarado["subtitulo"], "pie": pie,
@@ -8652,16 +8877,20 @@ def _con_departamento_faena(ctx, titulo, geo):
     return "%s - Dto %s" % (titulo, ctx.geo.nombre[geo]) if geo else titulo
 
 
-def panel_faena_razas(ctx, spec, anio, pie, geo=None):
-    declarado = spec["paneles"]["tabla-razas"]
-    datos = ctx.faena.por("raza", anio, geo=geo)
+def panel_faena_razas(ctx, spec, anio, pie, geo=None, declarado=None):
+    """Toneladas por raza, de mayor a menor. `excluir` saca del cuadro lo que JC no pone en
+    su tabla de razas (los bubalinos, que en la base 89 vienen como una "raza" mas: JC los
+    muestra en la tabla de categorias y no aca)."""
+    declarado = declarado or spec["paneles"]["tabla-razas"]
+    excluir = set(declarado.get("excluir") or [])
+    datos = {r: v for r, v in ctx.faena.por("raza", anio, geo=geo).items() if r not in excluir}
     titulo = _con_departamento_faena(ctx, titulo_literal(declarado["titulo"],
                                                          anio=ctx.rotulo_anio(anio)), geo)
     total = sum(v["tn"] for v in datos.values())
     if not total:
         return panel_vacio(titulo, "No hay ventas a faena en la selección.")
-    filas = [{"celdas": [ctx.raza(r), pr.fmt_numero(v["tn"], 0),
-                         pr.fmt_pct(v["tn"] / total * 100, 1)]}
+    filas = [{"celdas": [(declarado.get("etiquetas") or {}).get(r, ctx.raza(r)),
+                         pr.fmt_numero(v["tn"], 0), pr.fmt_pct(v["tn"] / total * 100, 1)]}
              for r, v in sorted(datos.items(), key=lambda t: (-t[1]["tn"], str(t[0])))
              if v["tn"]]
     filas.append({"celdas": ["Total", pr.fmt_numero(total, 0), "100,0%"], "actual": True})
@@ -8672,8 +8901,27 @@ def panel_faena_razas(ctx, spec, anio, pie, geo=None):
             "filas": filas}
 
 
-def panel_faena_departamentos(ctx, spec, anio, pie):
-    declarado = spec["paneles"]["tabla-departamentos"]
+def panel_faena_razas_y_departamentos(ctx, spec, anio, pie, geo=None):
+    """UN cuadro con dos tablas lado a lado bajo un solo titulo, como en "GanBov RAZ": "Sgo.
+    del Estero - Distribución de las tn enviadas a faena por raza y departamento de origen. %
+    del total y peso promedio". A la izquierda las razas (con su nota XD / XZ) y a la derecha
+    los departamentos. Con un departamento elegido cambian las razas; la de departamentos
+    sigue provincial y remarca su fila."""
+    declarado = spec["paneles"]["tabla-razas-departamentos"]
+    razas = panel_faena_razas(ctx, spec, anio, pie, geo, declarado=declarado)
+    deptos = panel_faena_departamentos(ctx, spec, anio, pie, declarado=declarado)
+    titulo = titulo_literal(declarado["titulo"], anio=ctx.rotulo_anio(anio))
+    if razas.get("vacio") and deptos.get("vacio"):
+        return panel_vacio(titulo, "No hay ventas a faena en la selección.")
+    bloques = [{"columnas": t["columnas"], "filas": t["filas"]}
+               for t in (razas, deptos) if not t.get("vacio")]
+    return {"titulo": _con_departamento_faena(ctx, titulo, geo) if geo else titulo,
+            "subtitulo": "En toneladas, porcentaje del total y kilos por cabeza",
+            "pie": pie, "nota": limpiar(declarado.get("nota") or ""), "bloques": bloques}
+
+
+def panel_faena_departamentos(ctx, spec, anio, pie, declarado=None):
+    declarado = declarado or spec["paneles"]["tabla-departamentos"]
     datos = ctx.faena.por("geo", anio)
     total = sum(v["tn"] for v in datos.values())
     cabezas = sum(v["cabezas"] for v in datos.values())
@@ -8736,13 +8984,16 @@ def panel_faena_precios(ctx, spec, id_panel, pie):
     declarado = spec["paneles"][id_panel]
     desde = int(declarado["desde"])
     meses = [(a, m) for a, m in ctx.faena.meses if a >= desde and m]
-    colores = ctx.colores.por_categoria([ctx.raza(r) for r in declarado["razas"]],
+    # El nombre de cada serie: el de JC en ESTE grafico (`etiquetas`: "Yorkshire" en la
+    # leyenda de "GanPorcRAZ") o el de la raza.
+    nombre = lambda r: (declarado.get("etiquetas") or {}).get(r, ctx.raza(r))
+    colores = ctx.colores.por_categoria([nombre(r) for r in declarado["razas"]],
                                         respetar_orden=True)
     series, todos = [], []
     for raza in declarado["razas"]:
         puntos = [ctx.faena.precio_de(ctx.faena.por("raza", a, m).get(raza)) for a, m in meses]
         todos.extend(v for v in puntos if v is not None)
-        series.append({"nombre": ctx.raza(raza), "color": colores[ctx.raza(raza)],
+        series.append({"nombre": nombre(raza), "color": colores[nombre(raza)],
                        "apilado": False, "puntos": puntos,
                        "textos": [("$ %s por kilo" % pr.fmt_numero(v, 0)) if v is not None
                                   else "S/D" for v in puntos]})
@@ -8762,6 +9013,14 @@ def panel_faena_precios(ctx, spec, id_panel, pie):
     }
 
 
+def _orden_de_jc(declarado, clave, nombre):
+    """El orden de las filas de una tabla de JC: el que declara el spec (`orden`, con las
+    claves de la base) y, lo que no figure, despues y alfabetico."""
+    orden = declarado.get("orden") or []
+    return ((orden.index(clave), "") if clave in orden
+            else (len(orden), pr.clave_alfabetica(nombre)))
+
+
 def _anios_recientes(ctx, cuantos):
     """Los ultimos N anios, del mas reciente al mas viejo: como los ordena JC en sus tablas."""
     return list(reversed(ctx.anios))[:cuantos]
@@ -8778,7 +9037,7 @@ def panel_faena_por_anios(ctx, spec, id_panel, pie):
     totales = {a: sum(v[medida] for v in datos[a].values()) for a in anios}
     nombre = ((lambda g: ctx.geo.nombre.get(g, str(g))) if dimension == "geo" else ctx.raza)
     claves = sorted({k for a in anios for k, v in datos[a].items() if v[medida]},
-                    key=lambda k: pr.clave_alfabetica(nombre(k)))
+                    key=lambda k: _orden_de_jc(declarado, k, nombre(k)))
     unidad = "Cabezas" if medida == "cabezas" else "Tn"
     columnas = [{"etiqueta": declarado["encabezado"], "num": False}]
     for a in anios:
@@ -8813,7 +9072,7 @@ def panel_faena_peso_razas(ctx, spec, pie):
     excluir = set(declarado.get("excluir") or [])
     claves = sorted({k for a in anios for k, v in datos[a].items()
                      if v["cabezas"] and k not in excluir},
-                    key=lambda k: pr.clave_alfabetica(ctx.raza(k)))
+                    key=lambda k: _orden_de_jc(declarado, k, ctx.raza(k)))
     peso = lambda acum: (acum["tn"] * 1000 / acum["cabezas"]) if acum and acum["cabezas"] else None
 
     def celda(v):
@@ -8866,6 +9125,8 @@ def panel_faena_precios_categorias(ctx, spec, id_panel, pie):
 
 PANELES_FAENA = {
     "mapa": lambda ctx, spec, anio, pie: panel_faena_mapa(ctx, spec, anio, pie),
+    "tabla-razas-departamentos": lambda ctx, spec, anio, pie:
+        panel_faena_razas_y_departamentos(ctx, spec, anio, pie),
     "tabla-categorias": lambda ctx, spec, anio, pie: panel_faena_categorias(ctx, spec, anio, pie),
     "tabla-razas": lambda ctx, spec, anio, pie: panel_faena_razas(ctx, spec, anio, pie),
     "tabla-departamentos": panel_faena_departamentos,
@@ -8894,14 +9155,18 @@ PANELES_FAENA = {
 
 
 def construir_tablero_faena(ctx, spec):
+    # `solo_anio_defecto` (filtro del spec): la pagina es la foto del ultimo anio cerrado y no
+    # se elige otro. JC, "GanBov RAZ" E141: "NO COLOCAREMOS POSIBILIDAD DE FILTRAR NADA".
+    decl_anio = next((f for f in spec.get("filtros") or [] if f.get("id") == "anio"), {})
+    anios = [ctx.anio_defecto] if decl_anio.get("solo_anio_defecto") else ctx.anios
     filtro = {"id": "anio", "etiqueta": "Año", "zona": "periodo",
               "opciones": [{"v": str(a), "t": ctx.rotulo_anio(a), "corto": str(a)[2:]}
-                           for a in ctx.anios],
+                           for a in anios],
               "defecto": str(ctx.anio_defecto)}
     tablero = tablero_base(ctx, spec, [filtro])
     pie = ctx.pie(spec)
     ids = [p["id"] for p in spec["paneles"]["orden"]]
-    desconocidos = [i for i in ids if i not in PANELES_FAENA]
+    desconocidos = [i for i in ids if i not in PANELES_FAENA and not i.startswith("texto-")]
     if desconocidos:
         raise pr.ErrorDeProtocolo("El tablero %s pide paneles que faena no sabe armar: %s"
                                   % (spec["slug_vista"], desconocidos))
@@ -8910,7 +9175,8 @@ def construir_tablero_faena(ctx, spec):
     fijos = {i: PANELES_FAENA[i](ctx, spec, None, pie) for i in ids
              if i.startswith("precios-") or i.startswith("tabla-anios-")
              or i == "tabla-peso-razas"}
-    for anio in ctx.anios:
+    fijos.update({i: panel_texto(spec, i) for i in ids if i.startswith("texto-")})
+    for anio in anios:
         tablero["combos"][str(anio)] = {
             "kpis": indicadores_faena(ctx, spec, anio),
             "paneles": {i: fijos[i] if i in fijos else PANELES_FAENA[i](ctx, spec, anio, pie)
@@ -8919,11 +9185,12 @@ def construir_tablero_faena(ctx, spec):
     if (spec["paneles"].get("mapa") or {}).get("click_departamento") == EN_LA_MISMA_VISTA:
         # Con un departamento: los KPIs de volumen, las categorias, las razas y sus anillos.
         # El mapa, la tabla y el anillo por departamento y los precios siguen provinciales.
-        cambian = {"tabla-categorias": panel_faena_categorias, "tabla-razas": panel_faena_razas}
+        cambian = {"tabla-categorias": panel_faena_categorias, "tabla-razas": panel_faena_razas,
+                   "tabla-razas-departamentos": panel_faena_razas_y_departamentos}
         capa = {}
         for geo in sorted(g for g in ctx.faena.por("geo") if g in ctx.geo.nombre):
             combos, claves = {}, []
-            for anio in ctx.anios:
+            for anio in anios:
                 paneles = {i: f(ctx, spec, anio, pie, geo) for i, f in cambian.items()
                            if i in ids}
                 for i in ("anillo-categorias", "anillo-razas"):
@@ -9040,10 +9307,10 @@ def construir_tablero_regimenes(ctx, spec):
                     "{regimen}", r["etiqueta"]))}))
         paneles = dict(tablas)
         if "mapa" in ids:
-            paneles["mapa"] = panel_mapa_stock(sub, spec_r, sub.anio_defecto, ctx.agregado, pie)
+            paneles["mapa"] = panel_mapa_stock(sub, spec_r, sub.anio_defecto, pie)
         if "anillo-departamentos" in ids:
             paneles["anillo-departamentos"] = panel_stock_anillo_departamentos(
-                sub, spec_r, sub.anio_defecto, ctx.agregado, pie)
+                sub, spec_r, sub.anio_defecto, pie)
         tablero["combos"][r["id"]] = {"kpis": kpis, "paneles": paneles}
     return tablero
 
@@ -9220,6 +9487,114 @@ def construir_tablero_apicola(ctx, spec):
         paneles["mapa"] = panel_apicola_mapa(ctx, spec, medida, pie)
         tablero["combos"][medida] = {"kpis": kpis, "paneles": paneles}
     return tablero
+
+
+# ==========================================================================
+# Reglas de presentacion que declara el SPEC y valen para cualquier tablero (13-oct-2026,
+# revision de ganaderia contra la maqueta "Maqueta Ganad VF")
+# ==========================================================================
+def _paneles_del_tablero(tablero):
+    """Todos los paneles armados de un tablero: los de cada combo y los de su capa
+    departamental (por combo y los `comunes`). Es por donde pasan las reglas de abajo."""
+    for combo in tablero["combos"].values():
+        yield from combo.get("paneles", {}).items()
+    for dto in (tablero.get("capa_departamental") or {}).values():
+        for combo in dto.get("combos", {}).values():
+            yield from combo.get("paneles", {}).items()
+        yield from (dto.get("comunes") or {}).items()
+
+
+def _kpis_del_tablero(tablero):
+    for combo in tablero["combos"].values():
+        yield combo
+    for dto in (tablero.get("capa_departamental") or {}).values():
+        for combo in dto.get("combos", {}).values():
+            yield combo
+
+
+def aplicar_reglas_del_spec(ctx, tablero):
+    """Lo que el spec declara sobre la PRESENTACION y no sobre el dato:
+
+    - `kpis_sin_variacion: true`: las tarjetas no llevan "vs <anio anterior>". JC no la
+      dibuja en ninguna de sus 21 hojas de ganaderia ("sacar la variacion donde JC no la
+      dibuja", 13-oct-2026).
+    - `tarjeta_datos`: la primera tarjeta de la banda, "Datos 2025" con el icono de la
+      especie, como la dibuja JC a la izquierda de sus KPIs. El anio es el de la combinacion
+      (o el unico de la pagina, si no tiene selector de anio). Un `nombre` fijo la convierte
+      en el encabezado de la hoja ("Indicadores bovinos 2025", con `detalle`).
+    - `paneles.<id>.fuente`: la cita al pie de ESE cuadro, literal de la maqueta ("Fuente:
+      MAGyP - ARCA"). Pisa la que arma el build con el organismo del mart. Donde JC cita
+      distinto que la config de la base se sigue a JC y la duda va al backlog.
+    """
+    spec = tablero["spec"]
+    if spec.get("indicadores") == []:
+        # Una hoja sin banda de KPIs (la "GanBov IN" de JC): ningun combo lleva `kpis`, que es
+        # como `verificar_tablero` distingue "sin tarjetas" de "la tarjeta salio vacia".
+        for combo in _kpis_del_tablero(tablero):
+            combo.pop("kpis", None)
+    if spec.get("kpis_sin_variacion"):
+        for combo in _kpis_del_tablero(tablero):
+            for kpi in combo.get("kpis") or []:
+                kpi["var"] = None
+    tarjeta = spec.get("tarjeta_datos")
+    if tarjeta:
+        icono = ruta_icono("color", tarjeta["icono"]) if tarjeta.get("icono") else None
+        con_anio = any(f["id"] == "anio" for f in tablero["filtros"])
+        fijo = getattr(ctx, "anio_defecto", None)
+        rotulo = getattr(ctx, "rotulo_anio", None)
+        for clave, combo in tablero["combos"].items():
+            anio = clave.split("|")[0] if con_anio else str(fijo)
+            if rotulo and anio.isdigit():
+                anio = rotulo(int(anio))
+            plantilla = tarjeta.get("nombre") or "Datos {anio}"
+            combo["contexto"] = {"nombre": plantilla.replace("{anio}", anio),
+                                 "detalle": tarjeta.get("detalle", ""), "icono": icono}
+    fuentes = {i: d["fuente"] for i, d in (spec.get("paneles") or {}).items()
+               if isinstance(d, dict) and d.get("fuente")
+               and not i.startswith(("imagen-", "texto-", "cifras-"))}
+    if fuentes:
+        for id_panel, panel in _paneles_del_tablero(tablero):
+            if id_panel in fuentes and not panel.get("vacio"):
+                panel["pie"] = fuentes[id_panel]
+
+
+def nombres_de_presentacion(navegacion, rama):
+    """Los nombres de departamento que la RAMA publica distinto que dim_geo.
+
+    dim_geo canoniza "LA BANDA" como "BANDA" (por alias, y asi tiene que seguir: es lo que
+    hace cerrar los cruces entre bases). JC la escribe "La Banda" y la ordena entre Juan F.
+    Ibarra y Loreto; el sitio la publicaba "BANDA", en la B. Se resuelve en la presentacion:
+    `ramas.<rama>.nombres_departamento` en site/navegacion.yaml.
+    """
+    for r in navegacion.get("ramas") or []:
+        if r.get("id") == rama:
+            return r.get("nombres_departamento") or {}
+    return {}
+
+
+def renombrar_departamentos(ctx, nombres):
+    """Aplica los nombres de presentacion a los diccionarios de nombres del contexto (los de
+    sus hechos, su dim_geo, sus sub-contextos). Es idempotente y no toca el mart: los
+    cuadros ordenan por el nombre que muestran, asi que tambien cambia el orden."""
+    if not nombres:
+        return
+    vistos = set()
+
+    def tocar(objeto):
+        dic = getattr(objeto, "nombre", None)
+        if isinstance(dic, dict) and id(dic) not in vistos:
+            vistos.add(id(dic))
+            for geo, nombre in list(dic.items()):
+                if nombre in nombres:
+                    dic[geo] = nombres[nombre]
+
+    for atributo in ("hechos", "geo", "tambos", "comparado"):
+        objeto = getattr(ctx, atributo, None)
+        if objeto is not None:
+            tocar(objeto)
+    for sub in (getattr(ctx, "de", None) or {}).values() if isinstance(
+            getattr(ctx, "de", None), dict) else ():
+        tocar(sub.hechos)
 
 
 TABLEROS = {
@@ -9993,7 +10368,12 @@ def tablero_para_pagina(tablero):
             "ruta_datos": tablero["ruta_datos"],
             "disposicion": disposicion_de(tablero),
             "alto": alto_de(tablero),
-            "tarjeta_contexto": bool(tablero["spec"].get("tarjeta_contexto")),
+            "tarjeta_contexto": bool(tablero["spec"].get("tarjeta_contexto")
+                                     or tablero["spec"].get("tarjeta_datos")),
+            # Cuantas tarjetas de indicador lleva la banda: las que declara el spec. La hoja
+            # "GanBov IN" de JC no tiene ninguna (solo su encabezado con el icono).
+            **({"kpis": len(tablero["spec"]["indicadores"])}
+               if isinstance(tablero["spec"].get("indicadores"), list) else {}),
             # Lo declara el spec del tablero, NO el sitio: el mapa de pasturas y forrajes se
             # dibuja solo con un departamento elegido (hoja "Agri 3-b" de JC) y el de cultivos
             # extensivos esta siempre. Viaja como una clase del nodo del tablero.
@@ -10431,7 +10811,10 @@ def escribir_sitio(ctx, vistas, tableros):
         # tramo: el de la seccion pasa a ser el link de vuelta a la portada.
         nombre_pagina = tablero["spec"].get("pagina")
         miga = miga_de_tablero(seccion, tablero["spec"])
-        if nombre_pagina:
+        # Un `breadcrumb` declarado es LITERAL y completo (13-oct-2026: la miga de cada hoja
+        # de ganaderia es la celda N5 de JC, "Ganadería - Bovinos - Provincia - Movimientos
+        # hacienda (DTE)", con el nombre largo de la pagina al final): no se le inserta nada.
+        if nombre_pagina and not tablero["spec"].get("breadcrumb"):
             # El tramo de la pagina va justo DESPUES del de la seccion: "Bovinos - Movimientos
             # - Provincia - Dto X", no al final.
             tramo = {"texto": tablero["spec"].get("titulo_pagina") or tablero["titulo"],
@@ -10655,6 +11038,16 @@ def main(args=None):
         f.write(escribir_colores_hacienda(contextos[85]))
 
     specs = cargar_specs()
+    # Los nombres de departamento que cada RAMA publica distinto que dim_geo ("LA BANDA" en
+    # ganaderia): se aplican al contexto de cada spec de esa rama ANTES de armar nada, porque
+    # los cuadros ordenan por el nombre que muestran.
+    rama_de_seccion = {x["id"]: x["rama"] for x in ctx.navegacion["secciones"]}
+    for spec in specs.values():
+        rama = rama_de_seccion.get(spec.get("seccion"))
+        clave = spec.get("familia") or spec.get("base")
+        if rama and clave in contextos:
+            renombrar_departamentos(contextos[clave],
+                                    nombres_de_presentacion(ctx.navegacion, rama))
     vistas, tableros, omitidas, sin_unidad_en_subtitulo = [], [], [], {}
     for slug in sorted(specs):
         spec = specs[slug]
@@ -10678,6 +11071,7 @@ def main(args=None):
         ctx_vista = contextos[clave_contexto]
         if constructor_tablero:
             tablero = constructor(ctx_vista, spec)
+            aplicar_reglas_del_spec(ctx_vista, tablero)
             anotar_abreviaturas(tablero)
             verificar_tablero(tablero)
             tableros.append(tablero)

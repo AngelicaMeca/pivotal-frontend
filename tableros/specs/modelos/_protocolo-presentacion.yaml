@@ -1121,6 +1121,23 @@ colores:
         variables distintas y el protocolo manda que dos tipos de variable no compartan escala.
         Gris azulado porque es el color de lo administrativo y porque, puesto al lado del marron
         de la hacienda, deja claro de un vistazo cual de los dos cuadros esta mirando el ojo.
+    unidades_productivas:
+      medidas: [apiarios]
+      unidad: "apiarios"
+      hex: ["#f6e8ea", "#e2b9c1", "#c47f8f", "#93455a", "#5e1f33"]
+      color_solido: "#93455a"
+      estado: nueva
+      agregada: 2026-10-13
+      agregada_por: "el mapa de la hoja GanApi de la maqueta de ganaderia (celda E84: 'Tonos de mapas de calor por variable')"
+      justificacion: >
+        Un APIARIO no es una colmena: es el lugar donde estan, una unidad productiva, igual
+        que un establecimiento o una UP. Contar colmenas (el rodeo de la apicultura, que va en
+        la rampa marron de `cabezas`) y contar apiarios son dos tipos de variable, y el
+        protocolo manda que no compartan escala: con la misma rampa el mapa de apiarios y el de
+        colmenas se veian iguales y el selector parecia no hacer nada. Borravino porque es el
+        otro color que JC le asigna a ganaderia en la hoja INDICACIONES ("en ganaderia el
+        borravino o un marron"): sigue siendo de la familia del area y se distingue de un
+        vistazo del marron de las colmenas.
     precio:
       medidas: [precio_kg]
       unidad: "$/kg"

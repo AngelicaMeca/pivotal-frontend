@@ -546,9 +546,54 @@ a { color: var(--enlace); }
   .banda-columnas { grid-template-columns: minmax(0, 1fr) !important; }
   .banda-en-fila > .panel { grid-column: span 12; }
 }
+/* Banda en fila CON titulo (13-oct-2026): el titulo que JC escribe sobre sus dos graficos de
+   precio ("GanPorcRAZ", fila 84). Va suelto sobre la banda, sin caja: en la maqueta no hay
+   recuadro alrededor, es un renglon de texto que nombra lo que hay debajo. */
+.banda-con-titulo { display: flex; flex-direction: column; gap: .35rem; min-width: 0; }
+.titulo-banda { font-family: var(--serif); font-size: .95rem; font-weight: 700; margin: .2rem .2rem 0; }
+/* Una tabla que JC dibuja entera en su columna (la matriz departamento x anio de Stocks y de
+   Vacunaciones, la de estratos de porcinos con Cachorras al final): letra y aire mas chicos
+   para que se vea completa a 1440 px sin scroll horizontal (`compacta: true` en el spec). */
+.panel[data-compacta] .tabla-datos table { font-size: .66rem; }
+.panel[data-compacta] .tabla-datos th, .panel[data-compacta] .tabla-datos td { padding: .14rem .2rem; }
+.panel[data-compacta] .tabla-datos thead th { font-size: .5rem; letter-spacing: 0; white-space: normal; }
+/* Un cuadro que JC excluye de la vista de un departamento ("salvo la departamental", hoja
+   "GanBov DTE" E122): se esconde mientras haya un departamento elegido. Cuelga de la clase
+   del PANEL, que la declara el spec, y no de `#tablero` (regla de los selectores de todo el
+   sitio). */
+.con-departamento .panel[data-solo-provincia] { display: none; }
+/* Dos tablas lado a lado bajo un mismo titulo de JC (raza | departamento de "GanBov RAZ"):
+   cada una se queda con la mitad y no se estiran entre si. */
+.tabla-datos > table + table { margin-left: .2rem; }
+/* Dos paneles lado a lado DENTRO de una columna (`en_par`, los dos anillos de estratos de
+   bubalinos). */
+.par-en-columna { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .55rem; }
+.par-en-columna > .panel { min-width: 0; }
+@media (max-width: 1000px) { .par-en-columna { grid-template-columns: minmax(0, 1fr); } }
+/* La nota de un cuadro AL COSTADO de su tabla (`nota_al_lado`), como JC pega sus cuadros de
+   texto (*)/(**) junto a las tablas de faena y de leche. */
+.panel[data-nota-al-lado] > .panel-cuerpo { display: grid; gap: .6rem; align-items: start; }
+.panel[data-nota-al-lado="der"] > .panel-cuerpo { grid-template-columns: minmax(0, 1fr) minmax(9rem, 30%); }
+.panel[data-nota-al-lado="izq"] > .panel-cuerpo { grid-template-columns: minmax(9rem, 30%) minmax(0, 1fr); }
+.panel[data-nota-al-lado="izq"] > .panel-cuerpo > .cuadro-nota { grid-row: 1; grid-column: 1; }
+.panel[data-nota-al-lado="izq"] > .panel-cuerpo > .tabla-datos { grid-row: 1; grid-column: 2; }
+.panel[data-nota-al-lado] > .panel-cuerpo > .cuadro-nota { margin: 0; }
+.panel[data-nota-al-lado] > .panel-cuerpo > .panel-vacio { grid-column: 1 / -1; }
+@media (max-width: 1000px) {
+  .panel[data-nota-al-lado] > .panel-cuerpo { grid-template-columns: minmax(0, 1fr) !important; }
+  .panel[data-nota-al-lado] > .panel-cuerpo > * { grid-row: auto !important; grid-column: auto !important; }
+}
+/* Una tabla escrita en el spec (`fija-*`: las equivalencias de bubalinos) es TEXTO: sus
+   celdas se parten en renglones en vez de cortarse contra el borde del cuadro. */
+.panel[data-panel^="fija-"] .tabla-datos td, .panel[data-panel^="fija-"] .tabla-datos th {
+  white-space: normal; vertical-align: top;
+}
 /* Un cuadro de texto de JC (metodologia): parrafos con aire, a la medida de lectura. */
 .cuadro-texto p { margin: 0 0 .7rem; line-height: 1.5; font-size: .9rem; }
 .cuadro-texto p:last-child { margin-bottom: 0; }
+.cuadro-texto .cuadro-texto-titulo { font-weight: 700; margin-bottom: .2rem; }
+.cuadro-texto ul { margin: 0 0 .7rem; padding-left: 1.1rem; font-size: .9rem; line-height: 1.45; }
+.cuadro-texto ul:last-child { margin-bottom: 0; }
 /* Un cuadro de cifras (caravanas bovinas): las tarjetas en fila y la serie debajo. */
 .cifras { display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
           gap: .6rem; margin-bottom: .8rem; }
@@ -558,6 +603,21 @@ a { color: var(--enlace); }
 .cifra-valor { font-size: 1.9rem; font-weight: 650; line-height: 1.1; }
 .cifras-serie { font-weight: 600; margin: 0 0 .3rem; }
 [data-panel^="cifras-"] .grafico { min-height: 280px; }
+/* Un cuadro de solo tarjetas (sin serie) esconde su hueco de grafico: `display` le gana al
+   atributo `hidden`, asi que se dice explicito. */
+[data-panel^="cifras-"] .grafico[hidden] { display: none; }
+/* Cuadro de SOLO tarjetas (resumen de faena equina): las tarjetas llenan la tarjeta del panel,
+   como en el tablero de SENASA (el total arriba a todo el ancho y debajo los pares). Si el
+   cuadro de al lado es mas alto, las filas crecen en vez de dejar un hueco al pie. */
+[data-panel^="cifras-"]:has(.grafico[hidden]) .cifras {
+  flex: 1 1 auto; margin-bottom: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 1fr;
+}
+[data-panel^="cifras-"]:has(.grafico[hidden]) .cifra:first-child { grid-column: span 2; }
+[data-panel^="cifras-"]:has(.grafico[hidden]) .cifra {
+  justify-content: center; align-items: center; text-align: center;
+}
+[data-panel^="cifras-"]:has(.grafico[hidden]) .cifra:first-child .cifra-valor { font-size: 2.8rem; }
 .cuadro-imagen img { display: block; width: 100%; max-width: 1480px; height: auto; }
 .tablero > [data-scroll-interno] > .panel-cuerpo { min-height: 0; }
 .tablero > [data-scroll-interno] .tabla-datos { flex: 1 1 0; min-height: 0; overflow: auto; }

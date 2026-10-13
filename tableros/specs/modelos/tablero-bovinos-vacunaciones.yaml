@@ -14,7 +14,15 @@ titulo_pagina: "Vacunaciones"
 titulo: "Bovinos"
 subtitulo: "Provincia de Santiago del Estero · 1ra vacunación bovina por categoría y departamento"
 
-breadcrumb: "Ganadería - Bovinos - Provincia - {departamento}"
+breadcrumb: "Ganadería - Bovinos - Provincia - {departamento} - Vacunaciones Aftosa (1ra dosis)"
+
+# 13-oct-2026 (revision contra la maqueta): tarjeta "Datos 2025" con la vaca, sin variacion
+# contra 2024 en las tarjetas (JC no la dibuja, y la de vacas comparaba contra la celda rota
+# de 2024), encabezados en singular como los escribe JC, la matriz departamento x anio entera
+# a 1440 px y "Generar PDF" al pie (BF87).
+kpis_sin_variacion: true
+tarjeta_datos:
+  icono: bovinos
 
 # La banda de JC, textual: "Total vacunado 1.164.191 cab", "Terneros vacunados 176.969 cab",
 # "Vacunac. Dto Moreno 152.609 cab" y "Vacas vacunadas 471.447 cab". Las cuatro dan exacto.
@@ -33,6 +41,8 @@ indicadores:
 
 paneles:
   alto: fluye
+  acciones_de_tablero:
+    - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
   mapa:
     titulo: "1ra vacunación por departamento"
     medida: cabezas
@@ -50,9 +60,12 @@ paneles:
   tabla-departamentos:
     titulo: "Sgo. del Estero - Evolución de 1ra vacunación bovina por categoría y totales por departamento - año {anio}"
     encabezado_geo: "Departamento"
-    encabezado_total: "Total"
+    encabezado_total: "TOTAL"
     rotulo_total: "TOTAL PROV"
     columnas_extra: []
+    etiquetas: &singular {Terneros: Ternero, Terneras: Ternera, Novillitos: Novillito,
+                          Novillos: Novillo, Toritos: Torito, Toros: Toro, Vacas: Vaca,
+                          Vaquillonas: Vaquillona}
     nota: >
       El guion marca las categorías sin vacunados en ese departamento, que no es lo mismo que
       un dato que la fuente no informó (ése sale como S/D).
@@ -67,7 +80,8 @@ paneles:
   tabla-evolucion:
     titulo: "Sgo. del Estero - Evolución de 1ra vacunación bovina por categoría y totales - años {desde} a {hasta}"
     encabezado_anio: ""
-    encabezado_total: "Total"
+    encabezado_total: "TOTAL"
+    etiquetas: *singular
     nota: >
       2024: Sarmiento figura con 7,94 cabezas en el total y 4,57 en vacas, y la celda de vacas
       de Juan F. Ibarra viene ilegible. Se publican como los trae la fuente.
@@ -96,12 +110,13 @@ paneles:
     - {id: evolucion-total, ancho: 4, columna: izq, nueva_banda: true}
     - {id: evolucion-vs-otra, ancho: 4, columna: izq}
     - {id: tabla-evolucion, ancho: 8, columna: der}
-    - {id: tabla-departamento-anios, ancho: 8, columna: der}
+    - {id: tabla-departamento-anios, ancho: 8, columna: der, compacta: true}
 
+# Solo el anio. NO hay filtro de categoria (JC, 13-oct-2026: "JAMAS SE PUEDE ANALIZAR UN
+# STOCK SEPARANDO LAS CATEGORIAS"): el unico selector de sus hojas es el departamento, que
+# se elige con un clic en el mapa. El mapa, la evolucion total y los KPIs de volumen son
+# siempre el TOTAL; las categorias se ven solo juntas (tablas completas, barras apiladas).
+# El build corta la corrida si un tablero de stock vuelve a declarar `categoria`.
 filtros:
   - id: anio
     zona: periodo
-  - id: categoria
-    zona: barra
-    incluye_total: true
-    defecto: "Total"

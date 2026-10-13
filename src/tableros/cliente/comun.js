@@ -315,7 +315,9 @@ export default function crearPivotal() {
     Object.keys(base.paneles).forEach(function (k) { paneles[k] = base.paneles[k]; });
     Object.keys(comunes).forEach(function (k) { paneles[k] = comunes[k]; });
     Object.keys(extra.paneles).forEach(function (k) { paneles[k] = extra.paneles[k]; });
-    return { contexto: extra.contexto, kpis: extra.kpis, paneles: paneles };
+    /* La tarjeta de contexto ("Datos 2025") es la misma con o sin departamento: si la capa no
+       trae la suya, queda la de la provincia. */
+    return { contexto: extra.contexto || base.contexto, kpis: extra.kpis, paneles: paneles };
   }
 
   /* Las combinaciones que se pueden elegir. Con un departamento puesto son las del tablero
@@ -1519,7 +1521,15 @@ export default function crearPivotal() {
 
     /* El departamento elegido y como cambiarlo. Lo usa el mapa del tablero: su clic ya no
        navega a otra pagina, cambia los datos de esta (ver "capa departamental"). */
-    departamento: function () { return estado.dto; },
+    departamento: function () {
+      if (estado.dto) { return estado.dto; }
+      /* Una pagina SIN capa departamental a la que se llega con un departamento en la URL
+         (el clic del mapa de tambos de "Producc. Leche" lleva a Feed Lots con el
+         departamento puesto, JC "GanBov LACT" E105): no cambia ningun dato, solo remarca
+         ese departamento en el mapa y en las tablas. */
+      if (hayCapa()) { return ""; }
+      return new URLSearchParams(window.location.search).get("departamento") || "";
+    },
 
     /* El valor vigente de un filtro, por id. Lo usa el popup "Mas informacion" para saber que
        cultivo mostrar en su bloque 5.3. */

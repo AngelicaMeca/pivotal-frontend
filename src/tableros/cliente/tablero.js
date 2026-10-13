@@ -87,6 +87,11 @@ export default function iniciar(PIVOTAL) {
   var PISO_MINIMO = 220;
   var TOPE_CRECER = 1.6;     /* un grafico crece hasta 1,6 veces su alto natural */
   var PISO_TABLA = 300;      /* una tabla con scroll propio no baja de esto */
+  /* Lo que los graficos no alcanzan a cubrir (ya estan en su piso) lo toman las FILAS de las
+     tablas de la columna corta, repartido parejo, en vez de quedar como hueco vacio al pie de
+     la tarjeta (13-oct-2026: "no me gusta que queden espacios asi vacios en las tarjetas").
+     Con tope por fila para que una tabla no termine con renglones de doble alto. */
+  var TOPE_FILA = 14;
 
   function cajaElastica(panel) {
     var graf = panel.querySelector("[data-grafico]");
@@ -121,7 +126,8 @@ export default function iniciar(PIVOTAL) {
 
   function nivelarBandas() {
     if (!contenedor || !contenedor.classList.contains("tablero-columnas")) { return; }
-    var bandas = contenedor.querySelectorAll(":scope > .banda-columnas, :scope > .banda-en-fila");
+    var bandas = contenedor.querySelectorAll(
+      ":scope > .banda-columnas, :scope > .banda-con-titulo > .banda-en-fila");
     Array.prototype.forEach.call(bandas, function (banda) {
       var columnas = banda.classList.contains("banda-en-fila")
         ? Array.prototype.slice.call(banda.querySelectorAll(":scope > .panel"))
@@ -131,14 +137,21 @@ export default function iniciar(PIVOTAL) {
           ? [col] : Array.prototype.slice.call(col.querySelectorAll(":scope > .panel"));
         var cajas = [];
         var tablas = [];
+        var filas = [];
         paneles.forEach(function (p) {
           var caja = cajaElastica(p);
           if (caja) { soltarCaja(caja); cajas.push(caja); }
           var tabla = p.hasAttribute("data-scroll-interno") && p.querySelector(".tabla-datos");
           /* Se mide con la tabla ENTERA: el tope lo pone esta funcion, no el CSS. */
           if (tabla) { tabla.style.maxHeight = "none"; tablas.push(tabla); }
+          if (!p.hasAttribute("data-scroll-interno")) {
+            Array.prototype.forEach.call(p.querySelectorAll(".tabla-datos tbody tr"), function (tr) {
+              tr.style.removeProperty("height");
+              filas.push(tr);
+            });
+          }
         });
-        return { col: col, cajas: cajas, tablas: tablas };
+        return { col: col, cajas: cajas, tablas: tablas, filas: filas };
       });
       banda.classList.remove("banda-nivelada");
       /* Apiladas (angosto, o la banda se partio en una sola columna): nada que nivelar, y las
@@ -190,6 +203,27 @@ export default function iniciar(PIVOTAL) {
         g.cajas.forEach(function (caja, i) {
           fijarCaja(caja, Math.round(altos[i] + mover * margen[i] / total));
         });
+      });
+
+      /* Lo que todavia falta en una columna (los graficos de al lado tocaron su piso) se
+         reparte entre las filas de sus tablas. Se mide de nuevo: los graficos ya se movieron. */
+      var altoFinal = Math.max.apply(null, grupos.map(function (g) {
+        return g.col.getBoundingClientRect().height;
+      }));
+      /* Varias pasadas: con dos tablas lado a lado en la misma tarjeta, solo las filas de la
+         mas larga suman alto, y una sola pasada cubriria la mitad de lo que falta. */
+      grupos.forEach(function (g) {
+        if (!g.filas.length) { return; }
+        var naturales = g.filas.map(function (tr) { return tr.getBoundingClientRect().height; });
+        var extra = 0;
+        for (var pasada = 0; pasada < 4 && extra < TOPE_FILA; pasada++) {
+          var resto = altoFinal - g.col.getBoundingClientRect().height;
+          if (resto < 2) { break; }
+          extra = Math.min(TOPE_FILA, extra + resto / g.filas.length);
+          g.filas.forEach(function (tr, i) {
+            tr.style.height = (naturales[i] + extra).toFixed(1) + "px";
+          });
+        }
       });
       banda.classList.add("banda-nivelada");
     });
@@ -786,7 +820,9 @@ export default function iniciar(PIVOTAL) {
         smooth: false,
         connectNulls: false,
         symbol: "circle",
-        symbolSize: 4,
+        /* Una serie de UN solo punto (Solemar en la faena equina: un mes) no tiene linea que
+           la muestre: el punto va mas grande para que no se pierda. */
+        symbolSize: linea.puntos.filter(function (v) { return v !== null; }).length === 1 ? 9 : 4,
         z: 2,
         /* La serie comparada va PUNTEADA ademas de con su color: es lo que la deja distinguir
            en la hoja impresa, que JC lee en blanco y negro. */
@@ -988,7 +1024,18 @@ export default function iniciar(PIVOTAL) {
       if (!elegido || fila.geo !== elegido) { return fila; }
       return Object.assign({}, fila, { actual: true });
     });
-    var bloques = propios || panel.bloques
+    var marcar = function (filas) {
+      return (filas || []).map(function (fila) {
+        if (!elegido || fila.geo !== elegido) { return fila; }
+        return Object.assign({}, fila, { actual: true });
+      });
+    };
+    /* Los bloques lado a lado (raza | departamento de "GanBov RAZ") tambien remarcan la fila
+       del departamento elegido. */
+    var bloques = propios
+      || (panel.bloques && panel.bloques.map(function (b) {
+        return Object.assign({}, b, { filas: marcar(b.filas) });
+      }))
       || (panel.tabla ? [panel.tabla] : [{ columnas: panel.columnas, filas: filasPlanas }]);
     /* Un bloque con `titulo` es una TARJETA (pasturas y forrajes: una por año). La caja pasa a
        apilarlas en vertical en vez de ponerlas lado a lado. */
@@ -1431,6 +1478,8 @@ export default function iniciar(PIVOTAL) {
     "tabla-hilton": pintarTablaDatos,
     "tabla-tambo": pintarTablaDatos,
     "tabla-razas": pintarTablaDatos,
+    // Razas bovinas: las dos tablas (raza | departamento) bajo el titulo unico de JC.
+    "tabla-razas-departamentos": pintarTablaDatos,
     "anillo-razas": pintarAnillo,
     "precios-leche-2": pintarTendencia,
     "evolucion-total": pintarApiladas,
@@ -1445,20 +1494,39 @@ export default function iniciar(PIVOTAL) {
     img.setAttribute("alt", panel.alt || "");
   }
 
-  /* Un cuadro de texto (`texto-*`): un parrafo por entrada, con su titulo en negrita. */
+  /* Un cuadro de texto (`texto-*`): un parrafo por entrada, con su titulo en negrita. Si la
+     entrada trae `items`, van debajo como vinetas (los ">" de JC en su metodologia). Un
+     titulo `aparte` va en su propio renglon, como lo escribe JC en sus cuadros de texto. */
   function pintarTexto(nodo, panel) {
     var caja = nodo.querySelector("[data-texto]");
     if (!caja) { return; }
     PIVOTAL.vaciar(caja);
     (panel.parrafos || []).forEach(function (parrafo) {
-      var p = document.createElement("p");
-      if (parrafo.titulo) {
-        var b = document.createElement("strong");
-        b.textContent = parrafo.titulo + ". ";
-        p.appendChild(b);
+      if (parrafo.titulo && parrafo.aparte) {
+        var t = document.createElement("p");
+        t.className = "cuadro-texto-titulo";
+        t.textContent = parrafo.titulo;
+        caja.appendChild(t);
       }
-      p.appendChild(document.createTextNode(parrafo.texto));
-      caja.appendChild(p);
+      if (parrafo.texto) {
+        var p = document.createElement("p");
+        if (parrafo.titulo && !parrafo.aparte) {
+          var b = document.createElement("strong");
+          b.textContent = parrafo.titulo + ". ";
+          p.appendChild(b);
+        }
+        p.appendChild(document.createTextNode(parrafo.texto));
+        caja.appendChild(p);
+      }
+      if (parrafo.items && parrafo.items.length) {
+        var ul = document.createElement("ul");
+        parrafo.items.forEach(function (item) {
+          var li = document.createElement("li");
+          li.textContent = item;
+          ul.appendChild(li);
+        });
+        caja.appendChild(ul);
+      }
     });
   }
 
@@ -1483,15 +1551,26 @@ export default function iniciar(PIVOTAL) {
       });
     }
     texto(nodo, "[data-cifras-serie]", panel.subtitulo_serie);
+    /* Un cuadro de solo tarjetas (el resumen de faena equina) no trae serie: el hueco del
+       grafico se esconde en vez de quedar como un recuadro vacio. */
+    var hueco = nodo.querySelector("[data-grafico]");
+    if (!panel.series || !panel.series.length) {
+      if (hueco) { hueco.hidden = true; }
+      return;
+    }
+    if (hueco) { hueco.hidden = false; }
     pintarTendencia(nodo, panel);
   }
 
-  /* El dibujante de un panel: por su id; los `imagen-*`, `texto-*` y `cifras-*` comparten. */
+  /* El dibujante de un panel: por su id; los `imagen-*`, `texto-*`, `cifras-*` y `fija-*`
+     comparten. */
   function dibujanteDe(id) {
     if (DIBUJANTES[id]) { return DIBUJANTES[id]; }
     if (id.indexOf("imagen-") === 0) { return pintarImagen; }
     if (id.indexOf("texto-") === 0) { return pintarTexto; }
     if (id.indexOf("cifras-") === 0) { return pintarCifras; }
+    if (id.indexOf("anillo-fijo-") === 0) { return pintarAnillo; }
+    if (id.indexOf("fija-") === 0) { return pintarTablaDatos; }
     return null;
   }
 

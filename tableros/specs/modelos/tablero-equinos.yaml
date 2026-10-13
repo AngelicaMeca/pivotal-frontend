@@ -2,8 +2,23 @@
 # Ganad VF" (9-oct-2026). JC no dibuja tabla de categorias por departamento: la pagina es la
 # serie por categoria, la serie por departamento y los estratos.
 #
-# El cuadro "Resumen de faena equino, totales - año 2.025" de su hoja no se construye: no hay
-# base de faena equina en la entrega.
+# 13-oct-2026 (revision contra la maqueta):
+# - Disposicion de sus anclajes. Izquierda: mapa (5-38), barras del total (39-54), barras
+#   apiladas (54-71), anillo de departamentos (71-91) y anillo de estratos en el stock
+#   (92-113). Derecha: tabla por categoria (16-37), matriz departamento x anio (41-66), tabla
+#   de estratos (70-80) y anillo de estratos en las UP (83-102). Al pie, a todo el ancho, la
+#   faena: "Resumen de faena equino, totales - año 2.025" con las DOS capturas del tablero de
+#   SENASA que pega JC (image132 e image133 de su archivo; F196: "Faena: Generado imagen de
+#   Tablero control SENASA"). Las capturas viven en site/assets/ganaderia/ y no se actualizan
+#   con los Excels.
+# - La tabla de estratos con las columnas de JC en su orden (Establec., U.P., TOTAL,
+#   Potrillo/a, Yegua, Padrillo, Caballo, Burro, Asno, Mula) y los estratos sin numero ni
+#   especie ("Hasta 5", "Entre 6 y 15").
+# - Con un departamento elegido, la tabla de estratos pasa a ser la del departamento: son sus
+#   UP (JC, E184: "Datos de stocks y UP por categorías").
+# - Encabezado "Total Equidos", la matriz sin la fila TOTAL PROV, "Fuente: MAGyP" donde la pone
+#   JC (AD39, AF68), rotulos de KPI de JC, miga literal, tarjeta "Datos 2025", sin variacion y
+#   "Generar PDF" (BD186).
 id: tablero-equinos
 tipo: tablero
 familia: stock-equinos
@@ -12,40 +27,44 @@ seccion: equinos
 titulo: "Equinos"
 subtitulo: "Provincia de Santiago del Estero · existencias por categoría, departamento y estrato"
 
+kpis_sin_variacion: true
+tarjeta_datos:
+  icono: equinos
+
 # La banda de JC: "Stock total 116.597 cab", "Stock Dto. Mitre 9.162 cab", "+ caida Dto
 # Salavina - 53,41%" y "+ increm. Dto Sn Martin + 177,87%". Las dos variaciones se calculan
 # contra 2015, que es donde arranca su tabla por departamento (San Martin da +177,87% exacto).
-# La caida mas grande en ese periodo es la de ATAMISQUI (-62,68%), no la de SALAVINA: se
-# publica la que dice el dato.
+# La caida PORCENTUAL mas grande en ese periodo es la de ATAMISQUI (-62,68%), no la de
+# SALAVINA (que es la mayor caida en CABEZAS): se publica la que dice el dato y la pregunta va
+# al backlog.
 indicadores:
   - medida: cabezas
     categoria: "Total"
     etiqueta: "Stock total"
   - lider: cabezas
-    etiqueta: "Stock Dto {departamento}"
+    etiqueta: "Stock Dto. {departamento}"
   - variacion_extrema: min
     desde: 2015
-    etiqueta: "Mayor caída Dto {departamento}"
+    etiqueta: "+ caida Dto {departamento}"
   - variacion_extrema: max
     desde: 2015
-    etiqueta: "Mayor incremento Dto {departamento}"
+    etiqueta: "+ increm. Dto {departamento}"
 
-# La miga de agricultura: "Provincia" es el link de vuelta cuando hay un departamento elegido.
 breadcrumb: "Ganadería - Equinos - Provincia - {departamento}"
 
 paneles:
   alto: fluye
+  acciones_de_tablero:
+    - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
   mapa:
-    titulo: "Stock por departamento"
+    titulo: "Stocks"
     medida: cabezas
+    fuente: "Fuente: SENASA"
     rotulo_accion: "Seleccione departamento"
-    # JC, celda E121 de su hoja: "Seleccionando un departamento del mapa lleva a página de
-    # datos (como en agri)". Es el mecanismo de cultivos extensivos: la MISMA página con los
-    # datos del departamento (KPIs de volumen, los dos gráficos de evolución y la tabla por
-    # categoría); el mapa, los anillos y las tablas por departamento siguen provinciales y
-    # remarcan el elegido. El mapa en miniatura de JC con "Departamento ALBERDI" arriba no va:
-    # mismo desvío que agricultura (Francisco, 2-oct-2026), el elegido ya se lee en el mapa y
-    # en la miga.
+    # JC, celda E182 de su hoja: "Seleccionando un departamento del mapa lleva a página de
+    # datos (como en agri)". La MISMA pagina con los datos del departamento (KPIs de volumen,
+    # los dos graficos de evolucion, la tabla por categoria y la de estratos, con sus UP); el
+    # mapa, los anillos y la matriz por departamento siguen provinciales y remarcan el elegido.
     click_departamento: en-la-misma-vista
     seleccion_departamento:
       defecto: provincia
@@ -57,7 +76,8 @@ paneles:
   tabla-evolucion:
     titulo: "Sgo. del Estero - Evolución de stocks equinos por categoría y totales - años {desde} a {hasta}"
     encabezado_anio: ""
-    encabezado_total: "Total Cab"
+    encabezado_total: "Total Equidos"
+    fuente: "Fuente: MAGyP"
   evolucion-categorias:
     titulo: "Sgo del Estero - Evolución del stock equino por categoría años {desde} a {hasta}"
     # JC arranca este grafico en 2012, aunque la serie total venga desde 2008.
@@ -68,21 +88,28 @@ paneles:
     titulo: "Sgo. del Estero - Evolución del stock equino total por departamento - años {desde} a {hasta}"
     encabezado_geo: "Departamento"
     rotulo_total: "TOTAL PROV"
+    sin_total: true
+    fuente: "Fuente: MAGyP"
     # JC arranca en 2015: con dieciocho columnas no entra.
     desde: 2015
   evolucion-total:
-    titulo: "Sgo del Estero - Evolución del stock total equinos - años {desde} a {hasta}"
+    titulo: "Sgo del Estero - Evolución del stock total equidos - años {desde} a {hasta}"
     medida_nombre: "Stock total"
     acciones:
       - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   tabla-estratos:
     titulo: "Sgo. del Estero - Estratos del stock equino, totales, Establecimientos y UP - año {anio}"
-    encabezado_estrato: "Estrato"
-    encabezado_total: "Total Cab"
+    encabezado_estrato: "Estratos"
+    encabezado_total: "TOTAL"
     rotulo_total: "TOTAL PROV"
+    conteos_primero: true
+    categorias: [Potrillos/as, Yeguas, Padrillos, Caballos, Burros, Asnos, Mulas]
+    etiquetas: {Potrillos/as: "Potrillo/a", Yeguas: Yegua, Padrillos: Padrillo, Caballos: Caballo,
+                Burros: Burro, Asnos: Asno, Mulas: Mula}
     columnas_extra:
       - {medida: establecimientos, encabezado: "Establec."}
-      - {medida: renspas, encabezado: "UP"}
+      - {medida: renspas, encabezado: "U.P."}
+    cambia_con_departamento: true
     nota: >
       La base por estrato separa burros y asnos, que la serie provincial informa juntos. Las
       UP son los RENSPA registrados en cada tramo.
@@ -91,6 +118,7 @@ paneles:
   anillo-departamentos:
     titulo: "Sgo del Estero - Equinos, Participación por departamento en el stock total año {anio}"
     cuantos: 9
+    fuente: "Fuente: SENASA"
     acciones:
       - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   anillo-estratos:
@@ -102,26 +130,88 @@ paneles:
     subtitulo: "En unidades productivas (RENSPA)"
     acciones:
       - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
-  # Disposicion en COLUMNAS (12-oct-2026, "reacomoda... para que no haya espacios vacios"):
-  # cada banda tiene dos columnas que se apilan a su ritmo, como las hojas de JC (graficos a
-  # la izquierda, tablas a la derecha). Las bandas agrupan cuadros de alto parecido; los
-  # altos se midieron a 1600 px.
+  # La faena: el tablero de control de SENASA que JC pega al pie de su hoja. Eran dos
+  # imagenes; la usuaria pidio el 13-oct-2026 "no quiero que sean imagenes, hardcodealos si
+  # hace falta". No hay base de faena equina: los numeros se TRANSCRIBIERON de las capturas
+  # (como las caravanas bovinas) y no se actualizan con los Excels.
+  #
+  # Las porciones de la torta: SENASA la publica SIN numeros, solo con los nombres. Se
+  # midieron sobre el dibujo (angulo de cada porcion en grados, con el borde en el medio del
+  # separador blanco; error de unos 0,3 puntos) y van como APROXIMADAS: el "≈" sale en cada
+  # porcentaje y la nota lo dice. Orden: el de SENASA, en el sentido del reloj desde arriba.
+  anillo-fijo-faena-categorias:
+    titulo: "SIGSA - Categorías de équidos migrados del sistema REALIDAD"
+    subtitulo: "Proporción de cada categoría en la faena 2025"
+    aproximado: true
+    porciones:
+      - {nombre: "Burro", valor: 4.1}
+      - {nombre: "Caballo", valor: 169.9}
+      - {nombre: "Mula", valor: 2.5}
+      - {nombre: "Potrillo/a", valor: 11.2}
+      - {nombre: "Yegua", valor: 172.3}
+    nota: >
+      SENASA publica esta torta sin cifras: las proporciones se midieron sobre su gráfico y
+      son aproximadas.
+    fuente: "Fuente: SENASA"
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  cifras-faena-totales:
+    titulo: "Équidos faenados y remanentes en establecimientos"
+    subtitulo: "Año 2025"
+    cifras:
+      - {etiqueta: "Éq. totales", valor: 5760}
+      - {etiqueta: "Éq. faenados", valor: 5760}
+      - {etiqueta: "Éq. remanentes", valor: 0}
+      - {etiqueta: "% Éq. faenados", valor: 100, decimales: 2, sufijo: "%"}
+      - {etiqueta: "% Éq. remanentes", valor: 0, decimales: 2, sufijo: "%"}
+    fuente: "Fuente: SENASA"
+  # La serie mensual por frigorifico. Tres puntos SENASA los dibuja sin numero (julio de los
+  # dos frigorificos grandes, donde los puntos se pisan, y octubre de Land): se leyeron del
+  # grafico y se ajustaron a su total. Los meses rotulados suman 5.241 y los 5.760 faenados
+  # dejan 519 para esos tres puntos; la lectura da 117 + 120 + 282 = 519.
+  cifras-faena-mensual:
+    titulo: "Evolución por mes - Cantidad de équidos faenados por frigorífico"
+    subtitulo: "Año 2025, en cabezas"
+    series:
+      - nombre: "Frigorífico Lamar SA"
+        valores: [277, 392, 214, 287, 291, 251, 117, 247, 253, 301, 279, 247]
+        aproximados: [6]
+        unidad: "cabezas"
+        eje: "Cabezas"
+        rotulos: [ene, feb, mar, abr, may, jun, jul, ago, sep, oct, nov, dic]
+        etiquetas: [enero 2025, febrero 2025, marzo 2025, abril 2025, mayo 2025, junio 2025,
+                    julio 2025, agosto 2025, septiembre 2025, octubre 2025, noviembre 2025,
+                    diciembre 2025]
+      - nombre: "Land L S.A."
+        valores: [70, 210, 277, 197, 159, 134, 120, 335, 193, 282, 109, 484]
+        aproximados: [6, 9]
+      - nombre: "Solemar Alimentaria"
+        valores: [null, null, null, null, null, null, 34, null, null, null, null, null]
+    nota: >
+      Los valores marcados con "≈" (julio de Lamar y de Land, octubre de Land) SENASA los
+      dibuja sin número: se leyeron de su gráfico y cierran con el total de 5.760 faenados.
+    fuente: "Fuente: SENASA"
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   disposicion: columnas
   orden:
     - {id: mapa, ancho: 4, columna: izq}
     - {id: evolucion-total, ancho: 4, columna: izq}
+    - {id: evolucion-categorias, ancho: 4, columna: izq}
+    - {id: anillo-departamentos, ancho: 4, columna: izq}
+    - {id: anillo-estratos, ancho: 4, columna: izq}
     - {id: tabla-evolucion, ancho: 8, columna: der}
-    - {id: tabla-departamento-anios, ancho: 8, columna: der}
-    - {id: evolucion-categorias, ancho: 12}
-    - {id: tabla-estratos, ancho: 12}
-    - {id: anillo-departamentos, ancho: 4, columna: fila}
-    - {id: anillo-estratos, ancho: 4, columna: fila}
-    - {id: anillo-estratos-up, ancho: 4, columna: fila}
+    - {id: tabla-departamento-anios, ancho: 8, columna: der, compacta: true}
+    - {id: tabla-estratos, ancho: 8, columna: der, compacta: true}
+    - {id: anillo-estratos-up, ancho: 8, columna: der}
+    - {id: anillo-fijo-faena-categorias, ancho: 6, columna: fila,
+       titulo_fila: "Sgo. del Estero - Resumen de faena equino, totales - año 2.025"}
+    - {id: cifras-faena-totales, ancho: 6, columna: fila}
+    - {id: cifras-faena-mensual, ancho: 12}
 
+# Solo el anio. NO hay filtro de categoria (JC, 13-oct-2026: "JAMAS SE PUEDE ANALIZAR UN
+# STOCK SEPARANDO LAS CATEGORIAS"): el unico selector de sus hojas es el departamento, que
+# se elige con un clic en el mapa.
 filtros:
   - id: anio
     zona: periodo
-  - id: categoria
-    zona: barra
-    incluye_total: true
-    defecto: "Total"

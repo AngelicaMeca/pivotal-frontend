@@ -4,10 +4,13 @@ id: _comunes-apicola
 mart: hecho_apicola
 
 presentacion:
-  # Colmenas y apiarios van en la rampa marron de ganaderia (el color es del area).
+  # Una rampa por VARIABLE (JC, hoja "GanApi" E84: "Tonos de mapas de calor por variable",
+  # 13-oct-2026): las colmenas en el marron de las cabezas y los apiarios -que son unidades
+  # productivas, no animales- en el borravino de `unidades_productivas`. Antes iban las dos
+  # en marron y el mapa no cambiaba de color al cambiar de variable.
   tipos_de_variable:
     colmenas: cabezas
-    apiarios: cabezas
+    apiarios: unidades_productivas
 
 fuente:
   organismo_esperado: "MAGyP"

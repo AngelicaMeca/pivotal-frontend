@@ -6,17 +6,30 @@
 # precio; al pie la captura del tablero de SENASA de existencias en tambos (JC, celda E147:
 # "Se baja directo el JPG de SENASA el tablero de control").
 #
-# Dos desvios de la maqueta, con su motivo:
-# - El grafico de PPP de JC compara Santiago con CORDOBA y con el promedio nacional. La serie
-#   de Cordoba no va: las comparaciones con otras provincias son material sensible y no se
-#   publican sin decision de Francisco (CLAUDE.md). Sumarla es agregar una entrada en
-#   `precios-leche-1.series` (provincia: "CORDOBA").
+# 13-oct-2026 (revision contra la maqueta):
+# - La serie de CORDOBA vuelve al grafico de PPP, con el titulo literal de JC: las
+#   comparaciones entre provincias de ganaderia se publican por decision de la usuaria con el
+#   OK de Francisco (`aprobado_por`).
+# - La grasa y la proteina de Santiago salen de la base 188, como dice JC en E113 ("Columnas
+#   C e I de las hojas de Grasa y Proteína"): asi dan exactas contra su maqueta.
+# - La tabla de la cuenca muestra sus 25 meses (marzo 2024 a marzo 2026) sin scroll: la
+#   barra de scroll que dibuja JC es la de la tabla de calidad.
+# - Miga literal (N5), tarjeta "Datos 2025", "Generar PDF" (BF93), encabezados de la tabla de
+#   calidad como los escribe JC, citas "Fuente: MAGyP" donde el las pone, y una sola banda de
+#   dos columnas como su hoja: mapa y graficos a la izquierda, tablas a la derecha, la captura
+#   de SENASA a todo el ancho al pie y sin titulo (E147: "Se baja directo el JPG ... NO hay
+#   que elaborarlo").
 id: tablero-bovinos-leche
 tipo: tablero
+sensibilidad: comparativo
+aprobado_por: "fran, 2026-10-13 (decisión de la usuaria: la serie de Córdoba del PPP, según la maqueta)"
 familia: leche-bovinos
 seccion: bovinos
 pagina: produccion-de-leche
-titulo_pagina: "Producc. Leche"
+titulo_pagina: "Producc Leche"
+breadcrumb: "Ganadería - Bovinos - Provincia - Producción leche"
+tarjeta_datos:
+  icono: bovinos
 
 titulo: "Bovinos"
 subtitulo: "Provincia de Santiago del Estero · cuenca lechera"
@@ -36,6 +49,8 @@ indicadores:
 
 paneles:
   alto: fluye
+  acciones_de_tablero:
+    - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
   mapa:
     titulo: "Tambos"
     subtitulo: "Cabezas en tambos por departamento"
@@ -49,6 +64,7 @@ paneles:
   tabla-cuenca:
     titulo: "Sgo. del Estero - Evolución de indicadores económicos de la Cuenca Lechera Provincial"
     subtitulo: "Tambos, litros, pesos por litro y pesos corrientes"
+    fuente: "Fuente: MAGyP"
     encabezados: ["Mes", "Cantidad tambos", "Litros tambo/día", "Litros por día",
                   "Litros mensuales", "Precio por litro (*)", "Valor bruto de la producción (VBP)/mes (**)"]
     # Texto de JC (cuadro de texto de su hoja, celda Z17), mas la convencion de los 30 dias.
@@ -63,24 +79,28 @@ paneles:
   tabla-calidad:
     titulo: "Sgo. del Estero - Evolución de indicadores de calidad de la leche de la Cuenca Lechera Provincial y comparado nacional"
     subtitulo: "En miles por mililitro y porcentaje"
-    # Los de JC, acortados para que las siete columnas entren en el cuadro: "Sgo. del Estero"
-    # pasa a "SDE" y "Prom Nacional" a "Nacional".
-    encabezados: ["Mes", "Prom. RCS (a)", "Prom. UFC (b)", "% Grasa But. SDE",
-                  "% Grasa But. Nacional", "% Proteína SDE", "% Proteína Nacional"]
-    # Texto de JC (cuadro de texto de su hoja, celda Z46).
+    fuente: "Fuente: MAGyP"
+    # Los de JC, literales (13-oct-2026). El cuadro es `compacta`: los encabezados largos se
+    # parten en dos renglones en vez de ensanchar la tabla.
+    encabezados: ["Mes", "Promedio de RCS (a)", "Promedio de UFC (b)",
+                  "% Grasa Butirosa Sgo. Del Estero", "% Grasa Butirosa Prom Nacional",
+                  "% Proteína Sgo. Del Estero", "% Proteína Prom Nacional"]
+    # Texto de JC (cuadro de texto de su hoja, celda Z46), con su encabezado.
     nota: >
-      (a) RCS - Recuento de Células Somáticas: mide la cantidad de células (principalmente
+      Indicadores Calidad leche. (a) RCS - Recuento de Células Somáticas: mide la cantidad de células (principalmente
       glóbulos blancos) por mililitro de leche. Es un indicador clave de la salud de la ubre
       del animal y de la calidad sanitaria de la leche cruda. (b) UFC - Unidad Formadora de
       Colonias: medida estándar de microbiología utilizada para cuantificar la cantidad de
       microorganismos vivos (bacterias, hongos o levaduras) capaces de multiplicarse en una
       muestra de leche.
   precios-leche-1:
-    titulo: "Precio Pagado al Productor (PPP) comparado Sgo del Estero y promedio Nacional, en $ corrientes/Lt"
+    titulo: "Precio Pagado al Productor (PPP) comparado Sgo del Estero, Córdoba y promedio Nacional, en $ corrientes/Lt"
     subtitulo: "En pesos corrientes por litro"
     eje: "$/Lt"
+    fuente: "Fuente: MAGyP"
     series:
       - {nombre: "Sgo Estero", variable: precio_litro, provincia: "Santiago del Estero"}
+      - {nombre: "Córdoba", variable: precio_litro, provincia: "CORDOBA"}
       - {nombre: "Prom Nacional", variable: precio_litro, provincia: "Total del pais"}
     acciones:
       - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
@@ -88,14 +108,16 @@ paneles:
     titulo: "Precio Pagado al Productor (PPP) por proteína y sólidos útiles en leche - Sgo del Estero, en $ corrientes/Kg"
     subtitulo: "En pesos corrientes por kilo"
     eje: "$/Kg"
+    fuente: "Fuente: MAGyP"
     series:
       - {nombre: "Proteína", variable: precio_proteina, provincia: "Santiago del Estero"}
       - {nombre: "Sólidos útiles", variable: precio_solidos, provincia: "Santiago del Estero"}
     acciones:
       - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   imagen-tambos:
-    titulo: "Sgo. del Estero - Existencias bovinas en tambos"
-    subtitulo: "Captura del tablero de control de SENASA"
+    # Sin titulo, como en la hoja de JC: la captura trae el suyo adentro (E147).
+    titulo: ""
+    subtitulo: ""
     imagen: "ganaderia/tambos-senasa-2025.png"
     alt: >-
       Tablero de SENASA de existencias en tambos: 41.799 bovinos, 20.203 vacas, 134
@@ -109,10 +131,10 @@ paneles:
   disposicion: columnas
   orden:
     - {id: mapa, ancho: 4, columna: izq}
-    - {id: tabla-cuenca, ancho: 8, columna: der, scroll_interno: true}
-    - {id: precios-leche-1, ancho: 4, columna: izq, nueva_banda: true}
+    - {id: precios-leche-1, ancho: 4, columna: izq}
     - {id: precios-leche-2, ancho: 4, columna: izq}
-    - {id: tabla-calidad, ancho: 8, columna: der}
+    - {id: tabla-cuenca, ancho: 8, columna: der, compacta: true}
+    - {id: tabla-calidad, ancho: 8, columna: der, compacta: true}
     - {id: imagen-tambos, ancho: 12}
 
 filtros:

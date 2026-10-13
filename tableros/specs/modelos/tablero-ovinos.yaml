@@ -4,6 +4,18 @@
 # Arriba el mapa y la tabla por departamento con establecimientos y UP, que es la FOTO 2025
 # (la base por departamento no tiene otros anios: por eso el selector de periodo tiene uno
 # solo). Debajo la serie provincial completa, en grafico y en tabla.
+#
+# 13-oct-2026 (revision contra la maqueta):
+# - La disposicion de sus anclajes: a la izquierda el mapa y los dos graficos de la serie
+#   (barras del total y apiladas, "Fuente: MAGyP"); a la derecha la tabla por departamento y,
+#   al lado de las apiladas, el anillo de departamentos ("Fuente: SENASA").
+# - La tabla de la SERIE 2008-2025 por categoria: la pide la nota de JC en su hoja ("Stocks
+#   por categoría provincia de 2008 a 2025 (para tablas de series y graficos de barras)" y
+#   "PROCESAR IDEM formato y contenidos de stocks"), con el formato de las otras especies.
+# - Encabezados de JC ("Total Ovinos", "Total Establ", "Total UP"), mapa "Stocks" sin
+#   "Seleccione departamento" (no tiene clic: la base por departamento es una sola foto y JC
+#   no dice que haria el clic; pregunta en el backlog), miga literal, tarjeta "Datos 2025",
+#   sin variacion y "Generar PDF" (BF82).
 id: tablero-ovinos
 tipo: tablero
 familia: stock-ovinos
@@ -12,16 +24,23 @@ seccion: ovinos
 titulo: "Ovinos"
 subtitulo: "Provincia de Santiago del Estero · existencias por categoría y departamento"
 
+breadcrumb: "Ganadería - Ovinos - Provincia - Stocks"
+
+kpis_sin_variacion: true
+tarjeta_datos:
+  icono: ovinos
+
 # La banda de JC: "Stock 212.758 cab", "Unidades Productivas 5.400", "Stock Dto Quebrachos
 # 46.445 cab" y "U.P. Dto Salavina 519". Los tres primeros dan exacto; en el cuarto, el
-# departamento con mas UP en la base es QUEBRACHOS (718). Se publica el que dice el dato.
+# departamento con mas UP en la base es QUEBRACHOS (718, y asi lo dice la propia tabla de JC):
+# se publica el que dice el dato y la pregunta va al backlog.
 indicadores:
   - medida: cabezas
     categoria: "Total"
     etiqueta: "Stock"
   - medida: unidades_productivas
     categoria: "Total"
-    etiqueta: "Unidades productivas"
+    etiqueta: "Unidades Productivas"
   - lider: cabezas
     etiqueta: "Stock Dto {departamento}"
   - lider: unidades_productivas
@@ -29,57 +48,61 @@ indicadores:
 
 paneles:
   alto: fluye
+  acciones_de_tablero:
+    - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
   mapa:
-    titulo: "Stock por departamento"
+    titulo: "Stocks"
     medida: cabezas
-    rotulo_accion: "Seleccione departamento"
+    fuente: "Fuente: SENASA"
     acciones:
       - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   tabla-departamentos:
     titulo: "Sgo. del Estero - Stocks ovinos por categoría, totales y cantidad de Establecimientos y UP por departamento - año {anio}"
     encabezado_geo: "Departamento"
-    encabezado_total: "Total Cab"
+    encabezado_total: "Total Ovinos"
     rotulo_total: "TOTAL PROV"
     columnas_extra:
-      - {medida: establecimientos, encabezado: "Establec."}
+      - {medida: establecimientos, encabezado: "Total Establ"}
       - {medida: unidades_productivas, encabezado: "Total UP"}
+    fuente: "Fuente: SENASA"
     nota: >
       El guion marca las categorías sin existencias en ese departamento, que no es lo mismo
       que un dato que la fuente no informó (ése sale como S/D).
   evolucion-total:
     titulo: "Sgo del Estero - Evolución del stock total ovinos - años {desde} a {hasta}"
     medida_nombre: "Stock total"
+    fuente: "Fuente: MAGyP"
     acciones:
       - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   evolucion-categorias:
     titulo: "Sgo del Estero - Evolución del stock ovino por categoría años {desde} a {hasta}"
     # JC arranca este grafico en 2012, aunque la serie total venga desde 2008.
     desde: 2012
+    fuente: "Fuente: MAGyP"
     acciones:
       - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  tabla-evolucion:
+    titulo: "Sgo. del Estero - Evolución del stock ovino por categoría y totales - años {desde} a {hasta}"
+    encabezado_anio: ""
+    encabezado_total: "Total Ovinos"
+    fuente: "Fuente: MAGyP"
   anillo-departamentos:
     titulo: "Sgo del Estero - Ovinos, Participación por departamento en el stock total año {anio}"
     cuantos: 5
+    fuente: "Fuente: SENASA"
     acciones:
       - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
-  # La hoja de JC NO tiene tabla de evolucion por categoria (caprinos si): debajo del mapa van
-  # los dos graficos y el anillo. Se ponen los tres en una fila.
-  # Disposicion en COLUMNAS (12-oct-2026, "vuelve a revisar, hay tableros donde todavia hay
-  # tarjetas que se ven asi"): la grilla de filas estiraba cada cuadro al alto del mas alto
-  # de su fila. En columnas cada cuadro mide lo suyo y tablero.js nivela el final de las dos
-  # columnas estirando o achicando los graficos (nunca las tablas).
   disposicion: columnas
   orden:
     - {id: mapa, ancho: 4, columna: izq}
     - {id: tabla-departamentos, ancho: 8, columna: der}
-    - {id: evolucion-total, ancho: 4, columna: fila}
-    - {id: evolucion-categorias, ancho: 4, columna: fila}
-    - {id: anillo-departamentos, ancho: 4, columna: fila}
+    - {id: evolucion-total, ancho: 4, columna: izq, nueva_banda: true}
+    - {id: evolucion-categorias, ancho: 4, columna: izq}
+    - {id: tabla-evolucion, ancho: 8, columna: der}
+    - {id: anillo-departamentos, ancho: 8, columna: der}
 
+# Solo el anio. NO hay filtro de categoria (JC, 13-oct-2026: "JAMAS SE PUEDE ANALIZAR UN
+# STOCK SEPARANDO LAS CATEGORIAS").
 filtros:
   - id: anio
     zona: periodo
-  - id: categoria
-    zona: barra
-    incluye_total: true
-    defecto: "Total"

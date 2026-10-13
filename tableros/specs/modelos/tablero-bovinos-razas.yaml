@@ -1,9 +1,23 @@
 # Ganaderia > Bovinos > Razas. Hoja "GanBov RAZ" de la maqueta "Maqueta Ganad VF"
 # (9-oct-2026). Base 89 (Siocarnes): hacienda vendida para faena.
 #
-# Contra la planilla de JC: las toneladas dan con una diferencia de 0,05% (304.182 contra
-# 304.034 en 2025), que viene de la version del archivo. El PRECIO y el VBP no coinciden:
-# JC promedia las ventas sin ponderar y aca va ponderado por los kilos (backlog 85).
+# 13-oct-2026, revision contra la maqueta:
+# - PRECIO PROMEDIO SIMPLE, como JC (decision de la usuaria, backlog 85 cerrada): el precio de
+#   cada subcategoria es el promedio de los precios declarados en sus lineas de venta y el VBP
+#   es tn x 1.000 x ese precio (E129). Con eso el VBP de 2025 da $ 686.930 millones contra los
+#   $ 686.473 de JC: la diferencia (0,07%) es la de las toneladas (304.182 contra 304.034), que
+#   viene de la version del archivo.
+# - SIN selector de anio: "NO COLOCAREMOS POSIBILIDAD DE FILTRAR NADA" (E141). La pagina es la
+#   foto del ultimo anio cerrado (2025).
+# - La disposicion de sus anclajes: a la izquierda el mapa y, apilados debajo, los tres anillos
+#   (categoria, raza, departamento); a la derecha la tabla de categorias con su nota del VBP y,
+#   debajo, UN cuadro con el titulo unico de JC y las dos tablas lado a lado (raza |
+#   departamento). Al pie, los dos graficos de precio.
+# - La fila TOTALES no lleva precio (JC no lo pone) y la de Bubalinos lleva el suyo y el 100%.
+# - La tabla de razas no tiene la fila "Bubalino": JC no la pone (su total, 303.995, no la
+#   incluye). Donde la pone el es la fila "Bubalinos TOTAL" de la tabla de categorias.
+# - Citas como JC: "Fuente: MAGyP" en el mapa y los anillos; "Fuente: MAGyP - ARCA" en las
+#   tablas y los precios. La config de la base cita SENASA - Siocarnes: la duda va al backlog.
 id: tablero-bovinos-razas
 tipo: tablero
 familia: faena-bovinos
@@ -14,7 +28,11 @@ titulo_pagina: "Razas"
 titulo: "Bovinos"
 subtitulo: "Provincia de Santiago del Estero · hacienda vendida para faena por categoría, raza y departamento"
 
-breadcrumb: "Ganadería - Bovinos - Provincia - {departamento}"
+breadcrumb: "Ganadería - Bovinos - Provincia - {departamento} - Razas y categorías comercializadas para faena"
+
+kpis_sin_variacion: true
+tarjeta_datos:
+  icono: bovinos
 
 # La banda de JC: "Total enviado a faena 304.034 Tns", "Particip. Dto. Jiménez 19,3 %",
 # "VBP (millones $ corr.) $ 686.473" y "% enviado Bovino Criollo 28,1 %". La raza lider
@@ -33,9 +51,12 @@ indicadores:
 
 paneles:
   alto: fluye
+  acciones_de_tablero:
+    - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
   mapa:
     titulo: "Razas y categorías"
     rotulo_accion: "Seleccione departamento"
+    fuente: "Fuente: MAGyP"
     click_departamento: en-la-misma-vista
     seleccion_departamento:
       defecto: provincia
@@ -49,69 +70,76 @@ paneles:
     subtitulo: "En toneladas, pesos por kilo y millones de pesos corrientes"
     encabezados: ["Categorías", "Tn", "%/Total", "Precio prom $/Kg", "VBP (*) Millones $ corr", "%/Total"]
     rotulo_total: "TOTALES"
-    # Texto de JC (cuadro de texto de su hoja), con "paraa" corregido en el titulo y una
-    # oracion sobre como se promedia el precio.
+    fuente: "Fuente: MAGyP - ARCA"
+    # Texto LITERAL de JC (cuadro de texto de su hoja, debajo de la tabla).
     nota: >
-      (*) VBP - Valor Bruto de la Producción ($ corrientes): surge de multiplicar el precio
-      pagado al productor por la cantidad de toneladas vendidas a faena. El precio es declarado
-      por el productor ganadero. Si bien técnicamente no representaría de manera exacta el VBP,
-      es una estimación en base a datos comprobables. ($ corrientes) implica que el precio
-      expresado no fue actualizado mediante ningún método y corresponde a valores históricos.
-      El precio promedio está ponderado por los kilos de cada venta.
+      (*) VBP - Valor Bruto de la Producción mensual ($ corrientes) Surge de multiplicar el
+      precio Pagado al Productor (PPP - Precio promedio $ corr.) por la cantidad de tn
+      vendidas a faena. El precio es declarado por el productor ganadero. Si bien técnicamente
+      no representaría de manera exacta el VBP, es una estimación en base a datos
+      comprobables. ($ corrientes) : Implica que el precio expresado NO fue actualizado
+      mediante ningún método y corresponde a valores históricos.
   anillo-categorias:
     titulo: "Sgo del Estero - Participación por categoría total en la venta para faena - año {anio}"
+    fuente: "Fuente: MAGyP"
     acciones:
       - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
-  tabla-razas:
-    titulo: "Sgo. del Estero - Distribución de las tn enviadas a faena por raza - Año {anio}"
-    # Texto de JC (cuadro de texto de su hoja).
+  tabla-razas-departamentos:
+    titulo: "Sgo. del Estero - Distribución de las tn enviadas a faena por raza y departamento de origen. % del total y peso promedio - Año {anio}"
+    fuente: "Fuente: MAGyP - ARCA"
+    # Los bubalinos no van en la tabla de razas de JC (estan en la de categorias).
+    excluir: ["Bubalino"]
+    etiquetas:
+      "Holando Argentino": "Holando Argent."
+      "XD - Decomisado": "XD - Decomisado (*)"
+      "XZ - Golpeado": "XZ - Golpeado (**)"
+    # Texto LITERAL de JC (cuadro de texto debajo de su tabla de razas).
     nota: >
-      XD - Decomisado: es una categoría técnica de clasificación (equivalente a las razas en el
-      sistema) que se utiliza para registrar aquellos animales o lotes de hacienda que fueron
-      retirados o confiscados por las autoridades sanitarias por no cumplir con los requisitos
-      sanitarios o de documentación. XZ - Golpeado: código de clasificación que se utiliza
-      para registrar animales que llegan a la faena con traumatismos o contusiones físicas
-      visibles. "Otras" es la hacienda sin raza declarada.
+      (*) XD - Decomisado: Es una categoría técnica de clasificación (equivalente a las razas
+      en el sistema) que se utiliza para registrar aquellos animales o lotes de hacienda que
+      fueron retirados o confiscados por las autoridades sanitarias por no cumplir con los
+      requisitos sanitarios o de documentación. (**) XZ - Golpeado: Código de clasificación o
+      categorización que se utiliza para registrar animales que llegan a la faena con
+      traumatismos o contusiones físicas visibles.
   anillo-razas:
     titulo: "Sgo del Estero - Participación por raza en la venta para faena - año {anio}"
     cuantos: 5
+    fuente: "Fuente: MAGyP"
     acciones:
       - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
-  tabla-departamentos:
-    titulo: "Sgo. del Estero - Distribución de las tn enviadas a faena por departamento de origen. % del total y peso promedio - Año {anio}"
   anillo-departamentos:
     titulo: "Sgo del Estero - Participación por Departamento en la venta para faena - año {anio}"
     cuantos: 5
+    fuente: "Fuente: MAGyP"
     acciones:
       - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   precios-razas-1:
     titulo: "Precio declarado venta a faena - Aberdeen Angus y Braford - $/Kg en pie"
     razas: ["Aberdeen Angus", "Braford"]
     desde: 2025
+    fuente: "Fuente: MAGyP - ARCA"
     acciones:
       - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   precios-razas-2:
     titulo: "Precio declarado venta a faena - Bovino Criollo y Otras razas - $/Kg en pie"
     razas: ["Bovino Criollo", "Otra 99"]
     desde: 2025
+    fuente: "Fuente: MAGyP - ARCA"
     acciones:
       - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
-  # Disposicion en COLUMNAS (12-oct-2026, "reacomoda... para que no haya espacios vacios"):
-  # cada banda tiene dos columnas que se apilan a su ritmo, como las hojas de JC (graficos a
-  # la izquierda, tablas a la derecha). Las bandas agrupan cuadros de alto parecido; los
-  # altos se midieron a 1600 px.
   disposicion: columnas
   orden:
     - {id: mapa, ancho: 4, columna: izq}
+    - {id: anillo-categorias, ancho: 4, columna: izq}
+    - {id: anillo-razas, ancho: 4, columna: izq}
+    - {id: anillo-departamentos, ancho: 4, columna: izq}
     - {id: tabla-categorias, ancho: 8, columna: der}
-    - {id: anillo-categorias, ancho: 4, columna: fila}
-    - {id: anillo-razas, ancho: 4, columna: fila}
-    - {id: anillo-departamentos, ancho: 4, columna: fila}
-    - {id: tabla-razas, ancho: 6, columna: izq}
-    - {id: tabla-departamentos, ancho: 6, columna: der, scroll_interno: true}
+    - {id: tabla-razas-departamentos, ancho: 8, columna: der}
     - {id: precios-razas-1, ancho: 6, columna: fila}
     - {id: precios-razas-2, ancho: 6, columna: fila}
 
+# Un solo anio, el ultimo cerrado: JC no pone selector en esta hoja (E141).
 filtros:
   - id: anio
     zona: periodo
+    solo_anio_defecto: true

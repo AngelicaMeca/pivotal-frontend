@@ -1,20 +1,33 @@
 # Ganaderia > Porcinos > Movimientos. Hoja "GanPorcDTE" de la maqueta "Maqueta Ganad VF"
 # (9-oct-2026). Base 144 (DTE porcinos).
 #
-# JC la arma con los titulos y KPIs de bovinos ("PROCESAR IDEM DTE BOVINOS"): es la pagina de
-# movimientos de bovinos con los datos de porcinos. Lo que va por provincia de destino y de
-# origen queda en la pagina reservada, como en bovinos.
+# JC la arma con los titulos y KPIs de bovinos ("(SIMULACION) IDEM DTE BOVINOS"): es la pagina
+# de movimientos de bovinos con los datos de porcinos, menos la matriz origen-destino ("SOLO
+# EN CASO DE BOVINOS PUBLICAMOS LA MATRIZ OD", T128 de "GanBov DTE").
+#
+# 13-oct-2026 (revision contra la maqueta): misma estructura que bovinos. Se publican las
+# tablas y anillos por provincia de destino y de origen y los KPIs que nombran la provincia
+# (decision de la usuaria con el OK de Francisco); dos columnas como el molde (mapa y anillos
+# a la izquierda, las cinco tablas a la derecha); con un departamento elegido, solo el anio
+# elegido y sin el anillo departamental. La introduccion de un departamento al que no entro
+# nada desde otra provincia es cero, no S/D.
 id: tablero-porcinos-movimientos
 tipo: tablero
 familia: movimientos-porcinos
 seccion: porcinos
 pagina: movimientos
 titulo_pagina: "Movimientos"
+sensibilidad: comparativo
+aprobado_por: "fran, 2026-10-13 (decisión de la usuaria: comparaciones entre provincias de ganadería, según la maqueta)"
 
 titulo: "Porcinos"
 subtitulo: "Provincia de Santiago del Estero · movimientos de porcinos con DTE"
 
-breadcrumb: "Ganadería - Porcinos - Provincia - {departamento}"
+breadcrumb: "Ganadería - Porcinos - Provincia - {departamento} - Movimientos (DTE)"
+
+kpis_sin_variacion: true
+tarjeta_datos:
+  icono: porcinos
 
 indicadores:
   - recorte: totales_sin_introduccion
@@ -22,12 +35,16 @@ indicadores:
   - recorte: internos
     etiqueta: "Movimientos internos"
   - recorte: extraccion
-    etiqueta: "Extracción"
+    provincia_lider: true
+    etiqueta: "Extracción a {provincia}"
   - recorte: introduccion
-    etiqueta: "Introducción"
+    provincia_lider: true
+    etiqueta: "Introducción de {provincia}"
 
 paneles:
   alto: fluye
+  acciones_de_tablero:
+    - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
   mapa:
     titulo: "Movimientos por departamento"
     rotulo_accion: "Seleccione departamento"
@@ -40,7 +57,11 @@ paneles:
     acciones:
       - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   tabla-tipos:
-    titulo: "Sgo. del Estero - Movimientos porcinos por tipo, categoría y DTE Totales provincia - años {desde} a {hasta}"
+    titulo: "Sgo. del Estero - Movimientos porcinos por tipo, categoría y DTE Totales provincia - años {desde} a {hasta} (parcial)"
+    titulo_departamento: "Sgo. del Estero - Movimientos porcinos por tipo, categoría y DTE - Dto {departamento} - año {anio}"
+    rotulos_franja:
+      internos: "Movimientos internos (dentro de la provincia Sgo Estero)"
+      extraccion: "Movimientos cabezas salidas de la provincia (extracción) - cálculo por diferencia"
     nota: >
       La extracción es la diferencia entre los movimientos totales y los internos. La planilla
       de SENASA informa los DTE por categoría: un documento que ampara animales de dos
@@ -48,6 +69,7 @@ paneles:
       sobreestimado.
   tabla-balance:
     titulo: "Sgo. del Estero - Balance de movimientos porcinos (extracción - introducción) por categoría y totales - años {desde} a {hasta}"
+    titulo_departamento: "Sgo. del Estero - Balance de movimientos porcinos (extracción - introducción) por categoría y totales - Dto {departamento} - año {anio}"
     # Mismo signo que en bovinos (introduccion - extraccion, el de los numeros de JC; backlog 86).
     nota: >
       Un número negativo quiere decir que salieron de la provincia más cabezas de esa
@@ -55,6 +77,12 @@ paneles:
   tabla-departamentos:
     titulo: "Sgo. del Estero - Movimientos porcinos por tipo, categoría y DTE por Departamento - año {anio}"
     rotulo_total: "PROVINCIA"
+  tabla-provincias-destino:
+    titulo: "Sgo. del Estero - Movimientos porcinos de EXTRACCIÓN, categoría y DTE por Provincia de destino - año {anio}"
+    encabezado: "Pcia. Destino"
+  tabla-provincias-origen:
+    titulo: "Sgo. del Estero - Movimientos porcinos de INTRODUCCIÓN, categoría y DTE por Provincia de origen - año {anio}"
+    encabezado: "Pcia. Origen"
   anillo-categorias:
     titulo: "Sgo del Estero - Participación por categoría en movimientos totales año {anio}"
     acciones:
@@ -64,18 +92,28 @@ paneles:
     cuantos: 5
     acciones:
       - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
-  # Disposicion en COLUMNAS (12-oct-2026, "reacomoda... para que no haya espacios vacios"):
-  # cada banda tiene dos columnas que se apilan a su ritmo, como las hojas de JC (graficos a
-  # la izquierda, tablas a la derecha). Las bandas agrupan cuadros de alto parecido; los
-  # altos se midieron a 1600 px.
+  anillo-provincias-destino:
+    titulo: "Sgo del Estero - Participación de las provincias de destino en los movimientos de EXTRACCIÓN año {anio}"
+    cuantos: 4
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  anillo-provincias-origen:
+    titulo: "Sgo del Estero - Participación de las provincias de origen en los movimientos de INTRODUCCIÓN año {anio}"
+    cuantos: 5
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   disposicion: columnas
   orden:
     - {id: mapa, ancho: 4, columna: izq}
+    - {id: anillo-categorias, ancho: 4, columna: izq}
+    - {id: anillo-departamentos, ancho: 4, columna: izq, solo_provincia: true}
+    - {id: anillo-provincias-destino, ancho: 4, columna: izq, solo_provincia: true}
+    - {id: anillo-provincias-origen, ancho: 4, columna: izq, solo_provincia: true}
     - {id: tabla-tipos, ancho: 8, columna: der}
-    - {id: anillo-categorias, ancho: 6, columna: fila}
-    - {id: anillo-departamentos, ancho: 6, columna: fila}
-    - {id: tabla-balance, ancho: 12}
-    - {id: tabla-departamentos, ancho: 12}
+    - {id: tabla-balance, ancho: 8, columna: der}
+    - {id: tabla-departamentos, ancho: 8, columna: der}
+    - {id: tabla-provincias-destino, ancho: 8, columna: der, solo_provincia: true}
+    - {id: tabla-provincias-origen, ancho: 8, columna: der, solo_provincia: true}
 
 filtros:
   - id: anio

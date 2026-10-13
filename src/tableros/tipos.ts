@@ -185,9 +185,22 @@ export type Panel = {
   scroll_interno?: boolean;
   // Disposicion "columnas": en que columna de su banda va el cuadro ("izq" o "der"). Si el
   // spec no lo dice, lo decide el ancho (ver bandasEnColumnas en Tablero.tsx).
-  columna?: "izq" | "der" | "fila";
+  columna?: "izq" | "centro" | "der" | "fila";
   // Disposicion "columnas": este panel abre una banda nueva.
   nueva_banda?: boolean;
+  // Disposicion "columnas": el titulo que JC escribe SOBRE una banda en fila (los dos
+  // graficos de precio de "GanPorcRAZ"). Lo declara el primer panel de la fila.
+  titulo_fila?: string;
+  // Tabla ancha que tiene que entrar entera sin scroll horizontal (letra y aire mas chicos).
+  compacta?: boolean;
+  // El cuadro NO se muestra con un departamento elegido (JC, "GanBov DTE" E122: "Gráficos
+  // de participaciones, salvo la departamental").
+  solo_provincia?: boolean;
+  // Dos paneles seguidos con `en_par` van lado a lado dentro de su columna.
+  en_par?: boolean;
+  // La nota del cuadro va al costado de la tabla y no debajo ("izq" o "der"), como JC pega
+  // sus cuadros de texto (*)/(**) junto a sus tablas.
+  nota_al_lado?: string;
   detalle?: string | null;
   rotulo?: string;
   rotulo_partes?: ParteDeTexto[];
@@ -217,6 +230,8 @@ export type PaginaTablero = Comun & {
     // que necesita y la pagina scrollea (pedido de JC del 30-sep-2026, hoy solo agricultura).
     alto: string;
     tarjeta_contexto: boolean;
+    // Cuantas tarjetas de indicador dibuja la banda (las del spec; 0 = ninguna).
+    kpis?: number;
     // El mapa se dibuja solo con un departamento elegido (pasturas y forrajes).
     mapa_por_departamento?: boolean;
   };

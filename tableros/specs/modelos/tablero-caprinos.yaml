@@ -12,6 +12,17 @@ seccion: caprinos
 titulo: "Caprinos"
 subtitulo: "Provincia de Santiago del Estero · existencias por categoría y departamento"
 
+# 13-oct-2026 (revision contra la maqueta): titulos y encabezados de JC ("Total Caprinos",
+# "Total Establ", "Cabrillas / Chivitos"), "Fuente: MAGyP" en sus cinco cuadros (H39 SENASA
+# solo bajo el mapa; el indice de JC declara las bases 177 y 178 como MAGyP y la config de la
+# 178 dice SENASA: backlog), mapa "Stocks" sin "Seleccione departamento" (la hoja no lo
+# tiene), la disposicion de sus anclajes, miga literal, tarjeta "Datos 2025", sin variacion y
+# "Generar PDF" (BF91).
+breadcrumb: "Ganadería - Caprinos - Provincia - Stocks"
+kpis_sin_variacion: true
+tarjeta_datos:
+  icono: caprinos
+
 # La banda de JC: "Stock 484.091 cab", "Unidades Productivas 8.285", "Stock Dto Quebrachos
 # 67.578 cab" y "U.P. Dto Quebrachos 842". Los cuatro dan exacto contra la base.
 indicadores:
@@ -20,7 +31,7 @@ indicadores:
     etiqueta: "Stock"
   - medida: unidades_productivas
     categoria: "Total"
-    etiqueta: "Unidades productivas"
+    etiqueta: "Unidades Productivas"
   - lider: cabezas
     etiqueta: "Stock Dto {departamento}"
   - lider: unidades_productivas
@@ -28,41 +39,50 @@ indicadores:
 
 paneles:
   alto: fluye
+  acciones_de_tablero:
+    - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
   mapa:
-    titulo: "Stock por departamento"
+    titulo: "Stocks"
     medida: cabezas
-    rotulo_accion: "Seleccione departamento"
+    fuente: "Fuente: SENASA"
     acciones:
       - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   tabla-departamentos:
-    titulo: "Sgo. del Estero - Stock caprino por categoría, totales y cantidad de Establecimientos y UP por departamento - año {anio}"
+    titulo: "Sgo. del Estero - Stock caprino por categoría, totales y cantidad de UP por departamento - año {anio}"
     encabezado_geo: "Departamento"
-    encabezado_total: "Total Cab"
+    encabezado_total: "Total Caprinos"
     rotulo_total: "TOTAL PROV"
+    etiquetas: &capr {"Cabrillas/chivitos": "Cabrillas / Chivitos"}
     columnas_extra:
-      - {medida: establecimientos, encabezado: "Establec."}
+      - {medida: establecimientos, encabezado: "Total Establ"}
       - {medida: unidades_productivas, encabezado: "Total UP"}
+    fuente: "Fuente: MAGyP"
     nota: >
       El guion marca las categorías sin existencias en ese departamento, que no es lo mismo
       que un dato que la fuente no informó (ése sale como S/D).
   evolucion-total:
     titulo: "Sgo del Estero - Evolución del stock total caprinos - años {desde} a {hasta}"
     medida_nombre: "Stock total"
+    fuente: "Fuente: MAGyP"
     acciones:
       - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   tabla-evolucion:
     titulo: "Sgo. del Estero - Evolución del stock caprino por categoría y totales - años {desde} a {hasta}"
     encabezado_anio: ""
-    encabezado_total: "Total Cab"
+    encabezado_total: "Total Caprinos"
+    etiquetas: *capr
+    fuente: "Fuente: MAGyP"
   evolucion-categorias:
     titulo: "Sgo del Estero - Evolución del stock caprino por categoría años {desde} a {hasta}"
     # JC arranca este grafico en 2012, aunque la serie total venga desde 2009.
     desde: 2012
+    fuente: "Fuente: MAGyP"
     acciones:
       - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   anillo-departamentos:
     titulo: "Sgo del Estero - Caprinos, Participación por departamento en el stock total año {anio}"
     cuantos: 5
+    fuente: "Fuente: MAGyP"
     acciones:
       - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   # Como en la hoja de JC: el grafico por categoria a la izquierda y el anillo a la derecha.
@@ -71,18 +91,22 @@ paneles:
   # de su fila. En columnas cada cuadro mide lo suyo y tablero.js nivela el final de las dos
   # columnas estirando o achicando los graficos (nunca las tablas).
   disposicion: columnas
+  # Los anclajes de JC: a la izquierda mapa (5-38), barras del total (40-55) y apiladas
+  # (58-75); a la derecha la tabla por departamento (16-46), la de evolucion (49-69) y el
+  # anillo de departamentos (70-88).
   orden:
     - {id: mapa, ancho: 4, columna: izq}
     - {id: tabla-departamentos, ancho: 8, columna: der}
     - {id: evolucion-total, ancho: 4, columna: izq, nueva_banda: true}
+    - {id: evolucion-categorias, ancho: 4, columna: izq}
     - {id: tabla-evolucion, ancho: 8, columna: der}
-    - {id: evolucion-categorias, ancho: 6, columna: fila}
-    - {id: anillo-departamentos, ancho: 6, columna: fila}
+    - {id: anillo-departamentos, ancho: 8, columna: der}
 
+# Solo el anio. NO hay filtro de categoria (JC, 13-oct-2026: "JAMAS SE PUEDE ANALIZAR UN
+# STOCK SEPARANDO LAS CATEGORIAS"): el unico selector de sus hojas es el departamento, que
+# se elige con un clic en el mapa. El mapa, la evolucion total y los KPIs de volumen son
+# siempre el TOTAL; las categorias se ven solo juntas (tablas completas, barras apiladas).
+# El build corta la corrida si un tablero de stock vuelve a declarar `categoria`.
 filtros:
   - id: anio
     zona: periodo
-  - id: categoria
-    zona: barra
-    incluye_total: true
-    defecto: "Total"

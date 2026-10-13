@@ -31,6 +31,70 @@ hojas:
       geo:
         nivel: departamento
 
+    # Estratificacion de establecimientos por tamanio del rodeo (13-oct-2026, decision de la
+    # usuaria: JC la pide en su hoja "GanBovESTR", celda E165 -"Base de estratos y UP | 48 |
+    # HOJA ESTRATIFICACION"-). Es la foto a diciembre de cada anio por PROVINCIA, con nueve
+    # estratos y cuatro campos por estrato. Entra SOLO la fila de Santiago del Estero
+    # (`solo_filas`): las otras provincias y el total pais son material comparativo que no se
+    # publica (CLAUDE.md). Las filas son provinciales: entran como agregado de la provincia
+    # (`geo.nivel: provincia`), con su estrato, y no se mezclan con el stock departamental
+    # (pipeline/stock.py las separa por la columna `estrato`).
+    - nombre: "Estratificación"
+      header_fila: 4
+      encabezado_grupo_fila: 3
+      ambito: sde
+      contenido: "Santiago del Estero por estrato de tamanio, anios 2012 a 2025 (una fila por anio)"
+      geo:
+        nivel: provincia
+      solo_filas:
+        provincia_nombre: ["Santiago del Estero"]
+      columnas:
+        "Provincia\n(sin tilde)": provincia_sin_tilde
+        "Hasta 20 | Estableci-mientos": hasta_20_establecimientos
+        "Hasta 20 | Cantidad de UP": hasta_20_up
+        "Hasta 20 | Vacas": hasta_20_vacas
+        "Hasta 20 | Total Bovinos": hasta_20_total
+        "Entre 21 y 100 | Estableci-mientos": e21_100_establecimientos
+        "Entre 21 y 100 | Cantidad de UP": e21_100_up
+        "Entre 21 y 100 | Vacas": e21_100_vacas
+        "Entre 21 y 100 | Total Bovinos": e21_100_total
+        "Entre 101 y 250 | Estableci-mientos": e101_250_establecimientos
+        "Entre 101 y 250 | Cantidad de UP": e101_250_up
+        "Entre 101 y 250 | Vacas": e101_250_vacas
+        "Entre 101 y 250 | Total Bovinos": e101_250_total
+        "Entre 251 y 500 | Estableci-mientos": e251_500_establecimientos
+        "Entre 251 y 500 | Cantidad de UP": e251_500_up
+        "Entre 251 y 500 | Vacas": e251_500_vacas
+        "Entre 251 y 500 | Total Bovinos": e251_500_total
+        "Entre 501 y 750 | Estableci-mientos": e501_750_establecimientos
+        "Entre 501 y 750 | Cantidad de UP": e501_750_up
+        "Entre 501 y 750 | Vacas": e501_750_vacas
+        "Entre 501 y 750 | Total Bovinos": e501_750_total
+        "Entre 751 y 1000 | Estableci-mientos": e751_1000_establecimientos
+        "Entre 751 y 1000 | Cantidad de UP": e751_1000_up
+        "Entre 751 y 1000 | Vacas": e751_1000_vacas
+        "Entre 751 y 1000 | Total Bovinos": e751_1000_total
+        "Entre 1001 y 2000 | Estableci-mientos": e1001_2000_establecimientos
+        "Entre 1001 y 2000 | Cantidad de UP": e1001_2000_up
+        "Entre 1001 y 2000 | Vacas": e1001_2000_vacas
+        "Entre 1001 y 2000 | Total Bovinos": e1001_2000_total
+        "Entre 2001 y 4000 | Estableci-mientos": e2001_4000_establecimientos
+        "Entre 2001 y 4000 | Cantidad de UP": e2001_4000_up
+        "Entre 2001 y 4000 | Vacas": e2001_4000_vacas
+        "Entre 2001 y 4000 | Total Bovinos": e2001_4000_total
+        "Más de 4000 | Estableci-mientos": mas_4000_establecimientos
+        "Más de 4000 | Cantidad de UP": mas_4000_up
+        "Más de 4000 | Vacas": mas_4000_vacas
+        "Más de 4000 | Total Bovinos": mas_4000_total
+        # El grupo "Total" es la suma de los nueve estratos: se mapea para que el header
+        # cierre pero NO se declara en `valores` (no entra al mart). El total provincial se
+        # recalcula sumando los estratos, como el de los departamentos; verificado 2025:
+        # 5.281 / 9.009 / 477.780 / 1.083.349, identico a esta columna.
+        "Total | Estableci-mientos": control_total_establecimientos
+        "Total | Cantidad de UP": control_total_up
+        "Total | Vacas": control_total_vacas
+        "Total | Total Bovinos": control_total_total
+
   ignorar:
     - nombre: "Modelo An 01"
       motivo: >
@@ -39,21 +103,6 @@ hojas:
         departamentos en zonas productivas. No son datos: va a constructor-reglas para
         convertirse en specs/modelos/48-*.yaml. La zonificacion NO existe en ninguna otra
         parte del repo y hay que levantarla de ahi.
-
-  pendientes:
-    - nombre: "Estratificación"
-      motivo: >
-        Estratificacion de establecimientos con existencias bovinas segun stock total: 9
-        estratos ("Hasta 20", "Entre 21 y 100", ... "Mas de 4000") x 4 campos
-        (Establecimientos, Cantidad de UP, Vacas, Total Bovinos), con los estratos en la r3 y
-        los campos en la r4. Es otro GRANO (provincia x estrato, no departamento) y otra forma
-        de schema (grupos de columnas repetidos, como la familia cuadro-indec), asi que no
-        entra en el mismo parquet que el stock departamental.
-      ambito: comparativo
-      sensibilidad: >
-        SENSIBLE. Trae Buenos Aires, CABA, Catamarca, Jujuy, Salta, Tucuman y Total Pais.
-        Comparaciones interprovinciales: no se publican sin decision de Francisco (CLAUDE.md).
-      fuente_declarada_en_la_hoja: "SENASA"
 
 # ---------------------------------------------------------------------------
 # COLUMNAS: origen -> canonico snake_case
@@ -175,6 +224,320 @@ valores:
     unidad: up
     agregable: true
 
+  # --- Hoja "Estratificación" (13-oct-2026): nueve estratos x cuatro campos. El estrato lo
+  # declara cada valor (viene en el grupo del header, no en una columna). Las UP de esta hoja
+  # se guardan como `renspas`, que es como se llaman las UP en las otras bases por estrato
+  # (porcinos, ovinos, caprinos, equinos, bubalinos): asi las lee el mismo motor de estratos.
+  # Vacas y Total Bovinos van con rol `simple`: en esta hoja las vacas NO son una parte que
+  # sume el total junto a otras (las demas categorias no vienen), asi que el check de "el
+  # detalle suma el total" no tiene nada que comparar.
+  hasta_20_establecimientos:
+    etiqueta: "Establecimientos - Hasta 20"
+    medida: establecimientos
+    especie: bovinos
+    rol: simple
+    estrato: "1. Hasta 20"
+    unidad: establecimientos
+    agregable: true
+  hasta_20_up:
+    etiqueta: "Cantidad de UP - Hasta 20"
+    medida: renspas
+    especie: bovinos
+    rol: simple
+    estrato: "1. Hasta 20"
+    unidad: up
+    agregable: true
+  hasta_20_vacas:
+    etiqueta: "Vacas - Hasta 20"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Vacas"
+    rol: simple
+    estrato: "1. Hasta 20"
+    unidad: cabezas
+    agregable: true
+  hasta_20_total:
+    etiqueta: "Total Bovinos - Hasta 20"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Total"
+    rol: simple
+    estrato: "1. Hasta 20"
+    unidad: cabezas
+    agregable: true
+  e21_100_establecimientos:
+    etiqueta: "Establecimientos - Entre 21 y 100"
+    medida: establecimientos
+    especie: bovinos
+    rol: simple
+    estrato: "2. Entre 21 y 100"
+    unidad: establecimientos
+    agregable: true
+  e21_100_up:
+    etiqueta: "Cantidad de UP - Entre 21 y 100"
+    medida: renspas
+    especie: bovinos
+    rol: simple
+    estrato: "2. Entre 21 y 100"
+    unidad: up
+    agregable: true
+  e21_100_vacas:
+    etiqueta: "Vacas - Entre 21 y 100"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Vacas"
+    rol: simple
+    estrato: "2. Entre 21 y 100"
+    unidad: cabezas
+    agregable: true
+  e21_100_total:
+    etiqueta: "Total Bovinos - Entre 21 y 100"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Total"
+    rol: simple
+    estrato: "2. Entre 21 y 100"
+    unidad: cabezas
+    agregable: true
+  e101_250_establecimientos:
+    etiqueta: "Establecimientos - Entre 101 y 250"
+    medida: establecimientos
+    especie: bovinos
+    rol: simple
+    estrato: "3. Entre 101 y 250"
+    unidad: establecimientos
+    agregable: true
+  e101_250_up:
+    etiqueta: "Cantidad de UP - Entre 101 y 250"
+    medida: renspas
+    especie: bovinos
+    rol: simple
+    estrato: "3. Entre 101 y 250"
+    unidad: up
+    agregable: true
+  e101_250_vacas:
+    etiqueta: "Vacas - Entre 101 y 250"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Vacas"
+    rol: simple
+    estrato: "3. Entre 101 y 250"
+    unidad: cabezas
+    agregable: true
+  e101_250_total:
+    etiqueta: "Total Bovinos - Entre 101 y 250"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Total"
+    rol: simple
+    estrato: "3. Entre 101 y 250"
+    unidad: cabezas
+    agregable: true
+  e251_500_establecimientos:
+    etiqueta: "Establecimientos - Entre 251 y 500"
+    medida: establecimientos
+    especie: bovinos
+    rol: simple
+    estrato: "4. Entre 251 y 500"
+    unidad: establecimientos
+    agregable: true
+  e251_500_up:
+    etiqueta: "Cantidad de UP - Entre 251 y 500"
+    medida: renspas
+    especie: bovinos
+    rol: simple
+    estrato: "4. Entre 251 y 500"
+    unidad: up
+    agregable: true
+  e251_500_vacas:
+    etiqueta: "Vacas - Entre 251 y 500"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Vacas"
+    rol: simple
+    estrato: "4. Entre 251 y 500"
+    unidad: cabezas
+    agregable: true
+  e251_500_total:
+    etiqueta: "Total Bovinos - Entre 251 y 500"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Total"
+    rol: simple
+    estrato: "4. Entre 251 y 500"
+    unidad: cabezas
+    agregable: true
+  e501_750_establecimientos:
+    etiqueta: "Establecimientos - Entre 501 y 750"
+    medida: establecimientos
+    especie: bovinos
+    rol: simple
+    estrato: "5. Entre 501 y 750"
+    unidad: establecimientos
+    agregable: true
+  e501_750_up:
+    etiqueta: "Cantidad de UP - Entre 501 y 750"
+    medida: renspas
+    especie: bovinos
+    rol: simple
+    estrato: "5. Entre 501 y 750"
+    unidad: up
+    agregable: true
+  e501_750_vacas:
+    etiqueta: "Vacas - Entre 501 y 750"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Vacas"
+    rol: simple
+    estrato: "5. Entre 501 y 750"
+    unidad: cabezas
+    agregable: true
+  e501_750_total:
+    etiqueta: "Total Bovinos - Entre 501 y 750"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Total"
+    rol: simple
+    estrato: "5. Entre 501 y 750"
+    unidad: cabezas
+    agregable: true
+  e751_1000_establecimientos:
+    etiqueta: "Establecimientos - Entre 751 y 1000"
+    medida: establecimientos
+    especie: bovinos
+    rol: simple
+    estrato: "6. Entre 751 y 1000"
+    unidad: establecimientos
+    agregable: true
+  e751_1000_up:
+    etiqueta: "Cantidad de UP - Entre 751 y 1000"
+    medida: renspas
+    especie: bovinos
+    rol: simple
+    estrato: "6. Entre 751 y 1000"
+    unidad: up
+    agregable: true
+  e751_1000_vacas:
+    etiqueta: "Vacas - Entre 751 y 1000"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Vacas"
+    rol: simple
+    estrato: "6. Entre 751 y 1000"
+    unidad: cabezas
+    agregable: true
+  e751_1000_total:
+    etiqueta: "Total Bovinos - Entre 751 y 1000"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Total"
+    rol: simple
+    estrato: "6. Entre 751 y 1000"
+    unidad: cabezas
+    agregable: true
+  e1001_2000_establecimientos:
+    etiqueta: "Establecimientos - Entre 1001 y 2000"
+    medida: establecimientos
+    especie: bovinos
+    rol: simple
+    estrato: "7. Entre 1001 y 2000"
+    unidad: establecimientos
+    agregable: true
+  e1001_2000_up:
+    etiqueta: "Cantidad de UP - Entre 1001 y 2000"
+    medida: renspas
+    especie: bovinos
+    rol: simple
+    estrato: "7. Entre 1001 y 2000"
+    unidad: up
+    agregable: true
+  e1001_2000_vacas:
+    etiqueta: "Vacas - Entre 1001 y 2000"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Vacas"
+    rol: simple
+    estrato: "7. Entre 1001 y 2000"
+    unidad: cabezas
+    agregable: true
+  e1001_2000_total:
+    etiqueta: "Total Bovinos - Entre 1001 y 2000"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Total"
+    rol: simple
+    estrato: "7. Entre 1001 y 2000"
+    unidad: cabezas
+    agregable: true
+  e2001_4000_establecimientos:
+    etiqueta: "Establecimientos - Entre 2001 y 4000"
+    medida: establecimientos
+    especie: bovinos
+    rol: simple
+    estrato: "8. Entre 2001 y 4000"
+    unidad: establecimientos
+    agregable: true
+  e2001_4000_up:
+    etiqueta: "Cantidad de UP - Entre 2001 y 4000"
+    medida: renspas
+    especie: bovinos
+    rol: simple
+    estrato: "8. Entre 2001 y 4000"
+    unidad: up
+    agregable: true
+  e2001_4000_vacas:
+    etiqueta: "Vacas - Entre 2001 y 4000"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Vacas"
+    rol: simple
+    estrato: "8. Entre 2001 y 4000"
+    unidad: cabezas
+    agregable: true
+  e2001_4000_total:
+    etiqueta: "Total Bovinos - Entre 2001 y 4000"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Total"
+    rol: simple
+    estrato: "8. Entre 2001 y 4000"
+    unidad: cabezas
+    agregable: true
+  mas_4000_establecimientos:
+    etiqueta: "Establecimientos - Más de 4000"
+    medida: establecimientos
+    especie: bovinos
+    rol: simple
+    estrato: "9. Más de 4000"
+    unidad: establecimientos
+    agregable: true
+  mas_4000_up:
+    etiqueta: "Cantidad de UP - Más de 4000"
+    medida: renspas
+    especie: bovinos
+    rol: simple
+    estrato: "9. Más de 4000"
+    unidad: up
+    agregable: true
+  mas_4000_vacas:
+    etiqueta: "Vacas - Más de 4000"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Vacas"
+    rol: simple
+    estrato: "9. Más de 4000"
+    unidad: cabezas
+    agregable: true
+  mas_4000_total:
+    etiqueta: "Total Bovinos - Más de 4000"
+    medida: cabezas
+    especie: bovinos
+    categoria: "Total"
+    rol: simple
+    estrato: "9. Más de 4000"
+    unidad: cabezas
+    agregable: true
+
 unidades:
   conversiones: []    # el archivo ya viene en cabezas, no hay conversion que hacer
 
@@ -287,6 +650,17 @@ notas:
       La hoja "Estratificación" no se ingiere en esta pasada (ver hojas.pendientes): otro grano,
       otra forma de schema y ademas material comparativo interprovincial, que necesita decision
       de Francisco antes de publicarse. Cuando entre, va a un parquet propio.
+  - fecha: "2026-10-13"
+    tipo: hoja
+    texto: >
+      Se ingiere la hoja "Estratificación", SOLO la fila de Santiago del Estero (decision de la
+      usuaria: JC la nombra en su hoja "GanBovESTR"). No va a un parquet propio -la ingesta
+      escribe uno por base- sino al mismo mart, separada por la columna `estrato` y marcada
+      como agregado provincial: pipeline/stock.py lee el stock departamental con `estrato IS
+      NULL` y los estratos aparte. Para eso el adapter `stock` aprendio tres cosas
+      declarativas: `encabezado_grupo_fila`, `solo_filas` y `geo.nivel: provincia`. Control
+      2025: 5.281 establecimientos, 9.009 UP y 1.083.349 cabezas, que son los totales de la
+      hoja de datos departamental (las UP y las cabezas dan identico).
   - fecha: "2026-08-05"
     tipo: pendiente
     texto: >

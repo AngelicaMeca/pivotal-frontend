@@ -4,44 +4,54 @@
 # Misma banda de KPIs que la pagina de stocks (la hereda), el mapa a la izquierda con los
 # dos anillos de estratos debajo, y a la derecha la tabla grande: cada departamento abierto
 # por estrato con su total.
+#
+# 13-oct-2026 (revision contra la maqueta): el mapa se titula "Estratos" (la pestaña de JC),
+# la tabla lleva las categorias en el orden de JC (Ovejas antes que Carneros, "Corderos"), no
+# lleva fila de la provincia (la de JC no la tiene: arranca en Aguirre) y los estratos van sin
+# numero ni especie ("Hasta 10"). El anillo de UP de JC trae los estratos de OTRA especie (los
+# de caprinos): se publica el de ovinos y se le avisa (backlog).
 id: tablero-ovinos-estratos
 igual_que: tablero-ovinos
 pagina: estratos
 titulo_pagina: "Estratos"
 periodo: estrato
 
+breadcrumb: "Ganadería - Ovinos - Provincia - Estratos, Establecimientos y U.P."
+
 paneles:
+  mapa:
+    titulo: "Estratos"
   tabla-departamento-estratos:
     titulo: "Sgo. del Estero - Stocks ovinos por categoría, estrato, cantidad de Establecimientos y UP por departamento - año {anio}"
     encabezado_geo: "Departamento"
     encabezado_estrato: "Estrato"
-    encabezado_total: "Total Ovinos"
+    encabezado_total: "TOTAL Ovinos"
     rotulo_total: "TOTAL PROV"
+    total: "no"
+    categorias: [Ovejas, Carneros, Borregos, Capones, Corderos/as]
+    etiquetas: {"Corderos/as": "Corderos"}
     columnas_extra:
       - {medida: establecimientos, encabezado: "Establ"}
       - {medida: renspas, encabezado: "UP"}
+    fuente: "Fuente: SENASA"
     nota: >
       Las UP son los RENSPA registrados en cada estrato. La base por estrato y la de stock por
       departamento son dos relevamientos distintos de SENASA: sus totales no tienen por qué
       coincidir.
   anillo-estratos:
     titulo: "Sgo del Estero - Ovinos - Participación de los estratos en la cantidad de cabezas - año {anio}"
+    fuente: "Fuente: SENASA"
     acciones:
       - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   anillo-estratos-up:
     titulo: "Sgo del Estero - Ovinos - Participación de los estratos en la cantidad de UP - año {anio}"
     subtitulo: "En unidades productivas (RENSPA)"
+    fuente: "Fuente: SENASA"
     acciones:
       - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
-  # La tabla ocupa tres filas de la grilla: a su izquierda van el mapa y los dos anillos,
-  # uno debajo del otro, que es como los pega JC.
-  # Disposicion en COLUMNAS (12-oct-2026, "vuelve a revisar, hay tableros donde todavia hay
-  # tarjetas que se ven asi"): la grilla de filas estiraba cada cuadro al alto del mas alto
-  # de su fila. En columnas cada cuadro mide lo suyo y tablero.js nivela el final de las dos
-  # columnas estirando o achicando los graficos (nunca las tablas).
   disposicion: columnas
   orden:
     - {id: mapa, ancho: 4, columna: izq}
     - {id: anillo-estratos, ancho: 4, columna: izq}
     - {id: anillo-estratos-up, ancho: 4, columna: izq}
-    - {id: tabla-departamento-estratos, ancho: 8, columna: der, scroll_interno: true}
+    - {id: tabla-departamento-estratos, ancho: 8, columna: der, scroll_interno: true, compacta: true}

@@ -24,6 +24,21 @@ Que hace el adapter, y solo eso:
    etiquetas de `geo.agregados.nombres_total`) con es_agregado_geo=true. Se marcan, no se
    borran, y no entran a ningun total: el que suma es marts.
 
+Tres agregados declarativos del 13-oct-2026, para la hoja "Estratificación" de la base 48
+(estratos de establecimientos por provincia, que JC pide en su hoja "GanBovESTR", celda E165):
+
+6. `encabezado_grupo_fila: N` (por hoja): el header repite los mismos titulos una vez por
+   GRUPO ("Hasta 20": Establecimientos, Cantidad de UP, Vacas, Total Bovinos; "Entre 21 y
+   100": los mismos cuatro...) y el grupo esta en la fila N, en una celda combinada sobre sus
+   columnas. Cada titulo pasa a ser "<grupo> | <titulo>", que es lo que mapea `columnas`.
+7. `solo_filas: {<campo>: [valores]}` (por hoja): la hoja trae filas que el config decide NO
+   ingerir (otras provincias: material comparativo que no se publica). Se declaran por su
+   valor exacto, no se deducen; cualquier otra fila no entra, y el config dice por que.
+8. `geo.nivel: provincia` (por hoja): las filas son de una PROVINCIA entera, no de un
+   departamento. Entran como agregado provincial (`es_agregado_geo`), igual que la fila
+   "Total" de las hojas departamentales. Y un valor puede declarar su `estrato` cuando el
+   tramo no viene en una columna sino en el grupo del header.
+
 Lo que NO hace: no valida calidad (eso es qa-datos), no calcula participaciones ni variaciones
 (eso es marts), no corrige un valor jamas (las cabezas fraccionarias de la base 48 entran tal
 cual vienen) y no dropea filas.
@@ -141,12 +156,25 @@ def _parsear_hoja(config, libro, hoja_cfg, entrega, alias):
     if hoja_cfg.get("anio_fijo") is not None:
         clave_de_fila = "departamento" if "departamento" in mapeo.values() else "provincia_nombre"
 
+    grupo_fila = hoja_cfg.get("encabezado_grupo_fila")
+    solo_filas = {campo: {str(v) for v in valores_ok}
+                  for campo, valores_ok in (hoja_cfg.get("solo_filas") or {}).items()}
+    grupos = None
     filas = []
     posiciones = None
     for nro_fila, celdas in enumerate(hoja.iter_rows(values_only=True), start=1):
+        if grupo_fila is not None and nro_fila == int(grupo_fila):
+            grupos = _grupos_del_encabezado(celdas)
         if nro_fila < header_fila:
             continue
         if nro_fila == header_fila:
+            if grupo_fila is not None:
+                if grupos is None:
+                    raise ValueError("La hoja %r declara encabezado_grupo_fila %s y esa fila "
+                                     "no se leyo." % (nombre_hoja, grupo_fila))
+                celdas = [("%s | %s" % (grupos[i], _texto(c)))
+                          if i < len(grupos) and grupos[i] and _texto(c) else c
+                          for i, c in enumerate(celdas)]
             posiciones = _mapear_header(celdas, mapeo, nombre_hoja)
             continue
         if all(_es_vacia(c) for c in celdas):
@@ -158,11 +186,25 @@ def _parsear_hoja(config, libro, hoja_cfg, entrega, alias):
         # lo declara el config y la que manda es la columna geografica.
         if _es_vacia(cruda.get(clave_de_fila)):
             continue
+        if any(_texto(cruda.get(campo)) not in permitidos
+               for campo, permitidos in solo_filas.items()):
+            continue  # fila que el config declara fuera (`solo_filas`), no un descarte mudo
         filas.extend(
             _filas_de_observacion(config, hoja_cfg, cruda, nro_fila, entrega, valores,
                                   fuente, grano, alias)
         )
     return filas
+
+
+def _grupos_del_encabezado(celdas):
+    """La fila de GRUPOS del header: cada columna se queda con el ultimo grupo escrito a su
+    izquierda (el Excel lo pone una vez, en una celda combinada sobre sus columnas)."""
+    grupos, actual = [], None
+    for celda in celdas:
+        if _texto(celda):
+            actual = " ".join(_texto(celda).split())
+        grupos.append(actual)
+    return grupos
 
 
 def _mapear_header(celdas, mapeo, nombre_hoja):
@@ -197,7 +239,8 @@ def _filas_de_observacion(config, hoja_cfg, cruda, nro_fila, entrega, valores,
             "Fila %d de la hoja %r: el anio %r no es un numero."
             % (nro_fila, hoja_cfg["nombre"], cruda.get("anio"))
         )
-    geo = _resolver_geo(config, cruda, nro_fila, hoja_cfg["nombre"], alias)
+    geo = _resolver_geo(config, cruda, nro_fila, hoja_cfg["nombre"], alias,
+                        (hoja_cfg.get("geo") or {}).get("nivel"))
 
     salida = []
     for campo, meta in valores.items():
@@ -214,7 +257,9 @@ def _filas_de_observacion(config, hoja_cfg, cruda, nro_fila, entrega, valores,
             # El ESTRATO del establecimiento ("1. Hasta 20 ovinos."). Es una dimension mas de
             # la fila, no una medida: la misma categoria aparece una vez por estrato. Las
             # bases que no estratifican lo dejan en nulo y el schema no cambia.
-            "estrato": _texto(cruda.get("estrato")) or None,
+            # Si el tramo no viene en una columna sino en el grupo del header (hoja
+            # "Estratificación" de la base 48), lo declara el valor en el config.
+            "estrato": _texto(cruda.get("estrato")) or meta.get("estrato") or None,
             # `variable` es el nombre canonico de la columna del Excel de la que sale este
             # valor. Junto con fila_origen identifica la celda de origen, asi que es la clave
             # unica de la fila de salida y el criterio de orden de los marts.
@@ -245,7 +290,7 @@ def _cargar_alias():
         return yaml.safe_load(f)
 
 
-def _resolver_geo(config, cruda, nro_fila, nombre_hoja, alias):
+def _resolver_geo(config, cruda, nro_fila, nombre_hoja, alias, nivel_hoja=None):
     geo_cfg = config.get("geo") or {}
     normalizar = bool(geo_cfg.get("normalizar_nombre"))
     nombres_total = set((geo_cfg.get("agregados") or {}).get("nombres_total") or [])
@@ -272,8 +317,11 @@ def _resolver_geo(config, cruda, nro_fila, nombre_hoja, alias):
         )
 
     # Fila de agregado embebida entre el detalle. Se marca y se le deja el geo de la
-    # provincia; no se le inventa un codigo de departamento.
-    if departamento in nombres_total:
+    # provincia; no se le inventa un codigo de departamento. Una hoja de nivel PROVINCIAL
+    # (`geo.nivel: provincia`) es toda asi: cada fila es la provincia entera.
+    if nivel_hoja == "provincia" and departamento is None:
+        departamento = provincia
+    if departamento in nombres_total or nivel_hoja == "provincia":
         return {
             "provincia": geo_cfg.get("particion", "sde"),
             "provincia_nombre": provincia,

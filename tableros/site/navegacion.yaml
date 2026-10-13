@@ -24,9 +24,17 @@ ramas:
     # especies. Pedido explicito: "saca el menu superior porque repite el lateral". El
     # mecanismo sigue en el build y en Cascara.tsx: se vuelve a prender con
     # `tira_de_secciones: true`.
+    # 13-oct-2026 (decision de la usuaria): la tira queda APAGADA y se respeta el pedido del
+    # 12-oct. La navegacion por especie vive en el menu lateral (backlog 76, nota para JC).
     rama: Ganadería
     titulo: Ganadería
     bajada: "Existencias, movimientos y faena por departamento."
+    # Como se PUBLICA un departamento cuyo nombre canonico de dim_geo no es el de JC (13-oct-
+    # 2026). dim_geo canoniza "BANDA" por alias y asi tiene que seguir; JC escribe "La Banda"
+    # y la ordena entre Juan F. Ibarra y Loreto. Se resuelve aca, en la presentacion: todos
+    # los cuadros de la rama la nombran y la ordenan asi (site_build.renombrar_departamentos).
+    nombres_departamento:
+      "BANDA": "LA BANDA"
   - id: clima
     bloque: acceso-por-tema
     rama: Clima
@@ -224,8 +232,11 @@ secciones:
       - {texto: "Indicadores", vista: tablero-bovinos-indicadores}
       - {texto: "Movimientos", vista: tablero-bovinos-movimientos}
       - {texto: "Vacunaciones", vista: tablero-bovinos-vacunaciones}
-      - {texto: "Producc. Leche", vista: tablero-bovinos-leche}
-      - {texto: "Estratos y UP"}
+      # "Producc Leche" sin punto, literal de JC (13-oct-2026).
+      - {texto: "Producc Leche", vista: tablero-bovinos-leche}
+      # Construida el 13-oct-2026 con la hoja "Estratificación" de la base 48 (JC, celda E165
+      # de "GanBovESTR"): ya no es "Próximamente".
+      - {texto: "Estratos y UP", vista: tablero-bovinos-estratos}
       - {texto: "Razas", vista: tablero-bovinos-razas}
       - {texto: "Feed Lots, Hilton y Tambos", vista: tablero-bovinos-feedlots}
     # La matriz origen-destino de los movimientos internos: pagina suelta, se llega por el

@@ -3,22 +3,34 @@
 #
 # Como la de ovinos, mas la tabla resumen que JC pone debajo del mapa ("Participación del
 # stock caprino y cantidad de UP por estrato": Estrato | UP | Cabezas).
+# 13-oct-2026 (revision contra la maqueta): sin la fila TOTAL PROV en las dos tablas (la
+# suma de esta base, 500.953 cabezas, no cierra con el stock de la pagina, 484.091, y JC no la
+# pone), encabezados de JC, estratos sin numero ni especie ("Hasta 15"), mapa "Estratos" sin
+# "Seleccione departamento" y miga literal (la de JC dice "Stocks" por arrastre). Las
+# diferencias de JC en tres estratos (16-30, 31-60 y 251-500) NO se tocan: van al backlog.
 id: tablero-caprinos-estratos
 igual_que: tablero-caprinos
 pagina: estratos
 titulo_pagina: "Estratos"
 periodo: estrato
 
+breadcrumb: "Ganadería - Caprinos - Provincia - Estratos, Establecimientos y U.P."
+
 paneles:
+  mapa:
+    titulo: "Estratos"
   tabla-departamento-estratos:
     titulo: "Sgo. del Estero - Stock caprino por categoría, estrato, cantidad de Establecimientos y UP por departamento - año {anio}"
     encabezado_geo: "Departamento"
     encabezado_estrato: "Estrato"
-    encabezado_total: "Total Caprinos"
+    encabezado_total: "TOTAL Caprinos"
     rotulo_total: "TOTAL PROV"
+    total: "no"
+    etiquetas: {"Cabrillas/chivitos": "Cabrillas / Chivitos"}
     columnas_extra:
       - {medida: establecimientos, encabezado: "Establ"}
       - {medida: renspas, encabezado: "UP"}
+    fuente: "Fuente: SENASA"
     nota: >
       Las UP son los RENSPA registrados en cada estrato. La base por estrato y la de stock por
       departamento son dos relevamientos distintos de SENASA: sus totales no tienen por qué
@@ -29,6 +41,8 @@ paneles:
     encabezado_estrato: "Estrato"
     encabezado_total: "Cabezas"
     rotulo_total: "TOTAL PROV"
+    sin_total: true
+    fuente: "Fuente: SENASA"
     columnas_extra:
       - {medida: renspas, encabezado: "UP"}
   anillo-estratos-up:
@@ -52,4 +66,4 @@ paneles:
     - {id: tabla-estratos, ancho: 4, columna: izq}
     - {id: anillo-estratos-up, ancho: 4, columna: izq}
     - {id: anillo-estratos, ancho: 4, columna: izq}
-    - {id: tabla-departamento-estratos, ancho: 8, columna: der, scroll_interno: true}
+    - {id: tabla-departamento-estratos, ancho: 8, columna: der, scroll_interno: true, compacta: true}

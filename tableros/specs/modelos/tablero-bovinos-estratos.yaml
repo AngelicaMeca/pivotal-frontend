@@ -1,0 +1,121 @@
+# Ganaderia > Bovinos > "Estratos y UP". Hoja "GanBovESTR" de la maqueta "Maqueta Ganad VF"
+# (9-oct-2026). Construida el 13-oct-2026 por decision de la usuaria (la pagina estaba en
+# "Próximamente").
+#
+# JC arma esta hoja copiando la de ovinos ("EN ESTE CASO TODOS LOS VALORES NO SON REALES,
+# CAMBIO DE FORMATO TOMADO DE OVINOS", E167) y nombra la base que la alimenta: la hoja
+# "Estratificación" de la base 48 (E165). Se calca la ESTRUCTURA de su hoja con los datos
+# reales; los valores simulados de la maqueta (212.758, 5.400, Quebrachos, Salavina) NO se
+# publican.
+#
+# Lo que no se puede calcar: la tabla de JC abre cada DEPARTAMENTO por estrato y categoria, y
+# la fuente es provincial (nueve estratos con establecimientos, UP, vacas y total de bovinos).
+# En su lugar va la tabla PROVINCIAL por estrato, con un aviso escrito en el cuadro. Si JC
+# consigue la estratificacion por departamento, el cuadro pasa a ser el suyo (backlog).
+id: tablero-bovinos-estratos
+tipo: tablero
+familia: stock-bovinos-estratos
+seccion: bovinos
+pagina: estratos-y-up
+titulo_pagina: "Estratos y UP"
+# Los anios del selector son los de la base por estrato (2012 a 2025).
+periodo: estrato
+
+titulo: "Bovinos"
+subtitulo: "Provincia de Santiago del Estero · estratos de establecimientos por tamaño del rodeo"
+
+breadcrumb: "Ganadería - Bovinos - Provincia - Estratos, Establecimientos y U.P."
+
+kpis_sin_variacion: true
+tarjeta_datos:
+  icono: bovinos
+
+# La banda de la hoja (copiada de ovinos): Stock, Unidades Productivas, Stock Dto X y U.P.
+# Dto Y. Con el dato de la base 48 de 2025: 1.083.349 cabezas, 9.009 UP, Moreno y Copo, igual
+# que la pagina Stocks.
+indicadores:
+  - medida: cabezas
+    categoria: "Total"
+    etiqueta: "Stock"
+  - medida: unidades_productivas
+    categoria: "Total"
+    etiqueta: "Unidades Productivas"
+  - lider: cabezas
+    etiqueta: "Stock Dto {departamento}"
+  - lider: unidades_productivas
+    etiqueta: "U.P. Dto {departamento}"
+
+paneles:
+  alto: fluye
+  acciones_de_tablero:
+    - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
+  mapa:
+    # La pestaña de JC sobre el mapa: "Estratos". JC no pide clic en esta hoja: el mapa
+    # muestra el stock por departamento y no lleva "Seleccione departamento".
+    titulo: "Estratos"
+    medida: cabezas
+    fuente: "Fuente: SENASA"
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  # El cuadro de texto de JC bajo el mapa (filas 40-50), literal.
+  texto-definiciones:
+    titulo: ""
+    parrafos:
+      - titulo: "ESTRATO"
+        texto: "Rango de cabezas que clasifica el tamaño del establecimiento o la unidad productiva ganadera."
+      - titulo: "ESTABLECIMIENTO"
+        texto: "El espacio físico donde se desarrolla la actividad ganadera."
+      - titulo: "UNIDAD PRODUCTIVA (UP)"
+        texto: >
+          Razón social (unipersonal o de cualquier tipo) que desarrolla la actividad ganadera
+          dentro de un establecimiento. En un establecimiento puede existir más de una UP, por
+          eso la cifra siempre es igual o mayor.
+    fuente: "Fuente: SENASA"
+  anillo-estratos:
+    titulo: "Sgo del Estero - Bovinos - Participación de los estratos en la cantidad de cabezas - año {anio}"
+    fuente: "Fuente: SENASA"
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  anillo-estratos-up:
+    titulo: "Sgo del Estero - Bovinos - Participación de los estratos en la cantidad de UP - año {anio}"
+    subtitulo: "En unidades productivas"
+    fuente: "Fuente: SENASA"
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  tabla-estratos:
+    # El titulo de JC sin "por categoría" ni "por departamento", que es justo lo que la fuente
+    # no abre (ver el aviso de la nota).
+    titulo: "Sgo. del Estero - Stocks bovinos por estrato, cantidad de Establecimientos y UP - año {anio}"
+    encabezado_estrato: "Estrato"
+    encabezado_total: "TOTAL Bovinos"
+    rotulo_total: "TOTAL PROV"
+    conteos_primero: true
+    categorias: [Vacas]
+    columnas_extra:
+      - {medida: establecimientos, encabezado: "Establ"}
+      - {medida: renspas, encabezado: "UP"}
+    fuente: "Fuente: SENASA"
+    nota: >
+      Aviso: la fuente (hoja "Estratificación" de la base 48) no abre los estratos por
+      departamento ni por categoría: trae, para la provincia, los establecimientos, las UP, las
+      vacas y el total de bovinos de cada estrato. Por eso este cuadro es provincial y no abre
+      cada departamento como la tabla de la maqueta.
+  # La disposicion de la hoja: a la izquierda el mapa y las definiciones; a la derecha la
+  # tabla. DESVIO: JC apila tambien los dos anillos a la izquierda, al lado de su tabla por
+  # departamento (seis imagenes, filas 16 a 155). La tabla provincial tiene diez renglones, y
+  # con los anillos en la columna izquierda la tarjeta de la tabla quedaba con mas de media
+  # pantalla vacia; van debajo, uno al lado del otro, en el mismo orden (cabezas, UP).
+  # Las definiciones van debajo de la TABLA y no del mapa (13-oct-2026, la usuaria: "no me
+  # gusta que queden espacios asi vacios en las tarjetas"): con mapa + definiciones a la
+  # izquierda, la tabla de diez renglones dejaba 380 px vacios en su tarjeta.
+  disposicion: columnas
+  orden:
+    - {id: mapa, ancho: 4, columna: izq}
+    - {id: tabla-estratos, ancho: 8, columna: der}
+    - {id: texto-definiciones, ancho: 8, columna: der}
+    - {id: anillo-estratos, ancho: 6, columna: fila}
+    - {id: anillo-estratos-up, ancho: 6, columna: fila}
+
+filtros:
+  - id: anio
+    zona: periodo

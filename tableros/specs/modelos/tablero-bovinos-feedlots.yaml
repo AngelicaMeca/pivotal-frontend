@@ -18,6 +18,14 @@ titulo_pagina: "Feed Lots, Hilton y Tambos"
 titulo: "Bovinos"
 subtitulo: "Provincia de Santiago del Estero · stocks en engorde a corral, Cuota Hilton y tambos"
 
+# 13-oct-2026 (revision contra la maqueta): miga literal (N5), tarjeta "Datos 2025",
+# "Generar PDF" (BF66) y el regreso a "Producc Leche" que pide JC en la E105 de "GanBov LACT"
+# ("agregar botón o medio de regreso"). Al llegar desde el mapa de tambos de Leche, el
+# departamento clickeado queda remarcado en el mapa y en las tablas (viaja en la URL).
+breadcrumb: "Ganadería - Bovinos - Provincia - Engorde a Corral (EAC) - Cuota Hilton y Tambos"
+tarjeta_datos:
+  icono: bovinos
+
 # La banda de JC, textual: "Stock EAC 98.324 cab", "Stock Cuota Hilton 173.670 cab", "Stock
 # Tambos 41.453 cab" y "Unidades Productivas 393" (77 + 143 + 173). Las cuatro dan exactas.
 indicadores:
@@ -31,12 +39,17 @@ indicadores:
     medida: cabezas
     etiqueta: "Stock Tambos"
   - medida: unidades_productivas
-    etiqueta: "Unidades productivas"
+    etiqueta: "Unidades Productivas"
 
 paneles:
   alto: fluye
+  acciones_de_tablero:
+    - {id: volver-leche, etiqueta: "Volver a Producc Leche", vista: tablero-bovinos-leche}
+    - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
   mapa:
-    titulo: "Stock por departamento - {regimen}"
+    # JC rotula el mapa con sus tres pestañas (EAC | Cuota Hilton | Tambo): el titulo es el
+    # regimen elegido.
+    titulo: "{regimen}"
     medida: cabezas
     acciones:
       - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}

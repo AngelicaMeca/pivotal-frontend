@@ -8,6 +8,10 @@
 # en _privado/ (`reservado: true`), no la enlaza ninguna pagina y scripts/tableros.mjs la
 # borra antes de publicar. Para publicarla hace falta la decision escrita de Francisco aca
 # (`aprobado_por`) y sacarle `reservado`.
+# NO PUBLICADA desde el 13-oct-2026: sus cuadros (tablas y anillos por provincia de destino y
+# de origen) se publican ahora en la pagina de Movimientos de la especie, en el lugar donde
+# los dibuja JC (decision de la usuaria con el OK de Francisco). Queda como registro.
+estado: no-publicada
 id: tablero-bovinos-movimientos-provincias
 tipo: tablero
 familia: movimientos-bovinos

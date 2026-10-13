@@ -1,0 +1,37 @@
+# Comunes de Ganaderia > Bovinos > "Estratos y UP" (hoja "GanBovESTR" de la maqueta "Maqueta
+# Ganad VF", 9-oct-2026). Lo lee site_build.ContextoStockEspecie.
+#
+# Decision de la usuaria del 13-oct-2026: la pagina SE PUBLICA con la base que nombra JC en su
+# celda E165 ("Base de estratos y UP | 48 | PB 11 | HOJA ESTRATIFICACION"). Dos marts en uno:
+# - `principal`: el stock por departamento de la base 48 (hoja "Data stock SDE"), que da el
+#   mapa, los KPIs y la tabla de departamentos de la pagina Stocks;
+# - `estrato`: la hoja "Estratificación" de la MISMA base, que vive en el mismo mart separada
+#   por la columna `estrato` y es PROVINCIAL (`estrato_provincial`): SENASA no la abre por
+#   departamento ni por categoria (trae Vacas y Total de bovinos).
+id: _comunes-stock-bovinos-estratos
+especie: bovinos
+
+marts:
+  principal: hecho_stock_bovino
+  estrato: hecho_stock_bovino
+  estrato_provincial: true
+
+presentacion:
+  subsector: "ganado bovino"
+  tipos_de_variable:
+    cabezas: cabezas
+
+categorias:
+  orden: [Vacas, Vaquillonas, Novillos, Novillitos, Terneros, Terneras, Toros, Toritos, Bueyes]
+  agregado: "Total"
+
+tiempo:
+  ventana_anios:
+    desde: 2012
+    hasta: 2025
+
+fuente:
+  # La base 48 la declara el indice como MAGyP. JC cita "Fuente: SENASA" en los cuadros de su
+  # hoja (y la hoja "Estratificación" lo dice al pie): se cita como JC, cuadro por cuadro, en
+  # el spec de la pagina. La duda va al backlog.
+  organismo_esperado: "MAGyP"

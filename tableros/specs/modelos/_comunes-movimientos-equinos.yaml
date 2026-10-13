@@ -15,8 +15,15 @@ presentacion:
     cabezas: cabezas
     documentos: documentos
 
+# El encabezado de JC para la columna del total en sus tablas de equinos.
+encabezado_total: "Total Equidos"
+
 categorias:
-  orden: [Padrillos, Caballos, Yeguas, Potrillos/as, Mulas, Burros, Asnos]
+  # "Burros/asnos" en UNA columna, como la escribe JC en su tabla de "GanEquiDTE" (y como la
+  # informa la serie de stock): la base 230 los separa y se suman al leer (`juntar`).
+  orden: [Padrillos, Caballos, Yeguas, Potrillos/as, Mulas, Burros/asnos]
+  juntar:
+    "Burros/asnos": [Burros, Asnos]
 
 tiempo:
   ventana_anios:

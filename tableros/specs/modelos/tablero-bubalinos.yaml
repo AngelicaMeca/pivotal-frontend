@@ -2,10 +2,23 @@
 # (9-oct-2026).
 #
 # JC: "NO se selecciona departamento, sólo se visualiza la escala" (celda E112). Por eso no
-# hay chips de categoria y el mapa solo pinta. La faena (tabla y precios) sale de Siocarnes.
+# hay clic ni "Seleccione departamento" en el mapa. La faena (tabla y precios) sale de
+# Siocarnes (base 89).
 #
-# Lo unico de su hoja que no se construye es la tabla de EQUIVALENCIAS de categorias
-# (Resolucion MAGyP 470/2012): en la maqueta es una imagen, no un dato.
+# 13-oct-2026, revision contra la maqueta ("POR FAVOR SIGAMOS EL MODELO"):
+# - La disposicion de sus anclajes. Izquierda: el mapa "Stocks" y debajo las equivalencias de
+#   categorias bovinas/bubalinas con su texto y la clasificacion por kilos vivos (Res. MAGyP
+#   470/2012), que JC tiene en CELDAS (BU64:BW71 y BW78:BX118): se transcriben al spec.
+#   Derecha: la serie 2015-2025, la tabla departamento x estrato, los dos anillos lado a lado
+#   y la faena con su nota del VBP al costado. Al pie, los dos graficos de precio.
+# - UNA tabla departamento x estrato como la de JC: sus columnas en su orden (sin Bueyes,
+#   que el no pone), la fila "Tot X" solo cuando el departamento tiene mas de un estrato
+#   (E115), la columna "% Depart." y "Totales" al pie.
+# - Fuera los tres cuadros que la maqueta no tiene (barras del total, barras apiladas y el
+#   resumen por estrato).
+# - Precio de faena PROMEDIO SIMPLE como JC: novillito $ 2.518 y VBP $ 3.581, exactos.
+# - Tarjeta "Datos 2025", miga literal, rotulo "VBP (millones $ corr.)", sin variacion, y
+#   "Generar PDF" (BF105).
 id: tablero-bubalinos
 tipo: tablero
 familia: stock-bubalinos
@@ -14,64 +27,109 @@ seccion: bubalinos
 titulo: "Bubalinos"
 subtitulo: "Provincia de Santiago del Estero · existencias por categoría, departamento y estrato"
 
+breadcrumb: "Ganadería - Bubalinos (Búfalos) - Provincia"
+
+kpis_sin_variacion: true
+tarjeta_datos:
+  icono: bubalinos
+
 # La banda de JC: "Stock 2.386 cab", "Unidades Productivas 48", "VBP (millones $ corr.)
-# $ 3.581" y "% Dto Guasayán 29,38 %". Stock, UP y Guasayan dan exacto. El VBP da distinto
-# porque JC promedia el precio de las ventas sin ponderar (ver tabla-faena).
+# $ 3.581" y "% Dto Guasayán 29,38 %". Las cuatro dan exacto.
 indicadores:
   - medida: cabezas
     categoria: "Total"
     etiqueta: "Stock"
   - medida: renspas
     origen: estrato
-    etiqueta: "Unidades productivas"
+    etiqueta: "Unidades Productivas"
   - faena: vbp
-    etiqueta: "VBP faena (millones $ corr.)"
+    etiqueta: "VBP (millones $ corr.)"
   - lider: cabezas
     como: participacion
     etiqueta: "% Dto {departamento}"
 
 paneles:
   alto: fluye
+  acciones_de_tablero:
+    - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
   mapa:
-    titulo: "Stock por departamento"
+    titulo: "Stocks"
     medida: cabezas
+    fuente: "Fuente: SENASA"
     acciones:
       - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   tabla-evolucion:
     titulo: "Sgo. del Estero - Stocks bubalinos por categoría y totales - años {desde} a {hasta}"
-    encabezado_anio: ""
-    encabezado_total: "Total Cab"
-  evolucion-categorias:
-    titulo: "Sgo del Estero - Evolución del stock bubalino por categoría años {desde} a {hasta}"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
-  tabla-departamentos:
-    titulo: "Sgo. del Estero - Stock Bubalino por departamento, categoría y totales. UP y Establecim. - año {anio}"
+    encabezado_anio: "Año"
+    encabezado_total: "Total Búfalos"
+    # La cita de JC al pie de esta tabla (AD29). La config de la base 183 dice SENASA: va al
+    # backlog.
+    fuente: "Fuente: MAGyP"
+  tabla-departamento-estratos:
+    titulo: "Sgo. del Estero - Stock Bubalino por departamento, categoría, totales y estrato. UP y Establecim. - año {anio}"
     encabezado_geo: "Departamento"
+    encabezado_estrato: "estrato"
     encabezado_total: "Total Cab"
-    rotulo_total: "TOTAL PROV"
+    rotulo_total: "Totales"
+    total: abajo
+    subtotal: varios
+    rotulo_subtotal: "Tot {departamento}"
+    columna_pct: "% Depart."
+    estrato_con_numero: true
+    # Las columnas de JC, en su orden y sin Bueyes. La base 153 nombra las categorias como
+    # bovinos, igual que la tabla de JC ("emplearemos en algunos cuadros ... la de Bovinos").
+    categorias: [Terneras, Terneros, Novillos, Novillitos, Vaquillonas, Toritos, Vacas, Toros]
     columnas_extra:
-      - {medida: establecimientos, encabezado: "Establec."}
+      - {medida: establecimientos, encabezado: "Establ"}
       - {medida: renspas, encabezado: "UP"}
-    # Texto de JC (cuadro de texto de su hoja), con la errata "normbrar" corregida.
+    fuente: "Fuente: SENASA"
+  # Las equivalencias y la clasificacion por kilos vivos: texto de JC en CELDAS de su hoja, no
+  # un dato de una base. Literal; la errata "normbrar" del texto corregida.
+  fija-equivalencias:
+    titulo: "Equivalencias entre las categorías de BOVINOS y BUBALINOS (Búfalos)"
     nota: >
-      Equivalencias entre las categorías de bovinos y bubalinos: a efectos de ir
-      acostumbrando al sector a nombrar adecuadamente a las categorías de los bubalinos,
-      empleamos en algunos cuadros las de bovinos y en otros las de bubalinos, porque así
-      figuran formalmente en las bases de datos.
-  evolucion-total:
-    titulo: "Sgo del Estero - Evolución del stock total bubalinos - años {desde} a {hasta}"
-    medida_nombre: "Stock total"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
-  tabla-estratos:
-    titulo: "Sgo. del Estero - Stock Bubalino por estrato, categoría, totales, UP y Establecim. - año {anio}"
-    encabezado_estrato: "Estrato"
-    encabezado_total: "Total Cab"
-    rotulo_total: "TOTAL PROV"
-    columnas_extra:
-      - {medida: establecimientos, encabezado: "Establec."}
-      - {medida: renspas, encabezado: "UP"}
+      A efectos de ir acostumbrando al sector a nombrar adecuadamente a las categorías de los
+      Bubalinos, emplearemos en algunos cuadros y gráficos la de Bovinos y en otros las de
+      Bubalinos (porque así figuran formalmente en las bases de datos).
+    tablas:
+      - titulo: "Equivalencias de categorías"
+        columnas: ["Categ Vacuna (Bovinos)", "Categ Bubalina Equivalente", "Descripción y Criterios Comunes"]
+        filas:
+          - ["Ternera", "Bucerra", "Hembra joven, desde el destete hasta que deja de ser catalogada como liviana/pesada por peso. Dientes de leche."]
+          - ["Ternero", "Bucerro", "Macho joven, desde el destete. Dientes de leche."]
+          - ["Vaquillona", "Bubilla", "Hembra joven que aún no ha tenido su primer parto. Habitualmente hasta 4 dientes incisivos permanentes."]
+          - ["Novillito / Novillo", "Bubillito / Bubillo", "Machos castrados en proceso de recría o engorde para faena."]
+          - ["Vaca", "Búfala", "Hembra adulta que ya ha entrado en servicio/parición o posee más de 4 dientes incisivos permanentes."]
+          - ["Toro / Torito (MEJ)", "Búfalo / Búfalo Entero", "Machos enteros destinados a la reproducción o machos jóvenes enteros para faena."]
+      - titulo: "Clasificación por kilos vivos"
+        columnas: ["Clasificación", "Kg Vivos"]
+        filas:
+          - {celdas: ["1 - Bucerra", ""], resaltada: true}
+          - ["Liviana", "Hasta 320"]
+          - ["Pesada", "Más de 320"]
+          - {celdas: ["2 - Bubilla", ""], resaltada: true}
+          - ["Liviana", "Hasta 420"]
+          - ["Pesada", "Más de 420"]
+          - {celdas: ["3 - Búfala", ""], resaltada: true}
+          - ["Joven Liviana", "Hasta 450"]
+          - ["Joven Pesada", "Más de 450"]
+          - ["Adulta Liviana", "Hasta 530"]
+          - ["Adulta Pesada", "Más de 530"]
+          - {celdas: ["4 - Bucerro", ""], resaltada: true}
+          - ["Liviano", "Hasta 320"]
+          - ["Pesado", "Más de 320"]
+          - {celdas: ["5 - Bubillito", ""], resaltada: true}
+          - ["Liviano", "Hasta 420"]
+          - ["Pesado", "Más de 420"]
+          - {celdas: ["6 - Bubillo", ""], resaltada: true}
+          - ["Joven Liviano", "Hasta 450"]
+          - ["Joven Pesado", "Más de 450"]
+          - ["Adulto Liviano", "Hasta 530"]
+          - ["Adulto Pesado", "Más de 530"]
+          - {celdas: ["7 - Búfalo Entero Joven", ""], resaltada: true}
+          - ["Liviano", "Hasta 420"]
+          - ["Pesado", "Más de 420"]
+    fuente: "Fuente: MAGyP - Resolución 470/2012"
   anillo-estratos:
     titulo: "Sgo del Estero - Bubalinos, Participación por estrato en el total de cabezas - año {anio}"
     acciones:
@@ -88,14 +146,15 @@ paneles:
     encabezados: ["Categorías", "Tn", "%/Total", "Precio prom $/Kg", "VBP (*) Millones $ corr", "%/Total"]
     rotulo_total: "Bubalinos TOTAL"
     prefijo_fila: "Bubalino "
-    # Texto de JC (cuadro de texto al lado de su tabla). Se agrega como se calcula aca el
-    # precio, que no es como lo calcula su maqueta (backlog).
+    # Texto LITERAL de JC (cuadro de texto AL COSTADO de su tabla), "paraa" corregido en el
+    # titulo.
     nota: >
-      (*) VBP - Valor Bruto de la Producción ($ corrientes). Surge de multiplicar el precio
-      pagado al productor por la cantidad de toneladas vendidas a faena. El precio es
-      declarado por el productor ganadero. Si bien técnicamente no representaría de manera
-      exacta el VBP, es una estimación en base a datos comprobables ($ corrientes). El precio
-      promedio está ponderado por los kilos de cada venta.
+      (*) VBP - Valor Bruto de la Producción mensual ($ corrientes) Surge de multiplicar el
+      precio Pagado al Productor (PPP - Precio promedio $ corr.) por la cantidad de tn
+      vendidas a faena. El precio es declarado por el productor ganadero. Si bien técnicamente
+      no representaría de manera exacta el VBP, es una estimación en base a datos
+      comprobables. ($ corrientes) : Implica que el precio expresado NO fue actualizado
+      mediante ningún método y corresponde a valores históricos.
   precios-faena-1:
     titulo: "Sgo del Estero - Bubalinos Precio declarado venta a faena - Novillo y Novillito - $/Kg en pie"
     categorias: ["Bubalino Novillito", "Bubalino Novillo"]
@@ -108,23 +167,17 @@ paneles:
     desde: 2025
     acciones:
       - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
-  # Disposicion en COLUMNAS (12-oct-2026, "reacomoda... para que no haya espacios vacios"):
-  # cada banda tiene dos columnas que se apilan a su ritmo, como las hojas de JC (graficos a
-  # la izquierda, tablas a la derecha). Las bandas agrupan cuadros de alto parecido; los
-  # altos se midieron a 1600 px.
   disposicion: columnas
   orden:
     - {id: mapa, ancho: 4, columna: izq}
-    - {id: evolucion-total, ancho: 4, columna: izq}
-    - {id: evolucion-categorias, ancho: 4, columna: izq}
+    - {id: fija-equivalencias, ancho: 4, columna: izq}
     - {id: tabla-evolucion, ancho: 8, columna: der}
-    - {id: tabla-departamentos, ancho: 8, columna: der}
-    - {id: tabla-estratos, ancho: 8, columna: der}
-    - {id: tabla-faena, ancho: 8, columna: der}
-    - {id: anillo-estratos, ancho: 6, columna: fila}
-    - {id: anillo-estratos-up, ancho: 6, columna: fila}
-    - {id: precios-faena-1, ancho: 6, columna: izq, nueva_banda: true}
-    - {id: precios-faena-2, ancho: 6, columna: der}
+    - {id: tabla-departamento-estratos, ancho: 8, columna: der, compacta: true}
+    - {id: anillo-estratos, ancho: 8, columna: der, en_par: true}
+    - {id: anillo-estratos-up, ancho: 8, columna: der, en_par: true}
+    - {id: tabla-faena, ancho: 8, columna: der, nota_al_lado: der}
+    - {id: precios-faena-1, ancho: 6, columna: fila}
+    - {id: precios-faena-2, ancho: 6, columna: fila}
 
 filtros:
   - id: anio

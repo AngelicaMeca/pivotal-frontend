@@ -26,70 +26,79 @@ titulo_pagina: "Indicadores"
 titulo: "Bovinos"
 subtitulo: "Provincia de Santiago del Estero · relaciones entre categorías del stock"
 
-# JC no dibuja banda de KPIs en esta hoja (solo el titulo "Indicadores bovinos 2025
-# Provincia y departamentos"); van las cuatro relaciones principales de la provincia.
-indicadores:
-  - etiqueta: "Vaca / Stock"
-    numerador: [Vacas]
-    denominador: [Total]
-  - etiqueta: "Vaquillona / Vaca"
-    numerador: [Vaquillonas]
-    denominador: [Vacas]
-  - etiqueta: "Ternero / Vaca"
-    numerador: [Terneros, Terneras]
-    denominador: [Vacas]
-  - etiqueta: "Nvto + Novillo / Vaca"
-    numerador: [Novillitos, Novillos]
-    denominador: [Vacas]
+breadcrumb: "Ganadería - Bovinos - Provincia - Indicadores"
+
+# JC NO dibuja banda de KPIs en esta hoja (13-oct-2026, revision contra la maqueta): arriba va
+# solo su encabezado con el icono de la vaca, "Indicadores bovinos 2025 Provincia y
+# departamentos" (filas 6-10). Las cuatro tarjetas de relaciones que habia se sacaron: las
+# cinco relaciones -Toro/Vaca incluida- estan en la tabla de la derecha.
+indicadores: []
+tarjeta_datos:
+  icono: bovinos
+  nombre: "Indicadores bovinos {anio}"
+  detalle: "Provincia y departamentos"
 
 paneles:
   alto: fluye
+  acciones_de_tablero:
+    - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
   texto-metodologia:
-    titulo: "Metodología de cálculo e interpretación de los indicadores"
-    # Texto de JC (cuadro de texto de su hoja, columna 8, fila 12), sin cambiar una idea.
+    # Texto LITERAL de JC: el cuadro de texto de su hoja (columna 8, fila 12; drawing2.xml),
+    # con sus vinetas ">" y sus palabras ("partido/departamento", "EAP"). Solo se unieron
+    # las letras que el Excel parte en dos ("C uando") y se sacaron espacios dobles. La cita
+    # (*) va al pie, que es donde la pone el.
+    titulo: "Metodología de cálculo e interpretación de los indicadores (*)"
     parrafos:
-      - titulo: "Vaca / Stock"
+      - titulo: "Vaca /Stock"
+        aparte: true
         texto: >
           Permite definir la actividad predominante en cada departamento, en cuanto a la
-          cantidad de vientres, considerando que: cuando es superior a 0,45 define a una zona
-          de cría; menos de 0,45 es zona de cría en ambientes de mejor aptitud ganadera con
-          buena incorporación de tecnología; superior a 0,5, zona de cría en ambientes con
-          menor aptitud ganadera y en forma más extensiva, con escasa incorporación de
-          tecnología.
+          cantidad de vientres, considerando que:
+        items:
+          - "Cuando es superior a 0.45 define a una zona de cría"
+          - "Menos de 0.45 es zona de cría en ambientes de mejor aptitud ganadera con buena incorporación de tecnología"
+          - "Superior a 0.5 zona de cría en ambientes con menor aptitud ganadera y en forma más extensiva, con escasa incorporación de tecnología"
       - titulo: "Vaquillona / Vaca"
+        aparte: true
         texto: >
           Esta relación hace referencia al porcentaje de reposición del plantel de madres, es
-          decir, vaquillonas que entran al rodeo para reposición de vacas que salen del mismo
-          por viejas, vacías o enfermas. En la medida que sea inferior a 0,2 indica una alta
-          vida útil de los vientres, son longevas, por lo tanto la cantidad de vaquillonas de
-          reemplazo por año es menor. Cabe aclarar que este índice sobreestima el porcentaje de
+          decir vaquillonas que entran al rodeo para reposición de vacas que salen del mismo por
+          viejas, vacías o por enfermas. En la medida que sea inferior a 0.2 indica una alta vida
+          útil de los vientres, son longevas, por lo tanto la cantidad de vaquillonas de reemplazo
+          por año es menor. Cabe aclarar que este índice sobreestima el porcentaje de
           reposición, pues una alta proporción de dichas vaquillonas son destinadas a engorde y
           venta.
-      - titulo: "Ternero / Vaca"
+      - titulo: "Ternero/vaca"
+        aparte: true
         texto: >
-          Este indicador aproxima la posible tasa de destete del departamento, es decir, es una
-          medida de eficiencia de la actividad, considerando que: hasta 0,5 caracteriza a una
-          zona de baja producción de terneros; entre 0,5 y 0,6 es índice de moderada producción
-          de terneros; superior a 0,6, buena producción de terneros. Se calcula con terneros y
-          terneras.
-      - titulo: "Novillito + Novillo / Vaca"
+          Este indicador aproxima la posible tasa de destete de partido/departamento, es decir
+          es una medida de eficiencia de la actividad considerando que:
+        items:
+          - "Hasta 0.5 caracteriza a una zona de baja producción de terneros."
+          - "Entre 0.5 y 0.60 es índice de moderada producción de terneros."
+          - "Superior a 0.6 buena producción de terneros."
+      - titulo: "Novillito + novillo/ vaca (Nto+Novillo/Vaca)"
+        aparte: true
         texto: >
-          Calcula la relación entre la suma de novillitos y novillos en el departamento sobre el
-          total de vacas existentes en el mismo. Refleja el tipo de actividad ganadera
-          predominante según los siguientes criterios: hasta 0,4 se presume que predomina la
-          actividad de cría; entre 0,4 y 1,2 se estima que la actividad es de ciclo completo;
-          superior a 1,2 la actividad desarrollada es de invernada, engorde y terminación.
-      - titulo: "Toro / Vaca"
+          Calcula la relación entre la suma novillitos y novillos en el partido/departamento,
+          sobre el total de vacas existentes en el mismo. Este indicador refleja el tipo de
+          actividad ganadera predominante en cada distrito según los siguientes criterios:
+        items:
+          - "Hasta 0.4 se presume que predomina la actividad de cría."
+          - "Entre 0.4 y 1.2 se estima que la actividad es de ciclo completo."
+          - "Superior a 1.2 la actividad desarrollada es de invernada-engorde-terminación"
+      - titulo: "Toro/ Vaca"
+        aparte: true
         texto: >
-          Este índice refleja el porcentaje de toros en servicio que posee cada departamento:
-          por ejemplo, un índice de 0,04 significa un 4% de toros en servicio. La cantidad de
-          toros utilizados varía según las condiciones agroecológicas y de infraestructura de
-          la explotación, y es ajustada en cada sistema ganadero tratando de asegurar el mejor
-          porcentaje de preñez posible.
+          Este índice refleja el porcentaje de toros en servicio que posee cada
+          partido/departamento, por ejemplo un índice de 0,04 significa un 4% de toros en
+          servicio. La cantidad de toros utilizados varía según las condiciones agro ecológicas
+          y de infraestructura de la EAP, y es ajustada en cada sistema ganadero tratando de
+          asegurar el mejor porcentaje de preñez posible.
     fuente: >-
-      Fuente: "Análisis de la actividad ganadera bovina Provincial y Regional por estratos de
-      productores y composición del stock - Años 2008 a 2014" - Fumagalli Arnaldo - INTA - EEA
-      Sgo del Estero, RIAN - Observatorio Estratégico - 2015.
+      (*) " Análisis de la actividad ganadera bovina Provincial y Regional por estratos de
+      productores y composición del stock - Años 2008 a 2014 " - Fumagalli Arnaldo. - INTA -
+      EEA Sgo del Estero, RIAN -Observatorio Estratégico - 2015.
   tabla-relaciones:
     titulo: "Relaciones entre categorías del stock - Año {anio} - Santiago del Estero"
     subtitulo: "Cocientes entre cabezas de cada categoría"
@@ -101,9 +110,11 @@ paneles:
       - {etiqueta: "Ternero/Vaca", numerador: [Terneros, Terneras], denominador: [Vacas]}
       - {etiqueta: "Nvto+Novillo/Vaca", numerador: [Novillitos, Novillos], denominador: [Vacas]}
       - {etiqueta: "Toro/Vaca", numerador: [Toros], denominador: [Vacas]}
+    # La cita de JC al pie de su tabla (AJ48).
+    fuente: "Fuente: SENASA"
     nota: >
       Cada relación se calcula sobre las cabezas de ese departamento (o de la provincia), nunca
-      promediando las de los departamentos.
+      promediando las de los departamentos. Ternero/Vaca se calcula con terneros y terneras.
   # Como en la hoja de JC: la metodologia a la izquierda y la tabla a la derecha.
   # Disposicion en COLUMNAS (12-oct-2026, "vuelve a revisar, hay tableros donde todavia hay
   # tarjetas que se ven asi"): la grilla de filas estiraba cada cuadro al alto del mas alto

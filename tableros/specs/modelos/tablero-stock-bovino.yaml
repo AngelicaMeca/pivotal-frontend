@@ -23,6 +23,24 @@ titulo: "Bovinos"
 subtitulo: "Provincia de Santiago del Estero · existencias al cierre de cada año"
 
 # ---------------------------------------------------------------------------
+# REVISION CONTRA LA MAQUETA (13-oct-2026, JC: "NO SE ESTÁ RESPETANDO PARA NADA LA MAQUETA...
+# POR FAVOR SIGAMOS EL MODELO"). Lo que se ajusto en esta hoja ("GanBov ST"):
+# - la miga es la celda N5 de JC: "Ganadería - Bovinos - Provincia - Stocks";
+# - la tarjeta "Datos 2025" con el icono de la vaca abre la banda, y las tarjetas no llevan
+#   variacion contra el anio anterior (JC no la dibuja);
+# - el mapa se titula "Stocks" (la pestaña de JC) y cita "Fuente: SENASA" como su H39;
+# - la matriz departamento x anio va SIN la fila TOTAL PROV (JC no la pone) y entra entera a
+#   1440 px (`compacta`);
+# - la disposicion es la de sus anclajes: a la izquierda mapa, barras del total, barras
+#   apiladas y anillo; a la derecha las tres tablas; las caravanas a todo el ancho debajo;
+# - "Generar PDF" al pie (BE113).
+# Lo que no se pudo: la faena como imagen del tablero de SENASA (F135) no tiene JPG (backlog
+# 79) y la leyenda del mapa con cortes fijos espera a JC (backlog 91).
+kpis_sin_variacion: true
+tarjeta_datos:
+  icono: bovinos
+
+# ---------------------------------------------------------------------------
 # INDICADORES DE CABECERA
 # ---------------------------------------------------------------------------
 # Los dos primeros son volumen (cuanta hacienda hay y cuantos vientres), el tercero es
@@ -39,82 +57,22 @@ indicadores:
   # dos de relaciones entre categorias que iban provisoriamente.
   - medida: cabezas
     categoria: "Total"
-    etiqueta: "Stock total"
+    etiqueta: "Stock"
   - medida: unidades_productivas
     categoria: "Total"
-    etiqueta: "Unidades productivas"
+    etiqueta: "Unidades Productivas"
   - lider: cabezas
     etiqueta: "Stock Dto {departamento}"
   - lider: unidades_productivas
     etiqueta: "U.P. Dto {departamento}"
 
 # ---------------------------------------------------------------------------
-# CRUZAR DATOS: la comparacion adentro del zoom (Francisco, 24-sep-2026)
+# SIN CRUZAR DATOS (13-oct-2026)
 # ---------------------------------------------------------------------------
-cruzar_datos:
-  pedido_por: "Francisco, 24-sep-2026"
-  que_pidio: >
-    Dos formas de cruce, elegidas por el explicitamente: dos VALORES DEL MISMO FILTRO
-    superpuestos en un mismo grafico (dos cultivos, dos departamentos, dos anios) y dos
-    MEDIDAS distintas de la misma base, con dos ejes cuando no comparten unidad. Descarto la
-    tercera forma que estaba sobre la mesa: unir bases distintas en un mismo cuadro.
-  donde_vive: >
-    Adentro del ZOOM y en ningun otro lado. El tablero es la maqueta literal de JC -cuatro
-    cuadros, una pantalla- y meterle selectores de comparacion romperia justo lo que el pidio
-    que se respetara; el zoom ya tiene su barra de controles y lugar de sobra. Francisco lo
-    sabe y esta de acuerdo. Son dos desplegables APAGADOS por defecto, y al cerrar el zoom la
-    comparacion se apaga sola: el tablero vuelve a ser el de JC.
-  que_cuadros_la_llevan: "tendencia (la serie anual de existencias), y ninguno mas"
-  que_cuadros_no: >
-    El mapa no (un mapa no admite dos categorias encima), el anillo tampoco (ya muestra la composicion entera) y el ranking tampoco: serian dos ordenes distintos en la misma tabla.
-  reglas_de_jc_que_la_condicionan:
-    nunca_se_combinan_en_un_numero: >
-      Las dos series no se suman ni se promedian NUNCA: se dibujan una al lado de la otra. El
-      rendimiento no se promedia entre cultivos y un precio no se suma. Cada serie sale de su
-      propia combinacion del payload, ya calculada por el build; el navegador no hace una sola
-      cuenta.
-    cobertura_despareja: >
-      Los anios sin declaracion viajan como huecos y no se dibujan (`connectNulls: false`). Todas las categorias de esta base cubren los mismos anios, asi que no hay cobertura despareja que advertir; si alguna entrega la trajera, el hueco se veria como hueco.
-    unidades: >
-      Si las dos medidas comparten unidad va UN solo eje (el build recalcula la escala sobre
-      las dos series juntas para que la segunda entre entera). Si no la comparten, van dos
-      ejes y cada uno con su unidad rotulada, con la misma cantidad de intervalos para que las
-      marcas caigan sobre las mismas lineas de grilla. Nunca dos escalas sobre el mismo eje.
-    colores: >
-      Este cuadro no pinta por rampa de variable: su linea es cromo del tema (el verde medio declarado en site/theme.yaml para lineas de tendencia), asi que la serie comparada usa el otro verde de series del mismo theme.
-      Lo que distingue a las dos series ademas del tono es el PUNTEADO de la comparada, que es
-      lo unico que sobrevive a la impresion en blanco y negro con la que lee JC. Queda como
-      pregunta para JC en el backlog: si prefiere otra cosa, se cambia en el protocolo y
-      cambia en todo el sitio.
-    leyenda_y_titulo: >
-      La leyenda dice que es cada serie sin ambiguedad ("Vacas: Cabezas") y el titulo del
-      cuadro refleja que hay comparacion ("... - comparado con Novillos"). Las dos frases salen
-      de las
-      plantillas de este spec: el navegador sustituye slots, no escribe texto.
-  sobre_el_pdf:
-    decision: "El PDF sigue siendo el TABLERO completo. La comparacion no viaja."
-    por_que: >
-      El formato de la hoja lo define la clase `imprimiendo` sobre el tablero entero y un
-      dialogo modal no se imprime: con el cuadro ampliado afuera de su celda, la hoja saldria
-      con un hueco donde iba el cuadro. Imprimir SOLO el cuadro ampliado seria otro producto
-      (otra hoja, con su propio formato) y nadie lo pidio. Se eligio lo mas simple y
-      predecible: "Generar PDF" cierra el zoom -y con el la comparacion- e imprime el tablero
-      con la seleccion vigente.
-    como_se_avisa: >
-      No se deja que el usuario lo descubra perdiendo lo que estaba mirando: la barra del zoom
-      lo dice al lado de los dos desplegables, con el texto de
-      `paneles.<id>.comparacion.nota`.
-    si_alguna_vez_se_quiere_al_reves: >
-      Habria que darle al cuadro ampliado su propio formato de hoja (una pagina, un cuadro, su
-      fuente y sus notas) y decidir que pasa con el resto del tablero. Es otra tarea y va al
-      backlog, no una variante de esta.
-  payload: >
-    La comparacion por valor no agrega un byte al JSON de datos: es una segunda clave de
-    combinacion y los combos ya estan en el payload (si el archivo esta partido por ese mismo
-    filtro, el navegador baja la otra particion a pedido, como hace para cualquier cambio de
-    ese filtro). Lo unico que se agrego son las series de la segunda medida (`medidas_extra`)
-    donde el cuadro la ofrece, y el color de comparacion de cada serie. No se genera el
-    producto cartesiano de las comparaciones posibles: seria imposible de sostener.
+# Aca estaba `cruzar_datos`: el zoom de la evolucion dejaba superponer otra categoria
+# ("Vacas comparado con Novillos"). Se saco por pedido de JC (13-oct-2026): "JAMAS SE
+# PUEDE ANALIZAR UN STOCK SEPARANDO LAS CATEGORIAS". El zoom sigue, sin comparacion; el
+# build corta la corrida si un tablero de stock vuelve a declarar una.
 
 # ---------------------------------------------------------------------------
 # ZOOM: ampliar un cuadro a pantalla completa (Francisco, 24-sep-2026)
@@ -168,13 +126,18 @@ zoom_de_los_cuadros:
 # El cuarto cuadro de JC, "Bovinos, caravanas en existencia y promedio de solicitudes"
 # (fila 91 de su hoja), NO se construye: no hay base de caravanas en la entrega. Backlog 84.
 # La miga de agricultura: "Provincia" es el link de vuelta cuando hay un departamento elegido.
-breadcrumb: "Ganadería - Bovinos - Provincia - {departamento}"
+breadcrumb: "Ganadería - Bovinos - Provincia - {departamento} - Stocks"
 
 paneles:
   alto: fluye
+  # "Generar PDF" al pie de la hoja, como en agricultura (celda BE113 de "GanBov ST").
+  acciones_de_tablero:
+    - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
 
   mapa:
-    titulo: "Stock por departamento"
+    # La pestaña de JC sobre su mapa ("Stocks") y su cita al pie (H39).
+    titulo: "Stocks"
+    fuente: "Fuente: SENASA"
     # El color lo fija el protocolo por TIPO de variable: cabezas va en la rampa marron, la
     # misma que usa la base 85. No se elige aca.
     medida: cabezas
@@ -228,6 +191,9 @@ paneles:
     titulo: "Sgo. del Estero - Evolución del stock bovino total por departamento - años {desde} a {hasta}"
     encabezado_geo: "Departamento"
     rotulo_total: "TOTAL PROV"
+    # JC no pone la fila de la provincia en esta matriz: el total por anio ya esta en la
+    # tabla de evolucion de arriba.
+    sin_total: true
     # JC arranca esta tabla en 2015 y no en 2012 como las otras dos: son 27 filas y con
     # catorce columnas no entra. Se respeta su recorte.
     desde: 2015
@@ -285,6 +251,10 @@ paneles:
   # cada banda tiene dos columnas que se apilan a su ritmo, como las hojas de JC (graficos a
   # la izquierda, tablas a la derecha). Las bandas agrupan cuadros de alto parecido; los
   # altos se midieron a 1600 px.
+  # 13-oct-2026: la disposicion de los anclajes de JC. Columna izquierda (col. 6-29 de su
+  # hoja): mapa (filas 5-38), barras del total (39-55), apiladas (55-72) y anillo (72-89).
+  # Columna derecha (29-59): tabla por departamento (15-38), tabla de evolucion (39-55) y la
+  # matriz departamento x anio (55-85). Debajo, a todo el ancho, las caravanas (90-109).
   disposicion: columnas
   orden:
     - {id: mapa, ancho: 4, columna: izq}
@@ -292,20 +262,18 @@ paneles:
     - {id: evolucion-total, ancho: 4, columna: izq, nueva_banda: true}
     - {id: tabla-evolucion, ancho: 8, columna: der}
     - {id: evolucion-categorias, ancho: 4, columna: izq, nueva_banda: true}
-    - {id: tabla-departamento-anios, ancho: 8, columna: der, scroll_interno: true}
-    - {id: anillo-departamentos, ancho: 4, columna: izq, nueva_banda: true}
-    - {id: cifras-caravanas, ancho: 8, columna: der}
+    - {id: anillo-departamentos, ancho: 4, columna: izq}
+    - {id: tabla-departamento-anios, ancho: 8, columna: der, compacta: true}
+    - {id: cifras-caravanas, ancho: 12}
 
 # ---------------------------------------------------------------------------
 # FILTROS
 # ---------------------------------------------------------------------------
-# Dos, que es el maximo razonable para un tablero: el anio manda sobre todo y la categoria
-# permite mirar el rodeo por partes (ver solo las vacas, solo los terneros). Con la categoria
-# en "Total" el tablero muestra el rodeo entero, que es como abre.
+# Solo el anio. NO hay filtro de categoria (JC, 13-oct-2026: "JAMAS SE PUEDE ANALIZAR UN
+# STOCK SEPARANDO LAS CATEGORIAS"): el unico selector de sus hojas es el departamento, que
+# se elige con un clic en el mapa. El mapa, la evolucion total y los KPIs de volumen son
+# siempre el TOTAL; las categorias se ven solo juntas (tablas completas, barras apiladas).
+# El build corta la corrida si un tablero de stock vuelve a declarar `categoria`.
 filtros:
   - id: anio
     zona: periodo        # barra verde de la cabecera
-  - id: categoria
-    zona: barra          # barra de chips
-    incluye_total: true
-    defecto: "Total"

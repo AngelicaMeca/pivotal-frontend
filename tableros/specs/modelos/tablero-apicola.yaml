@@ -15,6 +15,16 @@ seccion: apicola
 titulo: "Apícola"
 subtitulo: "Provincia de Santiago del Estero · apiarios y colmenas por departamento"
 
+# 13-oct-2026 (revision contra la maqueta): TRES columnas como la hoja de JC (mapa y anillo |
+# tabla de apiarios y colmenas | ranking, sin scroll), el mapa rotulado con la variable
+# elegida ("Colmenas", su pestaña), una rampa de color POR VARIABLE (E84: colmenas en marron,
+# apiarios en borravino), miga literal (N5), tarjeta "Datos 2025" y "Generar PDF" (BF59).
+# JC cita "Fuente: SENASA" bajo su mapa (H39) y la base 30 es de RENAPA/MAGyP: se sigue a JC
+# en ese cuadro y la duda va al backlog.
+breadcrumb: "Ganadería - Apícola - Provincia"
+tarjeta_datos:
+  icono: apicolas
+
 # La banda de JC, textual: "Total colmenas 93.618", "Colm. prom. por apiario 77,3",
 # "Apiarios Dto Rivadavia 102" y "Colmenas Dto Choya 12.023". Las cuatro dan exactas.
 indicadores:
@@ -34,8 +44,11 @@ indicadores:
 
 paneles:
   alto: fluye
+  acciones_de_tablero:
+    - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
   mapa:
-    titulo: "{variable} por departamento"
+    titulo: "{variable}"
+    fuente: "Fuente: SENASA"
     variables: [colmenas, apiarios]
     nombres: {colmenas: "Colmenas", apiarios: "Apiarios"}
     unidades: {colmenas: "colmenas", apiarios: "apiarios"}
@@ -61,8 +74,8 @@ paneles:
   orden:
     - {id: mapa, ancho: 4, columna: izq}
     - {id: anillo-departamentos, ancho: 4, columna: izq}
-    - {id: tabla-departamentos, ancho: 8, columna: der}
-    - {id: tabla-ranking, ancho: 8, columna: der, scroll_interno: true}
+    - {id: tabla-departamentos, ancho: 4, columna: centro}
+    - {id: tabla-ranking, ancho: 4, columna: der}
 
 filtros:
   - id: variable

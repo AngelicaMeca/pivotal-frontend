@@ -3,12 +3,19 @@
 El mismo papel que pipeline/stock.py: resuelve en un solo init los agregados que necesita la
 capa de presentacion, para que los constructores no escriban SQL.
 
-La regla que manda en esta familia (ver marts.sql_hecho_comercializacion): el PRECIO no se
-suma ni se promedia a secas. Cada linea de venta trae sus kilos y su precio por kilo; el
-precio promedio de un grupo de lineas es el ponderado por los kilos, o sea el valor total
-(kilos x precio de cada linea) dividido por los kilos de las lineas que informaron precio. Ese
-valor total es el VBP que muestra JC: "Surge de multiplicar el precio pagado al productor por
-la cantidad de tn vendidas a faena".
+La regla que manda en esta familia: el PRECIO no se suma nunca. Cada linea de venta trae sus
+kilos y su precio por kilo, y el precio promedio de un grupo de lineas es el PROMEDIO SIMPLE de
+los precios de las lineas que lo informaron. Es la cuenta de JC en su maqueta (decision de la
+usuaria del 13-oct-2026, backlog 85): con ella dan exactos sus numeros de control (novillito
+bubalino 2.518 $/kg, VBP bubalino 3.581; Hibrida Materna ene-25 1.035, Yorkshire 1.514, Capon
+1.155, Cerda 807). El ponderado por kilos seria mas preciso -una venta de una tonelada pesa lo
+mismo que una de diez kilos en el promedio simple- y queda anotado para JC por si lo quiere.
+
+El VBP es la cuenta de JC (hoja "GanBov RAZ", celda E129): "Cantidad de tn * 1.000 * precio
+promedio", por SUBCATEGORIA, y el VBP de un grupo es la suma de los de sus subcategorias. Por
+eso `valor` de un acumulado es tn x 1.000 x su propio promedio simple: vale como VBP cuando el
+acumulado es UNA subcategoria (o un grupo que JC trata como una sola fila, los bubalinos en
+la pagina de razas bovinas); para un grupo de varias hay que sumar las de sus partes.
 """
 import os
 import sys
@@ -56,13 +63,10 @@ class Comercializacion:
         for anio, mes, categoria, _raza, _geo, tn, cabezas, precio_kg in filas:
             for clave, destino in (((anio, categoria), self.anual),
                                    ((anio, mes, categoria), self.mensual)):
-                acum = destino.setdefault(clave, {"tn": 0.0, "cabezas": 0.0,
-                                                  "kg_con_precio": 0.0, "valor": 0.0})
-                acum["tn"] += tn or 0.0
-                acum["cabezas"] += cabezas or 0.0
-                if tn and precio_kg is not None:
-                    acum["kg_con_precio"] += tn * 1000.0
-                    acum["valor"] += tn * 1000.0 * precio_kg
+                _sumar(destino.setdefault(clave, _acumulado()), tn, cabezas, precio_kg)
+        for destino in (self.anual, self.mensual):
+            for acum in destino.values():
+                _cerrar(acum)
         self.categorias = sorted({c for (_, c) in self.anual})
         self.meses = sorted({(a, m) for (a, m, _) in self.mensual if m})
 
@@ -70,24 +74,22 @@ class Comercializacion:
         return (self.anual.get((anio, categoria)) or {}).get("tn")
 
     def vbp(self, anio, categoria):
-        """Valor bruto de la produccion: kilos x precio por kilo, sumado linea a linea."""
+        """Valor bruto de la produccion de una subcategoria: tn x 1.000 x su precio promedio."""
         acum = self.anual.get((anio, categoria))
-        return acum["valor"] if acum and acum["kg_con_precio"] else None
+        return acum["valor"] if acum and acum["n_precio"] else None
 
     def precio_promedio(self, anio, categoria, mes=None):
-        """$/kg ponderado por los kilos de las lineas que informaron precio."""
+        """$/kg: promedio simple de los precios de las lineas que lo informaron."""
         acum = (self.mensual.get((anio, mes, categoria)) if mes
                 else self.anual.get((anio, categoria)))
-        if not acum or not acum["kg_con_precio"]:
-            return None
-        return acum["valor"] / acum["kg_con_precio"]
+        return self.precio_de(acum)
 
     # -- aperturas por dimension (raza, departamento, grupo de categoria) ------------
     DIMENSIONES = {"categoria": 2, "raza": 3, "geo": 4}
 
     def por(self, dimension, anio=None, mes=None, grupo_de=None, geo=None, raza=None):
         """{valor de la dimension: acumulado} para un anio (o un mes). Cada acumulado trae
-        tn, cabezas, kg_con_precio y valor (kilos x precio), como `anual`.
+        tn, cabezas, n_precio, suma_precio y valor (tn x 1.000 x promedio simple), como `anual`.
 
         `grupo_de` es una funcion que lleva el valor de la dimension a su grupo (la
         subcategoria "Bovino Novillo Regular..." a "Novillo"): se agrupa antes de acumular.
@@ -108,17 +110,33 @@ class Comercializacion:
             valor = linea[indice]
             if grupo_de:
                 valor = grupo_de(valor)
-            acum = salida.setdefault(valor, {"tn": 0.0, "cabezas": 0.0,
-                                             "kg_con_precio": 0.0, "valor": 0.0})
-            acum["tn"] += tn or 0.0
-            acum["cabezas"] += cabezas or 0.0
-            if tn and precio_kg is not None:
-                acum["kg_con_precio"] += tn * 1000.0
-                acum["valor"] += tn * 1000.0 * precio_kg
+            _sumar(salida.setdefault(valor, _acumulado()), tn, cabezas, precio_kg)
+        for acum in salida.values():
+            _cerrar(acum)
         self._cache[clave_cache] = salida
         return salida
 
     @staticmethod
     def precio_de(acum):
-        """$/kg ponderado por los kilos de las lineas que informaron precio."""
-        return acum["valor"] / acum["kg_con_precio"] if acum and acum["kg_con_precio"] else None
+        """$/kg: promedio simple de los precios de las lineas que lo informaron."""
+        return acum["suma_precio"] / acum["n_precio"] if acum and acum["n_precio"] else None
+
+
+def _acumulado():
+    return {"tn": 0.0, "cabezas": 0.0, "n_precio": 0, "suma_precio": 0.0, "valor": 0.0}
+
+
+def _sumar(acum, tn, cabezas, precio_kg):
+    acum["tn"] += tn or 0.0
+    acum["cabezas"] += cabezas or 0.0
+    # Toda linea con precio entra en el promedio, como en la cuenta de JC (AVERAGE de Excel
+    # sobre la columna de precio).
+    if precio_kg is not None:
+        acum["n_precio"] += 1
+        acum["suma_precio"] += precio_kg
+
+
+def _cerrar(acum):
+    """El VBP del acumulado como UNA fila de JC: tn x 1.000 x su promedio simple."""
+    precio = Comercializacion.precio_de(acum)
+    acum["valor"] = acum["tn"] * 1000.0 * precio if precio is not None else 0.0

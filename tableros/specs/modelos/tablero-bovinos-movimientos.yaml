@@ -1,48 +1,71 @@
 # Ganaderia > Bovinos > Movimientos. Hoja "GanBov DTE" de la maqueta "Maqueta Ganad VF"
 # (9-oct-2026). Base 85.
 #
-# Lo que va por PROVINCIA de destino y de origen (dos tablas y dos anillos de su hoja) NO esta
-# en esta pagina: es material reservado y vive en tablero-bovinos-movimientos-provincias
-# (`reservado: true`), por decision del 12-oct-2026 ("déjalas en privado"). Por eso los KPIs
-# tampoco nombran provincias: JC pone "Extracción a Santa Fe" e "Introducción de Chaco", y acá
-# van los totales de extraccion e introduccion.
-#
-# La matriz origen-destino interna es otra pagina (85-matriz-od-interna) y se llega por el
-# boton "Matrices Origen Destino (OD)" que JC dibuja en esta hoja.
+# 13-oct-2026, revision contra la maqueta (JC: "POR FAVOR SIGAMOS EL MODELO"):
+# - Lo que va por PROVINCIA de destino y de origen (dos tablas, dos anillos y los KPIs
+#   "Extracción a Santa Fe" e "Introducción de Chaco") SE PUBLICA, en el lugar donde lo dibuja
+#   JC. Decision de la usuaria del 13-oct-2026 con el OK de Francisco (`aprobado_por`): la
+#   reserva del 12-oct ("déjalas en privado") queda sin efecto para ganaderia. La pagina
+#   reservada `tablero-bovinos-movimientos-provincias` pasa a `no-publicada` (sus cuadros
+#   viven aca) y sus datos ya no van a _privado/.
+# - La disposicion es la de sus anclajes: DOS columnas a todo lo largo. Izquierda: el mapa y
+#   los cuatro anillos (categoria, departamentos de origen, provincias de destino, provincias
+#   de origen). Derecha: las cinco tablas (por tipo, balance, por departamento, por provincia
+#   de destino, por provincia de origen).
+# - Titulo de la tabla por tipo con "(parcial)" y las franjas con su texto completo.
+# - Con un departamento elegido (E119-E123): las tablas muestran SOLO el anio elegido ("SOLO
+#   2025"), el titulo deja de decir "Totales provincia" y el anillo de departamentos no se
+#   muestra ("salvo la departamental"). Lo que va por provincia sigue siendo provincial (la
+#   base no cruza departamento de origen con provincia de destino en este build) y por eso
+#   tambien se esconde con un departamento elegido: backlog.
+# - La matriz origen-destino interna es otra pagina (85-matriz-od-interna); su boton va al pie
+#   junto a "Generar PDF" (JC, T127: "REUBICAR DONDE CREAN CONVENIENTE").
 id: tablero-bovinos-movimientos
 tipo: tablero
 familia: movimientos-bovinos
 seccion: bovinos
 pagina: movimientos
 titulo_pagina: "Movimientos"
+sensibilidad: comparativo
+aprobado_por: "fran, 2026-10-13 (decisión de la usuaria: comparaciones entre provincias de ganadería, según la maqueta)"
 
 titulo: "Bovinos"
 subtitulo: "Provincia de Santiago del Estero · movimientos de hacienda con DTE"
 
-breadcrumb: "Ganadería - Bovinos - Provincia - {departamento}"
+breadcrumb: "Ganadería - Bovinos - Provincia - {departamento} - Movimientos hacienda (DTE)"
 
+kpis_sin_variacion: true
+tarjeta_datos:
+  icono: bovinos
+
+# La banda de JC, textual: "Totales movidos 966.161 cab", "Movimientos internos 391.248 cab",
+# "Extracción a Santa Fe 157.595 cab" e "Introducción de Chaco 123.836 cab". Las dos ultimas
+# son la provincia LIDER de cada sentido: la decide el dato del anio elegido.
 indicadores:
   - recorte: totales_sin_introduccion
     etiqueta: "Totales movidos"
   - recorte: internos
     etiqueta: "Movimientos internos"
   - recorte: extraccion
-    etiqueta: "Extracción"
+    provincia_lider: true
+    etiqueta: "Extracción a {provincia}"
   - recorte: introduccion
-    etiqueta: "Introducción"
+    provincia_lider: true
+    etiqueta: "Introducción de {provincia}"
 
 paneles:
   alto: fluye
-  # El boton de JC (cuadro de texto de la fila 14 y la flecha al pie de su hoja): lleva a la
-  # matriz de movimientos internos departamento x departamento.
   acciones_de_tablero:
+    # El boton de JC (cuadro de texto de la fila 14 y la flecha al pie de su hoja): lleva a
+    # la matriz de movimientos internos departamento x departamento.
     - {id: matriz-od, etiqueta: "Matrices Origen Destino (OD)", vista: 85-matriz-od-interna, flecha: true}
+    - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
   mapa:
     titulo: "Movimientos por departamento"
     rotulo_accion: "Seleccione departamento"
     # JC, celda E119: "Seleccionando un departamento del mapa lleva a página de datos (como en
-    # agri)". Cambian los KPIs, las dos tablas de la serie y el anillo por categoria; la
-    # introduccion de un departamento es la que ENTRO a el.
+    # agri)". Cambian los KPIs de volumen, las dos tablas de la serie (solo el anio elegido) y
+    # el anillo por categoria; la introduccion de un departamento es la que ENTRO a el.
     click_departamento: en-la-misma-vista
     seleccion_departamento:
       defecto: provincia
@@ -52,13 +75,19 @@ paneles:
     acciones:
       - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   tabla-tipos:
-    titulo: "Sgo. del Estero - Movimientos hacienda por tipo, categoría y DTE Totales provincia - años {desde} a {hasta}"
+    titulo: "Sgo. del Estero - Movimientos hacienda por tipo, categoría y DTE Totales provincia - años {desde} a {hasta} (parcial)"
+    titulo_departamento: "Sgo. del Estero - Movimientos hacienda por tipo, categoría y DTE - Dto {departamento} - año {anio}"
+    # Las franjas de JC, literales ("introdcción" corregido).
+    rotulos_franja:
+      internos: "Movimientos internos (dentro de la provincia Sgo Estero)"
+      extraccion: "Movimientos cabezas salidas de la provincia (extracción) - cálculo por diferencia"
     nota: >
       La extracción es la diferencia entre los movimientos totales y los internos, como en la
       planilla de JC. Un DTE puede amparar animales de varias categorías: los documentos se
       cuentan una vez y no se abren por categoría.
   tabla-balance:
     titulo: "Sgo. del Estero - Balance de movimientos hacienda (extracción - introducción) por categoría y totales - años {desde} a {hasta}"
+    titulo_departamento: "Sgo. del Estero - Balance de movimientos hacienda (extracción - introducción) por categoría y totales - Dto {departamento} - año {anio}"
     # OJO: el titulo de JC dice "extracción - introducción", pero los numeros de su tabla son
     # introduccion - extraccion (2022: -168.296 el total, +64.676 terneros). Se publican sus
     # numeros y la nota dice como leerlos. Pregunta para JC: ¿se corrige el titulo o el signo?
@@ -68,6 +97,12 @@ paneles:
   tabla-departamentos:
     titulo: "Sgo. del Estero - Movimientos hacienda por tipo, categoría y DTE por Departamento - año {anio}"
     rotulo_total: "PROVINCIA"
+  tabla-provincias-destino:
+    titulo: "Sgo. del Estero - Movimientos hacienda de EXTRACCIÓN, categoría y DTE por Provincia de destino - año {anio}"
+    encabezado: "Pcia. Destino"
+  tabla-provincias-origen:
+    titulo: "Sgo. del Estero - Movimientos hacienda de INTRODUCCIÓN, categoría y DTE por Provincia de origen - año {anio}"
+    encabezado: "Pcia. Origen"
   anillo-categorias:
     titulo: "Sgo del Estero - Participación por categoría en movimientos totales año {anio}"
     acciones:
@@ -77,18 +112,28 @@ paneles:
     cuantos: 5
     acciones:
       - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
-  # Disposicion en COLUMNAS (12-oct-2026, "reacomoda... para que no haya espacios vacios"):
-  # cada banda tiene dos columnas que se apilan a su ritmo, como las hojas de JC (graficos a
-  # la izquierda, tablas a la derecha). Las bandas agrupan cuadros de alto parecido; los
-  # altos se midieron a 1600 px.
+  anillo-provincias-destino:
+    titulo: "Sgo del Estero - Participación de las provincias de destino en los movimientos de EXTRACCIÓN año {anio}"
+    cuantos: 4
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  anillo-provincias-origen:
+    titulo: "Sgo del Estero - Participación de las provincias de origen en los movimientos de INTRODUCCIÓN año {anio}"
+    cuantos: 5
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   disposicion: columnas
   orden:
     - {id: mapa, ancho: 4, columna: izq}
+    - {id: anillo-categorias, ancho: 4, columna: izq}
+    - {id: anillo-departamentos, ancho: 4, columna: izq, solo_provincia: true}
+    - {id: anillo-provincias-destino, ancho: 4, columna: izq, solo_provincia: true}
+    - {id: anillo-provincias-origen, ancho: 4, columna: izq, solo_provincia: true}
     - {id: tabla-tipos, ancho: 8, columna: der}
-    - {id: anillo-categorias, ancho: 6, columna: fila}
-    - {id: anillo-departamentos, ancho: 6, columna: fila}
-    - {id: tabla-balance, ancho: 12}
-    - {id: tabla-departamentos, ancho: 12}
+    - {id: tabla-balance, ancho: 8, columna: der}
+    - {id: tabla-departamentos, ancho: 8, columna: der}
+    - {id: tabla-provincias-destino, ancho: 8, columna: der, solo_provincia: true}
+    - {id: tabla-provincias-origen, ancho: 8, columna: der, solo_provincia: true}
 
 filtros:
   - id: anio

@@ -16,6 +16,17 @@ titulo_pagina: "Movimientos"
 titulo: "Equinos"
 subtitulo: "Provincia de Santiago del Estero · movimientos de équidos con DTE"
 
+# 13-oct-2026 (revision contra la maqueta): miga literal (N5), tarjeta "Datos 2025", sin
+# variacion, "Total Equidos" y "Burros/asnos" juntos como en la tabla de JC, las franjas con su
+# texto y "(parcial)" en el titulo, la disposicion del molde (anillo por categoria a la
+# izquierda, tabla a la derecha) y "Generar PDF" (BE81). Lo que la base no permite sigue
+# fuera: el mapa, el anillo y la tabla por departamento (no trae departamento de origen,
+# backlog 89) y la introduccion y el balance (backlog 82).
+breadcrumb: "Ganadería - Equinos - Provincia - Movimientos cabezas (DTE)"
+kpis_sin_variacion: true
+tarjeta_datos:
+  icono: equinos
+
 
 indicadores:
   - recorte: totales_sin_introduccion
@@ -31,6 +42,8 @@ indicadores:
 
 paneles:
   alto: fluye
+  acciones_de_tablero:
+    - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
   mapa:
     titulo: "Movimientos por departamento"
     rotulo_accion: "Seleccione departamento"
@@ -43,7 +56,10 @@ paneles:
     acciones:
       - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   tabla-tipos:
-    titulo: "Sgo. del Estero - Movimientos cabezas equinas por categoría y DTE Totales provincia - años {desde} a {hasta}"
+    titulo: "Sgo. del Estero - Movimientos cabezas equinas por categoría y DTE Totales provincia - años {desde} a {hasta} (parcial)"
+    rotulos_franja:
+      internos: "Movimientos internos (dentro de la provincia Sgo Estero)"
+      extraccion: "Movimientos cabezas salidas de la provincia (extracción) - cálculo por diferencia"
     nota: >
       Todavía no se muestran los movimientos que entran a la provincia: la hoja de ingresos de
       la planilla de SENASA llegó con problemas y está en revisión.
@@ -65,8 +81,8 @@ paneles:
   # a todo el ancho porque no hay con que emparejarlas.
   disposicion: columnas
   orden:
-    - {id: tabla-tipos, ancho: 12}
-    - {id: anillo-categorias, ancho: 12}
+    - {id: anillo-categorias, ancho: 4, columna: izq}
+    - {id: tabla-tipos, ancho: 8, columna: der}
 
 filtros:
   - id: anio
