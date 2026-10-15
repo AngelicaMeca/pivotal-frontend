@@ -144,6 +144,7 @@ const CUERPOS: Record<string, (props: { elementos: Elemento[] }) => ReactNode> =
   lista: SoloTabla,
   "tabla-variaciones": SoloTabla,
   galeria: Galeria,
+  documentos: Documentos,
 };
 
 /* La grilla de miniaturas de la pagina "Mapas". El cuerpo es un hueco y nada mas: lo llena
@@ -161,6 +162,29 @@ function Galeria({ elementos }: { elementos: Elemento[] }) {
           <div className="galeria-cuerpo">
             <div className="galeria-lateral" data-galeria-lateral="" hidden></div>
             <div className="galeria" data-galeria=""></div>
+          </div>
+          <p className="cuadro-nota">{elemento.nota}</p>
+          <figcaption className="fuente">{elemento.pie}</figcaption>
+        </figure>
+      ))}
+    </>
+  );
+}
+
+/* Tipo `documentos`: una lista de documentos con link (los informes de INTA AgroMet, hoja
+   "ClimAGM" de JC), en grilla, del mas nuevo al mas viejo, con la tapa del ultimo a la
+   izquierda. Mismo armazon que la galeria: el cuerpo son dos huecos que llena documentos.js con
+   lo que escribio el build. La tapa arranca oculta y solo aparece si el build la manda. */
+function Documentos({ elementos }: { elementos: Elemento[] }) {
+  return (
+    <>
+      {elementos.map((elemento, i) => (
+        <figure key={i} className="cuadro">
+          <h2>{elemento.titulo}</h2>
+          <p className="subtitulo">{elemento.subtitulo}</p>
+          <div className="documentos-cuerpo">
+            <div className="documentos-portada" data-documentos-portada="" hidden></div>
+            <ul className="documentos" data-documentos=""></ul>
           </div>
           <p className="cuadro-nota">{elemento.nota}</p>
           <figcaption className="fuente">{elemento.pie}</figcaption>

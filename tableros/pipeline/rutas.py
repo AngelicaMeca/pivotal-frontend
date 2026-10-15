@@ -8,7 +8,8 @@ donde tiene esa carpeta, en este orden:
   3. si no hay ninguna de las dos, tableros/raw/ (la ubicacion de siempre).
 
 La carpeta tiene la forma de siempre: entrega-NN/ con los Excels de cada entrega e indice/ con
-las versiones del indice de JC. Sigue siendo de SOLO LECTURA: el pipeline nunca escribe
+las versiones del indice de JC; y documentos/<clave>/ con los PDF que el sitio publica tal cual
+(hoy los de INTA AgroMet, base "2008 IC-CD"). Sigue siendo de SOLO LECTURA: el pipeline nunca escribe
 adentro, y lo que llego queda registrado (nombre, tamaño y sha256) en configs/entregas/.
 """
 import os
@@ -45,3 +46,6 @@ def _resolver():
 
 DIR_RAW = _resolver()
 DIR_INDICE = os.path.join(DIR_RAW, "indice")
+# Los documentos que el sitio publica tal cual (los PDF de INTA AgroMet): los baja
+# pipeline/sharepoint.py a documentos/<clave>/ (configs/origen-sharepoint.yaml, `documentos`).
+DIR_DOCUMENTOS = os.path.join(DIR_RAW, "documentos")

@@ -1,0 +1,96 @@
+# AgroClima > Informes > INTA AgroMet · hoja "ClimAGM" de la maqueta de JC
+# ("0000000000 Maqueta Clima 1.xlsx", 14-oct-2026; base "2008 IC-CD"). Lectura en
+# docs/maqueta-clima.md.
+#
+# Que es: la lista de los ejemplares del Informe agrometeorologico semanal del INTA de los ultimos
+# 6 meses, cada uno con LINK AL PDF. Lo que pide JC, en rojo al pie de su hoja:
+#   D31/E31 "1 Base informes Agromet con LINK AL PDF"
+#   W31     "PARA EL BETA DE WEB PUBLICA, SOLO 6 meses de informes"
+#   W33     "CORRECTAS LAS FECHAS"
+#
+# Disposicion de la hoja, leida por los anclajes (drawing3.xml): a la izquierda la tapa del
+# ultimo ejemplar (imagen 35 = image15.png, G6:Q18; es la misma imagen que la miniatura de la
+# tarjeta de la portada); arriba a la derecha el titulo (cuadro de texto 36, Q6:BG8); debajo una
+# GRILLA de 4 columnas (R, AC, AN, AY) y 6 filas (10 a 20) con los 24 ejemplares, del mas nuevo
+# al mas viejo, de izquierda a derecha y de arriba abajo. "2008 IC-CD" (cuadro 32) es el codigo
+# de base que JC escribe al pie de cada hoja y "Santiago en el NOA" el boton de la cabecera de su
+# plantilla: como en las demas paginas de AgroClima, ninguno de los dos se dibuja.
+#
+# Los PDF NO se enlazan al INTA: salen de la carpeta de JC (base "2008 IC-CD", SharePoint
+# "Pivotal Repositorio/Operaciones/Maquetas/Recursos clima/", Partes A y B), que
+# pipeline/sharepoint.py baja junto con los Excels a <raw>/documentos/agromet/ y el build copia a
+# public/plataforma/documentos/agromet/. Pedido de la usuaria del 15-oct-2026. Cada link abre el
+# PDF en una pestaña nueva.
+#
+# COMO SE SUMA UN EJEMPLAR NUEVO (sin tocar codigo):
+#   1. JC sube el PDF a la carpeta de SharePoint (cualquiera de las dos partes o una nueva
+#      subcarpeta). La tarea horaria ve el cambio en la huella y publica; mientras el PDF no este
+#      declarado en el paso 2, el build lo AVISA ("PDF no declarado") y NO lo publica: la
+#      pagina sigue igual, nada se rompe.
+#   2. Agregar su entrada ARRIBA de todo en configs/dims/agromet-ejemplares.yaml: numero y fecha
+#      que da JC (no se deducen del nombre del archivo), nombre exacto del archivo y tamaño en
+#      bytes (el del listado de SharePoint). El build corta si el PDF falta o si su tamaño no
+#      coincide.
+#   3. La ventana es de 24 (abajo): el mas viejo sale solo de la pagina.
+#   4. La tapa de la izquierda y el bloque "Destacados" de la portada (tablero-agroclima.yaml,
+#      panel `destacados-agromet`) tendrian que seguir al ultimo ejemplar: reemplazar la imagen
+#      de `portada` y su `numero`, y el contenido de Destacados. Si la tapa queda de un ejemplar
+#      que no es el ultimo, el build lo avisa (la tapa lleva su propio rotulo, asi que no miente).
+#      Quien lo hace cada semana sigue abierto: backlog 109.
+# Hoy la lista es la de JC tal cual (Nº 922 a Nº 899). El Nº 923 (14-oct-2026) y el ejemplar
+# del 26-ago-2026 no estan en la maqueta ni en la carpeta y no se agregan (backlog 109).
+familia: agroclima
+seccion: agroclima
+slug: 2008-informes-agromet
+protocolo: _protocolo-presentacion
+tipo: documentos
+
+titulo: "INTA AgroMet"
+subtitulo: "Informe agrometeorológico semanal · últimos 6 meses"
+# La miga es la celda L5 de JC, literal.
+breadcrumb: "AgroClima - Provincia - Informes - INTA - AgroMet"
+# El cuadro de texto 36 de JC, literal.
+titulo_protocolo: "INTA AgroMet - Informe agrometeorológico semanal - (últimos 6 meses)"
+subtitulo_cuadro: "Del ejemplar más reciente al más antiguo · cada ejemplar abre su PDF en una pestaña nueva"
+
+documentos:
+  # La lista declarativa: numero, fecha, archivo y tamaño de cada ejemplar, con su procedencia.
+  lista: configs/dims/agromet-ejemplares.yaml
+  # <raw>/documentos/<carpeta>/ (lo baja pipeline/sharepoint.py, clave `documentos.agromet` de
+  # configs/origen-sharepoint.yaml) -> public/plataforma/documentos/<carpeta>/.
+  carpeta: agromet
+  # Rotulo de cada ejemplar: {numero} y {fecha} ("7 octubre 2026", el mismo formato que el pie
+  # de "Destacados"). JC: "Nº 922 - 7 octubre 2026".
+  rotulo: "Nº {numero} - {fecha}"
+  # El texto que lee un lector de pantalla en cada link ({rotulo} ya compuesto).
+  rotulo_accesible: "{publicacion} {rotulo} (PDF, se abre en una pestaña nueva)"
+  # La marquita al costado de cada rotulo: dice que el link es un PDF.
+  formato: "PDF"
+  # JC, W31: "SOLO 6 meses de informes". 24 semanas, que son exactamente los 24 ejemplares de
+  # su hoja. Fija en cantidad para que la pagina no crezca sola.
+  ventana:
+    cuantos: 24
+    motivo: "JC, W31: PARA EL BETA DE WEB PUBLICA, SOLO 6 meses de informes"
+  # 4 columnas, como la grilla de JC (R, AC, AN, AY).
+  por_fila: 4
+  # La tapa de la izquierda (imagen 35 de la hoja). Su rotulo y su link salen del ejemplar
+  # `numero`, que tiene que estar en la ventana. sha256 6e1d1275eeb29c5446c07f20bc03aa5073331403408b3d0491529b12f64c204f
+  portada:
+    imagen: clima/tarjetas/tarjeta-agromet.png
+    numero: 922
+    alt: "Tapa del INTA AgroMet Nº 922 (7 de octubre de 2026)"
+
+fuente:
+  pie: "Fuente: INTA - Instituto de Clima y Agua, AgroMet (Informe agrometeorológico semanal)"
+
+# Pendiente, si algun dia hace falta: hoy el build copia los PDF que baja sharepoint.py y la
+# lista se mantiene a mano (paso 2 de arriba). Automatizar el alta (leer numero y fecha de la
+# tapa del PDF) no se hizo: el nombre del archivo es ambiguo y la tapa trae erratas del INTA.
+
+sensibilidad: normal
+estado: publicada
+origen:
+  tipo: maqueta de JC
+  archivo: "0000000000 Maqueta Clima 1.xlsx"
+  hojas: ["ClimAGM"]
+  recibido: 2026-10-14

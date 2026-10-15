@@ -1549,6 +1549,63 @@ a { color: var(--enlace); }
   .galeria.galeria-por-fila { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
+/* ---------- lista de documentos con link (tipo de vista `documentos`, 15-oct-2026) ----------
+   La hoja "ClimAGM" de JC: a la izquierda la tapa del ultimo ejemplar (anclada en G6:Q18, unas
+   diez columnas de su hoja: ~290 px) y a la derecha una grilla de CUATRO columnas (R, AC, AN,
+   AY) con un rotulo por ejemplar. Cada rotulo es un link al PDF; la marquita "PDF" lo dice. El
+   lateral solo existe si el build manda la tapa (`[hidden]` si no). */
+.documentos-cuerpo { margin-top: .6rem; }
+.documentos-cuerpo:has(> .documentos-portada:not([hidden])) {
+  display: grid; grid-template-columns: minmax(12rem, 18rem) minmax(0, 1fr); gap: 1.1rem;
+  align-items: start;
+}
+.documentos-portada[hidden] { display: none; }
+.documentos-tapa {
+  display: flex; flex-direction: column; gap: .35rem; color: var(--texto); text-decoration: none;
+}
+.documentos-tapa img {
+  display: block; width: 100%; height: auto; background: var(--fondo-apoyo);
+  border: 1px solid var(--borde-panel); border-radius: var(--radio-chico);
+  transition: border-color 120ms ease-out;
+}
+.documentos-tapa:hover img { border-color: var(--enlace); }
+.documentos-tapa:focus-visible { outline: 2px solid var(--enlace); outline-offset: 2px; }
+.documentos-tapa-rotulo { font-size: .72rem; text-align: center; }
+.documentos {
+  list-style: none; margin: 0; padding: 0; display: grid; gap: .55rem .7rem;
+  grid-template-columns: repeat(var(--por-fila, 4), minmax(0, 1fr));
+  /* Todas las filas del alto de la mas alta: a 1440 px "Nº 921 - 30 septiembre 2026" va en dos
+     renglones y "Nº 914 - 5 agosto 2026" en uno, y con filas desparejas la grilla de JC se lee
+     como una lista corrida. Aca `1fr` es lo que se quiere: la fila CRECE con su contenido. */
+  grid-auto-rows: 1fr;
+}
+.documentos > li { display: flex; min-width: 0; }
+.documento {
+  flex: 1 1 auto;
+  display: flex; align-items: center; justify-content: space-between; gap: .5rem;
+  padding: .6rem .75rem; border: 1px solid var(--borde-panel); border-radius: var(--radio-chico);
+  background: var(--fondo); color: var(--enlace); text-decoration: none; font-size: .85rem;
+  transition: border-color 120ms ease-out;
+}
+.documento:hover { border-color: var(--enlace); }
+.documento:hover .documento-rotulo { text-decoration: underline; }
+.documento:focus-visible { outline: 2px solid var(--enlace); outline-offset: 2px; }
+.documento-rotulo { min-width: 0; }
+.documento-formato {
+  flex: none; font-family: var(--rotulos); font-size: .55rem; letter-spacing: .08em;
+  color: var(--texto-apoyo); border: 1px solid var(--borde-panel); border-radius: 4px;
+  padding: .05rem .3rem;
+}
+@media (max-width: 1000px) {
+  .documentos-cuerpo:has(> .documentos-portada:not([hidden])) { grid-template-columns: minmax(0, 1fr); }
+  .documentos-portada .documentos-tapa { max-width: 14rem; }
+  .documentos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) { .documentos { grid-template-columns: minmax(0, 1fr); } }
+@media (prefers-reduced-motion: reduce) {
+  .documento, .documentos-tapa img { transition: none; }
+}
+
 /* ---------- AgroClima: portada y estaciones (14-oct-2026) ---------- */
 /* Las tarjetas de la portada ("Clima Ingreso" de JC): miniatura a la izquierda y texto a la
    derecha, como las dibuja el. Toda la tarjeta es el link. La apagada (una pagina sin base

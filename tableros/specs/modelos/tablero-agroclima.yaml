@@ -18,10 +18,10 @@
 # al lado de las tarjetas. Ver el panel `destacados-agromet` mas abajo y como se actualiza.
 # Sigue abierto en el backlog 107 quien arma cada ejemplar nuevo.
 #
-# Lo que NO se construyo, porque no hay base entregada (backlog 107):
-#   - la pagina AgroMet (hoja "ClimAGM", base "2008 IC-CD", lista de informes "con LINK AL
-#     PDF"). Su tarjeta se dibuja APAGADA con "Próximamente", la misma convencion que una
-#     seccion anunciada en el menu: el rotulo esta y al lado dice que todavia no.
+# La pagina AgroMet (hoja "ClimAGM", base "2008 IC-CD": la carpeta de PDFs de JC, lista de
+# informes "con LINK AL PDF") se publico el 15-oct-2026 (2008-informes-agromet.yaml) y su
+# tarjeta ya no va apagada. Una tarjeta sin pagina todavia se declara con `proximamente` en vez
+# de `destino` y se dibuja apagada.
 #
 # Desvios de la maqueta, anotados (backlog 108): (a) dos bajadas de tarjeta corregidas porque
 # contradicen la pagina a la que llevan -"Humedad disponible: cada 21 días" (la propia hoja
@@ -61,8 +61,9 @@ paneles:
       - organismo: "INTA"
         titulo: "AgroMet"
         bajada: "Informe agrometeorológico semanal"
-        # Sin `destino`: no hay base entregada (backlog 107). Se dibuja apagada.
-        proximamente: "Próximamente"
+        # La pagina de informes con link al PDF (hoja "ClimAGM", base "2008 IC-CD"), publicada
+        # el 15-oct-2026. Hasta ese dia la tarjeta iba apagada con "Próximamente".
+        destino: 2008-informes-agromet
         # La miniatura es la de JC (Grupo 121 de "Clima Ingreso"): la tapa del AgroMet Nº 922.
         # Imagen fija en site/assets/ (`miniatura: imagen`); no cambia con cada ejemplar salvo
         # que se reemplace el archivo. sha256 6e1d1275eeb29c5446c07f20bc03aa5073331403408b3d0491529b12f64c204f

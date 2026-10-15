@@ -15,6 +15,8 @@ const MODULOS = {
   "tabla-variaciones": () => import("@/tableros/cliente/tabla-variaciones"),
   // Miniaturas que se amplian en un popup. No dibuja graficos: el contenido son imagenes.
   galeria: () => import("@/tableros/cliente/galeria"),
+  // Una lista de documentos con link (los PDF de INTA AgroMet). No dibuja graficos.
+  documentos: () => import("@/tableros/cliente/documentos"),
 };
 
 export type TipoDePagina = keyof typeof MODULOS;

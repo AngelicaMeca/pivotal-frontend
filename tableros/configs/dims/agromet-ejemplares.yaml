@@ -1,0 +1,197 @@
+# INTA AgroMet · los ejemplares del Informe agrometeorologico semanal que publica la pagina
+# AgroClima > INTA AgroMet (hoja "ClimAGM" de la maqueta de JC "0000000000 Maqueta Clima 1.xlsx",
+# spec specs/modelos/2008-informes-agromet.yaml). Lo lee site_build.construir_documentos.
+#
+# Los PDF son la base "2008 IC-CD" de JC: una carpeta de PDFs en SharePoint (OneDrive de
+# AUTOScraping), "Pivotal Repositorio/Operaciones/Maquetas/Recursos clima/", con las subcarpetas
+# "2008 - IC -CD - Parte A" (899 a 910) y "2008 - IC -CD - Parte B" (911 a 922). La baja
+# pipeline/sharepoint.py junto con los Excels (configs/origen-sharepoint.yaml, `documentos`) a
+# <raw>/documentos/agromet/, y el build copia los de la ventana a
+# public/plataforma/documentos/agromet/: el sitio sirve el PDF que mando JC, no el del INTA.
+#
+# QUE ES CADA CAMPO
+#   numero           el numero del ejemplar TAL CUAL lo escribe JC en la maqueta (R10..AY20). Es
+#                    el que se publica: "Nº 922 - 7 octubre 2026" se compone de numero + fecha.
+#   fecha            fecha de publicacion (AAAA-MM-DD). JC, W33: "CORRECTAS LAS FECHAS".
+#                    Numero y fecha NO se deducen del nombre del archivo: es ambiguo ("10626" es
+#                    10 de junio y "10726" es 1 de julio).
+#   numero_en_tapa   solo cuando la tapa impresa del PDF dice otro numero (errata del INTA). No se
+#                    publica: queda escrito para que nadie lo "corrija" al reves.
+#   archivo, bytes   el nombre EXACTO del PDF en la carpeta de SharePoint y su tamaño. El build
+#                    CORTA si falta un PDF declarado o si su tamaño no coincide.
+#   parte            la subcarpeta (A o B). Informativo: el build no la usa.
+#   referencia_inta  el mismo PDF en argentina.gob.ar (mismo tamaño, byte a byte; comparado el
+#                    2026-10-15). Solo procedencia: NO se publica ni se enlaza. Si alguna vez se
+#                    enlaza al INTA, que sea al PDF y nunca a la pagina web del ejemplar: desde
+#                    septiembre de 2026 sus titulos estan corridos +1.
+#
+# PROCEDENCIA
+#   - Lista (numeros y fechas): JC, maqueta, hoja ClimAGM (14-oct-2026). JC ya corrigio las
+#     erratas de tapa del INTA en 899, 902 y 917.
+#   - Cada PDF verificado contra su tapa impresa el 2026-10-15 (listado del INTA,
+#     https://www.argentina.gob.ar/inta/informacion-agroclimatica/informes-agrometeorologicos/agromet-semanal).
+#   - Archivos y tamaños: listado de la carpeta de SharePoint del 2026-10-15. El nombre de la 905
+#     en la carpeta no lleva el "_1" que tiene en el INTA.
+#
+# NO ESTAN (no estan en la maqueta ni en la carpeta de JC; backlog 109):
+#   - el ejemplar del 26-ago-2026 (tapa Nº 917, INTA .../2026/08/917-agromet_semanal_260826.pdf);
+#   - el Nº 923 del 14-oct-2026 (INTA .../2026/10/923-agromet_semanal_141026.pdf), posterior.
+#
+# COMO SE SUMA UN EJEMPLAR NUEVO: JC sube el PDF a la carpeta y se agrega su entrada ARRIBA de
+# todo (ver el spec 2008-informes-agromet.yaml). Un PDF que esta en la carpeta y no aca NO se
+# publica: el build lo avisa y sigue.
+publicacion: "INTA AgroMet"
+verificado: 2026-10-15
+base:
+  codigo: "2008 IC-CD"
+  carpeta: "Pivotal Repositorio/Operaciones/Maquetas/Recursos clima"
+
+# Del mas nuevo al mas viejo (el build lo verifica: numeros y fechas estrictamente descendentes).
+ejemplares:
+  - numero: 922
+    fecha: 2026-10-07
+    archivo: "922-agromet_semanal_71026.pdf"
+    bytes: 7544661
+    parte: B
+    referencia_inta: "https://www.argentina.gob.ar/sites/default/files/2026/10/922-agromet_semanal_71026.pdf"
+  - numero: 921
+    fecha: 2026-09-30
+    archivo: "921-agromet_semanal_300926.pdf"
+    bytes: 7105442
+    parte: B
+    referencia_inta: "https://www.argentina.gob.ar/sites/default/files/2026/10/921-agromet_semanal_300926.pdf"
+  - numero: 920
+    fecha: 2026-09-23
+    archivo: "920-agromet_semanal_230926.pdf"
+    bytes: 7206731
+    parte: B
+    referencia_inta: "https://www.argentina.gob.ar/sites/default/files/2026/09/920-agromet_semanal_230926.pdf"
+  - numero: 919
+    fecha: 2026-09-16
+    archivo: "919-agromet_semanal_160926.pdf"
+    bytes: 7195249
+    parte: B
+    referencia_inta: "https://www.argentina.gob.ar/sites/default/files/2026/09/919-agromet_semanal_160926.pdf"
+  - numero: 918
+    fecha: 2026-09-09
+    archivo: "918-agromet_semanal_90926.pdf"
+    bytes: 6884740
+    parte: B
+    referencia_inta: "https://www.argentina.gob.ar/sites/default/files/2026/09/918-agromet_semanal_90926.pdf"
+  - numero: 917
+    fecha: 2026-09-02
+    numero_en_tapa: 916      # errata del INTA en la tapa; se publica el de JC
+    archivo: "917-agromet_semanal_20926.pdf"
+    bytes: 7261633
+    parte: B
+    referencia_inta: "https://www.argentina.gob.ar/sites/default/files/2026/09/917-agromet_semanal_20926.pdf"
+  - numero: 916
+    fecha: 2026-08-19
+    archivo: "916-agromet_semanal_190826.pdf"
+    bytes: 7169768
+    parte: B
+    referencia_inta: "https://www.argentina.gob.ar/sites/default/files/2026/08/916-agromet_semanal_190826.pdf"
+  - numero: 915
+    fecha: 2026-08-12
+    archivo: "915-agromet_semanal_120826.pdf"
+    bytes: 7158688
+    parte: B
+    referencia_inta: "https://www.argentina.gob.ar/sites/default/files/2026/08/915-agromet_semanal_120826.pdf"
+  - numero: 914
+    fecha: 2026-08-05
+    archivo: "914-agromet_semanal_50826.pdf"
+    bytes: 7189595
+    parte: B
+    referencia_inta: "https://www.argentina.gob.ar/sites/default/files/2026/08/914-agromet_semanal_50826.pdf"
+  - numero: 913
+    fecha: 2026-07-29
+    archivo: "913-agromet_semanal_290726.pdf"
+    bytes: 6746217
+    parte: B
+    referencia_inta: "https://www.argentina.gob.ar/sites/default/files/2026/07/913-agromet_semanal_290726.pdf"
+  - numero: 912
+    fecha: 2026-07-22
+    archivo: "912-agromet_semanal_220726.pdf"
+    bytes: 7227860
+    parte: B
+    referencia_inta: "https://www.argentina.gob.ar/sites/default/files/2026/07/912-agromet_semanal_220726.pdf"
+  - numero: 911
+    fecha: 2026-07-15
+    archivo: "911-agromet_semanal_150726.pdf"
+    bytes: 6833081
+    parte: B
+    referencia_inta: "https://www.argentina.gob.ar/sites/default/files/2026/07/911-agromet_semanal_150726.pdf"
+  - numero: 910
+    fecha: 2026-07-08
+    archivo: "910-agromet_semanal_080726.pdf"
+    bytes: 7009531
+    parte: A
+    referencia_inta: "https://www.argentina.gob.ar/sites/default/files/2026/07/910-agromet_semanal_080726.pdf"
+  - numero: 909
+    fecha: 2026-07-01
+    archivo: "909-agromet_semanal_10726.pdf"
+    bytes: 7189617
+    parte: A
+    referencia_inta: "https://www.argentina.gob.ar/sites/default/files/2026/07/909-agromet_semanal_10726.pdf"
+  - numero: 908
+    fecha: 2026-06-24
+    archivo: "908-agromet_semanal_24626.pdf"
+    bytes: 6476246
+    parte: A
+    referencia_inta: "https://www.argentina.gob.ar/sites/default/files/2026/06/908-agromet_semanal_24626.pdf"
+  - numero: 907
+    fecha: 2026-06-17
+    archivo: "907-agromet_semanal_17626.pdf"
+    bytes: 6931698
+    parte: A
+    referencia_inta: "https://www.argentina.gob.ar/sites/default/files/2026/06/907-agromet_semanal_17626.pdf"
+  - numero: 906
+    fecha: 2026-06-10
+    archivo: "906-agromet_semanal_10626.pdf"
+    bytes: 7005402
+    parte: A
+    referencia_inta: "https://www.argentina.gob.ar/sites/default/files/2026/06/906-agromet_semanal_10626.pdf"
+  - numero: 905
+    fecha: 2026-06-03
+    archivo: "905-agromet_semanal_30626.pdf"
+    bytes: 6747189
+    parte: A
+    referencia_inta: "https://www.argentina.gob.ar/sites/default/files/2026/06/905-agromet_semanal_30626_1.pdf"
+  - numero: 904
+    fecha: 2026-05-27
+    archivo: "904-agromet_semanal_27526.pdf"
+    bytes: 7535495
+    parte: A
+    referencia_inta: "https://www.argentina.gob.ar/sites/default/files/2026/05/904-agromet_semanal_27526.pdf"
+  - numero: 903
+    fecha: 2026-05-20
+    archivo: "903-agromet_semanal_20526.pdf"
+    bytes: 7060450
+    parte: A
+    referencia_inta: "https://www.argentina.gob.ar/sites/default/files/2026/05/903-agromet_semanal_20526.pdf"
+  - numero: 902
+    fecha: 2026-05-13
+    numero_en_tapa: 900      # errata del INTA en la tapa; se publica el de JC
+    archivo: "902-agromet_semanal_130526.pdf"
+    bytes: 7623359
+    parte: A
+    referencia_inta: "https://www.argentina.gob.ar/sites/default/files/2026/05/902-agromet_semanal_130526.pdf"
+  - numero: 901
+    fecha: 2026-05-06
+    archivo: "901-agromet_semanal_60526.pdf"
+    bytes: 7024483
+    parte: A
+    referencia_inta: "https://www.argentina.gob.ar/sites/default/files/2026/05/901-agromet_semanal_60526.pdf"
+  - numero: 900
+    fecha: 2026-04-29
+    archivo: "900-agromet_semanal_290426.pdf"
+    bytes: 7264007
+    parte: A
+    referencia_inta: "https://www.argentina.gob.ar/sites/default/files/2026/04/900-agromet_semanal_290426.pdf"
+  - numero: 899
+    fecha: 2026-04-22
+    numero_en_tapa: 898      # errata del INTA en la tapa; se publica el de JC
+    archivo: "899-agromet_semanal_220426.pdf"
+    bytes: 7238584
+    parte: A
+    referencia_inta: "https://www.argentina.gob.ar/sites/default/files/2026/04/899-agromet_semanal_220426.pdf"

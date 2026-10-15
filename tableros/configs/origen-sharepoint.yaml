@@ -32,3 +32,15 @@ entregas:
 # Carpeta con las versiones del indice de JC ("Bases para Beta - N.xlsx"), dentro de `carpeta`.
 # Opcional: el build no la usa (solo la etapa `indice`). null = no se baja.
 indice: null
+
+# DOCUMENTOS que el sitio publica tal cual (no son Excels y el pipeline no los lee como datos).
+# Cada clave es una carpeta de raw/documentos/<clave>/ y su valor la carpeta de SharePoint, con
+# la ruta COMPLETA dentro de "Documentos" (no cuelga de `carpeta`). Se bajan todos los PDF de la
+# carpeta y de sus subcarpetas, juntos en una sola carpeta (dos PDF con el mismo nombre cortan).
+# Entran en la HUELLA: un PDF nuevo de JC dispara la publicacion horaria igual que un Excel.
+documentos:
+  # 15-oct-2026, pedido de la usuaria: la pagina AgroClima > INTA AgroMet (hoja "ClimAGM" de la
+  # maqueta de clima) sirve los PDF de la base "2008 IC-CD" de JC desde el sitio, no desde el
+  # INTA. Subcarpetas "2008 - IC -CD - Parte A" y "Parte B" (24 PDF, ~170 MB). Que ejemplares se
+  # publican lo dice configs/dims/agromet-ejemplares.yaml, no esta carpeta.
+  agromet: "Pivotal Repositorio/Operaciones/Maquetas/Recursos clima"

@@ -395,6 +395,8 @@ secciones:
     # tarjetas de la portada, como en las hojas de JC.
     sin_pestanias: true
     vistas_sueltas:
+      # INTA AgroMet (hoja "ClimAGM", 15-oct-2026): la lista de informes con link al PDF.
+      - 2008-informes-agromet
       - 3001-mapas-ora-humedad-suelo
       - 3002-mapas-evapotranspiracion
       - 3003-mapas-variacion-agua

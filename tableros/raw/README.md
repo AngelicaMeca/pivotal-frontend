@@ -13,6 +13,9 @@ El pipeline los sigue leyendo con la forma de siempre:
   `configs/origen-sharepoint.yaml`.
 - `indice/`: las versiones del Excel "Bases para Beta - N.xlsx" (el índice/contexto de JC). Las
   procesa el agente `indexador-contexto`.
+- `documentos/<clave>/`: PDF que el sitio publica tal cual (hoy `agromet`, la base "2008 IC-CD" de
+  JC). Los baja `pipeline/sharepoint.py` de las carpetas que declara `documentos` en
+  `configs/origen-sharepoint.yaml`; el pipeline no los lee como datos.
 
 ## Dónde busca el pipeline esa carpeta
 

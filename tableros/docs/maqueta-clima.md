@@ -13,9 +13,9 @@ URL `/plataforma/clima/agroclima`).
 
 | Hoja | Página del sitio | Spec | Estado |
 |---|---|---|---|
-| Clima Ingreso | portada `/plataforma/clima/agroclima` | `tablero-agroclima.yaml` | construida, con "Destacados" del AgroMet Nº 922 (backlog 107) |
+| Clima Ingreso | portada `/plataforma/clima/agroclima` | `tablero-agroclima.yaml` | construida, con "Destacados" del AgroMet Nº 922 (backlog 107 y 109) |
 | ClimEAI | `/clima/agroclima/estaciones-inta` | `tablero-agroclima-estaciones.yaml` + `_comunes-agroclima.yaml` | construida (base 111) |
-| ClimAGM | AgroMet, informes con link al PDF | — | NO construida: base "2008 IC-CD" no entregada (backlog 107). Tarjeta "Próximamente" |
+| ClimAGM | `/clima/agroclima/2008-informes-agromet` | `2008-informes-agromet.yaml` + `configs/dims/agromet-ejemplares.yaml` | construida (base "2008 IC-CD": carpeta de PDFs de JC) |
 | ClimORA-1 | `/clima/agroclima/3001-mapas-ora-humedad-suelo` | `3001-mapas-ora-humedad-suelo.yaml` | construida |
 | ClimEVT | `/clima/agroclima/3002-mapas-evapotranspiracion` | `3002-mapas-evapotranspiracion.yaml` | construida |
 | ClimVAD | `/clima/agroclima/3003-mapas-variacion-agua` | `3003-mapas-variacion-agua.yaml` | construida |
@@ -39,9 +39,10 @@ Los números 3001..3006 son los códigos de base que JC escribe al pie de cada h
   pronóstico trimestral oct-nov-dic, lado a lado y del mismo alto, cada uno con su texto debajo, "Estado de los cultivos" y el pie "Extraído de". Panel
   `destacados-agromet` del spec, imágenes en `site/assets/clima/destacados/`; cómo se actualiza
   está en el spec. Tarjetas y Destacados mitad y mitad (cols G-AH y AI-BH); las tarjetas van de
-  a dos por fila, como en la hoja. Quién arma cada ejemplar nuevo: backlog 107.
-- La tarjeta de AgroMet (apagada, "Próximamente") lleva de miniatura la tapa del AgroMet Nº 922,
-  como en la maqueta (Grupo 121): `site/assets/clima/tarjetas/tarjeta-agromet.png`.
+  a dos por fila, como en la hoja. Quién arma cada ejemplar nuevo: backlog 109.
+- La tarjeta de AgroMet lleva de miniatura la tapa del AgroMet Nº 922, como en la maqueta
+  (Grupo 121): `site/assets/clima/tarjetas/tarjeta-agromet.png`. Desde el 15-oct-2026 lleva a la
+  página de informes (hasta ese día iba apagada con "Próximamente").
 - "Generar PDF" abajo a la derecha.
 - Desvíos: miniaturas calculadas (la de cada galería es su mapa más reciente; la de las
   estaciones es la silueta de la provincia con las ocho estaciones, generada por el build);
@@ -77,6 +78,44 @@ Los números 3001..3006 son los códigos de base que JC escribe al pie de cada h
   asterisco "Unidad a confirmar" (backlog 108). No se escribe "°C".
 - Definiciones: textos de JC de `configs/dims/variables-clima.yaml` (completos; en la maqueta
   algunos están cortados por el tamaño de la forma), con los títulos literales de la maqueta.
+
+### ClimAGM (INTA AgroMet, base "2008 IC-CD")
+
+Construida el 15-oct-2026: `/plataforma/clima/agroclima/2008-informes-agromet`, tipo de vista
+nuevo y genérico `documentos` (lista de documentos con link; sirve para otros listados de
+informes), constructor `site_build.construir_documentos`, dibujante `cliente/documentos.js`.
+
+- Miga L5 "AgroClima - Provincia - Informes - INTA - AgroMet" (literal) y "Regresar" (BE5, link
+  a `'Clima Ingreso'!A1`) a la portada, como las demás páginas de la rama.
+- Anclajes (drawing3.xml): la tapa (imagen 35 = image15.png, G6:Q18) a la IZQUIERDA; el título
+  (cuadro de texto 36, Q6:BG8) "INTA AgroMet - Informe agrometeorológico semanal - (últimos 6
+  meses)"; y la GRILLA de 4 columnas (R, AC, AN, AY) × 6 filas (10 a 20) con los 24 ejemplares,
+  del más nuevo al más viejo por filas. image15 es byte a byte la miniatura de la tarjeta de la
+  portada (sha256 6e1d1275…), así que se reusa el mismo asset. "2008 IC-CD" (cuadro 32, P30) es
+  el código de base del pie y "Santiago en el NOA" (AT1) el botón de la plantilla de JC: como en
+  las otras ocho páginas de la rama, no se dibujan. La tapa es además un link al PDF de su
+  ejemplar y lleva su rótulo debajo (no está en la maqueta: ver backlog 109).
+- Rojo: D31/E31 "1 Base informes Agromet con LINK AL PDF"; W31 "PARA EL BETA DE WEB PUBLICA,
+  SOLO 6 meses de informes" (ventana de 24 en el spec); W33 "CORRECTAS LAS FECHAS". JC no
+  escribe fuente en la hoja: el pie es "Fuente: INTA - Instituto de Clima y Agua, AgroMet
+  (Informe agrometeorológico semanal)".
+- La lista es la de JC tal cual (Nº 922 - 7 octubre 2026 … Nº 899 - 22 abril 2026), en
+  `configs/dims/agromet-ejemplares.yaml`: número, fecha, nombre exacto del PDF y tamaño, con la
+  procedencia. Rótulo = número + fecha, mismo formato que el pie de "Destacados"
+  (`fecha_de_ejemplar`). Tres tapas del INTA traen errata en el número (899 dice 898, 902 dice
+  900, el 917 del 2-sep dice 916): se publica el de JC (`numero_en_tapa` lo deja escrito).
+- Los PDF se sirven desde el sitio: salen de la carpeta de JC en SharePoint
+  ("Operaciones/Maquetas/Recursos clima", Partes A y B), que `pipeline/sharepoint.py` baja con los
+  Excels y el build copia a `public/plataforma/documentos/agromet/` (ver
+  `docs/actualizacion-automatica.md`). Cada link abre el PDF en una pestaña nueva. Nada se enlaza
+  al INTA (sus páginas web tienen los títulos corridos +1 desde septiembre; la URL del PDF del
+  INTA queda solo como referencia en el YAML).
+- No se agregaron el ejemplar del 26-ago-2026 (tapa Nº 917) ni el Nº 923 del 14-oct-2026: no
+  están en la maqueta ni en la carpeta de JC (backlog 109).
+- **Cómo se suma un ejemplar nuevo:** JC sube el PDF a la carpeta + una entrada arriba de todo en
+  `agromet-ejemplares.yaml` (número y fecha de JC, archivo y bytes). Un PDF en la carpeta sin
+  entrada no se publica y el build lo avisa. La tapa y "Destacados" deberían seguir al último
+  (detalle en el spec).
 
 ### Galerías de mapas (ORA y SEPA-INTA)
 

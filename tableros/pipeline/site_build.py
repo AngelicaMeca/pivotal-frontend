@@ -10504,6 +10504,12 @@ MESES_LARGOS_CLIMA = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "ju
                       "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
 
 
+def fecha_de_ejemplar(fecha):
+    """La fecha de un ejemplar de AgroMet como la escribe JC: "7 octubre 2026" (pie de
+    "Destacados" y rotulos de la pagina de informes)."""
+    return "%d %s %d" % (fecha.day, MESES_LARGOS_CLIMA[fecha.month - 1], fecha.year)
+
+
 def panel_destacados(spec, id_panel):
     """El bloque "Destacados" de la portada de AgroClima (`destacados-*`): la primera pagina del
     ultimo ejemplar de INTA AgroMet, tal cual la transcribe JC en su maqueta (W62 de "Clima
@@ -10520,7 +10526,7 @@ def panel_destacados(spec, id_panel):
     if not isinstance(fecha, datetime.date):
         raise pr.ErrorDeProtocolo("`%s.ejemplar.fecha` de %s tiene que ser una fecha AAAA-MM-DD."
                                   % (id_panel, spec["id"]))
-    fecha_texto = "%d %s %d" % (fecha.day, MESES_LARGOS_CLIMA[fecha.month - 1], fecha.year)
+    fecha_texto = fecha_de_ejemplar(fecha)
     pie = declarado["pie"].format(publicacion=ejemplar["publicacion"], numero=ejemplar["numero"],
                                   fecha=fecha_texto)
     figuras = []
@@ -10791,6 +10797,123 @@ def construir_galeria_clima(ctx, spec):
     return vista
 
 
+# --------------------------------------------------------------------------
+# Tipo de vista `documentos`: una lista de documentos con link (hoy los PDF de INTA AgroMet,
+# hoja "ClimAGM" de la maqueta de clima, 2008-informes-agromet.yaml)
+# --------------------------------------------------------------------------
+def documentos_declarados(spec):
+    """(publicacion, ejemplares de la ventana, todos los archivos declarados) de la lista que
+    declara el spec. Cada ejemplar: numero, fecha, archivo, bytes (y lo demas que traiga el YAML).
+
+    Corta si la lista no esta del mas nuevo al mas viejo (numeros y fechas estrictamente
+    descendentes) o si repite un archivo: el orden de la pagina es el del YAML y un error de
+    tipeo no se puede publicar en silencio."""
+    declarado = spec["documentos"]
+    lista = pr.cargar_yaml(os.path.join(RAIZ, declarado["lista"]))
+    ejemplares = lista["ejemplares"]
+    for e in ejemplares:
+        if not isinstance(e.get("fecha"), datetime.date):
+            raise pr.ErrorDeProtocolo("%s: el ejemplar %r no tiene una fecha AAAA-MM-DD."
+                                      % (declarado["lista"], e.get("numero")))
+        for campo in ("numero", "archivo", "bytes"):
+            if e.get(campo) in (None, ""):
+                raise pr.ErrorDeProtocolo("%s: al ejemplar %r le falta `%s`."
+                                          % (declarado["lista"], e.get("numero"), campo))
+    for nuevo, viejo in zip(ejemplares, ejemplares[1:]):
+        if not (nuevo["numero"] > viejo["numero"] and nuevo["fecha"] > viejo["fecha"]):
+            raise pr.ErrorDeProtocolo(
+                "%s no esta del mas nuevo al mas viejo: Nº %s (%s) va antes que Nº %s (%s). Un "
+                "ejemplar nuevo se agrega ARRIBA de todo." % (
+                    declarado["lista"], nuevo["numero"], nuevo["fecha"], viejo["numero"],
+                    viejo["fecha"]))
+    archivos = [e["archivo"] for e in ejemplares]
+    if len(set(archivos)) != len(archivos):
+        raise pr.ErrorDeProtocolo("%s declara dos veces el mismo archivo." % declarado["lista"])
+    return lista["publicacion"], ejemplares[:declarado["ventana"]["cuantos"]], archivos
+
+
+def construir_documentos(ctx, spec):
+    """Una lista de documentos con link, en una grilla de `por_fila` columnas y del mas nuevo al
+    mas viejo, con una tapa opcional a la izquierda. Un solo cuadro, SIN filtros.
+
+    Los documentos NO viven en el repo: los baja pipeline/sharepoint.py a
+    <raw>/documentos/<carpeta>/ (configs/origen-sharepoint.yaml, `documentos`) y el build copia
+    los de la ventana a public/plataforma/documentos/<carpeta>/. Corta si falta uno declarado o
+    si su tamaño no es el declarado (el link apuntaria a otro archivo). Un PDF de la carpeta que
+    no esta declarado NO se publica y se avisa: es el paso intermedio normal cuando JC sube uno
+    nuevo y todavia nadie le escribio numero y fecha, y no tiene que frenar la publicacion del
+    resto del sitio."""
+    from pipeline.rutas import DIR_DOCUMENTOS
+    declarado = spec["documentos"]
+    publicacion, ejemplares, todos = documentos_declarados(spec)
+    carpeta = os.path.join(DIR_DOCUMENTOS, declarado["carpeta"])
+    if not os.path.isdir(carpeta):
+        raise pr.ErrorDeProtocolo(
+            "No esta la carpeta de documentos %s (la pide %s). Se baja de SharePoint con: "
+            "python -m pipeline.sharepoint --destino <carpeta raw> --solo-documentos"
+            % (carpeta, spec["slug_vista"]))
+    presentes = sorted(n for n in os.listdir(carpeta) if n.lower().endswith(".pdf"))
+    for nombre in presentes:
+        if nombre not in todos:
+            print("[site]   AVISO   %-40s PDF no declarado en %s, no se publica: %s"
+                  % (spec["slug_vista"], declarado["lista"], nombre))
+    ruta_publica = "%s/documentos/%s" % (PREFIJO, declarado["carpeta"])
+    documentos, archivos = [], []
+    for e in ejemplares:
+        origen = os.path.join(carpeta, e["archivo"])
+        if not os.path.exists(origen):
+            raise pr.ErrorDeProtocolo(
+                "Falta el PDF %s del ejemplar Nº %s en %s (declarado en %s)."
+                % (e["archivo"], e["numero"], carpeta, declarado["lista"]))
+        tamanio = os.path.getsize(origen)
+        if tamanio != e["bytes"]:
+            raise pr.ErrorDeProtocolo(
+                "El PDF %s pesa %d bytes y %s declara %d: no es el archivo verificado."
+                % (e["archivo"], tamanio, declarado["lista"], e["bytes"]))
+        rotulo = declarado["rotulo"].format(numero=e["numero"],
+                                            fecha=fecha_de_ejemplar(e["fecha"]))
+        documentos.append({
+            "numero": e["numero"], "rotulo": rotulo,
+            "accesible": declarado["rotulo_accesible"].format(publicacion=publicacion,
+                                                              rotulo=rotulo),
+            "href": "%s/%s" % (ruta_publica, e["archivo"]),
+            "formato": declarado.get("formato", "")})
+        archivos.append((origen, "public/plataforma/documentos/%s/%s"
+                         % (declarado["carpeta"], e["archivo"])))
+    elemento = {
+        "titulo": spec["titulo_protocolo"],
+        "subtitulo": spec["subtitulo_cuadro"],
+        "pie": spec["fuente"]["pie"],
+        "nota": limpiar(spec.get("nota") or ""),
+        "documentos": documentos,
+        "por_fila": declarado.get("por_fila") or 4,
+    }
+    portada = declarado.get("portada")
+    if portada:
+        documento = next((d for d in documentos if d["numero"] == portada["numero"]), None)
+        if documento is None:
+            raise pr.ErrorDeProtocolo(
+                "La tapa de %s es del Nº %s, que no esta en la ventana publicada."
+                % (spec["slug_vista"], portada["numero"]))
+        if documento is not documentos[0]:
+            print("[site]   AVISO   %-40s la tapa es del Nº %s y el ultimo ejemplar es el Nº %s"
+                  % (spec["slug_vista"], portada["numero"], documentos[0]["numero"]))
+        ruta = os.path.join(DIR_ASSETS, portada["imagen"])
+        if not os.path.exists(ruta):
+            raise pr.ErrorDeProtocolo("La tapa de %s pide site/assets/%s, que no existe."
+                                      % (spec["slug_vista"], portada["imagen"]))
+        ancho, alto = _dimensiones_imagen(ruta)
+        elemento["portada"] = {"imagen": "%s/%s" % (PREFIJO, portada["imagen"]),
+                               "alt": portada["alt"], "ancho": ancho, "alto": alto,
+                               "rotulo": documento["rotulo"], "href": documento["href"],
+                               "accesible": documento["accesible"]}
+        archivos.append((ruta, "public/plataforma/" + portada["imagen"]))
+    vista = vista_base(ctx, spec, "documentos.html", [])
+    vista["combos"][""] = {"elementos": [elemento]}
+    vista["imagenes_a_copiar"] = archivos
+    return vista
+
+
 def resolver_tarjetas(tablero, url_de):
     """Las URL de las tarjetas de la portada de AgroClima, que el constructor deja como id de
     spec. Un destino que no se publica en ninguna seccion corta la corrida: una tarjeta no
@@ -10859,6 +10982,9 @@ def constructor_de_vista(spec):
     copiar sus imagenes, sin tocar este archivo."""
     if spec.get("tipo") == "galeria" and spec.get("familia") == ContextoAgroclima.familia:
         return construir_galeria_clima
+    # Una lista de documentos con link: el spec dice que lista y que carpeta (sin codigo).
+    if spec.get("tipo") == "documentos":
+        return construir_documentos
     return None
 
 

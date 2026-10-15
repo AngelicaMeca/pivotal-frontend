@@ -6,7 +6,7 @@ slug: ejemplo-ranking
 titulo: "Ranking de producción por departamento"   # NOMBRE CORTO: menu, catalogo, breadcrumb,
                                                    # pestaña del navegador. NO es lo que se ve
                                                    # arriba del cuadro (eso lo arma el protocolo).
-tipo: ranking                # ranking | serie | torta | mapa | flujo-od | lista | tabla-variaciones
+tipo: ranking                # ranking | serie | torta | mapa | flujo-od | lista | tabla-variaciones | galeria | documentos
 
 # El titulo que va ARRIBA del cuadro lo arma specs/modelos/_protocolo-presentacion.yaml con estos
 # componentes. Es obligatorio: sin esto, el build no puede titular la vista y falla.

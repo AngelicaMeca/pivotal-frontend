@@ -26,6 +26,40 @@ SharePoint  <──── GitHub Actions ────> Deploy Hook de Vercel
 Qué Excels se bajan lo dice `configs/origen-sharepoint.yaml`. Una entrega nueva se suma ahí con
 el nombre de su carpeta en SharePoint (una carpeta que ya se llame `entrega-NN` entra sola).
 
+## Documentos que el sitio publica tal cual (PDF)
+
+Además de los Excels, `configs/origen-sharepoint.yaml` declara en `documentos` carpetas de PDF que
+el sitio **sirve él mismo** (desde el 15-oct-2026). Hoy hay una: `agromet`, la base "2008 IC-CD"
+de JC, en `Pivotal Repositorio/Operaciones/Maquetas/Recursos clima/` (ruta completa: está FUERA
+de "Bases de datos"), con las subcarpetas "2008 - IC -CD - Parte A" y "Parte B". Son los informes
+semanales de INTA AgroMet que enlaza la página AgroClima > INTA AgroMet.
+
+- `pipeline/sharepoint.py` baja todos los PDF de la carpeta y de sus subcarpetas, juntos, a
+  `<raw>/documentos/agromet/` (dos PDF con el mismo nombre en dos subcarpetas cortan). Entran en la
+  **huella** como `documentos/agromet`: un PDF nuevo o reemplazado dispara la publicación horaria
+  igual que un Excel.
+- El build (`site_build.construir_documentos`) copia a `public/plataforma/documentos/agromet/`
+  solo los PDF **declarados** en `configs/dims/agromet-ejemplares.yaml` dentro de la ventana del
+  spec (24). Corta si falta uno declarado o si su tamaño no es el declarado. Un PDF de la carpeta
+  que no está declarado **no se publica y se avisa** en el log (`AVISO ... PDF no declarado`), sin
+  frenar la publicación: es el estado normal entre que JC sube uno nuevo y alguien lo declara.
+- Peso: los 24 PDF son ~163 MB (170.629.726 bytes) y se bajan en cada compilación.
+
+**Cómo se suma un ejemplar nuevo de AgroMet:** (1) JC sube el PDF a la carpeta (en cualquiera de
+las partes); (2) se agrega su entrada ARRIBA de todo en `configs/dims/agromet-ejemplares.yaml`
+con el número y la fecha que da JC (no se deducen del nombre del archivo: "10626" es 10 de junio y
+"10726" es 1 de julio), el nombre exacto del archivo y su tamaño en bytes; (3) se commitea: la
+ventana de 24 saca sola al más viejo. Ver `specs/modelos/2008-informes-agromet.yaml` (también qué
+hacer con la tapa y con "Destacados").
+
+Para bajar solo los PDF a una computadora (a la carpeta de `tableros/raw.local.txt`), sin tocar
+los Excels:
+
+```bash
+cd tableros
+MS_TENANT_ID=... MS_CLIENT_ID=... MS_CLIENT_SECRET=... python -m pipeline.sharepoint --destino "<carpeta de raw.local.txt>" --solo-documentos
+```
+
 ## Puesta en marcha (una sola vez)
 
 ### 1. Registrar la aplicación en Microsoft Entra (administrador de AUTOScraping)
