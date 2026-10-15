@@ -907,6 +907,72 @@ export default function iniciar(PIVOTAL) {
     });
   }
 
+  /* ================= "Destacados" de AgroMet (portada de AgroClima, 15-oct-2026) ============
+     La columna derecha de la hoja "Clima Ingreso": dos imagenes de la primera pagina del ultimo
+     ejemplar, lado a lado, cada una con su texto debajo; despues las secciones de parrafos con
+     el titulo de cada parrafo en negrita ("Maíz: ..."). Todo viene del spec; aca no se escribe
+     ningun texto. La imagen lleva su ancho y alto para que la caja se reserve antes de bajar.
+     El pie del cuadro lleva su rotulo en negrita ("Extraído de: ..."), como en la maqueta. */
+  function pintarDestacados(nodo, panel) {
+    var caja = nodo.querySelector("[data-destacados]");
+    if (!caja) { return; }
+    PIVOTAL.vaciar(caja);
+    var fila = document.createElement("div");
+    fila.className = "destacados-figuras";
+    (panel.figuras || []).forEach(function (f) {
+      var figura = document.createElement("figure");
+      figura.className = "destacado";
+      var marco = document.createElement("div");
+      marco.className = "destacado-marco";
+      var img = document.createElement("img");
+      img.src = f.imagen;
+      img.alt = f.alt || "";
+      img.width = f.ancho;
+      img.height = f.alto;
+      img.decoding = "async";
+      marco.appendChild(img);
+      figura.appendChild(marco);
+      if (f.texto) {
+        var leyenda = document.createElement("figcaption");
+        leyenda.textContent = f.texto;
+        figura.appendChild(leyenda);
+      }
+      fila.appendChild(figura);
+    });
+    caja.appendChild(fila);
+    (panel.secciones || []).forEach(function (s) {
+      var seccion = document.createElement("section");
+      seccion.className = "destacados-seccion";
+      // Un <p> y no un <h3>: el h3 del sitio es un rotulo en versalita y este es el titulo
+      // en negrita que escribe JC ("Estado de los cultivos").
+      var titulo = document.createElement("p");
+      titulo.className = "destacados-titulo";
+      titulo.textContent = s.titulo;
+      seccion.appendChild(titulo);
+      (s.parrafos || []).forEach(function (p) {
+        var parrafo = document.createElement("p");
+        if (p.titulo) {
+          var b = document.createElement("strong");
+          b.textContent = p.titulo;
+          parrafo.appendChild(b);
+          parrafo.appendChild(document.createTextNode(": "));
+        }
+        parrafo.appendChild(document.createTextNode(p.texto));
+        seccion.appendChild(parrafo);
+      });
+      caja.appendChild(seccion);
+    });
+    var pie = nodo.querySelector("[data-pie]");
+    var prefijo = panel.pie_rotulo ? panel.pie_rotulo + ": " : "";
+    if (pie && prefijo && (panel.pie || "").indexOf(prefijo) === 0) {
+      PIVOTAL.vaciar(pie);
+      var rotulo = document.createElement("strong");
+      rotulo.textContent = panel.pie_rotulo;
+      pie.appendChild(rotulo);
+      pie.appendChild(document.createTextNode(panel.pie.slice(panel.pie_rotulo.length)));
+    }
+  }
+
   /* ================= cruzar datos: las dos series del zoom (Francisco, 24-sep-2026) =========
      La comparacion se prende ADENTRO DEL ZOOM y solo en los cuadros de serie temporal, que son
      los unicos donde una segunda serie se lee sin mentir (en el mapa, el anillo y el ranking
@@ -1834,6 +1900,7 @@ export default function iniciar(PIVOTAL) {
     if (id.indexOf("anillo-fijo-") === 0) { return pintarAnillo; }
     if (id.indexOf("fija-") === 0) { return pintarTablaDatos; }
     if (id.indexOf("accesos-") === 0) { return pintarAccesos; }
+    if (id.indexOf("destacados-") === 0) { return pintarDestacados; }
     return null;
   }
 

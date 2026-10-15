@@ -11,11 +11,14 @@
 # la de las estaciones es la silueta de la provincia con las ocho estaciones, dibujada por el
 # build con las coordenadas de la base 111. JC pega capturas; las nuestras se actualizan solas.
 #
+# El bloque "Destacados" de la derecha (JC, W62: "SE EXTRAE DE LA PRIMERA PÁGINA DEL ULTIMO
+# EJEMPLAR DE AgroMet") SE PUBLICA desde el 15-oct-2026 (pedido de la usuaria): la maqueta ya
+# trae el contenido completo, que JC extrajo de la primera pagina del AgroMet Nº 922 (7-oct-2026),
+# y se publica TAL CUAL, en el lugar donde lo dibuja: columna derecha (cols AI-BH, filas 6-50),
+# al lado de las tarjetas. Ver el panel `destacados-agromet` mas abajo y como se actualiza.
+# Sigue abierto en el backlog 107 quien arma cada ejemplar nuevo.
+#
 # Lo que NO se construyo, porque no hay base entregada (backlog 107):
-#   - el bloque "Destacados" de la derecha (JC, W62: "SE EXTRAE DE LA PRIMERA PÁGINA DEL ULTIMO
-#     EJEMPLAR DE AgroMet": los dos mapas de pronostico, sus textos y el "Estado de los
-#     cultivos"). Sin el ejemplar no hay nada que extraer: no se inventa. Sin ese bloque, las
-#     tarjetas ocupan todo el ancho.
 #   - la pagina AgroMet (hoja "ClimAGM", base "2008 IC-CD", lista de informes "con LINK AL
 #     PDF"). Su tarjeta se dibuja APAGADA con "Próximamente", la misma convencion que una
 #     seccion anunciada en el menu: el rotulo esta y al lado dice que todavia no.
@@ -48,7 +51,8 @@ paneles:
     pie: "Fuente: INTA"
     tarjetas:
       # `destino`: el id del spec de la pagina (tablero o galeria). El build lo resuelve a su
-      # URL y corta si no existe. `miniatura: estaciones` = la silueta con las estaciones.
+      # URL y corta si no existe. `miniatura: estaciones` = la silueta con las estaciones;
+      # `miniatura: imagen` + `imagen:` = un archivo fijo de site/assets/.
       - organismo: "INTA"
         titulo: "Red de Estaciones Agrometeorológicas Santiago del Estero"
         bajada: "Información diaria"
@@ -59,6 +63,11 @@ paneles:
         bajada: "Informe agrometeorológico semanal"
         # Sin `destino`: no hay base entregada (backlog 107). Se dibuja apagada.
         proximamente: "Próximamente"
+        # La miniatura es la de JC (Grupo 121 de "Clima Ingreso"): la tapa del AgroMet Nº 922.
+        # Imagen fija en site/assets/ (`miniatura: imagen`); no cambia con cada ejemplar salvo
+        # que se reemplace el archivo. sha256 6e1d1275eeb29c5446c07f20bc03aa5073331403408b3d0491529b12f64c204f
+        miniatura: imagen
+        imagen: clima/tarjetas/tarjeta-agromet.png
   accesos-mapas:
     titulo: "Mapas"
     pie: "Fuentes: ORA (Oficina de Riesgo Agropecuario) y SEPA - INTA (Instituto de Clima y Agua)"
@@ -90,9 +99,84 @@ paneles:
         bajada: "Acceso a mapas cada 8 días"
         destino: 3006-mapas-vci
         miniatura: galeria
+  # "Destacados" (hoja "Clima Ingreso", recuadro de AI6 a BH50): la primera pagina del ultimo
+  # ejemplar de INTA AgroMet, publicada TAL CUAL la transcribe JC en su maqueta (textos de sus
+  # cuadros de texto 110, 113, 114 y 115; imagenes 111 y 112). Nada de esto sale de una base:
+  # es contenido del ejemplar y se reemplaza con cada ejemplar nuevo.
+  #
+  # COMO SE ACTUALIZA con un ejemplar nuevo (sin tocar codigo):
+  #   1. Copiar las dos imagenes de la primera pagina del ejemplar a
+  #      site/assets/clima/destacados/ con el numero en el nombre
+  #      (agromet-<numero>-precipitacion-14-dias.png, agromet-<numero>-pronostico-trimestral.png,
+  #      o el nombre del mapa que traiga ese ejemplar) y borrar las del ejemplar anterior.
+  #   2. Aca abajo: `ejemplar` (numero y fecha de publicacion), `figuras` (archivo, alt y el
+  #      texto que va debajo de cada imagen) y `secciones` (el "Estado de los cultivos", un
+  #      parrafo por cultivo con el cultivo en `titulo`). Actualizar `procedencia`.
+  #   3. Correr `make site`. Una imagen declarada que no exista en site/assets/ corta el build.
+  # El pie ("Extraído de: INTA AgroMet Nº 922 - 7 octubre 2026") se compone del `ejemplar`
+  # con la plantilla de `pie`: no se escribe a mano, asi no queda desfasado del contenido.
+  # Quien extrae el contenido de cada ejemplar (nosotros del PDF o JC armado) sigue abierto:
+  # backlog 107.
+  #
+  # Los dos mapas van lado a lado y del mismo alto, como en la maqueta (imagenes 111 y 112, filas
+  # 7 a 30): a la izquierda la precipitacion acumulada a 14 dias y a la derecha el pronostico
+  # trimestral, cada uno con su texto debajo.
+  destacados-agromet:
+    titulo: "Destacados"
+    ejemplar:
+      publicacion: "INTA AgroMet"
+      numero: 922
+      fecha: 2026-10-07
+    # `{publicacion}`, `{numero}` y `{fecha}` ("7 octubre 2026", como lo escribe JC). El rotulo
+    # va en negrita, como en la maqueta.
+    pie_rotulo: "Extraído de"
+    pie: "{publicacion} Nº {numero} - {fecha}"
+    figuras:
+      - imagen: clima/destacados/agromet-922-precipitacion-14-dias.png
+        alt: "Mapa de la Argentina: precipitación acumulada pronosticada a 14 días, del 07-10-2026 al 20-10-2026, en mm (INTA, Instituto de Clima y Agua)"
+        texto: >-
+          Para las próximas dos semanas se prevén precipitaciones en gran parte del país.
+          Mayores acumulados en el centro y norte, especialmente en Cuyo y región Pampeana. En
+          Patagonia se esperan acumulados menores, salvo en sectores cordilleranos.
+      - imagen: clima/destacados/agromet-922-pronostico-trimestral.png
+        alt: "Mapa de la Argentina: pronóstico de precipitación trimestral octubre, noviembre y diciembre, categoría más probable (inferior, normal o superior a la normal). CIRN, Instituto de Clima y Agua; adaptación del Pronóstico Trimestral del Servicio Meteorológico Nacional"
+        texto: >-
+          Predominan las probabilidades de precipitaciones normales a superiores a lo normal en
+          gran parte del país, con mayores probabilidades de lluvias superiores a lo normal en
+          el Litoral, y menores a lo normal en el NOA.
+    secciones:
+      - titulo: "Estado de los cultivos"
+        parrafos:
+          - titulo: "Maíz"
+            texto: >-
+              la siembra alcanza el 19% a nivel nacional. Las lluvias favorecieron la
+              implantación en algunas zonas, aunque los excesos hídricos demoraron las labores
+              en sectores de Buenos Aires.
+          - titulo: "Trigo"
+            texto: >-
+              predomina un buen estado general, con diferencias regionales en la disponibilidad
+              de agua. Se observan limitaciones hídricas en sectores de Córdoba, Santa Fe y el
+              norte del país, mientras que en Buenos Aires las condiciones son mayormente
+              favorables. Se registran efectos puntuales de heladas y granizo.
+          - titulo: "Girasol"
+            texto: >-
+              la siembra alcanza el 38% de la superficie prevista a nivel nacional. Finalizó en
+              el NEA y el Litoral, mientras que en Córdoba avanza a buen ritmo tras las últimas
+              precipitaciones. Los lotes implantados presentan, en general, buena evolución.
+    procedencia:
+      maqueta: "0000000000 Maqueta Clima 1.xlsx, hoja Clima Ingreso (imagenes 111 y 112, cuadros de texto 110, 113, 114 y 115)"
+      imagenes_recibidas: 2026-10-15
+      sha256:
+        agromet-922-precipitacion-14-dias.png: 0e08eaa25c28dd240c38fa8aa742a94ff8779fa6b7b328547549e270e84d1bec
+        agromet-922-pronostico-trimestral.png: 322c971595031242db60f8a5c60d55166a0b2cc56cc561c74f63ede1ae298b6f
+  # Las tarjetas a la izquierda y "Destacados" a la derecha, como en la hoja de JC: las
+  # tarjetas van de la col G a la AH (27 columnas) y el recuadro de la AI a la BH (26). Mitad
+  # y mitad. En pantallas angostas (<= 1000 px) la banda pasa a una columna y "Destacados"
+  # baja debajo de las tarjetas.
   orden:
-    - {id: accesos-datos, ancho: 12}
-    - {id: accesos-mapas, ancho: 12}
+    - {id: accesos-datos, ancho: 6, columna: izq}
+    - {id: accesos-mapas, ancho: 6, columna: izq}
+    - {id: destacados-agromet, ancho: 6, columna: der}
 
 filtros: []
 

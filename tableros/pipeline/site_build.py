@@ -29,6 +29,7 @@ Determinismo: sin timestamps, sin locale, sin azar. Todo diccionario que va a JS
 ordenado y todo listado del disco se lee con sorted(). Dos corridas dan bytes identicos.
 """
 import argparse
+import datetime
 import hashlib
 import itertools
 import json
@@ -7901,12 +7902,19 @@ def panel_stock_relaciones(ctx, spec, anio, pie):
 
 
 def imagenes_de_paneles(tableros):
-    """Las imagenes que declaran los cuadros `imagen-*`, para copiarlas al sitio."""
+    """Las imagenes que declaran los cuadros `imagen-*`, las `figuras` de los `destacados-*` y
+    las miniaturas fijas de las tarjetas `accesos-*` (portada de AgroClima), para copiarlas."""
     rutas = set()
     for tablero in tableros:
         for id_panel, declarado in (tablero["spec"].get("paneles") or {}).items():
             if id_panel.startswith("imagen-") and isinstance(declarado, dict):
                 rutas.add(declarado["imagen"])
+            if id_panel.startswith("destacados-") and isinstance(declarado, dict):
+                rutas.update(f["imagen"] for f in declarado["figuras"])
+            # Las tarjetas de acceso con miniatura fija (`miniatura: imagen`).
+            if id_panel.startswith("accesos-") and isinstance(declarado, dict):
+                rutas.update(t["imagen"] for t in declarado["tarjetas"]
+                             if t.get("miniatura") == "imagen")
     return sorted(rutas)
 
 
@@ -10478,6 +10486,10 @@ def panel_accesos(ctx, spec, id_panel):
                 % (item["titulo"], spec["id"]))
         if item.get("miniatura") == "estaciones":
             tarjeta["miniatura"] = "%s/%s" % (PREFIJO, SVG_ESTACIONES)
+        elif item.get("miniatura") == "imagen":
+            # Una imagen fija de site/assets/ (la tapa de AgroMet en su tarjeta, Grupo 121 de
+            # "Clima Ingreso"): la copia `imagenes_de_paneles`, que corta si no existe.
+            tarjeta["miniatura"] = "%s/%s" % (PREFIJO, item["imagen"])
         elif item.get("miniatura") == "galeria":
             galeria = pr.cargar_yaml(os.path.join(DIR_MODELOS, item["destino"] + ".yaml"))
             galeria["slug_vista"] = item["destino"]
@@ -10488,23 +10500,71 @@ def panel_accesos(ctx, spec, id_panel):
             "pie": declarado["pie"], "tarjetas": tarjetas}
 
 
+MESES_LARGOS_CLIMA = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
+                      "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
+
+
+def panel_destacados(spec, id_panel):
+    """El bloque "Destacados" de la portada de AgroClima (`destacados-*`): la primera pagina del
+    ultimo ejemplar de INTA AgroMet, tal cual la transcribe JC en su maqueta (W62 de "Clima
+    Ingreso": "SE EXTRAE DE LA PRIMERA PÁGINA DEL ULTIMO EJEMPLAR DE AgroMet").
+
+    Todo el contenido vive en el spec (ejemplar, figuras con su texto debajo, secciones de
+    parrafos con el titulo en negrita) y se reemplaza con cada ejemplar; el build no compone
+    texto, salvo el pie, que sale del `ejemplar` con la plantilla del spec para que el numero y
+    la fecha citados no se desfasen del contenido. Las imagenes viven en site/assets/ y las
+    copia `imagenes_de_paneles` como las de los cuadros `imagen-*`."""
+    declarado = spec["paneles"][id_panel]
+    ejemplar = declarado["ejemplar"]
+    fecha = ejemplar["fecha"]
+    if not isinstance(fecha, datetime.date):
+        raise pr.ErrorDeProtocolo("`%s.ejemplar.fecha` de %s tiene que ser una fecha AAAA-MM-DD."
+                                  % (id_panel, spec["id"]))
+    fecha_texto = "%d %s %d" % (fecha.day, MESES_LARGOS_CLIMA[fecha.month - 1], fecha.year)
+    pie = declarado["pie"].format(publicacion=ejemplar["publicacion"], numero=ejemplar["numero"],
+                                  fecha=fecha_texto)
+    figuras = []
+    for figura in declarado["figuras"]:
+        ruta = os.path.join(DIR_ASSETS, figura["imagen"])
+        if not os.path.exists(ruta):
+            raise pr.ErrorDeProtocolo("El bloque %s de %s pide site/assets/%s, que no existe."
+                                      % (id_panel, spec["id"], figura["imagen"]))
+        ancho, alto = _dimensiones_imagen(ruta)
+        figuras.append({"imagen": "%s/%s" % (PREFIJO, figura["imagen"]), "alt": figura["alt"],
+                        "ancho": ancho, "alto": alto, "texto": limpiar(figura["texto"])})
+    secciones = [{"titulo": s["titulo"],
+                  "parrafos": [{"titulo": p["titulo"], "texto": limpiar(p["texto"])}
+                               for p in s["parrafos"]]}
+                 for s in declarado.get("secciones") or []]
+    rotulo = declarado.get("pie_rotulo", "")
+    return {"titulo": declarado["titulo"], "subtitulo": declarado.get("subtitulo", ""),
+            "pie": ("%s: %s" % (rotulo, pie)) if rotulo else pie, "pie_rotulo": rotulo,
+            "figuras": figuras, "secciones": secciones}
+
+
 def construir_tablero_agroclima(ctx, spec):
-    """La portada de la rama ("Clima Ingreso" de JC): dos bloques de tarjetas, sin filtros."""
+    """La portada de la rama ("Clima Ingreso" de JC): dos bloques de tarjetas y, a la derecha,
+    los "Destacados" del ultimo AgroMet. Sin filtros."""
     tablero = tablero_base(ctx, spec, [])
     tablero["combos"][""] = {"paneles": {
-        id_panel: panel_accesos(ctx, spec, id_panel)
-        for id_panel in ("accesos-datos", "accesos-mapas")}}
+        id_panel: (panel_destacados(spec, id_panel) if id_panel.startswith("destacados-")
+                   else panel_accesos(ctx, spec, id_panel))
+        for id_panel in (p["id"] for p in spec["paneles"]["orden"])}}
     tablero["archivos_extra"] = {"public/plataforma/" + SVG_ESTACIONES: svg_de_estaciones(ctx)}
     return tablero
 
 
 def _dimensiones_imagen(ruta):
-    """(ancho, alto) de un JPEG o un GIF, leyendo su cabecera. Lo usa la grilla para reservar
-    la caja de cada miniatura ANTES de que baje (ver `.galeria-mapa img`): los mapas de clima
-    son verticales y no tienen la proporcion de los forrajeros."""
+    """(ancho, alto) de un JPEG, un GIF o un PNG, leyendo su cabecera. Lo usa la grilla para
+    reservar la caja de cada miniatura ANTES de que baje (ver `.galeria-mapa img`): los mapas
+    de clima son verticales y no tienen la proporcion de los forrajeros. Tambien las imagenes
+    de "Destacados" de la portada de AgroClima."""
     import struct
     with open(ruta, "rb") as f:
         datos = f.read()
+    # PNG (las imagenes de "Destacados"): ancho y alto en el IHDR, el primer chunk.
+    if datos[:8] == b"\x89PNG\r\n\x1a\n" and datos[12:16] == b"IHDR":
+        return struct.unpack(">II", datos[16:24])
     if datos[:6] in (b"GIF87a", b"GIF89a"):
         return struct.unpack("<HH", datos[6:10])
     if datos[:2] == b"\xff\xd8":
@@ -10523,7 +10583,7 @@ def _dimensiones_imagen(ruta):
                 alto, ancho = struct.unpack(">HH", datos[i + 5:i + 9])
                 return ancho, alto
             i += 2 + largo
-    raise pr.ErrorDeProtocolo("No se pudo leer el tamaño de la imagen %s (solo JPEG o GIF)."
+    raise pr.ErrorDeProtocolo("No se pudo leer el tamaño de la imagen %s (solo JPEG, GIF o PNG)."
                               % ruta)
 
 

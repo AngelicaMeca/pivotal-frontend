@@ -1553,9 +1553,12 @@ a { color: var(--enlace); }
 /* Las tarjetas de la portada ("Clima Ingreso" de JC): miniatura a la izquierda y texto a la
    derecha, como las dibuja el. Toda la tarjeta es el link. La apagada (una pagina sin base
    todavia) no reacciona al mouse y lleva su "Próximamente". */
-.accesos { display: grid; grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr)); gap: .8rem; }
+/* 17rem y no mas: con "Destacados" al costado (15-oct-2026) las tarjetas tienen media pagina y
+   JC las dibuja de a DOS por fila (cada una de ~310 px en su hoja: miniatura de ~120 px y el
+   texto al lado). Con 21rem entraba una sola y la columna se hacia el doble de alta. */
+.accesos { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: .8rem; }
 .acceso {
-  display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: .85rem; align-items: center;
+  display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: .75rem; align-items: center;
   padding: .7rem; border: 1px solid var(--borde-panel); border-radius: var(--radio);
   background: var(--fondo); color: var(--texto); text-decoration: none;
   transition: border-color 120ms ease-out;
@@ -1573,11 +1576,37 @@ a.acceso:focus-visible { outline: 2px solid var(--enlace); outline-offset: 2px; 
   font-family: var(--rotulos); font-size: .6rem; text-transform: uppercase; letter-spacing: .08em;
   color: var(--texto-apoyo);
 }
-.acceso-titulo { font-family: var(--titulos); font-size: 1.05rem; font-weight: 700; line-height: 1.2; }
+/* Partir con guion: "Agrometeorológicas" y "Evapotranspiración" no entran enteras en el texto de
+   una tarjeta de media columna y se salian del borde. */
+.acceso-titulo { font-family: var(--titulos); font-size: 1.05rem; font-weight: 700; line-height: 1.2;
+                 hyphens: auto; overflow-wrap: break-word; }
 .acceso-detalle { font-size: .8rem; }
 .acceso-bajada { font-size: .8rem; color: var(--texto-apoyo); }
 .acceso-texto .prox { align-self: flex-start; margin-top: .2rem; }
 @media (prefers-reduced-motion: reduce) { .acceso { transition: none; } }
+
+/* "Destacados" de AgroMet (columna derecha de "Clima Ingreso", 15-oct-2026). Los dos mapas
+   van lado a lado y del MISMO alto, como en la maqueta (las dos ocupan las filas 7 a 30); cada
+   una se ve entera (`contain`) sobre el fondo del cuadro. El alto fijo reserva la caja antes de
+   que la imagen baje. Debajo de cada una su texto; despues los parrafos a todo el ancho. En
+   pantallas angostas las imagenes se apilan. */
+.destacados { display: flex; flex-direction: column; gap: .8rem; font-size: .85rem; line-height: 1.45; }
+.destacados-figuras { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; }
+.destacado { margin: 0; display: flex; flex-direction: column; gap: .5rem; min-width: 0; }
+.destacado-marco {
+  display: flex; align-items: center; justify-content: center; height: 23rem;
+  border-radius: var(--radio-chico); background: var(--fondo-cuadro); overflow: hidden;
+}
+/* `height: 100%` y no `auto`: los dos mapas (308x478 y 307x477) quedan del MISMO alto aunque
+   la columna los angoste; `contain` mantiene la proporcion dentro de la caja. */
+.destacado-marco img { display: block; max-width: 100%; height: 100%; width: auto; object-fit: contain; }
+.destacado figcaption { margin: 0; }
+.destacados-seccion p { margin: 0 0 .45rem; }
+.destacados-seccion p:last-child { margin-bottom: 0; }
+.destacados-seccion .destacados-titulo { font-weight: 700; font-size: .95rem; margin-bottom: .4rem; }
+@media (max-width: 560px) {
+  .destacados-figuras { grid-template-columns: minmax(0, 1fr); }
+}
 
 /* El mapa de estaciones: es el selector de la pagina, asi que la lista de estaciones (el
    mismo filtro, para elegir con el teclado) va DEBAJO del titulo y envuelve en varios

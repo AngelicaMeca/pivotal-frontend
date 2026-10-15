@@ -248,9 +248,17 @@ function CuerpoPanel({ id: idPanel, mockup = false, panel }: { id: string; mocku
     : idPanel.startsWith("anillo-fijo-") ? "anillo"
     // Bloques de tarjetas con miniatura que llevan a otras paginas (portada de AgroClima).
     : idPanel.startsWith("accesos-") ? "accesos"
+    // Contenido de un ejemplar de otro organismo: imagenes con su texto y parrafos ("Destacados"
+    // de AgroMet en la portada de AgroClima).
+    : idPanel.startsWith("destacados-") ? "destacados"
     : (FORMA_DEL_PANEL[idPanel] ?? idPanel);
   let cuerpo = null;
-  if (id === "accesos") {
+  if (id === "destacados") {
+    /* "Destacados" de la hoja "Clima Ingreso" de JC: la primera pagina del ultimo AgroMet. Dos
+       imagenes lado a lado con su texto debajo y, a todo el ancho, los parrafos del "Estado de
+       los cultivos". Todo el contenido viene del spec por el JSON; lo arma tablero.js. */
+    cuerpo = <div className="destacados" data-destacados=""></div>;
+  } else if (id === "accesos") {
     /* Las tarjetas de la portada de AgroClima ("Datos e informes" y "Mapas" de la hoja "Clima
        Ingreso" de JC): miniatura + texto, cada una un link a su pagina. Las arma tablero.js con
        lo que manda el build; una tarjeta sin pagina todavia va apagada con "Próximamente". */

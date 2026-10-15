@@ -13,7 +13,7 @@ URL `/plataforma/clima/agroclima`).
 
 | Hoja | Página del sitio | Spec | Estado |
 |---|---|---|---|
-| Clima Ingreso | portada `/plataforma/clima/agroclima` | `tablero-agroclima.yaml` | construida, sin "Destacados" (backlog 107) |
+| Clima Ingreso | portada `/plataforma/clima/agroclima` | `tablero-agroclima.yaml` | construida, con "Destacados" del AgroMet Nº 922 (backlog 107) |
 | ClimEAI | `/clima/agroclima/estaciones-inta` | `tablero-agroclima-estaciones.yaml` + `_comunes-agroclima.yaml` | construida (base 111) |
 | ClimAGM | AgroMet, informes con link al PDF | — | NO construida: base "2008 IC-CD" no entregada (backlog 107). Tarjeta "Próximamente" |
 | ClimORA-1 | `/clima/agroclima/3001-mapas-ora-humedad-suelo` | `3001-mapas-ora-humedad-suelo.yaml` | construida |
@@ -33,8 +33,15 @@ Los números 3001..3006 son los códigos de base que JC escribe al pie de cada h
   agrometeorológico semanal) y **Mapas** (Reservas Hídricas ORA, Evapotranspiración, Humedad
   disponible, Humedad en el suelo, Índice de Vegetación NDVI, Índice de Condición de la
   Vegetación VCI).
-- A la derecha, "Destacados": W62 "SE EXTRAE DE LA PRIMERA PÁGINA DEL ULTIMO EJEMPLAR DE
-  AgroMet". Sin ejemplar no se construye; las tarjetas ocupan todo el ancho.
+- A la derecha, "Destacados" (recuadro AI6:BH50): W62 "SE EXTRAE DE LA PRIMERA PÁGINA DEL
+  ULTIMO EJEMPLAR DE AgroMet". Publicado el 15-oct-2026 con el contenido que JC ya transcribe en
+  la maqueta (AgroMet Nº 922, 7-oct-2026): mapas de precipitación acumulada a 14 días y de
+  pronóstico trimestral oct-nov-dic, lado a lado y del mismo alto, cada uno con su texto debajo, "Estado de los cultivos" y el pie "Extraído de". Panel
+  `destacados-agromet` del spec, imágenes en `site/assets/clima/destacados/`; cómo se actualiza
+  está en el spec. Tarjetas y Destacados mitad y mitad (cols G-AH y AI-BH); las tarjetas van de
+  a dos por fila, como en la hoja. Quién arma cada ejemplar nuevo: backlog 107.
+- La tarjeta de AgroMet (apagada, "Próximamente") lleva de miniatura la tapa del AgroMet Nº 922,
+  como en la maqueta (Grupo 121): `site/assets/clima/tarjetas/tarjeta-agromet.png`.
 - "Generar PDF" abajo a la derecha.
 - Desvíos: miniaturas calculadas (la de cada galería es su mapa más reciente; la de las
   estaciones es la silueta de la provincia con las ocho estaciones, generada por el build);
