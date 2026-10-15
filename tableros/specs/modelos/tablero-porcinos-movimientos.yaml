@@ -11,6 +11,12 @@
 # a la izquierda, las cinco tablas a la derecha); con un departamento elegido, solo el anio
 # elegido y sin el anillo departamental. La introduccion de un departamento al que no entro
 # nada desde otra provincia es cero, no S/D.
+#
+# 15-oct-2026 (pedido de la usuaria, toda ganaderia): el mapa de la provincia lleva los NOMBRES
+# de los departamentos escritos (`paneles.mapa.rotulos_departamento`). DESVIO de la maqueta
+# "Maqueta Ganad VF", que dibuja los mapas sin nombres (viven en el tooltip y en la tabla por
+# departamento); es el mismo desvio que agricultura (backlog 68). Pregunta para JC en el
+# backlog 110; se apaga borrando esa linea del spec.
 id: tablero-porcinos-movimientos
 tipo: tablero
 familia: movimientos-porcinos
@@ -46,6 +52,8 @@ paneles:
   acciones_de_tablero:
     - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
   mapa:
+    # Nombres de los departamentos sobre el mapa: desvio de la maqueta (ver la cabecera).
+    rotulos_departamento: true
     titulo: "Movimientos por departamento"
     rotulo_accion: "Seleccione departamento"
     click_departamento: en-la-misma-vista

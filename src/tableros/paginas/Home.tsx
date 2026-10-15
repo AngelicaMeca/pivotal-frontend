@@ -22,7 +22,8 @@ export default function Home({ pagina }: { pagina: PaginaHome }) {
             <span className={`rama-estado ${rama.secciones.length ? "con-datos" : "sin-datos"}`}>
               {rama.secciones.length ? "Con datos" : "Sin datos todavía"}
             </span>
-            <h2>{rama.titulo}</h2>
+            {/* Una rama con portada (Ganaderia) lleva a ella desde su titulo */}
+            <h2>{rama.href ? <a href={rama.href}>{rama.titulo}</a> : rama.titulo}</h2>
             <p className="rama-bajada">{rama.bajada}</p>
             {rama.secciones.length ? (
               <ul>

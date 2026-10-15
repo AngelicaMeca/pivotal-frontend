@@ -1,0 +1,49 @@
+# Comunes de la PORTADA de Ganaderia ("Ganad Ingreso" de la maqueta de JC "Maqueta INGRESO a
+# GANADERIA.xlsx", 15-oct-2026). Lo lee site_build.ContextoGanaderiaIngreso.
+#
+# La portada no tiene base propia: los anillos de "Destacados" suman el stock de cada especie
+# desde los MISMOS marts que sus paginas. Aca se declara de donde sale cada especie y que se
+# cuenta como "UP" en cada una, que no es la misma medida en todas las bases:
+#   - `marts_de`: el `_comunes-stock-<especie>.yaml` de la especie (se reusan sus marts, asi no
+#     hay dos lugares donde decir de que mart sale una especie). Bovinos no tiene comunes de ese
+#     tipo (su pagina usa el contexto de la base 48) y declara el mart directo en `marts`.
+#   - `up`: la medida de las unidades productivas y de donde se lee: `de: serie` es el total
+#     provincial del mart principal; `de: estratos` es la suma de los tramos de la base por
+#     estrato (las especies cuya serie no trae UP). Es la misma UP que muestra la pagina de cada
+#     especie (U.P. = RENSPA).
+# El anio es el ULTIMO con cabezas y UP de TODAS las especies (lo calcula el build): un anillo
+# que mezclara anios de especies distintas no se puede leer como participacion.
+id: _comunes-ganaderia-ingreso
+familia: ganaderia-ingreso
+
+presentacion:
+  tipos_de_variable:
+    cabezas: cabezas
+    up: unidades_productivas
+
+especies:
+  - id: bovinos
+    nombre: "Bovinos"
+    marts:
+      principal: hecho_stock_bovino
+    up: {medida: unidades_productivas, de: serie}
+  - id: bubalinos
+    nombre: "Bubalinos"
+    marts_de: stock-bubalinos
+    up: {medida: renspas, de: estratos}
+  - id: equinos
+    nombre: "Equinos"
+    marts_de: stock-equinos
+    up: {medida: renspas, de: estratos}
+  - id: porcinos
+    nombre: "Porcinos"
+    marts_de: stock-porcinos
+    up: {medida: renspas, de: estratos}
+  - id: ovinos
+    nombre: "Ovinos"
+    marts_de: stock-ovinos
+    up: {medida: unidades_productivas, de: serie}
+  - id: caprinos
+    nombre: "Caprinos"
+    marts_de: stock-caprinos
+    up: {medida: unidades_productivas, de: serie}

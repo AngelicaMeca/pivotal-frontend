@@ -29,6 +29,10 @@ ramas:
     rama: Ganadería
     titulo: Ganadería
     bajada: "Existencias, movimientos y faena por departamento."
+    # La PORTADA de la rama (maqueta "Maqueta INGRESO a GANADERIA.xlsx", 15-oct-2026): el tramo
+    # "Ganadería" de la miga y el titulo de la rama en la home llevan a esta seccion en vez del
+    # ancla de la home. Es el id de una seccion de esta rama.
+    portada: ganaderia-ingreso
     # Como se PUBLICA un departamento cuyo nombre canonico de dim_geo no es el de JC (13-oct-
     # 2026). dim_geo canoniza "BANDA" por alias y asi tiene que seguir; JC escribe "La Banda"
     # y la ordena entre Juan F. Ibarra y Loreto. Se resuelve aca, en la presentacion: todos
@@ -217,6 +221,25 @@ secciones:
   # (la de stocks, `tablero-<especie>.yaml` sobre `_comunes-stock-<especie>.yaml`). Las otras
   # páginas de cada tira esperan su spec y se dibujan apagadas con "Próximamente". Apícola
   # se construyó el 12-oct-2026, cuando se configuró su base (30).
+
+  # La PORTADA de la rama (hoja "Ganad Ingreso" de "Maqueta INGRESO a GANADERIA.xlsx",
+  # 15-oct-2026; lectura en docs/maqueta-ganaderia-ingreso.md). Mismo patrón que la portada de
+  # AgroClima: tarjetas por especie con los links a sus páginas y "Destacados" a la derecha.
+  # Va PRIMERA para ser la primera entrada de Ganadería en el menú lateral y en la home. Vive
+  # en /plataforma/ganaderia: las URL de las especies (ganaderia/<especie>/...) no cambian.
+  - id: ganaderia-ingreso
+    familia: ganaderia-ingreso
+    rama: ganaderia
+    ruta: [Ganadería, Acceso a datos e informes]
+    url: ganaderia
+    titulo: "Acceso a datos e informes"
+    bajada_corta: "Accesos directos por especie y la participación de cada una en el stock."
+    bajada: >
+      La puerta de entrada a la ganadería de Santiago del Estero: accesos directos a la
+      información de cada especie, por provincia y por departamento, y la participación de la
+      hacienda mayor y menor en el stock.
+    sin_pestanias: true
+    grupos: []
 
   - id: bovinos
     base: 48

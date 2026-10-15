@@ -10,6 +10,13 @@
 # lleva fila de la provincia (la de JC no la tiene: arranca en Aguirre) y los estratos van sin
 # numero ni especie ("Hasta 10"). El anillo de UP de JC trae los estratos de OTRA especie (los
 # de caprinos): se publica el de ovinos y se le avisa (backlog).
+#
+# 15-oct-2026 (pedido de la usuaria, toda ganaderia): el mapa de la provincia lleva los NOMBRES
+# de los departamentos escritos (`paneles.mapa.rotulos_departamento`). DESVIO de la maqueta
+# "Maqueta Ganad VF", que dibuja los mapas sin nombres (viven en el tooltip y en la tabla por
+# departamento); es el mismo desvio que agricultura (backlog 68). Pregunta para JC en el
+# backlog 110; se apaga borrando esa linea en tablero-ovinos, de donde esta pagina lo hereda
+# (`igual_que`).
 id: tablero-ovinos-estratos
 igual_que: tablero-ovinos
 pagina: estratos

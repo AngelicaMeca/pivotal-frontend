@@ -20,6 +20,12 @@
 #   tambien se esconde con un departamento elegido: backlog.
 # - La matriz origen-destino interna es otra pagina (85-matriz-od-interna); su boton va al pie
 #   junto a "Generar PDF" (JC, T127: "REUBICAR DONDE CREAN CONVENIENTE").
+#
+# 15-oct-2026 (pedido de la usuaria, toda ganaderia): el mapa de la provincia lleva los NOMBRES
+# de los departamentos escritos (`paneles.mapa.rotulos_departamento`). DESVIO de la maqueta
+# "Maqueta Ganad VF", que dibuja los mapas sin nombres (viven en el tooltip y en la tabla por
+# departamento); es el mismo desvio que agricultura (backlog 68). Pregunta para JC en el
+# backlog 110; se apaga borrando esa linea del spec.
 id: tablero-bovinos-movimientos
 tipo: tablero
 familia: movimientos-bovinos
@@ -61,6 +67,8 @@ paneles:
     - {id: matriz-od, etiqueta: "Matrices Origen Destino (OD)", vista: 85-matriz-od-interna, flecha: true}
     - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
   mapa:
+    # Nombres de los departamentos sobre el mapa: desvio de la maqueta (ver la cabecera).
+    rotulos_departamento: true
     titulo: "Movimientos por departamento"
     rotulo_accion: "Seleccione departamento"
     # JC, celda E119: "Seleccionando un departamento del mapa lleva a página de datos (como en

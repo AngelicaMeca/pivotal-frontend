@@ -12,6 +12,13 @@
 # hoja no tiene el de UP). La tabla grande no lleva la fila de la provincia (la copia de
 # ovinos de JC no la tiene), la fila "Total X" va solo en los departamentos con mas de un
 # estrato y entra entera a 1440 px (Cachorras incluida).
+#
+# 15-oct-2026 (pedido de la usuaria, toda ganaderia): el mapa de la provincia lleva los NOMBRES
+# de los departamentos escritos (`paneles.mapa.rotulos_departamento`). DESVIO de la maqueta
+# "Maqueta Ganad VF", que dibuja los mapas sin nombres (viven en el tooltip y en la tabla por
+# departamento); es el mismo desvio que agricultura (backlog 68). Pregunta para JC en el
+# backlog 110; se apaga borrando esa linea en tablero-porcinos, de donde esta pagina lo hereda
+# (`igual_que`).
 id: tablero-porcinos-estratos
 igual_que: tablero-porcinos
 pagina: estratos-y-up

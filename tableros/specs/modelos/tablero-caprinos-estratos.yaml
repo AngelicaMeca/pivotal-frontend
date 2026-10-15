@@ -8,6 +8,13 @@
 # pone), encabezados de JC, estratos sin numero ni especie ("Hasta 15"), mapa "Estratos" sin
 # "Seleccione departamento" y miga literal (la de JC dice "Stocks" por arrastre). Las
 # diferencias de JC en tres estratos (16-30, 31-60 y 251-500) NO se tocan: van al backlog.
+#
+# 15-oct-2026 (pedido de la usuaria, toda ganaderia): el mapa de la provincia lleva los NOMBRES
+# de los departamentos escritos (`paneles.mapa.rotulos_departamento`). DESVIO de la maqueta
+# "Maqueta Ganad VF", que dibuja los mapas sin nombres (viven en el tooltip y en la tabla por
+# departamento); es el mismo desvio que agricultura (backlog 68). Pregunta para JC en el
+# backlog 110; se apaga borrando esa linea en tablero-caprinos, de donde esta pagina lo hereda
+# (`igual_que`).
 id: tablero-caprinos-estratos
 igual_que: tablero-caprinos
 pagina: estratos

@@ -4,6 +4,12 @@
 # Misma anatomia que Stocks: el mapa y la tabla por departamento arriba, y debajo dos pares
 # de grafico + tabla. El segundo grafico es el unico propio de esta hoja: la vacunacion
 # comparada con el stock (base 48), en barras agrupadas.
+#
+# 15-oct-2026 (pedido de la usuaria, toda ganaderia): el mapa de la provincia lleva los NOMBRES
+# de los departamentos escritos (`paneles.mapa.rotulos_departamento`). DESVIO de la maqueta
+# "Maqueta Ganad VF", que dibuja los mapas sin nombres (viven en el tooltip y en la tabla por
+# departamento); es el mismo desvio que agricultura (backlog 68). Pregunta para JC en el
+# backlog 110; se apaga borrando esa linea del spec.
 id: tablero-bovinos-vacunaciones
 tipo: tablero
 familia: stock-vacunacion-bovinos
@@ -44,6 +50,8 @@ paneles:
   acciones_de_tablero:
     - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
   mapa:
+    # Nombres de los departamentos sobre el mapa: desvio de la maqueta (ver la cabecera).
+    rotulos_departamento: true
     titulo: "1ra vacunación por departamento"
     medida: cabezas
     rotulo_accion: "Seleccione departamento"

@@ -4,6 +4,12 @@
 # Arriba el mapa y la tabla por departamento con establecimientos y UP, que es la FOTO 2025
 # (la base por departamento no tiene otros anios: por eso el selector de periodo tiene uno
 # solo). Debajo la serie provincial completa, en grafico y en tabla.
+#
+# 15-oct-2026 (pedido de la usuaria, toda ganaderia): el mapa de la provincia lleva los NOMBRES
+# de los departamentos escritos (`paneles.mapa.rotulos_departamento`). DESVIO de la maqueta
+# "Maqueta Ganad VF", que dibuja los mapas sin nombres (viven en el tooltip y en la tabla por
+# departamento); es el mismo desvio que agricultura (backlog 68). Pregunta para JC en el
+# backlog 110; se apaga borrando esa linea del spec.
 id: tablero-caprinos
 tipo: tablero
 familia: stock-caprinos
@@ -42,6 +48,8 @@ paneles:
   acciones_de_tablero:
     - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
   mapa:
+    # Nombres de los departamentos sobre el mapa: desvio de la maqueta (ver la cabecera).
+    rotulos_departamento: true
     # Capas de contexto del IGN (rutas, caminos rurales, ferrocarril y estaciones; pedido de
     # JC del 14-oct-2026, backlog 104). APAGADAS al abrir: con todo apagado el mapa es el de
     # siempre. Se prenden desde el control "Capas" del cuadro (tambien en el zoom) y lo que se

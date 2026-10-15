@@ -6482,6 +6482,7 @@ def panel_mapa_hacienda(ctx, spec, recorte, anio, medida, pie):
         "subtitulo": ctx.subtitulo_unidad(hac.UNIDAD[medida]),
         "pie": pie,
         "geojson": GEOJSON,
+        "rotulos": bool(spec["paneles"]["mapa"].get("rotulos_departamento")),
         "aspecto": aspecto_mapa(), "relacion": relacion_mapa(),
         "deptos": deptos,
         "unidad": hac.UNIDAD[medida],
@@ -6989,6 +6990,10 @@ def panel_mapa_stock(ctx, spec, anio, pie):
             "rotulo_cambiar"),
         "selecciona": selecciona,
         "ficha": None,
+        # Nombres de los departamentos sobre el mapa: lo decide el spec, como en agricultura
+        # (desvio de la maqueta, backlog 110). Este constructor lo usan stocks, estratos,
+        # vacunaciones, leche y regimenes de todas las especies.
+        "rotulos": bool(declarado.get("rotulos_departamento")),
         "aspecto": aspecto_mapa(), "relacion": relacion_mapa(),
         "deptos": deptos,
         "unidad": "cabezas",
@@ -7910,7 +7915,8 @@ def imagenes_de_paneles(tableros):
             if id_panel.startswith("imagen-") and isinstance(declarado, dict):
                 rutas.add(declarado["imagen"])
             if id_panel.startswith("destacados-") and isinstance(declarado, dict):
-                rutas.update(f["imagen"] for f in declarado["figuras"])
+                # Los "Destacados" de la portada de Ganaderia no traen imagenes (son anillos).
+                rutas.update(f["imagen"] for f in declarado.get("figuras") or [])
             # Las tarjetas de acceso con miniatura fija (`miniatura: imagen`).
             if id_panel.startswith("accesos-") and isinstance(declarado, dict):
                 rutas.update(t["imagen"] for t in declarado["tarjetas"]
@@ -8185,6 +8191,7 @@ def panel_mov_mapa(ctx, spec, anio, pie):
             "rotulo_cambiar"),
         "selecciona": declarado.get("click_departamento") == EN_LA_MISMA_VISTA,
         "ficha": None,
+        "rotulos": bool(declarado.get("rotulos_departamento")),
         "aspecto": aspecto_mapa(), "relacion": relacion_mapa(),
         "deptos": deptos,
         "unidad": "cabezas",
@@ -8824,6 +8831,7 @@ def panel_faena_mapa(ctx, spec, anio, pie):
             "rotulo_cambiar"),
         "selecciona": declarado.get("click_departamento") == EN_LA_MISMA_VISTA,
         "ficha": None,
+        "rotulos": bool(declarado.get("rotulos_departamento")),
         "aspecto": aspecto_mapa(), "relacion": relacion_mapa(),
         "deptos": deptos, "unidad": "tn",
         "escala": escala_del_panel_mapa(ctx, deptos, escala, rampa, "tn"),
@@ -9419,6 +9427,7 @@ def panel_apicola_mapa(ctx, spec, medida, pie):
         "titulo": declarado["titulo"].replace("{variable}", declarado["nombres"][medida]),
         "subtitulo": "En %s" % unidad, "pie": pie, "geojson": GEOJSON,
         "accion": None, "accion_con_departamento": None, "selecciona": False, "ficha": None,
+        "rotulos": bool(declarado.get("rotulos_departamento")),
         "aspecto": aspecto_mapa(), "relacion": relacion_mapa(),
         "deptos": deptos, "unidad": unidad,
         "escala": escala_del_panel_mapa(ctx, deptos, escala, rampa, unidad),
@@ -10480,11 +10489,34 @@ def panel_accesos(ctx, spec, id_panel):
                    "detalle": item.get("detalle", ""), "bajada": item.get("bajada", ""),
                    "destino": item.get("destino"), "miniatura": None,
                    "proximamente": item.get("proximamente", "")}
-        if bool(tarjeta["destino"]) == bool(tarjeta["proximamente"]):
+        # Una tarjeta con VARIOS links (portada de Ganaderia, "Ganad Ingreso" de JC: cada especie
+        # con la lista de sus paginas). La tarjeta no es un link; cada renglon lo es, y el que no
+        # tiene pagina todavia va apagado con su "Próximamente".
+        if item.get("enlaces"):
+            if tarjeta["destino"] or tarjeta["proximamente"]:
+                raise pr.ErrorDeProtocolo(
+                    "La tarjeta %r de %s tiene `enlaces`: no puede tener tambien `destino` ni "
+                    "`proximamente`." % (item["titulo"], spec["id"]))
+            tarjeta["enlaces"] = []
+            for enlace in item["enlaces"]:
+                if bool(enlace.get("destino")) == bool(enlace.get("proximamente")):
+                    raise pr.ErrorDeProtocolo(
+                        "El enlace %r de la tarjeta %r de %s tiene que tener `destino` o "
+                        "`proximamente` (una de las dos)."
+                        % (enlace.get("texto"), item["titulo"], spec["id"]))
+                tarjeta["enlaces"].append({"texto": enlace["texto"],
+                                           "destino": enlace.get("destino"),
+                                           "proximamente": enlace.get("proximamente", "")})
+        elif bool(tarjeta["destino"]) == bool(tarjeta["proximamente"]):
             raise pr.ErrorDeProtocolo(
                 "La tarjeta %r de %s tiene que tener `destino` o `proximamente` (una de las dos)."
                 % (item["titulo"], spec["id"]))
-        if item.get("miniatura") == "estaciones":
+        if item.get("miniatura") == "icono":
+            # El icono de la especie del paquete de JC (site/assets/iconos/color/), el mismo que
+            # lleva la tarjeta "Datos" de cada pagina de ganaderia.
+            tarjeta["miniatura"] = ruta_icono("color", item["icono"])
+            tarjeta["miniatura_icono"] = True
+        elif item.get("miniatura") == "estaciones":
             tarjeta["miniatura"] = "%s/%s" % (PREFIJO, SVG_ESTACIONES)
         elif item.get("miniatura") == "imagen":
             # Una imagen fija de site/assets/ (la tapa de AgroMet en su tarjeta, Grupo 121 de
@@ -10521,6 +10553,12 @@ def panel_destacados(spec, id_panel):
     la fecha citados no se desfasen del contenido. Las imagenes viven en site/assets/ y las
     copia `imagenes_de_paneles` como las de los cuadros `imagen-*`."""
     declarado = spec["paneles"][id_panel]
+    if "ejemplar" not in declarado:
+        # Sin ejemplar de otro organismo (los "Destacados" de la portada de Ganaderia, que son
+        # anillos armados con los marts): el pie es literal del spec y los bloques los agrega
+        # el constructor de esa portada (`bloques_de_destacados`).
+        return {"titulo": declarado["titulo"], "subtitulo": declarado.get("subtitulo", ""),
+                "pie": declarado["pie"], "pie_rotulo": "", "figuras": [], "secciones": []}
     ejemplar = declarado["ejemplar"]
     fecha = ejemplar["fecha"]
     if not isinstance(fecha, datetime.date):
@@ -10557,6 +10595,125 @@ def construir_tablero_agroclima(ctx, spec):
                    else panel_accesos(ctx, spec, id_panel))
         for id_panel in (p["id"] for p in spec["paneles"]["orden"])}}
     tablero["archivos_extra"] = {"public/plataforma/" + SVG_ESTACIONES: svg_de_estaciones(ctx)}
+    return tablero
+
+
+# ==========================================================================
+# Ganaderia · portada de la rama ("Ganad Ingreso", 15-oct-2026)
+# ==========================================================================
+class ContextoGanaderiaIngreso:
+    """La portada de Ganaderia: tarjetas por especie (forma `accesos-*`) y "Destacados" con seis
+    anillos de participacion por especie y por hacienda mayor/menor. No tiene base propia: lee
+    el stock de cada especie de los MISMOS marts que sus paginas
+    (`_comunes-ganaderia-ingreso.yaml`)."""
+
+    familia = "ganaderia-ingreso"
+
+    def __init__(self, con):
+        self.protocolo = pr.cargar_protocolo()
+        self.comunes = pr.cargar_comunes(self.familia)
+        self.theme = pr.cargar_theme()
+        self.navegacion = pr.cargar_yaml(os.path.join(DIR_SITE, "navegacion.yaml"))
+        self.colores = pr.Colores(self.protocolo, self.comunes, self.theme)
+        self.especies, self.nombre_especie = {}, {}
+        self.fuentes = set()
+        anios_por_especie = []
+        for decl in self.comunes["especies"]:
+            if decl.get("marts_de"):
+                comunes_especie = pr.cargar_comunes(decl["marts_de"])
+                marts = comunes_especie["marts"]
+                agregado = comunes_especie["categorias"]["agregado"]
+            else:
+                marts, agregado = decl["marts"], "Total"
+            datos = stk.StockEspecie(con, marts, agregado)
+            self.fuentes.update(datos.fuentes)
+            up = decl["up"]
+            if up["de"] not in ("serie", "estratos"):
+                raise pr.ErrorDeProtocolo("`up.de` de %s tiene que ser serie o estratos."
+                                          % decl["id"])
+            valores = {}
+            for anio in datos.anios:
+                cabezas = datos.anual.get((anio, agregado, "cabezas"))
+                if up["de"] == "serie":
+                    unidades = datos.anual.get((anio, agregado, up["medida"]))
+                else:
+                    unidades = datos.total_estratos_provincia(anio, up["medida"])
+                if cabezas is not None and unidades is not None:
+                    valores[anio] = {"cabezas": cabezas, "up": unidades}
+            if not valores:
+                raise pr.ErrorDeProtocolo("La especie %s no tiene ningun anio con cabezas y UP."
+                                          % decl["id"])
+            self.especies[decl["id"]] = valores
+            self.nombre_especie[decl["id"]] = decl["nombre"]
+            anios_por_especie.append(set(valores))
+        comunes_anios = set.intersection(*anios_por_especie)
+        if not comunes_anios:
+            raise pr.ErrorDeProtocolo("Las especies de la portada de Ganaderia no comparten "
+                                      "ningun anio con cabezas y UP.")
+        # El ultimo anio con dato de TODAS: un anillo con anios mezclados no es participacion.
+        self.anio = max(comunes_anios)
+
+    def valor(self, especie, medida):
+        if especie not in self.especies:
+            raise pr.ErrorDeProtocolo("Un anillo de la portada de Ganaderia nombra la especie "
+                                      "%r, que no esta en _comunes-ganaderia-ingreso." % especie)
+        return self.especies[especie][self.anio][medida]
+
+
+UNIDAD_DE_HACIENDA = {"cabezas": "cabezas", "up": "UP"}
+
+
+def bloques_de_destacados(ctx, declarado):
+    """Los bloques de los "Destacados" de la portada de Ganaderia, en el orden de JC: filas de
+    dos anillos y renglones de texto entre ellas (su AM17). Cada porcion SUMA las especies que
+    declara el spec ("Hacienda mayor" = bovinos + bubalinos + equinos); el porcentaje es sobre
+    el total del anillo. Los colores van por POSICION en la paleta del theme, como en su Excel
+    (la primera porcion de cada anillo en el primer color), sin repetirse dentro de un anillo."""
+    bloques = []
+    for bloque in declarado["bloques"]:
+        if "texto" in bloque:
+            bloques.append({"texto": limpiar(bloque["texto"])})
+            continue
+        anillos = []
+        for anillo in bloque["anillos"]:
+            medida = anillo["medida"]
+            if medida not in UNIDAD_DE_HACIENDA:
+                raise pr.ErrorDeProtocolo("La medida de un anillo de Destacados tiene que ser "
+                                          "cabezas o up (dice %r)." % medida)
+            partes = [(p["nombre"], sum(ctx.valor(e, medida) for e in p["especies"]))
+                      for p in anillo["porciones"]]
+            total = sum(v for _, v in partes)
+            colores = ctx.colores.por_categoria([n for n, _ in partes], respetar_orden=True)
+            porciones = []
+            for nombre, valor in partes:
+                pct = pr.fmt_pct(valor / total * 100, 2)
+                porciones.append({"n": nombre, "v": valor, "pct": pct,
+                                  "t": "%s %s" % (pr.fmt_numero(valor, 0),
+                                                  UNIDAD_DE_HACIENDA[medida]),
+                                  "color": colores[nombre]})
+            anillos.append({"titulo": anillo["titulo"].format(anio=ctx.anio),
+                            "porciones": porciones})
+        bloques.append({"anillos": anillos})
+    return bloques
+
+
+def construir_tablero_ganaderia_ingreso(ctx, spec):
+    """La portada de la rama Ganaderia ("Ganad Ingreso" de JC): a la izquierda las tarjetas por
+    especie con los links a sus paginas y a la derecha "Destacados", con los anillos de la
+    hacienda mayor y menor. Sin filtros. Mismo patron que la portada de AgroClima."""
+    tablero = tablero_base(ctx, spec, [])
+    paneles = {}
+    for id_panel in (p["id"] for p in spec["paneles"]["orden"]):
+        if id_panel.startswith("destacados-"):
+            panel = panel_destacados(spec, id_panel)
+            declarado = spec["paneles"][id_panel]
+            panel["bloques"] = bloques_de_destacados(ctx, declarado)
+            panel["pie"] = declarado["pie"].format(
+                organismos=" - ".join(sorted(ctx.fuentes, key=pr.clave_alfabetica)))
+            paneles[id_panel] = panel
+        else:
+            paneles[id_panel] = panel_accesos(ctx, spec, id_panel)
+    tablero["combos"][""] = {"paneles": paneles}
     return tablero
 
 
@@ -10921,6 +11078,14 @@ def resolver_tarjetas(tablero, url_de):
     for combo in tablero["combos"].values():
         for panel in combo.get("paneles", {}).values():
             for tarjeta in panel.get("tarjetas") or []:
+                for enlace in tarjeta.get("enlaces") or []:
+                    destino = enlace.pop("destino", None)
+                    if destino and destino not in url_de:
+                        raise pr.ErrorDeProtocolo(
+                            "El enlace %r de la tarjeta %r de %s lleva a %s, que no se publica "
+                            "en ninguna seccion." % (enlace["texto"], tarjeta["titulo"],
+                                                     tablero["slug"], destino))
+                    enlace["href"] = url_de[destino] if destino else None
                 destino = tarjeta.pop("destino", None)
                 if not destino:
                     tarjeta["href"] = None
@@ -10944,6 +11109,8 @@ TABLEROS = {
     # AgroClima (maqueta "0000000000 Maqueta Clima 1.xlsx", 14-oct-2026)
     "tablero-agroclima": construir_tablero_agroclima,
     "tablero-agroclima-estaciones": construir_tablero_estaciones,
+    # Ganaderia: portada de la rama (maqueta "Maqueta INGRESO a GANADERIA.xlsx", 15-oct-2026)
+    "tablero-ganaderia-ingreso": construir_tablero_ganaderia_ingreso,
 }
 
 
@@ -11551,17 +11718,36 @@ def construir_home(ctx, vistas_por_slug):
         # El `id` ancla la rama en la home (`#rama-agricultura`): es el nivel intermedio del
         # breadcrumb, que tiene que linkear a SU nivel y no a la home a secas
         # (formato_v1.navegacion.breadcrumb, bug que encontro JC).
+        # `href`: la portada de la rama, si declara una (Ganaderia): el titulo de la rama en la
+        # home lleva ahi.
         ramas.append({"id": declaracion["id"], "titulo": declaracion["titulo"],
+                      "href": href_de_rama(ctx.navegacion, declaracion["id"]),
                       "bajada": limpiar(declaracion["bajada"]),
                       "secciones": publicadas, "pendientes": listado})
     return ramas
+
+
+def href_de_rama(navegacion, id_rama):
+    """La URL de la PORTADA de una rama (`ramas[].portada`: el id de la seccion que es su puerta
+    de entrada), o None si la rama no declara portada. Una portada que no es una seccion de esa
+    misma rama corta la corrida."""
+    rama = next((r for r in navegacion["ramas"] if r["id"] == id_rama), None)
+    if not rama or not rama.get("portada"):
+        return None
+    seccion = next((s for s in navegacion["secciones"]
+                    if s["id"] == rama["portada"] and s["rama"] == id_rama), None)
+    if seccion is None or seccion.get("proximamente"):
+        raise pr.ErrorDeProtocolo("La portada de la rama %s (%r) no es una seccion publicada "
+                                  "de esa rama en site/navegacion.yaml." % (id_rama,
+                                                                            rama["portada"]))
+    return "%s/%s" % (PREFIJO, seccion["url"])
 
 
 def miga_de_tablero(seccion, spec):
     """El breadcrumb del tablero. Si el spec declara uno (el del mockup de JC), se sigue tramo
     por tramo: cada nivel linkea a SU nivel y los tramos entre llaves ("{cultivo}") quedan
     dinamicos, atados al selector de la pagina (los actualiza comun.js)."""
-    rama_href = "%s#rama-%s" % (INICIO, seccion["rama"])
+    rama_href = seccion.get("href_rama") or "%s#rama-%s" % (INICIO, seccion["rama"])
     declarado = spec.get("breadcrumb")
     if not declarado:
         return [{"texto": "Inicio", "href": INICIO},
@@ -11839,8 +12025,20 @@ def escribir_sitio(ctx, vistas, tableros):
         if tab["spec"].get("pagina"):
             seccion = next(x for x in secciones if x["id"] == tab["seccion"])
             url_de[tab["slug"]] = "%s/%s/%s" % (PREFIJO, seccion["url"], tab["spec"]["pagina"])
+        else:
+            # La PORTADA de una seccion se publica en la URL de la seccion. La necesitan las
+            # tarjetas de la portada de Ganaderia, que llevan a la pagina de stocks de cada
+            # especie (que es la portada de su seccion) por el id de su spec.
+            seccion = next((x for x in secciones if x["id"] == tab["seccion"]), None)
+            if seccion is not None:
+                url_de.setdefault(tab["slug"], "%s/%s" % (PREFIJO, seccion["url"]))
     for slug in ctx.navegacion["privadas"]["vistas"]:
         url_de[slug] = "%s/_privado/%s" % (PREFIJO, slug)
+    # Una rama con PORTADA (`ramas[].portada` en site/navegacion.yaml: Ganaderia desde el
+    # 15-oct-2026) lleva a ella desde el tramo de la rama en la miga y desde su titulo en la
+    # home, en vez del ancla de la rama en la home.
+    for seccion in ctx.navegacion["secciones"]:
+        seccion["href_rama"] = href_de_rama(ctx.navegacion, seccion["rama"])
 
     def extras_de_seccion(seccion, portada=True):
         """Tema de cuerpo y botones de cabecera que declara la seccion (site/navegacion.yaml).
@@ -12010,7 +12208,8 @@ def escribir_sitio(ctx, vistas, tableros):
                     % vista["slug"])
             base_url = carpeta["url"]
             miga = [{"texto": "Inicio", "href": INICIO},
-                    {"texto": carpeta["ruta"][0], "href": "%s#rama-%s" % (INICIO, carpeta["rama"])},
+                    {"texto": carpeta["ruta"][0],
+                     "href": carpeta.get("href_rama") or "%s#rama-%s" % (INICIO, carpeta["rama"])},
                     {"texto": carpeta["titulo"], "href": "%s/%s" % (PREFIJO, carpeta["url"])},
                     {"texto": vista["titulo"], "href": None}]
             carpeta_datos, ruta_publica = "public/plataforma/data", PREFIJO + "/data"
@@ -12436,6 +12635,8 @@ def main(args=None):
     capas_ign = ContextoCapasIgn(con)
     # AgroClima: lee el mart de clima diario (base 111) y dim_geo.
     agroclima = ContextoAgroclima(con)
+    # La portada de Ganaderia: suma el stock de cada especie desde sus marts.
+    ganaderia_ingreso = ContextoGanaderiaIngreso(con)
     con.close()
     contextos = {9: ctx, 85: ContextoHacienda(hacienda), 48: ContextoStock(stock),
                  ContextoVegetales.familia: ContextoVegetales(vegetales, precios_mcba),
@@ -12443,7 +12644,8 @@ def main(args=None):
                  # General > Infraestructura y riesgo: las capas del IGN (no lee marts, salvo
                  # dim_geo para los nombres de los departamentos).
                  ContextoCapasIgn.familia: capas_ign,
-                 ContextoAgroclima.familia: agroclima, **especies}
+                 ContextoAgroclima.familia: agroclima,
+                 ContextoGanaderiaIngreso.familia: ganaderia_ingreso, **especies}
 
     with open(os.path.join(DIR_SITE, "colores-cultivo.yaml"), "w", encoding="utf-8") as f:
         f.write(escribir_asignacion_colores(ctx))

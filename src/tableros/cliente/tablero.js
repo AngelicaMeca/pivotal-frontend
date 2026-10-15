@@ -872,12 +872,17 @@ export default function iniciar(PIVOTAL) {
     if (!caja) { return; }
     PIVOTAL.vaciar(caja);
     (panel.tarjetas || []).forEach(function (t) {
+      /* Una tarjeta con `enlaces` (portada de Ganaderia: una especie y la lista de sus
+         paginas) no es un link: lo es cada renglon. No va apagada aunque tenga renglones
+         apagados. */
+      var conEnlaces = !!(t.enlaces && t.enlaces.length);
       var tarjeta = document.createElement(t.href ? "a" : "div");
-      tarjeta.className = "acceso" + (t.href ? "" : " acceso-apagado");
+      tarjeta.className = "acceso" + (t.href || conEnlaces ? "" : " acceso-apagado")
+        + (conEnlaces ? " acceso-con-enlaces" : "");
       if (t.href) { tarjeta.href = t.href; }
-      else { tarjeta.setAttribute("aria-disabled", "true"); }
+      else if (!conEnlaces) { tarjeta.setAttribute("aria-disabled", "true"); }
       var mini = document.createElement("span");
-      mini.className = "acceso-mini";
+      mini.className = "acceso-mini" + (t.miniatura_icono ? " acceso-mini-icono" : "");
       if (t.miniatura) {
         var img = document.createElement("img");
         img.src = t.miniatura;
@@ -902,6 +907,28 @@ export default function iniciar(PIVOTAL) {
         prox.textContent = t.proximamente;
         textos.appendChild(prox);
       }
+      if (conEnlaces) {
+        var lista = document.createElement("ul");
+        lista.className = "acceso-enlaces";
+        t.enlaces.forEach(function (e) {
+          var li = document.createElement("li");
+          if (e.href) {
+            var a = document.createElement("a");
+            a.href = e.href;
+            a.textContent = e.texto;
+            li.appendChild(a);
+          } else {
+            li.className = "acceso-enlace-apagado";
+            li.appendChild(document.createTextNode(e.texto + " "));
+            var p = document.createElement("span");
+            p.className = "prox";
+            p.textContent = e.proximamente;
+            li.appendChild(p);
+          }
+          lista.appendChild(li);
+        });
+        textos.appendChild(lista);
+      }
       tarjeta.appendChild(textos);
       caja.appendChild(tarjeta);
     });
@@ -913,10 +940,96 @@ export default function iniciar(PIVOTAL) {
      el titulo de cada parrafo en negrita ("Maíz: ..."). Todo viene del spec; aca no se escribe
      ningun texto. La imagen lleva su ancho y alto para que la caja se reserve antes de bajar.
      El pie del cuadro lleva su rotulo en negrita ("Extraído de: ..."), como en la maqueta. */
+  /* Los bloques de "Destacados" de la portada de Ganaderia ("Ganad Ingreso" de JC, 15-oct-2026):
+     filas de anillos de a dos y renglones de texto entre ellas, en el orden del JSON. Cada
+     anillo lleva su titulo arriba, el porcentaje afuera de cada porcion (como en el Excel de
+     JC) y la leyenda en HTML debajo. Los numeros y colores vienen escritos del build. */
+  function pintarBloquesDestacados(caja, bloques) {
+    bloques.forEach(function (bloque) {
+      if (bloque.texto) {
+        var p = document.createElement("p");
+        p.className = "destacados-nota";
+        p.textContent = bloque.texto;
+        caja.appendChild(p);
+        return;
+      }
+      var fila = document.createElement("div");
+      fila.className = "destacados-anillos";
+      caja.appendChild(fila);
+      (bloque.anillos || []).forEach(function (anillo) {
+        var figura = document.createElement("figure");
+        figura.className = "destacado-anillo";
+        var titulo = document.createElement("figcaption");
+        titulo.textContent = anillo.titulo;
+        figura.appendChild(titulo);
+        var grafico = document.createElement("div");
+        grafico.className = "grafico";
+        figura.appendChild(grafico);
+        var leyenda = document.createElement("ul");
+        leyenda.className = "anillo-leyenda";
+        anillo.porciones.forEach(function (porcion) {
+          var li = document.createElement("li");
+          var muestra = document.createElement("span");
+          muestra.className = "muestra";
+          muestra.style.background = porcion.color;
+          var nombre = document.createElement("span");
+          nombre.className = "nombre";
+          nombre.textContent = porcion.n;
+          li.appendChild(muestra);
+          li.appendChild(nombre);
+          leyenda.appendChild(li);
+        });
+        figura.appendChild(leyenda);
+        fila.appendChild(figura);
+        var chart = PIVOTAL.grafico(grafico);
+        chart.setOption({
+          animation: false,
+          tooltip: {
+            trigger: "item",
+            confine: true,
+            formatter: function (p) {
+              var porcion = anillo.porciones[p.dataIndex];
+              return "<b>" + porcion.n + "</b><br>" + porcion.t + "<br>" + porcion.pct;
+            }
+          },
+          series: [{
+            type: "pie",
+            radius: ["34%", "52%"],
+            center: ["50%", "52%"],
+            avoidLabelOverlap: true,
+            minShowLabelAngle: 0,
+            label: {
+              show: true,
+              /* Sin esto ECharts recorta el porcentaje ("40...") cuando el anillo va en media
+                 columna: el texto es corto y entra entero. */
+              overflow: "none",
+              formatter: function (p) { return anillo.porciones[p.dataIndex].pct; },
+              fontSize: 11,
+              fontWeight: 600,
+              color: PIVOTAL.color("--texto")
+            },
+            labelLine: { show: true, length: 6, length2: 8 },
+            data: anillo.porciones.map(function (porcion) {
+              return { value: porcion.v, name: porcion.n, itemStyle: { color: porcion.color } };
+            })
+          }]
+        }, true);
+      });
+    });
+  }
+
   function pintarDestacados(nodo, panel) {
     var caja = nodo.querySelector("[data-destacados]");
     if (!caja) { return; }
+    /* Con anillos (portada de Ganaderia) el bloque se arma UNA vez: es estatico (sin filtros)
+       y cada anillo es un grafico con su ResizeObserver, que pide un repintado. Rearmarlo en
+       cada repintado crearia graficos nuevos que vuelven a pedir otro, sin fin. */
+    if (panel.bloques && caja.dataset.pintado === "1") { return; }
     PIVOTAL.vaciar(caja);
+    if (panel.bloques) {
+      pintarBloquesDestacados(caja, panel.bloques);
+      caja.dataset.pintado = "1";
+    }
     var fila = document.createElement("div");
     fila.className = "destacados-figuras";
     (panel.figuras || []).forEach(function (f) {

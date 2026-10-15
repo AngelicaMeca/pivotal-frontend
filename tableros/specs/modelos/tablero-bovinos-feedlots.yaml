@@ -8,6 +8,12 @@
 #
 # Desde la pagina de leche se llega con el regimen Tambo puesto (clic en su mapa de tambos,
 # celda E105 de "GanBov LACT"); el regreso es la tira de paginas.
+#
+# 15-oct-2026 (pedido de la usuaria, toda ganaderia): el mapa de la provincia lleva los NOMBRES
+# de los departamentos escritos (`paneles.mapa.rotulos_departamento`). DESVIO de la maqueta
+# "Maqueta Ganad VF", que dibuja los mapas sin nombres (viven en el tooltip y en la tabla por
+# departamento); es el mismo desvio que agricultura (backlog 68). Pregunta para JC en el
+# backlog 110; se apaga borrando esa linea del spec.
 id: tablero-bovinos-feedlots
 tipo: tablero
 familia: regimenes-bovinos
@@ -47,6 +53,8 @@ paneles:
     - {id: volver-leche, etiqueta: "Volver a Producc Leche", vista: tablero-bovinos-leche}
     - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
   mapa:
+    # Nombres de los departamentos sobre el mapa: desvio de la maqueta (ver la cabecera).
+    rotulos_departamento: true
     # JC rotula el mapa con sus tres pestañas (EAC | Cuota Hilton | Tambo): el titulo es el
     # regimen elegido.
     titulo: "{regimen}"

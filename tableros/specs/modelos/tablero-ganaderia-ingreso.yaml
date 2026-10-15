@@ -1,0 +1,191 @@
+# Ganaderia · portada de la rama ("Ganad Ingreso" de la maqueta de JC "Maqueta INGRESO a
+# GANADERIA.xlsx", 15-oct-2026). Lectura completa en docs/maqueta-ganaderia-ingreso.md.
+#
+# Que es: la puerta de entrada a la ganaderia. Mismo patron que la portada de AgroClima
+# (tablero-agroclima.yaml): a la izquierda las TARJETAS (forma `accesos-*`), a la derecha el
+# bloque "Destacados" (forma `destacados-*`). El tramo "Ganadería" de la miga, el titulo de la
+# rama en la home y la primera entrada de Ganaderia en el menu lateral llevan aca
+# (`ramas.ganaderia.portada` en site/navegacion.yaml). Las URL de las especies no cambian.
+#
+# Tarjetas (cuadro de texto 16, G6:AL7, y grupos 22 a 55, G8:AL35): una por especie, de a dos
+# por fila como las dibuja JC (Bovinos | Bubalinos, Porcinos | Equinos, Ovinos | Caprinos,
+# Apicolas), con el ICONO de la especie y la lista de sus paginas en su orden y con sus rotulos.
+# G49: "EN EL DOCUMENTO 'ICONOS' ESTÁN LAS IMÁGENES ORIGINALES DE LAS ESPECIES (modificado el
+# 13/10/2026)". La maqueta pega FOTOS (vacas, bufalos, cerdos...); el documento de iconos de JC
+# es el paquete que el sitio ya tiene (site/assets/iconos/color/<especie>.png), asi que van esos
+# iconos, los mismos de la tarjeta "Datos" de cada pagina. Backlog 111 (a).
+#
+# Cada link va a la pagina que YA existe. Donde JC nombra algo que vive DENTRO de otra pagina
+# de la especie, el link va a esa pagina (Bubalinos: "Estratos y UP" y "Categorías" estan en la
+# pagina unica de bubalinos; Equinos: "Estratos y UP" y "Faena" estan en "Stocks, UP y
+# Estratos"; Apicolas: apiarios y colmenas son el selector de su pagina). Lo que no existe va
+# apagado con "Próximamente": Bubalinos > Movimientos y Caprinos > Faena (no hay base).
+#
+# "Destacados" (rectangulo 18, AL6:BI39): SEIS anillos de JC (imagenes 56 a 61), en tres filas
+# de a dos, con el texto AM17 entre la primera y la segunda fila y el pie AM38 "Elaborado por
+# Pivotal con Tecnología Minibox®". JC los pega como imagenes de Excel; aca se CALCULAN de los
+# marts de stock de cada especie (los mismos de sus paginas, _comunes-ganaderia-ingreso.yaml),
+# asi se actualizan con los Excels. Verificado contra la maqueta (2025): cabezas 59,09 / 40,91,
+# hacienda mayor 90,10 / 0,20 / 9,70, hacienda menor 16,30 / 25,55 / 58,14 y UP de la menor
+# 31,43 / 27,06 / 41,51: identicos. Los dos anillos de UP que incluyen EQUINOS difieren: JC usa
+# los ESTABLECIMIENTOS equinos (8.543) y no sus UP/RENSPA (10.800), que es lo que la pagina de
+# equinos publica como U.P.; se publica la UP, como en todo el sitio. Backlog 111 (b).
+#
+# Lo que NO se dibuja, como en las otras portadas: "Santiago en el NOA" (AT1, el boton de la
+# plantilla de JC) y el cuadro "Alberdi" (Q12:V13, un link a 'Agri 1 Dto' que quedo de la
+# plantilla de agricultura, montado sobre la tarjeta de bovinos). H46 ("Tecnología Pivotal")
+# es el pie global del sitio.
+id: tablero-ganaderia-ingreso
+tipo: tablero
+familia: ganaderia-ingreso
+seccion: ganaderia-ingreso
+
+titulo: "Ganadería"
+subtitulo: "Provincia de Santiago del Estero · acceso a datos e informes"
+# La miga es la celda N5 de JC, literal.
+breadcrumb: "Ganadería - Provincia - acceso a datos e informes"
+
+# Sin banda de KPIs: la hoja de JC va del titulo directo a las tarjetas.
+indicadores: []
+
+paneles:
+  alto: fluye
+  disposicion: columnas
+  # "Generar PDF" (BE45) abajo a la derecha, donde lo dibuja JC.
+  acciones_de_tablero:
+    - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
+  accesos-especies:
+    titulo: "Accesos directos a información por especie - Provincia y departamentos"
+    pie: "Fuentes: SENASA y MAGyP · cada página cita la fuente de su base"
+    tarjetas:
+      # `enlaces`: los renglones de la tarjeta, en el orden y con los rotulos de JC. `destino`
+      # es el id del spec de la pagina (el build lo resuelve a su URL y corta si no existe);
+      # `proximamente` la deja apagada. `miniatura: icono` + `icono:` = el icono de la especie.
+      - titulo: "Bovinos"
+        miniatura: icono
+        icono: bovinos
+        enlaces:
+          - {texto: "Stocks", destino: tablero-stock-bovino}
+          - {texto: "Indicadores", destino: tablero-bovinos-indicadores}
+          - {texto: "Movimientos", destino: tablero-bovinos-movimientos}
+          - {texto: "Vacunaciones", destino: tablero-bovinos-vacunaciones}
+          - {texto: "Estratos y UP", destino: tablero-bovinos-estratos}
+          - {texto: "Razas", destino: tablero-bovinos-razas}
+          - {texto: "Producc. Láctea", destino: tablero-bovinos-leche}
+          # JC: "Feed Lots,  Hilton y tambos" (con doble espacio).
+          - {texto: "Feed Lots, Hilton y tambos", destino: tablero-bovinos-feedlots}
+      - titulo: "Bubalinos (Búfalos)"
+        miniatura: icono
+        icono: bubalinos
+        enlaces:
+          - {texto: "Stocks", destino: tablero-bubalinos}
+          # La tabla departamento x estrato y los anillos de estratos y UP estan en la pagina
+          # unica de bubalinos.
+          - {texto: "Estratos y UP", destino: tablero-bubalinos}
+          - {texto: "Movimientos", proximamente: "Próximamente"}
+          # Las categorias (tabla por categoria y equivalencias bovino/bubalino) tambien.
+          - {texto: "Categorías", destino: tablero-bubalinos}
+      - titulo: "Porcinos"
+        miniatura: icono
+        icono: porcinos
+        enlaces:
+          - {texto: "Stocks", destino: tablero-porcinos}
+          - {texto: "Movimientos", destino: tablero-porcinos-movimientos}
+          - {texto: "Estratos y UP", destino: tablero-porcinos-estratos}
+          - {texto: "Razas", destino: tablero-porcinos-razas}
+      - titulo: "Equinos"
+        miniatura: icono
+        icono: equinos
+        enlaces:
+          - {texto: "Stocks", destino: tablero-equinos}
+          - {texto: "Movimientos", destino: tablero-equinos-movimientos}
+          # La pagina de equinos es "Stocks, UP y Estratos": los estratos y la faena de SENASA
+          # estan ahi.
+          - {texto: "Estratos y UP", destino: tablero-equinos}
+          - {texto: "Faena", destino: tablero-equinos}
+      - titulo: "Ovinos"
+        miniatura: icono
+        icono: ovinos
+        enlaces:
+          - {texto: "Stocks", destino: tablero-ovinos}
+          - {texto: "Movimientos", destino: tablero-ovinos-movimientos}
+          - {texto: "Estratos y UP", destino: tablero-ovinos-estratos}
+      - titulo: "Caprinos"
+        miniatura: icono
+        icono: caprinos
+        enlaces:
+          - {texto: "Stocks", destino: tablero-caprinos}
+          - {texto: "Estratos y UP", destino: tablero-caprinos-estratos}
+          # No hay base de faena caprina en las entregas.
+          - {texto: "Faena", proximamente: "Próximamente"}
+      - titulo: "Apícolas"
+        miniatura: icono
+        icono: apicolas
+        enlaces:
+          # Apiarios y colmenas son el selector del mapa de la pagina apicola.
+          - {texto: "Apiarios", destino: tablero-apicola}
+          - {texto: "Colmenas", destino: tablero-apicola}
+  # "Destacados": `bloques` en el orden de JC. Un bloque es una fila de anillos o un renglon de
+  # texto. Cada porcion SUMA las especies que nombra (ids de _comunes-ganaderia-ingreso.yaml);
+  # `medida` es cabezas o up. `{anio}` es el ultimo anio con dato de todas las especies (lo
+  # calcula el build). Titulos literales de JC (imagenes 56 a 61).
+  destacados-hacienda:
+    titulo: "Destacados"
+    # AM38 literal, despues de la cita de la fuente (`{organismos}` sale de los marts).
+    pie: "Fuente: {organismos}. Elaborado por Pivotal con Tecnología Minibox®"
+    bloques:
+      - anillos:
+          - titulo: "Sgo. del Estero - Participación de la hacienda mayor y menor en el stock total en cabezas - año {anio}"
+            medida: cabezas
+            porciones:
+              - {nombre: "Hacienda mayor", especies: [bovinos, bubalinos, equinos]}
+              - {nombre: "Hacienda menor", especies: [porcinos, ovinos, caprinos]}
+          - titulo: "Sgo. del Estero - Participación de la hacienda mayor y menor en el stock total en UP - año {anio}"
+            medida: up
+            porciones:
+              - {nombre: "Hacienda mayor", especies: [bovinos, bubalinos, equinos]}
+              - {nombre: "Hacienda menor", especies: [porcinos, ovinos, caprinos]}
+      # AM17, literal salvo el espacio que falta antes del guion ("equinos- Hacienda").
+      - texto: "Hacienda mayor: Bovinos, bubalinos y equinos - Hacienda menor: Porcinos, ovinos y caprinos"
+      - anillos:
+          - titulo: "Sgo del Estero - Hacienda mayor - Participación en el total de cabezas por especie - {anio}"
+            medida: cabezas
+            porciones:
+              - {nombre: "Bovinos", especies: [bovinos]}
+              - {nombre: "Bubalinos", especies: [bubalinos]}
+              - {nombre: "Equinos", especies: [equinos]}
+          - titulo: "Sgo del Estero - Hacienda mayor - Participación en el total de UP por especie - {anio}"
+            medida: up
+            porciones:
+              - {nombre: "Bovinos", especies: [bovinos]}
+              - {nombre: "Bubalinos", especies: [bubalinos]}
+              - {nombre: "Equinos", especies: [equinos]}
+      - anillos:
+          - titulo: "Sgo del Estero - Hacienda menor - Participación en el total de cabezas por especie - {anio}"
+            medida: cabezas
+            porciones:
+              - {nombre: "Porcinos", especies: [porcinos]}
+              - {nombre: "Ovinos", especies: [ovinos]}
+              - {nombre: "Caprinos", especies: [caprinos]}
+          - titulo: "Sgo del Estero - Hacienda menor - Participación en el total de UP por especie - {anio}"
+            medida: up
+            porciones:
+              - {nombre: "Porcinos", especies: [porcinos]}
+              - {nombre: "Ovinos", especies: [ovinos]}
+              - {nombre: "Caprinos", especies: [caprinos]}
+  # Las tarjetas a la izquierda y "Destacados" a la derecha, como en la hoja de JC: las
+  # tarjetas van de la col G a la AL (32 columnas) y el recuadro de la AL a la BI (23): 7 y 5
+  # de 12. En pantallas angostas "Destacados" baja debajo de las tarjetas.
+  orden:
+    - {id: accesos-especies, ancho: 7, columna: izq}
+    - {id: destacados-hacienda, ancho: 5, columna: der}
+
+filtros: []
+
+sensibilidad: normal
+estado: publicada
+origen:
+  tipo: maqueta de JC
+  archivo: "Maqueta INGRESO a GANADERIA.xlsx"
+  hojas: ["Ganad Ingreso"]
+  recibido: 2026-10-15

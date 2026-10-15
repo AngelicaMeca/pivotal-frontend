@@ -12,6 +12,12 @@
 # la fuente es provincial (nueve estratos con establecimientos, UP, vacas y total de bovinos).
 # En su lugar va la tabla PROVINCIAL por estrato, con un aviso escrito en el cuadro. Si JC
 # consigue la estratificacion por departamento, el cuadro pasa a ser el suyo (backlog).
+#
+# 15-oct-2026 (pedido de la usuaria, toda ganaderia): el mapa de la provincia lleva los NOMBRES
+# de los departamentos escritos (`paneles.mapa.rotulos_departamento`). DESVIO de la maqueta
+# "Maqueta Ganad VF", que dibuja los mapas sin nombres (viven en el tooltip y en la tabla por
+# departamento); es el mismo desvio que agricultura (backlog 68). Pregunta para JC en el
+# backlog 110; se apaga borrando esa linea del spec.
 id: tablero-bovinos-estratos
 tipo: tablero
 familia: stock-bovinos-estratos
@@ -50,6 +56,8 @@ paneles:
   acciones_de_tablero:
     - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
   mapa:
+    # Nombres de los departamentos sobre el mapa: desvio de la maqueta (ver la cabecera).
+    rotulos_departamento: true
     # La pestaña de JC sobre el mapa: "Estratos". JC no pide clic en esta hoja: el mapa
     # muestra el stock por departamento y no lleva "Seleccione departamento".
     titulo: "Estratos"

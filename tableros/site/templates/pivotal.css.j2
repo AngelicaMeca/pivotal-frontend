@@ -1665,6 +1665,36 @@ a.acceso:focus-visible { outline: 2px solid var(--enlace); outline-offset: 2px; 
   .destacados-figuras { grid-template-columns: minmax(0, 1fr); }
 }
 
+/* ---------- Ganaderia: portada de la rama ("Ganad Ingreso", 15-oct-2026) ---------- */
+/* Tarjetas por especie: el icono de la especie a la izquierda y, al lado, el nombre y la lista
+   de sus paginas ("> Stocks", "> Movimientos"...), como las dibuja JC. La tarjeta NO es un
+   link: cada renglon lo es. El icono va mas chico que una miniatura de AgroClima y sobre el
+   fondo de la tarjeta (es un dibujo, no una captura). */
+.acceso-con-enlaces { grid-template-columns: 4.5rem minmax(0, 1fr); align-items: start; }
+.acceso-mini-icono { height: 4.5rem; background: transparent; }
+.acceso-enlaces { list-style: none; margin: .25rem 0 0; padding: 0; display: flex; flex-direction: column;
+                  gap: .15rem; font-size: .85rem; }
+.acceso-enlaces li::before { content: "> "; color: var(--texto-apoyo); }
+.acceso-enlaces a { color: var(--enlace); text-decoration: none; }
+.acceso-enlaces a:hover { text-decoration: underline; }
+.acceso-enlaces a:focus-visible { outline: 2px solid var(--enlace); outline-offset: 2px; }
+.acceso-enlace-apagado { color: var(--texto-apoyo); }
+.acceso-enlace-apagado .prox { margin-left: .2rem; }
+/* "Destacados" con anillos: filas de a dos (las imagenes 56 a 61 de JC), cada anillo con su
+   titulo arriba y la leyenda debajo; el texto de JC entre filas va centrado y en negrita. */
+.destacados-anillos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; }
+.destacado-anillo { margin: 0; display: flex; flex-direction: column; gap: .3rem; min-width: 0;
+                    padding: .5rem; border-radius: var(--radio-chico); background: var(--fondo-cuadro); }
+.destacado-anillo figcaption { margin: 0; text-align: center; font-weight: 700; font-size: .78rem;
+                               line-height: 1.3; }
+.destacado-anillo .grafico { height: 11.5rem; flex: 0 0 auto; }
+.destacado-anillo .anillo-leyenda { display: flex; flex-wrap: wrap; justify-content: center; gap: .2rem .8rem;
+                                    list-style: none; margin: 0; padding: 0; font-size: .75rem; }
+.destacados-nota { margin: 0; text-align: center; font-weight: 700; font-size: .85rem; }
+@media (max-width: 560px) {
+  .destacados-anillos { grid-template-columns: minmax(0, 1fr); }
+}
+
 /* El mapa de estaciones: es el selector de la pagina, asi que la lista de estaciones (el
    mismo filtro, para elegir con el teclado) va DEBAJO del titulo y envuelve en varios
    renglones en vez de apretarse al costado. El mapa mide lo que mide en la maqueta. */
