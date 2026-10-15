@@ -104,3 +104,89 @@ peso_por_movimiento_tn:
       Tope de transporte terrestre en Argentina. Vale igual para algodon, cebolla,
       batata y papa: lo que limita el peso es el camion, no el cultivo. Si JC confirma
       que alguna DTV ampara varios viajes, este rango se ensancha con la fecha anotada.
+
+# ---------------------------------------------------------------------------
+# Clima DIARIO por variable (base 111, estaciones del INTA en Santiago del Estero).
+# Agregado el 2026-10-14 por qa-datos con la entrega-03. Lo usa el check
+# `fuera_de_rango_fisico` via `rangos_por_variable` en reglas.yaml.
+#
+# Dos niveles: `min`/`max` = "mirarlo" (raro pero posible); `min_imposible`/
+# `max_imposible` = no ocurre en la llanura santiaguena (estaciones entre ~100 y
+# ~250 m de altura). Criterio: records absolutos de la region (maximas de ~47 C, minimas
+# de ~-10 C) con margen. Las unidades NO estan confirmadas por la fuente para varias de
+# estas variables (ver configs/dims/variables-clima.yaml): el rango supone la unidad
+# obvia por la magnitud y lo dice en `unidad`. Si JC dice otra, se corrige aca.
+# ---------------------------------------------------------------------------
+temperatura_aire_maxima_diaria_c:
+  {min: -5,  max: 46, min_imposible: -15, max_imposible: 50, unidad: "C (supuesta)"}
+temperatura_aire_minima_diaria_c:
+  {min: -10, max: 32, min_imposible: -15, max_imposible: 38, unidad: "C (supuesta)"}
+temperatura_aire_media_diaria_c:
+  min: -3
+  max: 38
+  min_imposible: -10
+  max_imposible: 42
+  unidad: "C (supuesta)"
+  nota: "Una media diaria bajo -10 C no se registro nunca en la region."
+temperatura_suelo_10cm_media_c:
+  min: 0
+  max: 45
+  min_imposible: -3
+  max_imposible: 55
+  unidad: "C (supuesta)"
+  nota: "A 10 cm el suelo amortigua: una media diaria bajo cero ya es para mirar, y de -3 para abajo no ocurre aca."
+punto_rocio_medio_c:
+  min: -15
+  max: 28
+  min_imposible: -30
+  max_imposible: 32
+  unidad: "C (supuesta)"
+  nota: "Un rocio medio de 32 C es casi record mundial; en el Chaco seco no pasa de ~26."
+precipitacion_diaria_mm:
+  min: 0
+  max: 200
+  min_imposible: 0
+  max_imposible: 500
+  unidad: "mm"
+  nota: "200 mm en un dia ya es extraordinario en Santiago; se lista para mirar."
+precipitacion_30min_mm:
+  {min: 0, max: 80, min_imposible: 0, max_imposible: 150, unidad: "mm"}
+humedad_relativa_diaria_pct:
+  min: 5
+  max: 100
+  min_imposible: 1
+  max_imposible: 100
+  unidad: "%"
+  nota: "Una humedad relativa MEDIA DIARIA de 0% no existe en la atmosfera: es sensor caido."
+horas_frio_dia:
+  {min: 0, max: 24, min_imposible: 0, max_imposible: 24, unidad: "horas"}
+tension_vapor_media_hpa:
+  min: 2
+  max: 40
+  min_imposible: 0.5
+  max_imposible: 50
+  unidad: "hPa (supuesta)"
+  nota: "50 hPa equivale a un rocio de ~33 C, que no ocurre en la region."
+presion_media_estacion_hpa:
+  min: 960
+  max: 1040
+  min_imposible: 930
+  max_imposible: 1060
+  unidad: "hPa (supuesta)"
+  nota: "Estaciones a 100-250 m: por debajo de 930 hPa haria falta estar a ~700 m de altura."
+heliofania_efectiva_h:
+  min: 0
+  max: 14
+  min_imposible: 0
+  max_imposible: 14.5
+  unidad: "horas"
+  nota: "Entre 26 y 30 grados sur el dia mas largo del anio tiene menos de 14 horas de sol posible."
+radiacion_global_mj_m2_dia:
+  min: 0
+  max: 35
+  min_imposible: 0
+  max_imposible: 45
+  unidad: "MJ/m2 por dia (supuesta)"
+  nota: "Fuera de la atmosfera llegan ~44 MJ/m2 en el dia mas largo a esta latitud; en superficie, con cielo limpio, ~33."
+evapotranspiracion_mm_dia:
+  {min: 0, max: 12, min_imposible: 0, max_imposible: 20, unidad: "mm (supuesta)"}

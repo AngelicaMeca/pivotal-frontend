@@ -1,0 +1,174 @@
+# Comunes de la rama AgroClima (maqueta de JC "0000000000 Maqueta Clima 1.xlsx", 14-oct-2026).
+# Lo lee site_build.ContextoAgroclima. Lectura completa de la maqueta en docs/maqueta-clima.md.
+#
+# La rama tiene tres clases de pagina:
+#   - la portada ("Clima Ingreso"): tarjetas con miniatura que llevan a cada pagina
+#     (tablero-agroclima.yaml);
+#   - "Estaciones agrometeorologicas INTA" ("ClimEAI"): la base 111, dato diario del ultimo
+#     anio por estacion (tablero-agroclima-estaciones.yaml). Es la UNICA pagina con datos;
+#   - seis galerias de mapas ("ClimORA-1", "ClimEVT", "ClimVAD", "ClimPAS", "ClimNDVI",
+#     "ClimVCI"): imagenes de SEPA-INTA y de la ORA, publicadas tal cual (3001..3006-*.yaml).
+id: _comunes-agroclima
+
+presentacion:
+  # El color lo fija el TIPO de variable (protocolo, `colores.rampas`). `temperatura` es una
+  # rampa nueva (14-oct-2026), agregada para la linea de temperatura de esta pagina.
+  tipos_de_variable:
+    temperatura_abrigo_150cm_media: temperatura
+
+fuente:
+  # "Fuente: INTA", literal de la maqueta: JC lo escribe al pie del cuadro de definiciones
+  # (H69), de la tabla (AA69) y del grafico (W85). El mart tiene que decir lo mismo.
+  pie: "Fuente: INTA"
+  organismo_esperado: "INTA"
+
+# ---------------------------------------------------------------------------
+# ESTACIONES (base 111)
+# ---------------------------------------------------------------------------
+estaciones:
+  # La maqueta abre en Bandera ("ESTACION BANDERA COMO EJEMPLO", celda W94).
+  por_defecto: 251
+
+  # "PARA EL BETA, SOLO EL ULTIMO AÑO DE DATOS" (JC, celda W95). El anio TERMINA en el ultimo
+  # dia con algun dato de toda la base, no en el de cada estacion: asi todas se miran sobre el
+  # mismo anio (hoy 30/05/2025 a 29/05/2026; reporte entrega-03). La ventana es fija en dias
+  # para que no crezca sola cuando llegue una planilla con mas historia.
+  ventana_dias: 365
+
+  # Las once columnas de la tabla diaria, en el orden de JC (hoja "ClimEAI", "SOLO LAS
+  # VARIABLES DETALLADAS EN ESTE EJEMPLO"). Son las `en_maqueta` 1..11 de
+  # configs/dims/variables-clima.yaml; el build verifica que coincidan. Etiqueta, unidad y
+  # definicion salen de ese diccionario, que es donde estan transcriptas las de JC.
+  columnas:
+    - temperatura_abrigo_150cm_media
+    - temperatura_abrigo_150cm_maxima
+    - temperatura_abrigo_150cm_minima
+    - temperatura_suelo_10cm_media
+    - precipitacion_pluviometrica
+    - precipitacion_cronologica
+    - precipitacion_maxima_30minutos
+    - humedad_media
+    - humedad_media_8_14_20
+    - rocio_medio
+    - horas_frio
+
+  # El grafico de lineas de la maqueta: "Temperatura Abrigo 150cm", UNA linea (la media; los
+  # valores del dibujo van de 5 a 33, que es el rango de la media). JC: "TODAS SE
+  # REPRESENTARÁN CON GRAFICO DE LÍNEAS (luego veremos cuales se pueden combinar)"
+  # (Estaciones!C71): por ahora solo esta, que es la que dibuja.
+  grafico: temperatura_abrigo_150cm_media
+
+  # "LA NUMERACION ORIGINAL ESTÁ CON SISTEMA INGLÉS. CONVERTI PUNTOS EN COMAS Y DEJÉ 1 DÍGITO
+  # SOLAMENTE" (JC, celda E99): todas las celdas con coma y un decimal.
+  decimales: 1
+
+  # Los titulos del cuadro de definiciones, LITERALES de la maqueta (las formas de texto de la
+  # hoja "ClimEAI"). Las tres temperaturas de abrigo comparten un parrafo, como lo escribe JC.
+  # El TEXTO de cada definicion es el del diccionario (hoja "Estaciones" del Excel de JC), que
+  # esta completo: en la maqueta varias vienen cortadas por el tamaño de la forma.
+  titulos_de_definicion:
+    temperatura_abrigo_150cm_media: "Temperatura abrigo 150 cm (media, mínima y máxima)"
+    temperatura_abrigo_150cm_maxima: "Temperatura abrigo 150 cm (media, mínima y máxima)"
+    temperatura_abrigo_150cm_minima: "Temperatura abrigo 150 cm (media, mínima y máxima)"
+    temperatura_suelo_10cm_media: "Temperatura Suelo 10cm Media"
+    precipitacion_pluviometrica: "Precipitacion Pluviometrica"
+    precipitacion_cronologica: "Precipitacion Cronologica"
+    precipitacion_maxima_30minutos: "Precipitacion Maxima 30 minutos"
+    humedad_media: "Humedad Media"
+    humedad_media_8_14_20: "Humedad Media 8-14-20"
+    rocio_medio: "Rocio Medio"
+    horas_frio: "Horas Frio"
+
+  # Unidades: SOLO las que dio JC en sus definiciones (mm, horas, %), que son las que trae el
+  # diccionario. Las temperaturas, el rocio y la lluvia cronologica NO tienen unidad declarada:
+  # la columna lleva un asterisco y la nota lo dice (reporte entrega-03, punto 9). No se
+  # escribe "°C" en ningun lado hasta que JC lo confirme (backlog 108).
+  marca_sin_unidad: "*"
+  nota_sin_unidad: "* Unidad a confirmar: ni la planilla del INTA ni las definiciones la informan."
+  # El eje del grafico de temperatura, por el mismo motivo.
+  eje_sin_unidad: "Unidad a confirmar"
+
+  # Estaciones que NO se muestran en el ultimo anio. No se borran: figuran en el mapa y en la
+  # lista con su leyenda, y su historia queda en el mart.
+  fuera_del_ultimo_anio:
+    - estacion_id: 250          # Sachayoj
+      leyenda: "sin datos desde el {ultimo_dato}"
+      # El motivo SE PUBLICA (es el cartel de los cuadros de la estacion): va con tildes.
+      motivo: >
+        Su último dato es del 04/07/2025: la planilla salta 297 días hasta una fila vacía del
+        29/04/2026. En el año publicado tendría dato en 36 días de 365, y mostrar su propio
+        último año (julio de 2024 a julio de 2025) haría creer que se mira lo mismo que en las
+        otras estaciones.
+      referencia: "validations/reportes/entrega-03.md, punto 2 (pregunta 3 para JC)"
+
+  # RECORTES DEL CONTROL DE CALIDAD (validations/reportes/entrega-03.md y
+  # validations/hallazgos/entrega-03.yaml). Son tramos del anio publicado que NO se muestran:
+  # la celda dice "S/D" y el cuadro lleva una nota con el motivo. NO se borra nada del staging
+  # ni del mart: es una decision de PRESENTACION, y el dia que JC conteste se saca la entrada
+  # y el dato vuelve a la pantalla sin reingerir nada.
+  # `desde`/`hasta` son fechas inclusivas; sin `hasta` llega al final de la ventana.
+  # "Todo el anio" se escribe con la fecha de inicio de la ventana publicada (30/05/2025).
+  recortes:
+    - estacion_id: 498          # Los Juríes
+      variables: [temperatura_abrigo_150cm_media, temperatura_abrigo_150cm_maxima,
+                  temperatura_abrigo_150cm_minima, rocio_medio, horas_frio]
+      desde: 2025-12-01
+      motivo: >
+        Desde diciembre de 2025 sus temperaturas dan entre 6 y 14 grados más que las demás
+        estaciones (34,1 de media en abril contra 20,7), con máximas de más de 50, 0 horas de
+        frío en mayo y rocío de hasta 39,97: parece el sensor del abrigo corrido o dañado.
+      referencia: "validations/reportes/entrega-03.md, punto 1 (pregunta 2 para JC)"
+    - estacion_id: 364          # Malbrán
+      variables: [humedad_media, humedad_media_8_14_20, rocio_medio]
+      desde: 2025-05-30
+      motivo: >
+        La humedad promedia entre 1 y 24% por mes cuando las demás estaciones dan entre 50 y
+        85%, con 139 días en 0% desde 2019: parece el sensor de humedad caído.
+      referencia: "validations/reportes/entrega-03.md, punto 3 (pregunta 4 para JC)"
+    - estacion_id: 719          # Vaca Huañuna
+      variables: [humedad_media, humedad_media_8_14_20]
+      desde: 2026-02-01
+      motivo: >
+        Desde febrero de 2026 la humedad baja mes a mes hasta 0% en mayo (52 días en 0%),
+        cuando las demás andan entre 60 y 85%: el mismo patrón de sensor que Malbrán.
+      referencia: "validations/reportes/entrega-03.md, punto 4 (pregunta 4 para JC)"
+    - estacion_id: 497          # Quimilí
+      variables: [temperatura_suelo_10cm_media]
+      desde: 2025-05-30
+      motivo: >
+        Su temperatura de suelo da entre 4 y 7 grados menos que el resto todo el año y es
+        negativa 18 días seguidos de mayo de 2026 (hasta -8,19): parece un sensor que se fue
+        corriendo desde 2023.
+      referencia: "validations/reportes/entrega-03.md, punto 5 (pregunta 5 para JC)"
+    - estacion_id: 251          # Bandera
+      variables: [temperatura_suelo_10cm_media]
+      desde: 2026-04-16
+      motivo: >
+        Desde la segunda quincena de abril de 2026 la temperatura de suelo queda entre 25 y 33
+        todos los días (28,1 de promedio en mayo contra 14,9 del resto), 13 grados por encima
+        del aire.
+      referencia: "validations/reportes/entrega-03.md, punto 6 (pregunta 5 para JC)"
+    - estacion_id: 496          # Monte Quemado
+      variables: [humedad_media]
+      desde: 2025-05-30
+      motivo: >
+        La humedad media viene muy por debajo de las demás entre septiembre de 2025 y enero de
+        2026, con 10 días en 0% exacto, y no cuenta la misma historia que su humedad 8-14-20.
+      referencia: "validations/reportes/entrega-03.md, punto 8 (pregunta 4 para JC)"
+
+notas_metodologicas:
+  estaciones:
+    titulo: "Qué muestra esta página"
+    texto: >
+      El dato diario de las estaciones agrometeorológicas del INTA en Santiago del Estero, tal
+      como lo entrega el INTA, durante el último año con datos de la planilla. Cada estación
+      tiene su propio equipo: no todas miden las mismas variables, y las que una estación no
+      mide no figuran en su tabla. Un día sin dato se muestra como "S/D", nunca como cero, y el
+      gráfico corta la línea en ese tramo.
+  control_de_calidad:
+    titulo: "Tramos que no se muestran"
+    texto: >
+      El control de calidad de la entrega encontró sensores con lecturas imposibles para la
+      zona en el último año. Esos tramos se muestran como "S/D" y cada tabla dice cuáles son y
+      por qué: no se corrigió ni se borró ningún dato. Los recortes quedan hasta que el INTA los
+      revise.

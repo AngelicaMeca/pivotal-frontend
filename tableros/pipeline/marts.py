@@ -12,6 +12,7 @@ Salida (todo regenerable, marts/ esta gitignoreado):
   marts/hecho_movimientos_hacienda.parquet una fila por base-flujo-periodo-categoria-medida
   marts/hecho_movimientos_vegetales.parquet una fila por base-DTV-medida (grano diario)
   marts/hecho_precios_mayoristas.parquet   una fila por base-cotizacion-medida (grano diario)
+  marts/hecho_clima_diario.parquet         una fila por estacion-dia-variable (base 111, INTA)
 
 Que base alimenta que hecho lo dice el config de la base (`salida.mart`), no este
 codigo. Lo que si sabe este codigo es que cada FAMILIA de schema tiene su propia forma
@@ -516,7 +517,47 @@ def sql_geo_serie_mensual(rutas):
     """ % lista_sql(rutas)
 
 
+def sql_hecho_clima_diario(rutas):
+    """Familia clima-diario (base 111, estaciones del INTA): una fila por estacion, dia y
+    variable, con nulos explicitos. Es el staging tal cual, ordenado: el dato diario no se
+    agrega ni se redondea aca (el "1 decimal con coma" de JC es de presentacion).
+
+    Lo que se ve en el sitio es una LECTURA de esto: el recorte al ultimo anio y los tramos que
+    el control de calidad saca de la pantalla viven en el spec (_comunes-agroclima.yaml), no
+    en el mart. Nada se borra.
+    """
+    return """
+        SELECT
+            base_id, entrega, hoja, fila_origen,
+            estacion_id, estacion, estacion_nombre, estacion_tipo, localidad,
+            latitud, longitud, altura,
+            estacion_desde_declarado, estacion_hasta_declarado,
+            geo_id, geo_nombre, geo_verificar,
+            fecha, anio, mes, dia,
+            variable, variable_etiqueta, unidad, tipo_valor,
+            valor, valor_texto, fuente
+        FROM read_parquet(%s)
+        ORDER BY estacion_id, fecha, variable
+    """ % lista_sql(rutas)
+
+
+def sql_geo_clima_diario(rutas):
+    """No aporta geografia a dim_geo: la unidad es la ESTACION, no el departamento, y su
+    departamento es una propuesta sin verificar (`geo_verificar`, reporte entrega-03 punto
+    22). El filtro deja el resultado vacio a proposito."""
+    return """
+        SELECT DISTINCT
+            CAST(NULL AS VARCHAR) AS geo_id, CAST(NULL AS VARCHAR) AS nivel_geo,
+            CAST(NULL AS VARCHAR) AS nombre, CAST(NULL AS VARCHAR) AS provincia,
+            CAST(NULL AS BIGINT) AS provincia_id, CAST(NULL AS VARCHAR) AS provincia_nombre,
+            CAST(NULL AS BIGINT) AS departamento_id, CAST(NULL AS BOOLEAN) AS es_agregado_geo
+        FROM read_parquet(%s)
+        WHERE false
+    """ % lista_sql(rutas)
+
+
 HECHOS_POR_FAMILIA = {
+    "clima-diario": sql_hecho_clima_diario,
     "tidy": sql_hecho_tidy,
     "dte": sql_hecho_dte,
     "dtv": sql_hecho_dtv,
@@ -528,6 +569,7 @@ HECHOS_POR_FAMILIA = {
 }
 
 GEO_POR_FAMILIA = {
+    "clima-diario": sql_geo_clima_diario,
     "tidy": sql_geo_tidy,
     "dte": sql_geo_dte,
     # La familia dtv tiene la geografia en las dos puntas y con los mismos nombres de

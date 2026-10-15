@@ -1,0 +1,226 @@
+# Base 111 · Datos diarios de las estaciones agrometeorologicas del INTA en Santiago del Estero
+#
+# Primera base de la familia `clima-diario` (adapters/clima_diario.py). Llego con la entrega-03
+# (clima, 14-oct-2026, maqueta "Maqueta Clima 1"); la misma planilla ya habia venido en la
+# entrega-01 con otro nombre ("111 - Detalle estaciones SDE del INTA.xlsx") y quedo sin config.
+#
+# Forma del archivo:
+#   * hoja "Estaciones": fila 2 encabezado y filas 3-10 las OCHO estaciones (Id del INTA,
+#     nombre, tipo de equipo, localidad, lat/long COMO TEXTO, altura, id interno, ubicacion,
+#     desde/hasta). Debajo, desde la fila 12, JC escribio la definicion de cada variable y sus
+#     notas: eso NO se ingiere como dato, esta transcripto en configs/dims/variables-clima.yaml.
+#   * una hoja "DD <estacion>" por estacion: fila 1 encabezado, una fila por DIA. La fecha es
+#     texto ("2010-12-14 00:00:00.0") y TODAS las variables tambien son texto con punto decimal
+#     ingles ('25.53263', '1.0E-7'). Las direcciones de viento son letras ('NE', 'C ') y el
+#     INTA rellena con espacios: '  ' es una celda vacia.
+#
+# Staging: formato LARGO estacion x fecha x variable, con nulos explicitos (una fila por cada
+# variable que trae la hoja, haya dato o no). Nulo es nulo, nunca cero. No se redondea: el
+# redondeo a 1 decimal con coma ("CONVERTI PUNTOS EN COMAS Y DEJE 1 DIGITO SOLAMENTE", JC) es
+# de presentacion y lo hace el sitio. Se ingiere TODA la serie: el recorte al ultimo anio de la
+# maqueta tambien es de presentacion.
+
+base: 111
+slug: clima-estaciones-inta
+familia: clima-diario
+estado: activa
+
+archivo:
+  # Matchea el nombre con que llego a la entrega-03 ("111 -Estaciones SDE.xlsx", SIN espacio
+  # despues del guion) y tambien el nombre bien escrito si JC lo corrige ("111 - Estaciones
+  # SDE.xlsx"). NO matchea el archivo de la entrega-01 ("111 - Detalle estaciones SDE del
+  # INTA.xlsx"): asi una corrida de todas las entregas no reescribe el manifiesto de la
+  # entrega-01. El contenido de los dos es identico (ver `notas`).
+  patron: "^111 ?- ?Estaciones SDE"
+  # Nombres EXACTOS que no siguen la convencion "NN - Nombre.xlsx" y que igual se aceptan como
+  # de ESTA base. pipeline/ingest.py corta la corrida ante un nombre fuera de convencion para no
+  # adivinar el numero de base; aca el numero no se adivina, lo declara este config despues de
+  # mirar el archivo (sha256 29ee457d...7661, 5.234.823 bytes). Si JC lo renombra bien, esta
+  # lista deja de hacer falta y se puede borrar.
+  nombres_fuera_de_convencion:
+    - "111 -Estaciones SDE.xlsx"
+
+# Diccionario de variables: encabezado de origen -> nombre canonico, etiqueta, unidad y
+# definicion de JC. Un encabezado que no este ahi corta la ingesta (columna nueva = drift).
+variables: configs/dims/variables-clima.yaml
+
+hojas:
+  estaciones:
+    nombre: "Estaciones"
+    header_fila: 2
+    # Las estaciones son las filas siguientes al encabezado hasta la primera fila sin Id. Lo
+    # que sigue (definiciones y notas de JC) no es dato.
+    columnas:
+      "Id": estacion_id
+      "Nombre": estacion_nombre
+      "Tipo": estacion_tipo
+      "Localidad": localidad
+      "Provincia": provincia_nombre
+      "Latitud": latitud
+      "Longitud": longitud
+      "Altura": altura
+      "Id Interno": estacion_id_interno
+      "Ubicacion": ubicacion
+      "Desde": desde_declarado
+      "Hasta": hasta_declarado
+    # Formato de las fechas Desde/Hasta (texto dd/mm/aaaa).
+    formato_fecha: "dd/mm/aaaa"
+
+  datos:
+    # Una entrada por hoja. `estacion_id` es el Id del INTA de la hoja "Estaciones" y es lo que
+    # une la hoja con su estacion: NUNCA se deduce del nombre de la hoja. `estacion` es el
+    # nombre corto para el sitio (el de la maqueta). `departamento` es nuestra PROPUESTA: la
+    # hoja "Estaciones" trae la localidad, no el departamento (salvo Malbran y Vaca Huañuna,
+    # que lo nombran en "Ubicacion"); por eso va con `verificar: true`. Se cruzo ademas la
+    # latitud/longitud de cada estacion contra el mapa de departamentos
+    # (configs/dims/sde-departamentos.geojson): coinciden las ocho salvo La Maria (ver alli).
+    - nombre: "DD Bandera"
+      header_fila: 1
+      ambito: sde
+      estacion_id: 251
+      estacion: "Bandera"
+      departamento: "BELGRANO"
+      verificar: true
+    - nombre: "DD LM Silipica"
+      header_fila: 1
+      ambito: sde
+      estacion_id: 67
+      estacion: "La María"
+      # La hoja "Estaciones" dice Localidad "Silipica", pero la coordenada publicada
+      # (-28.02, -64.23, redondeada a dos decimales) cae en el departamento CAPITAL, cerca del
+      # limite con Silipica. Se sigue al texto de la fuente; la duda va al reporte para JC.
+      departamento: "SILIPICA"
+      verificar: true
+    - nombre: "DD Los Juries"
+      header_fila: 1
+      ambito: sde
+      estacion_id: 498
+      estacion: "Los Juríes"
+      departamento: "GENERAL TABOADA"
+      verificar: true
+    - nombre: "DD Malbran"
+      header_fila: 1
+      ambito: sde
+      estacion_id: 364
+      estacion: "Malbrán"
+      departamento: "AGUIRRE"        # "Dto Aguirre" en la columna Ubicacion
+      verificar: true
+    - nombre: "DD Monte Quemado"
+      header_fila: 1
+      ambito: sde
+      estacion_id: 496
+      estacion: "Monte Quemado"
+      departamento: "COPO"
+      verificar: true
+    - nombre: "DD Quimili"
+      header_fila: 1
+      ambito: sde
+      estacion_id: 497
+      estacion: "Quimilí"
+      departamento: "MORENO"
+      verificar: true
+    - nombre: "DD Sachayoj"
+      header_fila: 1
+      ambito: sde
+      estacion_id: 250
+      estacion: "Sachayoj"
+      departamento: "ALBERDI"
+      verificar: true
+    - nombre: "DD Vaca Huañuna"
+      header_fila: 1
+      ambito: sde
+      estacion_id: 719
+      estacion: "Vaca Huañuna"
+      departamento: "FIGUEROA"       # "Departamento Figueroa" en la columna Ubicacion
+      verificar: true
+  ignorar: []
+
+tiempo:
+  grano: fecha
+  columna: "Fecha"
+  # La fecha viene como texto "AAAA-MM-DD 00:00:00.0". El adapter acepta ese texto (o una
+  # fecha de Excel) y CORTA ante cualquier otra cosa, incluida una hora distinta de 00:00 que
+  # no este declarada aca abajo.
+  horas_aceptadas:
+    - hora: "01:00:00"
+      motivo: >
+        Siete filas de La Maria traen "01:00:00.0" en vez de "00:00:00.0": 01/12/1988,
+        15/10/1989, 21/10/1990, 20/10/1991, 18/10/1992, 30/12/2007 y 19/10/2008, que son los
+        dias en que empezo el horario de verano en Argentina (esa medianoche no existio y el
+        sistema que exporto los datos la corrio a la 01:00). Es el mismo DIA: se toma la fecha
+        y se ignora la hora. Ningun dia queda repetido por esto (lo verifica el adapter).
+
+# Fechas que aparecen DOS veces en una hoja. Una fecha repetida que no este declarada corta la
+# ingesta. Declarada con `conservar: primera`, el adapter se queda con la primera fila y
+# descarta la otra SOLO si la descartada no contradice a la conservada (cada valor que trae la
+# descartada tiene que ser igual al de la conservada); si contradice, corta. Asi no se pierde
+# ningun dato y la decision queda escrita.
+fechas_repetidas:
+  "DD LM Silipica":
+    "2016-10-07":
+      conservar: primera
+      motivo: >
+        Filas 10417 y 10418 de la hoja, mismo dia. La segunda es un subconjunto de la primera:
+        repite temperaturas, lluvia, heliofania, viento y radiacion global con los mismos
+        valores y le faltan tension de vapor, humedad, rocio, direccion del viento, radiacion
+        neta y evapotranspiracion. Se conserva la primera (la completa). Va al reporte para JC.
+
+geo:
+  particion: sde
+  provincia_fija: "Santiago del Estero"
+  nivel: estacion
+
+salida:
+  staging: "staging/base-111-clima-estaciones-inta.parquet"
+  # El mart lo agrego constructor-dashboards el 14-oct-2026, al armar la pagina "Estaciones
+  # agrometeorologicas INTA" de la rama AgroClima (pipeline/marts.py, familia clima-diario).
+  # Es el staging tal cual, ordenado: el dato diario no se agrega ni se redondea en el mart.
+  mart: hecho_clima_diario
+  particiones: [provincia, estacion_id]
+
+indice:
+  fuente: "INTA"
+  frecuencia: "diaria"
+  rango_declarado: "2008-01-01 a 2026-05-31"
+  titulo_en_el_indice: "Datos 114 estaciones meteorológicas INTA"
+  denominacion_jc: "Datos historicos diarios de las 8 estaciones meteorológicas INTA SDE"
+  registros_declarados: 642097
+
+notas:
+  - >
+    2026-10-14 (ingestor-bases): config creado con la entrega-03. Sin drift contra la
+    entrega-01: comparadas celda por celda, las nueve hojas son IDENTICAS (mismas filas, mismos
+    valores); lo unico distinto es una fila vacia de mas al pie de "Estaciones" en la version
+    vieja y el NOMBRE del archivo, que ahora no respeta la convencion "NN - " (falta el espacio
+    despues del guion). La entrega-01 no se reingiere.
+  - >
+    La hoja de La Maria (estacion convencional, desde 1988) trae columnas distintas que las
+    siete Nimbus: suma Granizo, Nieve, Radiacion_Neta, Evaporacion_Tanque,
+    Evapotranspiracion_Potencial y Profundidad_Napa, escribe "Unidad_Frio" en singular y no
+    trae Precipitacion_Cronologica ni Precipitacion_Maxima_30minutos. Todo resuelto en el
+    diccionario de variables, sin logica por hoja.
+  - >
+    El indice de JC dice "114 estaciones" y 642.097 registros: la planilla trae 8 estaciones y
+    38.747 dias. "114" parece errata por "111" (el numero de base); la cantidad de registros no
+    se corresponde con ninguna cuenta obvia de la planilla. Va como pregunta a JC.
+
+# Lo que se vio al perfilar y NO se corrigio. Lo levanta qa-datos para el reporte de la
+# entrega (validations/reportes/entrega-03.md), en lenguaje de JC.
+anomalias_para_reporte:
+  - "Fechas Desde/Hasta de la hoja Estaciones que no coinciden con las hojas de datos: Quimilí dice desde 09/07/2006 y su hoja arranca el 10/09/2015; Vaca Huañuna dice desde 07/01/2025 y arranca el 09/01/2025; La María dice hasta 31/05/2026 y su último día es el 28/05/2026; Monte Quemado dice hasta 04/04/2026 y el 04/04 viene vacío (último dato 03/04/2026); Sachayoj dice hasta 29/04/2026 y su último dato es del 04/07/2025: la fila del 29/04/2026 viene vacía."
+  - "Sachayoj salta del 05/07/2025 al 29/04/2026 (298 días sin filas) y la única fila posterior está vacía: en el último año no tiene ningún dato."
+  - "Huecos largos (días que no figuran en la hoja): Bandera jun-2012 a may-2013 (363 días), feb-abr 2015 (83), ene-mar 2019 (52), mar-may 2025 (66); Monte Quemado feb-oct 2020 (236); Sachayoj jul-2018 a mar-2019 (243), oct-2023 a ene-2024 (91), jun-sep 2024 (85); Los Juríes jun-ago 2024 (61); Vaca Huañuna jul-oct 2025 (98)."
+  - "Filas de días completamente vacías (el día figura pero sin ningún dato): Bandera 53, La María 0, Los Juríes 103, Malbrán 38, Monte Quemado 257, Quimilí 43, Sachayoj 174, Vaca Huañuna 42. Entran como datos faltantes, nunca como cero."
+  - "La María repite el día 07/10/2016 (filas 10417 y 10418); la segunda fila es una copia incompleta de la primera. Se usa la primera."
+  - "La María: siete días traen la hora 01:00 en vez de 00:00 (los inicios del horario de verano de 1988-1992, 2007 y 2008). Es un detalle de la exportación, no del dato: se toma el día."
+  - "La María en el último año (jun-2025 a may-2026): la temperatura de suelo, la humedad 8-14-20, el rocío y la tensión de vapor solo tienen 113 días con dato de 363, y no hay ningún dato de horas de frío. La humedad media no la mide nunca (solo la 8-14-20)."
+  - "Temperatura de suelo a 10 cm NEGATIVA: Quimilí 18 días seguidos, del 12/05/2026 al 29/05/2026 (último dato de la entrega), con mínimo de -8,19 el 23/05/2026: cae dentro del último año que muestra la maqueta. Malbrán 21 días entre el 16/10/2017 y el 24/01/2018 (en pleno verano), con mínimo de -9,9. La María un día, 26/08/2018, -2,5. A confirmar si son fallas del sensor."
+  - "Bandera trae temperaturas de abrigo imposibles para la zona: mínimas de -10 a -30 grados en sep-oct 2014 y en decenas de días entre dic-2018 y ago-2019, máximas de 48 a 59,9 en jul-ago 2019 y una media de -15,1 el 10/10/2014. Parece un sensor roto en esos tramos."
+  - "Humedad media en 0% (una humedad relativa diaria de 0 no es físicamente posible, parece sensor caído): Quimilí 266 días (dic-2020 a sep-2021), Bandera 207 (2014 a 2021), Malbrán 139 (desde jun-2019 hasta el 29/05/2026, o sea también en el último año), Vaca Huañuna 52 (mar a may 2026, último año), Monte Quemado 29, Sachayoj 20 y Los Juríes 13."
+  - "Quimilí registra 300,5 mm el 16/02/2023 y 441,25 mm el 17/02/2023 de lluvia pluviométrica, pero su precipitación cronológica nunca pasa de 97,75: muy probable error de carga."
+  - "Los Juríes: tensión de vapor por encima de 50 casi todos los días entre el 17/02/2026 y el 22/04/2026 (máximo 74,05 el 16/04/2026; el resto de las estaciones no pasa de 45), dentro del último año. Presiones medias sueltas fuera de lo esperable para la altura de la estación: Los Juríes 902,3 el 04/10/2023 y Sachayoj 851,6 el 12/03/2019."
+  - "La dirección del viento a 10 m viene SIEMPRE 'C' en las siete estaciones Nimbus (todas sus filas): parece un valor de relleno, no una medición."
+  - "Unidades de frío: el valor exacto -23,90403 se repite en todas las estaciones Nimbus (1.835 días en Sachayoj, 1.446 en Bandera, 1.360 en Quimilí...) y es siempre el mínimo: parece un tope del cálculo, no una medición. A confirmar qué modelo usa el INTA antes de graficarla."
+  - "Variables que figuran en la planilla pero vienen VACÍAS en todas las estaciones: Temperatura_Inte_5cm, Temperatura_Intemperie_150cm_Minima y Humedad_Suelo; en La María además Humedad_Media, Duracion_Follaje_Mojado, Velocidad_Viento_Maxima, Presion_Media, Evaporacion_Tanque, Profundidad_Napa y Unidad_Frio."
+  - "Las definiciones de variables de la hoja Estaciones perdieron algunas comas al pegarse (se ven dos espacios seguidos) y la de Precipitación cronológica quedó partida en dos celdas. Se publican tal cual hasta que JC las revise."
+  - "Unidades: la planilla no trae unidades. JC las da en sus definiciones solo para lluvia y lluvia máxima en 30 minutos (mm), heliofanía efectiva, follaje mojado y horas de frío (horas), heliofanía relativa y humedades (%). Las temperaturas, el rocío, la tensión de vapor, el viento, la presión, la radiación y las unidades de frío quedan SIN unidad hasta que JC las confirme."

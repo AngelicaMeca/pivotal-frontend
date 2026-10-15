@@ -129,3 +129,52 @@ Se anota para no volver a levantarlo en cada entrega si el resultado se mantiene
 Las 20 bases restantes (30, 33, 38, 92, 93, 100, 101, 110, 111, 132, 134, 135, 136, 137, 144, 145, 151, 196, 197, 198) llegaron completas y sin faltantes contra el índice. Todavía no tienen receta de lectura, así que no pasaron por validaciones. No hay anomalías que reportar sobre ellas.
 
 Actualización 2026-09-23: las cuatro DTV (53, 56, 57 y 75) ya salieron de esta lista y tienen su sección propia más arriba. El pendiente que quedaba anotado acá, la sospecha de copy/paste en cebolla, quedó **descartado**.
+
+
+---
+
+## entrega-03 · base 111 · Clima diario de las estaciones del INTA
+
+Reportadas el 2026-10-14 en `validations/reportes/entrega-03.md`. Primera base de la familia `clima-diario`. "Último año" publicado = del 30/05/2025 al 29/05/2026 (`serie_diaria.ventana_dias` en `validations/reglas.yaml`). Con esto la base 111 sale de la lista "bases todavía sin procesar" de la entrega-01: es el mismo archivo, valor por valor.
+
+| # | Anomalía | Detectada | Estado | Respuesta de JC | Regla resultante |
+|---|---|---|---|---|---|
+| 40 | **Los Juríes**: temperatura de abrigo, rocío y horas de frío despegadas del resto desde dic-2025 (media mensual +6 a +13,4 grados ene-may 2026; máximas de 51,7; 0 horas de frío en mayo). Incluye la tensión de vapor >50 (máx 74,05) que anotó la ingesta | 2026-10-14 | abierta | | Provisoria: temperatura de abrigo (media, máx, mín), rocío y horas de frío de Los Juríes fuera del sitio desde el 01/12/2025. Falta escribirla en el spec del tablero de clima. Detecta: `desvio_contra_otras_series`. |
+| 41 | **Sachayoj** sin datos desde el 04/07/2025 (297 días sin filas; la fila del 29/04/2026 viene vacía). 35-36 días con dato en el último año | 2026-10-14 | abierta | | Provisoria: Sachayoj fuera del tablero del último año, con la leyenda "sin datos desde el 04/07/2025". Detecta: `huecos_serie_diaria`. |
+| 42 | **Malbrán**: humedad media 1-24% de promedio mensual todo el último año (139 días en 0% desde jun-2019); humedad 8-14-20 en 8-28%; rocío con 11 días de 365 | 2026-10-14 | abierta | | Provisoria: humedad media, humedad 8-14-20 y rocío de Malbrán fuera del sitio en todo el último año. |
+| 43 | **Vaca Huañuna**: humedad media cae a 0 desde feb-2026 (52 días en 0%, mar-may); hueco 02/07-08/10/2025 (97 días); 38 días vacíos en el último año; viento a 2 m siempre "C" | 2026-10-14 | abierta | | Provisoria: humedad media y 8-14-20 de Vaca Huañuna fuera del sitio desde el 01/02/2026. El gráfico corta la línea en el hueco. |
+| 44 | **Quimilí**: temperatura de suelo 10 cm negativa del 12/05 al 29/05/2026 (mín -8,19) y 4-7 grados por debajo del resto en todo el último año; promedio anual en baja desde 2023 | 2026-10-14 | abierta | | Provisoria: temperatura de suelo de Quimilí fuera del sitio en todo el último año. |
+| 45 | **Bandera**: temperatura de suelo 10 cm clavada en 25-33 grados desde la 2da quincena de abril 2026 (mayo: 28,1 contra 14,9 del resto). Mismo síntoma jun-sep 2023 | 2026-10-14 | abierta | | Provisoria: temperatura de suelo de Bandera fuera del sitio desde el 16/04/2026. |
+| 46 | **Monte Quemado**: termina el 03/04/2026; humedad media baja sep-2025 a ene-2026 (25% en oct contra 57-62%) con 10 días en 0% en el último año | 2026-10-14 | abierta | | Provisoria: humedad media de Monte Quemado fuera del sitio en el último año; el resto se publica con la fecha de su último dato. |
+| 47 | **La María**: no mide humedad media, lluvia cronológica ni máxima en 30 min; 0 días de horas de frío en el último año; suelo, 8-14-20 y rocío con 112 de 365 | 2026-10-14 | cerrada | No hace falta preguntar: es otra estación (convencional) y JC ya lo anota ("NO TODAS LAS ESTACIONES TIENEN LAS MISMAS VARIABLES"). | La tabla dice "no se mide en esta estación". Detecta: `cobertura_variables_publicadas`. Falta escribirlo en el spec. |
+| 48 | Unidades sin declarar: temperaturas, rocío, lluvia cronológica, tensión de vapor, viento, presión, radiación, unidades de frío | 2026-10-14 | abierta | | Provisoria: "unidad a confirmar" en ejes y tablas. `unidad: null` + `nota_unidad` en `configs/dims/variables-clima.yaml`. |
+| 49 | Lluvia máxima en 30 min mayor que la lluvia cronológica del día (79 días, 11 en el último año) y rocío mayor que la temperatura media (62 días, 10 en el último año) | 2026-10-14 | abierta | | Provisoria: se publican sin tocar. Detecta: `orden_entre_variables`. |
+| 50 | **Bandera**: temperaturas imposibles en 2014 y dic-2018 a ago-2019 (mínimas hasta -30, máximas hasta 59,9, media -15,1); radiación de 49,9 en jul-2017 | 2026-10-14 | abierta | | Ninguna por ahora: fuera del último año. Si se publica serie larga, esos tramos van como "sin dato". |
+| 51 | **Quimilí**: 300,5 mm (16/02/2023) y 441,25 mm (17/02/2023); las demás estaciones 4-10 mm esos días | 2026-10-14 | abierta | | Ninguna por ahora: fuera del último año. |
+| 52 | Suelo bajo cero en Malbrán (21 días oct-2017 a ene-2018, mín -9,9) y La María (26/08/2018, -2,5) | 2026-10-14 | abierta | | Ninguna por ahora: fuera del último año. |
+| 53 | Humedad media en 0% en la historia: Quimilí 266 días, Bandera 207, Monte Quemado 29, Sachayoj 20, Los Juríes 13 | 2026-10-14 | abierta | | Ninguna por ahora (ver 42, 43 y 46 para el último año). |
+| 54 | Tramos sin filas de más de 30 días (14 tramos; el mayor Bandera 31/05/2012-29/05/2013) y días vacíos (710 en total) | 2026-10-14 | abierta | | Provisoria: "sin dato", nunca cero; el gráfico corta la línea. |
+| 55 | Desde/Hasta de la hoja Estaciones que no cierran (Quimilí "desde 2006" y arranca en 2015; Vaca Huañuna, La María, Monte Quemado, Sachayoj) | 2026-10-14 | abierta | | Provisoria: se publica el período de los datos, no el declarado. |
+| 56 | Heliofanía efectiva >14,5 h (223 días, 196 en Quimilí), presiones de 902,3 (Los Juríes) y 851,6 (Sachayoj), evapotranspiración de 21,97 (La María) | 2026-10-14 | abierta | | Ninguna: variables no publicadas. |
+| 57 | Dirección del viento a 10 m siempre "C" en las 7 estaciones automáticas | 2026-10-14 | abierta | | Provisoria: no se publica. Detecta: `categoria_constante`. |
+| 58 | Unidades de frío: -23,90403 repetido en 1.034 a 1.835 días por estación (y +23,90403 una vez): parece tope del cálculo | 2026-10-14 | abierta | | Provisoria: no se publica. Detecta: `valor_pegado`. |
+| 59 | Columnas vacías de punta a punta (Temperatura_Inte_5cm, Temperatura_Intemperie_150cm_Minima, Humedad_Suelo en las 8; varias en La María y Vaca Huañuna) | 2026-10-14 | cerrada | No hace falta preguntar. | No se publican. Detecta: `variables_siempre_vacias`. |
+| 60 | La María repite el 07/10/2016 (filas 10417 y 10418, la segunda incompleta) y trae 7 días con hora 01:00 (inicios del horario de verano) | 2026-10-14 | cerrada | No hace falta preguntar: la segunda fila no contradice a la primera. | `fechas_repetidas` y `tiempo.horas_aceptadas` en `configs/bases/111-clima-estaciones-inta.yaml`. |
+| 61 | Definiciones de la hoja Estaciones con comas perdidas y una partida en dos celdas | 2026-10-14 | abierta | | Provisoria: se publican tal cual (`configs/dims/variables-clima.yaml`). |
+| 62 | Nombre de archivo "111 -Estaciones SDE.xlsx" (sin espacio); índice dice "114 estaciones", 642.097 registros y desde 2008 (la planilla: 8 estaciones, 38.746 días, desde 1988); mismo archivo que la entrega-01 | 2026-10-14 | abierta | | `archivo.nombres_fuera_de_convencion` en el config de la base. El índice lo corrige `indexador-contexto` si JC confirma. |
+| 63 | Departamento de cada estación propuesto por nosotros; La María: la hoja dice Silípica y la coordenada cae en Capital | 2026-10-14 | abierta | | Provisoria: `departamento` + `verificar: true` en el config; no se usan para mapas por departamento hasta que JC confirme. |
+
+### Verificado y sano en la base 111 (no genera anomalía)
+
+| Qué se verificó | Resultado | Fecha |
+|---|---|---|
+| Contenido contra el archivo de la entrega-01 ("111 - Detalle estaciones SDE del INTA.xlsx") | Las 9 hojas idénticas valor por valor (huella de contenido por hoja) | 2026-10-14 |
+| Días repetidos (hoja + fecha + variable) | Ninguno después de la excepción declarada del 07/10/2016 | 2026-10-14 |
+| Filas 100% duplicadas | Ninguna | 2026-10-14 |
+| Lluvia pluviométrica contra cronológica en el último año | Cierran (Quimilí 1.135 y 1.135 mm; Los Juríes 984 y 981; Bandera 951 y 944) | 2026-10-14 |
+| Coordenadas contra el mapa de departamentos | 7 de 8 caen en el departamento propuesto; La María en Capital (anomalía 63) | 2026-10-14 |
+| Temperatura del aire del último año, estación contra estación | Pareja (1 a 3 grados) en todas las estaciones con dato salvo Los Juríes (anomalía 40) | 2026-10-14 |
+
+### Controles que no aplican a la familia `clima-diario`
+
+Totales embebidos, U.M. en {Kg., Tn.}, CANT × PESO_UNITARIO, cabezas fraccionarias y copy/paste entre períodos: la base no tiene `medida` ni `periodo` y se saltean solos. El de unidades (`unidades_declaradas`) daba falso positivo bloqueante ("mm", "horas", "%"); se resolvió declarando `unidades_admitidas` en `reglas.yaml`, sin tocar código. En la comparación entre estaciones, la humedad de Malbrán y Vaca Huañuna arrastra la mediana: Los Juríes, Quimilí y Bandera salen marcadas en humedad mar-may 2026 y son normales (falso positivo explicado en el reporte).

@@ -1,0 +1,1181 @@
+descripcion: Hallazgos de las validaciones. GENERADO por pipeline/validations.py, no editar a mano. El
+  reporte para JC se escribe a partir de esto en validations/reportes/entrega-03.md
+entrega: entrega-03
+resumen:
+  bases_ingeridas:
+  - 111
+  filas_revisadas: 1179362
+  checks_corridos: 38
+  bloqueantes: 12
+  observaciones: 25
+  informativos: 37
+hallazgos:
+- check: cobertura-temporal
+  severidad: bloqueante
+  base: 111
+  titulo: Estaciones cuyo ultimo dato queda muy atras del resto
+  casos: 2
+  detalle: La base llega hasta el 29/05/2026. Estas series dejan de traer datos mas de 30 dias antes,
+    asi que 'el ultimo anio' de esa estacion no es el mismo que el de las otras.
+  ejemplos:
+  - 'Sachayoj: ultimo dato el 04/07/2025; dias con dato en la ventana publicada (30/05/2025 a 29/05/2026):
+    36'
+  - 'Monte Quemado: ultimo dato el 03/04/2026; dias con dato en la ventana publicada (30/05/2025 a 29/05/2026):
+    309'
+  propuesta: 'No mostrar el ultimo anio de esa estacion como si fuera el de las demas: o se muestra su
+    propio ultimo anio con la fecha bien a la vista, o se deja afuera hasta que llegue el dato.'
+  pregunta_jc: Esta estacion dejo de mandar datos hace meses. Esta fuera de servicio, o el INTA tiene
+    los datos y faltan en la planilla?
+- check: coherencia
+  severidad: bloqueante
+  base: 111
+  titulo: Meses en que una estacion se despega de las demas en humedad_media
+  casos: 81
+  detalle: Promedio del mes de la estacion contra la mediana de los promedios de las otras estaciones
+    ese mismo mes; se listan las diferencias de mas de 25. 28 de esos meses tocan la ventana publicada
+    (desde el 30/05/2025).
+  ejemplos:
+  - 'Vaca Huañuna, 05/2026: 0 contra 79,20 de las demas (-79,10) (en la ventana publicada)'
+  - 'Malbrán, 05/2026: 4,90 contra 79,20 de las demas (-74,20) (en la ventana publicada)'
+  - 'Malbrán, 04/2026: 1,40 contra 70,30 de las demas (-68,90) (en la ventana publicada)'
+  - 'Malbrán, 05/2025: 18,20 contra 81,80 de las demas (-63,60) (en la ventana publicada)'
+  - 'Malbrán, 06/2025: 17,40 contra 80,80 de las demas (-63,40) (en la ventana publicada)'
+  - 'Vaca Huañuna, 04/2026: 7,40 contra 70,30 de las demas (-62,90) (en la ventana publicada)'
+  - 'Malbrán, 02/2026: 7,80 contra 70,30 de las demas (-62,50) (en la ventana publicada)'
+  - 'Los Juríes, 04/2026: 92,70 contra 30,40 de las demas (+62,30) (en la ventana publicada)'
+  - 'Malbrán, 12/2025: 7,20 contra 67,50 de las demas (-60,30) (en la ventana publicada)'
+  - 'Malbrán, 07/2025: 17,50 contra 76,70 de las demas (-59,20) (en la ventana publicada)'
+  - 'Quimilí, 04/2026: 87,40 contra 30,40 de las demas (+57) (en la ventana publicada)'
+  - 'Malbrán, 03/2026: 4 contra 59,70 de las demas (-55,60) (en la ventana publicada)'
+  propuesta: Dejar esa variable de esa estacion fuera del sitio en los meses marcados hasta que JC confirme.
+  pregunta_jc: En estos meses una estacion da muy distinto que todas las demas. Sabes si el sensor tuvo
+    una falla o se movio?
+- check: coherencia
+  severidad: bloqueante
+  base: 111
+  titulo: Meses en que una estacion se despega de las demas en humedad_media_8_14_20
+  casos: 35
+  detalle: Promedio del mes de la estacion contra la mediana de los promedios de las otras estaciones
+    ese mismo mes; se listan las diferencias de mas de 25. 16 de esos meses tocan la ventana publicada
+    (desde el 30/05/2025).
+  ejemplos:
+  - 'Malbrán, 05/2026: 14 contra 78,80 de las demas (-64,80) (en la ventana publicada)'
+  - 'Vaca Huañuna, 04/2026: 25,60 contra 85,10 de las demas (-59,50) (en la ventana publicada)'
+  - 'Malbrán, 06/2025: 25,40 contra 78,40 de las demas (-53) (en la ventana publicada)'
+  - 'Malbrán, 05/2025: 28,30 contra 77,60 de las demas (-49,30) (en la ventana publicada)'
+  - 'Malbrán, 02/2026: 21 contra 67,50 de las demas (-46,50) (en la ventana publicada)'
+  - 'Malbrán, 07/2025: 28,30 contra 72,70 de las demas (-44,40) (en la ventana publicada)'
+  - 'Malbrán, 12/2025: 23,40 contra 62,90 de las demas (-39,40) (en la ventana publicada)'
+  - 'Los Juríes, 04/2026: 91,40 contra 52,60 de las demas (+38,80) (en la ventana publicada)'
+  - 'Malbrán, 01/2026: 20,90 contra 59,50 de las demas (-38,60) (en la ventana publicada)'
+  - 'Malbrán, 08/2025: 26,90 contra 61,10 de las demas (-34,20) (en la ventana publicada)'
+  - 'Vaca Huañuna, 03/2026: 37,10 contra 71 de las demas (-33,90) (en la ventana publicada)'
+  - 'Bandera, 04/2026: 52,60 contra 85,10 de las demas (-32,50) (en la ventana publicada)'
+  propuesta: Dejar esa variable de esa estacion fuera del sitio en los meses marcados hasta que JC confirme.
+  pregunta_jc: En estos meses una estacion da muy distinto que todas las demas. Sabes si el sensor tuvo
+    una falla o se movio?
+- check: coherencia
+  severidad: bloqueante
+  base: 111
+  titulo: Meses en que una estacion se despega de las demas en rocio_medio
+  casos: 10
+  detalle: Promedio del mes de la estacion contra la mediana de los promedios de las otras estaciones
+    ese mismo mes; se listan las diferencias de mas de 6. 3 de esos meses tocan la ventana publicada (desde
+    el 30/05/2025).
+  ejemplos:
+  - 'Los Juríes, 03/2026: 31,90 contra 20,60 de las demas (+11,30) (en la ventana publicada)'
+  - 'Monte Quemado, 08/2025: 17,30 contra 8,30 de las demas (+9) (en la ventana publicada)'
+  - 'Bandera, 03/2026: 15 contra 22 de las demas (-6,90) (en la ventana publicada)'
+  - 'Malbrán, 05/2021: -0,20 contra 11,10 de las demas (-11,30)'
+  - 'Los Juríes, 02/2022: 10,30 contra 19,20 de las demas (-8,90)'
+  - 'Malbrán, 06/2019: 4,40 contra 13 de las demas (-8,70)'
+  - 'Malbrán, 07/2019: 2,20 contra 9,50 de las demas (-7,30)'
+  - 'Sachayoj, 08/2021: -1,10 contra 6,10 de las demas (-7,20)'
+  - 'Malbrán, 09/2020: 2,80 contra 9,60 de las demas (-6,80)'
+  - 'Malbrán, 11/2020: 9,40 contra 15,50 de las demas (-6,10)'
+  propuesta: Dejar esa variable de esa estacion fuera del sitio en los meses marcados hasta que JC confirme.
+  pregunta_jc: En estos meses una estacion da muy distinto que todas las demas. Sabes si el sensor tuvo
+    una falla o se movio?
+- check: coherencia
+  severidad: bloqueante
+  base: 111
+  titulo: Meses en que una estacion se despega de las demas en temperatura_abrigo_150cm_maxima
+  casos: 7
+  detalle: Promedio del mes de la estacion contra la mediana de los promedios de las otras estaciones
+    ese mismo mes; se listan las diferencias de mas de 6. 5 de esos meses tocan la ventana publicada (desde
+    el 30/05/2025).
+  ejemplos:
+  - 'Los Juríes, 04/2026: 39,90 contra 25,60 de las demas (+14,30) (en la ventana publicada)'
+  - 'Los Juríes, 03/2026: 41,20 contra 31,30 de las demas (+9,90) (en la ventana publicada)'
+  - 'Los Juríes, 05/2026: 31,40 contra 22,40 de las demas (+9) (en la ventana publicada)'
+  - 'Los Juríes, 02/2026: 41,50 contra 34,70 de las demas (+6,80) (en la ventana publicada)'
+  - 'Los Juríes, 01/2026: 40,60 contra 34,30 de las demas (+6,30) (en la ventana publicada)'
+  - 'Bandera, 07/2019: 39,20 contra 21,10 de las demas (+18,10)'
+  - 'Monte Quemado, 10/2020: 36,50 contra 30,50 de las demas (+6)'
+  propuesta: Dejar esa variable de esa estacion fuera del sitio en los meses marcados hasta que JC confirme.
+  pregunta_jc: En estos meses una estacion da muy distinto que todas las demas. Sabes si el sensor tuvo
+    una falla o se movio?
+- check: coherencia
+  severidad: bloqueante
+  base: 111
+  titulo: Meses en que una estacion se despega de las demas en temperatura_abrigo_150cm_media
+  casos: 7
+  detalle: Promedio del mes de la estacion contra la mediana de los promedios de las otras estaciones
+    ese mismo mes; se listan las diferencias de mas de 5. 5 de esos meses tocan la ventana publicada (desde
+    el 30/05/2025).
+  ejemplos:
+  - 'Los Juríes, 04/2026: 34,10 contra 20,70 de las demas (+13,40) (en la ventana publicada)'
+  - 'Los Juríes, 03/2026: 34,20 contra 25,10 de las demas (+9,10) (en la ventana publicada)'
+  - 'Los Juríes, 05/2026: 23,50 contra 14,80 de las demas (+8,70) (en la ventana publicada)'
+  - 'Los Juríes, 02/2026: 34,10 contra 27,40 de las demas (+6,70) (en la ventana publicada)'
+  - 'Los Juríes, 01/2026: 33 contra 27,10 de las demas (+5,90) (en la ventana publicada)'
+  - 'Monte Quemado, 10/2020: 27,40 contra 22,10 de las demas (+5,30)'
+  - 'Monte Quemado, 11/2020: 29,80 contra 24,80 de las demas (+5)'
+  propuesta: Dejar esa variable de esa estacion fuera del sitio en los meses marcados hasta que JC confirme.
+  pregunta_jc: En estos meses una estacion da muy distinto que todas las demas. Sabes si el sensor tuvo
+    una falla o se movio?
+- check: coherencia
+  severidad: bloqueante
+  base: 111
+  titulo: Meses en que una estacion se despega de las demas en temperatura_abrigo_150cm_minima
+  casos: 8
+  detalle: Promedio del mes de la estacion contra la mediana de los promedios de las otras estaciones
+    ese mismo mes; se listan las diferencias de mas de 6. 4 de esos meses tocan la ventana publicada (desde
+    el 30/05/2025).
+  ejemplos:
+  - 'Los Juríes, 04/2026: 29,60 contra 16,40 de las demas (+13,20) (en la ventana publicada)'
+  - 'Los Juríes, 03/2026: 28,80 contra 19,80 de las demas (+9) (en la ventana publicada)'
+  - 'Los Juríes, 05/2026: 16,60 contra 7,70 de las demas (+8,90) (en la ventana publicada)'
+  - 'Los Juríes, 02/2026: 28,20 contra 21,20 de las demas (+7) (en la ventana publicada)'
+  - 'Bandera, 07/2019: -17,90 contra 7 de las demas (-24,90)'
+  - 'Bandera, 08/2019: -1,10 contra 7 de las demas (-8,20)'
+  - 'Bandera, 05/2019: 4,20 contra 12,10 de las demas (-7,90)'
+  - 'La María, 06/2024: 8,40 contra 14,80 de las demas (-6,40)'
+  propuesta: Dejar esa variable de esa estacion fuera del sitio en los meses marcados hasta que JC confirme.
+  pregunta_jc: En estos meses una estacion da muy distinto que todas las demas. Sabes si el sensor tuvo
+    una falla o se movio?
+- check: coherencia
+  severidad: bloqueante
+  base: 111
+  titulo: Meses en que una estacion se despega de las demas en temperatura_suelo_10cm_media
+  casos: 21
+  detalle: Promedio del mes de la estacion contra la mediana de los promedios de las otras estaciones
+    ese mismo mes; se listan las diferencias de mas de 6. 5 de esos meses tocan la ventana publicada (desde
+    el 30/05/2025).
+  ejemplos:
+  - 'Quimilí, 05/2026: -0,10 contra 16,80 de las demas (-17) (en la ventana publicada)'
+  - 'Bandera, 05/2026: 28,10 contra 14,90 de las demas (+13,20) (en la ventana publicada)'
+  - 'Quimilí, 01/2026: 20,90 contra 27,70 de las demas (-6,80) (en la ventana publicada)'
+  - 'Quimilí, 10/2025: 20,20 contra 26,60 de las demas (-6,40) (en la ventana publicada)'
+  - 'Quimilí, 02/2026: 22,40 contra 28,60 de las demas (-6,20) (en la ventana publicada)'
+  - 'Malbrán, 12/2017: 7,30 contra 30,20 de las demas (-23)'
+  - 'Malbrán, 01/2018: 7,90 contra 29 de las demas (-21,10)'
+  - 'Malbrán, 11/2017: 6,90 contra 27,80 de las demas (-20,90)'
+  - 'Bandera, 07/2023: 34,40 contra 17,90 de las demas (+16,60)'
+  - 'Bandera, 06/2023: 33,70 contra 18,40 de las demas (+15,40)'
+  - 'Bandera, 09/2023: 36,70 contra 22,50 de las demas (+14,20)'
+  - 'Malbrán, 10/2017: 10,30 contra 24,40 de las demas (-14,10)'
+  propuesta: Dejar esa variable de esa estacion fuera del sitio en los meses marcados hasta que JC confirme.
+  pregunta_jc: En estos meses una estacion da muy distinto que todas las demas. Sabes si el sensor tuvo
+    una falla o se movio?
+- check: valores-imposibles
+  severidad: bloqueante
+  base: 111
+  titulo: Valores de humedad_media fuera de lo fisicamente plausible
+  casos: 820
+  detalle: 'Rango razonable 5 a 100 %; imposible por debajo de 1 o por encima de 100. 726 imposibles,
+    94 para mirar; 229 de ellos en la ventana publicada (desde el 30/05/2025). Por estacion: Bandera 207
+    imposibles + 11 a mirar (0 en la ventana), del 19/12/2014 al 10/03/2022, entre 0 y 4; Los Juríes 13
+    imposibles + 7 a mirar (0 en la ventana), del 14/01/2019 al 21/09/2022, entre 0 y 4; Malbrán 139 imposibles
+    + 55 a mirar (158 en la ventana), del 13/06/2019 al 29/05/2026, entre 0 y 4; Monte Quemado 29 imposibles
+    + 11 a mirar (15 en la ventana), del 13/04/2023 al 09/01/2026, entre 0 y 4; Quimilí 266 imposibles
+    + 0 a mirar (0 en la ventana), del 16/12/2020 al 15/09/2021, entre 0 y 0; Sachayoj 20 imposibles +
+    6 a mirar (0 en la ventana), del 30/04/2019 al 29/06/2019, entre 0 y 4; Vaca Huañuna 52 imposibles
+    + 4 a mirar (56 en la ventana), del 06/03/2026 al 29/05/2026, entre 0 y 4.'
+  ejemplos:
+  - 'Malbrán, 06/06/2025 (fila 3282 del Excel): 0 IMPOSIBLE (en la ventana publicada)'
+  - 'Malbrán, 14/06/2025 (fila 3290 del Excel): 0 IMPOSIBLE (en la ventana publicada)'
+  - 'Malbrán, 16/06/2025 (fila 3292 del Excel): 0 IMPOSIBLE (en la ventana publicada)'
+  - 'Malbrán, 17/06/2025 (fila 3293 del Excel): 0 IMPOSIBLE (en la ventana publicada)'
+  - 'Malbrán, 18/06/2025 (fila 3294 del Excel): 0 IMPOSIBLE (en la ventana publicada)'
+  - 'Malbrán, 21/06/2025 (fila 3297 del Excel): 0 IMPOSIBLE (en la ventana publicada)'
+  - 'Malbrán, 10/07/2025 (fila 3316 del Excel): 0 IMPOSIBLE (en la ventana publicada)'
+  - 'Malbrán, 11/07/2025 (fila 3317 del Excel): 0 IMPOSIBLE (en la ventana publicada)'
+  - 'Malbrán, 12/07/2025 (fila 3318 del Excel): 0 IMPOSIBLE (en la ventana publicada)'
+  - 'Malbrán, 13/07/2025 (fila 3319 del Excel): 0 IMPOSIBLE (en la ventana publicada)'
+  - 'Malbrán, 23/07/2025 (fila 3329 del Excel): 0 IMPOSIBLE (en la ventana publicada)'
+  - 'Malbrán, 24/07/2025 (fila 3330 del Excel): 0 IMPOSIBLE (en la ventana publicada)'
+  propuesta: Dejar esa variable de esa estacion fuera del sitio en la ventana publicada hasta que JC confirme.
+  pregunta_jc: Estos valores no son posibles para la zona. Es una falla del sensor? Los mostramos como
+    'sin dato'?
+- check: valores-imposibles
+  severidad: bloqueante
+  base: 111
+  titulo: Valores de rocio_medio fuera de lo fisicamente plausible
+  casos: 123
+  detalle: 'Rango razonable -15 a 28 C (supuesta); imposible por debajo de -30 o por encima de 32. 35
+    imposibles, 88 para mirar; 90 de ellos en la ventana publicada (desde el 30/05/2025). Por estacion:
+    Bandera 0 imposibles + 12 a mirar (0 en la ventana), del 03/05/2015 al 13/03/2024, entre -19,84 y
+    29,46; La María 1 imposibles + 4 a mirar (0 en la ventana), del 25/11/2009 al 18/11/2014, entre -15,10
+    y 36,20; Los Juríes 34 imposibles + 54 a mirar (88 en la ventana), del 27/12/2025 al 06/05/2026, entre
+    28,05 y 39,97; Malbrán 0 imposibles + 1 a mirar (0 en la ventana), del 03/10/2019 al 03/10/2019, entre
+    -16,10 y -16,10; Monte Quemado 0 imposibles + 6 a mirar (2 en la ventana), del 10/03/2024 al 21/12/2025,
+    entre 28,05 y 29,98; Quimilí 0 imposibles + 5 a mirar (0 en la ventana), del 08/03/2024 al 22/04/2024,
+    entre 28,01 y 29,61; Sachayoj 0 imposibles + 6 a mirar (0 en la ventana), del 09/01/2020 al 17/02/2020,
+    entre 28,04 y 30,57.'
+  ejemplos:
+  - 'Los Juríes, 17/02/2026 (fila 3648 del Excel): 33,90 IMPOSIBLE (en la ventana publicada)'
+  - 'Los Juríes, 18/02/2026 (fila 3649 del Excel): 33,23 IMPOSIBLE (en la ventana publicada)'
+  - 'Los Juríes, 19/02/2026 (fila 3650 del Excel): 32,56 IMPOSIBLE (en la ventana publicada)'
+  - 'Los Juríes, 09/03/2026 (fila 3668 del Excel): 32,28 IMPOSIBLE (en la ventana publicada)'
+  - 'Los Juríes, 15/03/2026 (fila 3674 del Excel): 33,92 IMPOSIBLE (en la ventana publicada)'
+  - 'Los Juríes, 16/03/2026 (fila 3675 del Excel): 35,52 IMPOSIBLE (en la ventana publicada)'
+  - 'Los Juríes, 17/03/2026 (fila 3676 del Excel): 36,16 IMPOSIBLE (en la ventana publicada)'
+  - 'Los Juríes, 18/03/2026 (fila 3677 del Excel): 33,53 IMPOSIBLE (en la ventana publicada)'
+  - 'Los Juríes, 19/03/2026 (fila 3678 del Excel): 33,40 IMPOSIBLE (en la ventana publicada)'
+  - 'Los Juríes, 20/03/2026 (fila 3679 del Excel): 36,49 IMPOSIBLE (en la ventana publicada)'
+  - 'Los Juríes, 21/03/2026 (fila 3680 del Excel): 32,94 IMPOSIBLE (en la ventana publicada)'
+  - 'Los Juríes, 27/03/2026 (fila 3686 del Excel): 37,01 IMPOSIBLE (en la ventana publicada)'
+  propuesta: Dejar esa variable de esa estacion fuera del sitio en la ventana publicada hasta que JC confirme.
+  pregunta_jc: Estos valores no son posibles para la zona. Es una falla del sensor? Los mostramos como
+    'sin dato'?
+- check: valores-imposibles
+  severidad: bloqueante
+  base: 111
+  titulo: Valores de temperatura_abrigo_150cm_maxima fuera de lo fisicamente plausible
+  casos: 39
+  detalle: 'Rango razonable -5 a 46 C (supuesta); imposible por debajo de -15 o por encima de 50. 10 imposibles,
+    29 para mirar; 18 de ellos en la ventana publicada (desde el 30/05/2025). Por estacion: Bandera 6
+    imposibles + 1 a mirar (0 en la ventana), del 25/07/2019 al 13/08/2019, entre 48,40 y 59,90; Los Juríes
+    4 imposibles + 14 a mirar (18 en la ventana), del 02/01/2026 al 18/04/2026, entre 46,10 y 51,70; Monte
+    Quemado 0 imposibles + 4 a mirar (0 en la ventana), del 01/01/2022 al 03/02/2024, entre 46,20 y 46,70;
+    Quimilí 0 imposibles + 5 a mirar (0 en la ventana), del 01/01/2022 al 17/12/2023, entre 46,50 y 47,90;
+    Sachayoj 0 imposibles + 4 a mirar (0 en la ventana), del 08/12/2022 al 22/10/2023, entre 46,10 y 47,10;
+    Vaca Huañuna 0 imposibles + 1 a mirar (0 en la ventana), del 05/02/2025 al 05/02/2025, entre 47,50
+    y 47,50.'
+  ejemplos:
+  - 'Los Juríes, 30/03/2026 (fila 3689 del Excel): 50,10 IMPOSIBLE (en la ventana publicada)'
+  - 'Los Juríes, 31/03/2026 (fila 3690 del Excel): 50,20 IMPOSIBLE (en la ventana publicada)'
+  - 'Los Juríes, 01/04/2026 (fila 3691 del Excel): 51,30 IMPOSIBLE (en la ventana publicada)'
+  - 'Los Juríes, 03/04/2026 (fila 3693 del Excel): 51,70 IMPOSIBLE (en la ventana publicada)'
+  - 'Bandera, 25/07/2019 (fila 2561 del Excel): 54,10 IMPOSIBLE'
+  - 'Bandera, 27/07/2019 (fila 2563 del Excel): 59,60 IMPOSIBLE'
+  - 'Bandera, 29/07/2019 (fila 2565 del Excel): 55,90 IMPOSIBLE'
+  - 'Bandera, 06/08/2019 (fila 2573 del Excel): 56,20 IMPOSIBLE'
+  - 'Bandera, 08/08/2019 (fila 2575 del Excel): 51,40 IMPOSIBLE'
+  - 'Bandera, 13/08/2019 (fila 2580 del Excel): 59,90 IMPOSIBLE'
+  - 'Los Juríes, 02/01/2026 (fila 3608 del Excel): 46,50 (en la ventana publicada)'
+  - 'Los Juríes, 05/02/2026 (fila 3636 del Excel): 46,30 (en la ventana publicada)'
+  propuesta: Dejar esa variable de esa estacion fuera del sitio en la ventana publicada hasta que JC confirme.
+  pregunta_jc: Estos valores no son posibles para la zona. Es una falla del sensor? Los mostramos como
+    'sin dato'?
+- check: valores-imposibles
+  severidad: bloqueante
+  base: 111
+  titulo: Valores de temperatura_suelo_10cm_media fuera de lo fisicamente plausible
+  casos: 41
+  detalle: 'Rango razonable 0 a 45 C (supuesta); imposible por debajo de -3 o por encima de 55. 29 imposibles,
+    12 para mirar; 18 de ellos en la ventana publicada (desde el 30/05/2025). Por estacion: La María 0
+    imposibles + 2 a mirar (0 en la ventana), del 05/11/2014 al 26/08/2018, entre -2,50 y 46,50; Malbrán
+    11 imposibles + 10 a mirar (0 en la ventana), del 16/10/2017 al 24/01/2018, entre -9,90 y -0,10; Quimilí
+    18 imposibles + 0 a mirar (18 en la ventana), del 12/05/2026 al 29/05/2026, entre -8,19 y -3,12.'
+  ejemplos:
+  - 'Quimilí, 12/05/2026 (fila 3823 del Excel): -3,12 IMPOSIBLE (en la ventana publicada)'
+  - 'Quimilí, 13/05/2026 (fila 3824 del Excel): -5,21 IMPOSIBLE (en la ventana publicada)'
+  - 'Quimilí, 14/05/2026 (fila 3825 del Excel): -5,41 IMPOSIBLE (en la ventana publicada)'
+  - 'Quimilí, 15/05/2026 (fila 3826 del Excel): -5,35 IMPOSIBLE (en la ventana publicada)'
+  - 'Quimilí, 16/05/2026 (fila 3827 del Excel): -5,54 IMPOSIBLE (en la ventana publicada)'
+  - 'Quimilí, 17/05/2026 (fila 3828 del Excel): -5,90 IMPOSIBLE (en la ventana publicada)'
+  - 'Quimilí, 18/05/2026 (fila 3829 del Excel): -7,55 IMPOSIBLE (en la ventana publicada)'
+  - 'Quimilí, 19/05/2026 (fila 3830 del Excel): -7,93 IMPOSIBLE (en la ventana publicada)'
+  - 'Quimilí, 20/05/2026 (fila 3831 del Excel): -7,89 IMPOSIBLE (en la ventana publicada)'
+  - 'Quimilí, 21/05/2026 (fila 3832 del Excel): -7,63 IMPOSIBLE (en la ventana publicada)'
+  - 'Quimilí, 22/05/2026 (fila 3833 del Excel): -7,47 IMPOSIBLE (en la ventana publicada)'
+  - 'Quimilí, 23/05/2026 (fila 3834 del Excel): -8,19 IMPOSIBLE (en la ventana publicada)'
+  propuesta: Dejar esa variable de esa estacion fuera del sitio en la ventana publicada hasta que JC confirme.
+  pregunta_jc: Estos valores no son posibles para la zona. Es una falla del sensor? Los mostramos como
+    'sin dato'?
+- check: cobertura-entrega
+  severidad: observacion
+  base: null
+  titulo: Archivos que llegaron sin estar en la lista de la entrega
+  casos: 1
+  detalle: 'Numeros de base: 111'
+  propuesta: Confirmar con JC si entran en esta entrega o quedan para la siguiente.
+- check: drift
+  severidad: observacion
+  base: 8
+  titulo: Cambio de formato respecto de lo declarado en el indice
+  casos: 1
+  detalle: 'Dos diferencias contra el índice de JC (configs/manifiesto-indice.yaml, base 8), las dos registradas
+    y ninguna corregida. (1) El índice la da por PROMETIDA PARA LA ENTREGA-02 y sin archivo recibido;
+    el archivo llegó igual con la entrega-01 y el pipeline ya lo baja de SharePoint en cada publicación.
+    El manifiesto del índice va a seguir listándola como "prometida-no-recibida" hasta que indexador-contexto
+    lo regenere: NO es un problema de datos. (2) El índice declara frecuencia MENSUAL y el archivo trae
+    observaciones DIARIAS (5.655 fechas distintas entre 2017 y 2026). El grano bueno es el del archivo;
+    el mensual se calcula. El rango sí coincide: el índice promete 2017-01-01 a 2026-04-30 y el archivo
+    va de 2017-01-02 a 2026-04-09.'
+  propuesta: 'No se corrige el archivo: el pipeline ya sabe leerlo como viene.'
+- check: drift
+  severidad: observacion
+  base: 9
+  titulo: Cambio de formato respecto de lo declarado en el indice
+  casos: 1
+  detalle: 'El indice declara la hoja "CR" y el archivo la trae como "Calculos Ranking". Ademas el archivo
+    trae dos hojas no declaradas en el indice: "Modelo Analisis" (con dos espacios entre las palabras)
+    y "Hoja1" (vacia). No se corrige nada: queda registrado aca.'
+  propuesta: 'No se corrige el archivo: el pipeline ya sabe leerlo como viene.'
+- check: drift
+  severidad: observacion
+  base: 48
+  titulo: Cambio de formato respecto de lo declarado en el indice
+  casos: 1
+  detalle: 'El indice declara la hoja "Data SDE" y el archivo la trae como "Data stock SDE". Ademas el
+    archivo suma dos hojas no declaradas: "Modelo An 01" y "Estratificación".'
+  propuesta: 'No se corrige el archivo: el pipeline ya sabe leerlo como viene.'
+- check: drift
+  severidad: observacion
+  base: 53
+  titulo: Cambio de formato respecto de lo declarado en el indice
+  casos: 1
+  detalle: 'El perfil con el que se planificó la ingesta decía 3 hojas de datos (Sgo 23, 24 y 25), 53.512
+    filas y "NRO. DTV" en la segunda columna. El archivo trae CINCO hojas (Sgo 21 a Sgo 25), 102.380 filas
+    de detalle y en la segunda columna "mes", no el número de DTV. Además las hojas Sgo 21 y Sgo 22 titulan
+    la primera columna "FECHA " (con espacio) y las otras tres "FECHA EMISIÓN". Todo se resuelve en este
+    config; el Excel no se toca. El número de DTV no existe en esta base: `nro_dtv` queda nulo en las
+    102.380 filas.'
+  propuesta: 'No se corrige el archivo: el pipeline ya sabe leerlo como viene.'
+- check: drift
+  severidad: observacion
+  base: 56
+  titulo: Cambio de formato respecto de lo declarado en el indice
+  casos: 1
+  detalle: 'En la posición donde las otras DTV traen "NRO. DTV" esta base trae "AÑO". El número de DTV
+    no existe en el archivo: `nro_dtv` queda nulo en las 635 filas, así que en esta base no se puede chequear
+    si una misma declaración aparece repetida. Se resuelve en el config; el Excel no se toca.'
+  propuesta: 'No se corrige el archivo: el pipeline ya sabe leerlo como viene.'
+- check: drift
+  severidad: observacion
+  base: 57
+  titulo: Cambio de formato respecto de lo declarado en el indice
+  casos: 1
+  detalle: 'El header no está en la misma fila en las cinco hojas. "Sgo 25" lleva en la fila 1 un rótulo
+    suelto ("Cebolla Santiago 2025", en la columna 7) y el header en la 2. "Sgo 21" tiene la fila 1 completamente
+    vacía y el header también en la 2: esto último NO estaba en el perfil con el que se planificó la ingesta
+    y se descubrió al perfilar el archivo. Las otras tres tienen el header en la fila 1. Cada hoja declara
+    su `header_fila`.'
+  propuesta: 'No se corrige el archivo: el pipeline ya sabe leerlo como viene.'
+- check: drift
+  severidad: observacion
+  base: 75
+  titulo: Cambio de formato respecto de lo declarado en el indice
+  casos: 1
+  detalle: 'La hoja "Data" tiene la fila 1 completamente vacía y el header en la fila 2. El perfil con
+    el que se planificó la ingesta la daba con header en la fila 1. Se resuelve con `header_fila: 2`;
+    el Excel no se toca.'
+  propuesta: 'No se corrige el archivo: el pipeline ya sabe leerlo como viene.'
+- check: cobertura-temporal
+  severidad: observacion
+  base: 111
+  titulo: Dias que figuran en la planilla pero sin ningun dato
+  casos: 710
+  detalle: La fila del dia esta, pero todas sus celdas vienen vacias. Entran como dato faltante, nunca
+    como cero.
+  ejemplos:
+  - 'Bandera: 53 dias vacios de 4.970 (2 en la ventana publicada)'
+  - 'Los Juríes: 103 dias vacios de 3.748 (2 en la ventana publicada)'
+  - 'Malbrán: 38 dias vacios de 3.638 (1 en la ventana publicada)'
+  - 'Monte Quemado: 257 dias vacios de 3.482 (1 en la ventana publicada)'
+  - 'Quimilí: 43 dias vacios de 3.839 (0 en la ventana publicada)'
+  - 'Sachayoj: 174 dias vacios de 4.747 (2 en la ventana publicada)'
+  - 'Vaca Huañuna: 42 dias vacios de 390 (38 en la ventana publicada)'
+  propuesta: Mostrarlos como 'sin dato'.
+- check: cobertura-temporal
+  severidad: observacion
+  base: 111
+  titulo: Las fechas Desde/Hasta que declara la fuente no coinciden con los datos
+  casos: 8
+  detalle: Se compara lo que dice la hoja de estaciones con la primera y la ultima fila de cada hoja de
+    datos, y con el primer y el ultimo dia que traen algun valor. Una diferencia de un dia suele ser el
+    dia de instalacion o de baja, que viene vacio.
+  ejemplos:
+  - 'Bandera: declara desde 14/12/2010; la hoja arranca el 14/12/2010 y el primer dato es del 15/12/2010'
+  - 'La María: declara hasta 31/05/2026; la hoja termina el 28/05/2026 y el ultimo dato es del 28/05/2026'
+  - 'Los Juríes: declara desde 08/09/2015; la hoja arranca el 08/09/2015 y el primer dato es del 09/09/2015'
+  - 'Malbrán: declara desde 02/06/2016; la hoja arranca el 02/06/2016 y el primer dato es del 03/06/2016'
+  - 'Monte Quemado: declara desde 10/09/2015; la hoja arranca el 10/09/2015 y el primer dato es del 11/09/2015;
+    declara hasta 04/04/2026; la hoja termina el 04/04/2026 y el ultimo dato es del 03/04/2026'
+  - 'Quimilí: declara desde 09/07/2006; la hoja arranca el 10/09/2015 y el primer dato es del 10/09/2015'
+  - 'Sachayoj: declara desde 27/12/2010; la hoja arranca el 27/12/2010 y el primer dato es del 28/12/2010;
+    declara hasta 29/04/2026; la hoja termina el 29/04/2026 y el ultimo dato es del 04/07/2025'
+  - 'Vaca Huañuna: declara desde 07/01/2025; la hoja arranca el 09/01/2025 y el primer dato es del 09/01/2025'
+  propuesta: Publicar el periodo que traen los datos, no el declarado.
+- check: cobertura-temporal
+  severidad: observacion
+  base: 111
+  titulo: Tramos de 30 dias o mas que no figuran en la planilla
+  casos: 14
+  detalle: Entre esas dos fechas la hoja no trae ninguna fila. Un grafico de lineas uniria los dos extremos
+    con una recta. 2 de estos tramos tocan la ventana que se publica (30/05/2025 a 29/05/2026).
+  ejemplos:
+  - 'Bandera: del 31/05/2012 al 29/05/2013, 362 dias sin filas'
+  - 'Sachayoj: del 05/07/2025 al 29/04/2026, 297 dias sin filas (toca la ventana publicada)'
+  - 'Sachayoj: del 11/07/2018 al 11/03/2019, 242 dias sin filas'
+  - 'Monte Quemado: del 14/02/2020 al 07/10/2020, 235 dias sin filas'
+  - 'Vaca Huañuna: del 02/07/2025 al 08/10/2025, 97 dias sin filas (toca la ventana publicada)'
+  - 'Sachayoj: del 25/10/2023 al 24/01/2024, 90 dias sin filas'
+  - 'Sachayoj: del 20/06/2024 al 13/09/2024, 84 dias sin filas'
+  - 'Bandera: del 04/02/2015 al 28/04/2015, 82 dias sin filas'
+  - 'Bandera: del 28/02/2025 al 05/05/2025, 65 dias sin filas'
+  - 'Los Juríes: del 28/06/2024 al 28/08/2024, 60 dias sin filas'
+  - 'Sachayoj: del 05/04/2016 al 02/06/2016, 57 dias sin filas'
+  - 'Bandera: del 15/01/2019 al 08/03/2019, 51 dias sin filas'
+  propuesta: Cortar la linea en el hueco, nunca unir los puntos de los costados.
+  pregunta_jc: Faltan tramos largos de dias en algunas estaciones. Existen esos datos en el INTA o la
+    estacion estuvo fuera de servicio?
+- check: cobertura-temporal
+  severidad: observacion
+  base: 111
+  titulo: Variables publicadas con pocos dias de dato en el ultimo anio
+  casos: 30
+  detalle: 'Ventana publicada: 30/05/2025 a 29/05/2026 (365 dias). Se listan las que tienen dato en menos
+    del 80% de esos dias.'
+  ejemplos:
+  - 'La María, horas_frio: 0 de 365 dias con dato (0%)'
+  - 'Sachayoj, precipitacion_maxima_30minutos: 0 de 365 dias con dato (0%)'
+  - 'Malbrán, rocio_medio: 11 de 365 dias con dato (3%)'
+  - 'Sachayoj, horas_frio: 35 de 365 dias con dato (9,60%)'
+  - 'Sachayoj, humedad_media: 35 de 365 dias con dato (9,60%)'
+  - 'Sachayoj, precipitacion_cronologica: 35 de 365 dias con dato (9,60%)'
+  - 'Sachayoj, precipitacion_pluviometrica: 35 de 365 dias con dato (9,60%)'
+  - 'Sachayoj, rocio_medio: 35 de 365 dias con dato (9,60%)'
+  - 'Sachayoj, temperatura_abrigo_150cm_media: 35 de 365 dias con dato (9,60%)'
+  - 'Sachayoj, humedad_media_8_14_20: 36 de 365 dias con dato (9,90%)'
+  - 'Sachayoj, temperatura_abrigo_150cm_maxima: 36 de 365 dias con dato (9,90%)'
+  - 'Sachayoj, temperatura_abrigo_150cm_minima: 36 de 365 dias con dato (9,90%)'
+  propuesta: Mostrar los dias sin dato como huecos en el grafico y avisar al pie cuantos dias tiene la
+    serie.
+- check: coherencia
+  severidad: observacion
+  base: 111
+  titulo: Dias donde el punto de rocio supera a la temperatura media del aire
+  casos: 62
+  detalle: 10 en la ventana publicada (desde el 30/05/2025).
+  ejemplos:
+  - 'La María, 18/11/2014 (fila 9729 del Excel): rocio_medio = 36,20 contra temperatura_abrigo_150cm_media
+    = 28,75'
+  - 'La María, 12/04/2016 (fila 10239 del Excel): rocio_medio = 17,32 contra temperatura_abrigo_150cm_media
+    = 14,90'
+  - 'Sachayoj, 19/03/2016 (fila 1852 del Excel): rocio_medio = 20,43 contra temperatura_abrigo_150cm_media
+    = 18,61'
+  - 'Bandera, 27/02/2024 (fila 4233 del Excel): rocio_medio = 28,39 contra temperatura_abrigo_150cm_media
+    = 26,63'
+  - 'La María, 16/08/2015 (fila 10000 del Excel): rocio_medio = 11,68 contra temperatura_abrigo_150cm_media
+    = 10,25'
+  - 'Bandera, 24/02/2024 (fila 4230 del Excel): rocio_medio = 24,16 contra temperatura_abrigo_150cm_media
+    = 22,87'
+  - 'Monte Quemado, 05/07/2025 (fila 3210 del Excel): rocio_medio = 16,43 contra temperatura_abrigo_150cm_media
+    = 15,15 (en la ventana publicada)'
+  - 'Monte Quemado, 12/06/2025 (fila 3187 del Excel): rocio_medio = 16,46 contra temperatura_abrigo_150cm_media
+    = 15,32 (en la ventana publicada)'
+  - 'La María, 07/06/2017 (fila 10661 del Excel): rocio_medio = 10,73 contra temperatura_abrigo_150cm_media
+    = 9,60'
+  - 'La María, 05/04/2000 (fila 4389 del Excel): rocio_medio = 19,20 contra temperatura_abrigo_150cm_media
+    = 18,20'
+  - 'La María, 24/06/2019 (fila 11406 del Excel): rocio_medio = 16,36 contra temperatura_abrigo_150cm_media
+    = 15,40'
+  - 'Los Juríes, 29/05/2019 (fila 1293 del Excel): rocio_medio = 12,89 contra temperatura_abrigo_150cm_media
+    = 11,98'
+  propuesta: Publicar sin tocar; suele acompanar a un sensor con falla.
+  pregunta_jc: Hay dias en que el punto de rocio supera a la temperatura media del aire. Cual de los dos
+    valores esta mal?
+- check: coherencia
+  severidad: observacion
+  base: 111
+  titulo: Dias donde la lluvia maxima en 30 minutos supera a la lluvia del dia (cronologica)
+  casos: 79
+  detalle: 11 en la ventana publicada (desde el 30/05/2025).
+  ejemplos:
+  - 'Los Juríes, 26/03/2021 (fila 1960 del Excel): precipitacion_maxima_30minutos = 13,50 contra precipitacion_cronologica
+    = 2,50'
+  - 'Malbrán, 13/12/2024 (fila 3107 del Excel): precipitacion_maxima_30minutos = 16,60 contra precipitacion_cronologica
+    = 6,20'
+  - 'Quimilí, 16/02/2026 (fila 3738 del Excel): precipitacion_maxima_30minutos = 5,50 contra precipitacion_cronologica
+    = 2,25 (en la ventana publicada)'
+  - 'Malbrán, 24/03/2025 (fila 3208 del Excel): precipitacion_maxima_30minutos = 17,60 contra precipitacion_cronologica
+    = 14,40'
+  - 'Quimilí, 07/04/2016 (fila 212 del Excel): precipitacion_maxima_30minutos = 3,25 contra precipitacion_cronologica
+    = 0,25'
+  - 'Bandera, 25/11/2017 (fila 2005 del Excel): precipitacion_maxima_30minutos = 7,25 contra precipitacion_cronologica
+    = 4,75'
+  - 'Bandera, 18/11/2023 (fila 4138 del Excel): precipitacion_maxima_30minutos = 7,75 contra precipitacion_cronologica
+    = 5,25'
+  - 'Bandera, 15/10/2015 (fila 1233 del Excel): precipitacion_maxima_30minutos = 2,50 contra precipitacion_cronologica
+    = 0,25'
+  - 'Monte Quemado, 23/10/2025 (fila 3320 del Excel): precipitacion_maxima_30minutos = 7,50 contra precipitacion_cronologica
+    = 5,50 (en la ventana publicada)'
+  - 'Monte Quemado, 07/12/2023 (fila 2665 del Excel): precipitacion_maxima_30minutos = 2,50 contra precipitacion_cronologica
+    = 1'
+  - 'Quimilí, 21/12/2018 (fila 1167 del Excel): precipitacion_maxima_30minutos = 41,25 contra precipitacion_cronologica
+    = 39,75'
+  - 'Malbrán, 15/07/2022 (fila 2228 del Excel): precipitacion_maxima_30minutos = 1,40 contra precipitacion_cronologica
+    = 0'
+  propuesta: Publicar sin tocar; suele acompanar a un sensor con falla.
+  pregunta_jc: Hay dias en que la lluvia maxima en 30 minutos supera a la lluvia del dia (cronologica).
+    Cual de los dos valores esta mal?
+- check: geo
+  severidad: observacion
+  base: 111
+  titulo: Departamentos propuestos por nosotros, sin confirmar
+  casos: 8
+  detalle: 'La fuente no dice el departamento: lo propusimos mirando la localidad y las coordenadas. Ningun
+    dato se descarto por esto.'
+  ejemplos:
+  - Bandera / BELGRANO / 86042
+  - La María / SILIPICA / 86189
+  - Los Juríes / GENERAL TABOADA / 86077
+  - Malbrán / AGUIRRE / 86007
+  - Monte Quemado / COPO / 86056
+  - Quimilí / MORENO / 86119
+  - Sachayoj / ALBERDI / 86014
+  - Vaca Huañuna / FIGUEROA / 86070
+  propuesta: Publicar con el departamento propuesto, sin usarlo todavia para mapas de calor por departamento.
+  pregunta_jc: Nos confirmas a que departamento pertenece cada estacion?
+- check: serie
+  severidad: observacion
+  base: 111
+  titulo: El mismo valor exacto repetido en muchos dias (30 o mas y al menos el 5% de la serie)
+  casos: 27
+  detalle: Un instrumento que mide de verdad rara vez da el mismo numero con cinco decimales muchos dias.
+    Suele ser un tope del calculo, un relleno o un sensor trabado.
+  ejemplos:
+  - Sachayoj, unidades_frio = -23,90 en 1.835 de 4.456 dias con dato (del 28/12/2010 al 17/05/2025; 0
+    en la ventana publicada)
+  - Bandera, unidades_frio = -23,90 en 1.446 de 4.710 dias con dato (del 17/12/2010 al 06/05/2026; 122
+    en la ventana publicada)
+  - Quimilí, unidades_frio = -23,90 en 1.360 de 3.712 dias con dato (del 21/09/2015 al 28/02/2026; 117
+    en la ventana publicada)
+  - La María, velocidad_viento_1000cm_media = 4 en 1.344 de 12.103 dias con dato (del 03/04/1988 al 09/10/2024;
+    0 en la ventana publicada)
+  - Monte Quemado, unidades_frio = -23,90 en 1.313 de 3.078 dias con dato (del 21/09/2015 al 03/04/2026;
+    143 en la ventana publicada)
+  - Los Juríes, unidades_frio = -23,90 en 1.215 de 3.610 dias con dato (del 23/10/2015 al 29/05/2026;
+    184 en la ventana publicada)
+  - La María, velocidad_viento_1000cm_media = 3 en 1.153 de 12.103 dias con dato (del 01/04/1988 al 25/06/2024;
+    0 en la ventana publicada)
+  - La María, velocidad_viento_1000cm_media = 6 en 1.130 de 12.103 dias con dato (del 05/04/1988 al 23/10/2024;
+    0 en la ventana publicada)
+  - La María, velocidad_viento_1000cm_media = 5 en 1.035 de 12.103 dias con dato (del 02/04/1988 al 30/10/2024;
+    0 en la ventana publicada)
+  - Malbrán, unidades_frio = -23,90 en 1.034 de 3.548 dias con dato (del 15/10/2016 al 06/05/2026; 112
+    en la ventana publicada)
+  - La María, velocidad_viento_1000cm_media = 2 en 832 de 12.103 dias con dato (del 04/05/1988 al 01/03/2024;
+    0 en la ventana publicada)
+  - La María, velocidad_viento_1000cm_media = 7 en 765 de 12.103 dias con dato (del 20/04/1988 al 18/10/2024;
+    0 en la ventana publicada)
+  propuesta: Publicar sin tocar las variables publicadas; las otras no se grafican hasta saber que significa
+    el valor.
+  pregunta_jc: Este valor se repite exacto muchisimos dias. Es un tope de la cuenta del INTA o un dato
+    real?
+- check: valores-imposibles
+  severidad: observacion
+  base: 111
+  titulo: Valores de evapotranspiracion_potencial fuera de lo fisicamente plausible
+  casos: 1
+  detalle: 'Rango razonable 0 a 12 mm (supuesta); imposible por debajo de 0 o por encima de 20. 1 imposibles,
+    0 para mirar; 0 de ellos en la ventana publicada (desde el 30/05/2025). La variable no se publica.
+    Por estacion: La María 1 imposibles + 0 a mirar (0 en la ventana), del 16/02/2004 al 16/02/2004, entre
+    21,97 y 21,97.'
+  ejemplos:
+  - 'La María, 16/02/2004 (fila 5801 del Excel): 21,97 IMPOSIBLE'
+  propuesta: Publicar sin tocar; si la variable se publica, nota al pie.
+  pregunta_jc: Estos valores no son posibles para la zona. Es una falla del sensor? Los mostramos como
+    'sin dato'?
+- check: valores-imposibles
+  severidad: observacion
+  base: 111
+  titulo: Valores de heliofania_efectiva fuera de lo fisicamente plausible
+  casos: 416
+  detalle: 'Rango razonable 0 a 14 horas; imposible por debajo de 0 o por encima de 14,50. 223 imposibles,
+    193 para mirar; 17 de ellos en la ventana publicada (desde el 30/05/2025). La variable no se publica.
+    Por estacion: La María 1 imposibles + 0 a mirar (0 en la ventana), del 02/12/2011 al 02/12/2011, entre
+    16,80 y 16,80; Los Juríes 14 imposibles + 84 a mirar (16 en la ventana), del 20/11/2015 al 06/01/2026,
+    entre 14,00 y 14,99; Malbrán 12 imposibles + 11 a mirar (0 en la ventana), del 27/10/2016 al 13/02/2017,
+    entre 14,01 y 15,44; Quimilí 196 imposibles + 98 a mirar (1 en la ventana), del 20/11/2015 al 17/12/2025,
+    entre 14,00 y 17,00.'
+  ejemplos:
+  - 'Los Juríes, 24/11/2025 (fila 3569 del Excel): 14,88 IMPOSIBLE (en la ventana publicada)'
+  - 'Los Juríes, 03/12/2025 (fila 3578 del Excel): 14,55 IMPOSIBLE (en la ventana publicada)'
+  - 'Los Juríes, 16/12/2025 (fila 3591 del Excel): 14,68 IMPOSIBLE (en la ventana publicada)'
+  - 'Los Juríes, 17/12/2025 (fila 3592 del Excel): 14,99 IMPOSIBLE (en la ventana publicada)'
+  - 'Los Juríes, 05/01/2026 (fila 3611 del Excel): 14,86 IMPOSIBLE (en la ventana publicada)'
+  - 'La María, 02/12/2011 (fila 8647 del Excel): 16,80 IMPOSIBLE'
+  - 'Los Juríes, 14/12/2016 (fila 442 del Excel): 14,71 IMPOSIBLE'
+  - 'Los Juríes, 16/12/2016 (fila 444 del Excel): 14,99 IMPOSIBLE'
+  - 'Los Juríes, 20/12/2016 (fila 448 del Excel): 14,80 IMPOSIBLE'
+  - 'Los Juríes, 26/12/2017 (fila 819 del Excel): 14,53 IMPOSIBLE'
+  - 'Los Juríes, 10/12/2020 (fila 1854 del Excel): 14,53 IMPOSIBLE'
+  - 'Los Juríes, 18/01/2021 (fila 1893 del Excel): 14,91 IMPOSIBLE'
+  propuesta: Publicar sin tocar; si la variable se publica, nota al pie.
+  pregunta_jc: Estos valores no son posibles para la zona. Es una falla del sensor? Los mostramos como
+    'sin dato'?
+- check: valores-imposibles
+  severidad: observacion
+  base: 111
+  titulo: Valores de humedad_media_8_14_20 fuera de lo fisicamente plausible
+  casos: 21
+  detalle: 'Rango razonable 5 a 100 %; imposible por debajo de 1 o por encima de 100. 0 imposibles, 21
+    para mirar; 9 de ellos en la ventana publicada (desde el 30/05/2025). Por estacion: Bandera 0 imposibles
+    + 2 a mirar (0 en la ventana), del 02/02/2015 al 07/06/2021, entre 3 y 3; Los Juríes 0 imposibles
+    + 2 a mirar (0 en la ventana), del 03/01/2019 al 03/04/2022, entre 4 y 4; Malbrán 0 imposibles + 13
+    a mirar (9 en la ventana), del 29/01/2020 al 26/05/2026, entre 3 y 4; Monte Quemado 0 imposibles +
+    1 a mirar (0 en la ventana), del 18/10/2023 al 18/10/2023, entre 3 y 3; Sachayoj 0 imposibles + 3
+    a mirar (0 en la ventana), del 02/05/2019 al 15/09/2021, entre 3 y 4.'
+  ejemplos:
+  - 'Malbrán, 19/06/2025 (fila 3295 del Excel): 3 (en la ventana publicada)'
+  - 'Malbrán, 08/07/2025 (fila 3314 del Excel): 3 (en la ventana publicada)'
+  - 'Malbrán, 05/10/2025 (fila 3403 del Excel): 3 (en la ventana publicada)'
+  - 'Malbrán, 17/10/2025 (fila 3415 del Excel): 4 (en la ventana publicada)'
+  - 'Malbrán, 08/11/2025 (fila 3437 del Excel): 3 (en la ventana publicada)'
+  - 'Malbrán, 03/04/2026 (fila 3583 del Excel): 3 (en la ventana publicada)'
+  - 'Malbrán, 22/05/2026 (fila 3632 del Excel): 3 (en la ventana publicada)'
+  - 'Malbrán, 23/05/2026 (fila 3633 del Excel): 4 (en la ventana publicada)'
+  - 'Malbrán, 26/05/2026 (fila 3636 del Excel): 4 (en la ventana publicada)'
+  - 'Bandera, 02/02/2015 (fila 1060 del Excel): 3'
+  - 'Bandera, 07/06/2021 (fila 3244 del Excel): 3'
+  - 'Los Juríes, 03/01/2019 (fila 1147 del Excel): 4'
+  propuesta: Publicar sin tocar; si la variable se publica, nota al pie.
+  pregunta_jc: Estos valores no son posibles para la zona. Es una falla del sensor? Los mostramos como
+    'sin dato'?
+- check: valores-imposibles
+  severidad: observacion
+  base: 111
+  titulo: Valores de precipitacion_pluviometrica fuera de lo fisicamente plausible
+  casos: 2
+  detalle: 'Rango razonable 0 a 200 mm; imposible por debajo de 0 o por encima de 500. 0 imposibles, 2
+    para mirar; 0 de ellos en la ventana publicada (desde el 30/05/2025). Por estacion: Quimilí 0 imposibles
+    + 2 a mirar (0 en la ventana), del 16/02/2023 al 17/02/2023, entre 300,50 y 441,25.'
+  ejemplos:
+  - 'Quimilí, 16/02/2023 (fila 2653 del Excel): 300,50'
+  - 'Quimilí, 17/02/2023 (fila 2654 del Excel): 441,25'
+  propuesta: Publicar sin tocar; si la variable se publica, nota al pie.
+  pregunta_jc: Estos valores no son posibles para la zona. Es una falla del sensor? Los mostramos como
+    'sin dato'?
+- check: valores-imposibles
+  severidad: observacion
+  base: 111
+  titulo: Valores de presion_media fuera de lo fisicamente plausible
+  casos: 6
+  detalle: 'Rango razonable 960 a 1.040 hPa (supuesta); imposible por debajo de 930 o por encima de 1.060.
+    2 imposibles, 4 para mirar; 1 de ellos en la ventana publicada (desde el 30/05/2025). La variable
+    no se publica. Por estacion: Bandera 0 imposibles + 1 a mirar (0 en la ventana), del 11/07/2017 al
+    11/07/2017, entre 1.047,33 y 1.047,33; Los Juríes 1 imposibles + 2 a mirar (1 en la ventana), del
+    04/10/2023 al 28/10/2025, entre 902,34 y 952,35; Malbrán 0 imposibles + 1 a mirar (0 en la ventana),
+    del 11/11/2016 al 11/11/2016, entre 958,45 y 958,45; Sachayoj 1 imposibles + 0 a mirar (0 en la ventana),
+    del 12/03/2019 al 12/03/2019, entre 851,64 y 851,64.'
+  ejemplos:
+  - 'Los Juríes, 04/10/2023 (fila 2881 del Excel): 902,34 IMPOSIBLE'
+  - 'Sachayoj, 12/03/2019 (fila 2627 del Excel): 851,64 IMPOSIBLE'
+  - 'Los Juríes, 28/10/2025 (fila 3542 del Excel): 952,35 (en la ventana publicada)'
+  - 'Bandera, 11/07/2017 (fila 1868 del Excel): 1.047,33'
+  - 'Los Juríes, 05/02/2025 (fila 3309 del Excel): 943,80'
+  - 'Malbrán, 11/11/2016 (fila 164 del Excel): 958,45'
+  propuesta: Publicar sin tocar; si la variable se publica, nota al pie.
+  pregunta_jc: Estos valores no son posibles para la zona. Es una falla del sensor? Los mostramos como
+    'sin dato'?
+- check: valores-imposibles
+  severidad: observacion
+  base: 111
+  titulo: Valores de radiacion_global fuera de lo fisicamente plausible
+  casos: 76
+  detalle: 'Rango razonable 0 a 35 MJ/m2 por dia (supuesta); imposible por debajo de 0 o por encima de
+    45. 3 imposibles, 73 para mirar; 0 de ellos en la ventana publicada (desde el 30/05/2025). La variable
+    no se publica. Por estacion: Bandera 3 imposibles + 4 a mirar (0 en la ventana), del 20/07/2017 al
+    06/08/2017, entre 38,92 y 49,92; Malbrán 0 imposibles + 1 a mirar (0 en la ventana), del 16/12/2016
+    al 16/12/2016, entre 35,10 y 35,10; Quimilí 0 imposibles + 68 a mirar (0 en la ventana), del 20/11/2017
+    al 29/01/2022, entre 35,03 y 37,63.'
+  ejemplos:
+  - 'Bandera, 26/07/2017 (fila 1883 del Excel): 48,85 IMPOSIBLE'
+  - 'Bandera, 27/07/2017 (fila 1884 del Excel): 49,92 IMPOSIBLE'
+  - 'Bandera, 28/07/2017 (fila 1885 del Excel): 49,49 IMPOSIBLE'
+  - 'Bandera, 20/07/2017 (fila 1877 del Excel): 39,38'
+  - 'Bandera, 21/07/2017 (fila 1878 del Excel): 38,92'
+  - 'Bandera, 24/07/2017 (fila 1881 del Excel): 42,45'
+  - 'Bandera, 06/08/2017 (fila 1894 del Excel): 42,14'
+  - 'Malbrán, 16/12/2016 (fila 199 del Excel): 35,10'
+  - 'Quimilí, 20/11/2017 (fila 773 del Excel): 35,03'
+  - 'Quimilí, 22/11/2017 (fila 775 del Excel): 36,34'
+  - 'Quimilí, 23/11/2017 (fila 776 del Excel): 36,30'
+  - 'Quimilí, 26/11/2017 (fila 779 del Excel): 36,22'
+  propuesta: Publicar sin tocar; si la variable se publica, nota al pie.
+  pregunta_jc: Estos valores no son posibles para la zona. Es una falla del sensor? Los mostramos como
+    'sin dato'?
+- check: valores-imposibles
+  severidad: observacion
+  base: 111
+  titulo: Valores de temperatura_abrigo_150cm_media fuera de lo fisicamente plausible
+  casos: 25
+  detalle: 'Rango razonable -3 a 38 C (supuesta); imposible por debajo de -10 o por encima de 42. 1 imposibles,
+    24 para mirar; 15 de ellos en la ventana publicada (desde el 30/05/2025). Por estacion: Bandera 1
+    imposibles + 3 a mirar (0 en la ventana), del 27/09/2014 al 10/10/2014, entre -15,15 y -4,13; Los
+    Juríes 0 imposibles + 15 a mirar (15 en la ventana), del 18/02/2026 al 20/04/2026, entre 38,19 y 41,74;
+    Monte Quemado 0 imposibles + 5 a mirar (0 en la ventana), del 16/12/2023 al 14/03/2024, entre 38,05
+    y 39,17; Quimilí 0 imposibles + 1 a mirar (0 en la ventana), del 17/12/2023 al 17/12/2023, entre 39,35
+    y 39,35.'
+  ejemplos:
+  - 'Bandera, 10/10/2014 (fila 970 del Excel): -15,15 IMPOSIBLE'
+  - 'Los Juríes, 18/02/2026 (fila 3649 del Excel): 39,06 (en la ventana publicada)'
+  - 'Los Juríes, 20/03/2026 (fila 3679 del Excel): 38,79 (en la ventana publicada)'
+  - 'Los Juríes, 28/03/2026 (fila 3687 del Excel): 40,36 (en la ventana publicada)'
+  - 'Los Juríes, 29/03/2026 (fila 3688 del Excel): 41,00 (en la ventana publicada)'
+  - 'Los Juríes, 30/03/2026 (fila 3689 del Excel): 41,42 (en la ventana publicada)'
+  - 'Los Juríes, 31/03/2026 (fila 3690 del Excel): 41,74 (en la ventana publicada)'
+  - 'Los Juríes, 01/04/2026 (fila 3691 del Excel): 41,34 (en la ventana publicada)'
+  - 'Los Juríes, 02/04/2026 (fila 3692 del Excel): 40,43 (en la ventana publicada)'
+  - 'Los Juríes, 03/04/2026 (fila 3693 del Excel): 41,21 (en la ventana publicada)'
+  - 'Los Juríes, 04/04/2026 (fila 3694 del Excel): 39,39 (en la ventana publicada)'
+  - 'Los Juríes, 16/04/2026 (fila 3706 del Excel): 41,32 (en la ventana publicada)'
+  propuesta: Publicar sin tocar; si la variable se publica, nota al pie.
+  pregunta_jc: Estos valores no son posibles para la zona. Es una falla del sensor? Los mostramos como
+    'sin dato'?
+- check: valores-imposibles
+  severidad: observacion
+  base: 111
+  titulo: Valores de temperatura_abrigo_150cm_minima fuera de lo fisicamente plausible
+  casos: 73
+  detalle: 'Rango razonable -10 a 32 C (supuesta); imposible por debajo de -15 o por encima de 38. 42
+    imposibles, 31 para mirar; 23 de ellos en la ventana publicada (desde el 30/05/2025). Por estacion:
+    Bandera 42 imposibles + 4 a mirar (0 en la ventana), del 27/09/2014 al 13/08/2019, entre -30 y -10,20;
+    La María 0 imposibles + 1 a mirar (0 en la ventana), del 21/11/2023 al 21/11/2023, entre 32,30 y 32,30;
+    Los Juríes 0 imposibles + 23 a mirar (23 en la ventana), del 18/02/2026 al 22/04/2026, entre 32,20
+    y 36,80; Monte Quemado 0 imposibles + 2 a mirar (0 en la ventana), del 17/12/2023 al 14/03/2024, entre
+    32,30 y 32,70; Quimilí 0 imposibles + 1 a mirar (0 en la ventana), del 17/12/2023 al 17/12/2023, entre
+    32,90 y 32,90.'
+  ejemplos:
+  - 'Bandera, 19/12/2018 (fila 2394 del Excel): -28,30 IMPOSIBLE'
+  - 'Bandera, 20/12/2018 (fila 2395 del Excel): -28 IMPOSIBLE'
+  - 'Bandera, 30/04/2019 (fila 2475 del Excel): -19 IMPOSIBLE'
+  - 'Bandera, 01/05/2019 (fila 2476 del Excel): -27,90 IMPOSIBLE'
+  - 'Bandera, 02/05/2019 (fila 2477 del Excel): -25,40 IMPOSIBLE'
+  - 'Bandera, 03/05/2019 (fila 2478 del Excel): -27,80 IMPOSIBLE'
+  - 'Bandera, 04/05/2019 (fila 2479 del Excel): -29,20 IMPOSIBLE'
+  - 'Bandera, 05/05/2019 (fila 2480 del Excel): -27,80 IMPOSIBLE'
+  - 'Bandera, 06/05/2019 (fila 2481 del Excel): -29 IMPOSIBLE'
+  - 'Bandera, 21/06/2019 (fila 2527 del Excel): -28,80 IMPOSIBLE'
+  - 'Bandera, 22/06/2019 (fila 2528 del Excel): -29,30 IMPOSIBLE'
+  - 'Bandera, 04/07/2019 (fila 2540 del Excel): -26,70 IMPOSIBLE'
+  propuesta: Publicar sin tocar; si la variable se publica, nota al pie.
+  pregunta_jc: Estos valores no son posibles para la zona. Es una falla del sensor? Los mostramos como
+    'sin dato'?
+- check: valores-imposibles
+  severidad: observacion
+  base: 111
+  titulo: Valores de tension_vapor_media fuera de lo fisicamente plausible
+  casos: 270
+  detalle: 'Rango razonable 2 a 40 hPa (supuesta); imposible por debajo de 0,50 o por encima de 50. 104
+    imposibles, 166 para mirar; 157 de ellos en la ventana publicada (desde el 30/05/2025). La variable
+    no se publica. Por estacion: Bandera 6 imposibles + 16 a mirar (0 en la ventana), del 17/12/2014 al
+    10/03/2022, entre 0,01 y 1,99; La María 0 imposibles + 4 a mirar (0 en la ventana), del 25/11/2009
+    al 15/08/2013, entre 1,90 y 44,60; Los Juríes 35 imposibles + 61 a mirar (81 en la ventana), del 18/12/2018
+    al 06/05/2026, entre 0,02 y 74,05; Malbrán 33 imposibles + 49 a mirar (49 en la ventana), del 12/06/2019
+    al 26/05/2026, entre 0,01 y 1,99; Monte Quemado 15 imposibles + 14 a mirar (14 en la ventana), del
+    13/04/2023 al 21/12/2025, entre 0,00 y 42,59; Quimilí 0 imposibles + 2 a mirar (0 en la ventana),
+    del 16/09/2021 al 19/03/2024, entre 1,94 y 41,50; Sachayoj 4 imposibles + 18 a mirar (0 en la ventana),
+    del 29/04/2019 al 15/09/2021, entre 0,01 y 44,04; Vaca Huañuna 11 imposibles + 2 a mirar (13 en la
+    ventana), del 06/03/2026 al 07/05/2026, entre 0,00 y 1,57.'
+  ejemplos:
+  - 'Los Juríes, 17/02/2026 (fila 3648 del Excel): 53,30 IMPOSIBLE (en la ventana publicada)'
+  - 'Los Juríes, 18/02/2026 (fila 3649 del Excel): 51,04 IMPOSIBLE (en la ventana publicada)'
+  - 'Los Juríes, 15/03/2026 (fila 3674 del Excel): 53,67 IMPOSIBLE (en la ventana publicada)'
+  - 'Los Juríes, 16/03/2026 (fila 3675 del Excel): 58,36 IMPOSIBLE (en la ventana publicada)'
+  - 'Los Juríes, 17/03/2026 (fila 3676 del Excel): 60,17 IMPOSIBLE (en la ventana publicada)'
+  - 'Los Juríes, 18/03/2026 (fila 3677 del Excel): 51,93 IMPOSIBLE (en la ventana publicada)'
+  - 'Los Juríes, 19/03/2026 (fila 3678 del Excel): 52,04 IMPOSIBLE (en la ventana publicada)'
+  - 'Los Juríes, 20/03/2026 (fila 3679 del Excel): 61,26 IMPOSIBLE (en la ventana publicada)'
+  - 'Los Juríes, 21/03/2026 (fila 3680 del Excel): 50,63 IMPOSIBLE (en la ventana publicada)'
+  - 'Los Juríes, 27/03/2026 (fila 3686 del Excel): 63,36 IMPOSIBLE (en la ventana publicada)'
+  - 'Los Juríes, 28/03/2026 (fila 3687 del Excel): 64,53 IMPOSIBLE (en la ventana publicada)'
+  - 'Los Juríes, 29/03/2026 (fila 3688 del Excel): 62,87 IMPOSIBLE (en la ventana publicada)'
+  propuesta: Publicar sin tocar; si la variable se publica, nota al pie.
+  pregunta_jc: Estos valores no son posibles para la zona. Es una falla del sensor? Los mostramos como
+    'sin dato'?
+- check: cobertura-hojas
+  severidad: informativo
+  base: 8
+  titulo: Hojas del archivo que no se leyeron
+  casos: 2
+  ejemplos:
+  - 'Modelo analisis: Especificación de negocio escrita por JC, 6 filas. Define los cuatro niveles de
+    filtrado del panel de precios (Hortalizas/Frutas, Especie, rango de meses "sólo donde aparece la especie
+    para evitar resultados vacíos", Variedad con opción "todas"), la salida ("Genera tabla y gráficos
+    de líneas") y el alcance diferenciado de la INTRANET (ahí también se consultan VARIEDAD y TAMAÑO).
+    No son datos: va a constructor-reglas para convertirse en specs/modelos/.'
+  - 'Zana Mes: Ejemplo trabajado por JC: 43 valores de precio/kg mensual de Zanahoria Chantenay agrupados
+    por año, de julio 2017 a noviembre 2025, tipeados a mano (las celdas no tienen fórmula ni tabla dinámica
+    detrás). NO es dato de la fuente y no se ingiere; se usó como control de la agregación. Ver la nota
+    `control` al pie: la verificación NO cerró y quedó una pregunta abierta para JC.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 9
+  titulo: Hojas del archivo que no se leyeron
+  casos: 3
+  ejemplos:
+  - 'Calculos Ranking: Hoja de calculo del propio Excel: replica las filas de "Soja total" de la hoja
+    A y arma rankings de departamentos con tablas lado a lado. Los rankings y variaciones se computan
+    en marts, nunca se ingieren de la planilla (CLAUDE.md). Verificado el 2026-07-30.'
+  - 'Modelo  Analisis: Especificacion de negocio escrita por JC (que graficos, que rankings, que variaciones,
+    y la clasificacion verano/invierno de cada cultivo). No son datos: va a constructor-reglas para convertirse
+    en specs/modelos/base-9-*.yaml.'
+  - 'Hoja1: Hoja vacia (dims A1:A1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 30
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Analisis: Las indicaciones de JC para la vista (ranking por departamento, participacion de
+    los 6 principales y el resto, volcado a mapa), no datos.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 43
+  titulo: Hojas del archivo que no se leyeron
+  casos: 2
+  ejemplos:
+  - 'Modelo analisis: Es la tabla dinamica con la que JC armo su maqueta: meses x bandas, en ha y en %,
+    filtrada por quincena "1ra" (celda I2). No son datos nuevos, son los mismos de "Santiago 2" agregados.
+    Lo que SI aporta es una regla de negocio -que su "promedio mensual" es en realidad la primera quincena-
+    y eso ya esta escrito en specs/modelos/_comunes-base-43.yaml.'
+  - 'Hoja2: hoja de trabajo suelta, 30 filas sin encabezado util'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 48
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo An 01: Especificacion de negocio escrita por JC: la tabla de composicion del stock por categoria
+    comparando dos anios, con participaciones, y una columna ZONA que agrupa los departamentos en zonas
+    productivas. No son datos: va a constructor-reglas para convertirse en specs/modelos/48-*.yaml. La
+    zonificacion NO existe en ninguna otra parte del repo y hay que levantarla de ahi.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 53
+  titulo: Hojas del archivo que no se leyeron
+  casos: 2
+  ejemplos:
+  - 'Modelo analisis: Especificación de negocio escrita por JC, y la más completa de todo el repo para
+    esta familia: define el modelo de TODAS las DTV ("ESTO ES APLICABLE A TODOS LOS PRODUCTOS POR DTV").
+    Pide convertir los kg a toneladas, unidad temporal mes y año, unidades geográficas "a) Total provincia
+    (sumatoria) b) Total x departamento", visualización por producto con mapa y selección desde una lista,
+    total provincial abajo, selector de año y variaciones. Trae además tablas 2021 ya calculadas a mano
+    que sirven de control de la ingesta: ver nota `control`. No son datos: va a constructor-reglas para
+    convertirse en specs/modelos/base-53-*.yaml.'
+  - 'Hoja1: Hoja vacía (1 fila x 1 columna).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 56
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo analisis: Hoja de especificación de JC. Acá solo dice "MISMO MODELO QUE DTV DE ALGODÓN": la
+    regla completa está en la hoja Modelo analisis de la base 53. Va a constructor-reglas como herencia
+    de spec (`igual_que: base-53`), no como datos.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 57
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Analisis: Hoja de especificación de JC (acá escrita "Modelo Analisis", con A mayúscula y sin
+    tilde). Solo dice "MISMO MODELO QUE DTV DE ALGODÓN": la regla completa está en la base 53. Va a constructor-reglas
+    como herencia de spec, no como datos.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 75
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo analisis: Hoja de especificación de JC. Solo dice "MISMO MODELO QUE DTV DE ALGODÓN": la regla
+    completa está en la base 53. Va a constructor-reglas como herencia de spec.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 85
+  titulo: Hojas del archivo que no se leyeron
+  casos: 2
+  ejemplos:
+  - 'Modelo Analisis: Especificacion de negocio escrita por JC: que cortes quiere ver (movimientos totales
+    sin introduccion, movimientos internos, participacion por categoria sobre el total) y la instruccion
+    "AGREGAR TODAS LAS OPERACIONES DE VARIACIONES COMO EN AGRICOLA". No son datos: va a constructor-reglas
+    para convertirse en specs/modelos/base-85-*.yaml. Sus tablas ya estan calculadas a mano y sirven de
+    control: ver nota `control`.'
+  - 'Hoja2: Hoja vacia (1 fila x 1 columna).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 89
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo analisis: Especificacion de negocio de JC: los pivoteos que quiere ver (cabezas y toneladas
+    comercializadas por departamento y por raza, con su participacion sobre el total). No son datos, y
+    los pivoteos los computa el pipeline. Sirven de control.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 90
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Analisis: Especificacion de negocio de JC: los pivoteos que quiere ver (cabezas y toneladas
+    comercializadas por departamento y por raza, con su participacion sobre el total). No son datos, y
+    los pivoteos los computa el pipeline. Sirven de control.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 91
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Hoja2: Vacia (1x1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-temporal
+  severidad: informativo
+  base: 111
+  titulo: Columnas que vienen vacias de punta a punta
+  casos: 17
+  detalle: La planilla trae el encabezado pero ni un solo dato en toda la serie.
+  ejemplos:
+  - 'direccion_viento_200cm: vacia en La María'
+  - 'duracion_follaje_mojado: vacia en La María, Vaca Huañuna'
+  - 'evaporacion_tanque: vacia en La María'
+  - 'heliofania_efectiva: vacia en Vaca Huañuna'
+  - 'heliofania_relativa: vacia en Vaca Huañuna'
+  - 'humedad_media: vacia en La María'
+  - 'humedad_suelo: vacia en Bandera, La María, Los Juríes, Malbrán, Monte Quemado, Quimilí, Sachayoj,
+    Vaca Huañuna'
+  - 'presion_media: vacia en La María, Vaca Huañuna'
+  - 'profundidad_napa: vacia en La María'
+  - 'radiacion_global: vacia en Vaca Huañuna'
+  - 'temperatura_inte_5cm: vacia en Bandera, La María, Los Juríes, Malbrán, Monte Quemado, Quimilí, Sachayoj,
+    Vaca Huañuna'
+  - 'temperatura_intemperie_150cm_minima: vacia en Bandera, La María, Los Juríes, Malbrán, Monte Quemado,
+    Quimilí, Sachayoj, Vaca Huañuna'
+  propuesta: 'No se publican. No es un problema: solo se deja constancia.'
+- check: cobertura-temporal
+  severidad: informativo
+  base: 111
+  titulo: Variables publicadas que una estacion no mide nunca
+  casos: 3
+  detalle: 'No es un dato faltante en el ultimo anio: la estacion nunca la informo. La tabla tiene que
+    decir que no se mide, no dejar la columna en blanco.'
+  ejemplos:
+  - 'La María: humedad_media (la planilla trae la columna, siempre vacia)'
+  - 'La María: precipitacion_cronologica (la planilla no trae la columna)'
+  - 'La María: precipitacion_maxima_30minutos (la planilla no trae la columna)'
+  propuesta: Escribir 'no se mide en esta estacion' en lugar de la columna vacia.
+- check: serie
+  severidad: informativo
+  base: 111
+  titulo: Una categoria que no cambia nunca en toda la serie
+  casos: 8
+  detalle: 'La variable trae un solo valor posible en todos los dias informados: no parece una medicion
+    sino un valor de relleno.'
+  ejemplos:
+  - 'Bandera, direccion_viento_1000cm: siempre ''C'' (4.726 dias)'
+  - 'Los Juríes, direccion_viento_1000cm: siempre ''C'' (3.630 dias)'
+  - 'Malbrán, direccion_viento_1000cm: siempre ''C'' (3.582 dias)'
+  - 'Monte Quemado, direccion_viento_1000cm: siempre ''C'' (3.103 dias)'
+  - 'Quimilí, direccion_viento_1000cm: siempre ''C'' (3.777 dias)'
+  - 'Sachayoj, direccion_viento_1000cm: siempre ''C'' (4.519 dias)'
+  - 'Vaca Huañuna, direccion_viento_1000cm: siempre ''C'' (329 dias)'
+  - 'Vaca Huañuna, direccion_viento_200cm: siempre ''C'' (329 dias)'
+  propuesta: No publicar esa variable en esas estaciones.
+  pregunta_jc: La direccion del viento viene siempre igual. Es un dato real o relleno?
+- check: cobertura-hojas
+  severidad: informativo
+  base: 144
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo analisis: Indicaciones de JC para la vista, no datos (su pagina es la de bovinos: "PROCESAR
+    IDEM DTE BOVINOS").'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 145
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Análisis: Indicaciones de JC para la vista, no datos ("PROCESAR IDEM DTE BOVINOS").'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 151
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo análisis: Las indicaciones de JC para la vista (tabla simple, volcado a mapas y torta de los
+    5 principales + resto), no datos. Estan reflejadas en tablero-bovinos-feedlots.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 152
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Analisis: Hoja vacia (1x1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 153
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Analisis: Hoja vacia (1x1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 154
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Analisis: Hoja vacia (1x1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 156
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Análisis: Hoja vacia (1x1): JC no escribio especificacion en esta base.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 157
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Análisis: Hoja vacía (1x1). En las otras bases de JC esta hoja trae su especificación de negocio;
+    en ésta no escribió nada.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 158
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Analisis: Hoja vacia (1x1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 176
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Hoja3: Copia de la hoja DATA con el encabezado una fila mas arriba. Se lee una sola.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 177
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Análisis: Hoja vacia (1x1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 178
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Análisis: Hoja vacia (1x1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 179
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Análisis: Hoja vacia (1x1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 183
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Análisis: Hoja vacia (1x1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 184
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Analisis: Glosario que escribió JC con la definición de dos siglas: UFC (Unidad Formadora
+    de Colonias, "medida estándar de microbiología en una muestra de leche") y RCS (Recuento de Células
+    Somáticas). No son datos; las definiciones van al glosario del sitio (site/glosario.yaml) para que
+    aparezcan como aclaración al pasar el mouse.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 185
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Hoja2: Vacia (1x1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 186
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'FUENTE: Dos filas con el link a la pagina de MAGyP de donde sale la serie.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 188
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'FUENTE: Dos filas con el link a la pagina de MAGyP.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 228
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'SDE 1a Vac: Resumen provincial por anio que arma JC sumando las hojas de cada anio. No se ingiere:
+    los agregados los computa el pipeline sobre el detalle departamental, nunca se leen de la planilla.
+    Sirve igual como control -la suma de cada anio tiene que dar su fila-.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 229
+  titulo: Hojas del archivo que no se leyeron
+  casos: 2
+  ejemplos:
+  - 'Hoja1: Pivoteo que arma JC sobre la misma tabla: la serie provincial a la izquierda y la matriz departamento
+    x anio a la derecha. Los pivoteos los hace el pipeline.'
+  - 'Hoja3: Vacia (1x1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 232
+  titulo: Hojas del archivo que no se leyeron
+  casos: 2
+  ejemplos:
+  - 'Analisis: Pivoteos que arma JC sobre las hojas de datos (matriz departamento x anio y composicion
+    por categoria). Los pivoteos los hace el pipeline.'
+  - 'Hoja11: Vacia.'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.

@@ -354,3 +354,122 @@ bases:
       texto: >
         Cinco temporadas de septiembre a diciembre. Consecuencia para el tablero: ninguna
         vista puede llamar "total del anio" a lo que suma esta base.
+
+  111:
+    # Primera base de la familia `clima-diario` (entrega-03, 14-oct-2026). Formato LARGO:
+    # una fila por estacion x dia x variable, con nulos explicitos. Los checks pensados para
+    # campanias, departamentos y medidas no aplican (no hay `medida` ni `periodo`): esta
+    # base la controlan los checks de serie diaria de pipeline/validations.py, que se
+    # activan con el bloque `serie_diaria`.
+    etiqueta: "Clima diario · estaciones agrometeorologicas del INTA"
+    columnas:
+      serie: estacion
+      fecha: fecha
+      variable: variable
+      desde_declarado: estacion_desde_declarado
+      hasta_declarado: estacion_hasta_declarado
+    # Un dia no puede figurar dos veces para la misma estacion y variable. La ingesta ya
+    # descarto la copia del 07/10/2016 de La Maria (declarada en el config); esto confirma
+    # que no quedo ninguna otra.
+    clave_unica: [hoja, fecha, variable]
+
+    # Las unidades de esta base no vienen del archivo: salen del diccionario
+    # configs/dims/variables-clima.yaml, que solo pone las que dice la definicion de JC.
+    # Sin esta lista el check de unidades marcaba "mm", "horas" y "%" como bloqueantes
+    # (falso positivo: no hay suma de pesos en juego). Las unidades que FALTAN son el
+    # problema real y van al reporte como pregunta.
+    unidades_admitidas: ["%", "horas", "mm"]
+
+    serie_diaria:
+      # Lo que muestra la maqueta "Maqueta Clima 1": por estacion, el ULTIMO ANIO de datos
+      # diarios. Se mide hacia atras desde el ultimo dia con dato de la base entera.
+      ventana_dias: 365
+      # Las 11 columnas de la tabla diaria de la maqueta (en_maqueta 1-11 en
+      # configs/dims/variables-clima.yaml). Un problema en estas, dentro de la ventana,
+      # es el que puede distorsionar un numero visible.
+      variables_publicadas:
+        - temperatura_abrigo_150cm_media
+        - temperatura_abrigo_150cm_maxima
+        - temperatura_abrigo_150cm_minima
+        - temperatura_suelo_10cm_media
+        - precipitacion_pluviometrica
+        - precipitacion_cronologica
+        - precipitacion_maxima_30minutos
+        - humedad_media
+        - humedad_media_8_14_20
+        - rocio_medio
+        - horas_frio
+      hueco_min_dias: 30           # tramos sin filas mas cortos no se listan uno por uno
+      atraso_max_dias: 30          # una estacion que termina >30 dias antes que la base
+      dias_minimos_ventana: 180    # con menos de medio anio de dato en la ventana, bloquea
+      cobertura_minima_pct: 80
+      pegado_min_dias: 30
+      pegado_min_pct: 5            # y que sea al menos el 5% de los dias con dato
+      # Una estacion contra las demas: promedio del mes vs mediana de las otras. Las
+      # tolerancias se eligieron mirando la serie entera: Monte Quemado (la mas al norte y
+      # la mas calida) se separa hasta 3-5 grados en algunos meses y eso es clima, no falla;
+      # por eso el corte va en 5 grados para la temperatura media.
+      desvio_entre_series:
+        min_dias_mes: 10
+        min_otras_series: 3
+        tolerancias:
+          temperatura_abrigo_150cm_media: 5
+          temperatura_abrigo_150cm_maxima: 6
+          temperatura_abrigo_150cm_minima: 6
+          rocio_medio: 6
+          temperatura_suelo_10cm_media: 6
+          humedad_media: 25
+          humedad_media_8_14_20: 25
+      # Valores que es NORMAL ver repetidos todos los dias: no son "sensor trabado".
+      valores_frecuentes_normales:
+        precipitacion_pluviometrica: [0]
+        precipitacion_cronologica: [0]
+        precipitacion_maxima_30minutos: [0]
+        horas_frio: [0]
+        granizo: [0]
+        nieve: [0]
+        heliofania_efectiva: [0]
+        heliofania_relativa: [0]
+        duracion_follaje_mojado: [0]
+
+    # Rango fisico por variable (tablas de validations/rangos.yaml, seccion clima diario).
+    rangos_por_variable:
+      temperatura_abrigo_150cm_media: temperatura_aire_media_diaria_c
+      temperatura_abrigo_150cm_maxima: temperatura_aire_maxima_diaria_c
+      temperatura_abrigo_150cm_minima: temperatura_aire_minima_diaria_c
+      temperatura_suelo_10cm_media: temperatura_suelo_10cm_media_c
+      rocio_medio: punto_rocio_medio_c
+      precipitacion_pluviometrica: precipitacion_diaria_mm
+      precipitacion_cronologica: precipitacion_diaria_mm
+      precipitacion_maxima_30minutos: precipitacion_30min_mm
+      humedad_media: humedad_relativa_diaria_pct
+      humedad_media_8_14_20: humedad_relativa_diaria_pct
+      horas_frio: horas_frio_dia
+      tension_vapor_media: tension_vapor_media_hpa
+      presion_media: presion_media_estacion_hpa
+      heliofania_efectiva: heliofania_efectiva_h
+      radiacion_global: radiacion_global_mj_m2_dia
+      evapotranspiracion_potencial: evapotranspiracion_mm_dia
+
+    # El mismo dia, una variable no puede superar a la otra. La tolerancia absorbe el
+    # redondeo de promedios calculados por separado.
+    orden_entre_variables:
+      - menor: temperatura_abrigo_150cm_minima
+        mayor: temperatura_abrigo_150cm_maxima
+        texto: "la temperatura minima supera a la maxima"
+      - menor: temperatura_abrigo_150cm_minima
+        mayor: temperatura_abrigo_150cm_media
+        tolerancia: 0.1
+        texto: "la temperatura minima supera a la media"
+      - menor: temperatura_abrigo_150cm_media
+        mayor: temperatura_abrigo_150cm_maxima
+        tolerancia: 0.1
+        texto: "la temperatura media supera a la maxima"
+      - menor: rocio_medio
+        mayor: temperatura_abrigo_150cm_media
+        tolerancia: 0.5
+        texto: "el punto de rocio supera a la temperatura media del aire"
+      - menor: precipitacion_maxima_30minutos
+        mayor: precipitacion_cronologica
+        tolerancia: 0.1
+        texto: "la lluvia maxima en 30 minutos supera a la lluvia del dia (cronologica)"

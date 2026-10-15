@@ -23,6 +23,11 @@ entregas:
   # lechera. Incluye de nuevo la base 48, que ya estaba en la entrega-01: gana la mas
   # reciente. La lectura de la maqueta esta en docs/maqueta-ganaderia.md.
   entrega-02: "00000 Entrega Beta Ganaderia"
+  # Clima (14-oct-2026), maqueta "Maqueta Clima 1". De esta carpeta el pipeline solo baja el
+  # Excel de las estaciones del INTA (base 111). Los mapas de las subcarpetas 3001-3002 y de la
+  # carpeta "000 Entega beta clima - parte 2" (3003-3006) son imagenes: se publican como assets
+  # en site/assets/clima/, igual que los mapas forrajeros.
+  entrega-03: "000 Entrega Beta Clima - Parte 1B"
 
 # Carpeta con las versiones del indice de JC ("Bases para Beta - N.xlsx"), dentro de `carpeta`.
 # Opcional: el build no la usa (solo la etapa `indice`). null = no se baja.

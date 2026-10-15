@@ -1505,6 +1505,96 @@ a { color: var(--enlace); }
 }
 .galeria-grande img { max-width: 100%; max-height: 100%; object-fit: contain; }
 
+/* ---------- galerias de AgroClima (maqueta "0000000000 Maqueta Clima 1.xlsx", 14-oct-2026) ----
+   Las hojas de mapas de JC tienen un LATERAL a la izquierda -el mapa mas reciente en grande y
+   debajo el cuadro con la definicion del producto- y la grilla a la derecha, seis por fila. El
+   lateral solo existe si el build manda `destacado` o `definicion`: con el oculto (la galeria de
+   mapas forrajeros) el cuerpo es un bloque comun y nada cambia. */
+.galeria-cuerpo:has(> .galeria-lateral:not([hidden])) {
+  display: grid; grid-template-columns: minmax(15rem, 22%) minmax(0, 1fr); gap: 1.1rem;
+  align-items: start; margin-top: .6rem;
+}
+.galeria-cuerpo:has(> .galeria-lateral:not([hidden])) > .galeria { margin-top: 0; }
+.galeria-lateral { display: flex; flex-direction: column; gap: .8rem; min-width: 0; }
+.galeria-lateral[hidden] { display: none; }
+.galeria-destacado figcaption { font-size: .68rem; color: var(--texto); }
+.galeria-definicion {
+  border: 1px solid var(--borde-panel); border-radius: var(--radio-chico);
+  background: var(--fondo); padding: .7rem .85rem; font-size: .78rem; line-height: 1.45;
+}
+.galeria-definicion h3 {
+  margin: 0 0 .4rem; text-align: center; font-size: .78rem; letter-spacing: .03em;
+}
+.galeria-definicion p { margin: 0 0 .5rem; }
+.galeria-definicion p:last-child { margin-bottom: 0; }
+.galeria-definicion a { color: var(--enlace); word-break: break-all; }
+/* Cuantas miniaturas por fila lo dice el spec (`por_fila`, JC dibuja seis): viaja como una
+   variable CSS que pone galeria.js. Le gana al `auto-fill` de la grilla forrajera porque va
+   despues y con la misma especificidad. Los mapas de clima son verticales: a seis por fila
+   cada uno queda de ~150 px, que es lo que mide en la maqueta. */
+.galeria.galeria-por-fila {
+  grid-template-columns: repeat(var(--por-fila), minmax(0, 1fr)); gap: .7rem;
+}
+.galeria-por-fila .galeria-mapa figcaption { font-size: .56rem; letter-spacing: .03em; }
+/* La ORA va por FILAS: la fecha como titulo, a todo el ancho, con la linea que JC dibuja
+   arriba de cada fila; y un hueco del tamaño de una miniatura donde falta la de un cultivo. */
+.galeria-fila-titulo {
+  grid-column: 1 / -1; margin: .4rem 0 -.2rem; padding-top: .35rem;
+  border-top: 2px solid var(--cromo); font-size: .8rem;
+}
+.galeria-fila-titulo:first-child { margin-top: 0; }
+.galeria-hueco { min-height: 1px; }
+@media (max-width: 1000px) {
+  .galeria-cuerpo:has(> .galeria-lateral:not([hidden])) { grid-template-columns: minmax(0, 1fr); }
+  .galeria.galeria-por-fila { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* ---------- AgroClima: portada y estaciones (14-oct-2026) ---------- */
+/* Las tarjetas de la portada ("Clima Ingreso" de JC): miniatura a la izquierda y texto a la
+   derecha, como las dibuja el. Toda la tarjeta es el link. La apagada (una pagina sin base
+   todavia) no reacciona al mouse y lleva su "Próximamente". */
+.accesos { display: grid; grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr)); gap: .8rem; }
+.acceso {
+  display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: .85rem; align-items: center;
+  padding: .7rem; border: 1px solid var(--borde-panel); border-radius: var(--radio);
+  background: var(--fondo); color: var(--texto); text-decoration: none;
+  transition: border-color 120ms ease-out;
+}
+a.acceso:hover { border-color: var(--enlace); }
+a.acceso:focus-visible { outline: 2px solid var(--enlace); outline-offset: 2px; }
+.acceso-apagado { opacity: .72; }
+.acceso-mini {
+  display: flex; align-items: center; justify-content: center; height: 8.5rem;
+  border-radius: var(--radio-chico); background: var(--fondo-cuadro); overflow: hidden;
+}
+.acceso-mini img { display: block; max-width: 100%; max-height: 100%; object-fit: contain; }
+.acceso-texto { display: flex; flex-direction: column; gap: .2rem; min-width: 0; }
+.acceso-organismo {
+  font-family: var(--rotulos); font-size: .6rem; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--texto-apoyo);
+}
+.acceso-titulo { font-family: var(--titulos); font-size: 1.05rem; font-weight: 700; line-height: 1.2; }
+.acceso-detalle { font-size: .8rem; }
+.acceso-bajada { font-size: .8rem; color: var(--texto-apoyo); }
+.acceso-texto .prox { align-self: flex-start; margin-top: .2rem; }
+@media (prefers-reduced-motion: reduce) { .acceso { transition: none; } }
+
+/* El mapa de estaciones: es el selector de la pagina, asi que la lista de estaciones (el
+   mismo filtro, para elegir con el teclado) va DEBAJO del titulo y envuelve en varios
+   renglones en vez de apretarse al costado. El mapa mide lo que mide en la maqueta. */
+.panel[data-panel="mapa-estaciones"] > .panel-cab { flex-direction: column; align-items: stretch; gap: .45rem; }
+/* `nowrap` y base automatica: la regla general de los toggles de 5+ opciones (al final del
+   archivo) les da `flex-basis: 100%` y `wrap` al renglon, que en una columna flex manda la
+   lista a una SEGUNDA columna, afuera del panel. */
+.panel[data-panel="mapa-estaciones"] > .panel-cab { flex-wrap: nowrap; }
+.panel[data-panel="mapa-estaciones"] > .panel-cab > .panel-toggle { flex: 0 0 auto; flex-wrap: wrap; }
+.panel[data-panel="mapa-estaciones"] .grafico { height: 27rem; }
+.panel[data-panel="lineas-temperatura"] .grafico { height: 300px; }
+/* La tabla diaria: los 365 renglones scrollean adentro del cuadro ("ESTA SIMULADA LA BARRA DE
+   DESPLAZAMIENTO", JC) con el encabezado fijo. Los encabezados son largos y van en dos o tres
+   renglones, como los de JC. */
+.panel[data-panel="tabla-diaria"] .tabla-datos thead th { white-space: normal; vertical-align: bottom; }
+
 /* ================= popup "Mas informacion" (seccion 5 de la maqueta) =================
    MISMO diseno y MISMO gesto que el zoom (Francisco, 2-oct-2026: "que el pop up tenga ese
    mismo diseño, con las esquinas redondeadas" y "la misma animacion que el zoom"). Las reglas
@@ -2473,3 +2563,116 @@ dialog.zoom.zoom-visible::backdrop { opacity: 1; }
    siempre el tablero completo, y con el panel afuera de su celda la hoja saldria con un
    hueco donde iba el cuadro. */
 .imprimiendo dialog.zoom { display: none; }
+
+/* ---------- capas del IGN sobre un mapa (pedido de JC del 14-oct-2026, backlog 104) ----------
+   Rutas, caminos rurales, ferrocarril y estaciones. Los COLORES de los trazos no estan aca: los
+   manda el protocolo (`colores.capas_de_contexto`) y los pinta src/tableros/cliente/capas.js.
+   Aca va solo el cromo del control, de la leyenda y de la cita.
+
+   Sobre un mapa de CALOR el control es un desplegable que FLOTA arriba a la derecha del cuadro
+   (posicion absoluta): cerrado no le quita lugar al mapa, asi que con las capas apagadas el
+   cuadro mide y se ve igual que antes. La clase `con-capas` la pone Tablero.tsx solo en los
+   cuadros que ofrecen capas: ningun otro panel cambia. */
+.panel-cuerpo.con-capas { position: relative; }
+.capas-desplegable { position: absolute; top: 0; right: 0; z-index: 3; }
+.capas-desplegable > summary {
+  list-style: none; cursor: pointer; user-select: none;
+  font-family: var(--rotulos); font-size: .62rem; text-transform: uppercase; letter-spacing: .08em;
+  padding: .2rem .45rem; border-radius: var(--radio-chico);
+  border: 1px solid var(--borde-panel); background: var(--fondo-cuadro); color: var(--texto-apoyo);
+}
+.capas-desplegable > summary::-webkit-details-marker { display: none; }
+.capas-desplegable[open] > summary {
+  background: var(--seleccion); border-color: var(--seleccion); color: var(--sobre-seleccion);
+}
+.capas-desplegable > .capas-lista {
+  position: absolute; right: 0; top: calc(100% + .25rem); min-width: 15rem;
+  padding: .5rem .6rem; background: var(--fondo-cuadro);
+  border: 1px solid var(--borde-panel); border-radius: var(--radio-chico);
+}
+.capas-lista {
+  list-style: none; margin: 0; padding: 0;
+  display: flex; flex-direction: column; gap: .3rem; font-size: .74rem;
+}
+.capas-lista label { display: flex; align-items: center; gap: .45rem; cursor: pointer; color: var(--texto); }
+.capas-lista input { margin: 0; accent-color: var(--cromo); }
+.capas-trazo { display: inline-block; flex: 0 0 auto; width: 1.5rem; height: 0; vertical-align: middle; }
+.capas-punto {
+  display: inline-block; flex: 0 0 auto; width: .6rem; height: .6rem;
+  border: 1.5px solid; border-radius: 50%; vertical-align: middle;
+}
+.capas-muestra { display: inline-flex; align-items: center; justify-content: center; width: 1.5rem; }
+.capas-variante { display: inline-flex; align-items: center; gap: .3rem; }
+.capas-variantes > span { display: flex; flex-wrap: wrap; gap: .1rem .7rem; }
+.capas-variantes { font-size: .64rem; color: var(--texto-apoyo); padding-left: 3.35rem; }
+.capas-variantes:empty, .capas-variantes > span:empty { display: none; }
+/* En el desplegable alcanza con la muestra principal: lo que dice cada trazo lo cuenta la
+   leyenda de abajo del mapa, que solo lista lo prendido. */
+.capas-desplegable .capas-variantes { display: none; }
+
+/* La portada de Infraestructura y riesgo: la lista va a la vista y es la LEYENDA del mapa.
+   Va a la DERECHA del mapa y no arriba: la provincia es mas alta que ancha y el cuadro es
+   ancho, asi que arriba le comia alto al mapa y a los costados quedaba crema vacia. */
+.panel[data-panel="mapa-capas"] > .panel-cuerpo {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(12rem, 17rem);
+  gap: .9rem; align-items: start;
+}
+.panel[data-panel="mapa-capas"] > .panel-cuerpo > .grafico {
+  grid-column: 1; grid-row: 1; height: 640px; min-height: 0;
+}
+.panel[data-panel="mapa-capas"] > .panel-cuerpo > .capas-a-la-vista { grid-column: 2; grid-row: 1; }
+.panel[data-panel="mapa-capas"] > .panel-cuerpo > .cuadro-nota,
+.panel[data-panel="mapa-capas"] > .panel-cuerpo > .panel-vacio { grid-column: 1 / -1; }
+.capas-a-la-vista > .capas-lista {
+  gap: .65rem; padding: .6rem .7rem;
+  border: 1px solid var(--fondo-apoyo); border-radius: var(--radio-chico);
+}
+.capas-a-la-vista li { display: flex; flex-direction: column; gap: .2rem; }
+.capas-a-la-vista .capas-variantes > span { flex-direction: column; gap: .15rem; }
+@media (max-width: 1100px) {
+  .panel[data-panel="mapa-capas"] > .panel-cuerpo { grid-template-columns: minmax(0, 1fr); }
+  .panel[data-panel="mapa-capas"] > .panel-cuerpo > .capas-a-la-vista { grid-column: 1; grid-row: 2; }
+}
+
+/* La leyenda bajo un mapa de calor: solo las capas prendidas; vacia no se dibuja. */
+.capas-leyenda {
+  list-style: none; margin: .4rem 0 0; padding: 0;
+  display: flex; flex-wrap: wrap; justify-content: center; gap: .2rem 1rem;
+  font-size: .64rem; color: var(--texto-apoyo);
+}
+.capas-leyenda:empty { display: none; }
+.capas-leyenda li { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .1rem .4rem; }
+.capas-leyenda li > span:not([class]) { display: inline-flex; flex-wrap: wrap; gap: .1rem .55rem; }
+.capas-leyenda-nombre { color: var(--texto); }
+
+/* La cita de las capas prendidas va en su propio renglon del pie, debajo de la de los datos.
+   Vacia no ocupa nada y el pie queda como siempre. */
+.panel-pie:has(> .panel-fuente-capas:not(:empty)) { flex-wrap: wrap; }
+.panel-pie:has(> .panel-fuente-capas:not(:empty)) > .panel-fuente { flex-basis: 0; }
+.panel-fuente-capas { flex: 1 1 100%; order: 2; }
+.panel-fuente-capas:empty { display: none; }
+
+/* En el PDF no sale el desplegable (es un control) pero SI lo prendido: el dibujo, la leyenda y
+   la cita. En la portada la lista es la leyenda: se imprimen solo los renglones prendidos y sin
+   la casilla. */
+.imprimiendo .capas-desplegable { display: none; }
+.imprimiendo .capas-a-la-vista li:not(.prendida) { display: none; }
+.imprimiendo .capas-lista input { display: none; }
+/* En el zoom el mapa de capas se queda con todo el alto del dialogo. El `!important` le gana
+   al alto que `nivelarBandas` (tablero.js) le deja escrito en el atributo style mientras el
+   cuadro estaba en su banda: el panel se muda al dialogo con ese alto puesto. */
+.zoom .zoom-marco .panel[data-panel="mapa-capas"] > .panel-cuerpo {
+  flex: 1 1 auto; min-height: 0; grid-template-rows: minmax(0, 1fr); align-items: stretch;
+}
+.zoom .zoom-marco .panel[data-panel="mapa-capas"] > .panel-cuerpo > .grafico {
+  height: auto !important; min-height: 0 !important;
+}
+.zoom .zoom-marco .panel[data-panel="mapa-capas"] > .panel-cuerpo > .capas-a-la-vista { align-self: start; }
+
+/* Un toggle de panel con muchas opciones (el selector de evento del mapa de amenazas, 11) no
+   entra al lado del titulo: lo aplastaba a una columna de una palabra y cortaba los ultimos
+   chips. Con cinco o mas opciones el toggle baja a su propio renglon y los chips se envuelven.
+   Hoy ningun otro toggle del sitio llega a cinco (medido sobre todas las paginas), asi que el
+   resto no cambia. */
+.panel-cab:has(> .panel-toggle > button:nth-child(5)) { flex-wrap: wrap; }
+.panel-cab > .panel-toggle:has(> button:nth-child(5)) { flex: 1 1 100%; flex-wrap: wrap; order: 2; }

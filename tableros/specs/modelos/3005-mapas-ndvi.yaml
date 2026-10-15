@@ -1,0 +1,58 @@
+# AgroClima > Mapas > Índice de Vegetación NDVI · hoja "ClimNDVI" de la maqueta de JC (base
+# "3005 MP"). Mismo mecanismo que 3002-mapas-evapotranspiracion.
+#   U49 "PARA EL BETA DE WEB PUBLICA, SOLO 6 meses de mapas - 2 por mes (son quincenales)"
+#   U52 "CORRECTAS LAS FECHAS Y LAS MINIATURAS"
+# El nombre "iv_AAAADDD" trae el DIA JULIANO en que empieza la composicion de 16 dias (texto de
+# JC: "Se contabilizan los 16 días a partir del 1º de enero de cada año, obteniéndose un total
+# de 23 imágenes anuales"). El rotulo es el rango exacto: iv_2026241 = "29 agosto al 13
+# septiembre", que es lo que dice la propia imagen (la maqueta decia "1 al 13 septiembre").
+# La ultima composicion del anio se corta el 31/12.
+familia: agroclima
+seccion: agroclima
+slug: 3005-mapas-ndvi
+protocolo: _protocolo-presentacion
+tipo: galeria
+
+titulo: "Índice de Vegetación NDVI"
+subtitulo: "SEPA - INTA · índice de vegetación, composiciones de 16 días, últimos 6 meses"
+breadcrumb: "AgroClima - Provincia - mapas - SEPA-INTA - NDVI"
+titulo_protocolo: "SEPA - INTA - Mapas de NDVI (Indice de Vegetación) {anios} (últimos 6 meses)"
+subtitulo_cuadro: "Del período más reciente al más antiguo · clic en un mapa para verlo completo"
+
+serie: ndvi
+assets:
+  carpeta: "site/assets/clima/ndvi"
+  patron: "^iv_(?P<anio>\\d{4})(?P<dia>\\d{3})(?P<mini>-mini)?\\.(?P<ext>gif|jpg)$"
+periodo: dias-julianos
+dias: 16
+orden: descendente
+por_fila: 6
+ventana:
+  cuantos: 12
+  motivo: "JC, U49: SOLO 6 meses de mapas - 2 por mes (son quincenales)"
+destacado: mas_reciente
+
+definicion:
+  # JC escribe "NVDI": se corrige la sigla (el producto es NDVI, como dice el mismo texto).
+  titulo: "INDICE DE VEGETACIÓN COMPUESTO (NDVI)"
+  parrafos:
+    - >
+      Es el índice de vegetación normalizado (IVN; NDVI en inglés) que se calcula tomando los
+      valores máximos para una composición de imágenes correspondientes a 16 días. Se
+      contabilizan los 16 días a partir del 1º de enero de cada año, obteniéndose un total de
+      23 imágenes anuales.
+    - >
+      Se utilizan imágenes del sensor MODIS de los satélites AQUA-TERRA con una resolución
+      espacial de 6,25 hectáreas (250 m).
+  enlace: {texto: "https://sepa.inta.gob.ar/productos/", href: "https://sepa.inta.gob.ar/productos/"}
+
+fuente:
+  pie: "Fuente: SEPA - INTA (Instituto de Clima y Agua)"
+
+sensibilidad: normal
+estado: publicada
+origen:
+  tipo: maqueta de JC
+  archivo: "0000000000 Maqueta Clima 1.xlsx"
+  hojas: ["ClimNDVI"]
+  recibido: 2026-10-14

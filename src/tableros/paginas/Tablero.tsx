@@ -32,6 +32,7 @@
    Sin badges de tipo de grafico: los saco JC el 10-ago-2026. */
 import type {
   AccionDeCuadro,
+  CapaDeMapa,
   ComparacionDeCuadro,
   Filtro,
   PaginaTablero,
@@ -186,9 +187,58 @@ const FORMA_DEL_PANEL: Record<string, string> = {
   "anillo-categorias": "anillo",
   "anillo-provincias-destino": "anillo",
   "anillo-provincias-origen": "anillo",
+  // General > Infraestructura y riesgo (capas del IGN, 14-oct-2026)
+  "tabla-red-vial": "tabla-estratos",
+  "tabla-ferrocarril": "tabla-estratos",
+  "tabla-eventos-departamento": "tabla-estratos",
+  "tabla-sinagir": "tabla-estratos",
+  "anillo-eventos": "anillo",
+  // AgroClima > Estaciones agrometeorologicas INTA (14-oct-2026): la tabla diaria y la linea
+  // de temperatura usan formas que ya existen.
+  "tabla-diaria": "tabla-estratos",
+  "lineas-temperatura": "lineas",
 };
 
-function CuerpoPanel({ id: idPanel, mockup = false }: { id: string; mockup?: boolean }) {
+/* El control de las CAPAS DEL IGN de un mapa (rutas, caminos rurales, ferrocarril y
+   estaciones; pedido de JC del 14-oct-2026). Un checkbox por capa, en el orden del spec.
+
+   Dos modos, los decide el build (`capas_modo`):
+     - "desplegable": sobre un mapa de CALOR. Un boton chico arriba a la derecha del cuadro
+       que despliega la lista por encima del mapa; cerrado no ocupa lugar en el layout, asi
+       que con las capas apagadas el cuadro es el de siempre. Las capas arrancan apagadas.
+     - "lista": en la portada de Infraestructura y riesgo, donde las capas SON el dato. La
+       lista va a la vista arriba del mapa y hace de leyenda.
+   Las muestras de color y los trazos de cada capa los pinta src/tableros/cliente/capas.js con
+   el estilo del protocolo: aca no hay ningun color. Los checkbox NO llevan `data-control`:
+   prender una capa no cambia la combinacion de filtros, solo el dibujo de ESTE mapa. */
+function ControlCapas({ capas, modo, rotulo }: { capas?: CapaDeMapa[]; modo?: string; rotulo?: string }) {
+  if (!capas || capas.length === 0) return null;
+  const lista = (
+    <ul className="capas-lista">
+      {capas.map((capa) => (
+        <li key={capa.id} data-capa-item={capa.id}>
+          <label>
+            <input type="checkbox" data-capa={capa.id} defaultChecked={capa.prendida} />
+            <span className="capas-muestra" data-muestra-capa={capa.id}></span>
+            <span className="capas-etiqueta">{capa.etiqueta}</span>
+          </label>
+          <span className="capas-variantes" data-variantes-capa={capa.id}></span>
+        </li>
+      ))}
+    </ul>
+  );
+  if (modo === "lista") {
+    return <div className="capas capas-a-la-vista" data-capas="">{lista}</div>;
+  }
+  return (
+    <details className="capas capas-desplegable" data-capas="">
+      <summary>{rotulo}</summary>
+      {lista}
+    </details>
+  );
+}
+
+function CuerpoPanel({ id: idPanel, mockup = false, panel }: { id: string; mockup?: boolean; panel?: Panel }) {
   const id = idPanel.startsWith("imagen-") ? "imagen"
     : idPanel.startsWith("texto-") ? "texto"
     // Una tabla escrita en el spec (equivalencias de categorias de "GanBuba ST").
@@ -196,9 +246,21 @@ function CuerpoPanel({ id: idPanel, mockup = false }: { id: string; mockup?: boo
     : idPanel.startsWith("cifras-") ? "cifras"
     // Un anillo escrito en el spec (categorias de la faena equina de SENASA).
     : idPanel.startsWith("anillo-fijo-") ? "anillo"
+    // Bloques de tarjetas con miniatura que llevan a otras paginas (portada de AgroClima).
+    : idPanel.startsWith("accesos-") ? "accesos"
     : (FORMA_DEL_PANEL[idPanel] ?? idPanel);
   let cuerpo = null;
-  if (id === "cifras") {
+  if (id === "accesos") {
+    /* Las tarjetas de la portada de AgroClima ("Datos e informes" y "Mapas" de la hoja "Clima
+       Ingreso" de JC): miniatura + texto, cada una un link a su pagina. Las arma tablero.js con
+       lo que manda el build; una tarjeta sin pagina todavia va apagada con "Próximamente". */
+    cuerpo = <div className="accesos" data-accesos=""></div>;
+  } else if (id === "mapa-estaciones") {
+    /* El mapa de la provincia con las estaciones del INTA como puntos (hoja "ClimEAI"): es el
+       selector de la pagina. El clic en un punto aprieta el chip de esa estacion de la lista de
+       arriba, que es la misma eleccion hecha con el teclado. */
+    cuerpo = <div className="grafico" data-grafico=""></div>;
+  } else if (id === "cifras") {
     // Tarjetas de cifras y, debajo, una serie en lineas (caravanas bovinas de SENASA).
     cuerpo = (
       <>
@@ -235,9 +297,21 @@ function CuerpoPanel({ id: idPanel, mockup = false }: { id: string; mockup?: boo
         <ul className="anillo-leyenda" data-leyenda=""></ul>
       </>
     );
+  } else if (id === "mapa-capas") {
+    /* El mapa de la portada de Infraestructura y riesgo: los departamentos de fondo neutro y
+       las capas del IGN encima, con la lista de capas a la vista (es su leyenda). */
+    cuerpo = (
+      <>
+        <ControlCapas capas={panel?.capas} modo={panel?.capas_modo} rotulo={panel?.capas_rotulo} />
+        <div className="grafico" data-grafico=""></div>
+      </>
+    );
   } else if (id === "mapa") {
     cuerpo = (
       <>
+        {/* Las capas del IGN, si el spec las ofrece: un desplegable que flota sobre el mapa y
+            no le quita lugar. Sin capas no se dibuja nada y el cuadro es el de siempre. */}
+        <ControlCapas capas={panel?.capas} modo={panel?.capas_modo} rotulo={panel?.capas_rotulo} />
         <div className="grafico" data-grafico=""></div>
         {/* Las cinco muestras de la escala (una por quintil, con su tramo debajo) y la unidad
             una sola vez, como las dibuja JC bajo el mapa en su maqueta. Las llena tablero.js
@@ -245,6 +319,9 @@ function CuerpoPanel({ id: idPanel, mockup = false }: { id: string; mockup?: boo
         <div className="escala" data-escala=""></div>
         <p className="escala-unidad" data-escala-unidad=""></p>
         <p className="total-provincial" data-total=""></p>
+        {/* Que es cada trazo de las capas PRENDIDAS. Vacia (y sin dibujarse) con todo apagado.
+            Va tambien al PDF, donde el desplegable no sale. */}
+        {panel?.capas?.length ? <ul className="capas-leyenda" data-leyenda-capas=""></ul> : null}
         {/* La invitacion a elegir departamento va DEBAJO del mapa y su escala, que es donde
             la escribe JC en las dos hojas de su maqueta ("seleccione departamento para..." en
             "Agri 1" y "Seleccione otro departamento si desea visualizar" en "Agri 1 Dto").
@@ -558,12 +635,13 @@ function PanelComun({ panel, filtro }: { panel: Panel; filtro?: Filtro }) {
         <TogglePanel filtro={filtro} />
       </div>
 
-      <div className="panel-cuerpo">
-        <CuerpoPanel id={panel.id} />
+      <div className={panel.capas?.length ? "panel-cuerpo con-capas" : "panel-cuerpo"}>
+        <CuerpoPanel id={panel.id} panel={panel} />
       </div>
 
       <div className="panel-pie">
         <span className="panel-fuente" data-pie=""></span>
+        <PieDeCapas panel={panel} />
         {/* Las acciones del cuadro (hoy "Zoom") tambien en la disposicion generica: la tira
             de acciones al pie es del CUADRO, no de una disposicion. Cada panel declara las
             suyas en el spec; un cuadro sin gráfico no lleva ninguna y esto no dibuja nada. */}
@@ -579,6 +657,14 @@ function PanelComun({ panel, filtro }: { panel: Panel; filtro?: Filtro }) {
       <ControlesDeComparacion comparacion={panel.comparacion} />
     </section>
   );
+}
+
+/* La cita de las capas del IGN PRENDIDAS, al pie del cuadro y al lado de la de sus datos
+   (regla de JC: fuente al pie de todo lo que se dibuja). La escribe capas.js con las fuentes
+   que manda el build; vacia, no se ve. */
+function PieDeCapas({ panel }: { panel: Panel }) {
+  if (!panel.capas?.length) return null;
+  return <span className="panel-fuente-capas" data-pie-capas=""></span>;
 }
 
 /* Panel del tablero de cultivos, calcado de la captura: titulo centrado (lo pinta tablero.js
@@ -610,11 +696,12 @@ function PanelMockup({ panel, filtro }: { panel: Panel; filtro?: Filtro }) {
           {conIconos ? null : <TogglePanel filtro={filtro} />}
         </div>
       ) : null}
-      <div className="panel-cuerpo">
-        <CuerpoPanel id={panel.id} mockup />
+      <div className={panel.capas?.length ? "panel-cuerpo con-capas" : "panel-cuerpo"}>
+        <CuerpoPanel id={panel.id} mockup panel={panel} />
       </div>
       <div className="panel-pie">
         <span className="panel-fuente" data-pie=""></span>
+        <PieDeCapas panel={panel} />
         <AccionesDeCuadro acciones={panel.acciones} />
       </div>
       <ControlesDeComparacion comparacion={panel.comparacion} />

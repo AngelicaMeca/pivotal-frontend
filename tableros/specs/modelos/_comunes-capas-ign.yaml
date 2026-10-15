@@ -1,0 +1,67 @@
+# Comunes de General > Infraestructura y riesgo (capas del IGN, pedido de JC del 14-oct-2026,
+# backlog 104). Lo lee site_build.ContextoCapasIgn.
+#
+# Esto no sale de un Excel de JC ni pasa por raw/: son capas oficiales del Instituto Geografico
+# Nacional bajadas por su WFS y recortadas a la provincia (configs/dims/capas-ign.yaml y
+# configs/dims/capas-ign/). El sitio publica copias: no depende del servidor del IGN.
+id: _comunes-capas-ign
+
+presentacion:
+  # El color lo fija el TIPO de variable (protocolo, `colores.rampas`). `registros_eventos` es
+  # una rampa nueva, agregada el 14-oct-2026 para este mapa (backlog 106: JC la valida).
+  tipos_de_variable:
+    registros: registros_eventos
+
+# Las citas al pie, una por fuente. Salen de configs/dims/capas-ign.yaml (procedencia).
+fuentes:
+  red_vial: "Fuente: IGN - Dirección Nacional de Vialidad, direcciones provinciales de vialidad y red vial terciaria (Capas SIG)"
+  ferrocarril: "Fuente: IGN - Red ferroviaria (Capas SIG)"
+  mapa_base: "Fuente: IGN - Límites departamentales"
+  desinventar: "Fuente: IGN, base DESINVENTAR 1970-2015"
+  sinagir: "Fuente: IGN, SINAGIR - PNRRD 2018-2023"
+
+notas_metodologicas:
+  km-de-red:
+    titulo: "Cómo se miden los kilómetros"
+    texto: >
+      Los kilómetros se calculan sobre el trazado que publica el IGN, ya recortado al límite de
+      la provincia: es la suma de la distancia sobre la superficie terrestre (fórmula del
+      haversine, radio medio de 6.371 km) entre cada par de puntos consecutivos de cada tramo.
+      No es la longitud oficial de cada ruta que informa Vialidad: un tramo compartido por dos
+      rutas puede estar cargado dos veces, y un camino que sale y vuelve a entrar a la
+      provincia cuenta solo lo que corre adentro. La red terciaria (caminos rurales) es la capa
+      completa del IGN.
+  capas:
+    titulo: "Qué muestra el mapa"
+    texto: >
+      Las rutas, el ferrocarril y las estaciones son capas del catálogo "Capas SIG" del IGN
+      (apartado Transporte), descargadas el 14 de octubre de 2026 por sus servicios OGC. Lo
+      pavimentado y lo activo va en trazo lleno; lo consolidado o de tierra, y lo abandonado o
+      desmantelado, en trazo punteado. Los caminos rurales están apagados al abrir la página
+      porque son más de once mil tramos: se cargan recién al prenderlos.
+  desinventar:
+    titulo: "Qué son los registros de DESINVENTAR"
+    texto: >
+      DESINVENTAR es un inventario de desastres armado sobre todo a partir de noticias de
+      prensa: cada registro es un evento adverso de origen hidrometeorológico (una inundación,
+      una tormenta, una sequía) que alguien informó en un departamento, entre 1970 y 2015. No
+      mide la intensidad del evento ni el daño, y tiene subregistro: la propia metadata del IGN
+      advierte que "nos brinda un contexto aproximado". Más registros en un departamento puede
+      querer decir más eventos o más cobertura periodística. La serie termina en 2015.
+  escala:
+    titulo: "Cómo se pinta el mapa"
+    texto: >
+      El mapa reparte los departamentos en cinco tramos según su cantidad de registros, con la
+      misma regla que el resto de los mapas del sitio. No usa la categoría que el IGN le pone a
+      cada departamento ("Muy baja" o "Baja cantidad de registros"): esa categoría compara a
+      cada departamento contra todo el país y deja a 25 de los 27 en la misma clase, así que no
+      sirve para comparar departamentos de la provincia entre sí.
+  sinagir:
+    titulo: "Exposición a amenazas: SINAGIR"
+    texto: >
+      El Sistema Nacional para la Gestión Integral del Riesgo (SINAGIR) publica, en el Plan
+      Nacional de Reducción del Riesgo de Desastres 2018-2023, un nivel de exposición por
+      amenaza para cada REGIÓN del país. Santiago del Estero está en la región NOA y no hay
+      detalle por provincia ni por departamento: el cuadro vale para toda la región. Los niveles
+      se publican tal cual los trae el IGN; según su metadata la escala va de 1 a 6, pero la
+      capa trae ceros en tres amenazas: se publican así y su significado está en consulta.

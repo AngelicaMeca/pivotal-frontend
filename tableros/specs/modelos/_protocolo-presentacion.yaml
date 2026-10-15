@@ -1156,6 +1156,89 @@ colores:
         hacienda, gris azulado documentos) ni el cromo del theme, y se distingue de todas ellas tambien en escala de
         grises.
       preguntado_a_jc: "backlog 50"
+    registros_eventos:
+      medidas: [registros]
+      unidad: "registros"
+      hex: ["#eef4f7", "#c5dbe6", "#8db7cc", "#4a87a6", "#1d4f6b"]
+      color_solido: "#2e6a88"
+      estado: nueva
+      agregada: 2026-10-14
+      agregada_por: "el mapa de amenazas hidrometeorologicas (DESINVENTAR, IGN) de General > Infraestructura y riesgo"
+      justificacion: >
+        Un REGISTRO DE EVENTO adverso (una inundacion, una tormenta cargada en la base
+        DESINVENTAR) no es ninguna de las variables que ya tenian rampa: no es una magnitud
+        fisica, no es un papel ni un precio, y no se mide en el mismo grano que nada de lo
+        agricola o ganadero. Es un conteo de sucesos, y el protocolo manda que dos tipos de
+        variable no compartan rampa. Azul petroleo porque las amenazas son de origen HIDRICO
+        (las inundaciones son el 73% de los registros) y porque es sobrio: no lleva rojo ni
+        naranja de alarma, que en un mapa de ministros se lee como emergencia y aca se cuenta
+        historia 1970-2015. Se separa del azul de JC para rendimiento (#ddebf7..#1f4e78) por
+        tono: este es mas verdoso y mas apagado en los pasos medios, y nunca conviven en una
+        misma pagina. NO usa la categoria que trae el IGN ("Muy baja / Baja cantidad de
+        registros"): es un corte de Jenks NACIONAL y pintaria 25 de los 27 departamentos
+        iguales (backlog 105).
+      preguntado_a_jc: "backlog 106"
+    temperatura:
+      medidas: [temperatura_abrigo_150cm_media]
+      unidad: null          # la fuente no la informa (reporte entrega-03, punto 9)
+      hex: ["#fbe5d6", "#f8cbad", "#f4b183", "#c55a11", "#843c0c"]
+      color_solido: "#c55a11"
+      estado: nueva
+      agregada: 2026-10-14
+      agregada_por: "el grafico de lineas de la pagina Estaciones agrometeorologicas INTA (AgroClima, hoja ClimEAI de la maqueta de JC)"
+      justificacion: >
+        Una TEMPERATURA no es ninguna de las variables que ya tenian color: no es una
+        superficie, un volumen, un conteo ni un precio. Le corresponde uno propio. Naranja
+        tostado porque es el color con que se lee el calor sin llegar al rojo de alarma, y
+        porque se separa de todas las rampas que ya existen (el ocre amarillo de produccion es
+        mas claro y mas amarillo, y nunca conviven en una pagina). La maqueta de JC dibuja la
+        linea en el azul por defecto de Excel: no se copia, porque el azul ya es de rendimiento
+        y el protocolo manda que dos tipos de variable no compartan color. Hoy solo se usa como
+        color de linea; la rampa queda para el dia que haya un mapa de temperatura.
+      preguntado_a_jc: "backlog 108"
+
+  # Las CAPAS DE CONTEXTO del IGN (rutas, ferrocarril, estaciones; pedido de JC del
+  # 14-oct-2026, backlog 104). No son escalas de intensidad: son lineas y puntos que se
+  # dibujan ENCIMA de un mapa para ubicarse, asi que no usan rampa. Viven aca y no en el theme
+  # porque son colores de DATO (una ruta es un dato del IGN) y tienen que ser los mismos para
+  # cualquier cliente.
+  #
+  # Criterio cartografico sobrio, el de cualquier mapa vial: rutas en rojo ladrillo (las
+  # nacionales mas anchas que las provinciales), caminos rurales finos y en gris tierra, el
+  # ferrocarril en gris casi negro y las estaciones como puntos. Lo PAVIMENTADO y lo ACTIVO
+  # van en trazo lleno; lo consolidado o de tierra, y lo abandonado o desmantelado, punteado:
+  # el punteado es lo que sobrevive a la impresion en blanco y negro. Los colores se eligieron
+  # para leerse sobre las cinco rampas de mapa de calor (verde, ocre, azul, marron,
+  # borravino): por eso las lineas principales llevan un HALO del color del fondo del cuadro
+  # (`halo`, px de cada lado), que las despega del relleno oscuro de los quintiles altos.
+  #
+  # `estilos` se recorre en orden y cada tramo toma el PRIMERO cuyo `cuando` coincida con sus
+  # propiedades (un `cuando` vacio es "todos"). `rotulo` es lo que dice la leyenda de ese
+  # trazo. JC valida (backlog 106).
+  capas_de_contexto:
+    rutas-nacionales:
+      halo: 1
+      estilos:
+        - {cuando: {calzada: [Pavimentado]}, color: "#a8322b", ancho: 2.4, trazo: lleno, rotulo: "pavimentada"}
+        - {cuando: {}, color: "#a8322b", ancho: 2.0, trazo: punteado, rotulo: "consolidado o tierra"}
+    rutas-provinciales:
+      halo: 0.8
+      estilos:
+        - {cuando: {calzada: [Pavimentado]}, color: "#d0703a", ancho: 1.6, trazo: lleno, rotulo: "pavimentada"}
+        - {cuando: {}, color: "#d0703a", ancho: 1.2, trazo: punteado, rotulo: "consolidado o tierra"}
+    caminos-terciarios:
+      halo: 0
+      estilos:
+        - {cuando: {}, color: "#7a6a58", ancho: 0.6, trazo: lleno, opacidad: 0.55, rotulo: ""}
+    ferrocarril:
+      halo: 1
+      estilos:
+        - {cuando: {estado: [Activo]}, color: "#2b2b2b", ancho: 1.8, trazo: lleno, rotulo: "activo"}
+        - {cuando: {}, color: "#5a5a5a", ancho: 1.3, trazo: punteado, opacidad: 0.8, rotulo: "abandonado o desmantelado"}
+    estaciones-ferrocarril:
+      estilos:
+        - {cuando: {estado: [Activo]}, color: "#2b2b2b", borde: "#fbf4ec", tamanio: 7, rotulo: "activa"}
+        - {cuando: {}, color: "#fbf4ec", borde: "#2b2b2b", tamanio: 5, rotulo: "sin servicio"}
 
   sin_dato:
     hex: "#bdbdbd"

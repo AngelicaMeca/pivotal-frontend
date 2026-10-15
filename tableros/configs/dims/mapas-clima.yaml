@@ -1,0 +1,217 @@
+# Procedencia de site/assets/clima/ (los mapas de la rama AgroClima, maqueta de JC
+# "0000000000 Maqueta Clima 1.xlsx", 14-oct-2026). Mismo criterio que configs/dims/capas-ign.yaml
+# y que los mapas del Observatorio Forrajero (site/assets/mapas-forrajeros/).
+#
+# Estos archivos NO son `raw/`: raw/ es para datos que el pipeline lee y transforma, y el
+# pipeline de SharePoint solo baja Excels. Son IMAGENES que el sitio publica tal cual, sin
+# leerlas: van en site/assets/ y se commitean, como el logo del manual de marca y los iconos de
+# JC. El build las copia a public/plataforma/mapas/clima/<serie>/.
+#
+# De cada mapa hay DOS archivos:
+#   <nombre>.<gif|jpg>   el ORIGINAL, tal cual llego de SharePoint (sha256 abajo). Es el que
+#                        abre el popup.
+#   <nombre>-mini.jpg    la miniatura, 400 px de ancho, JPEG calidad 85. Es la que dibuja la
+#                        grilla: son 115 mapas y con los originales la galeria bajaria 110 MB.
+#                        Se generaron UNA vez (14-oct-2026) con System.Drawing de Windows
+#                        (escalado bicubico de alta calidad) y se commitean junto al original.
+#                        No se regeneran en el build: el pipeline no depende de ninguna
+#                        libreria de imagenes.
+#
+# El ROTULO de cada mapa (fechas) no se escribe en ningun lado: lo calcula el build a partir del
+# NOMBRE del archivo (site_build.periodo_de_mapa_clima), con la regla de cada producto que
+# declara su spec (3001..3006-*.yaml). JC: "CORRECTAS LAS FECHAS Y LAS MINIATURAS".
+#
+# Carpetas de origen en SharePoint (OneDrive de AUTOScraping, "Pivotal Repositorio/Bases de
+# datos"), listadas el 14-oct-2026:
+#   000 Entrega Beta Clima - Parte 1B/3001 - Humedad suelo SDE      (ORA; seis zip JPG-AAAAMMDD.zip)
+#   000 Entrega Beta Clima - Parte 1B/3002 - Evapotranspiracion SDE (SEPA-INTA)
+#   000 Entega beta clima - parte 2/3003 - Variacion Agua SDE       (SEPA-INTA)
+#   000 Entega beta clima - parte 2/3004 - Porcentaje Agua suelo SDE (SEPA-INTA)
+#   000 Entega beta clima - parte 2/3005 - NDVI - SDE               (SEPA-INTA)
+#   000 Entega beta clima - parte 2/3006 - VCI -SDE                 (SEPA-INTA)
+# ("Entega", sin r, es el nombre real de la carpeta.) Los numeros 3001..3006 son los codigos de
+# base que JC escribe al pie de cada hoja de su maqueta ("3002 MP", etc.).
+#
+# Para sumar mapas nuevos: copiar el original y su miniatura (400 px) a la carpeta de la serie,
+# agregar su linea aca y correr `make site`. Un nombre que no siga el patron de su spec corta el
+# build: un mapa no se pierde en silencio.
+
+carpeta: site/assets/clima
+descargado: 2026-10-14
+miniaturas: {ancho_px: 400, formato: jpg, calidad: 85, herramienta: "System.Drawing (Windows), una sola vez"}
+
+series:
+  ora-humedad:
+    codigo_jc: "3001 MP"
+    producto: "Estado de las reservas hídricas en el suelo por cultivo"
+    organismo: "ORA (Oficina de Riesgo Agropecuario)"
+    sharepoint: "000 Entrega Beta Clima - Parte 1B/3001 - Humedad suelo SDE"
+    nota: >
+      Llegaron como seis zip (JPG-20260726.zip ... JPG-20261004.zip, uno por fecha); los jpg de
+      abajo son el contenido de esos zip, sin tocar. Los nombres son "[500_]<CULTIVO>_AAAAMMDD":
+      en la fecha 20260920 vienen sin el prefijo "500_" y en el resto con el; el prefijo no
+      cambia el contenido y el build acepta las dos formas. El codigo de cultivo es el de JC
+      (G1 Girasol Temprano, G2 Girasol Tardio, M1 Maiz Temprano, P Pradera, TC Trigo Tardio, TL
+      Trigo Temprano); se verifico que TC dice "TRIGO - Siembra tardía" en la imagen.
+  evapotranspiracion:
+    codigo_jc: "3002 MP"
+    producto: "Evapotranspiración real máxima (decádica)"
+    organismo: "SEPA - INTA (Instituto de Clima y Agua)"
+    sharepoint: "000 Entrega Beta Clima - Parte 1B/3002 - Evapotranspiracion SDE"
+    nombre: "et_AAAAMM_D (D = decada 1, 2 o 3 del mes)"
+  variacion-agua:
+    codigo_jc: "3003 MP"
+    producto: "Variación del agua disponible hasta 2 metros (decádica)"
+    organismo: "SEPA - INTA (Instituto de Clima y Agua)"
+    sharepoint: "000 Entega beta clima - parte 2/3003 - Variacion Agua SDE"
+    nombre: "db_AAAAMM_D"
+  porcentaje-agua:
+    codigo_jc: "3004 MP"
+    producto: "Agua en el suelo con respecto al máximo posible (decádica)"
+    organismo: "SEPA - INTA (Instituto de Clima y Agua)"
+    sharepoint: "000 Entega beta clima - parte 2/3004 - Porcentaje Agua suelo SDE"
+    nombre: "pj_AAAAMM_D"
+  ndvi:
+    codigo_jc: "3005 MP"
+    producto: "Índice de vegetación NDVI (composición de 16 días)"
+    organismo: "SEPA - INTA (Instituto de Clima y Agua)"
+    sharepoint: "000 Entega beta clima - parte 2/3005 - NDVI - SDE"
+    nombre: "iv_AAAADDD (DDD = dia juliano en que empieza la composicion)"
+  vci:
+    codigo_jc: "3006 MP"
+    producto: "Índice de condición de la vegetación VCI (8 días)"
+    organismo: "SEPA - INTA (Instituto de Clima y Agua)"
+    sharepoint: "000 Entega beta clima - parte 2/3006 - VCI -SDE"
+    nombre: "vi_AAAADDD (DDD = dia juliano en que empieza el periodo)"
+
+# Los ORIGINALES, por serie: nombre: [sha256, bytes]. Las miniaturas no se listan (se derivan).
+archivos:
+  ora-humedad:
+    archivos:
+      500_G1_20260809.jpg: [6d691166cc34c5c7f29a819898c69a8f035d6f3a4e04ea33e20dec33a7c8e89e, 221602]
+      500_G1_20260823.jpg: [dd204c045f137841d4b250e1ac4b7cf52aeaadbc03ad93ed4fd1acc664a980b1, 224017]
+      500_G1_20260906.jpg: [f07d1fef4ce8647c2b10db7dbb65c2d4cd57792b9e3f633de300d9fae9a8f546, 220270]
+      500_G1_20261004.jpg: [f1df2e41861335cfc5256025a9d68fd53d19a1cac7a3f525b8a2a8961199f3ec, 231212]
+      500_G2_20261004.jpg: [97c5116cdc6afa1cbb1666ae688a216381a1e8dbba1bc9a67aaf1a039bc423de, 222889]
+      500_M1_20260906.jpg: [0c3fc2b004144f2e0bd3982f7f12dd1c74dc8d14a4956c23da92164270a5c3d6, 218585]
+      500_M1_20261004.jpg: [cb4c0b9034f6bb9dba47e1f3842b3c0bc9a7535642087386ef9adee83ad83320, 229186]
+      500_P_20260726.jpg: [b82c3789cc72e53e55a3244078f05f67521096f1b5c104cd00f77412004e2b17, 224501]
+      500_P_20260809.jpg: [4b60bb7a6895dc688cc9ae10f96889cae1b59f2d936118a3d91e62ec052d995c, 224126]
+      500_P_20260823.jpg: [33d9bbdae27791afdef504b863d606b3aa3d81df58a1af6c6df298421728950a, 221264]
+      500_P_20260906.jpg: [30f5698c281bdb0990482a0090ef5346b5e868006dbd2f6f4e66ddd7d340639c, 224525]
+      500_P_20260920.jpg: [f440605d0e1f4b3a24b87efa8f012888bf9e410bcc1af9689f149a3c97193ce6, 226881]
+      500_P_20261004.jpg: [0fc5d7c113b8ad0449037c56e50782de074283d9802205e047fffd4b1bb393c4, 223124]
+      500_TC_20260726.jpg: [e06806619ce7d4df9cb4b30c58ce257a25d4b63c2e3419b0dd262dc737e2d0e0, 223269]
+      500_TC_20260809.jpg: [5983fda65aa85b13cec21029cdd4a78c2cf12cc18985e2e9f360a7b4beaf9afb, 221673]
+      500_TC_20260823.jpg: [25b5620141a9507acd1437fdf4dd1f3b6c492c7ae8ead804660bed506a15b1e3, 221346]
+      500_TC_20260906.jpg: [1fe33844fcfd805717aec60530034967ae1edf9796e77d87fd12b27638c4545e, 219925]
+      500_TC_20261004.jpg: [a3e0e20192eb7214ced8a8dbdee4f50a0e869dac83f362f1e65f3c4f33a2f018, 221734]
+      500_TL_20260726.jpg: [c2779e209ee9860ee18bd96584972138391a720ee0aa25d0e299f460e98af994, 232844]
+      500_TL_20260809.jpg: [3d88ee660c76f187e28c204eec70d7978b1202ebcf3f8ba6cc18896f5c6db457, 232313]
+      500_TL_20260823.jpg: [00bb2efe69fc300b92f93312cb14e0655aa968962b434ddecd83a0f7bab4a219, 231375]
+      500_TL_20260906.jpg: [734447608b428c1ede63bdeb77176f49dcf490547478ed1ddf0f89ad24f8f202, 229439]
+      500_TL_20261004.jpg: [18ed920765d4f2c0d0cc4ed2ce3d8c4eb00566706dcdaa45748c0deed8adeefe, 230747]
+      G1_20260920.jpg: [e1877fd3905ed4dc182ca6753a09f31acc4fa3031bdff263c81f5dd38a071dcb, 231802]
+      G2_20260920.jpg: [12f3c6b351533990ff138084ffde6a9e9d13d452ac388f407b6b8273237529b9, 221948]
+      M1_20260920.jpg: [65e4394bc574812900d837dd27f605a18480dcd06b4f7e868614121e3c190ef6, 221190]
+      TC_20260920.jpg: [52af9bbfc8b08a04f5a2b1d4daecff9dd010d42b4defaa0c26a56778ba2a31c0, 220389]
+      TL_20260920.jpg: [b756f22df671165acec95fc6b98995257eb975edd9408fcfa73bc9261940a6d0, 232518]
+  evapotranspiracion:
+    archivos:
+      et_202604_1.gif: [7f2b70c80dee60dde3fdbeb6e28cc4d7d0360205902546cdc564151638fb0846, 1613970]
+      et_202604_2.gif: [a7ae9c814f86db5731b7b91dfe31cea283df73109160bf53b6ae55b8ee2f2555, 1654428]
+      et_202604_3.gif: [b6ab56b9fb92d694928f3a9f459d221b7b03d10288242f42a96914c9bf4fb9a5, 1715266]
+      et_202605_1.gif: [1288ae071e9ab7dc37c76fac4c15e26b22c9220cd1848b4d751b7bd3b71da2cb, 1674320]
+      et_202605_2.gif: [756d40bdd4ad8a170b7775a37303a7e7eecbf05a25dc75ca2f9e679c8a80e336, 1685685]
+      et_202605_3.gif: [fd2c974cf33269c8159c9d226e57fb777caf806dc15ec9ceb84f441b76c9dfa8, 1662365]
+      et_202606_1.gif: [e8605a90ddc5608870a98d3dffe5e709e787b49276c7afa65a4c1f5f7e844670, 1461395]
+      et_202606_2.gif: [6824b9f90c33c6fc3b7b740b4040971a58f134380fbdb49b07640f91df091ab8, 1623517]
+      et_202606_3.gif: [34281aa314bd4180524d5c762e62dadce8b231a9e6e58187b0c848b5936086de, 1642426]
+      et_202607_1.gif: [336c1d3d1fdd12ab626e47976c17422fd13aac598589ad0eaab635e831316306, 1584688]
+      et_202607_2.gif: [b68b2bccb327f335325dd0b00189b2711550a9794497b647ce33039628c4ffac, 1488594]
+      et_202607_3.gif: [e814445390650bad0e5d66a0945b6a347caea118f2c3cca10b7f1e7b3ec9df4b, 1625201]
+      et_202608_1.gif: [c9369ef5f737b27cf94ea44954cc67ee2fd3b65941645b93fc9fd1f32b77a333, 1681966]
+      et_202608_2.gif: [388c808f2be5e07c9a280791990e83d7878bc2f695f9adf212a83bd3cab1a13d, 1667931]
+      et_202608_3.gif: [46b60ea3fd4bffaefd339df9c350ed825e4be13253aa4c4fa11f9557d3f12153, 1673304]
+      et_202609_1.gif: [b77eca10d2fbfe3002e54a5d5ea2ca6f19dbb8f0c344b63461935f720090178c, 1691690]
+      et_202609_2.gif: [ec7bc1b90dec40025402c35ba2c070d02ba2031a56fb8d7d83dc34afbd5db80b, 1746190]
+      et_202609_3.gif: [7faeed86ddc3f468dc8dc760c75e65d94a8364fc52882b48a58620888e1d1c25, 1670310]
+  variacion-agua:
+    archivos:
+      db_202604_1.jpg: [ac23588b61c35c2f020a985448838dc3ebfdb571dd6607bcaa17220ee5559dfd, 602975]
+      db_202604_2.jpg: [e7887754a93f3a84195ff6ab2162ecc006e6c56ecb3cdaf729e6060234fed83a, 625859]
+      db_202604_3.jpg: [81185dd88c25cc00fcf1d99fd0212d96a5a2e01aa6938c765d313cd9d0a92626, 587898]
+      db_202605_1.jpg: [60fe0eee63c40c74dc644a12c7ac1a0faa727466c9dec061071b65f207aa6d61, 586283]
+      db_202605_2.jpg: [748a2fef029b8e184cfd7e6f43f24794675f0426aed7a0d0fca67ac4d7a6e006, 554183]
+      db_202605_3.jpg: [9eb069e8004feade03bbaaf630e226ce4e2773179fb5890d89982d4c49fea07f, 565454]
+      db_202606_1.jpg: [67f1d588d501cdc475e68b21d5026e7cf1b50278f516554fb4b71d718e08ad78, 603891]
+      db_202606_2.jpg: [6e48fdb676a7962b3efe97474977dbd73592060b083674a490b1cd2bba7bd76f, 577807]
+      db_202606_3.jpg: [def85d08b4154045cb3f4abcfac366fce9aa1bf43ce23d13834ce52aaeb532bc, 561652]
+      db_202607_1.jpg: [c7473456cd4463de36adbc045473aaee0d32880ec06b00e1f008ccad37e2c116, 578198]
+      db_202607_2.jpg: [6a07a279e25b3e9aa2701a820b7154614d9143a74337579ef8ca4c5116401663, 626245]
+      db_202607_3.jpg: [af8b5ba759a5ca354a51125cae8447c08fd4b1046abbdd92f31302ed98fca156, 600023]
+      db_202608_1.jpg: [73930c8a0f383410705cb546ea6a7e14ac634318dce9d27bc13373d765e52668, 594901]
+      db_202608_2.jpg: [7d03f36215f25d5309363064e98813cf2d9eea9ffba4f4ed0bf594876f94c5a8, 712802]
+      db_202608_3.jpg: [dd9a2fac62b51c560c9ee7a28d231a221526372a240ed255b4a4ecb9c0cc88a4, 612126]
+      db_202609_1.jpg: [564185657f76ba071998dbb165b76b12c2e35fa3abe70317706991d04d73308e, 804129]
+      db_202609_2.jpg: [751fe90f8e77086d6f40ceff82f266c653e7369c4db1dbfcc6deaa5de499de10, 630981]
+      db_202609_3.jpg: [568c99f83ac5900f86a4ba4027ad09a1fee1b7a83a5a3e512865225257a7d8ce, 665513]
+  porcentaje-agua:
+    archivos:
+      pj_202604_1.jpg: [200829e993af1a13947e64a78cb712c479c741cca3f1f616ba09a950f7eb1627, 813324]
+      pj_202604_2.jpg: [5d16e6b23179b413f135a994d73c7bdcfb41c242729b9c790272d06920716b85, 754250]
+      pj_202604_3.jpg: [6b960c138ef2bd7922eebc6c500ea32d8fdd0a477154bff4ab0c848fe873ea1d, 777996]
+      pj_202605_1.jpg: [901d211cfacb3f0b507d6814c592df801dde26bb63f4311190bdccb84af1c385, 800743]
+      pj_202605_2.jpg: [88141e5b9ef28c47c8622144c8a85d6cda9209e44c3dbe0cf7971e01a265c76b, 798962]
+      pj_202605_3.jpg: [8c906d0ba877febc04da02f74ce7330061196e19b188c62370e2928f9d55e0fb, 799715]
+      pj_202606_1.jpg: [295afcf17e959bcc95e1e83c6c8f9560a99b0508b7f8d618455c530bbd64cf84, 813361]
+      pj_202606_2.jpg: [cf12605d8324b37128131838d1258a9d16d1bfb62add3cc60d2b03d8e6831eed, 805509]
+      pj_202606_3.jpg: [c6a220cb8a24296abf4b7efbed0071d53aa626a7a6479c4cb48383e329f61854, 818884]
+      pj_202607_1.jpg: [7e5ac33fe41340550e6b4a856a53ad88326fbd43c59ae05096e4e9a448a21173, 809852]
+      pj_202607_2.jpg: [d3262cceadda68dff7d9098950eaeb45721c399fd9e4420f9e4a43dc2af2d22d, 811171]
+      pj_202607_3.jpg: [f2c32ae9cf9387a931d4ed03c6bb467ea13ae6247095398b875419e73ed6ed6f, 805577]
+      pj_202608_1.jpg: [842df51b7a886bb66ee99e1ca54e10f02b5a3f64f1ad01fd1ceb00478ffb4f5e, 800355]
+      pj_202608_2.jpg: [36fdc5c8cfc75f16459fc26a3d84f14a1eecf3b95bce5abf38e2dcf4c35c1b72, 1019974]
+      pj_202608_3.jpg: [2a8296183db3086392fa9f5e4ba5b7fe887fa86e62abc748cdf0c4988cd92233, 821780]
+      pj_202609_1.jpg: [4a8cd4f7ecc7f9fecb99565726ec30c029dc3979c4b443cba76a12198b591f98, 1046936]
+      pj_202609_2.jpg: [01454e40594bb7de3db090e134db2589c50591748fefae7dc3faeb3edddc47c5, 836829]
+      pj_202609_3.jpg: [26b533b12729707875ea194f1fa605022bc21729a5c83208920d00a483c542cc, 859850]
+  ndvi:
+    archivos:
+      iv_2026081.gif: [fbbfd7ba17d5471c4e26c66b31f5f90c34b66504c2b463c95084ac5aae5de9fc, 1673986]
+      iv_2026097.gif: [1b92ee800a918d81446b14f1608b63211f34059e2f2a430f1dfa0717339a015a, 1687852]
+      iv_2026113.gif: [4a4c85505b0ad48b548794ecc83ca4024daf0b0269f30019fbe4727dc5188e20, 1728526]
+      iv_2026129.gif: [783e23f648ec0d739ce7f3e4dac1ec88e223dd5ebe481bc34d8016fdb131b1a9, 1755193]
+      iv_2026145.gif: [5fb97fdbdc93e285199657d9562002a4bf63efc702fc8c7b90186ba4087da133, 987774]
+      iv_2026161.gif: [faa545fe9cee8d8d40f2200e0a290297eed54d6427c8988cf19d6bf9a268be21, 1734458]
+      iv_2026177.gif: [037139ff96b352cad5973e9d4375bd23f31d19e8c685248c63fd8ca4b6489a31, 1725051]
+      iv_2026193.gif: [57da74acf33b57e92ba3a5434b2706ebc2ad8f7e1a7db23dc355c3039caa590e, 1701526]
+      iv_2026209.gif: [86c1823020638131b8130d0c352160009535b7b88626fff0cdf6e7974c100617, 1718775]
+      iv_2026225.gif: [bd0f87860316a97258be47812f15f2eac4dbf1895226b464898b1a5d3ec1a550, 1748228]
+      iv_2026241.gif: [36844295ec50f9b8fb558023a4366366f767dcf66bb1037dda0b77e8a0af6b12, 1740447]
+      iv_2026257.gif: [34210aacea724e655561e48b859d4c9c14c9719bfa26f5b9f3262aa09b38d624, 1762544]
+  vci:
+    archivos:
+      vi_2026073.jpg: [9ef215f2c9ac62d39751119c11e17c6e4d4a12a882a93df53fee22708932cdcb, 990462]
+      vi_2026081.jpg: [1099b13a64119fa92b1806a41ab58ec5f81e8e5409817bb513ae0012b4c5e87f, 986647]
+      vi_2026089.jpg: [0e8cb8e747b297442fd92d1171c41a765a7b57d73930b12c8feee6fddea6e048, 994287]
+      vi_2026097.jpg: [a4e8083c10c4bca2da327b6db70b5ff3f3fdeffb665e148f77c397bb198f2731, 983810]
+      vi_2026105.jpg: [8d211607dab3815ccf9b73c4b7e0e2d5015d1c5eae4f7e48798d0730171a49ee, 984462]
+      vi_2026113.jpg: [92630a0dcbae01f3248c4be6424983fc247868a4d71ed0a445630b285868d449, 998439]
+      vi_2026121.jpg: [246b3ed1c58f29cd985161c89e9b0c38c729b676e6f3a83c8f10d7b4cb8ac517, 1196747]
+      vi_2026129.jpg: [54647f190423a34df597a233f66d3825571850371d121e3bc52322dcb847ce7d, 1012515]
+      vi_2026137.jpg: [38aa8ce2f8a20b7fb946f6cf344e5eeb063902440f319a3f1f4da8cce8f4e616, 1022853]
+      vi_2026145.jpg: [5aab7234dace028bfc220d4ba0a56c715ab2f9b2331de722fd4c1a5fffac9540, 1017608]
+      vi_2026153.jpg: [8a1cfc5992eafd6180d7982f556ba7358043555ed60636c8e5f720b2af617bb3, 1014988]
+      vi_2026161.jpg: [3569833d23842e7bc6f1bd30516d7aef2aa98aa2ca10bef2f69de02411ae7549, 1012392]
+      vi_2026169.jpg: [5ba85ae81a76ee3d8ee3cc2a25c666525e26fbc147e815e7817e98bc68750ed9, 1005729]
+      vi_2026177.jpg: [89929aff2130d944899ef58198438cb36cfc09f331aada204c0ddd6e40ee1a89, 1009361]
+      vi_2026185.jpg: [c00881ebf2185d8401d37acb6e8d25b712d7a7d8ba86248b68a7632a1bae8de6, 1011153]
+      vi_2026193.jpg: [f599e8aaffb2f37b2e603a2dbe6b152b71ea8339fe90514bc6a17f13de269a66, 970100]
+      vi_2026201.jpg: [f2feb7bc9ac65250604b0b6347c1c043567a095645ab814983f82bdb12747749, 946384]
+      vi_2026209.jpg: [b1ac3b9b1a9820f7a05347f362d78b70ed0fcae564996878b1a86f4245d05a48, 1117474]
+      vi_2026217.jpg: [a36fece0acd055804602fb34cbee85a042a6ad77f586e19c36952236ea053ee6, 955159]
+      vi_2026225.jpg: [d3fc3bfbaa5ca1cb867d7faa348c58a2b9bda6323ce329edceb3dbe766432338, 954688]
+      vi_2026233.jpg: [9c289b31cfad65247ae7d2ef6a58259c46a8e56219591e1a0e206d168e838667, 966224]
+      vi_2026241.jpg: [7b69a361c2aea95e75ff0157f7167d6724826d9a95ede1189ed185da4d450a3f, 982426]
+      vi_2026249.jpg: [6a76a4ed23d76d5baa10a81eea30700abcd1a38cf776dc59ae1ee07471454dbe, 993080]

@@ -99,7 +99,9 @@ export default function iniciar(PIVOTAL) {
   function mostrar(indice) {
     popup.i = indice;
     var mapa = popup.mapas[indice];
-    popup.titulo.textContent = mapa.rotulo;
+    /* `titulo` lo manda el build cuando el rotulo de la grilla no alcanza para saber que se
+       esta viendo (las galerias de AgroClima le suman el año, y la ORA el cultivo y la fecha). */
+    popup.titulo.textContent = mapa.titulo || mapa.rotulo;
     popup.imagen.src = mapa.grande;
     popup.imagen.alt = mapa.rotulo;
     popup.anterior.disabled = indice === 0;
@@ -111,9 +113,11 @@ export default function iniciar(PIVOTAL) {
   }
 
   function abrirPopup(figura, mapa) {
-    popup.desde = figura.getBoundingClientRect();
     var dialogo = popup.dialogo || crearDialogo();
     mostrar(popup.mapas.indexOf(mapa));
+    /* La caja crece desde la miniatura que se APRETO: `mostrar` la apunta a la de la grilla, y
+       el mapa grande del lateral (AgroClima) es otra figura del mismo mapa. */
+    popup.desde = figura.getBoundingClientRect();
     dialogo.showModal();
     popup.anim.remedir();
     popup.anim.mover(popup.anim.encajarEn(popup.desde), "none", true, function () {});
@@ -130,33 +134,121 @@ export default function iniciar(PIVOTAL) {
     });
   }
 
+  /* Una miniatura con su rotulo, que abre el popup en ESE mapa. `perezosa` deja que las de
+     abajo del pliegue se bajen cuando hacen falta (son decenas). */
+  function figuraDe(mapa, perezosa) {
+    var figura = document.createElement("figure");
+    figura.className = "galeria-mapa";
+    var boton = document.createElement("button");
+    boton.type = "button";
+    boton.setAttribute("aria-label", "Ampliar " + (mapa.titulo || mapa.rotulo));
+    var img = document.createElement("img");
+    img.src = mapa.mini;
+    img.alt = mapa.titulo || mapa.rotulo;
+    /* La caja de la miniatura se reserva ANTES de que la imagen baje (ver el CSS de
+       `.galeria-mapa img`). Si el build manda el tamaño de la miniatura -los mapas de clima
+       son verticales, no apaisados como los forrajeros- esa proporcion le gana a la del CSS. */
+    if (mapa.ancho && mapa.alto) {
+      img.width = mapa.ancho;
+      img.height = mapa.alto;
+      img.style.aspectRatio = mapa.ancho + " / " + mapa.alto;
+    }
+    if (perezosa) { img.loading = "lazy"; }
+    img.decoding = "async";
+    boton.appendChild(img);
+    var pie = document.createElement("figcaption");
+    pie.textContent = mapa.rotulo;
+    boton.addEventListener("click", function () { abrirPopup(figura, mapa); });
+    figura.appendChild(boton);
+    figura.appendChild(pie);
+    return figura;
+  }
+
+  /* El lateral de las galerias de AgroClima, como lo dibuja JC: el mapa mas reciente en grande
+     arriba y, debajo, el cuadro con la definicion del producto y el link a la fuente. Todos los
+     textos vienen del spec (literales de JC). */
+  function pintarLateral(caja, elemento) {
+    var lateral = caja.querySelector("[data-galeria-lateral]");
+    if (!lateral) { return; }
+    PIVOTAL.vaciar(lateral);
+    var hayDestacado = elemento.destacado !== undefined && elemento.destacado !== null;
+    lateral.hidden = !hayDestacado && !elemento.definicion;
+    if (lateral.hidden) { return; }
+    if (hayDestacado) {
+      var mapa = elemento.mapas[elemento.destacado];
+      var grande = figuraDe(mapa, false);
+      grande.classList.add("galeria-destacado");
+      grande.querySelector("figcaption").textContent = mapa.titulo || mapa.rotulo;
+      lateral.appendChild(grande);
+    }
+    var definicion = elemento.definicion;
+    if (definicion) {
+      var cuadro = document.createElement("section");
+      cuadro.className = "galeria-definicion";
+      var titulo = document.createElement("h3");
+      titulo.textContent = definicion.titulo;
+      cuadro.appendChild(titulo);
+      (definicion.parrafos || []).forEach(function (texto) {
+        var p = document.createElement("p");
+        p.textContent = texto;
+        cuadro.appendChild(p);
+      });
+      if (definicion.enlace) {
+        var p = document.createElement("p");
+        var a = document.createElement("a");
+        a.href = definicion.enlace.href;
+        a.textContent = definicion.enlace.texto;
+        a.rel = "noopener";
+        a.target = "_blank";
+        p.appendChild(a);
+        cuadro.appendChild(p);
+      }
+      lateral.appendChild(cuadro);
+    }
+  }
+
   PIVOTAL.init(function (combo, cajas) {
     combo.elementos.forEach(function (elemento, i) {
       var grilla = cajas[i].querySelector("[data-galeria]");
       if (!grilla) { return; }
       PIVOTAL.vaciar(grilla);
+      pintarLateral(cajas[i], elemento);
+      /* Cuantas por fila lo dice el spec (JC dibuja seis). Sin el dato queda la grilla que se
+         acomoda sola, la de los mapas forrajeros. */
+      if (elemento.por_fila) {
+        grilla.style.setProperty("--por-fila", elemento.por_fila);
+        grilla.classList.add("galeria-por-fila");
+      }
       popup.mapas = elemento.mapas;
       popup.figuras = [];
-      elemento.mapas.forEach(function (mapa) {
-        var figura = document.createElement("figure");
-        figura.className = "galeria-mapa";
-        var boton = document.createElement("button");
-        boton.type = "button";
-        boton.setAttribute("aria-label", "Ampliar " + mapa.rotulo);
-        var img = document.createElement("img");
-        img.src = mapa.mini;
-        img.alt = mapa.rotulo;
-        /* Son 28 miniaturas: las que estan abajo del pliegue se bajan cuando hacen falta. */
-        img.loading = "lazy";
-        img.decoding = "async";
-        boton.appendChild(img);
-        var pie = document.createElement("figcaption");
-        pie.textContent = mapa.rotulo;
-        boton.addEventListener("click", function () { abrirPopup(figura, mapa); });
-        figura.appendChild(boton);
-        figura.appendChild(pie);
+      /* La ORA va por FILAS: una por fecha, con la fecha arriba, y una columna fija por
+         cultivo. Donde falta la imagen de un cultivo queda el lugar en blanco (JC, X92): no se
+         corre la fila. El resto es una lista corrida de la mas reciente a la mas vieja. */
+      if (elemento.filas) {
+        elemento.filas.forEach(function (fila) {
+          var titulo = document.createElement("h3");
+          titulo.className = "galeria-fila-titulo";
+          titulo.textContent = fila.titulo;
+          grilla.appendChild(titulo);
+          fila.celdas.forEach(function (indice) {
+            if (indice === null || indice === undefined) {
+              var hueco = document.createElement("div");
+              hueco.className = "galeria-hueco";
+              hueco.setAttribute("aria-hidden", "true");
+              grilla.appendChild(hueco);
+              return;
+            }
+            var figura = figuraDe(elemento.mapas[indice], true);
+            grilla.appendChild(figura);
+            popup.figuras[indice] = figura;
+          });
+        });
+        return;
+      }
+      elemento.mapas.forEach(function (mapa, indice) {
+        var figura = figuraDe(mapa, true);
         grilla.appendChild(figura);
-        popup.figuras.push(figura);
+        popup.figuras[indice] = figura;
       });
     });
   });

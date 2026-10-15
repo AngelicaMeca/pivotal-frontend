@@ -49,6 +49,7 @@ from pipeline import stock as stk
 from pipeline import comercializacion as com
 from pipeline import lecheria as lec
 from pipeline import vegetales as veg
+from pipeline import clima as cl
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DIR_MODELOS = os.path.join(RAIZ, "specs", "modelos")
@@ -62,7 +63,9 @@ DIR_PUBLICO = os.path.join(DIR_SITIO_WEB, "public", "plataforma")
 DIR_CONTENIDO = os.path.join(DIR_SITIO_WEB, "src", "tableros", "contenido")
 DIR_ESTILOS = os.path.join(DIR_SITIO_WEB, "src", "tableros", "estilos")
 # Lo que el build genera dentro de public/plataforma (todo, salvo lo que no genera el build)
-GENERADOS_PUBLICOS = ("data", "geo", "iconos", "_privado")
+# `mapas` y `clima`: las imagenes de las galerias y la miniatura de las estaciones de
+# AgroClima. Se borran para que un mapa que sale de la ventana no quede publicado.
+GENERADOS_PUBLICOS = ("data", "geo", "iconos", "_privado", "mapas", "clima")
 
 # Donde quedan montados los tableros dentro del sitio. Toda URL que escribe este archivo lleva
 # el prefijo, y ninguna termina en barra (el sitio no usa trailingSlash).
@@ -9490,6 +9493,465 @@ def construir_tablero_apicola(ctx, spec):
 
 
 # ==========================================================================
+# Capas del IGN (pedido de JC del 14-oct-2026, backlog 104)
+# ==========================================================================
+# Dos usos de las mismas capas, decididos por la usuaria el 14-oct-2026:
+#   1. la seccion General > Infraestructura y riesgo (dos paginas: red vial y ferrocarril, y
+#      amenazas hidrometeorologicas), con su propio contexto (`ContextoCapasIgn`);
+#   2. CAPAS DE CONTEXTO que se prenden sobre los mapas que ya existen. Son opt-in por spec,
+#      panel por panel (`paneles.mapa.capas: [rutas-nacionales, ...]`), y en un mapa de calor
+#      arrancan SIEMPRE apagadas: con todo apagado el mapa es el de siempre, byte a byte en el
+#      dibujo (ver `capas_del_panel`).
+# Las capas viven en configs/dims/capas-ign/ (las bajo pipeline/capas_ign.py del WFS del IGN y
+# se commitean ya recortadas). El build las COPIA a public/plataforma/geo/capas/: el sitio no
+# le pide nada al servidor del IGN.
+DIR_CAPAS_IGN = os.path.join(DIR_CONFIGS, "dims", "capas-ign")
+RADIO_TIERRA_KM = 6371.0088          # radio medio (IUGG), el de la nota metodologica
+FORMAS_CON_CAPAS = ("mapa", "mapa-capas")
+_CATALOGO_CAPAS = None
+# El valor del selector del mapa de amenazas que suma todos los eventos.
+TOTAL_EVENTOS = "total"
+
+
+def catalogo_capas():
+    """Las capas que un mapa puede prender: {id: definicion lista para el navegador}.
+
+    Junta dos fuentes, y ninguna se escribe aca: QUE es cada capa (archivo, etiqueta, tooltip,
+    fuente) sale de configs/dims/capas-ign.yaml (`publicacion`), y COMO se dibuja (color,
+    ancho, trazo) de `colores.capas_de_contexto` del protocolo, porque es color de dato.
+    """
+    global _CATALOGO_CAPAS
+    if _CATALOGO_CAPAS is not None:
+        return _CATALOGO_CAPAS
+    publicacion = pr.cargar_yaml(os.path.join(DIR_CONFIGS, "dims", "capas-ign.yaml"))[
+        "publicacion"]
+    estilos = pr.cargar_protocolo()["colores"]["capas_de_contexto"]
+    catalogo = {}
+    for id_capa, decl in publicacion["capas"].items():
+        origen = os.path.join(DIR_CAPAS_IGN, decl["archivo"])
+        if not os.path.exists(origen):
+            raise pr.ErrorDeProtocolo("La capa %s pide %s, que no existe." % (id_capa, origen))
+        if decl["geometria"] not in ("lineas", "puntos"):
+            raise pr.ErrorDeProtocolo("La capa %s declara la geometria %r (lineas o puntos)."
+                                      % (id_capa, decl["geometria"]))
+        if id_capa not in estilos:
+            raise pr.ErrorDeProtocolo(
+                "La capa %s no tiene estilo en _protocolo-presentacion.colores."
+                "capas_de_contexto: su color lo manda el protocolo, no el sitio." % id_capa)
+        estilo = estilos[id_capa]
+        lista = []
+        for e in estilo["estilos"]:
+            item = {"cuando": {k: list(v) for k, v in (e.get("cuando") or {}).items()},
+                    "color": e["color"], "rotulo": e.get("rotulo", "")}
+            for clave in ("ancho", "trazo", "opacidad", "borde", "tamanio"):
+                if clave in e:
+                    item[clave] = e[clave]
+            lista.append(item)
+        if not lista or lista[-1]["cuando"]:
+            raise pr.ErrorDeProtocolo(
+                "El ultimo estilo de la capa %s tiene que ser el general (`cuando: {}`): si no, "
+                "un tramo que no coincida con ninguno quedaria sin dibujar." % id_capa)
+        catalogo[id_capa] = {
+            "origen": origen,
+            "archivo": "%s/%s/%s" % (PREFIJO, publicacion["carpeta_publica"], decl["archivo"]),
+            "etiqueta": decl["etiqueta"], "geometria": decl["geometria"],
+            "tooltip": decl["tooltip"], "fuente": decl["fuente"],
+            "grande": bool(decl.get("grande")), "halo": estilo.get("halo", 0),
+            "estilos": lista,
+        }
+    _CATALOGO_CAPAS = {"rotulo_fuentes": publicacion["rotulo_fuentes"],
+                       "rotulo_control": publicacion["rotulo_control"], "capas": catalogo}
+    return _CATALOGO_CAPAS
+
+
+def capas_del_panel(tablero, id_panel, definicion):
+    """Las capas que declara un panel, validadas, en el orden del spec: [{id, etiqueta,
+    prendida}]. Lista vacia si el panel no declara ninguna (lo de siempre).
+
+    Se acepta `capas: [id, ...]` (todas apagadas) o `capas: [{id, prendida}, ...]`. En un mapa
+    de CALOR (forma `mapa`) ninguna puede arrancar prendida: JC ya valido esas maquetas y con
+    todo apagado tienen que verse exactamente igual que antes. Un id que no este en el
+    catalogo, o capas en un panel que no es un mapa, cortan la corrida.
+    """
+    declaradas = (definicion or {}).get("capas") or []
+    if not declaradas:
+        return []
+    if id_panel not in FORMAS_CON_CAPAS:
+        raise pr.ErrorDeProtocolo(
+            "El panel %s del tablero %s declara `capas`, y solo un mapa (%s) sabe dibujarlas."
+            % (id_panel, tablero["slug"], ", ".join(FORMAS_CON_CAPAS)))
+    catalogo = catalogo_capas()["capas"]
+    salida, vistas = [], set()
+    for item in declaradas:
+        item = item if isinstance(item, dict) else {"id": item}
+        id_capa = item["id"]
+        if id_capa not in catalogo:
+            raise pr.ErrorDeProtocolo(
+                "El panel %s del tablero %s pide la capa %r, que no esta en "
+                "configs/dims/capas-ign.yaml (publicacion.capas). Disponibles: %s"
+                % (id_panel, tablero["slug"], id_capa, ", ".join(sorted(catalogo))))
+        if id_capa in vistas:
+            raise pr.ErrorDeProtocolo("El panel %s del tablero %s repite la capa %s."
+                                      % (id_panel, tablero["slug"], id_capa))
+        vistas.add(id_capa)
+        prendida = bool(item.get("prendida"))
+        if prendida and id_panel == "mapa":
+            raise pr.ErrorDeProtocolo(
+                "El mapa de calor del tablero %s prende la capa %s al abrir. Sobre un mapa de "
+                "calor las capas arrancan APAGADAS (decision de la usuaria del 14-oct-2026)."
+                % (tablero["slug"], id_capa))
+        salida.append({"id": id_capa, "etiqueta": catalogo[id_capa]["etiqueta"],
+                       "prendida": prendida})
+    return salida
+
+
+def catalogo_del_tablero(tablero):
+    """Lo que el navegador necesita para dibujar las capas que nombra ESTE tablero: viaja en
+    su JSON de datos (`capas`), y solo si nombra alguna. Sin capas el payload no cambia."""
+    ids = []
+    for declarado in tablero["paneles"].get("orden") or []:
+        for capa in capas_del_panel(tablero, declarado["id"],
+                                    tablero["paneles"].get(declarado["id"])):
+            if capa["id"] not in ids:
+                ids.append(capa["id"])
+    if not ids:
+        return None
+    catalogo = catalogo_capas()
+    return {"rotulo_fuentes": catalogo["rotulo_fuentes"],
+            "capas": {i: {k: v for k, v in catalogo["capas"][i].items() if k != "origen"}
+                      for i in ids}}
+
+
+def km_de_linea(geometria):
+    """Largo de una LineString o MultiLineString en km: haversine entre puntos consecutivos.
+    Determinista: recorre siempre en el orden del archivo."""
+    import math
+    partes = (geometria["coordinates"] if geometria["type"] == "MultiLineString"
+              else [geometria["coordinates"]])
+    total = 0.0
+    for parte in partes:
+        for (lon1, lat1), (lon2, lat2) in zip(parte, parte[1:]):
+            p1, p2 = math.radians(lat1), math.radians(lat2)
+            dp, dl = p2 - p1, math.radians(lon2 - lon1)
+            h = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
+            total += 2 * RADIO_TIERRA_KM * math.asin(math.sqrt(h))
+    return total
+
+
+class ContextoCapasIgn:
+    """El contexto de General > Infraestructura y riesgo. No lee marts: lee las capas del IGN
+    de configs/dims/capas-ign/ y los nombres de los departamentos de dim_geo."""
+
+    familia = "capas-ign"
+    # La propiedad que abre cada capa de lineas en la tabla de km.
+    APERTURA = {"rutas-nacionales": "calzada", "rutas-provinciales": "calzada",
+                "caminos-terciarios": "calzada", "ferrocarril": "estado"}
+
+    def __init__(self, con):
+        self.protocolo = pr.cargar_protocolo()
+        self.comunes = pr.cargar_comunes(self.familia)
+        self.theme = pr.cargar_theme()
+        self.navegacion = pr.cargar_yaml(os.path.join(DIR_SITE, "navegacion.yaml"))
+        self.colores = pr.Colores(self.protocolo, self.comunes, self.theme)
+        self.geo = _Geo(con)
+        self.hechos = self.geo
+        self.notas = self.comunes["notas_metodologicas"]
+        catalogo = catalogo_capas()["capas"]
+        # Km por capa y por valor de su apertura: {(capa, valor): km}.
+        self.km = {}
+        for capa, propiedad in sorted(self.APERTURA.items()):
+            with open(catalogo[capa]["origen"], encoding="utf-8") as f:
+                for feature in json.load(f)["features"]:
+                    clave = (capa, feature["properties"][propiedad])
+                    self.km[clave] = self.km.get(clave, 0.0) + km_de_linea(feature["geometry"])
+        with open(catalogo["estaciones-ferrocarril"]["origen"], encoding="utf-8") as f:
+            self.estaciones = [x["properties"] for x in json.load(f)["features"]]
+        with open(os.path.join(DIR_CAPAS_IGN, "amenazas-desinventar.json"), encoding="utf-8") as f:
+            self.desinventar = json.load(f)
+        with open(os.path.join(DIR_CAPAS_IGN, "amenazas-sinagir.json"), encoding="utf-8") as f:
+            self.sinagir = json.load(f)
+        # Los departamentos de DESINVENTAR tienen que ser los de dim_geo: si el IGN cambia un
+        # codigo, se corta aca y no sale un mapa con un departamento en blanco.
+        self.registros = {}
+        for fila in self.desinventar["departamentos"]:
+            if fila["geo_id"] not in self.geo.nombre:
+                raise pr.ErrorDeProtocolo("DESINVENTAR trae el departamento %s, que no esta en "
+                                          "dim_geo." % fila["geo_id"])
+            self.registros[fila["geo_id"]] = fila
+        faltan = [g for g in self.geo.deptos if g not in self.registros]
+        if faltan:
+            raise pr.ErrorDeProtocolo("DESINVENTAR no trae los departamentos %s." % faltan)
+        # Los eventos con algun registro en la provincia, de mas a menos frecuente (empate:
+        # el orden del IGN). Los que no tienen ninguno no entran al selector ni a la tabla.
+        orden_ign = self.desinventar["eventos"]
+        totales = {e: sum(f["eventos"][e] for f in self.registros.values()) for e in orden_ign}
+        self.total_evento = totales
+        self.eventos = sorted([e for e in orden_ign if totales[e] > 0],
+                              key=lambda e: (-totales[e], orden_ign.index(e)))
+        self.anio = None
+
+    def notas_de(self, spec, extra=()):
+        ids = list(spec.get("notas_metodologicas") or []) + list(extra)
+        return [{"titulo": self.notas[i]["titulo"], "texto": " ".join(self.notas[i]["texto"].split())}
+                for i in ids if i in self.notas]
+
+    def fuente(self, clave):
+        return self.comunes["fuentes"][clave]
+
+    def km_de(self, capa, valor=None):
+        return sum(v for (c, x), v in self.km.items() if c == capa and (valor is None or x == valor))
+
+    def registros_de(self, geo, evento):
+        fila = self.registros[geo]
+        return fila["registros"] if evento == TOTAL_EVENTOS else fila["eventos"][evento]
+
+    def total_registros(self, evento=TOTAL_EVENTOS):
+        return sum(self.registros_de(g, evento) for g in self.geo.deptos)
+
+    def nombre(self, geo):
+        return self.geo.nombre.get(geo, str(geo))
+
+
+
+def _km(valor):
+    """Km enteros con punto de miles; el cero se escribe con guion (convencion de JC)."""
+    return "–" if not valor or round(valor) == 0 else pr.fmt_numero(valor, 0)
+
+
+def indicadores_red_vial(ctx, spec):
+    entero = lambda v: (pr.fmt_numero(v, 0), "")
+    salida = []
+    for decl in spec["indicadores"]:
+        if decl["indicador"] == "km":
+            kpi = indicador(decl["etiqueta"], ctx.km_de(decl["capa"], decl.get("estado")),
+                            "km", "km", None, None, formato=entero)
+        elif decl["indicador"] == "estaciones":
+            activas = sum(1 for e in ctx.estaciones if e["estado"] == "Activo")
+            kpi = indicador(decl["etiqueta"], len(ctx.estaciones), "", "estaciones", None, None,
+                            formato=entero)
+            if decl.get("nota"):
+                kpi["nota"] = decl["nota"].replace("{activas}", pr.fmt_numero(activas, 0))
+        else:
+            raise pr.ErrorDeProtocolo("Indicador %r desconocido en %s"
+                                      % (decl["indicador"], spec["id"]))
+        salida.append(kpi)
+    return salida
+
+
+def panel_mapa_capas(ctx, spec):
+    """El mapa de la portada: los departamentos de fondo NEUTRO (no es un mapa de calor) y las
+    capas del IGN encima. Las capas no viajan aca: las dibuja el navegador desde el catalogo
+    del tablero, y el control para prenderlas lo arma la pagina."""
+    declarado = spec["paneles"]["mapa-capas"]
+    return {"titulo": declarado["titulo"], "subtitulo": declarado.get("subtitulo", ""),
+            "pie": ctx.fuente("mapa_base"), "geojson": GEOJSON,
+            "aspecto": aspecto_mapa(), "relacion": relacion_mapa(),
+            "deptos": [{"id": g, "nombre": ctx.nombre(g)} for g in ctx.geo.deptos]}
+
+
+def panel_tabla_red_vial(ctx, spec):
+    declarado = spec["paneles"]["tabla-red-vial"]
+    calzadas = declarado["calzadas"]
+    filas = []
+    for fila in declarado["filas"]:
+        valores = [ctx.km_de(fila["capa"], c) for c in calzadas]
+        resto = ctx.km_de(fila["capa"]) - sum(valores)
+        if abs(resto) > 0.001:
+            raise pr.ErrorDeProtocolo(
+                "La capa %s tiene tramos con una calzada que no esta en %s: no cierra la tabla."
+                % (fila["capa"], calzadas))
+        filas.append({"celdas": [fila["rotulo"]] + [_km(v) for v in valores]
+                      + [_km(ctx.km_de(fila["capa"]))]})
+    capas = [f["capa"] for f in declarado["filas"]]
+    total = {"celdas": [declarado["rotulo_total"]]
+             + [_km(sum(ctx.km_de(c, x) for c in capas)) for x in calzadas]
+             + [_km(sum(ctx.km_de(c) for c in capas))], "actual": True}
+    return {"titulo": declarado["titulo"], "subtitulo": declarado["subtitulo"],
+            "pie": ctx.fuente("red_vial"),
+            "columnas": [{"etiqueta": "Jerarquía", "num": False}]
+                        + [{"etiqueta": c, "num": True} for c in calzadas]
+                        + [{"etiqueta": "Total", "num": True}],
+            "filas": [total] + filas}
+
+
+def panel_tabla_ferrocarril(ctx, spec):
+    declarado = spec["paneles"]["tabla-ferrocarril"]
+    estados = declarado["estados"]
+    conocidos = set(estados)
+    raros = sorted({e["estado"] for e in ctx.estaciones} - conocidos
+                   | {x for (c, x) in ctx.km if c == "ferrocarril"} - conocidos)
+    if raros:
+        raise pr.ErrorDeProtocolo("El ferrocarril trae estados que la tabla no lista: %s" % raros)
+    filas = [{"celdas": [estado, _km(ctx.km_de("ferrocarril", estado)),
+                         pr.fmt_numero(sum(1 for e in ctx.estaciones if e["estado"] == estado), 0)]}
+             for estado in estados]
+    total = {"celdas": [declarado["rotulo_total"], _km(ctx.km_de("ferrocarril")),
+                        pr.fmt_numero(len(ctx.estaciones), 0)], "actual": True}
+    return {"titulo": declarado["titulo"], "subtitulo": declarado["subtitulo"],
+            "pie": ctx.fuente("ferrocarril"),
+            "columnas": [{"etiqueta": "Estado", "num": False},
+                         {"etiqueta": "Km de vía", "num": True},
+                         {"etiqueta": "Estaciones", "num": True}],
+            "filas": [total] + filas}
+
+
+def construir_tablero_red_vial(ctx, spec):
+    tablero = tablero_base(ctx, spec, [])
+    tablero["combos"][""] = {
+        "kpis": indicadores_red_vial(ctx, spec),
+        "paneles": {"mapa-capas": panel_mapa_capas(ctx, spec),
+                    "tabla-red-vial": panel_tabla_red_vial(ctx, spec),
+                    "tabla-ferrocarril": panel_tabla_ferrocarril(ctx, spec)}}
+    return tablero
+
+
+def _nombre_evento(ctx, spec, evento):
+    return (spec["paneles"]["mapa"].get("rotulo_total", "Total") if evento == TOTAL_EVENTOS
+            else evento)
+
+
+def indicadores_amenazas(ctx, spec):
+    entero = lambda v: (pr.fmt_numero(v, 0), "")
+    total = ctx.total_registros()
+    salida = []
+    for decl in spec["indicadores"]:
+        tipo = decl["indicador"]
+        if tipo == "total":
+            kpi = indicador(decl["etiqueta"], total, "registros", tipo, None, None, formato=entero)
+        elif tipo == "evento_principal":
+            evento = ctx.eventos[0]
+            valor = ctx.total_evento[evento]
+            kpi = indicador(decl["etiqueta"].replace("{evento}", evento), valor, "registros",
+                            tipo, None, None, formato=entero)
+            if decl.get("nota"):
+                kpi["nota"] = decl["nota"].replace("{pct}", pr.fmt_pct(valor / total * 100, 1))
+        elif tipo == "lider":
+            geo = sorted(ctx.geo.deptos, key=lambda g: (-ctx.registros_de(g, TOTAL_EVENTOS),
+                                                         pr.clave_alfabetica(ctx.nombre(g))))[0]
+            kpi = indicador(decl["etiqueta"].replace("{departamento}", ctx.nombre(geo)),
+                            ctx.registros_de(geo, TOTAL_EVENTOS), "registros", tipo, None, None,
+                            formato=entero)
+        elif tipo == "tipos":
+            kpi = indicador(decl["etiqueta"], len(ctx.eventos), "", tipo, None, None,
+                            formato=entero)
+            kpi["nota"] = "de %d que releva DESINVENTAR" % len(ctx.desinventar["eventos"])
+        else:
+            raise pr.ErrorDeProtocolo("Indicador %r desconocido en %s" % (tipo, spec["id"]))
+        salida.append(kpi)
+    return salida
+
+
+def panel_mapa_amenazas(ctx, spec, evento):
+    """Mapa de calor de los registros por departamento. La rampa la fija el TIPO de variable
+    (`registros_eventos`); la categoria del IGN no se usa (backlog 105)."""
+    declarado = spec["paneles"]["mapa"]
+    unidad = declarado["unidad"]
+    deptos = []
+    for geo in ctx.geo.deptos:
+        valor = ctx.registros_de(geo, evento)
+        fila = ctx.registros[geo]
+        if evento == TOTAL_EVENTOS:
+            filas = [["Registros 1970-2015", pr.fmt_numero(valor, 0)]] + [
+                [e, pr.fmt_numero(fila["eventos"][e], 0)]
+                for e in ctx.eventos if fila["eventos"][e]]
+        else:
+            filas = [[evento, pr.fmt_numero(valor, 0)],
+                     ["Total de registros", pr.fmt_numero(fila["registros"], 0)]]
+        deptos.append({"id": geo, "nombre": ctx.nombre(geo), "v": valor, "filas": filas,
+                       "t": pr.fmt_numero(valor, 0)})
+    escala = pr.quintiles([d["v"] for d in deptos])
+    rampa = ctx.colores.rampa("registros")
+    for fila in deptos:
+        fila["color"] = rampa[min(pr.clase_de(fila["v"], escala["cortes"]), len(rampa)) - 1]
+    nombre = _nombre_evento(ctx, spec, evento)
+    return {
+        "titulo": declarado["titulo"].replace(
+            "{evento}", "todos los eventos" if evento == TOTAL_EVENTOS else nombre.lower()),
+        "subtitulo": "En cantidad de %s" % unidad, "pie": ctx.fuente("desinventar"),
+        "geojson": GEOJSON, "accion": None, "accion_con_departamento": None,
+        "selecciona": False, "ficha": None, "rotulos": bool(declarado.get("rotulos_departamento")),
+        "aspecto": aspecto_mapa(), "relacion": relacion_mapa(),
+        "deptos": deptos, "unidad": unidad,
+        "escala": escala_del_panel_mapa(ctx, deptos, escala, rampa, unidad),
+        "total": "Total provincial: %s %s" % (pr.fmt_numero(ctx.total_registros(evento), 0),
+                                              unidad),
+    }
+
+
+def panel_tabla_eventos_departamento(ctx, spec):
+    declarado = spec["paneles"]["tabla-eventos-departamento"]
+    eventos = ctx.eventos
+    deptos = sorted(ctx.geo.deptos, key=lambda g: pr.clave_alfabetica(ctx.nombre(g)))
+
+    def celda(valor):
+        return "–" if not valor else pr.fmt_numero(valor, 0)
+
+    filas = [{"celdas": [declarado["rotulo_total"], celda(ctx.total_registros())]
+                        + [celda(ctx.total_evento[e]) for e in eventos], "actual": True}]
+    for geo in deptos:
+        fila = ctx.registros[geo]
+        filas.append({"geo": geo, "celdas": [ctx.nombre(geo), celda(fila["registros"])]
+                      + [celda(fila["eventos"][e]) for e in eventos]})
+    return {"titulo": declarado["titulo"], "subtitulo": declarado["subtitulo"],
+            "pie": ctx.fuente("desinventar"),
+            "nota": "El guion es cero: ningún registro de ese evento en ese departamento.",
+            "columnas": [{"etiqueta": "Departamento", "num": False},
+                         {"etiqueta": "Total", "num": True}]
+                        + [{"etiqueta": e, "num": True} for e in eventos],
+            "filas": filas}
+
+
+def panel_anillo_eventos(ctx, spec):
+    declarado = spec["paneles"]["anillo-eventos"]
+    partes, total = _top_y_resto([(e, ctx.total_evento[e]) for e in ctx.eventos],
+                                 int(declarado.get("cuantos", 5)), rotulo="Otros eventos")
+    colores = ctx.colores.por_categoria([n for n, _ in partes], respetar_orden=True)
+    centro, prefijo = pr.fmt_compacto(total)
+    resto = [e for e in ctx.eventos if e not in dict(partes)]
+    return {"titulo": declarado["titulo"], "subtitulo": "En cantidad de registros",
+            "pie": ctx.fuente("desinventar"),
+            "nota": ("Otros eventos: %s." % ", ".join(
+                "%s (%s)" % (e.lower(), pr.fmt_numero(ctx.total_evento[e], 0)) for e in resto)
+                     if resto else ""),
+            "centro": centro, "centro_unidad": (prefijo + " registros").strip(),
+            "centro_nota": "total provincial",
+            "porciones": [{"n": n, "v": v, "t": pr.fmt_numero(v, 0) + " registros",
+                           "pct": pr.fmt_pct(v / total * 100, 1), "color": colores[n]}
+                          for n, v in partes]}
+
+
+def panel_tabla_sinagir(ctx, spec):
+    declarado = spec["paneles"]["tabla-sinagir"]
+    sinagir = ctx.sinagir
+    nota = " ".join(declarado["nota"].split())
+    nota = (nota.replace("{categoria}", sinagir["categoria_ign"])
+                .replace("{sumatoria}", pr.fmt_numero(sinagir["sumatoria"], 0)))
+    return {"titulo": declarado["titulo"], "subtitulo": declarado["subtitulo"],
+            "pie": ctx.fuente("sinagir"), "nota": nota,
+            "columnas": [{"etiqueta": "Amenaza", "num": False},
+                         {"etiqueta": "Nivel", "num": True}],
+            "filas": [{"celdas": [a["amenaza"], pr.fmt_numero(a["nivel"], 0)]}
+                      for a in sinagir["amenazas"]]}
+
+
+def construir_tablero_amenazas(ctx, spec):
+    opciones = [TOTAL_EVENTOS] + ctx.eventos
+    filtro = {"id": "evento", "etiqueta": "Evento", "zona": "panel", "panel": "mapa",
+              "opciones": [{"v": e, "t": _nombre_evento(ctx, spec, e)} for e in opciones],
+              "defecto": TOTAL_EVENTOS}
+    tablero = tablero_base(ctx, spec, [filtro])
+    kpis = indicadores_amenazas(ctx, spec)
+    fijos = {"tabla-eventos-departamento": panel_tabla_eventos_departamento(ctx, spec),
+             "anillo-eventos": panel_anillo_eventos(ctx, spec),
+             "tabla-sinagir": panel_tabla_sinagir(ctx, spec)}
+    for evento in opciones:
+        paneles = dict(fijos)
+        paneles["mapa"] = panel_mapa_amenazas(ctx, spec, evento)
+        tablero["combos"][evento] = {"kpis": kpis, "paneles": paneles}
+    return tablero
+
+
+# ==========================================================================
 # Reglas de presentacion que declara el SPEC y valen para cualquier tablero (13-oct-2026,
 # revision de ganaderia contra la maqueta "Maqueta Ganad VF")
 # ==========================================================================
@@ -9597,12 +10059,708 @@ def renombrar_departamentos(ctx, nombres):
         tocar(sub.hechos)
 
 
+# ==========================================================================
+# AgroClima (maqueta de JC "0000000000 Maqueta Clima 1.xlsx", 14-oct-2026)
+# ==========================================================================
+# Tres clases de pagina, todas en la seccion `agroclima` (site/navegacion.yaml):
+#   - la portada: tarjetas con miniatura que llevan a cada pagina (`construir_tablero_agroclima`);
+#   - "Estaciones agrometeorologicas INTA": la base 111, dato diario del ultimo anio por
+#     estacion, con un mapa que hace de selector (`construir_tablero_estaciones`);
+#   - seis galerias de mapas de SEPA-INTA y de la ORA (`construir_galeria_clima`), el mismo
+#     tipo de vista `galeria` de los mapas forrajeros con dos agregados: el mapa mas reciente
+#     en grande con la definicion del producto al lado, y la grilla por FILAS (una por fecha,
+#     una columna por cultivo) para la ORA.
+# Lectura completa de la maqueta en docs/maqueta-clima.md.
+VARIABLES_CLIMA = os.path.join(DIR_CONFIGS, "dims", "variables-clima.yaml")
+MESES_CLIMA_CORTOS = ["ene", "feb", "mar", "abr", "may", "jun",
+                      "jul", "ago", "sep", "oct", "nov", "dic"]
+# La miniatura de la tarjeta de las estaciones (la dibuja el build, ver `svg_de_estaciones`).
+SVG_ESTACIONES = "clima/estaciones-mini.svg"
+
+
+def _fecha_corta(fecha):
+    return "%02d/%02d/%d" % (fecha.day, fecha.month, fecha.year)
+
+
+class ContextoAgroclima:
+    """El contexto de la rama AgroClima. Lee el mart de clima diario (base 111) y dim_geo; las
+    galerias no leen ningun mart: publican imagenes de site/assets/clima/."""
+
+    familia = "agroclima"
+
+    def __init__(self, con):
+        import datetime
+        self.protocolo = pr.cargar_protocolo()
+        self.comunes = pr.cargar_comunes(self.familia)
+        self.theme = pr.cargar_theme()
+        self.navegacion = pr.cargar_yaml(os.path.join(DIR_SITE, "navegacion.yaml"))
+        self.colores = pr.Colores(self.protocolo, self.comunes, self.theme)
+        self.notas = self.comunes["notas_metodologicas"]
+        self.geo = _Geo(con)
+        self.hechos = self.geo
+        decl = self.comunes["estaciones"]
+        self.decl = decl
+        # Las columnas de la tabla son las `en_maqueta` 1..11 del diccionario, en ese orden. Si
+        # alguien cambia una de las dos listas sin la otra, se corta aca: la tabla tiene que ser
+        # la de JC.
+        diccionario = pr.cargar_yaml(VARIABLES_CLIMA)["variables"]
+        en_maqueta = sorted((d["en_maqueta"], v) for v, d in diccionario.items()
+                            if d.get("en_maqueta"))
+        if [v for _, v in en_maqueta] != list(decl["columnas"]):
+            raise pr.ErrorDeProtocolo(
+                "Las columnas de _comunes-agroclima (estaciones.columnas) no son las `en_maqueta` "
+                "1..11 de configs/dims/variables-clima.yaml, en ese orden.")
+        self.columnas = list(decl["columnas"])
+        self.variable = {v: diccionario[v] for v in self.columnas}
+        self.clima = cl.ClimaDiario(con, self.columnas, decl["ventana_dias"])
+        estaciones = self.clima.estaciones
+        if decl["por_defecto"] not in estaciones:
+            raise pr.ErrorDeProtocolo("La estacion por defecto %r no esta en la base 111."
+                                      % decl["por_defecto"])
+        self.fuera = {}
+        for item in decl.get("fuera_del_ultimo_anio") or []:
+            if item["estacion_id"] not in estaciones:
+                raise pr.ErrorDeProtocolo("fuera_del_ultimo_anio nombra la estacion %r, que no "
+                                          "esta en la base 111." % item["estacion_id"])
+            self.fuera[item["estacion_id"]] = item
+        if decl["por_defecto"] in self.fuera:
+            raise pr.ErrorDeProtocolo("La estacion por defecto no puede estar fuera del anio.")
+        # Los recortes del control de calidad: se validan contra la base y el diccionario, y se
+        # guardan con sus fechas ya convertidas. Un recorte que nombra algo que no existe corta
+        # la corrida (no se publica un "S/D" que no se sabe de donde sale).
+        self.recortes = []
+        for r in decl.get("recortes") or []:
+            if r["estacion_id"] not in estaciones:
+                raise pr.ErrorDeProtocolo("Un recorte nombra la estacion %r, que no esta en la "
+                                          "base 111." % r["estacion_id"])
+            for v in r["variables"]:
+                if v not in self.variable:
+                    raise pr.ErrorDeProtocolo("Un recorte nombra la variable %r, que no es una "
+                                              "columna de la tabla." % v)
+            desde = r["desde"] if isinstance(r["desde"], datetime.date) else \
+                datetime.date.fromisoformat(str(r["desde"]))
+            hasta = r.get("hasta")
+            if hasta is not None and not isinstance(hasta, datetime.date):
+                hasta = datetime.date.fromisoformat(str(hasta))
+            self.recortes.append(dict(r, desde=desde, hasta=hasta))
+        # Las estaciones en orden alfabetico de su nombre corto (el de la maqueta).
+        self.orden = sorted(estaciones, key=lambda e: pr.clave_alfabetica(estaciones[e]["nombre"]))
+
+    def pie(self, spec=None):
+        esperado = self.comunes["fuente"]["organismo_esperado"]
+        if self.clima.fuentes != [esperado]:
+            raise pr.ErrorDeProtocolo("AgroClima espera fuente %r y el mart de clima trae %r"
+                                      % (esperado, self.clima.fuentes))
+        return self.comunes["fuente"]["pie"]
+
+    def notas_de(self, spec, extra=()):
+        ids = list(spec.get("notas_metodologicas") or []) + list(extra)
+        return [{"titulo": self.notas[i]["titulo"], "texto": limpiar(self.notas[i]["texto"])}
+                for i in ids if i in self.notas]
+
+    def nombre(self, eid):
+        return self.clima.estaciones[eid]["nombre"]
+
+    def recorte_de(self, eid, fecha, variable):
+        """El recorte del control de calidad que tapa ese dato, o None."""
+        for r in self.recortes:
+            if (r["estacion_id"] == eid and variable in r["variables"] and fecha >= r["desde"]
+                    and (r["hasta"] is None or fecha <= r["hasta"])):
+                return r
+        return None
+
+    def visibles(self, eid):
+        """Las columnas que ESA estacion mide (las que no mide no tienen columna)."""
+        return [v for v in self.columnas if v in self.clima.mide[eid]]
+
+    def no_mide(self, eid):
+        return [v for v in self.columnas if v not in self.clima.mide[eid]]
+
+    def rango(self, eid):
+        """(primer, ultimo) dia de la ventana con algun dato de la estacion, o None."""
+        dias = self.clima.dias_con_dato(eid)
+        return (dias[0], dias[-1]) if dias else None
+
+    def texto(self, valor):
+        return pr.fmt_numero(valor, self.decl["decimales"])
+
+    def encabezado(self, variable):
+        """La etiqueta de la columna con su unidad: la de JC si la dio, o la marca de "unidad a
+        confirmar" (reporte entrega-03, punto 9)."""
+        d = self.variable[variable]
+        if d.get("unidad"):
+            return "%s (%s)" % (d["etiqueta"], d["unidad"])
+        return d["etiqueta"] + self.decl["marca_sin_unidad"]
+
+
+def filtro_estacion(ctx):
+    return {"id": "estacion", "etiqueta": "Estación", "zona": "panel", "panel": "mapa-estaciones",
+            "opciones": [{"v": str(e), "t": ctx.nombre(e)} for e in ctx.orden],
+            "defecto": str(ctx.decl["por_defecto"])}
+
+
+def _con_estacion(plantilla, ctx, eid, desde=None, hasta=None):
+    return titulo_literal(plantilla, estacion=ctx.nombre(eid),
+                          ESTACION=ctx.nombre(eid).upper(),
+                          desde=_fecha_corta(desde) if desde else "",
+                          hasta=_fecha_corta(hasta) if hasta else "")
+
+
+def _leyenda_fuera(ctx, eid):
+    item = ctx.fuera.get(eid)
+    if not item:
+        return ""
+    ultimo = ctx.clima.estaciones[eid]["ultimo_dato"]
+    return item["leyenda"].replace("{ultimo_dato}", _fecha_corta(ultimo))
+
+
+def panel_mapa_estaciones(ctx, spec, eid):
+    """El mapa de la provincia con las estaciones como puntos: es el SELECTOR de la pagina
+    ("Seleccione Estación Agrometeorológica", JC). Los departamentos van de fondo neutro (no
+    es un mapa de calor) y sin nombre, como en la maqueta; el nombre esta en el tooltip.
+    El departamento de cada estacion NO se usa: es una propuesta sin verificar (reporte
+    entrega-03, punto 22). Lo que manda es la coordenada de la hoja "Estaciones"."""
+    declarado = spec["paneles"]["mapa-estaciones"]
+    estaciones = []
+    for e in ctx.orden:
+        meta = ctx.clima.estaciones[e]
+        leyenda = _leyenda_fuera(ctx, e)
+        filas = [["Estación INTA", meta["nombre_inta"] or meta["nombre"]],
+                 ["Localidad", meta["localidad"] or "S/D"]]
+        if meta["primer_dato"]:
+            filas.append(["Período cubierto", "%s al %s" % (_fecha_corta(meta["primer_dato"]),
+                                                           _fecha_corta(meta["ultimo_dato"]))])
+        if leyenda:
+            filas.append(["Último año", leyenda])
+        estaciones.append({
+            "id": str(e), "nombre": meta["nombre"],
+            "rotulo": (titulo_literal(declarado["rotulo_fuera"], estacion=meta["nombre"],
+                                      leyenda=leyenda) if leyenda else meta["nombre"]),
+            "fuera": bool(leyenda),
+            "lon": meta["longitud"], "lat": meta["latitud"], "filas": filas,
+        })
+    return {"titulo": declarado["titulo"], "subtitulo": declarado.get("subtitulo", ""),
+            "pie": ctx.pie(), "geojson": GEOJSON, "aspecto": aspecto_mapa(),
+            "relacion": relacion_mapa(), "elegida": str(eid),
+            "deptos": [{"id": g, "nombre": ctx.geo.nombre.get(g, g)} for g in ctx.geo.deptos],
+            "estaciones": estaciones}
+
+
+def panel_definiciones(ctx, spec, eid):
+    """Las definiciones de JC de las variables que ESTA estacion muestra, una sola vez por
+    titulo (las tres temperaturas de abrigo comparten parrafo, como en la maqueta)."""
+    declarado = spec["paneles"]["texto-definiciones"]
+    titulos = ctx.decl["titulos_de_definicion"]
+    parrafos, vistos = [], set()
+    for v in ctx.visibles(eid):
+        titulo = titulos[v]
+        texto = ctx.variable[v].get("definicion")
+        if titulo in vistos or not texto:
+            continue
+        vistos.add(titulo)
+        # El texto va tal cual lo escribio JC; solo se juntan los dobles espacios que dejo la
+        # coma perdida al pegarlo (variables-clima.yaml, `definicion`): son espacios, no
+        # palabras, y en HTML se verian como uno igual.
+        parrafos.append({"titulo": titulo, "texto": " ".join(texto.split()), "aparte": True})
+    return {"titulo": declarado["titulo"], "subtitulo": "", "pie": ctx.pie(),
+            "parrafos": parrafos}
+
+
+def _nota_de_tabla(ctx, eid, visibles, rango):
+    import datetime
+    partes = []
+    no_mide = ctx.no_mide(eid)
+    if no_mide:
+        partes.append("No se mide en esta estación: %s." % ", ".join(
+            pr.minuscula_inicial(ctx.variable[v]["etiqueta"]) for v in no_mide))
+    # Una variable que la estacion SI mide (tiene datos en su historia) pero que no trae ni un
+    # dato en el periodo de la tabla: la columna queda entera en S/D y se dice por que.
+    dias = (rango[1] - rango[0]).days + 1
+    vacias = [v for v in visibles
+              if not any(ctx.clima.dato(eid, rango[0] + datetime.timedelta(days=i), v)
+                         is not None for i in range(dias))]
+    if vacias:
+        partes.append("Sin ningún dato en el período: %s." % ", ".join(
+            pr.minuscula_inicial(ctx.variable[v]["etiqueta"]) for v in vacias))
+    for r in ctx.recortes:
+        if r["estacion_id"] != eid:
+            continue
+        variables = [v for v in r["variables"] if v in visibles]
+        if not variables:
+            continue
+        cuando = ("todo el período" if r["desde"] <= ctx.clima.desde
+                  else "desde el %s" % _fecha_corta(r["desde"]))
+        if r["hasta"] is not None:
+            cuando += " hasta el %s" % _fecha_corta(r["hasta"])
+        partes.append("S/D por control de calidad en %s, %s: %s" % (
+            ", ".join(pr.minuscula_inicial(ctx.variable[v]["etiqueta"]) for v in variables),
+            cuando, limpiar(r["motivo"])))
+    if rango and rango[1] < ctx.clima.hasta:
+        partes.append("Último dato de la estación: %s." % _fecha_corta(rango[1]))
+    if any(not ctx.variable[v].get("unidad") for v in visibles):
+        partes.append(ctx.decl["nota_sin_unidad"])
+    return " ".join(partes)
+
+
+def panel_tabla_diaria(ctx, spec, eid, rango):
+    """Año | Mes | Día y las variables que la estacion mide, un renglon por dia, del primer al
+    ultimo dia con dato de la estacion dentro del anio publicado. Un dia que la hoja no trae
+    tambien tiene su renglon, en "S/D": el hueco se tiene que ver."""
+    import datetime
+    declarado = spec["paneles"]["tabla-diaria"]
+    visibles = ctx.visibles(eid)
+    columnas = ([{"etiqueta": "Año"}, {"etiqueta": "Mes"}, {"etiqueta": "Día", "num": True}]
+                + [{"etiqueta": ctx.encabezado(v), "num": True} for v in visibles])
+    filas = []
+    fecha = rango[0]
+    while fecha <= rango[1]:
+        celdas = [str(fecha.year), MESES_CLIMA_CORTOS[fecha.month - 1], str(fecha.day)]
+        for v in visibles:
+            if ctx.recorte_de(eid, fecha, v):
+                celdas.append("S/D")
+            else:
+                celdas.append(ctx.texto(ctx.clima.dato(eid, fecha, v)))
+        filas.append({"celdas": celdas})
+        fecha += datetime.timedelta(days=1)
+    return {"titulo": _con_estacion(declarado["titulo"], ctx, eid, rango[0], rango[1]),
+            "subtitulo": declarado.get("subtitulo", ""), "pie": ctx.pie(),
+            "nota": _nota_de_tabla(ctx, eid, visibles, rango),
+            "columnas": columnas, "filas": filas}
+
+
+def panel_lineas_temperatura(ctx, spec, eid, rango):
+    """La linea de la temperatura media diaria (la de la maqueta). Los dias sin dato y los
+    recortados van en null: la linea se CORTA, no une los extremos de un hueco."""
+    import datetime
+    declarado = spec["paneles"]["lineas-temperatura"]
+    variable = ctx.decl["grafico"]
+    titulo = _con_estacion(declarado["titulo"], ctx, eid, rango[0], rango[1])
+    if variable not in ctx.clima.mide[eid]:
+        return {"vacio": "Esta estación no mide la %s." % pr.minuscula_inicial(
+            ctx.variable[variable]["etiqueta"]), "titulo": titulo}
+    x, grupos, etiquetas, puntos, textos = [], [], [], [], []
+    dias_del_mes = {}
+    recortados = False
+    fecha = rango[0]
+    while fecha <= rango[1]:
+        # Eje en dos niveles, como el de JC: el dia arriba (solo 1, 10 y 20, si no 365 rotulos
+        # no se leen) y el mes abajo, una sola vez por mes ("jun-25").
+        x.append(str(fecha.day) if fecha.day in (1, 10, 20) else "")
+        grupos.append("%s-%s" % (MESES_CLIMA_CORTOS[fecha.month - 1], str(fecha.year)[2:]))
+        dias_del_mes.setdefault(grupos[-1], 0)
+        dias_del_mes[grupos[-1]] += 1
+        etiquetas.append(_fecha_corta(fecha))
+        valor = ctx.clima.dato(eid, fecha, variable)
+        if valor is not None and ctx.recorte_de(eid, fecha, variable):
+            valor, recortados = None, True
+        puntos.append(None if valor is None
+                      else float(pr.redondear(valor, ctx.decl["decimales"])))
+        textos.append(ctx.texto(valor))
+        fecha += datetime.timedelta(days=1)
+    # Un mes con pocos dias en la punta (el 30 y 31 de mayo de arranque) no se rotula: su
+    # rotulo se encimaria con el del mes siguiente.
+    grupos = [g if dias_del_mes[g] >= 8 else "" for g in grupos]
+    con_dato = [p for p in puntos if p is not None]
+    if not con_dato:
+        return {"vacio": "No hay datos de %s en el período que se puede publicar." %
+                pr.minuscula_inicial(ctx.variable[variable]["etiqueta"]), "titulo": titulo}
+    marcas = pr.marcas_eje(min(con_dato + [0.0]), max(con_dato + [0.0]))
+    eje = {"min": marcas["min"], "max": marcas["max"], "paso": marcas["paso"],
+           "etiquetas": {clave_js(m): pr.fmt_numero(m, 0) for m in marcas["marcas"]},
+           "nombre": ctx.decl["eje_sin_unidad"] if not ctx.variable[variable].get("unidad")
+           else ctx.variable[variable]["unidad"],
+           "minimo": minimo_rotuladas()}
+    nota = []
+    if recortados:
+        r = next(r for r in ctx.recortes
+                 if r["estacion_id"] == eid and variable in r["variables"])
+        nota.append("La línea se corta desde el %s: es un tramo que el control de calidad saca "
+                    "de la pantalla (el motivo está en la nota de la tabla)."
+                    % _fecha_corta(r["desde"]))
+    if not ctx.variable[variable].get("unidad"):
+        nota.append(ctx.decl["nota_sin_unidad"])
+    return {"titulo": titulo, "subtitulo": declarado.get("subtitulo", ""), "pie": ctx.pie(),
+            "nota": " ".join(nota), "x": x, "grupos": grupos, "x_rotar": 0,
+            "etiquetas": etiquetas, "eje": eje, "puntos": puntos,
+            "textos": textos, "color": ctx.colores.solido(variable)}
+
+
+def construir_tablero_estaciones(ctx, spec):
+    """La pagina "Estaciones agrometeorologicas INTA" (hoja "ClimEAI" de JC). Un combo por
+    estacion, partido en un archivo por estacion: el navegador baja solo la que se mira."""
+    tablero = tablero_base(ctx, spec, [filtro_estacion(ctx)])
+    tablero["particion"] = "estacion"
+    tarjeta = spec["tarjeta"]
+    for eid in ctx.orden:
+        meta = ctx.clima.estaciones[eid]
+        contexto = {"nombre": titulo_literal(tarjeta["nombre"], estacion=meta["nombre"]),
+                    "detalle": titulo_literal(
+                        tarjeta["detalle"], inicio=_fecha_corta(meta["primer_dato"]),
+                        fin=_fecha_corta(meta["ultimo_dato"])),
+                    "icono": None}
+        paneles = {"mapa-estaciones": panel_mapa_estaciones(ctx, spec, eid)}
+        rango = ctx.rango(eid)
+        leyenda = _leyenda_fuera(ctx, eid)
+        if leyenda or not rango:
+            # Fuera del ultimo anio (Sachayoj): figura en el mapa y en la lista, con su
+            # leyenda, y los cuadros dicen por que no hay nada que mostrar.
+            item = ctx.fuera.get(eid) or {}
+            motivo = "%s %s: no se muestra en el último año. %s" % (
+                meta["nombre"], leyenda or "sin datos en el último año",
+                limpiar(item.get("motivo", "")))
+            for id_panel in ("texto-definiciones", "tabla-diaria", "lineas-temperatura"):
+                paneles[id_panel] = {"vacio": motivo.strip()}
+        else:
+            paneles["texto-definiciones"] = panel_definiciones(ctx, spec, eid)
+            paneles["tabla-diaria"] = panel_tabla_diaria(ctx, spec, eid, rango)
+            paneles["lineas-temperatura"] = panel_lineas_temperatura(ctx, spec, eid, rango)
+        tablero["combos"][str(eid)] = {"contexto": contexto, "paneles": paneles}
+    return tablero
+
+
+def svg_de_estaciones(ctx):
+    """La miniatura de la tarjeta "Red de Estaciones Agrometeorológicas": la silueta de la
+    provincia con sus departamentos y un punto por estacion, dibujada con el GeoJSON de
+    siempre y las coordenadas de la base 111. JC pega una captura de un mapa web; la nuestra
+    sale de los datos y se actualiza sola. Colores del theme (cromo de marca, no dato)."""
+    import math
+    with open(os.path.join(DIR_CONFIGS, "dims", "sde-departamentos.geojson"), encoding="utf-8") as f:
+        geo = json.load(f)
+    (lon0, lon1), (lat0, lat1) = _extremos_geojson()
+    escala_x = math.cos(math.radians((lat0 + lat1) / 2.0))
+    alto = 300.0
+    k = alto / (lat1 - lat0)
+    ancho = (lon1 - lon0) * escala_x * k
+    margen = 8.0
+
+    def punto(lon, lat):
+        return ("%.1f" % (margen + (lon - lon0) * escala_x * k),
+                "%.1f" % (margen + (lat1 - lat) * k))
+
+    caminos = []
+    for feature in geo["features"]:
+        geometria = feature["geometry"]
+        poligonos = (geometria["coordinates"] if geometria["type"] == "MultiPolygon"
+                     else [geometria["coordinates"]])
+        trazo = []
+        for poligono in poligonos:
+            for anillo in poligono:
+                trazo.append("M" + "L".join("%s,%s" % punto(x, y) for x, y in anillo) + "Z")
+        caminos.append("".join(trazo))
+    c = ctx.theme["colores"]
+    puntos = []
+    for e in ctx.orden:
+        meta = ctx.clima.estaciones[e]
+        cx, cy = punto(meta["longitud"], meta["latitud"])
+        relleno = c["texto_apoyo"] if e in ctx.fuera else c["primario"]
+        puntos.append('<circle cx="%s" cy="%s" r="6" fill="%s" stroke="%s" stroke-width="2"/>'
+                      % (cx, cy, relleno, c["fondo_cuadro"]))
+    return ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %.0f %.0f" role="img">'
+            '<path d="%s" fill="%s" stroke="%s" stroke-width="1"/>%s</svg>\n'
+            % (ancho + 2 * margen, alto + 2 * margen, "".join(caminos), c["fondo_apoyo"],
+               c["fondo_cuadro"], "".join(puntos)))
+
+
+def panel_accesos(ctx, spec, id_panel):
+    """Un bloque de tarjetas de la portada ("Datos e informes" o "Mapas"). El destino de cada
+    tarjeta es el id del spec de la pagina; la URL la resuelve `escribir_sitio`, que es quien
+    sabe donde vive cada pagina (y corta si no existe)."""
+    declarado = spec["paneles"][id_panel]
+    tarjetas = []
+    for item in declarado["tarjetas"]:
+        tarjeta = {"organismo": item.get("organismo", ""), "titulo": item["titulo"],
+                   "detalle": item.get("detalle", ""), "bajada": item.get("bajada", ""),
+                   "destino": item.get("destino"), "miniatura": None,
+                   "proximamente": item.get("proximamente", "")}
+        if bool(tarjeta["destino"]) == bool(tarjeta["proximamente"]):
+            raise pr.ErrorDeProtocolo(
+                "La tarjeta %r de %s tiene que tener `destino` o `proximamente` (una de las dos)."
+                % (item["titulo"], spec["id"]))
+        if item.get("miniatura") == "estaciones":
+            tarjeta["miniatura"] = "%s/%s" % (PREFIJO, SVG_ESTACIONES)
+        elif item.get("miniatura") == "galeria":
+            galeria = pr.cargar_yaml(os.path.join(DIR_MODELOS, item["destino"] + ".yaml"))
+            galeria["slug_vista"] = item["destino"]
+            mapas, destacado = mapas_clima(galeria)[:2]
+            tarjeta["miniatura"] = mapas[destacado]["mini"]
+        tarjetas.append(tarjeta)
+    return {"titulo": declarado["titulo"], "subtitulo": declarado.get("subtitulo", ""),
+            "pie": declarado["pie"], "tarjetas": tarjetas}
+
+
+def construir_tablero_agroclima(ctx, spec):
+    """La portada de la rama ("Clima Ingreso" de JC): dos bloques de tarjetas, sin filtros."""
+    tablero = tablero_base(ctx, spec, [])
+    tablero["combos"][""] = {"paneles": {
+        id_panel: panel_accesos(ctx, spec, id_panel)
+        for id_panel in ("accesos-datos", "accesos-mapas")}}
+    tablero["archivos_extra"] = {"public/plataforma/" + SVG_ESTACIONES: svg_de_estaciones(ctx)}
+    return tablero
+
+
+def _dimensiones_imagen(ruta):
+    """(ancho, alto) de un JPEG o un GIF, leyendo su cabecera. Lo usa la grilla para reservar
+    la caja de cada miniatura ANTES de que baje (ver `.galeria-mapa img`): los mapas de clima
+    son verticales y no tienen la proporcion de los forrajeros."""
+    import struct
+    with open(ruta, "rb") as f:
+        datos = f.read()
+    if datos[:6] in (b"GIF87a", b"GIF89a"):
+        return struct.unpack("<HH", datos[6:10])
+    if datos[:2] == b"\xff\xd8":
+        i = 2
+        while i < len(datos) - 9:
+            if datos[i] != 0xFF:
+                i += 1
+                continue
+            marca = datos[i + 1]
+            if marca in (0xD8, 0x01) or 0xD0 <= marca <= 0xD7:
+                i += 2
+                continue
+            largo = struct.unpack(">H", datos[i + 2:i + 4])[0]
+            if marca in (0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7, 0xC9, 0xCA, 0xCB, 0xCD,
+                         0xCE, 0xCF):
+                alto, ancho = struct.unpack(">HH", datos[i + 5:i + 9])
+                return ancho, alto
+            i += 2 + largo
+    raise pr.ErrorDeProtocolo("No se pudo leer el tamaño de la imagen %s (solo JPEG o GIF)."
+                              % ruta)
+
+
+def periodo_de_mapa_clima(spec, grupo):
+    """(desde, hasta, rotulo) de un mapa, CALCULADO del nombre de su archivo. Es lo que pide JC
+    ("CORRECTAS LAS FECHAS Y LAS MINIATURAS"): los rotulos de su maqueta son aproximados.
+
+      decada            et_202609_3 -> "21 al 30 septiembre" (decada 1: 1 al 10; 2: 11 al 20;
+                        3: 21 al ultimo dia del mes, la definicion del producto)
+      decada-variacion  db_202609_1 -> "1 vs. 10 septiembre" (formato de JC: 1 vs. 10,
+                        10 vs. 20, 20 vs. 30/31)
+      decada-al         pj_202609_3 -> "al 30 septiembre"
+      dias-julianos     iv_2026241 (16 dias) -> "29 agosto al 13 septiembre"; el dia DDD es el
+                        primero del periodo y el ultimo se corta el 31/12
+      fecha             G1_20261004 (ORA) -> "4 octubre 2026"
+    """
+    import calendar
+    import datetime
+    regla = spec["periodo"]
+    mes_largo = MESES_FORRAJE_LARGOS
+    if regla in ("decada", "decada-variacion", "decada-al"):
+        anio, mes, decada = int(grupo["anio"]), int(grupo["mes"]), int(grupo["decada"])
+        ultimo = calendar.monthrange(anio, mes)[1]
+        desde = datetime.date(anio, mes, 1 + 10 * (decada - 1))
+        hasta = datetime.date(anio, mes, ultimo if decada == 3 else 10 * decada)
+        nombre_mes = mes_largo[mes - 1]
+        if regla == "decada":
+            rotulo = "%d al %d %s" % (desde.day, hasta.day, nombre_mes)
+        elif regla == "decada-variacion":
+            inicio = {1: 1, 2: 10, 3: 20}[decada]
+            rotulo = "%d vs. %d %s" % (inicio, hasta.day, nombre_mes)
+        else:
+            rotulo = "al %d %s" % (hasta.day, nombre_mes)
+        return desde, hasta, rotulo
+    if regla == "dias-julianos":
+        anio, dia = int(grupo["anio"]), int(grupo["dia"])
+        primero = datetime.date(anio, 1, 1)
+        fin_anio = datetime.date(anio, 12, 31)
+        if not 1 <= dia <= (fin_anio - primero).days + 1:
+            raise pr.ErrorDeProtocolo("Dia juliano %d fuera del anio %d en %s"
+                                      % (dia, anio, spec["slug_vista"]))
+        desde = primero + datetime.timedelta(days=dia - 1)
+        hasta = min(desde + datetime.timedelta(days=spec["dias"] - 1), fin_anio)
+        if desde.month == hasta.month:
+            rotulo = "%d al %d %s" % (desde.day, hasta.day, mes_largo[hasta.month - 1])
+        else:
+            rotulo = "%d %s al %d %s" % (desde.day, mes_largo[desde.month - 1],
+                                         hasta.day, mes_largo[hasta.month - 1])
+        return desde, hasta, rotulo
+    if regla == "fecha":
+        texto = grupo["fecha"]
+        fecha = datetime.date(int(texto[:4]), int(texto[4:6]), int(texto[6:]))
+        return fecha, fecha, "%d %s %d" % (fecha.day, mes_largo[fecha.month - 1], fecha.year)
+    raise pr.ErrorDeProtocolo("%s declara `periodo: %s`, que el build no sabe rotular."
+                              % (spec["slug_vista"], regla))
+
+
+def mapas_clima(spec):
+    """(mapas, destacado, filas, columnas, archivos, anios) de una galeria de AgroClima.
+
+    Lee la CARPETA (no una lista escrita a mano) y aplica la VENTANA del spec: el mapa nuevo
+    aparece solo y el mas viejo sale solo, sin que la galeria crezca. Un archivo cuyo nombre no
+    siga el patron, un mapa sin su miniatura (o al reves), un cultivo de la ORA sin nombre en el
+    spec o dos archivos para el mismo mapa CORTAN el build: un mapa no se pierde ni se duplica
+    en silencio.
+
+      mapas      en el orden de la grilla (el mas reciente primero), cada uno con su rotulo,
+                 su titulo para el popup y el tamaño de su miniatura
+      destacado  indice del mapa grande de arriba a la izquierda (el mas reciente)
+      filas      solo la ORA: [{titulo, celdas: [indice o None por cultivo]}]
+      columnas   solo la ORA: el nombre de cada columna (cultivo)
+      archivos   [(origen, destino)] de lo que hay que copiar al sitio
+      anios      los anios de los mapas publicados (para el titulo: "2026")
+    """
+    import re
+    carpeta = os.path.join(RAIZ, spec["assets"]["carpeta"])
+    if not os.path.isdir(carpeta):
+        raise pr.ErrorDeProtocolo("Falta la carpeta de mapas %s que declara %s"
+                                  % (carpeta, spec["slug_vista"]))
+    patron = re.compile(spec["assets"]["patron"])
+    por_cultivo = None
+    if spec["periodo"] == "fecha":
+        por_cultivo = {c["codigo"]: c["nombre"] for c in spec["cultivos"]}
+    entradas = {}
+    for nombre in sorted(os.listdir(carpeta)):
+        m = patron.match(nombre)
+        if not m:
+            raise pr.ErrorDeProtocolo(
+                "El archivo %s de %s no sigue el patron %s. Renombralo: un mapa no se descarta "
+                "en silencio." % (nombre, spec["assets"]["carpeta"], spec["assets"]["patron"]))
+        grupo = m.groupdict()
+        if por_cultivo is not None and grupo["cultivo"] not in por_cultivo:
+            raise pr.ErrorDeProtocolo(
+                "El mapa %s de la ORA trae el cultivo %r, que no esta en `cultivos` de %s.yaml. "
+                "JC: 'Los cultivos irán apareciendo con otros códigos - FAVOR DE LEER LA LEYENDA "
+                "EN LA IMAGEN, SINO ME PREGUNTAN'. Agregalo con su nombre."
+                % (nombre, grupo["cultivo"], spec["slug_vista"]))
+        desde, hasta, rotulo = periodo_de_mapa_clima(spec, grupo)
+        clave = (desde, grupo.get("cultivo") or "")
+        entrada = entradas.setdefault(clave, {"desde": desde, "hasta": hasta, "rotulo": rotulo,
+                                              "cultivo": grupo.get("cultivo")})
+        campo = "mini" if grupo["mini"] else "grande"
+        if campo in entrada:
+            raise pr.ErrorDeProtocolo("Dos archivos para el mismo mapa en %s: %s y %s."
+                                      % (spec["assets"]["carpeta"], entrada[campo], nombre))
+        entrada[campo] = nombre
+    faltan = sorted(n for e in entradas.values() for n in (e.get("grande"), e.get("mini"))
+                    if n and not (e.get("grande") and e.get("mini")))
+    if faltan:
+        raise pr.ErrorDeProtocolo(
+            "Estos mapas de %s no tienen su par original + miniatura: %s. La miniatura (400 px) "
+            "se genera una vez y se commitea junto al original (configs/dims/mapas-clima.yaml)."
+            % (spec["assets"]["carpeta"], ", ".join(faltan)))
+
+    ventana = spec["ventana"]
+    if por_cultivo is None:
+        lista = sorted(entradas.values(), key=lambda e: e["desde"], reverse=True)
+        lista = lista[:ventana["cuantos"]]
+    else:
+        fechas = sorted({e["desde"] for e in entradas.values()}, reverse=True)
+        fechas = fechas[:ventana["fechas"]]
+        for nueva, vieja in zip(fechas, fechas[1:]):
+            if (nueva - vieja).days < ventana["dias_minimos_entre_fechas"]:
+                raise pr.ErrorDeProtocolo(
+                    "La ORA trae fechas a menos de %d dias (%s y %s): la base es semanal y JC "
+                    "publica quincenalmente (X90). Cuales fechas van lo decide JC."
+                    % (ventana["dias_minimos_entre_fechas"], vieja, nueva))
+        orden = [c["codigo"] for c in spec["cultivos"]]
+        lista = sorted((e for e in entradas.values() if e["desde"] in fechas),
+                       key=lambda e: (-e["desde"].toordinal(), orden.index(e["cultivo"])))
+
+    ruta_publica = "%s/mapas/clima/%s" % (PREFIJO, spec["serie"])
+    mapas, archivos = [], []
+    for e in lista:
+        ancho, alto = _dimensiones_imagen(os.path.join(carpeta, e["mini"]))
+        if por_cultivo is None:
+            rotulo = e["rotulo"]
+            titulo = "%s %d" % (e["rotulo"], e["hasta"].year)
+        else:
+            rotulo = "%s %s" % (por_cultivo[e["cultivo"]], e["cultivo"])
+            titulo = "%s · %s" % (rotulo, e["rotulo"])
+        mapas.append({"clave": e["grande"].rsplit(".", 1)[0], "rotulo": rotulo, "titulo": titulo,
+                      "mini": "%s/%s" % (ruta_publica, e["mini"]),
+                      "grande": "%s/%s" % (ruta_publica, e["grande"]),
+                      "ancho": ancho, "alto": alto})
+        for nombre in (e["grande"], e["mini"]):
+            archivos.append((os.path.join(carpeta, nombre),
+                             "public/plataforma/mapas/clima/%s/%s" % (spec["serie"], nombre)))
+    if not mapas:
+        raise pr.ErrorDeProtocolo("La galeria %s no tiene ningun mapa." % spec["slug_vista"])
+
+    filas, columnas = None, None
+    if por_cultivo is not None:
+        columnas = ["%s %s" % (c["nombre"], c["codigo"]) for c in spec["cultivos"]]
+        filas = []
+        for fecha in fechas:
+            celdas = []
+            for c in spec["cultivos"]:
+                indice = next((i for i, e in enumerate(lista)
+                               if e["desde"] == fecha and e["cultivo"] == c["codigo"]), None)
+                celdas.append(indice)
+            filas.append({"titulo": periodo_de_mapa_clima(spec, {"fecha": fecha.strftime(
+                "%Y%m%d")})[2], "celdas": celdas})
+    # El destacado es el mas reciente: el primero de la grilla (en la ORA, el primer cultivo
+    # con imagen en la fecha mas reciente, que es el mismo primero de la lista).
+    destacado = 0
+    anios = sorted({e["hasta"].year for e in lista})
+    return mapas, destacado, filas, columnas, archivos, anios
+
+
+def construir_galeria_clima(ctx, spec):
+    """Una galeria de mapas de AgroClima. Un solo cuadro, SIN filtros: es la hoja de JC, una
+    grilla de miniaturas en orden descendente con el popup del original."""
+    vista = vista_base(ctx, spec, "galeria.html", [])
+    mapas, destacado, filas, columnas, archivos, anios = mapas_clima(spec)
+    if len(anios) == 1:
+        texto_anios = str(anios[0])
+    else:
+        texto_anios = "%d-%d" % (anios[0], anios[-1])
+    definicion = spec.get("definicion")
+    elemento = {
+        "titulo": titulo_literal(spec["titulo_protocolo"], anios=texto_anios),
+        "subtitulo": spec["subtitulo_cuadro"],
+        "pie": spec["fuente"]["pie"],
+        "nota": limpiar(spec.get("nota") or ""),
+        "mapas": mapas,
+        "por_fila": spec.get("por_fila") or len(columnas or []) or 6,
+        "destacado": destacado,
+    }
+    if definicion:
+        elemento["definicion"] = {
+            "titulo": definicion["titulo"],
+            "parrafos": [limpiar(p) for p in definicion["parrafos"]],
+            "enlace": definicion.get("enlace")}
+    if filas is not None:
+        elemento["filas"] = filas
+        # `cabeceras` y no `columnas`: `columnas` es la clave de las TABLAS y
+        # verificar_subtitulos la lee como tal.
+        elemento["cabeceras"] = columnas
+        elemento["por_fila"] = len(columnas)
+        elemento["nota"] = elemento["nota"] or (
+            "Cuando en una fecha no hay mapa de un cultivo, su lugar queda en blanco.")
+    vista["combos"][""] = {"elementos": [elemento]}
+    vista["imagenes_a_copiar"] = archivos
+    return vista
+
+
+def resolver_tarjetas(tablero, url_de):
+    """Las URL de las tarjetas de la portada de AgroClima, que el constructor deja como id de
+    spec. Un destino que no se publica en ninguna seccion corta la corrida: una tarjeta no
+    puede llevar a una pagina que no existe."""
+    for combo in tablero["combos"].values():
+        for panel in combo.get("paneles", {}).values():
+            for tarjeta in panel.get("tarjetas") or []:
+                destino = tarjeta.pop("destino", None)
+                if not destino:
+                    tarjeta["href"] = None
+                    continue
+                if destino not in url_de:
+                    raise pr.ErrorDeProtocolo(
+                        "La tarjeta %r de %s lleva a %s, que no se publica en ninguna seccion."
+                        % (tarjeta["titulo"], tablero["slug"], destino))
+                tarjeta["href"] = url_de[destino]
+
+
 TABLEROS = {
     "tablero-cultivos-extensivos": construir_tablero_cultivos,
     "tablero-cultivos-intensivos": construir_tablero_intensivos,
     "tablero-pasturas-forrajes": construir_tablero_forrajeras,
     "tablero-movimientos-hacienda": construir_tablero_hacienda,
     "tablero-stock-bovino": construir_tablero_stock,
+    # General > Infraestructura y riesgo (capas del IGN, 14-oct-2026)
+    "tablero-infraestructura-y-riesgo": construir_tablero_red_vial,
+    "tablero-infraestructura-amenazas": construir_tablero_amenazas,
+    # AgroClima (maqueta "0000000000 Maqueta Clima 1.xlsx", 14-oct-2026)
+    "tablero-agroclima": construir_tablero_agroclima,
+    "tablero-agroclima-estaciones": construir_tablero_estaciones,
 }
 
 
@@ -9632,6 +10790,15 @@ def constructor_de_tablero(slug, spec):
         return construir_tablero_regimenes
     if spec.get("tipo") == "tablero" and str(spec.get("familia") or "").startswith("apicola"):
         return construir_tablero_apicola
+    return None
+
+
+def constructor_de_vista(spec):
+    """El constructor de una vista que no esta en CONSTRUCTORES: por tipo y familia. Una galeria
+    de AgroClima se arma siempre igual, asi que sumar un producto de SEPA es escribir su spec y
+    copiar sus imagenes, sin tocar este archivo."""
+    if spec.get("tipo") == "galeria" and spec.get("familia") == ContextoAgroclima.familia:
+        return construir_galeria_clima
     return None
 
 
@@ -9681,10 +10848,14 @@ def verificar_tablero(tablero):
         # (tablero-cultivos-intensivos.indicadores.estado). "Sin tarjetas" y "la tarjeta salio
         # vacia" tienen que poder distinguirse: por eso la ausencia de la clave, y no una
         # lista vacia.
-        if "kpis" in combo and not 1 <= len(combo["kpis"]) <= 4:
+        # La disposicion en COLUMNAS dibuja la banda de tarjetas con `auto-fit`, asi que
+        # admite una quinta (la portada de Infraestructura y riesgo: km de red por jerarquia,
+        # vias activas y estaciones). Las otras siguen en 4: la del mockup es una grilla fija.
+        maximo = 5 if tablero["paneles"].get("disposicion") == "columnas" else 4
+        if "kpis" in combo and not 1 <= len(combo["kpis"]) <= maximo:
             raise pr.ErrorDeProtocolo(
-                "El tablero %s tiene %d indicadores en %s y el layout admite de 1 a 4"
-                % (tablero["slug"], len(combo["kpis"]), clave))
+                "El tablero %s tiene %d indicadores en %s y el layout admite de 1 a %d"
+                % (tablero["slug"], len(combo["kpis"]), clave, maximo))
         for nombre, panel in combo["paneles"].items():
             if not panel.get("vacio") and not panel.get("pie"):
                 raise pr.ErrorDeProtocolo(
@@ -9982,7 +11153,7 @@ def normalizar_paneles(vista):
 
 def payload_json(vista):
     normalizar_paneles(vista)
-    return {
+    payload = {
         "slug": vista["slug"],
         "tipo": vista["tipo"],
         "filtros": [f["id"] for f in vista["filtros"]],
@@ -10024,6 +11195,12 @@ def payload_json(vista):
         "sin_opcion_departamento": vista.get("sin_opcion_departamento")
                                    or "Sin datos de {opcion} en este departamento.",
     }
+    # Las capas del IGN que nombra el tablero (archivo, etiqueta, tooltip, estilo y fuente de
+    # cada una; ver `catalogo_del_tablero`). Solo si nombra alguna: el resto de los JSON no
+    # cambia ni un byte.
+    if vista.get("capas_catalogo"):
+        payload["capas"] = vista["capas_catalogo"]
+    return payload
 
 
 def escribir_datos(escritor, vista, carpeta_datos, ruta_publica):
@@ -10479,7 +11656,7 @@ def escribir_sitio(ctx, vistas, tableros):
     for slug in ctx.navegacion["privadas"]["vistas"]:
         url_de[slug] = "%s/_privado/%s" % (PREFIJO, slug)
 
-    def extras_de_seccion(seccion):
+    def extras_de_seccion(seccion, portada=True):
         """Tema de cuerpo y botones de cabecera que declara la seccion (site/navegacion.yaml).
 
         Hoy solo cultivos los trae (segunda tanda del 10-ago: tema moderno + botones "Datos
@@ -10560,6 +11737,13 @@ def escribir_sitio(ctx, vistas, tableros):
             tira.append({"texto": entrada["texto"],
                          "href": url_de.get(destino) if destino else None,
                          "actual": False})
+        # "Regresar" (AgroClima, 14-oct-2026): JC lo dibuja a la derecha de la banda en las
+        # ocho hojas internas de la rama y lleva a la portada. Va en el lugar de la tira de
+        # paginas, y solo en las paginas que NO son la portada (en la portada no hay adonde
+        # regresar dentro de la seccion).
+        if seccion.get("regresar") and not portada:
+            tira.append({"texto": seccion["regresar"],
+                         "href": "%s/%s" % (PREFIJO, seccion["url"]), "actual": False})
         if tira:
             extras["paginas_de_seccion"] = tira
         # La tira de SECCIONES HERMANAS, arriba de la de paginas. Es la fila 6 de todas las
@@ -10644,6 +11828,10 @@ def escribir_sitio(ctx, vistas, tableros):
                     {"texto": carpeta["titulo"], "href": "%s/%s" % (PREFIJO, carpeta["url"])},
                     {"texto": vista["titulo"], "href": None}]
             carpeta_datos, ruta_publica = "public/plataforma/data", PREFIJO + "/data"
+            # Un `breadcrumb` declarado en el spec de la vista es LITERAL, como el de los
+            # tableros (las galerias de AgroClima: la celda L5 de cada hoja de JC).
+            if vista["spec"].get("breadcrumb"):
+                miga = miga_de_tablero(carpeta, vista["spec"])
 
         vista["reservada"] = not publicable
         # Los enlaces entre vistas solo se dibujan si el destino esta PUBLICADO: una vista
@@ -10655,7 +11843,7 @@ def escribir_sitio(ctx, vistas, tableros):
                             if e["href"].replace(".html", "") in url_de]
         vista["ruta_datos"] = escribir_datos(escritor, vista, carpeta_datos, ruta_publica)
         periodo, barra, _ = repartir_filtros(vista["filtros"])
-        extras = extras_de_seccion(carpeta if publicable else None)
+        extras = extras_de_seccion(carpeta if publicable else None, portada=False)
         # Cuarta tanda (boton_volver_provincia, declarado en el bloque `cabecera` del spec
         # de la vista): el boton de cabecera que NOMBRA la pagina actual pasa a decir
         # "Provincia" y VUELVE al tablero ("un boton que nombra la pagina en la que ya estas
@@ -10684,6 +11872,8 @@ def escribir_sitio(ctx, vistas, tableros):
     # internas de la seccion y no la reemplazan.
     tablero_de_seccion = {t["seccion"]: t for t in tableros if not t["spec"].get("pagina")}
     reservados = []
+    # Las capas del IGN que nombra algun tablero: se copian a public/plataforma/geo/capas/.
+    capas_a_copiar = set()
     for tablero in tableros:
         seccion = next(s for s in secciones if s["id"] == tablero["seccion"])
         # Los DATOS de una pagina reservada van con ella a _privado/: si quedaran en data/ se
@@ -10701,6 +11891,15 @@ def escribir_sitio(ctx, vistas, tableros):
             seleccion = ((tablero["spec"].get("paneles") or {}).get("mapa") or {})                 .get("seleccion_departamento") or {}
             tablero["indice_departamental"] = escribir_capa_departamental(
                 escritor, tablero, carpeta_tab, ruta_tab, seleccion.get("miga"))
+        tablero["capas_catalogo"] = catalogo_del_tablero(tablero)
+        # Las tarjetas de la portada de AgroClima llevan el id de su pagina: aca, que ya se
+        # sabe donde vive cada una, pasan a ser URL.
+        resolver_tarjetas(tablero, url_de)
+        # Archivos que el constructor GENERA ademas del JSON (la miniatura de las estaciones).
+        for ruta_extra in sorted(tablero.get("archivos_extra") or {}):
+            escritor.texto(ruta_extra, tablero["archivos_extra"][ruta_extra])
+        for id_capa in sorted((tablero["capas_catalogo"] or {}).get("capas") or {}):
+            capas_a_copiar.add(id_capa)
         tablero["ruta_datos"] = escribir_datos(escritor, tablero, carpeta_tab, ruta_tab)
         # El panel de precios del MCBA tiene su propio JSON, partido por especie: no viaja en
         # las combinaciones del tablero porque sus filtros son otros (ver
@@ -10767,6 +11966,16 @@ def escribir_sitio(ctx, vistas, tableros):
             # combinaciones ya estan en el payload de datos.
             panel["comparacion"] = bloque_comparacion(
                 definicion, tablero["filtros"], declarado["id"], tablero["slug"])
+            # Las capas del IGN que este mapa ofrece prender (opt-in del spec). Van en el JSON
+            # de la PAGINA porque son cascara: el control "Capas" se dibuja en el servidor. Un
+            # panel sin capas no lleva la clave y su HTML queda igual que siempre.
+            capas = capas_del_panel(tablero, declarado["id"], definicion)
+            if capas:
+                panel["capas"] = capas
+                # En la portada del IGN el control es la LEYENDA, siempre a la vista; sobre un
+                # mapa de calor es un desplegable chico que no le quita lugar al mapa.
+                panel["capas_modo"] = "lista" if declarado["id"] == "mapa-capas" else "desplegable"
+                panel["capas_rotulo"] = catalogo_capas()["rotulo_control"]
             comunes = tablero["paneles"].get("acciones_de_cuadro") or []
             propias = definicion.get("acciones") or []
             if comunes or propias:
@@ -10849,7 +12058,7 @@ def escribir_sitio(ctx, vistas, tableros):
             menu=menu_del_sitio(ctx, seccion["id"]),
             pestanias=pestanias_de(seccion, "tablero"),
             titulo_pestania="%s · %s" % (tablero["titulo"], theme["titulo_sitio"]),
-            **extras_de_seccion(seccion)))
+            **extras_de_seccion(seccion, portada=not nombre_pagina)))
 
     # Lista completa de vistas de la seccion: lo que antes era la portada, ahora el "extra".
     for seccion in secciones:
@@ -10922,6 +12131,12 @@ def escribir_sitio(ctx, vistas, tableros):
         subtitulo_cabecera=theme["bajada_sitio"],
         titulo_pestania=theme["titulo_sitio"]))
 
+    # Las capas del IGN, tal cual estan en configs/dims/capas-ign/ (como el GeoJSON de los
+    # departamentos). Solo las que nombra algun tablero.
+    for id_capa in sorted(capas_a_copiar):
+        capa = catalogo_capas()["capas"][id_capa]
+        escritor.copia(capa["origen"], "public" + capa["archivo"])
+
     # Iconos: al deploy van SOLO los que el sitio usa (los referencio algun filtro, la tarjeta
     # de contexto o una accion del pie). El catalogo completo queda en site/assets/iconos/.
     copiar_iconos(escritor, theme)
@@ -10934,6 +12149,11 @@ def escribir_sitio(ctx, vistas, tableros):
             if nombre.lower().endswith(".png"):
                 escritor.copia(os.path.join(origen, nombre),
                                "public/plataforma/mapas/" + nombre)
+    # Las galerias de AgroClima: original y miniatura de cada mapa DENTRO de la ventana del
+    # spec (los que quedaron afuera no se publican). Tal cual, sin leerlos.
+    for vista in vistas:
+        for origen, destino in vista.get("imagenes_a_copiar") or []:
+            escritor.copia(origen, destino)
 
     return escritor
 
@@ -11026,10 +12246,18 @@ def main(args=None):
         if archivo.startswith("_comunes-apicola") and archivo.endswith(".yaml"):
             familia = archivo[len("_comunes-"):-len(".yaml")]
             especies[familia] = ContextoApicola(con, familia)
+    # Antes de cerrar la conexion: el contexto del IGN lee dim_geo.
+    capas_ign = ContextoCapasIgn(con)
+    # AgroClima: lee el mart de clima diario (base 111) y dim_geo.
+    agroclima = ContextoAgroclima(con)
     con.close()
     contextos = {9: ctx, 85: ContextoHacienda(hacienda), 48: ContextoStock(stock),
                  ContextoVegetales.familia: ContextoVegetales(vegetales, precios_mcba),
-                 ContextoForrajeras.familia: ContextoForrajeras(forrajeras), **especies}
+                 ContextoForrajeras.familia: ContextoForrajeras(forrajeras),
+                 # General > Infraestructura y riesgo: las capas del IGN (no lee marts, salvo
+                 # dim_geo para los nombres de los departamentos).
+                 ContextoCapasIgn.familia: capas_ign,
+                 ContextoAgroclima.familia: agroclima, **especies}
 
     with open(os.path.join(DIR_SITE, "colores-cultivo.yaml"), "w", encoding="utf-8") as f:
         f.write(escribir_asignacion_colores(ctx))
@@ -11059,7 +12287,8 @@ def main(args=None):
                                    "queda como registro, sin pagina propia)"))
             continue
         constructor_tablero = constructor_de_tablero(slug, spec)
-        constructor = CONSTRUCTORES.get(slug) or constructor_tablero
+        constructor = (CONSTRUCTORES.get(slug) or constructor_tablero
+                       or constructor_de_vista(spec))
         if constructor is None:
             omitidas.append((slug, "no hay constructor para este spec"))
             continue

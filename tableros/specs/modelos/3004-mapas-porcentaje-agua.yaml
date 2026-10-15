@@ -1,0 +1,56 @@
+# AgroClima > Mapas > Humedad en el suelo (porcentaje de agua en el suelo) · hoja "ClimPAS" de la
+# maqueta de JC (base "3004 MP"). Mismo mecanismo que 3002-mapas-evapotranspiracion.
+#   X52 "PARA EL BETA DE WEB PUBLICA, SOLO 6 meses de mapas - 3 por mes (son decádicas)"
+#   X54 "LOS CODIGOS DE IMÁGENES ESTÁN PUESTOS por mes y década (1, 2 y 3)"
+#   X56 "CORRECTAS LAS FECHAS Y LAS MINIATURAS"
+# Rotulo con el formato de JC: "al 10 septiembre", "al 20 ...", "al 30/31 ..." (agua al final de
+# la decada; la imagen dice "Acumulado al 30/09/2026").
+familia: agroclima
+seccion: agroclima
+slug: 3004-mapas-porcentaje-agua
+protocolo: _protocolo-presentacion
+tipo: galeria
+
+titulo: "Humedad en el suelo"
+subtitulo: "SEPA - INTA · porcentaje de agua en el suelo, decádico, últimos 6 meses"
+breadcrumb: "AgroClima - Provincia - mapas - SEPA-INTA - Porcentaje agua en suelo"
+titulo_protocolo: "SEPA - INTA - Mapas de porcentaje de agua en suelo {anios} (últimos 6 meses)"
+subtitulo_cuadro: "Del período más reciente al más antiguo · clic en un mapa para verlo completo"
+
+serie: porcentaje-agua
+assets:
+  carpeta: "site/assets/clima/porcentaje-agua"
+  patron: "^pj_(?P<anio>\\d{4})(?P<mes>\\d{2})_(?P<decada>[123])(?P<mini>-mini)?\\.(?P<ext>gif|jpg)$"
+periodo: decada-al
+orden: descendente
+por_fila: 6
+ventana:
+  cuantos: 18
+  motivo: "JC, X52: SOLO 6 meses de mapas - 3 por mes (son decádicas)"
+destacado: mas_reciente
+
+definicion:
+  titulo: "PORCENTAJE DE AGUA EN EL SUELO"
+  parrafos:
+    - >
+      Expresa la relación porcentual entre el contenido de agua disponible para la vegetación
+      que tiene el perfil (al final del período informado) y la capacidad potencial del suelo
+      para retener agua útil.
+    - >
+      Permite saber cuán completa está la recarga del suelo, lo que modifica la posibilidad de
+      que la vegetación transpire durante todo el día, dado que, por debajo de un determinado
+      umbral, la transpiración está limitada en las horas de mayor demanda. También indica el
+      almacenaje de agua en el suelo al inicio de una época de siembra, lo cual se relaciona
+      con la probabilidad de sufrir futuras sequías.
+  enlace: {texto: "https://sepa.inta.gob.ar/productos/", href: "https://sepa.inta.gob.ar/productos/"}
+
+fuente:
+  pie: "Fuente: SEPA - INTA (Instituto de Clima y Agua)"
+
+sensibilidad: normal
+estado: publicada
+origen:
+  tipo: maqueta de JC
+  archivo: "0000000000 Maqueta Clima 1.xlsx"
+  hojas: ["ClimPAS"]
+  recibido: 2026-10-14

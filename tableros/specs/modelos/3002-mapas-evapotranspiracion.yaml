@@ -1,0 +1,81 @@
+# AgroClima > Mapas > Evapotranspiración · hoja "ClimEVT" de la maqueta de JC
+# ("0000000000 Maqueta Clima 1.xlsx", 14-oct-2026; base "3002 MP"). Lectura en
+# docs/maqueta-clima.md.
+#
+# Galeria de IMAGENES de SEPA-INTA, publicadas tal cual (mismo mecanismo que
+# 43-mapas-forrajeros: miniatura en la grilla y el original en el popup). Lo que pide JC, en rojo
+# al pie de su hoja:
+#   X56 "PARA EL BETA DE WEB PUBLICA, SOLO 6 meses de mapas - 3 por mes (son decádicas)"
+#   X58 "LOS CODIGOS DE IMÁGENES ESTÁN PUESTOS por mes y década (1, 2 y 3)"
+#   X60 "CORRECTAS LAS FECHAS Y LAS MINIATURAS"
+# Los rotulos de la maqueta son aproximados ("10 al 20 mayo", "1 al 10 de abril"): aca se
+# CALCULAN del nombre del archivo, decada 1 = 1 al 10, decada 2 = 11 al 20, decada 3 = 21 al
+# ultimo dia del mes (que es la definicion del propio producto, en el texto de JC de abajo).
+#
+# Disposicion de la hoja: arriba a la izquierda el mapa MAS RECIENTE en grande, debajo el
+# cuadro con la definicion del producto y el link a SEPA; a la derecha la grilla de seis por
+# fila, del mas reciente al mas antiguo.
+familia: agroclima
+seccion: agroclima
+slug: 3002-mapas-evapotranspiracion
+protocolo: _protocolo-presentacion
+tipo: galeria
+
+titulo: "Evapotranspiración"
+subtitulo: "SEPA - INTA · mapas decádicos de evapotranspiración real, últimos 6 meses"
+breadcrumb: "AgroClima - Provincia - mapas - SEPA-INTA - Evapotranspiración"
+# {anios}: el año (o los años) de los mapas publicados. JC escribe "2026".
+titulo_protocolo: "SEPA - INTA - Mapas de evapotranspiración {anios} (últimos 6 meses)"
+subtitulo_cuadro: "Del período más reciente al más antiguo · clic en un mapa para verlo completo"
+
+serie: evapotranspiracion
+assets:
+  carpeta: "site/assets/clima/evapotranspiracion"
+  patron: "^et_(?P<anio>\\d{4})(?P<mes>\\d{2})_(?P<decada>[123])(?P<mini>-mini)?\\.(?P<ext>gif|jpg)$"
+# Regla del rotulo (site_build.periodo_de_mapa_clima): "21 al 30 septiembre".
+periodo: decada
+orden: descendente
+por_fila: 6
+# La ventana es la de JC y queda escrita para que no crezca sola: 6 meses x 3 decadas.
+ventana:
+  cuantos: 18
+  motivo: "JC, X56: SOLO 6 meses de mapas - 3 por mes (son decádicas)"
+destacado: mas_reciente
+
+definicion:
+  titulo: "EVAPOTRANSPIRACIÓN"
+  # Texto LITERAL del cuadro de JC (forma de texto de la hoja "ClimEVT"). Unica correccion: el
+  # "2" de la formula es un exponente (en la forma va como superindice).
+  parrafos:
+    - >
+      La evapotranspiración real (ETR) es la cantidad de agua (mm/día) evaporada desde la
+      superficie del suelo y transpirada por la cubierta vegetal. La ETR es clave para cálculos
+      del balance de agua en el suelo, detección de estrés hídrico o modelos de rendimientos de
+      cultivos. El cálculo de la ETR para la región pampeana surge del trabajo de Di Bella et
+      al.(2000) en el que se usó información de satélites de la serie NOAA-AVHRR. Este algoritmo
+      fue ajustado también para información del satélite S-NPP sensor VIIRS (Di Bella et al.
+      2019), teniendo como variables de cálculo al IVN y a la temperatura de superficie (Ts), de
+      la siguiente forma:
+    - "ETR= (-1.37 + 9.52*IVN + 0.14*Ts)²."
+    - >
+      Mensualmente se generan 3 imágenes de ETR tomando los valores máximos para 3
+      composiciones de imágenes correspondientes a 10 días: del 1 al 10 del mes (1era. década),
+      del 11 al 20 del mes (2da. década) y del 21 hasta el último día del mes (3ra. década). Se
+      utilizan imágenes del sensor VIIRS del satélite Suomi-NPP con una resolución espacial de
+      375 metros.
+    - >
+      Fuente: Di Bella, Oricchio, Gusmerotti y Texeira (2019) Actualización del algoritmo de
+      estimación de la evapotranspiración real para el sensor VIIRS-Suomi NPP. Ecología Austral
+      29:428-432, Asociación Argentina de Ecología.
+  enlace: {texto: "https://sepa.inta.gob.ar/productos/", href: "https://sepa.inta.gob.ar/productos/"}
+
+fuente:
+  pie: "Fuente: SEPA - INTA (Instituto de Clima y Agua)"
+
+sensibilidad: normal
+estado: publicada
+origen:
+  tipo: maqueta de JC
+  archivo: "0000000000 Maqueta Clima 1.xlsx"
+  hojas: ["ClimEVT"]
+  recibido: 2026-10-14

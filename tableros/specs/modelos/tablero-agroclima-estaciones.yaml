@@ -1,0 +1,96 @@
+# AgroClima > Estaciones agrometeorológicas INTA · hoja "ClimEAI" de la maqueta de JC
+# ("0000000000 Maqueta Clima 1.xlsx", 14-oct-2026). Base 111 (datos diarios de las 8 estaciones
+# del INTA en Santiago del Estero, entrega-03). Lectura completa en docs/maqueta-clima.md.
+#
+# Lo que pide JC, en rojo al pie de su hoja:
+#   W94 "ESTACION BANDERA COMO EJEMPLO - SOLO LAS VARIABLES DETALLADAS EN ESTE EJEMPLO"
+#   W95 "PARA EL BETA, SOLO EL ULTIMO AÑO DE DATOS"
+#   W96 "ESTA SIMULADA LA BARRA DE DESPLAZAMIENTO"  -> la tabla scrollea adentro de su cuadro
+#   E99 "LA NUMERACION ORIGINAL ESTÁ CON SISTEMA INGLÉS. CONVERTI PUNTOS EN COMAS Y DEJÉ 1
+#        DÍGITO SOLAMENTE"
+# y en la hoja "Estaciones" del Excel de la base: "NO TODAS LAS ESTACIONES TIENEN LAS MISMAS
+# VARIABLES (DEBEN ESPECIFICARSE)" y "TODAS SE REPRESENTARÁN CON GRAFICO DE LÍNEAS (luego
+# veremos cuales se pueden combinar)".
+#
+# Disposicion calcada de la hoja: a la izquierda el mapa de la provincia con las estaciones
+# ("Seleccione Estación Agrometeorológica") y debajo el cuadro de definiciones; a la derecha la
+# tabla diaria (Año, Mes, Día y las once variables) y debajo el grafico de lineas de la
+# temperatura de abrigo. Arriba, en la tarjeta, la estacion y su "Período cubierto: Desde ...
+# Hasta ..." (JC lo pone en la banda del titulo, celda AN5).
+#
+# El UNICO selector es la estacion: clic en el punto del mapa o en su nombre de la lista (la
+# lista es la forma de elegir con el teclado, y es donde Sachayoj muestra su leyenda). Abre en
+# Bandera, como la maqueta. Las estaciones, las variables y los recortes del control de calidad
+# viven en _comunes-agroclima.yaml.
+#
+# Que cambia segun la estacion (regla de JC: las variables "DEBEN ESPECIFICARSE"):
+#   - una variable que la estacion NO MIDE (su hoja no la trae, o la trae vacia en toda la
+#     serie) no tiene columna, y la nota de la tabla la nombra: hoy La María no mide la humedad
+#     media, la lluvia cronologica ni la maxima en 30 minutos;
+#   - un dia sin dato es "S/D" y el grafico corta la linea;
+#   - un tramo recortado por el control de calidad es "S/D" y la nota dice cual y por que.
+id: tablero-agroclima-estaciones
+tipo: tablero
+familia: agroclima
+seccion: agroclima
+pagina: estaciones-inta
+
+titulo: "Estaciones agrometeorológicas INTA"
+titulo_pagina: "Estaciones agrometeorológicas INTA"
+subtitulo: "Provincia de Santiago del Estero · dato diario del último año, por estación"
+# La miga es la celda L5 de JC; el tramo final es la estacion elegida (dinamico).
+breadcrumb: "AgroClima - Provincia - Estaciones agrometeorológicas INTA - {estacion}"
+
+# Sin KPIs: la banda lleva solo la tarjeta con la estacion y su periodo cubierto.
+indicadores: []
+tarjeta_contexto: true
+# Las plantillas de la tarjeta. {inicio}/{fin}: primer y ultimo dia con algun dato de esa
+# estacion (no los de la hoja "Estaciones", que en cinco estaciones no coinciden con los datos:
+# reporte entrega-03, punto 16).
+tarjeta:
+  nombre: "Estación {estacion}"
+  detalle: "Período cubierto: Desde {inicio} Hasta {fin}"
+
+paneles:
+  alto: fluye
+  disposicion: columnas
+  acciones_de_tablero:
+    - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
+  mapa-estaciones:
+    titulo: "Seleccione Estación Agrometeorológica"
+    # El rotulo de una estacion que no se muestra en el ultimo anio (Sachayoj).
+    rotulo_fuera: "{estacion} ({leyenda})"
+  texto-definiciones:
+    # "VARIABLES INCLUIDAS - Aclaraciones en las pantallas que correspondan" (JC, hoja
+    # "Estaciones", B12). Solo las de las columnas que ESA estacion muestra.
+    titulo: "Variables incluidas"
+  tabla-diaria:
+    # El grafico de JC nombra la estacion en mayusculas ("Est. agrometeorológica BANDERA").
+    titulo: "Sgo del Estero - Est. agrometeorológica {ESTACION} - Datos diarios ({desde} al {hasta})"
+    subtitulo: "Valor diario de cada variable · S/D: sin dato"
+  lineas-temperatura:
+    titulo: "Sgo del Estero - Est. agrometeorológica {ESTACION} - Temperatura Abrigo 150cm ({desde} al {hasta})"
+    subtitulo: "Temperatura media diaria"
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  orden:
+    - {id: mapa-estaciones, ancho: 4, columna: izq}
+    - {id: texto-definiciones, ancho: 4, columna: izq}
+    - {id: tabla-diaria, ancho: 8, columna: der, scroll_interno: true, compacta: true}
+    # El grafico va en su propia banda, a todo el ancho, debajo del par mapa | tabla: en la
+    # maqueta corre por debajo de los dos. Ademas es lo que deja que la tabla scrollee adentro
+    # (nivelarBandas recorta la tabla al alto de la columna de al lado solo si su columna no
+    # tiene graficos).
+    - {id: lineas-temperatura, ancho: 12}
+
+filtros:
+  - id: estacion
+    zona: panel
+
+sensibilidad: normal
+estado: publicada
+origen:
+  tipo: maqueta de JC
+  archivo: "0000000000 Maqueta Clima 1.xlsx"
+  hojas: ["ClimEAI"]
+  recibido: 2026-10-14

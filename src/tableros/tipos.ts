@@ -172,6 +172,15 @@ export type ComparacionDeCuadro = {
   medidas: { rotulo: string; ninguna: string; opciones: Opcion[] } | null;
 };
 
+/* Una capa del IGN que un mapa ofrece prender (rutas, ferrocarril...). Aca va solo lo que
+   necesita el CONTROL; el archivo, el estilo y la fuente viajan en el JSON de datos del
+   tablero (`capas`) y los usa src/tableros/cliente/capas.js. */
+export type CapaDeMapa = {
+  id: string;
+  etiqueta: string;
+  prendida: boolean;
+};
+
 export type Panel = {
   id: string;
   titulo: string;
@@ -210,6 +219,13 @@ export type Panel = {
   acciones?: AccionDeCuadro[];
   // Solo en los cuadros donde el spec habilita cruzar datos (ver ComparacionDeCuadro)
   comparacion?: ComparacionDeCuadro | null;
+  // Capas del IGN que este mapa ofrece prender (opt-in del spec, `paneles.<id>.capas`). En un
+  // mapa de calor arrancan apagadas y el control es un desplegable; en la portada de
+  // Infraestructura y riesgo el control es la leyenda, a la vista. Sin capas, no viene.
+  capas?: CapaDeMapa[];
+  capas_modo?: "lista" | "desplegable";
+  // El rotulo del boton del desplegable ("Capas"), de configs/dims/capas-ign.yaml.
+  capas_rotulo?: string;
   // `accion` solo la traen los items del panel UTILIDADES: con accion se dibujan como boton
   // (la engancha comun.js), sin accion siguen deshabilitados con "Próximamente".
   items?: { etiqueta: string; icono?: string; accion?: string }[];

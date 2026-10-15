@@ -7,7 +7,9 @@ su YAML de configs/bases/, nunca aca.
 Familias previstas (CLAUDE.md): tidy, dtv, dte, wide-mes, cuadro-indec, registro,
 clima-diario, clima-normal, stock, mas `precios`, que aparecio al ingerir la base 8 y
 todavia no esta en la lista de CLAUDE.md. Implementadas hasta ahora: tidy, dte, dtv,
-stock, precios.
+stock, precios, bandas-periodo, comercializacion, serie-mensual y clima-diario (base 111,
+estaciones del INTA: una hoja por estacion, sale largo estacion x fecha x variable; su
+diccionario de variables vive en configs/dims/variables-clima.yaml).
 
 Ojo con `precios`: es la unica familia cuya medida NO SE SUMA (un precio se promedia).
 Sus filas llevan `agregable=false`, `agregacion` y `ponderacion`; leer el encabezado de

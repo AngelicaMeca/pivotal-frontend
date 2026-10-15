@@ -103,6 +103,38 @@ cromadas:
       - "crema #f1dccb sobre cromo #2b1c18 = 12,36:1"
       - "crema #f1dccb sobre cromo_oscuro #7d5545 = 4,86:1"
       - "cocoa #2b1c18 sobre seleccion #c18477 = 5,33:1"
+  general:
+    # GENERAL (14-oct-2026, primera seccion: Infraestructura y riesgo, capas del IGN). JC no
+    # le asigno color a esta rama: no es agricola ni ganadera, asi que no le corresponde ni el
+    # verde ni el marron de la regla de la hoja INDICACIONES. Va una cromada NEUTRA, gris
+    # pizarra, para que no se confunda con ninguna de las dos areas productivas. Queda para
+    # que JC la valide (backlog 106).
+    cromo: "#2f3d48"           # gris pizarra: cabecera, menu lateral, banda
+    cromo_oscuro: "#4b5d6b"    # pizarra medio: tira de paginas y seccion activa del menu
+    seleccion: "#a9b8c4"       # gris azulado claro: chip SELECCIONADO y acentos
+    borde_panel: "#cfd0cb"     # gris calido muy claro: borde fino de panel, KPI y chips
+    enlace: "#3b4e5c"          # pizarra: links y acciones de texto sobre la crema
+    contraste_medido:
+      - "crema #f1dccb sobre cromo #2f3d48 = 8,42:1"
+      - "crema #f1dccb sobre cromo_oscuro #4b5d6b = 5,15:1"
+      - "cocoa #2b1c18 sobre seleccion #a9b8c4 = 8,07:1"
+      - "enlace #3b4e5c sobre fondo_cuadro #fbf4ec = 7,92:1"
+  clima:
+    # AGROCLIMA (14-oct-2026, maqueta "0000000000 Maqueta Clima 1.xlsx"). JC no le asigno color
+    # a la rama: su maqueta usa la plantilla azul de todas sus hojas. No es agricola ni
+    # ganadera, asi que no le toca ni el verde ni el marron de la regla de la hoja INDICACIONES,
+    # y tampoco el gris de General, para que no se confundan. Va un AZUL PETROLEO sobrio, por
+    # asociacion con el agua y el clima. Queda para que JC la valide (backlog 108).
+    cromo: "#1e4a5f"           # azul petroleo: cabecera, menu lateral, banda
+    cromo_oscuro: "#2f6379"    # petroleo medio: tira de paginas y seccion activa del menu
+    seleccion: "#9cc3d1"       # celeste grisado: chip SELECCIONADO y acentos
+    borde_panel: "#c9d3d3"     # gris azulado muy claro: borde fino de panel, KPI y chips
+    enlace: "#2a5d73"          # petroleo: links y acciones de texto sobre la crema
+    contraste_medido:
+      - "crema #f1dccb sobre cromo #1e4a5f = 7,20:1"
+      - "crema #f1dccb sobre cromo_oscuro #2f6379 = 4,98:1"
+      - "cocoa #2b1c18 sobre seleccion #9cc3d1 = 8,69:1"
+      - "enlace #2a5d73 sobre fondo_cuadro #fbf4ec = 6,61:1"
 
 # Logo provincial (cabecera). EL LOGO NUEVO, 29-sep-2026: JC avisa que el que vale es el que
 # el mismo pone en su maqueta ("0000000000 Maqueta Agri.xlsx", hoja "Agri 1", primera imagen

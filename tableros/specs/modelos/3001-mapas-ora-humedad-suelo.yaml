@@ -1,0 +1,69 @@
+# AgroClima > Mapas > Reservas hídricas ORA · hoja "ClimORA-1" de la maqueta de JC (base
+# "3001 MP"). Galeria de imagenes de la ORA (Oficina de Riesgo Agropecuario), publicadas tal
+# cual, con el mismo popup que el resto de las galerias. Lo que pide JC, en rojo:
+#   X86 "PARA EL BETA DE WEB PUBLICA, SOLO 3 meses de mapas - ES DECIR 6 FILAS DE IMÁGENES
+#        (2 quincenas por mes)"
+#   X88 "LOS CODIGOS DE IMÁGENES ESTÁN PUESTOS (G1=Girasol Temprano; G2= Girasol tardío, etc.)
+#        ASI FIGURAN EN LA BASE"
+#   X90 "La base es SEMANAL, PERO PARA LA BETA DE WEB PUBLICA, PUBLICAREMOS QUINCENALMENTE"
+#   X92 "Cuando NO exista una imagen, queda el espacio en blanco (como en el caso de Girasol
+#        Tardío 6 septiembre)"
+#   X94 "Los cultivos irán apareciendo con otros códigos - FAVOR DE LEER LA LEYENDA EN LA
+#        IMAGEN, SINO ME PREGUNTAN Y ARMO LISTA"
+#   X96 "CORRECTAS LAS FECHAS Y LAS MINIATURAS"
+#
+# Disposicion: UNA FILA POR FECHA (la mas reciente arriba, con la fecha como titulo de la fila)
+# y UNA COLUMNA POR CULTIVO, en el orden fijo de abajo. Si en una fecha falta la imagen de un
+# cultivo, su lugar queda en blanco (no se corre la fila). Arriba a la izquierda, el mapa mas
+# reciente del primer cultivo con imagen en esa fecha, en grande (como la maqueta). La ORA no
+# trae texto de definicion en la maqueta: no se inventa uno.
+#
+# Un codigo de cultivo que no este en `cultivos` CORTA el build: JC avisa que van a aparecer
+# otros y que hay que leer la leyenda de la imagen o preguntarle. Se agrega aca con su nombre.
+familia: agroclima
+seccion: agroclima
+slug: 3001-mapas-ora-humedad-suelo
+protocolo: _protocolo-presentacion
+tipo: galeria
+
+titulo: "Reservas hídricas ORA"
+subtitulo: "ORA (Oficina de Riesgo Agropecuario) · estado de las reservas hídricas en el suelo por cultivo, últimos 3 meses"
+breadcrumb: "AgroClima - Provincia - mapas - ORA - Mapas humedad del suelo"
+titulo_protocolo: "ORA (Oficina de Riesgo Agropecuario) - Mapas humedad suelo por cultivo - (últimos 3 meses)"
+subtitulo_cuadro: "Una fila por fecha, de la más reciente a la más antigua · clic en un mapa para verlo completo"
+
+serie: ora-humedad
+assets:
+  carpeta: "site/assets/clima/ora-humedad"
+  # El prefijo "500_" viene en cinco de las seis fechas y falta en la del 20/09/2026: no
+  # cambia el contenido y se aceptan las dos formas. Dos archivos del mismo cultivo y la misma
+  # fecha (con y sin prefijo) cortan el build.
+  patron: "^(?:500_)?(?P<cultivo>[A-Z][A-Z0-9]*)_(?P<fecha>\\d{8})(?P<mini>-mini)?\\.(?P<ext>gif|jpg)$"
+periodo: fecha
+orden: descendente
+# Los codigos de JC (celda X88 y rotulos de su hoja), en el orden de sus columnas.
+cultivos:
+  - {codigo: G1, nombre: "Girasol Temprano"}
+  - {codigo: G2, nombre: "Girasol Tardío"}
+  - {codigo: M1, nombre: "Maíz Temprano"}
+  - {codigo: P, nombre: "Pradera"}
+  - {codigo: TC, nombre: "Trigo Tardío"}
+  - {codigo: TL, nombre: "Trigo Temprano"}
+ventana:
+  fechas: 6
+  # Quincenal: dos fechas publicadas no pueden estar a menos de este numero de dias. Si llegan
+  # fechas semanales el build corta, porque elegir cuales se publican es decision de JC (X90).
+  dias_minimos_entre_fechas: 14
+  motivo: "JC, X86: SOLO 3 meses de mapas - ES DECIR 6 FILAS DE IMÁGENES (2 quincenas por mes)"
+destacado: mas_reciente
+
+fuente:
+  pie: "Fuente: ORA (Oficina de Riesgo Agropecuario)"
+
+sensibilidad: normal
+estado: publicada
+origen:
+  tipo: maqueta de JC
+  archivo: "0000000000 Maqueta Clima 1.xlsx"
+  hojas: ["ClimORA-1"]
+  recibido: 2026-10-14

@@ -1,0 +1,73 @@
+# AgroClima > Mapas > Humedad disponible (variación de agua disponible) · hoja "ClimVAD" de la
+# maqueta de JC (base "3003 MP"). Mismo mecanismo que 3002-mapas-evapotranspiracion.
+#   X56 "PARA EL BETA DE WEB PUBLICA, SOLO 6 meses de mapas - 3 por mes (son decádicas)"
+#   X58 "LOS CODIGOS DE IMÁGENES ESTÁN PUESTOS por mes y década (1, 2 y 3)"
+#   X60 "CORRECTAS LAS FECHAS Y LAS MINIATURAS"
+# El rotulo sigue el FORMATO de JC ("1 vs. 10 septiembre", "10 vs. 20 ...", "20 vs. 30/31 ..."),
+# calculado del nombre: los de la maqueta tienen errores ("11 vs. 20 julio" entre dos "10 vs.
+# 20"). OJO, queda como pregunta (backlog 108): la imagen de la decada 1 dice "acumulado al
+# 10/09 vs acumulado al 31/08", o sea que compara contra el ultimo dia del mes ANTERIOR, no
+# contra el dia 1.
+familia: agroclima
+seccion: agroclima
+slug: 3003-mapas-variacion-agua
+protocolo: _protocolo-presentacion
+tipo: galeria
+
+titulo: "Humedad disponible"
+subtitulo: "SEPA - INTA · variación del agua disponible hasta 2 metros, decádica, últimos 6 meses"
+breadcrumb: "AgroClima - Provincia - mapas - SEPA-INTA - Variación de agua disponible"
+titulo_protocolo: "SEPA - INTA - Variación de agua disponible {anios} (últimos 6 meses)"
+subtitulo_cuadro: "Del período más reciente al más antiguo · clic en un mapa para verlo completo"
+
+serie: variacion-agua
+assets:
+  carpeta: "site/assets/clima/variacion-agua"
+  patron: "^db_(?P<anio>\\d{4})(?P<mes>\\d{2})_(?P<decada>[123])(?P<mini>-mini)?\\.(?P<ext>gif|jpg)$"
+periodo: decada-variacion
+orden: descendente
+por_fila: 6
+ventana:
+  cuantos: 18
+  motivo: "JC, X56: SOLO 6 meses de mapas - 3 por mes (son decádicas)"
+destacado: mas_reciente
+
+definicion:
+  titulo: "VARIACION DEL AGUA DISPONIBLE"
+  parrafos:
+    - >
+      Representa el cambio en el agua disponible (expresado en mm) al final de un período de
+      10 días con respecto al final del período anterior.
+    - >
+      Permite analizar la magnitud del aumento (período actual mayor al anterior) o reducción
+      (período actual menor al anterior) del agua disponible en el perfil en hasta 2 metros de
+      profundidad.
+    - >
+      El producto balance hídrico estima diariamente la variación espacial del agua disponible
+      en el suelo en las regiones Pampeana, Chaqueña, Semiárida Central y Litoral, cubriendo la
+      mayor parte de la superficie ocupada por los principales cultivos agrícolas extensivos en
+      Argentina.
+    - >
+      El balance integra la estimación del ingreso de agua al perfil del suelo por
+      precipitaciones (no incluye riego) y el egreso de agua por evaporación directa y
+      transpiración (evapotranspiración real). Las precipitaciones se estiman a partir de
+      información satelital proveniente del sensor IMERG-GPM, corregida diariamente con datos
+      de estaciones meteorológicas INTA y SMN distribuidas en toda la región (Gusmerotti et al.,
+      2022). Por otro lado, la estimación de la evapotranspiración real se realiza mediante el
+      uso de un coeficiente dual para transpiración y evaporación (Allen, 1998; Mercau et al.,
+      2016). Para ello, se estima la demanda atmosférica diaria a través de una interpolación
+      espacial de la evapotranspiración de referencia (ETo) según el modelo Penman-Monteith
+      FAO-56 (Allen, 1998), utilizando las variables agrometeorológicas registradas en las
+      estaciones.
+  enlace: {texto: "https://sepa.inta.gob.ar/productos/", href: "https://sepa.inta.gob.ar/productos/"}
+
+fuente:
+  pie: "Fuente: SEPA - INTA (Instituto de Clima y Agua)"
+
+sensibilidad: normal
+estado: publicada
+origen:
+  tipo: maqueta de JC
+  archivo: "0000000000 Maqueta Clima 1.xlsx"
+  hojas: ["ClimVAD"]
+  recibido: 2026-10-14

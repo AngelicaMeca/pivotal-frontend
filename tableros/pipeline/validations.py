@@ -304,7 +304,9 @@ def cambios_de_formato(ctx):
     salida = []
     for nro, cfg in sorted(ctx.configs.items()):
         for nota in cfg.get("notas") or []:
-            if nota.get("tipo") != "drift":
+            # Hay configs (base 111) cuyas notas son texto suelto, sin `tipo`: esas no son
+            # drift declarado y no se miran.
+            if not isinstance(nota, dict) or nota.get("tipo") != "drift":
                 continue
             salida.append(hallazgo(
                 "drift", "observacion", base=nro,
@@ -1693,9 +1695,618 @@ def numeros_redondos(ctx, base):
 
 
 # ---------------------------------------------------------------------------
+# CHECKS DE DATOS · series diarias en formato largo (familia clima-diario)
+#
+# Se activan solo si la base declara `serie_diaria` en reglas.yaml. Suponen una tabla
+# LARGA: una fila por serie (estacion) x fecha x variable, con el numero en `valor` y,
+# para las variables de texto, `valor_texto`. Los nombres de esas columnas salen de
+# `columnas.serie`, `columnas.fecha` y `columnas.variable`. Nada sabe de clima: un
+# rango, una variable publicada o una tolerancia es siempre un parametro del YAML.
+#
+# La "ventana publicada" es el tramo que se va a ver en el sitio: los
+# `serie_diaria.ventana_dias` dias que terminan en el ultimo dia CON DATO de la base
+# entera (no de cada serie: una estacion que dejo de mandar datos no se corre para atras
+# sola). Un problema dentro de esa ventana y en una variable de
+# `serie_diaria.variables_publicadas` es el que puede distorsionar un numero visible.
+# ---------------------------------------------------------------------------
+def _diaria(base):
+    """(reglas de serie diaria, col serie, col fecha, col variable) o None si no aplica."""
+    sd = base.reglas.get("serie_diaria")
+    serie, fecha, variable = base.col("serie"), base.col("fecha"), base.col("variable")
+    if not sd or not serie or not fecha or not variable or "valor" not in base.columnas:
+        return None
+    return sd, serie, fecha, variable
+
+
+def _con_dato(base):
+    """Condicion SQL: la fila trae algun valor (numero o texto)."""
+    if "valor_texto" in base.columnas:
+        return "(valor IS NOT NULL OR valor_texto IS NOT NULL)"
+    return "(valor IS NOT NULL)"
+
+
+def _ventana(ctx, base, sd, fecha):
+    """(desde, hasta) de la ventana publicada, como fechas de Python."""
+    hasta = uno(ctx.con, "SELECT max(%s) f FROM %s WHERE %s"
+                % (fecha, base.tabla, _con_dato(base)), "f")
+    if hasta is None:
+        return None, None
+    dias = int(sd.get("ventana_dias", 365))
+    desde = uno(ctx.con, "SELECT CAST(%s AS DATE) - INTERVAL %d DAY AS f"
+                % (lit(hasta), dias - 1), "f")
+    return (desde.date() if hasattr(desde, "date") else desde), hasta
+
+
+def _fecha_ar(f):
+    return f.strftime("%d/%m/%Y") if f is not None else "sin fecha"
+
+
+@check_base
+def huecos_serie_diaria(ctx, base):
+    """Dias que faltan, dias vacios y desfasaje contra lo que la propia fuente declara.
+
+    Tres cosas distintas que un grafico de lineas diario dibuja igual de mal:
+      * un dia que NO FIGURA en la hoja (hueco): la linea une los puntos de al lado;
+      * un dia que figura pero SIN NINGUN DATO: entra como nulo, nunca como cero;
+      * una serie que termina mucho antes que las demas: su "ultimo anio" no es el de
+        las otras.
+    """
+    d = _diaria(base)
+    if not d:
+        return []
+    sd, serie, fecha, _ = d
+    minimo = int(sd.get("hueco_min_dias", 30))
+    v_desde, v_hasta = _ventana(ctx, base, sd, fecha)
+    salida = []
+
+    # Huecos largos: diferencia entre dos fechas consecutivas presentes en la hoja.
+    huecos = q(ctx.con, """
+        WITH f AS (SELECT DISTINCT %(s)s AS serie, %(f)s AS fecha FROM %(t)s),
+        x AS (SELECT serie, fecha, lag(fecha) OVER (PARTITION BY serie ORDER BY fecha) prev FROM f)
+        SELECT serie, prev, fecha, CAST(fecha - prev AS INTEGER) - 1 AS faltan
+        FROM x WHERE prev IS NOT NULL AND CAST(fecha - prev AS INTEGER) - 1 >= %(m)d
+        ORDER BY serie, prev
+    """ % {"s": serie, "f": fecha, "t": base.tabla, "m": minimo})
+    if huecos:
+        en_ventana = [h for h in huecos if v_desde and h["fecha"] > v_desde]
+        salida.append(hallazgo(
+            "cobertura-temporal", "observacion", base=base.nro,
+            titulo="Tramos de %d dias o mas que no figuran en la planilla" % minimo,
+            casos=len(huecos),
+            detalle="Entre esas dos fechas la hoja no trae ninguna fila. Un grafico de lineas "
+                    "uniria los dos extremos con una recta. %s de estos tramos tocan la ventana "
+                    "que se publica (%s a %s)."
+                    % (num(len(en_ventana)), _fecha_ar(v_desde), _fecha_ar(v_hasta)),
+            ejemplos=["%s: del %s al %s, %s dias sin filas%s"
+                      % (h["serie"], _fecha_ar(h["prev"]), _fecha_ar(h["fecha"]),
+                         num(h["faltan"]),
+                         " (toca la ventana publicada)" if h in en_ventana else "")
+                      for h in sorted(huecos, key=lambda h: (-h["faltan"], h["serie"]))],
+            propuesta="Cortar la linea en el hueco, nunca unir los puntos de los costados.",
+            pregunta_jc="Faltan tramos largos de dias en algunas estaciones. Existen esos "
+                        "datos en el INTA o la estacion estuvo fuera de servicio?"))
+
+    # Dias que figuran pero sin ningun dato.
+    vacios = q(ctx.con, """
+        WITH d AS (SELECT %(s)s AS serie, %(f)s AS fecha, bool_or(%(c)s) algo
+                   FROM %(t)s GROUP BY 1, 2)
+        SELECT serie, count(*) FILTER (WHERE NOT algo) vacios, count(*) dias,
+               count(*) FILTER (WHERE NOT algo AND fecha >= %(vd)s) vacios_ventana
+        FROM d GROUP BY 1 ORDER BY 1
+    """ % {"s": serie, "f": fecha, "t": base.tabla, "c": _con_dato(base),
+           "vd": lit(v_desde) if v_desde else "DATE '9999-01-01'"})
+    con_vacios = [v for v in vacios if v["vacios"]]
+    if con_vacios:
+        salida.append(hallazgo(
+            "cobertura-temporal", "observacion", base=base.nro,
+            titulo="Dias que figuran en la planilla pero sin ningun dato",
+            casos=sum(v["vacios"] for v in con_vacios),
+            detalle="La fila del dia esta, pero todas sus celdas vienen vacias. Entran como "
+                    "dato faltante, nunca como cero.",
+            ejemplos=["%s: %s dias vacios de %s (%s en la ventana publicada)"
+                      % (v["serie"], num(v["vacios"]), num(v["dias"]),
+                         num(v["vacios_ventana"])) for v in con_vacios],
+            propuesta="Mostrarlos como 'sin dato'."))
+
+    # Desde/Hasta que declara la propia fuente contra los datos.
+    c_desde, c_hasta = base.col("desde_declarado"), base.col("hasta_declarado")
+    if c_desde and c_hasta:
+        filas = q(ctx.con, """
+            SELECT %(s)s AS serie, any_value(%(cd)s) d_decl, any_value(%(ch)s) h_decl,
+                   min(%(f)s) primera, max(%(f)s) ultima,
+                   min(%(f)s) FILTER (WHERE %(c)s) primer_dato,
+                   max(%(f)s) FILTER (WHERE %(c)s) ultimo_dato
+            FROM %(t)s GROUP BY 1 ORDER BY 1
+        """ % {"s": serie, "cd": c_desde, "ch": c_hasta, "f": fecha, "c": _con_dato(base),
+               "t": base.tabla})
+        distintos = []
+        for f in filas:
+            partes = []
+            if f["d_decl"] != f["primera"] or f["primera"] != f["primer_dato"]:
+                partes.append("declara desde %s; la hoja arranca el %s y el primer dato es "
+                              "del %s" % (_fecha_ar(f["d_decl"]), _fecha_ar(f["primera"]),
+                                          _fecha_ar(f["primer_dato"])))
+            if f["h_decl"] != f["ultima"] or f["ultima"] != f["ultimo_dato"]:
+                partes.append("declara hasta %s; la hoja termina el %s y el ultimo dato es "
+                              "del %s" % (_fecha_ar(f["h_decl"]), _fecha_ar(f["ultima"]),
+                                          _fecha_ar(f["ultimo_dato"])))
+            if partes:
+                distintos.append("%s: %s" % (f["serie"], "; ".join(partes)))
+        if distintos:
+            salida.append(hallazgo(
+                "cobertura-temporal", "observacion", base=base.nro,
+                titulo="Las fechas Desde/Hasta que declara la fuente no coinciden con los datos",
+                casos=len(distintos),
+                detalle="Se compara lo que dice la hoja de estaciones con la primera y la "
+                        "ultima fila de cada hoja de datos, y con el primer y el ultimo dia "
+                        "que traen algun valor. Una diferencia de un dia suele ser el dia de "
+                        "instalacion o de baja, que viene vacio.",
+                ejemplos=distintos,
+                propuesta="Publicar el periodo que traen los datos, no el declarado."))
+
+    # Series que terminan mucho antes que la base: su ultimo anio no es el de las demas.
+    atraso_max = int(sd.get("atraso_max_dias", 30))
+    if v_hasta is not None:
+        atrasadas = q(ctx.con, """
+            SELECT %(s)s AS serie, max(%(f)s) FILTER (WHERE %(c)s) ultimo,
+                   count(DISTINCT %(f)s) FILTER (WHERE %(c)s AND %(f)s >= %(vd)s) dias_ventana
+            FROM %(t)s GROUP BY 1
+            HAVING max(%(f)s) FILTER (WHERE %(c)s) < CAST(%(vh)s AS DATE) - INTERVAL %(a)d DAY
+            ORDER BY 2, 1
+        """ % {"s": serie, "f": fecha, "c": _con_dato(base), "t": base.tabla,
+               "vd": lit(v_desde), "vh": lit(v_hasta), "a": atraso_max})
+        if atrasadas:
+            salida.append(hallazgo(
+                "cobertura-temporal", "bloqueante" if any(
+                    a["dias_ventana"] < int(sd.get("dias_minimos_ventana", 180))
+                    for a in atrasadas) else "observacion", base=base.nro,
+                titulo="Estaciones cuyo ultimo dato queda muy atras del resto",
+                casos=len(atrasadas),
+                detalle="La base llega hasta el %s. Estas series dejan de traer datos mas de "
+                        "%d dias antes, asi que 'el ultimo anio' de esa estacion no es el "
+                        "mismo que el de las otras." % (_fecha_ar(v_hasta), atraso_max),
+                ejemplos=["%s: ultimo dato el %s; dias con dato en la ventana publicada "
+                          "(%s a %s): %s" % (a["serie"], _fecha_ar(a["ultimo"]),
+                                             _fecha_ar(v_desde), _fecha_ar(v_hasta),
+                                             num(a["dias_ventana"])) for a in atrasadas],
+                propuesta="No mostrar el ultimo anio de esa estacion como si fuera el de las "
+                          "demas: o se muestra su propio ultimo anio con la fecha bien a la "
+                          "vista, o se deja afuera hasta que llegue el dato.",
+                pregunta_jc="Esta estacion dejo de mandar datos hace meses. Esta fuera de "
+                            "servicio, o el INTA tiene los datos y faltan en la planilla?"))
+    return salida
+
+
+@check_base
+def cobertura_variables_publicadas(ctx, base):
+    """Cuantos dias con dato tiene cada variable publicada, por serie, en la ventana.
+
+    Separa la variable que la estacion NO MIDE NUNCA (columna vacia o ausente: la tabla
+    tiene que decir "no se mide", no "sin dato") de la que mide a medias en el ultimo anio.
+    """
+    d = _diaria(base)
+    if not d:
+        return []
+    sd, serie, fecha, variable = d
+    publicadas = sd.get("variables_publicadas") or []
+    if not publicadas:
+        return []
+    umbral = float(sd.get("cobertura_minima_pct", 80))
+    v_desde, v_hasta = _ventana(ctx, base, sd, fecha)
+    if v_hasta is None:
+        return []
+    filas = q(ctx.con, """
+        WITH s AS (SELECT DISTINCT %(s)s AS serie FROM %(t)s),
+        v AS (SELECT unnest([%(vars)s]) AS variable),
+        dias AS (SELECT %(s)s AS serie, count(DISTINCT %(f)s) n FROM %(t)s
+                 WHERE %(f)s >= %(vd)s GROUP BY 1),
+        c AS (SELECT %(s)s AS serie, %(v)s AS variable,
+                     count(*) FILTER (WHERE valor IS NOT NULL AND %(f)s >= %(vd)s) con_dato,
+                     count(*) FILTER (WHERE valor IS NOT NULL) con_dato_historia
+              FROM %(t)s GROUP BY 1, 2)
+        SELECT s.serie, v.variable, coalesce(dias.n, 0) dias_en_ventana,
+               coalesce(c.con_dato, 0) con_dato, coalesce(c.con_dato_historia, 0) historia,
+               c.variable IS NOT NULL AS columna_existe
+        FROM s CROSS JOIN v LEFT JOIN dias ON dias.serie = s.serie
+        LEFT JOIN c ON c.serie = s.serie AND c.variable = v.variable
+        ORDER BY 1, 2
+    """ % {"s": serie, "f": fecha, "v": variable, "t": base.tabla, "vd": lit(v_desde),
+           "vars": ", ".join(lit(x) for x in publicadas)})
+    dias_ventana = int(sd.get("ventana_dias", 365))
+    nunca, parcial = [], []
+    for f in filas:
+        if not f["historia"]:
+            nunca.append("%s: %s (%s)" % (f["serie"], f["variable"],
+                                          "la planilla trae la columna, siempre vacia"
+                                          if f["columna_existe"] else "la planilla no trae la columna"))
+            continue
+        pct = 100.0 * f["con_dato"] / dias_ventana
+        if pct < umbral:
+            parcial.append((f, pct))
+    salida = []
+    if parcial:
+        salida.append(hallazgo(
+            "cobertura-temporal", "observacion", base=base.nro,
+            titulo="Variables publicadas con pocos dias de dato en el ultimo anio",
+            casos=len(parcial),
+            detalle="Ventana publicada: %s a %s (%d dias). Se listan las que tienen dato en "
+                    "menos del %s%% de esos dias." % (_fecha_ar(v_desde), _fecha_ar(v_hasta),
+                                                      dias_ventana, num(umbral)),
+            ejemplos=["%s, %s: %s de %d dias con dato (%s%%)"
+                      % (f["serie"], f["variable"], num(f["con_dato"]), dias_ventana,
+                         num(round(p, 1)))
+                      for f, p in sorted(parcial, key=lambda x: (x[1], x[0]["serie"],
+                                                                 x[0]["variable"]))],
+            propuesta="Mostrar los dias sin dato como huecos en el grafico y avisar al pie "
+                      "cuantos dias tiene la serie."))
+    if nunca:
+        salida.append(hallazgo(
+            "cobertura-temporal", "informativo", base=base.nro,
+            titulo="Variables publicadas que una estacion no mide nunca",
+            casos=len(nunca),
+            detalle="No es un dato faltante en el ultimo anio: la estacion nunca la informo. "
+                    "La tabla tiene que decir que no se mide, no dejar la columna en blanco.",
+            ejemplos=nunca,
+            propuesta="Escribir 'no se mide en esta estacion' en lugar de la columna vacia."))
+    return salida
+
+
+@check_base
+def fuera_de_rango_fisico(ctx, base):
+    """Rangos fisicamente plausibles por variable (validations/rangos.yaml).
+
+    Dos niveles, como `fuera_de_rango`: `min`/`max` es "mirarlo" y
+    `min_imposible`/`max_imposible` es "esto no ocurre en la zona". A diferencia de aquel
+    check, aca se miran tambien los negativos (una temperatura puede serlo) y el rango
+    se elige por VARIABLE, no por medida. Bloquea solo lo imposible que cae en la ventana
+    publicada de una variable publicada: es lo unico que distorsiona un numero visible.
+    """
+    d = _diaria(base)
+    if not d:
+        return []
+    sd, serie, fecha, variable = d
+    tablas = base.reglas.get("rangos_por_variable") or {}
+    if not tablas:
+        return []
+    publicadas = set(sd.get("variables_publicadas") or [])
+    v_desde, _ = _ventana(ctx, base, sd, fecha)
+    salida = []
+    for var, nombre_tabla in sorted(tablas.items()):
+        rango = ctx.rangos.get(nombre_tabla) or {}
+        if not rango:
+            continue
+        inf = rango.get("min_imposible")
+        sup = rango.get("max_imposible")
+        conds_imp = []
+        if inf is not None:
+            conds_imp.append("valor < %r" % float(inf))
+        if sup is not None:
+            conds_imp.append("valor > %r" % float(sup))
+        conds_mir = []
+        if rango.get("min") is not None:
+            conds_mir.append("valor < %r" % float(rango["min"]))
+        if rango.get("max") is not None:
+            conds_mir.append("valor > %r" % float(rango["max"]))
+        imposible = "(%s)" % " OR ".join(conds_imp) if conds_imp else "false"
+        mirar = "(%s)" % " OR ".join(conds_mir) if conds_mir else "false"
+        filas = q(ctx.con, """
+            SELECT %(s)s AS serie, %(f)s AS fecha, fila_origen, valor,
+                   %(imp)s AS imposible, %(f)s >= %(vd)s AS en_ventana
+            FROM %(t)s WHERE %(v)s = %(var)s AND valor IS NOT NULL AND (%(imp)s OR %(mir)s)
+            ORDER BY serie, fecha
+        """ % {"s": serie, "f": fecha, "t": base.tabla, "v": variable, "var": lit(var),
+               "imp": imposible, "mir": mirar, "vd": lit(v_desde)})
+        if not filas:
+            continue
+        unidad = rango.get("unidad") or ""
+        por_serie = {}
+        for f in filas:
+            r = por_serie.setdefault(f["serie"], {"imp": 0, "mir": 0, "ventana": 0,
+                                                  "desde": f["fecha"], "hasta": f["fecha"],
+                                                  "min": f["valor"], "max": f["valor"]})
+            r["imp" if f["imposible"] else "mir"] += 1
+            r["ventana"] += 1 if f["en_ventana"] else 0
+            r["hasta"] = f["fecha"]
+            r["min"] = min(r["min"], f["valor"])
+            r["max"] = max(r["max"], f["valor"])
+        imposibles_en_ventana = [f for f in filas if f["imposible"] and f["en_ventana"]]
+        if imposibles_en_ventana and var in publicadas:
+            severidad = "bloqueante"
+        elif any(f["imposible"] for f in filas):
+            severidad = "observacion"
+        else:
+            severidad = "observacion" if var in publicadas else "informativo"
+        texto_rango = "rango razonable %s a %s%s; imposible por debajo de %s o por encima de %s" % (
+            num(rango.get("min")), num(rango.get("max")), (" " + unidad) if unidad else "",
+            num(inf), num(sup))
+        peores = sorted(filas, key=lambda f: (not f["imposible"], not f["en_ventana"],
+                                              str(f["serie"]), f["fecha"]))
+        salida.append(hallazgo(
+            "valores-imposibles", severidad, base=base.nro,
+            titulo="Valores de %s fuera de lo fisicamente plausible" % var,
+            casos=len(filas),
+            detalle="%s. %s imposibles, %s para mirar; %s de ellos en la ventana publicada "
+                    "(desde el %s).%s Por estacion: %s." % (
+                        texto_rango[0].upper() + texto_rango[1:],
+                        num(sum(1 for f in filas if f["imposible"])),
+                        num(sum(1 for f in filas if not f["imposible"])),
+                        num(sum(1 for f in filas if f["en_ventana"])), _fecha_ar(v_desde),
+                        "" if var in publicadas else " La variable no se publica.",
+                        "; ".join("%s %s imposibles + %s a mirar (%s en la ventana), del %s al %s, "
+                                  "entre %s y %s" % (s, num(r["imp"]), num(r["mir"]),
+                                                     num(r["ventana"]), _fecha_ar(r["desde"]),
+                                                     _fecha_ar(r["hasta"]), num(r["min"]),
+                                                     num(r["max"]))
+                                  for s, r in sorted(por_serie.items()))),
+            ejemplos=["%s, %s (fila %s del Excel): %s%s%s"
+                      % (f["serie"], _fecha_ar(f["fecha"]), f["fila_origen"], num(f["valor"]),
+                         " IMPOSIBLE" if f["imposible"] else "",
+                         " (en la ventana publicada)" if f["en_ventana"] else "")
+                      for f in peores],
+            propuesta=("Dejar esa variable de esa estacion fuera del sitio en la ventana "
+                       "publicada hasta que JC confirme." if severidad == "bloqueante" else
+                       "Publicar sin tocar; si la variable se publica, nota al pie."),
+            pregunta_jc="Estos valores no son posibles para la zona. Es una falla del sensor? "
+                        "Los mostramos como 'sin dato'?"))
+    return salida
+
+
+@check_base
+def orden_entre_variables(ctx, base):
+    """El mismo dia, una variable no puede superar a otra (minima <= media <= maxima)."""
+    d = _diaria(base)
+    if not d:
+        return []
+    sd, serie, fecha, variable = d
+    reglas = base.reglas.get("orden_entre_variables") or []
+    v_desde, _ = _ventana(ctx, base, sd, fecha)
+    publicadas = set(sd.get("variables_publicadas") or [])
+    salida = []
+    for r in reglas:
+        menor, mayor = r["menor"], r["mayor"]
+        tol = float(r.get("tolerancia", 0))
+        total, filas = q_contando(ctx.con, """
+            WITH p AS (
+                SELECT %(s)s AS serie, %(f)s AS fecha, any_value(fila_origen) fila_origen,
+                       max(valor) FILTER (WHERE %(v)s = %(a)s) a,
+                       max(valor) FILTER (WHERE %(v)s = %(b)s) b
+                FROM %(t)s WHERE %(v)s IN (%(a)s, %(b)s) GROUP BY 1, 2)
+            SELECT serie, fecha, fila_origen, a, b, fecha >= %(vd)s AS en_ventana
+            FROM p WHERE a IS NOT NULL AND b IS NOT NULL AND a > b + %(tol)r
+            ORDER BY a - b DESC, serie, fecha
+        """ % {"s": serie, "f": fecha, "v": variable, "a": lit(menor), "b": lit(mayor),
+               "t": base.tabla, "vd": lit(v_desde), "tol": tol})
+        if not total:
+            continue
+        en_ventana = uno(ctx.con, "SELECT count(*) FILTER (WHERE en_ventana) n FROM (%s)" % """
+            WITH p AS (
+                SELECT %(s)s AS serie, %(f)s AS fecha,
+                       max(valor) FILTER (WHERE %(v)s = %(a)s) a,
+                       max(valor) FILTER (WHERE %(v)s = %(b)s) b
+                FROM %(t)s WHERE %(v)s IN (%(a)s, %(b)s) GROUP BY 1, 2)
+            SELECT fecha >= %(vd)s AS en_ventana FROM p
+            WHERE a IS NOT NULL AND b IS NOT NULL AND a > b + %(tol)r
+        """ % {"s": serie, "f": fecha, "v": variable, "a": lit(menor), "b": lit(mayor),
+               "t": base.tabla, "vd": lit(v_desde), "tol": tol}, "n") or 0
+        visible = en_ventana and (menor in publicadas or mayor in publicadas)
+        salida.append(hallazgo(
+            "coherencia", "observacion" if visible else "informativo", base=base.nro,
+            titulo="Dias donde %s" % (r.get("texto") or "%s supera a %s" % (menor, mayor)),
+            casos=total,
+            detalle="%s en la ventana publicada (desde el %s)." % (num(en_ventana),
+                                                                   _fecha_ar(v_desde)),
+            ejemplos=["%s, %s (fila %s del Excel): %s = %s contra %s = %s%s"
+                      % (f["serie"], _fecha_ar(f["fecha"]), f["fila_origen"], menor,
+                         num(f["a"]), mayor, num(f["b"]),
+                         " (en la ventana publicada)" if f["en_ventana"] else "")
+                      for f in filas],
+            propuesta="Publicar sin tocar; suele acompanar a un sensor con falla.",
+            pregunta_jc="Hay dias en que %s. Cual de los dos valores esta mal?"
+                        % (r.get("texto") or "una variable supera a la otra")))
+    return salida
+
+
+@check_base
+def desvio_contra_otras_series(ctx, base):
+    """Una serie que se despega de las demas en el promedio de un mes.
+
+    Un rango fijo no ve un sensor que se corre de a poco: 41 grados de media en marzo es
+    "posible" mirado solo, pero no si las otras siete estaciones de la provincia dan 30 ese
+    mismo dia. Se compara el promedio mensual de cada serie contra la MEDIANA de los
+    promedios de las otras series ese mismo mes. Parametros en
+    `serie_diaria.desvio_entre_series`: `tolerancias` (variable -> diferencia maxima en la
+    unidad de la variable), `min_dias_mes` y `min_otras_series`.
+    """
+    d = _diaria(base)
+    if not d:
+        return []
+    sd, serie, fecha, variable = d
+    cfg = sd.get("desvio_entre_series") or {}
+    tolerancias = cfg.get("tolerancias") or {}
+    if not tolerancias:
+        return []
+    min_dias = int(cfg.get("min_dias_mes", 10))
+    min_otras = int(cfg.get("min_otras_series", 3))
+    v_desde, _ = _ventana(ctx, base, sd, fecha)
+    publicadas = set(sd.get("variables_publicadas") or [])
+    salida = []
+    for var, tol in sorted(tolerancias.items()):
+        filas = q(ctx.con, """
+            WITH m AS (
+                SELECT %(s)s AS serie, date_trunc('month', %(f)s) AS mes, avg(valor) v
+                FROM %(t)s WHERE %(v)s = %(var)s AND valor IS NOT NULL
+                GROUP BY 1, 2 HAVING count(*) >= %(md)d),
+            o AS (
+                SELECT a.serie, a.mes, a.v, median(b.v) otras, count(*) n
+                FROM m a JOIN m b ON a.mes = b.mes AND a.serie <> b.serie
+                GROUP BY 1, 2, 3 HAVING count(*) >= %(mo)d)
+            SELECT serie, mes, v, otras, v - otras AS dif,
+                   mes + INTERVAL 1 MONTH > %(vd)s AS en_ventana
+            FROM o WHERE abs(v - otras) > %(tol)r ORDER BY serie, mes
+        """ % {"s": serie, "f": fecha, "t": base.tabla, "v": variable, "var": lit(var),
+               "md": min_dias, "mo": min_otras, "vd": lit(v_desde), "tol": float(tol)})
+        if not filas:
+            continue
+        visible = var in publicadas and any(f["en_ventana"] for f in filas)
+        salida.append(hallazgo(
+            "coherencia", "bloqueante" if visible else "observacion", base=base.nro,
+            titulo="Meses en que una estacion se despega de las demas en %s" % var,
+            casos=len(filas),
+            detalle="Promedio del mes de la estacion contra la mediana de los promedios de las "
+                    "otras estaciones ese mismo mes; se listan las diferencias de mas de %s. "
+                    "%s de esos meses tocan la ventana publicada (desde el %s)."
+                    % (num(float(tol)), num(sum(1 for f in filas if f["en_ventana"])),
+                       _fecha_ar(v_desde)),
+            ejemplos=["%s, %s: %s contra %s de las demas (%s%s)%s"
+                      % (f["serie"], f["mes"].strftime("%m/%Y"), num(round(f["v"], 1)),
+                         num(round(f["otras"], 1)), "+" if f["dif"] > 0 else "",
+                         num(round(f["dif"], 1)),
+                         " (en la ventana publicada)" if f["en_ventana"] else "")
+                      for f in sorted(filas, key=lambda f: (not f["en_ventana"],
+                                                            -abs(f["dif"]), str(f["serie"]),
+                                                            f["mes"]))],
+            propuesta=("Dejar esa variable de esa estacion fuera del sitio en los meses "
+                       "marcados hasta que JC confirme." if visible else
+                       "Publicar sin tocar: no cae en lo que se muestra."),
+            pregunta_jc="En estos meses una estacion da muy distinto que todas las demas. "
+                        "Sabes si el sensor tuvo una falla o se movio?"))
+    return salida
+
+
+@check_base
+def valor_pegado(ctx, base):
+    """El mismo numero exacto repetido muchos dias: un tope, un relleno o un sensor trabado.
+
+    Se excluyen los valores que es normal ver todos los dias (cero de lluvia, cero horas
+    de frio en verano): se declaran por variable en `serie_diaria.valores_frecuentes_normales`.
+    """
+    d = _diaria(base)
+    if not d:
+        return []
+    sd, serie, fecha, variable = d
+    minimo = int(sd.get("pegado_min_dias", 30))
+    normales = sd.get("valores_frecuentes_normales") or {}
+    v_desde, _ = _ventana(ctx, base, sd, fecha)
+    excluir = " AND ".join(
+        "NOT (%s = %s AND valor IN (%s))" % (variable, lit(v), ", ".join(repr(float(x)) for x in vals))
+        for v, vals in sorted(normales.items())) or "true"
+    # Ademas del minimo de dias, el valor tiene que ser una parte apreciable de la serie:
+    # en 38 anios de una estacion convencional que anota con un decimal, que "25,0" salga
+    # 40 veces es azar, no un sensor trabado.
+    pct = float(sd.get("pegado_min_pct", 5))
+    filas = q(ctx.con, """
+        WITH n AS (SELECT %(s)s AS serie, %(v)s AS variable, count(*) total
+                   FROM %(t)s WHERE valor IS NOT NULL GROUP BY 1, 2)
+        SELECT x.*, n.total FROM (
+            SELECT %(s)s AS serie, %(v)s AS variable, valor, count(*) dias,
+                   count(*) FILTER (WHERE %(f)s >= %(vd)s) en_ventana,
+                   min(%(f)s) desde, max(%(f)s) hasta
+            FROM %(t)s WHERE valor IS NOT NULL AND %(ex)s
+            GROUP BY 1, 2, 3 HAVING count(*) >= %(m)d) x
+        JOIN n USING (serie, variable)
+        WHERE x.dias * 100.0 >= n.total * %(pct)r
+        ORDER BY dias DESC, serie, variable
+    """ % {"s": serie, "v": variable, "f": fecha, "t": base.tabla, "vd": lit(v_desde),
+           "ex": excluir, "m": minimo, "pct": pct})
+    if not filas:
+        return []
+    publicadas = set(sd.get("variables_publicadas") or [])
+    visible = any(f["variable"] in publicadas and f["en_ventana"] for f in filas)
+    return [hallazgo(
+        "serie", "observacion" if visible else "informativo", base=base.nro,
+        titulo="El mismo valor exacto repetido en muchos dias (%d o mas y al menos el %s%% "
+               "de la serie)" % (minimo, num(pct)),
+        casos=len(filas),
+        detalle="Un instrumento que mide de verdad rara vez da el mismo numero con cinco "
+                "decimales muchos dias. Suele ser un tope del calculo, un relleno o un sensor "
+                "trabado.",
+        ejemplos=["%s, %s = %s en %s de %s dias con dato (del %s al %s; %s en la ventana "
+                  "publicada)" % (f["serie"], f["variable"], num(f["valor"]), num(f["dias"]),
+                                  num(f["total"]), _fecha_ar(f["desde"]), _fecha_ar(f["hasta"]),
+                                  num(f["en_ventana"]))
+                  for f in filas],
+        propuesta="Publicar sin tocar las variables publicadas; las otras no se grafican "
+                  "hasta saber que significa el valor.",
+        pregunta_jc="Este valor se repite exacto muchisimos dias. Es un tope de la cuenta "
+                    "del INTA o un dato real?")]
+
+
+@check_base
+def categoria_constante(ctx, base):
+    """Una variable de texto que en una serie trae siempre la misma categoria."""
+    d = _diaria(base)
+    if not d or "valor_texto" not in base.columnas:
+        return []
+    sd, serie, _, variable = d
+    minimo = int(sd.get("pegado_min_dias", 30))
+    filas = q(ctx.con, """
+        SELECT %(s)s AS serie, %(v)s AS variable, any_value(valor_texto) unico, count(*) dias
+        FROM %(t)s WHERE valor_texto IS NOT NULL
+        GROUP BY 1, 2 HAVING count(DISTINCT valor_texto) = 1 AND count(*) >= %(m)d
+        ORDER BY 2, 1
+    """ % {"s": serie, "v": variable, "t": base.tabla, "m": minimo})
+    if not filas:
+        return []
+    return [hallazgo(
+        "serie", "informativo", base=base.nro,
+        titulo="Una categoria que no cambia nunca en toda la serie", casos=len(filas),
+        detalle="La variable trae un solo valor posible en todos los dias informados: no "
+                "parece una medicion sino un valor de relleno.",
+        ejemplos=["%s, %s: siempre '%s' (%s dias)" % (f["serie"], f["variable"], f["unico"],
+                                                       num(f["dias"])) for f in filas],
+        propuesta="No publicar esa variable en esas estaciones.",
+        pregunta_jc="La direccion del viento viene siempre igual. Es un dato real o relleno?")]
+
+
+@check_base
+def variables_siempre_vacias(ctx, base):
+    """Variables que la planilla trae como columna pero sin un solo dato en una serie."""
+    d = _diaria(base)
+    if not d:
+        return []
+    _, serie, _, variable = d
+    filas = q(ctx.con, """
+        SELECT %(v)s AS variable, string_agg(DISTINCT CAST(%(s)s AS VARCHAR), ', '
+               ORDER BY CAST(%(s)s AS VARCHAR)) series, count(DISTINCT %(s)s) n
+        FROM (SELECT %(s)s, %(v)s FROM %(t)s GROUP BY 1, 2 HAVING NOT bool_or(%(c)s))
+        GROUP BY 1 ORDER BY 1
+    """ % {"s": serie, "v": variable, "t": base.tabla, "c": _con_dato(base)})
+    if not filas:
+        return []
+    return [hallazgo(
+        "cobertura-temporal", "informativo", base=base.nro,
+        titulo="Columnas que vienen vacias de punta a punta", casos=len(filas),
+        detalle="La planilla trae el encabezado pero ni un solo dato en toda la serie.",
+        ejemplos=["%s: vacia en %s" % (f["variable"], f["series"]) for f in filas],
+        propuesta="No se publican. No es un problema: solo se deja constancia.")]
+
+
+@check_base
+def geo_por_verificar(ctx, base):
+    """Unidades geograficas propuestas por la ingesta y no confirmadas (`geo_verificar`)."""
+    if not base.tiene("geo_verificar", "geo_nombre"):
+        return []
+    extra = base.col("serie")
+    cols = ("%s, " % extra if extra else "") + "geo_nombre, geo_id"
+    filas = q(ctx.con, "SELECT DISTINCT %s FROM %s WHERE geo_verificar ORDER BY 1"
+              % (cols, base.tabla))
+    if not filas:
+        return []
+    return [hallazgo(
+        "geo", "observacion", base=base.nro,
+        titulo="Departamentos propuestos por nosotros, sin confirmar", casos=len(filas),
+        detalle="La fuente no dice el departamento: lo propusimos mirando la localidad y las "
+                "coordenadas. Ningun dato se descarto por esto.",
+        ejemplos=[" / ".join(str(v) for v in f.values()) for f in filas],
+        propuesta="Publicar con el departamento propuesto, sin usarlo todavia para mapas "
+                  "de calor por departamento.",
+        pregunta_jc="Nos confirmas a que departamento pertenece cada estacion?")]
+
+
+# ---------------------------------------------------------------------------
 # Salida
 # ---------------------------------------------------------------------------
-ORDEN_SEVERIDAD = {"bloqueante": 0, "observacion": 1, "informativo": 2}
+ORDEN_SEVERIDAD ={"bloqueante": 0, "observacion": 1, "informativo": 2}
 
 
 def escribir_hallazgos(entrega, hallazgos, resumen):

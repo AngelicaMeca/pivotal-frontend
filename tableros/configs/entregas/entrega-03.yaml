@@ -1,0 +1,47 @@
+descripcion: 'Manifiesto de la entrega: que archivos llegaron, con que hash, y que dejo cada uno en staging.
+  GENERADO por pipeline/ingest.py, no editar a mano. Vive en configs/ y no en raw/ porque raw/ es de solo
+  lectura.'
+entrega: entrega-03
+archivos_recibidos: 1
+bases_ingeridas:
+- 111
+bases_sin_config: []
+bases_diferidas: []
+archivos_ignorados: []
+archivos:
+- archivo: 111 -Estaciones SDE.xlsx
+  base: 111
+  sha256: 29ee457d08f869e3c1467ee68bde30fe685e3e131add2f09c23b5d03c9137661
+  bytes: 5234823
+  fecha_archivo: '2026-07-15'
+  familia: clima-diario
+  config: configs/bases/111-clima-estaciones-inta.yaml
+  estado: ingerida
+  staging: staging/base-111-clima-estaciones-inta.parquet
+  filas_staging: 1179362
+  hojas:
+    DD Bandera:
+      filas_staging: 144130
+      filas_excel: 4970
+    DD LM Silipica:
+      filas_staging: 459756
+      filas_excel: 13932
+    DD Los Juries:
+      filas_staging: 108692
+      filas_excel: 3748
+    DD Malbran:
+      filas_staging: 105502
+      filas_excel: 3638
+    DD Monte Quemado:
+      filas_staging: 100978
+      filas_excel: 3482
+    DD Quimili:
+      filas_staging: 111331
+      filas_excel: 3839
+    DD Sachayoj:
+      filas_staging: 137663
+      filas_excel: 4747
+    DD Vaca Huañuna:
+      filas_staging: 11310
+      filas_excel: 390
+  valores_nulos: 527291

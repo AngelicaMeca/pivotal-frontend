@@ -1,0 +1,141 @@
+# Procedencia de configs/dims/capas-ign/ (capas del IGN que pidio JC el 14-oct-2026).
+#
+# Pedido textual de JC (WhatsApp a la usuaria): "Rutas provinciales, nacionales y caminos
+# rurales (Red vial primaria, secundaria y terciaria); Tendidos ferroviarios; Amenazas
+# hidrometeorologicas", del catalogo https://www.ign.gob.ar/NuestrasActividades/InformacionGeoespacial/CapasSIG
+# (apartados TRANSPORTE > Vial y Ferroviario, y RIESGO DE DESASTRES > Amenazas y fenomenos de
+# origen hidrometeorologico). Tambien sugirio mirar los Servicios OGC del IGN: las capas se
+# bajaron justamente por su WFS (el boton "Descargar Capa" del catalogo es ese mismo WFS).
+#
+# Esto NO es un dato de JC ni pasa por raw/: igual que sde-departamentos.geojson, lo bajamos de
+# la fuente oficial y se commitea el resultado ya recortado. Los tableros NO dependen del
+# servidor del IGN en ningun momento: si el IGN se cae, el sitio sigue igual.
+
+carpeta: capas-ign
+
+fuente:
+  organismo: Instituto Geográfico Nacional (IGN), República Argentina
+  servicio: WFS 1.0.0 de https://wms.ign.gob.ar/geoserver/<espacio>/ows
+  descargado: 2026-10-14
+  # Todas se bajaron con la caja de la provincia (un poco holgada) y en GeoJSON; el recorte
+  # fino contra el limite provincial lo hace pipeline/capas_ign.py.
+  caja: "-65.3,-30.6,-61.5,-25.5"
+  comando: >
+    curl -o <archivo>.json "https://wms.ign.gob.ar/geoserver/<espacio>/ows?service=WFS&version=1.0.0
+    &request=GetFeature&typeName=<espacio>:<capa>&outputFormat=application/json&srsName=EPSG:4326
+    &bbox=-65.3,-30.6,-61.5,-25.5"
+  # El limite provincial (para recortar) se bajo de la capa de provincias, sin caja:
+  comando_provincia: >
+    curl -o provincia.json "https://wms.ign.gob.ar/geoserver/ign/ows?service=WFS&version=1.0.0
+    &request=GetFeature&typeName=ign:provincia&outputFormat=application/json&srsName=EPSG:4326
+    &CQL_FILTER=in1='86'"
+
+descargas_crudas:
+  # archivo: [espacio:capa, sha256, bytes]
+  provincia.json: [ign:provincia, 59e5dc2c8a418d926ef39450dd4a50207e2ea99de24c1d00ae59874927792934, 64643]
+  vial_nacional.json: [ign:vial_nacional, e9ee72a62126c1dc0824f41046ee741d806beb325c5c450684819e7125aaa78e, 324847]
+  vial_provincial.json: [ign:vial_provincial, d71447b3ccaa448b30a9edc7c0420b2b28e3778210ca3a91041a5b80aeb1845e, 1729671]
+  vial_terciaria.json: [ign:vial_terciaria, c23cea87d24960d16846060881fadd1f7c29cdb05cdd2122cf3d762360a7732a, 12898556]
+  lineas_de_transporte_ferroviario_AN010.json: [ign:lineas_de_transporte_ferroviario_AN010, a4f49e69822e5a9e21da1074da5dee8836a3314b9af75cc74d2acf01db4b6f9f, 195146]
+  puntos_de_transporte_ferroviario_AN070.json: [ign:puntos_de_transporte_ferroviario_AN070, 2929f1f1da2393377f35bee4c01f7caa46c1bed4aa55fcfa0a61cecd5de55f12, 73380]
+  desinventar_hidrometeorologico_riesgo.json: [ign_riesgo:desinventar_hidrometeorologico_riesgo, 1e665a51098bc7e5451c82e56ea95925c5922b7eee9adaa88a97655a93f06cd0, 6759163]
+  sinagir_amenazas_hidrometeorologicas_riesgo.json: [ign_riesgo:sinagir_amenazas_hidrometeorologicas_riesgo, 7653100ec964bb1b43f9f543203e546ae98a6e77e6f48ce33a8ad4c7d35c843b, 13970379]
+
+metadata:
+  # Los PDF de metadata del IGN, de donde salen los dominios que traduce el script.
+  red_vial_nacional: https://www.ign.gob.ar/capas-sig/metadata/red_vial_nacional.pdf
+  red_vial_provincial: https://www.ign.gob.ar/capas-sig/metadata/red_vial_provincial.pdf
+  red_vial_terciaria: https://www.ign.gob.ar/capas-sig/metadata/red_vial_terciaria.pdf
+  desinventar: https://www.ign.gob.ar/capas-sig/metadata/desinventar_hidrometeorologico_riesgo.pdf
+  sinagir: https://www.ign.gob.ar/capas-sig/metadata/sinagir_amenazas_hidrometeorologicas_riesgo.pdf
+  dominios:
+    rst_red_nacional_y_provincial: {1: Pavimentado, 2: Consolidado, 3: Tierra}
+    rst_red_terciaria: {1: Pavimentado, 19: Consolidado, 13: Tierra}
+    fun_ferrocarril: {2: Abandonado, 4: Desmantelado, 6: Activo, 9: En construcción}
+
+transformacion:
+  script: pipeline/capas_ign.py
+  uso: >
+    python pipeline/capas_ign.py <carpeta de descargas> configs/dims/capas-ign 86
+    configs/dims/sde-departamentos.geojson
+  determinista: "Corrido dos veces sobre las mismas descargas: archivos identicos byte a byte."
+
+salidas:
+  rutas-nacionales.geojson: "Red vial primaria. 74 tramos (feature por tramo del IGN): ruta (RN 34) y calzada."
+  rutas-provinciales.geojson: "Red vial secundaria. 338 tramos: ruta (RP 21) y calzada."
+  caminos-terciarios.geojson: >
+    Red vial terciaria (caminos rurales), COMPLETA por decision de la usuaria (14-oct-2026):
+    un feature por calzada (Pavimentado 452 tramos, Consolidado 1.355, Tierra 9.898), ~2 MB.
+  ferrocarril.geojson: "Tendidos ferroviarios. 26 tramos: ramal y estado (Activo/Abandonado/Desmantelado)."
+  estaciones-ferrocarril.geojson: "89 puntos: nombre, tipo (Estación, Apeadero, Desvío, Embarcadero) y estado."
+  amenazas-desinventar.json: >
+    Registros de eventos adversos hidrometeorologicos 1970-2015 de la base DESINVENTAR, por
+    departamento (27) y por tipo de evento. 346 registros en total. El script controla que la
+    suma por evento de cada departamento de su total "registros".
+  amenazas-sinagir.json: >
+    Nivel de exposicion a amenazas hidrometeorologicas de la REGION que contiene a la provincia
+    (NOA; PNRRD 2018-2023): una sola fila para toda la provincia, no hay detalle departamental.
+
+advertencias_para_jc:
+  - "DESINVENTAR tiene subregistro (lo dice la propia metadata del IGN: 'nos brinda un contexto aproximado') y termina en 2015."
+  - "La categoria que trae el IGN para cada departamento ('Muy baja/Baja cantidad de registros') es un corte de Jenks NACIONAL: compara a Santiago contra todo el pais, no departamentos entre si."
+  - "SINAGIR es por region (NOA), no por departamento: no se puede dibujar como mapa de la provincia."
+  - "SINAGIR usa una escala 1-6 segun su metadata, pero la capa trae ceros (inundaciones regionales, ENOS): se publican tal cual y se pregunta."
+
+# --- Publicacion en el sitio (14-oct-2026) -------------------------------------------------
+# Lo lee pipeline/site_build.py (`catalogo_capas`). Cada capa que un tablero puede prender:
+# de que archivo sale, como se nombra, que dice su tooltip y que fuente se cita al pie del mapa
+# mientras esta prendida. Los COLORES y trazos no viven aca: los manda
+# specs/modelos/_protocolo-presentacion.yaml (`colores.capas_de_contexto`), como todo color de
+# dato.
+#
+# El build copia cada archivo TAL CUAL a public/plataforma/geo/capas/ (igual que
+# sde-departamentos.geojson): el sitio nunca le pide nada al servidor del IGN.
+#
+# Un mapa las prende declarandolas en su spec (`paneles.<id>.capas`), y el build corta la
+# corrida si un spec nombra una capa que no esta en esta lista.
+#
+# `tooltip` es una plantilla: el navegador sustituye {propiedad} con la propiedad del tramo y
+# no compone nada. Nunca lleva codigos internos.
+# `a_demanda: true`: el archivo se baja recien cuando alguien prende la capa (la terciaria,
+# ~2 MB). En la practica TODAS se bajan a demanda: ninguna se pide con la capa apagada.
+publicacion:
+  carpeta_publica: geo/capas
+  # Lo que antecede a las citas de las capas prendidas, al pie del mapa.
+  rotulo_fuentes: "Capas:"
+  # El boton del control sobre los mapas de calor.
+  rotulo_control: "Capas"
+  capas:
+    rutas-nacionales:
+      archivo: rutas-nacionales.geojson
+      etiqueta: "Rutas nacionales"
+      geometria: lineas
+      tooltip: "{ruta} · calzada: {calzada}"
+      fuente: "IGN - Dirección Nacional de Vialidad"
+    rutas-provinciales:
+      archivo: rutas-provinciales.geojson
+      etiqueta: "Rutas provinciales"
+      geometria: lineas
+      tooltip: "{ruta} · calzada: {calzada}"
+      fuente: "IGN - Direcciones provinciales de vialidad"
+    caminos-terciarios:
+      archivo: caminos-terciarios.geojson
+      etiqueta: "Caminos rurales (red terciaria)"
+      geometria: lineas
+      tooltip: "Camino rural · calzada: {calzada}"
+      fuente: "IGN - Red vial terciaria"
+      a_demanda: true
+      # ~11.700 tramos: se dibujan en el modo "large" de ECharts (un solo trazo por calzada).
+      grande: true
+    ferrocarril:
+      archivo: ferrocarril.geojson
+      etiqueta: "Ferrocarril"
+      geometria: lineas
+      tooltip: "{ramal} · {estado}"
+      fuente: "IGN - Red ferroviaria"
+    estaciones-ferrocarril:
+      archivo: estaciones-ferrocarril.geojson
+      etiqueta: "Estaciones de ferrocarril"
+      geometria: puntos
+      tooltip: "{tipo} {nombre} · {estado}"
+      fuente: "IGN - Red ferroviaria"

@@ -1,0 +1,435 @@
+# Diccionario de las variables de clima diario (familia `clima-diario`, base 111: estaciones
+# agrometeorologicas del INTA en Santiago del Estero). Lo lee adapters/clima_diario.py y lo
+# puede leer el sitio: una entrada por variable CANONICA, con su nombre legible, su unidad y la
+# definicion que escribio JC.
+#
+# De donde sale cada cosa (que no se mezcle lo de JC con lo nuestro):
+#
+#   columnas_origen  los encabezados EXACTOS de las hojas "DD <estacion>" que van a esta
+#                    variable. El adapter corta la ingesta si una hoja trae un encabezado que no
+#                    figura en ninguna variable: una columna nueva no se pierde en silencio.
+#   etiqueta         nombre legible para el sitio. Para las 11 columnas de la tabla diaria de
+#                    la maqueta "Maqueta Clima 1" es el rotulo de JC; para el resto es el
+#                    encabezado del INTA con tildes y espacios.
+#   unidad           SOLO si la dice la fuente o la definicion de JC (`unidad_origen` dice
+#                    donde). Si no la dice nadie queda NULA y `nota_unidad` explica que falta:
+#                    no se inventan unidades. Que la magnitud "parezca" grados o milimetros no
+#                    alcanza; se le pregunta a JC.
+#   definicion       texto LITERAL de JC en la hoja "Estaciones" del Excel (filas 14 a 61,
+#                    columna C, a veces partido en dos filas o en dos celdas: aca va unido con un
+#                    espacio). `definicion_origen` da las celdas. Nula si JC no la definio.
+#                    OJO: en varias definiciones se perdieron las COMAS al pegar el texto (se ven
+#                    como dos espacios seguidos: "la lluvia y el viento  permitiendo") y en la de
+#                    precipitacion cronologica una coma partio el texto en dos celdas ("(horas" |
+#                    " dias o meses)"). Se transcribe tal cual; la correccion la decide JC.
+#   en_maqueta       posicion de la columna en la tabla diaria de la maqueta (1 a 11) o null.
+#   tipo             numero (va a `valor`) o categoria (va a `valor_texto`, con su `dominio`).
+#
+# Ninguna variable declara agregacion: la maqueta muestra el dato DIARIO y el grafico de lineas
+# diario. Si un cuadro pide meses o anios, la regla de agregacion (suma la lluvia, promedia la
+# temperatura, maximo de la maxima...) la escribe constructor-reglas en el spec, no este archivo.
+#
+# Creado el 14-oct-2026 por ingestor-bases con la entrega-03 (clima).
+
+variables:
+
+  # ---------------------------------------------------------------- temperatura del aire
+  temperatura_abrigo_150cm_media:
+    columnas_origen: ["Temperatura_Abrigo_150cm"]
+    etiqueta: "Temp. abrigo 150 cm media"
+    tipo: numero
+    unidad: null
+    nota_unidad: >
+      Ni la fuente ni la definicion de JC dicen la unidad. Por los valores serian grados
+      Celsius; a confirmar con JC antes de rotular el eje.
+    en_maqueta: 1
+    definicion_titulo: "Temperatura abrigo 150 cm (media, mínima y máxima)"
+    definicion: "La \"temperatura en abrigo\" es la medida real de la temperatura del aire tomada dentro de un abrigo meteorológico (o garita). Este dispositivo aísla los termómetros de la radiación solar directa, la lluvia y el viento  permitiendo que el aire circule libremente para lograr una medición precisa de las condiciones ambientales"
+    definicion_origen: "Estaciones!B14:C15"
+    notas:
+      - >
+        El encabezado del INTA no dice "media" ("Temperatura_Abrigo_150cm"); la definicion de
+        JC habla de "media, minima y maxima" y su maqueta la rotula "media". Por eso el nombre
+        canonico lleva `_media`.
+
+  temperatura_abrigo_150cm_maxima:
+    columnas_origen: ["Temperatura_Abrigo_150cm_Maxima"]
+    etiqueta: "Temp. abrigo 150 cm máxima"
+    tipo: numero
+    unidad: null
+    nota_unidad: "Igual que la media: sin unidad declarada (serian grados Celsius), a confirmar."
+    en_maqueta: 2
+    definicion_titulo: "Temperatura abrigo 150 cm (media, mínima y máxima)"
+    definicion: "La \"temperatura en abrigo\" es la medida real de la temperatura del aire tomada dentro de un abrigo meteorológico (o garita). Este dispositivo aísla los termómetros de la radiación solar directa, la lluvia y el viento  permitiendo que el aire circule libremente para lograr una medición precisa de las condiciones ambientales"
+    definicion_origen: "Estaciones!B14:C15"
+
+  temperatura_abrigo_150cm_minima:
+    columnas_origen: ["Temperatura_Abrigo_150cm_Minima"]
+    etiqueta: "Temp. abrigo 150 cm mínima"
+    tipo: numero
+    unidad: null
+    nota_unidad: "Igual que la media: sin unidad declarada (serian grados Celsius), a confirmar."
+    en_maqueta: 3
+    definicion_titulo: "Temperatura abrigo 150 cm (media, mínima y máxima)"
+    definicion: "La \"temperatura en abrigo\" es la medida real de la temperatura del aire tomada dentro de un abrigo meteorológico (o garita). Este dispositivo aísla los termómetros de la radiación solar directa, la lluvia y el viento  permitiendo que el aire circule libremente para lograr una medición precisa de las condiciones ambientales"
+    definicion_origen: "Estaciones!B14:C15"
+
+  temperatura_intemperie_5cm_minima:
+    columnas_origen: ["Temperatura_Intemperie_5cm_Minima"]
+    etiqueta: "Temp. intemperie 5 cm mínima"
+    tipo: numero
+    unidad: null
+    nota_unidad: "Sin unidad en la fuente ni definicion de JC."
+    en_maqueta: null
+    definicion: null
+
+  temperatura_intemperie_50cm_minima:
+    columnas_origen: ["Temperatura_Intemperie_50cm_Minima"]
+    etiqueta: "Temp. intemperie 50 cm mínima"
+    tipo: numero
+    unidad: null
+    nota_unidad: "Sin unidad en la fuente ni definicion de JC."
+    en_maqueta: null
+    definicion: null
+
+  temperatura_intemperie_150cm_minima:
+    columnas_origen: ["Temperatura_Intemperie_150cm_Minima"]
+    etiqueta: "Temp. intemperie 150 cm mínima"
+    tipo: numero
+    unidad: null
+    nota_unidad: "Sin unidad en la fuente ni definicion de JC."
+    en_maqueta: null
+    definicion: null
+
+  temperatura_inte_5cm:
+    columnas_origen: ["Temperatura_Inte_5cm"]
+    etiqueta: "Temperatura_Inte_5cm"
+    tipo: numero
+    unidad: null
+    nota_unidad: "Sin unidad en la fuente ni definicion de JC."
+    en_maqueta: null
+    definicion: null
+    notas:
+      - >
+        No se sabe que mide ("Inte" puede ser intemperie). La columna viene VACIA en las ocho
+        estaciones, asi que la etiqueta queda con el encabezado crudo hasta que alguien la use.
+
+  # ------------------------------------------------------------------ temperatura del suelo
+  temperatura_suelo_5cm_media:
+    columnas_origen: ["Temperatura_Suelo_5cm_Media"]
+    etiqueta: "Temp. suelo 5 cm media"
+    tipo: numero
+    unidad: null
+    nota_unidad: "Sin unidad en la fuente ni definicion de JC."
+    en_maqueta: null
+    definicion: null
+
+  temperatura_suelo_10cm_media:
+    columnas_origen: ["Temperatura_Suelo_10cm_Media"]
+    etiqueta: "Temp. suelo 10 cm media"
+    tipo: numero
+    unidad: null
+    nota_unidad: >
+      La definicion de JC no dice la unidad. Por los valores serian grados Celsius; a confirmar.
+    en_maqueta: 4
+    definicion_titulo: "Temperatura_Suelo_10cm_Media"
+    definicion: "La \"temperatura del suelo\" en meteorología mide el calor o frío del terreno a distintas profundidades. Es fundamental porque determina cómo la energía solar se transfiere a la atmósfera y regula procesos físicos  biológicos y agrícolas  como la germinación de semillas y la actividad de los microorganismos"
+    definicion_origen: "Estaciones!B17:C18"
+
+  humedad_suelo:
+    columnas_origen: ["Humedad_Suelo"]
+    etiqueta: "Humedad del suelo"
+    tipo: numero
+    unidad: null
+    nota_unidad: "Sin unidad en la fuente ni definicion de JC (columna vacia en las ocho estaciones)."
+    en_maqueta: null
+    definicion: null
+
+  # --------------------------------------------------------------------------- precipitacion
+  precipitacion_pluviometrica:
+    columnas_origen: ["Precipitacion_Pluviometrica"]
+    etiqueta: "Precipitación pluviométrica"
+    tipo: numero
+    unidad: "mm"
+    unidad_origen: "Definicion de JC: \"se mide y expresa en milímetros (mm)\"."
+    en_maqueta: 5
+    definicion_titulo: "Precipitacion_Pluviometrica"
+    definicion: "Se refiere a la cantidad de agua caída (en forma de lluvia, llovizna, nieve o granizo) que llega a la superficie terrestre desde la atmósfera. Esta cantidad de agua se mide y expresa en milímetros (mm) de altura acumulada  lo que equivale a un litro de agua por cada metro cuadrado (1 mm = 1 Lm²)"
+    definicion_origen: "Estaciones!B20:C21"
+
+  precipitacion_cronologica:
+    columnas_origen: ["Precipitacion_Cronologica"]
+    etiqueta: "Precipitación cronológica"
+    tipo: numero
+    unidad: null
+    nota_unidad: >
+      La definicion de JC no dice la unidad (la de la pluviometrica si: mm). Por la magnitud
+      seria la misma, pero se pregunta antes de rotularla.
+    en_maqueta: 6
+    definicion_titulo: "Precipitacion_Cronologica"
+    definicion: "(o registro cronológico de precipitación) es la distribución y acumulación de agua (lluvia, nieve o granizo) registrada a lo largo del tiempo. Permite organizar las cantidades de lluvia caídas en intervalos específicos (horas días o meses) para entender el comportamiento del clima local"
+    definicion_origen: "Estaciones!B23:D24"
+
+  precipitacion_maxima_30minutos:
+    columnas_origen: ["Precipitacion_Maxima_30minutos"]
+    etiqueta: "Precipitación máxima 30 minutos"
+    tipo: numero
+    unidad: "mm"
+    unidad_origen: "Definicion de JC: \"Se expresa en milímetros (mm) o litros por metro cuadrado (l/m²)\"."
+    en_maqueta: 7
+    definicion_titulo: "Precipitacion_Maxima_30minutos"
+    definicion: "es la mayor cantidad de agua acumulada durante un lapso de media hora. Se expresa en milímetros (mm) o litros por metro cuadrado (l/m²). Es un indicador clave para medir la intensidad de la lluvia."
+    definicion_origen: "Estaciones!B26:C26"
+
+  granizo:
+    columnas_origen: ["Granizo"]
+    etiqueta: "Granizo"
+    tipo: numero
+    unidad: null
+    nota_unidad: >
+      Sin unidad ni definicion. Solo la trae La Maria y sus valores son 0 y 1: parece una
+      marca de "hubo / no hubo granizo", no una cantidad. A confirmar.
+    en_maqueta: null
+    definicion: null
+
+  nieve:
+    columnas_origen: ["Nieve"]
+    etiqueta: "Nieve"
+    tipo: numero
+    unidad: null
+    nota_unidad: "Sin unidad ni definicion. Solo La Maria; todos los valores informados son 0."
+    en_maqueta: null
+    definicion: null
+
+  # --------------------------------------------------------------------------- sol y radiacion
+  heliofania_efectiva:
+    columnas_origen: ["Heliofania_Efectiva"]
+    etiqueta: "Heliofanía efectiva"
+    tipo: numero
+    unidad: "horas"
+    unidad_origen: "Definicion de JC: \"Se mide en horas\"."
+    en_maqueta: null
+    definicion_titulo: "Heliofania_Efectiva"
+    definicion: "Cantidad de horas reales de brillo o radiación solar directa que recibe un lugar. Se mide en horas y representa el tiempo en que los rayos del sol alcanzan la superficie terrestre sin ser bloqueados por nubes u otros obstáculos."
+    definicion_origen: "Estaciones!B28:C29"
+
+  heliofania_relativa:
+    columnas_origen: ["Heliofania_Relativa"]
+    etiqueta: "Heliofanía relativa"
+    tipo: numero
+    unidad: "%"
+    unidad_origen: "Definicion de JC: \"es el porcentaje que indica...\"."
+    en_maqueta: null
+    definicion_titulo: "Heliofania_Relativa"
+    definicion: "es el porcentaje que indica cuántas horas de brillo solar directo se registraron efectivamente en un lugar en comparación con la cantidad máxima de horas de sol que teóricamente podrían haber ocurrido ese día (desde el amanecer hasta el atardecer  según su latitud)"
+    definicion_origen: "Estaciones!B31:C32"
+
+  radiacion_global:
+    columnas_origen: ["Radiacion_Global"]
+    etiqueta: "Radiación global"
+    tipo: numero
+    unidad: null
+    nota_unidad: "La definicion de JC no dice la unidad (por los valores, energia por m2 y por dia). A confirmar."
+    en_maqueta: null
+    definicion_titulo: "Radiacion_Global"
+    definicion: "Es la cantidad total de energía solar (de onda corta) que llega a la superficie de la Tierra. Es la suma de la radiación directa (la que llega sin obstáculos) y la radiación difusa (dispersada por nubes y partículas atmosféricas)"
+    definicion_origen: "Estaciones!B54:C55"
+
+  radiacion_neta:
+    columnas_origen: ["Radiacion_Neta"]
+    etiqueta: "Radiación neta"
+    tipo: numero
+    unidad: null
+    nota_unidad: "Sin unidad ni definicion. Solo La Maria."
+    en_maqueta: null
+    definicion: null
+
+  # ------------------------------------------------------------------------ humedad del aire
+  tension_vapor_media:
+    # El INTA escribe "Tesion" (sin la n) en el encabezado de las ocho hojas; JC la define
+    # como "Tension_Vapor_Media". Es la misma columna.
+    columnas_origen: ["Tesion_Vapor_Media"]
+    etiqueta: "Tensión de vapor media"
+    tipo: numero
+    unidad: null
+    nota_unidad: "La definicion de JC no dice la unidad (seria una presion, hPa). A confirmar."
+    en_maqueta: null
+    definicion_titulo: "Tension_Vapor_Media"
+    definicion: "Es la fuerza o presión parcial que ejerce el vapor de agua presente en el aire. El término \"media\" simplemente indica que se trata de un promedio de estas mediciones calculado durante un período de tiempo específico (por ejemplo  diario  mensual o anual)"
+    definicion_origen: "Estaciones!B34:C35"
+
+  humedad_media:
+    columnas_origen: ["Humedad_Media"]
+    etiqueta: "Humedad media"
+    tipo: numero
+    unidad: "%"
+    unidad_origen: >
+      Definicion de JC: "Generalmente se expresa como humedad relativa, indicando el
+      porcentaje de saturación". Los valores van de 0 a 100.
+    en_maqueta: 8
+    definicion_titulo: "Humedad_Media"
+    definicion: "valor promedio del vapor de agua presente en la atmósfera a lo largo de un período determinado (como un día, un mes o un año). Generalmente se expresa como humedad relativa, indicando el porcentaje de saturación de agua que el aire puede retener a esa temperatura"
+    definicion_origen: "Estaciones!B37:C38"
+
+  humedad_media_8_14_20:
+    columnas_origen: ["Humedad_Media_8_14_20"]
+    etiqueta: "Humedad media 8-14-20"
+    tipo: numero
+    unidad: "%"
+    unidad_origen: >
+      Definicion de JC: "Es el promedio de humedad relativa del aire" (la humedad relativa
+      se expresa en porcentaje, segun su propia definicion de Humedad_Media).
+    en_maqueta: 9
+    definicion_titulo: "Humedad_Media_8_14_20"
+    definicion: "Es el promedio de humedad relativa del aire calculado en tres momentos específicos del día (a las 08:00, 14:00 y 20:00 horas). Es una métrica estadística utilizada por los servicios meteorológicos para resumir y entender la tendencia diaria de la humedad."
+    definicion_origen: "Estaciones!B40:C41"
+
+  rocio_medio:
+    columnas_origen: ["Rocio_Medio"]
+    etiqueta: "Rocío medio"
+    tipo: numero
+    unidad: null
+    nota_unidad: >
+      JC la define como una TEMPERATURA ("la temperatura promedio a la que el aire debe
+      enfriarse") pero no dice la unidad (serian grados Celsius). A confirmar.
+    en_maqueta: 10
+    definicion_titulo: "Rocio_Medio"
+    definicion: "Se refiere al Punto de Rocío Medio, que es la temperatura promedio a la que el aire debe enfriarse para que el vapor de agua que contiene se condense y pase a estado líquido, formando gotitas (rocío) o niebla."
+    definicion_origen: "Estaciones!B43:C44"
+
+  duracion_follaje_mojado:
+    columnas_origen: ["Duracion_Follaje_Mojado"]
+    etiqueta: "Duración del follaje mojado"
+    tipo: numero
+    unidad: "horas"
+    unidad_origen: "Definicion de JC: \"indica el período de tiempo (en horas)\"."
+    en_maqueta: null
+    definicion_titulo: "Duracion_Follaje_Mojado"
+    definicion: "Conocido en la agricultura y meteorología como Leaf Wetness Duration o LWD) indica el período de tiempo (en horas) que las hojas de las plantas permanecen cubiertas de agua"
+    definicion_origen: "Estaciones!B46:C46"
+
+  # -------------------------------------------------------------------------------- viento
+  velocidad_viento_200cm_media:
+    columnas_origen: ["Velocidad_Viento_200cm_Media"]
+    etiqueta: "Velocidad del viento a 2 m media"
+    tipo: numero
+    unidad: null
+    nota_unidad: "La definicion de JC no dice la unidad (km/h o m/s). A confirmar."
+    en_maqueta: null
+    definicion_titulo: "Velocidad_Viento_200cm_Media"
+    definicion: "Hace referencia a la velocidad promedio del viento medida a 2 metros de altura sobre el suelo, y su valor se calcula promediando las lecturas de un anemómetro durante un período de tiempo determinado."
+    definicion_origen: "Estaciones!B48:C49"
+
+  velocidad_viento_1000cm_media:
+    columnas_origen: ["Velocidad_Viento_1000cm_Media"]
+    etiqueta: "Velocidad del viento a 10 m media"
+    tipo: numero
+    unidad: null
+    nota_unidad: "La definicion de JC no dice la unidad (km/h o m/s). A confirmar."
+    en_maqueta: null
+    definicion_titulo: "Velocidad_Viento_1000cm_Media"
+    definicion: "Indica la velocidad promedio del viento medida a 10 metros de altura (1000 cm) sobre el suelo. Esta es la altura estándar universal para registrar el viento y evitar que los obstáculos en la superficie alteren la lectura."
+    definicion_origen: "Estaciones!B51:C52"
+
+  velocidad_viento_maxima:
+    columnas_origen: ["Velocidad_Viento_Maxima"]
+    etiqueta: "Velocidad máxima del viento"
+    tipo: numero
+    unidad: null
+    nota_unidad: "Sin unidad ni definicion."
+    en_maqueta: null
+    definicion: null
+
+  direccion_viento_200cm:
+    columnas_origen: ["Direccion_Viento_200cm"]
+    etiqueta: "Dirección del viento a 2 m"
+    tipo: categoria
+    # Rumbos que aparecen en la entrega-03, sin los espacios con que los rellena el INTA
+    # ("C ", "E "). Un texto fuera de esta lista corta la ingesta. "C" no esta definida en
+    # la fuente: en la convencion meteorologica es "calma", a confirmar con JC.
+    dominio: ["N", "NE", "E", "SE", "S", "SW", "W", "NW", "C"]
+    unidad: null
+    en_maqueta: null
+    definicion: null
+
+  direccion_viento_1000cm:
+    columnas_origen: ["Direccion_Viento_1000cm"]
+    etiqueta: "Dirección del viento a 10 m"
+    tipo: categoria
+    dominio: ["N", "NE", "E", "SE", "S", "SW", "W", "NW", "C"]
+    unidad: null
+    en_maqueta: null
+    definicion: null
+
+  # --------------------------------------------------------------------------------- otras
+  presion_media:
+    columnas_origen: ["Presion_Media"]
+    etiqueta: "Presión media"
+    tipo: numero
+    unidad: null
+    nota_unidad: "Sin unidad ni definicion (por los valores, hPa). A confirmar."
+    en_maqueta: null
+    definicion: null
+
+  evaporacion_tanque:
+    columnas_origen: ["Evaporacion_Tanque"]
+    etiqueta: "Evaporación de tanque"
+    tipo: numero
+    unidad: null
+    nota_unidad: "Sin unidad ni definicion. Solo La Maria (columna vacia)."
+    en_maqueta: null
+    definicion: null
+
+  evapotranspiracion_potencial:
+    columnas_origen: ["Evapotranspiracion_Potencial"]
+    etiqueta: "Evapotranspiración potencial"
+    tipo: numero
+    unidad: null
+    nota_unidad: "Sin unidad ni definicion. Solo La Maria."
+    en_maqueta: null
+    definicion: null
+
+  profundidad_napa:
+    columnas_origen: ["Profundidad_Napa"]
+    etiqueta: "Profundidad de la napa"
+    tipo: numero
+    unidad: null
+    nota_unidad: "Sin unidad ni definicion. Solo La Maria (columna vacia)."
+    en_maqueta: null
+    definicion: null
+
+  horas_frio:
+    columnas_origen: ["Horas_Frio"]
+    etiqueta: "Horas frío"
+    tipo: numero
+    unidad: "horas"
+    unidad_origen: "Definicion de JC: \"la cantidad de tiempo (en horas)\"."
+    en_maqueta: 11
+    definicion_titulo: "Horas_Frio"
+    definicion: "Es un indicador meteorológico y agrícola que representa la cantidad de tiempo (en horas) que un cultivo, especialmente los árboles frutales de hoja caduca, pasa expuesto a temperaturas por debajo de un umbral específico durante su período de reposo invernal"
+    definicion_origen: "Estaciones!B57:C58"
+
+  unidades_frio:
+    # La Maria escribe "Unidad_Frio" (singular) y las siete Nimbus "Unidades_Frio". Se
+    # toman como la misma variable; la de La Maria viene vacia, asi que hoy no hay dato que
+    # contradiga la decision.
+    columnas_origen: ["Unidades_Frio", "Unidad_Frio"]
+    etiqueta: "Unidades frío"
+    tipo: numero
+    unidad: null
+    nota_unidad: "JC la define como una metrica de acumulacion de frio sin decir la unidad. A confirmar."
+    en_maqueta: null
+    definicion_titulo: "Unidades_Frio"
+    definicion: "Es una métrica agronómica y meteorológica que mide la acumulación de frío durante el invierno o la etapa de reposo de un cultivo. Permiten calcular si los árboles frutales han estado expuestos a las temperaturas adecuadas para florecer y producir frutos correctamente en la siguiente temporada."
+    definicion_origen: "Estaciones!B60:C61"
+
+# Notas de JC en la misma hoja, para el que arme las paginas (no son datos).
+notas_jc:
+  - texto: "VARIABLES INCLUIDAS - Aclaraciones en las pantallas que correspondan"
+    origen: "Estaciones!B12:C12"
+  - texto: "PARAMETROS DE CONSULTA: Por variable y período de tiempo"
+    origen: "Estaciones!C65:C67"
+  - texto: "NO TODAS LAS ESTACIONES TIENEN LAS MISMAS VARIABLES (DEBEN ESPECIFICARSE)"
+    origen: "Estaciones!C69"
+  - texto: "TODAS SE REPRESENTARÁN CON GRAFICO DE LÍNEAS (luego veremos cuales se pueden combinar)"
+    origen: "Estaciones!C71"

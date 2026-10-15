@@ -11,6 +11,7 @@
    propio JSON, partido por especie y por modo. */
 
 import * as echarts from "echarts";
+import { capasDelMapa } from "./capas";
 
 export default function iniciar(PIVOTAL) {
 
@@ -278,6 +279,9 @@ export default function iniciar(PIVOTAL) {
       texto(caja, "[data-unidad]", kpi.unidad);
       var destino = caja.querySelector("[data-variacion]");
       PIVOTAL.vaciar(destino);
+      /* Una aclaracion fija de la tarjeta, escrita por el build ("5 activas", "73,1% del
+         total"): va en el renglon de la variacion, que estas tarjetas no tienen. */
+      if (kpi.nota && !kpi.var) { destino.textContent = kpi.nota; return; }
       if (!kpi.var) { return; }
       var cambio = document.createElement("b");
       cambio.className = kpi.var.clase;
@@ -525,7 +529,15 @@ export default function iniciar(PIVOTAL) {
         var d = porId[p.name];
         return d ? d.nombre : "";
       }
-      chart.setOption({
+      /* La proyeccion del mapa, una sola vez: la usan la serie `map` y, si hay capas del IGN
+         prendidas, el componente `geo` que les da coordenadas (tienen que ser IDENTICAS para
+         que las rutas calcen con los departamentos). */
+      var proyeccion = {
+        aspectScale: panel.aspecto || 0.75,
+        layoutCenter: ["50%", "50%"],
+        layoutSize: PIVOTAL.tamanioMapa(nodo.querySelector("[data-grafico]"), panel.relacion)
+      };
+      var opcion = {
         animation: false,
         tooltip: {
           trigger: "item",
@@ -594,13 +606,13 @@ export default function iniciar(PIVOTAL) {
              tercera_tanda.mapa_grande): el build manda `aspecto` = coseno de la latitud media
              de la provincia, calculado del propio GeoJSON. Sin el dato queda el default de
              ECharts, que es lo que ya mostraban las otras secciones. */
-          aspectScale: panel.aspecto || 0.75,
+          aspectScale: proyeccion.aspectScale,
           /* El mapa se dibuja lo mas grande que entre en el panel, SIN deformarse (JC: "El
              mapa es una miniatura y está deformado"). Con left/right/top/bottom ECharts estira
              el dibujo hasta los bordes; con layoutCenter + layoutSize lo agranda conservando
              la proporcion geografica y centrado. */
-          layoutCenter: ["50%", "50%"],
-          layoutSize: PIVOTAL.tamanioMapa(nodo.querySelector("[data-grafico]"), panel.relacion),
+          layoutCenter: proyeccion.layoutCenter,
+          layoutSize: proyeccion.layoutSize,
           roam: false,
           selectedMode: false,
           itemStyle: { borderColor: PIVOTAL.color("--fondo-cuadro"), borderWidth: 0.7 },
@@ -660,7 +672,238 @@ export default function iniciar(PIVOTAL) {
             };
           })
         }]
+      };
+      /* Las capas del IGN que el spec le ofrece a este mapa (opt-in, apagadas al abrir). Con
+         todo apagado `capasDelMapa` devuelve null y la opcion queda EXACTAMENTE como siempre:
+         ni un componente ni una serie de mas. Prendidas, son `silent`: el clic y el tooltip
+         siguen siendo del departamento de abajo. */
+      var capas = capasDelMapa(nodo, (PIVOTAL.datos() || {}).capas,
+                               function () { pintarMapa(nodo, panel); }, proyeccion,
+                               { interactivas: false, halo: PIVOTAL.color("--fondo-cuadro") });
+      if (capas) {
+        opcion.geo = capas.geo;
+        opcion.series = opcion.series.concat(capas.series);
+      }
+      chart.setOption(opcion, true);
+    });
+  }
+
+  /* ================= mapa de capas (General > Infraestructura y riesgo, 14-oct-2026) =========
+     La portada de la seccion de las capas del IGN: los departamentos de fondo NEUTRO -no es un
+     mapa de calor, el dato son las lineas- y las capas encima, con tooltip (la ruta y su
+     calzada, el ramal y su estado, el nombre de la estacion). El fondo es la misma serie `map`
+     de los mapas de calor, con un solo color del tema, asi que la proyeccion, los nombres de
+     los departamentos y su acomodo son los de siempre. Los departamentos no se eligen: este
+     mapa no tiene clic. */
+  function pintarMapaCapas(nodo, panel) {
+    var caja = nodo.querySelector("[data-grafico]");
+    var porId = {};
+    panel.deptos.forEach(function (d) { porId[d.id] = d; });
+    cargarGeo(panel.geojson).then(function () {
+      var chart = PIVOTAL.grafico(caja);
+      var proyeccion = {
+        aspectScale: panel.aspecto || 0.75,
+        layoutCenter: ["50%", "50%"],
+        layoutSize: PIVOTAL.tamanioMapa(caja, panel.relacion)
+      };
+      var nombre = function (p) { var d = porId[p.name]; return d ? d.nombre : ""; };
+      var opcion = {
+        animation: false,
+        tooltip: {
+          trigger: "item",
+          confine: true,
+          formatter: function (p) { var n = nombre(p); return n ? "<b>" + n + "</b>" : ""; }
+        },
+        series: [{
+          type: "map",
+          map: "provincia",
+          nameProperty: "geo_id",
+          aspectScale: proyeccion.aspectScale,
+          layoutCenter: proyeccion.layoutCenter,
+          layoutSize: proyeccion.layoutSize,
+          roam: false,
+          selectedMode: false,
+          z: 2,
+          label: { show: caja.clientWidth >= 300, formatter: nombre, fontSize: 8,
+                   color: PIVOTAL.color("--texto-apoyo") },
+          labelLayout: { hideOverlap: true },
+          emphasis: {
+            label: { show: caja.clientWidth >= 300, formatter: nombre },
+            itemStyle: { areaColor: PIVOTAL.color("--fondo-apoyo") }
+          },
+          itemStyle: { areaColor: PIVOTAL.color("--fondo-apoyo"),
+                       borderColor: PIVOTAL.color("--fondo-cuadro"), borderWidth: 0.8 },
+          data: panel.deptos.map(function (d) { return { name: d.id, value: 0 }; })
+        }]
+      };
+      var capas = capasDelMapa(nodo, (PIVOTAL.datos() || {}).capas,
+                               function () { pintarMapaCapas(nodo, panel); }, proyeccion,
+                               { interactivas: true, halo: PIVOTAL.color("--fondo-cuadro") });
+      if (capas) {
+        opcion.geo = capas.geo;
+        opcion.series = opcion.series.concat(capas.series);
+      }
+      chart.setOption(opcion, true);
+    });
+  }
+
+  /* ================= mapa de estaciones (AgroClima, 14-oct-2026) =================
+     La hoja "ClimEAI" de JC: la provincia de fondo neutro y las estaciones del INTA como
+     puntos con su nombre, y "Seleccione Estación Agrometeorológica". El mapa ES el selector:
+     el clic en un punto aprieta el chip de esa estacion (el mismo control que se usa con el
+     teclado), asi que la URL, el historial y el "volver" son los de cualquier filtro. Los
+     departamentos no se eligen y no llevan nombre (como en la maqueta): lo dice el tooltip.
+     La estacion elegida va mas grande y en el color de seleccion del tema; una estacion fuera
+     del ultimo anio (Sachayoj) va apagada, con su leyenda en el rotulo. Son colores de
+     INTERFAZ (un selector), no de dato: salen del theme. */
+  function pintarMapaEstaciones(nodo, panel) {
+    var caja = nodo.querySelector("[data-grafico]");
+    var porId = {};
+    panel.deptos.forEach(function (d) { porId[d.id] = d; });
+    var estaciones = {};
+    panel.estaciones.forEach(function (e) { estaciones[e.id] = e; });
+    cargarGeo(panel.geojson).then(function () {
+      var chart = PIVOTAL.grafico(caja);
+      var proyeccion = {
+        aspectScale: panel.aspecto || 0.75,
+        layoutCenter: ["50%", "50%"],
+        layoutSize: PIVOTAL.tamanioMapa(caja, panel.relacion)
+      };
+      /* off() antes de on(): el panel se repinta en cada cambio y los handlers no se apilan. */
+      chart.off("click");
+      chart.off("mouseover");
+      chart.off("mouseout");
+      chart.on("mouseover", function (p) {
+        chart.getZr().setCursorStyle(p.seriesType === "scatter" ? "pointer" : "default");
+      });
+      chart.on("mouseout", function () { chart.getZr().setCursorStyle("default"); });
+      chart.on("click", function (p) {
+        if (p.seriesType !== "scatter" || !p.data) { return; }
+        var boton = document.querySelector(
+          "[data-control][data-filtro=\"estacion\"] button[data-valor=\"" + p.data.id + "\"]");
+        if (boton && !boton.disabled) { boton.click(); }
+      });
+      var elegida = panel.elegida;
+      chart.setOption({
+        animation: false,
+        tooltip: {
+          trigger: "item",
+          confine: true,
+          formatter: function (p) {
+            if (p.seriesType === "scatter") {
+              var e = estaciones[p.data.id];
+              return "<b>" + e.nombre + "</b><br>" + e.filas.map(function (par) {
+                return par[0] + ": <b>" + par[1] + "</b>";
+              }).join("<br>");
+            }
+            var d = porId[p.name];
+            return d ? "<b>" + d.nombre + "</b>" : "";
+          }
+        },
+        geo: {
+          map: "provincia",
+          nameProperty: "geo_id",
+          aspectScale: proyeccion.aspectScale,
+          layoutCenter: proyeccion.layoutCenter,
+          layoutSize: proyeccion.layoutSize,
+          roam: false,
+          selectedMode: false,
+          label: { show: false },
+          itemStyle: { areaColor: PIVOTAL.color("--fondo-apoyo"),
+                       borderColor: PIVOTAL.color("--fondo-cuadro"), borderWidth: 0.8 },
+          emphasis: { label: { show: false },
+                      itemStyle: { areaColor: PIVOTAL.color("--fondo-apoyo") } },
+          tooltip: { show: true }
+        },
+        series: [{
+          type: "scatter",
+          coordinateSystem: "geo",
+          z: 3,
+          data: panel.estaciones.map(function (e) {
+            var esta = e.id === elegida;
+            return {
+              id: e.id,
+              name: e.rotulo,
+              value: [e.lon, e.lat],
+              symbolSize: esta ? 16 : 11,
+              itemStyle: {
+                color: esta ? PIVOTAL.color("--seleccion")
+                  : (e.fuera ? PIVOTAL.color("--borde") : PIVOTAL.color("--enlace")),
+                borderColor: esta ? PIVOTAL.color("--texto") : PIVOTAL.color("--fondo-cuadro"),
+                borderWidth: esta ? 2 : 1.5
+              },
+              label: {
+                fontWeight: esta ? "bold" : "normal",
+                color: e.fuera ? PIVOTAL.color("--texto-apoyo") : PIVOTAL.color("--texto")
+              }
+            };
+          }),
+          label: {
+            show: true,
+            position: "right",
+            distance: 6,
+            fontSize: 11,
+            formatter: function (p) { return p.name; }
+          },
+          /* Bandera, Malbran y Los Juries quedan cerca: los rotulos se corren en vertical en
+             vez de pisarse, y los que se salen por la derecha pasan al otro lado del punto. */
+          labelLayout: function (info) {
+            var ancho = caja.clientWidth;
+            var r = info.labelRect;
+            var salida = { moveOverlap: "shiftY" };
+            if (r && ancho && r.x + r.width > ancho - 4) {
+              salida.x = info.rect.x - r.width - 6;
+            }
+            return salida;
+          },
+          emphasis: { scale: 1.2 }
+        }]
       }, true);
+    });
+  }
+
+  /* ================= tarjetas de acceso (portada de AgroClima, 14-oct-2026) =================
+     La hoja "Clima Ingreso" de JC: cada tarjeta es una miniatura y un texto que llevan a una
+     pagina. Es un <a> comun (cada pagina arranca su JS sobre un DOM recien cargado). Una
+     tarjeta sin pagina todavia (AgroMet, backlog 107) va APAGADA, sin link y con su rotulo
+     "Próximamente": el rotulo esta y al lado dice que todavia no. */
+  function pintarAccesos(nodo, panel) {
+    var caja = nodo.querySelector("[data-accesos]");
+    if (!caja) { return; }
+    PIVOTAL.vaciar(caja);
+    (panel.tarjetas || []).forEach(function (t) {
+      var tarjeta = document.createElement(t.href ? "a" : "div");
+      tarjeta.className = "acceso" + (t.href ? "" : " acceso-apagado");
+      if (t.href) { tarjeta.href = t.href; }
+      else { tarjeta.setAttribute("aria-disabled", "true"); }
+      var mini = document.createElement("span");
+      mini.className = "acceso-mini";
+      if (t.miniatura) {
+        var img = document.createElement("img");
+        img.src = t.miniatura;
+        img.alt = "";
+        img.decoding = "async";
+        mini.appendChild(img);
+      }
+      tarjeta.appendChild(mini);
+      var textos = document.createElement("span");
+      textos.className = "acceso-texto";
+      [["acceso-organismo", t.organismo], ["acceso-titulo", t.titulo],
+       ["acceso-detalle", t.detalle], ["acceso-bajada", t.bajada]].forEach(function (par) {
+        if (!par[1]) { return; }
+        var s = document.createElement("span");
+        s.className = par[0];
+        s.textContent = par[1];
+        textos.appendChild(s);
+      });
+      if (t.proximamente) {
+        var prox = document.createElement("span");
+        prox.className = "prox";
+        prox.textContent = t.proximamente;
+        textos.appendChild(prox);
+      }
+      tarjeta.appendChild(textos);
+      caja.appendChild(tarjeta);
     });
   }
 
@@ -912,7 +1155,9 @@ export default function iniciar(PIVOTAL) {
          primera marca del eje. */
       grid: { left: 4, right: 8,
               top: (varias ? (lineas.length > 2 ? 40 : 26) : 12) + (conEscala ? 12 : 0),
-              bottom: 4, containLabel: true },
+              /* La banda de meses de un eje en dos niveles con rotulos derechos queda debajo
+                 de lo que `containLabel` mide: se le deja el lugar a mano. */
+              bottom: panel.grupos && panel.x_rotar === 0 ? 22 : 4, containLabel: true },
       legend: varias
         ? { top: 0, left: 0, itemWidth: 14, itemHeight: 8,
             textStyle: { fontSize: 10, color: PIVOTAL.color("--texto-apoyo") } }
@@ -1129,8 +1374,11 @@ export default function iniciar(PIVOTAL) {
         axisLine: { lineStyle: { color: PIVOTAL.color("--borde") } },
         /* Rotados 90 grados: son los doce meses de cada año y horizontales no entran. Es como
            los escribe JC. */
+        /* `x_rotar` lo manda el build cuando las etiquetas de arriba son cortas y salteadas
+           (los dias 1, 10 y 20 de la serie diaria de clima): ahi van derechas. */
         axisLabel: {
-          interval: 0, rotate: 90, fontSize: 9, margin: 8,
+          interval: 0, rotate: panel.x_rotar !== undefined ? panel.x_rotar : 90,
+          fontSize: 9, margin: 8,
           color: PIVOTAL.color("--texto-apoyo")
         }
       },
@@ -1138,7 +1386,8 @@ export default function iniciar(PIVOTAL) {
         type: "category",
         data: bandaDeAnios,
         position: "bottom",
-        offset: 30,
+        /* Con los rotulos de arriba derechos (`x_rotar: 0`) la banda va mas pegada. */
+        offset: panel.x_rotar === 0 ? 16 : 30,
         axisTick: { show: false },
         axisLine: { show: false },
         /* `interval: 0` con las repetidas en blanco: asi el año queda escrito una sola vez,
@@ -1415,6 +1664,14 @@ export default function iniciar(PIVOTAL) {
   var DIBUJANTES = {
     anillo: pintarAnillo,
     mapa: pintarMapa,
+    // General > Infraestructura y riesgo (capas del IGN, 14-oct-2026): el mapa con las capas
+    // de fondo neutro, dos tablas de km, la tabla y el anillo de DESINVENTAR y el cuadro SINAGIR.
+    "mapa-capas": pintarMapaCapas,
+    "tabla-red-vial": pintarTablaDatos,
+    "tabla-ferrocarril": pintarTablaDatos,
+    "tabla-eventos-departamento": pintarTablaDatos,
+    "tabla-sinagir": pintarTablaDatos,
+    "anillo-eventos": pintarAnillo,
     tendencia: pintarTendencia,
     "tabla-datos": pintarTablaDatos,
     "tabla-superficie": pintarTablaDatos,
@@ -1483,7 +1740,12 @@ export default function iniciar(PIVOTAL) {
     "anillo-razas": pintarAnillo,
     "precios-leche-2": pintarTendencia,
     "evolucion-total": pintarApiladas,
-    "evolucion-categorias": pintarApiladas
+    "evolucion-categorias": pintarApiladas,
+    // AgroClima > Estaciones agrometeorologicas INTA (14-oct-2026): el mapa que hace de
+    // selector, la tabla diaria y la linea de temperatura.
+    "mapa-estaciones": pintarMapaEstaciones,
+    "tabla-diaria": pintarTablaDatos,
+    "lineas-temperatura": pintarTendencia
   };
 
   /* Un cuadro que es una captura de otro organismo (`imagen-*`): solo la imagen. */
@@ -1571,6 +1833,7 @@ export default function iniciar(PIVOTAL) {
     if (id.indexOf("cifras-") === 0) { return pintarCifras; }
     if (id.indexOf("anillo-fijo-") === 0) { return pintarAnillo; }
     if (id.indexOf("fija-") === 0) { return pintarTablaDatos; }
+    if (id.indexOf("accesos-") === 0) { return pintarAccesos; }
     return null;
   }
 

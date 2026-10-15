@@ -1,0 +1,73 @@
+# General > Infraestructura y riesgo > Amenazas hidrometeorologicas (pagina interna).
+# Pedido de JC del 14-oct-2026 (backlog 104), con sus limites en el backlog 105.
+#
+# Dos capas del IGN, apartado "Riesgo de desastres > Amenazas y fenomenos de origen
+# hidrometeorologico":
+#  - DESINVENTAR: registros de eventos adversos 1970-2015 POR DEPARTAMENTO y por tipo de
+#    evento. Es lo que va al mapa de calor, a la tabla y al anillo.
+#  - SINAGIR: nivel de exposicion por amenaza de la REGION NOA (PNRRD 2018-2023). Un solo
+#    valor para toda la provincia: va como cuadro, publicado tal cual, nunca como mapa.
+#
+# La rampa del mapa la fija el TIPO de variable (`registros_eventos`, agregada para este mapa:
+# backlog 106). NO se pinta con la categoria que trae el IGN para cada departamento (corte
+# de Jenks nacional, backlog 105).
+id: tablero-infraestructura-amenazas
+tipo: tablero
+familia: capas-ign
+seccion: infraestructura-y-riesgo
+pagina: amenazas-hidrometeorologicas
+
+titulo: "Infraestructura y riesgo"
+subtitulo: "Provincia de Santiago del Estero · registros de eventos adversos de origen hidrometeorológico, 1970-2015 (IGN)"
+titulo_pagina: "Amenazas hidrometeorológicas"
+breadcrumb: "General - Infraestructura y riesgo - Amenazas hidrometeorológicas"
+
+indicadores:
+  - {indicador: total, etiqueta: "Registros 1970-2015"}
+  - {indicador: evento_principal, etiqueta: "{evento}", nota: "{pct} del total"}
+  - {indicador: lider, etiqueta: "Dto. con más registros: {departamento}"}
+  - {indicador: tipos, etiqueta: "Tipos de evento registrados"}
+kpis_sin_variacion: true
+
+notas_metodologicas: [desinventar, escala, sinagir]
+
+paneles:
+  alto: fluye
+  acciones_de_tablero:
+    - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
+  mapa:
+    # El titulo nombra el evento elegido ("Inundaciones") o el total.
+    titulo: "Sgo. del Estero - Registros de eventos por departamento: {evento}, 1970-2015"
+    rotulo_total: "Total"
+    unidad: "registros"
+    rotulos_departamento: true
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  tabla-eventos-departamento:
+    titulo: "Sgo. del Estero - Registros de eventos adversos por departamento y tipo de evento, 1970-2015"
+    subtitulo: "En cantidad de registros"
+    rotulo_total: "TOTAL PROVINCIA"
+    # Solo los eventos con algun registro en la provincia, de mas a menos frecuente.
+    compacta: true
+  anillo-eventos:
+    titulo: "Sgo. del Estero - Composición de los registros por tipo de evento, 1970-2015"
+    cuantos: 5
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  tabla-sinagir:
+    titulo: "Región NOA - Nivel de exposición por amenaza hidrometeorológica (SINAGIR, PNRRD 2018-2023)"
+    subtitulo: "Nivel publicado por el IGN, tal cual"
+    nota: >
+      Es un valor de la REGIÓN NOA, no de la provincia ni de sus departamentos: SINAGIR no
+      publica un nivel por provincia. Categoría de la región según el IGN: {categoria}
+      (suma de niveles: {sumatoria}).
+  disposicion: columnas
+  orden:
+    - {id: mapa, ancho: 5, columna: izq}
+    - {id: tabla-eventos-departamento, ancho: 7, columna: der, compacta: true}
+    - {id: anillo-eventos, ancho: 5, columna: izq, nueva_banda: true}
+    - {id: tabla-sinagir, ancho: 7, columna: der}
+
+filtros:
+  - id: evento
+    zona: panel

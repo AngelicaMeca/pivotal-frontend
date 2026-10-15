@@ -147,7 +147,10 @@ const CUERPOS: Record<string, (props: { elementos: Elemento[] }) => ReactNode> =
 };
 
 /* La grilla de miniaturas de la pagina "Mapas". El cuerpo es un hueco y nada mas: lo llena
-   galeria.js con lo que escribio el build, que es quien sabe que mapas hay y como se rotulan. */
+   galeria.js con lo que escribio el build, que es quien sabe que mapas hay y como se rotulan.
+   El lateral (mapa mas reciente en grande + definicion del producto, galerias de AgroClima)
+   arranca oculto: solo se muestra si el build manda `definicion` o `destacado`, asi que la
+   galeria de mapas forrajeros queda como estaba. */
 function Galeria({ elementos }: { elementos: Elemento[] }) {
   return (
     <>
@@ -155,7 +158,10 @@ function Galeria({ elementos }: { elementos: Elemento[] }) {
         <figure key={i} className="cuadro">
           <h2>{elemento.titulo}</h2>
           <p className="subtitulo">{elemento.subtitulo}</p>
-          <div className="galeria" data-galeria=""></div>
+          <div className="galeria-cuerpo">
+            <div className="galeria-lateral" data-galeria-lateral="" hidden></div>
+            <div className="galeria" data-galeria=""></div>
+          </div>
           <p className="cuadro-nota">{elemento.nota}</p>
           <figcaption className="fuente">{elemento.pie}</figcaption>
         </figure>

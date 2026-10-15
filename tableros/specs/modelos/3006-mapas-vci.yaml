@@ -1,0 +1,62 @@
+# AgroClima > Mapas > Índice de Condición de la Vegetación VCI · hoja "ClimVCI" de la maqueta de
+# JC (base "3006 MP"). Mismo mecanismo que 3002-mapas-evapotranspiracion.
+#   X61 "PARA EL BETA DE WEB PUBLICA, SOLO 6 meses de mapas - 4 por mes (son semanales)"
+#   X63 "NO tienen código concreto - Van de manera descendente"
+#   X65 "CORRECTAS LAS FECHAS Y LAS MINIATURAS"
+# El nombre "vi_AAAADDD" trae el dia juliano en que empieza el periodo de 8 dias (el texto de JC
+# dice "cada 8 días"). vi_2026249 = "6 al 13 septiembre", que coincide con la leyenda de la
+# imagen ("Período: 06-Septiembre al 13-Septiembre de 2026"). 2026 no es bisiesto; el calculo
+# usa el calendario, asi que un anio bisiesto sale bien solo.
+# Ventana: 6 meses x 4 por mes = 24; hoy hay 23 (del 14 de marzo al 13 de septiembre).
+familia: agroclima
+seccion: agroclima
+slug: 3006-mapas-vci
+protocolo: _protocolo-presentacion
+tipo: galeria
+
+titulo: "Índice de Condición de la Vegetación VCI"
+subtitulo: "SEPA - INTA · condición de la vegetación cada 8 días, últimos 6 meses"
+breadcrumb: "AgroClima - Provincia - mapas - SEPA-INTA - Indice de Vegetación - VCI"
+titulo_protocolo: "SEPA - INTA - Mapas de Indice de Condición de Vegetación - VCI - {anios} (últimos 6 meses)"
+subtitulo_cuadro: "Del período más reciente al más antiguo · clic en un mapa para verlo completo"
+
+serie: vci
+assets:
+  carpeta: "site/assets/clima/vci"
+  patron: "^vi_(?P<anio>\\d{4})(?P<dia>\\d{3})(?P<mini>-mini)?\\.(?P<ext>gif|jpg)$"
+periodo: dias-julianos
+dias: 8
+orden: descendente
+por_fila: 6
+ventana:
+  cuantos: 24
+  motivo: "JC, X61: SOLO 6 meses de mapas - 4 por mes (son semanales)"
+destacado: mas_reciente
+
+definicion:
+  titulo: "INDICE CONDICION DE VEGETACIÓN - VCI"
+  parrafos:
+    - >
+      El Índice de Condición de la Vegetación (VCI en inglés) evalúa el comportamiento temporal
+      del IVN (índice de vegetación normalizado) cada 8 días respecto del mismo período de la
+      serie histórica de información. Mediante la fórmula ((IVN (actual) - IVN (mínimo
+      histórico)) / ((IVN máximo histórico) - (IVN mínimo histórico))) se generan 5 (cinco)
+      clases que permiten analizar el aumento del riesgo de sequedad de la vegetación
+      asociándolo a diferentes grados de intensidad de sequía. Cuánta más amplia sea la
+      diferencia entre el valor actual y el mínimo histórico del NDVI y se mantengan o aumenten
+      en el tiempo, mayor será el período de riesgo de sequía.
+    - >
+      Se utilizan imágenes del sensor VIIRS del satélite SUOMI-NPP con una resolución espacial
+      de 500 metros.
+  enlace: {texto: "https://sepa.inta.gob.ar/productos/", href: "https://sepa.inta.gob.ar/productos/"}
+
+fuente:
+  pie: "Fuente: SEPA - INTA (Instituto de Clima y Agua)"
+
+sensibilidad: normal
+estado: publicada
+origen:
+  tipo: maqueta de JC
+  archivo: "0000000000 Maqueta Clima 1.xlsx"
+  hojas: ["ClimVCI"]
+  recibido: 2026-10-14

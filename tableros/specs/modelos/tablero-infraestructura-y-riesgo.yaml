@@ -1,0 +1,75 @@
+# General > Infraestructura y riesgo > Red vial y ferrocarril (PORTADA de la seccion).
+# Pedido de JC del 14-oct-2026 por WhatsApp (backlog 104): "Rutas provinciales, nacionales y
+# caminos rurales (Red vial primaria, secundaria y terciaria); Tendidos ferroviarios;
+# Amenazas hidrometeorologicas", del catalogo Capas SIG del IGN.
+#
+# JC no dibujo maqueta para esto: el armado es nuestro y queda para que lo valide (backlog
+# 106). Lo que cuenta la pagina: un mapa grande de la provincia con los departamentos de fondo
+# NEUTRO (no es un mapa de calor: el dato son las lineas) y las capas encima, con un control
+# para prenderlas y apagarlas; al costado, cuanta red hay y de que calzada, y cuanto
+# ferrocarril queda activo. Los km los calcula el build (haversine sobre el trazado recortado,
+# ver la nota `km-de-red`), nunca el navegador.
+#
+# Decisiones de la usuaria (14-oct-2026): la seccion es nueva Y las capas tambien se prenden
+# sobre los mapas que ya existen; la red terciaria se publica COMPLETA (apagada al abrir: su
+# archivo de 2 MB se baja recien al prenderla).
+id: tablero-infraestructura-y-riesgo
+tipo: tablero
+familia: capas-ign
+seccion: infraestructura-y-riesgo
+
+titulo: "Infraestructura y riesgo"
+subtitulo: "Provincia de Santiago del Estero · red vial, ferrocarril y amenazas hidrometeorológicas (IGN)"
+titulo_pagina: "Red vial y ferrocarril"
+breadcrumb: "General - Infraestructura y riesgo - Red vial y ferrocarril"
+
+# Cinco tarjetas: la red por jerarquia, lo que queda de ferrocarril en servicio y las
+# estaciones. Las variaciones no existen (es una foto de 2026).
+indicadores:
+  - {indicador: km, capa: rutas-nacionales, etiqueta: "Rutas nacionales"}
+  - {indicador: km, capa: rutas-provinciales, etiqueta: "Rutas provinciales"}
+  - {indicador: km, capa: caminos-terciarios, etiqueta: "Caminos rurales"}
+  - {indicador: km, capa: ferrocarril, estado: Activo, etiqueta: "Vías férreas activas"}
+  - {indicador: estaciones, etiqueta: "Estaciones ferroviarias", nota: "{activas} activas"}
+kpis_sin_variacion: true
+
+notas_metodologicas: [capas, km-de-red]
+
+paneles:
+  alto: fluye
+  acciones_de_tablero:
+    - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
+  mapa-capas:
+    titulo: "Santiago del Estero - Red vial y ferrocarril"
+    subtitulo: "Prendé o apagá cada capa; pasá el mouse por un trazo para ver qué es"
+    # Las capas del mapa, en el orden en que se dibujan (la primera abajo). `prendida` es como
+    # arranca la pagina. La terciaria arranca apagada: son ~11.700 tramos y 2 MB.
+    capas:
+      - {id: caminos-terciarios, prendida: false}
+      - {id: rutas-provinciales, prendida: true}
+      - {id: rutas-nacionales, prendida: true}
+      - {id: ferrocarril, prendida: true}
+      - {id: estaciones-ferrocarril, prendida: true}
+    acciones:
+      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
+  tabla-red-vial:
+    titulo: "Sgo. del Estero - Red vial por jerarquía y tipo de calzada"
+    subtitulo: "En kilómetros"
+    rotulo_total: "TOTAL RED VIAL"
+    filas:
+      - {capa: rutas-nacionales, rotulo: "Nacional (primaria)"}
+      - {capa: rutas-provinciales, rotulo: "Provincial (secundaria)"}
+      - {capa: caminos-terciarios, rotulo: "Rural (terciaria)"}
+    calzadas: [Pavimentado, Consolidado, Tierra]
+  tabla-ferrocarril:
+    titulo: "Sgo. del Estero - Red ferroviaria por estado"
+    subtitulo: "En kilómetros de vía y cantidad de estaciones, apeaderos, desvíos y embarcaderos"
+    rotulo_total: "TOTAL"
+    estados: [Activo, Abandonado, Desmantelado]
+  disposicion: columnas
+  orden:
+    - {id: mapa-capas, ancho: 7, columna: izq}
+    - {id: tabla-red-vial, ancho: 5, columna: der}
+    - {id: tabla-ferrocarril, ancho: 5, columna: der}
+
+filtros: []

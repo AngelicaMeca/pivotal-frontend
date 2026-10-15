@@ -59,6 +59,9 @@ ADAPTERS = {
     # Una fila por MES: las columnas son provincias (una medida, varias provincias) o
     # medidas (una provincia, varias medidas). Bases 184, 185, 186, 188 y 194 (lecheria).
     "serie-mensual": "adapters.serie_mensual",
+    # Una hoja por ESTACION meteorologica, una fila por DIA y una columna por variable; sale
+    # largo estacion x fecha x variable. Primera base: la 111 (estaciones del INTA).
+    "clima-diario": "adapters.clima_diario",
 }
 
 
@@ -76,8 +79,31 @@ def listar_entregas():
     )
 
 
-def inventariar(entrega):
+def nombres_declarados(configs):
+    """{nombre_exacto: nro_base} de los archivos que un config acepta fuera de convencion.
+
+    Un archivo que no empieza con "NN - " corta la ingesta: el numero de base no se adivina.
+    La unica salida es que el config de la base lo DECLARE por su nombre exacto
+    (`archivo.nombres_fuera_de_convencion`), despues de que alguien miro el archivo. Caso
+    real: "111 -Estaciones SDE.xlsx" (entrega-03), sin espacio despues del guion.
+    """
+    declarados = {}
+    for _, config in configs:
+        for nombre in (config.get("archivo") or {}).get("nombres_fuera_de_convencion") or []:
+            nro = int(config["base"])
+            if not nombre.startswith(str(nro)):
+                sys.exit("[ingest] La base %s declara %r como suyo, pero el nombre no empieza "
+                         "con %s." % (nro, nombre, nro))
+            if declarados.get(nombre, nro) != nro:
+                sys.exit("[ingest] %r esta declarado por dos bases: %s y %s."
+                         % (nombre, declarados[nombre], nro))
+            declarados[nombre] = nro
+    return declarados
+
+
+def inventariar(entrega, configs=()):
     """[(nro_base, nombre_archivo)] + lista de ignorados. Falla si un nombre no matchea."""
+    declarados = nombres_declarados(configs)
     ruta = os.path.join(DIR_RAW, entrega)
     if not os.path.isdir(ruta):
         sys.exit("[ingest] No existe la carpeta raw/%s" % entrega)
@@ -90,15 +116,18 @@ def inventariar(entrega):
             ignorados.append(nombre)
             continue
         m = RE_NRO_ARCHIVO.match(nombre)
-        if not m:
+        if m:
+            archivos.append((int(m.group(1)), nombre))
+        elif nombre in declarados:
+            archivos.append((declarados[nombre], nombre))
+        else:
             sin_numero.append(nombre)
-            continue
-        archivos.append((int(m.group(1)), nombre))
     if sin_numero:
         sys.exit(
             "[ingest] Archivos de raw/%s que no siguen el patron 'NN - Nombre.xlsx': %s\n"
-            "         No se adivina el numero de base. Pedile a JC que los renombre o "
-            "renombralos al copiarlos." % (entrega, sin_numero)
+            "         No se adivina el numero de base. Pedile a JC que los renombre, o "
+            "declaralos por su nombre exacto en `archivo.nombres_fuera_de_convencion` del "
+            "config de la base." % (entrega, sin_numero)
         )
     return archivos, ignorados
 
@@ -152,7 +181,7 @@ def resumen_por_hoja(df):
 
 
 def procesar_entrega(entrega, configs):
-    archivos, ignorados = inventariar(entrega)
+    archivos, ignorados = inventariar(entrega, configs)
     por_nro = {}
     for nro, nombre in archivos:
         por_nro.setdefault(nro, []).append(nombre)

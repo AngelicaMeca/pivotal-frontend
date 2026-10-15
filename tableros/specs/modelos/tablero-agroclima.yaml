@@ -1,0 +1,105 @@
+# AgroClima · portada de la rama ("Clima Ingreso" de la maqueta de JC
+# "0000000000 Maqueta Clima 1.xlsx", 14-oct-2026). Lectura completa en docs/maqueta-clima.md.
+#
+# Que es: la puerta de entrada a los datos, informes y mapas de clima. NO tiene datos propios:
+# son TARJETAS con una miniatura que llevan a cada pagina, en dos bloques, como las dibuja JC:
+#   "Datos e informes": INTA Red de Estaciones Agrometeorologicas (informacion diaria) e INTA
+#                       AgroMet (informe semanal);
+#   "Mapas":            Reservas hidricas ORA, Evapotranspiracion, Humedad disponible, Humedad
+#                       en el suelo, NDVI y VCI.
+# La miniatura de cada mapa es la del mapa MAS RECIENTE de su galeria (la calcula el build), y
+# la de las estaciones es la silueta de la provincia con las ocho estaciones, dibujada por el
+# build con las coordenadas de la base 111. JC pega capturas; las nuestras se actualizan solas.
+#
+# Lo que NO se construyo, porque no hay base entregada (backlog 107):
+#   - el bloque "Destacados" de la derecha (JC, W62: "SE EXTRAE DE LA PRIMERA PÁGINA DEL ULTIMO
+#     EJEMPLAR DE AgroMet": los dos mapas de pronostico, sus textos y el "Estado de los
+#     cultivos"). Sin el ejemplar no hay nada que extraer: no se inventa. Sin ese bloque, las
+#     tarjetas ocupan todo el ancho.
+#   - la pagina AgroMet (hoja "ClimAGM", base "2008 IC-CD", lista de informes "con LINK AL
+#     PDF"). Su tarjeta se dibuja APAGADA con "Próximamente", la misma convencion que una
+#     seccion anunciada en el menu: el rotulo esta y al lado dice que todavia no.
+#
+# Desvios de la maqueta, anotados (backlog 108): (a) dos bajadas de tarjeta corregidas porque
+# contradicen la pagina a la que llevan -"Humedad disponible: cada 21 días" (la propia hoja
+# "ClimVAD" dice decadicas) y "VCI: por quincena" (la hoja "ClimVCI" dice cada 8 dias, "4 por
+# mes")-; (b) "NVDI" se escribe NDVI y "Indice" con tilde.
+id: tablero-agroclima
+tipo: tablero
+familia: agroclima
+seccion: agroclima
+
+titulo: "AgroClima"
+subtitulo: "Provincia de Santiago del Estero · acceso a datos, informes y mapas"
+# La miga es la celda N5 de JC, literal.
+breadcrumb: "AgroClima - Provincia - Acceso a datos, informes y mapas"
+
+# Sin banda de KPIs: la hoja de JC va del titulo directo a los bloques de tarjetas.
+indicadores: []
+
+paneles:
+  alto: fluye
+  disposicion: columnas
+  # "Generar PDF" abajo a la derecha, donde lo dibuja JC.
+  acciones_de_tablero:
+    - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
+  accesos-datos:
+    titulo: "Datos e informes"
+    pie: "Fuente: INTA"
+    tarjetas:
+      # `destino`: el id del spec de la pagina (tablero o galeria). El build lo resuelve a su
+      # URL y corta si no existe. `miniatura: estaciones` = la silueta con las estaciones.
+      - organismo: "INTA"
+        titulo: "Red de Estaciones Agrometeorológicas Santiago del Estero"
+        bajada: "Información diaria"
+        destino: tablero-agroclima-estaciones
+        miniatura: estaciones
+      - organismo: "INTA"
+        titulo: "AgroMet"
+        bajada: "Informe agrometeorológico semanal"
+        # Sin `destino`: no hay base entregada (backlog 107). Se dibuja apagada.
+        proximamente: "Próximamente"
+  accesos-mapas:
+    titulo: "Mapas"
+    pie: "Fuentes: ORA (Oficina de Riesgo Agropecuario) y SEPA - INTA (Instituto de Clima y Agua)"
+    tarjetas:
+      - titulo: "Reservas Hídricas ORA"
+        detalle: "(Oficina de Riesgo Agropecuario)"
+        bajada: "Acceso a mapas por cultivo y fechas"
+        destino: 3001-mapas-ora-humedad-suelo
+        miniatura: galeria
+      - titulo: "Evapotranspiración"
+        bajada: "Acceso a mapas por fechas decádicas (cada 10 días)"
+        destino: 3002-mapas-evapotranspiracion
+        miniatura: galeria
+      - titulo: "Humedad disponible"
+        # JC: "Acceso a mapas por fechas cada 21 días". Se corrige (backlog 108).
+        bajada: "Acceso a mapas por fechas decádicas (cada 10 días)"
+        destino: 3003-mapas-variacion-agua
+        miniatura: galeria
+      - titulo: "Humedad en el suelo"
+        bajada: "Acceso a mapas por fechas decádicas (cada 10 días)"
+        destino: 3004-mapas-porcentaje-agua
+        miniatura: galeria
+      - titulo: "Índice de Vegetación NDVI"
+        bajada: "Acceso a mapas por quincena"
+        destino: 3005-mapas-ndvi
+        miniatura: galeria
+      - titulo: "Índice de Condición de la Vegetación VCI"
+        # JC: "Acceso a mapas por quincena". Se corrige (backlog 108).
+        bajada: "Acceso a mapas cada 8 días"
+        destino: 3006-mapas-vci
+        miniatura: galeria
+  orden:
+    - {id: accesos-datos, ancho: 12}
+    - {id: accesos-mapas, ancho: 12}
+
+filtros: []
+
+sensibilidad: normal
+estado: publicada
+origen:
+  tipo: maqueta de JC
+  archivo: "0000000000 Maqueta Clima 1.xlsx"
+  hojas: ["Clima Ingreso"]
+  recibido: 2026-10-14

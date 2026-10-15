@@ -35,11 +35,14 @@ ramas:
     # los cuadros de la rama la nombran y la ordenan asi (site_build.renombrar_departamentos).
     nombres_departamento:
       "BANDA": "LA BANDA"
+  # AgroClima (maqueta de JC "0000000000 Maqueta Clima 1.xlsx", 14-oct-2026): JC llama asi a
+  # la rama en el menu y en la miga de sus nueve hojas. `rama` sigue siendo "Clima" porque es la
+  # clave con que el indice de JC (manifiesto-indice.yaml) ubica las bases del tema.
   - id: clima
     bloque: acceso-por-tema
     rama: Clima
-    titulo: Clima
-    bajada: "Estaciones meteorológicas y normales climatológicas."
+    titulo: AgroClima
+    bajada: "Acceso a datos, informes y mapas: las estaciones agrometeorológicas del INTA y los mapas de agua en el suelo y de vegetación."
   - id: economia
     bloque: acceso-por-tema
     rama: Economía
@@ -60,6 +63,10 @@ ramas:
     rama: General
     titulo: Datos generales
     bajada: "Población, educación y contexto de la provincia."
+    # Mismo criterio que ganadería: dim_geo canoniza "BANDA" y el sitio la publica como la
+    # nombra la provincia (los mapas y tablas de las capas del IGN, 14-oct-2026).
+    nombres_departamento:
+      "BANDA": "LA BANDA"
   - id: registros
     bloque: acceso-por-territorio
     rama: Departamento
@@ -77,7 +84,7 @@ ramas:
 menu_lateral:
   - {rama: agricultura, titulo: "Agricultura"}
   - {rama: ganaderia, titulo: "Ganadería"}
-  - {rama: clima, titulo: "Clima"}
+  - {rama: clima, titulo: "AgroClima"}
   - {rama: industria, titulo: "Industria"}
   - {rama: economia, titulo: "Economía"}
   - {rama: general, titulo: "General"}
@@ -333,6 +340,67 @@ secciones:
       cada departamento, y cuántas colmenas tiene en promedio cada apiario.
     # JC no la pone en la tira de especies de su maqueta aunque le dedica una hoja. Se suma
     # igual: dejarla afuera de la tira la volvería inalcanzable salvo por el menú lateral.
+    grupos: []
+
+  # ---------------------------------------------------------------------------
+  # GENERAL · Infraestructura y riesgo (capas del IGN, 14-oct-2026, backlog 104)
+  # ---------------------------------------------------------------------------
+  # Pedido de JC por WhatsApp: "Rutas provinciales, nacionales y caminos rurales (Red vial
+  # primaria, secundaria y terciaria); Tendidos ferroviarios; Amenazas hidrometeorologicas",
+  # del catálogo Capas SIG del IGN. Es la primera sección de la rama General (hasta acá salía
+  # "Próximamente"). No sale de una base del índice de JC: el contexto es `capas-ign`
+  # (configs/dims/capas-ign/). JC no dibujó maqueta: el armado es nuestro (backlog 106).
+  # Las mismas capas se prenden también sobre los mapas de agricultura y ganadería (opt-in
+  # por spec, apagadas al abrir).
+  - id: infraestructura-y-riesgo
+    familia: capas-ign
+    rama: general
+    ruta: [General, Infraestructura y riesgo]
+    url: general/infraestructura-y-riesgo
+    titulo: "Infraestructura y riesgo"
+    bajada_corta: "Rutas, caminos rurales, ferrocarril y amenazas hidrometeorológicas (IGN)."
+    bajada: >
+      La red vial nacional, provincial y rural de Santiago del Estero, el tendido ferroviario y
+      sus estaciones, y los eventos adversos de origen hidrometeorológico registrados por
+      departamento entre 1970 y 2015. Capas del Instituto Geográfico Nacional.
+    paginas_de_seccion:
+      - {texto: "Red vial y ferrocarril", tablero: true}
+      - {texto: "Amenazas hidrometeorológicas", vista: tablero-infraestructura-amenazas}
+    grupos: []
+
+  # ---------------------------------------------------------------------------
+  # AGROCLIMA · datos, informes y mapas (maqueta "0000000000 Maqueta Clima 1.xlsx", 14-oct-2026)
+  # ---------------------------------------------------------------------------
+  # Nueve hojas de JC y una sola seccion: la portada ("Clima Ingreso") son tarjetas que llevan a
+  # la pagina de las estaciones del INTA (base 111) y a seis galerias de mapas (SEPA-INTA y ORA,
+  # imagenes en site/assets/clima/). La pagina AgroMet y el bloque "Destacados" no tienen base
+  # entregada (backlog 107). Lectura de la maqueta en docs/maqueta-clima.md.
+  - id: agroclima
+    familia: agroclima
+    bases: [111]
+    rama: clima
+    ruta: [AgroClima, Datos, informes y mapas]
+    url: clima/agroclima
+    titulo: "Datos, informes y mapas"
+    bajada_corta: "Estaciones del INTA día a día y mapas de agua en el suelo y de vegetación."
+    bajada: >
+      El dato diario de las estaciones agrometeorológicas del INTA en Santiago del Estero y los
+      mapas de reservas de agua en el suelo, evapotranspiración y estado de la vegetación que
+      publican SEPA-INTA y la Oficina de Riesgo Agropecuario.
+    # JC dibuja "Regresar" a la derecha de la banda en las ocho hojas internas: vuelve a la
+    # portada de la rama. Va donde va la tira de paginas, y solo en las paginas que no son la
+    # portada.
+    regresar: "Regresar"
+    # Sin pestañas Tablero/Análisis: la rama son páginas sueltas a las que se llega por las
+    # tarjetas de la portada, como en las hojas de JC.
+    sin_pestanias: true
+    vistas_sueltas:
+      - 3001-mapas-ora-humedad-suelo
+      - 3002-mapas-evapotranspiracion
+      - 3003-mapas-variacion-agua
+      - 3004-mapas-porcentaje-agua
+      - 3005-mapas-ndvi
+      - 3006-mapas-vci
     grupos: []
 
 privadas:
