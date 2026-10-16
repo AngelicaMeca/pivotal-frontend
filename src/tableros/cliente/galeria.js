@@ -24,7 +24,9 @@ export default function iniciar(PIVOTAL) {
 
   function crearDialogo() {
     var dialogo = document.createElement("dialog");
-    dialogo.className = "info";          /* mismo cromo que el popup de "Mas informacion" */
+    /* Mismo cromo que el popup de "Mas informacion"; `info-galeria` hace que la caja mida lo
+       que el mapa y no la ventana entera (16-oct-2026, pedido de la usuaria). */
+    dialogo.className = "info info-galeria";
     var caja = document.createElement("div");
     caja.className = "info-caja";
     var cab = document.createElement("header");
@@ -102,6 +104,11 @@ export default function iniciar(PIVOTAL) {
     /* `titulo` lo manda el build cuando el rotulo de la grilla no alcanza para saber que se
        esta viendo (las galerias de AgroClima le suman el año, y la ORA el cultivo y la fecha). */
     popup.titulo.textContent = mapa.titulo || mapa.rotulo;
+    /* La proporcion del mapa ANTES de que baje: con ella el CSS le da a la imagen -y asi a la
+       caja- su tamaño final desde el primer cuadro, y la animacion de apertura se calcula
+       contra la caja que va a quedar. Los forrajeros no la traen: son todos de 2001x944. */
+    popup.caja.style.setProperty("--proporcion-mapa",
+      mapa.ancho && mapa.alto ? String(mapa.ancho / mapa.alto) : String(2001 / 944));
     popup.imagen.src = mapa.grande;
     popup.imagen.alt = mapa.rotulo;
     popup.anterior.disabled = indice === 0;

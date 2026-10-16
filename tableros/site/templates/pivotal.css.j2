@@ -1509,6 +1509,23 @@ a { color: var(--enlace); }
   display: flex; align-items: center; justify-content: center; padding: .6rem 1.1rem 1.1rem;
 }
 .galeria-grande img { max-width: 100%; max-height: 100%; object-fit: contain; }
+/* El popup de una galeria mide lo que el MAPA, no la ventana (16-oct-2026, pedido de la
+   usuaria): la caja va centrada y se ajusta a la imagen, que crece hasta donde da la ventana
+   sin deformarse. El ancho y el alto de la imagen salen de su proporcion (`--proporcion-mapa`,
+   la escribe galeria.js antes de que baje), asi la caja tiene su tamaño final desde el primer
+   cuadro de la animacion. Lo que se resta es lo que ocupa todo lo demas: el marco de 2vmin del
+   dialogo, el borde, la barra del titulo (4rem) y el aire del cuerpo (1.7rem / 2.2rem). La
+   barra no ensancha la caja (`width: 0; min-width: 100%`): un titulo largo se corta en renglones. */
+dialog.info.info-galeria[open] { display: flex; align-items: center; justify-content: center; }
+.info-galeria .info-caja { width: auto; height: auto; max-width: 100%; max-height: 100%; }
+.info-galeria .info-cab { width: 0; min-width: 100%; box-sizing: border-box; }
+.info-galeria .galeria-grande { flex: 0 0 auto; overflow: hidden; padding: .6rem 1.1rem 1.1rem; }
+.info-galeria .galeria-grande img {
+  max-width: none; max-height: none; height: auto; aspect-ratio: var(--proporcion-mapa, 1);
+  width: min(calc(100vw - 4vmin - 2.2rem - 2px),
+             calc((100vh - 4vmin - 5.7rem - 2px) * var(--proporcion-mapa, 1)));
+  min-width: 16rem;
+}
 
 /* ---------- galerias de AgroClima (maqueta "0000000000 Maqueta Clima 1.xlsx", 14-oct-2026) ----
    Las hojas de mapas de JC tienen un LATERAL a la izquierda -el mapa mas reciente en grande y

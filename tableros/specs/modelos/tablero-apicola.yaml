@@ -55,11 +55,8 @@ paneles:
   mapa:
     # Nombres de los departamentos sobre el mapa: desvio de la maqueta (ver la cabecera).
     rotulos_departamento: true
-    # Capas de contexto del IGN (rutas, caminos rurales, ferrocarril y estaciones; pedido de
-    # JC del 14-oct-2026, backlog 104). APAGADAS al abrir: con todo apagado el mapa es el de
-    # siempre. Se prenden desde el control "Capas" del cuadro (tambien en el zoom) y lo que se
-    # prende sale en el PDF. El orden es el de dibujo: la primera queda abajo.
-    capas: [caminos-terciarios, rutas-provinciales, rutas-nacionales, ferrocarril, estaciones-ferrocarril]
+    # Sin capas de contexto del IGN ni control "Capas" (pedido de la usuaria del
+    # 16-oct-2026: "saca el boton capas de los mapas de ganaderia").
     titulo: "{variable}"
     fuente: "Fuente: SENASA"
     variables: [colmenas, apiarios]
