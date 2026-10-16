@@ -38,6 +38,10 @@ export type PasoMiga = { texto: string; href?: string | null; dinamico?: string;
 export type SectorMenu = {
   id: string;
   titulo: string;
+  // La portada de la rama, si declara una (Ganaderia): el nombre del sector lleva ahi y la
+  // portada no figura como renglon. `portada_actual`: la pagina es la portada.
+  href?: string | null;
+  portada_actual?: boolean;
   actual: boolean;
   // `proximamente`: la seccion esta declarada y anunciada, pero todavia no tiene datos.
   // Se dibuja en el menu sin link (ver Cascara.tsx).

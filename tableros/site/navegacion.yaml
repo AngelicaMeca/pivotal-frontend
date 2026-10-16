@@ -225,7 +225,8 @@ secciones:
   # La PORTADA de la rama (hoja "Ganad Ingreso" de "Maqueta INGRESO a GANADERIA.xlsx",
   # 15-oct-2026; lectura en docs/maqueta-ganaderia-ingreso.md). Mismo patrón que la portada de
   # AgroClima: tarjetas por especie con los links a sus páginas y "Destacados" a la derecha.
-  # Va PRIMERA para ser la primera entrada de Ganadería en el menú lateral y en la home. Vive
+  # Va PRIMERA para ser la primera entrada de Ganadería en la home. En el menú lateral NO es un
+  # renglón: el nombre del sector "Ganadería" lleva acá y lo despliega (16-oct-2026). Vive
   # en /plataforma/ganaderia: las URL de las especies (ganaderia/<especie>/...) no cambian.
   - id: ganaderia-ingreso
     familia: ganaderia-ingreso

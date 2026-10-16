@@ -4,16 +4,17 @@
 # Que es: la puerta de entrada a la ganaderia. Mismo patron que la portada de AgroClima
 # (tablero-agroclima.yaml): a la izquierda las TARJETAS (forma `accesos-*`), a la derecha el
 # bloque "Destacados" (forma `destacados-*`). El tramo "Ganadería" de la miga, el titulo de la
-# rama en la home y la primera entrada de Ganaderia en el menu lateral llevan aca
+# rama en la home y el nombre del sector Ganaderia en el menu lateral (que ademas lo despliega) llevan aca
 # (`ramas.ganaderia.portada` en site/navegacion.yaml). Las URL de las especies no cambian.
 #
 # Tarjetas (cuadro de texto 16, G6:AL7, y grupos 22 a 55, G8:AL35): una por especie, de a dos
 # por fila como las dibuja JC (Bovinos | Bubalinos, Porcinos | Equinos, Ovinos | Caprinos,
-# Apicolas), con el ICONO de la especie y la lista de sus paginas en su orden y con sus rotulos.
-# G49: "EN EL DOCUMENTO 'ICONOS' ESTÁN LAS IMÁGENES ORIGINALES DE LAS ESPECIES (modificado el
-# 13/10/2026)". La maqueta pega FOTOS (vacas, bufalos, cerdos...); el documento de iconos de JC
-# es el paquete que el sitio ya tiene (site/assets/iconos/color/<especie>.png), asi que van esos
-# iconos, los mismos de la tarjeta "Datos" de cada pagina. Backlog 111 (a).
+# Apicolas), con la FOTO de la especie y la lista de sus paginas en su orden y con sus rotulos.
+# Las fotos son las que JC pega en la maqueta (imagenes de los grupos 22 a 53, xl/media/image9 a
+# image15), recortadas como las recorta el Excel (`srcRect` del dibujo) y a la proporcion de su
+# caja, en site/assets/ganaderia/ingreso/<especie>.jpg (16-oct-2026, pedido de la usuaria: "debe
+# usar las mismas imagenes de la maqueta"; antes iban los iconos del paquete de JC por la G49).
+# Backlog 111 (a).
 #
 # Cada link va a la pagina que YA existe. Donde JC nombra algo que vive DENTRO de otra pagina
 # de la especie, el link va a esa pagina (Bubalinos: "Estratos y UP" y "Categorías" estan en la
@@ -60,10 +61,11 @@ paneles:
     tarjetas:
       # `enlaces`: los renglones de la tarjeta, en el orden y con los rotulos de JC. `destino`
       # es el id del spec de la pagina (el build lo resuelve a su URL y corta si no existe);
-      # `proximamente` la deja apagada. `miniatura: icono` + `icono:` = el icono de la especie.
+      # `proximamente` la deja apagada. `miniatura: imagen` + `imagen:` = la FOTO de la especie de la
+      # maqueta (site/assets/ganaderia/ingreso/, con el recorte que JC le hizo en el Excel).
       - titulo: "Bovinos"
-        miniatura: icono
-        icono: bovinos
+        miniatura: imagen
+        imagen: ganaderia/ingreso/bovinos.jpg
         enlaces:
           - {texto: "Stocks", destino: tablero-stock-bovino}
           - {texto: "Indicadores", destino: tablero-bovinos-indicadores}
@@ -75,8 +77,8 @@ paneles:
           # JC: "Feed Lots,  Hilton y tambos" (con doble espacio).
           - {texto: "Feed Lots, Hilton y tambos", destino: tablero-bovinos-feedlots}
       - titulo: "Bubalinos (Búfalos)"
-        miniatura: icono
-        icono: bubalinos
+        miniatura: imagen
+        imagen: ganaderia/ingreso/bubalinos.jpg
         enlaces:
           - {texto: "Stocks", destino: tablero-bubalinos}
           # La tabla departamento x estrato y los anillos de estratos y UP estan en la pagina
@@ -86,16 +88,16 @@ paneles:
           # Las categorias (tabla por categoria y equivalencias bovino/bubalino) tambien.
           - {texto: "Categorías", destino: tablero-bubalinos}
       - titulo: "Porcinos"
-        miniatura: icono
-        icono: porcinos
+        miniatura: imagen
+        imagen: ganaderia/ingreso/porcinos.jpg
         enlaces:
           - {texto: "Stocks", destino: tablero-porcinos}
           - {texto: "Movimientos", destino: tablero-porcinos-movimientos}
           - {texto: "Estratos y UP", destino: tablero-porcinos-estratos}
           - {texto: "Razas", destino: tablero-porcinos-razas}
       - titulo: "Equinos"
-        miniatura: icono
-        icono: equinos
+        miniatura: imagen
+        imagen: ganaderia/ingreso/equinos.jpg
         enlaces:
           - {texto: "Stocks", destino: tablero-equinos}
           - {texto: "Movimientos", destino: tablero-equinos-movimientos}
@@ -104,23 +106,23 @@ paneles:
           - {texto: "Estratos y UP", destino: tablero-equinos}
           - {texto: "Faena", destino: tablero-equinos}
       - titulo: "Ovinos"
-        miniatura: icono
-        icono: ovinos
+        miniatura: imagen
+        imagen: ganaderia/ingreso/ovinos.jpg
         enlaces:
           - {texto: "Stocks", destino: tablero-ovinos}
           - {texto: "Movimientos", destino: tablero-ovinos-movimientos}
           - {texto: "Estratos y UP", destino: tablero-ovinos-estratos}
       - titulo: "Caprinos"
-        miniatura: icono
-        icono: caprinos
+        miniatura: imagen
+        imagen: ganaderia/ingreso/caprinos.jpg
         enlaces:
           - {texto: "Stocks", destino: tablero-caprinos}
           - {texto: "Estratos y UP", destino: tablero-caprinos-estratos}
           # No hay base de faena caprina en las entregas.
           - {texto: "Faena", proximamente: "Próximamente"}
       - titulo: "Apícolas"
-        miniatura: icono
-        icono: apicolas
+        miniatura: imagen
+        imagen: ganaderia/ingreso/apicolas.jpg
         enlaces:
           # Apiarios y colmenas son el selector del mapa de la pagina apicola.
           - {texto: "Apiarios", destino: tablero-apicola}

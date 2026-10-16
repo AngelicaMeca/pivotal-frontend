@@ -191,7 +191,22 @@ export default function Cascara({ pagina, children }: { pagina: Comun; children:
             {pagina.menu.map((sector) =>
               sector.secciones.length ? (
                 <details key={sector.id} className="menu-sector" open={sector.actual}>
-                  <summary>{sector.titulo}</summary>
+                  {/* Un sector con portada (Ganaderia): el nombre es el link a la portada. El
+                      clic navega y la pagina nueva llega con el sector desplegado, porque la
+                      portada es una seccion de la rama (`actual`). */}
+                  <summary>
+                    {sector.href ? (
+                      <a
+                        className="menu-sector-portada"
+                        href={sector.href}
+                        aria-current={sector.portada_actual ? "page" : undefined}
+                      >
+                        {sector.titulo}
+                      </a>
+                    ) : (
+                      sector.titulo
+                    )}
+                  </summary>
                   <ul>
                     {sector.secciones.map((seccion) =>
                       /* Seccion ANUNCIADA: el rotulo esta -JC la tiene en el menu de su

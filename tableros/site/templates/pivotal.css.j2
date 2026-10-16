@@ -228,6 +228,11 @@ a.boton-cabecera:hover { background: color-mix(in srgb, var(--sobre-cromo) 16%, 
 .menu-sector summary::after { content: "▾"; font-size: .7rem; opacity: .9; }
 .menu-sector[open] summary::after { content: "▴"; }
 .menu-sector summary:hover { background: color-mix(in srgb, var(--sobre-cromo) 14%, transparent); }
+/* Sector con portada (Ganaderia): el nombre es un link que ocupa el renglon; la flecha sigue
+   desplegando sin navegar. */
+.menu-sector-portada { flex: 1 1 auto; color: inherit; text-decoration: none; }
+.menu-sector-portada:focus-visible { outline: 2px solid var(--sobre-cromo); outline-offset: 2px; }
+.menu-sector summary:has(.menu-sector-portada[aria-current]) { background: var(--cromo-oscuro); }
 .menu-sector ul { list-style: none; margin: 0 0 .3rem; padding: 0 0 0 .5rem; }
 .menu-sector li a {
   display: block; color: color-mix(in srgb, var(--sobre-cromo) 92%, transparent); text-decoration: none; font-size: .8rem;
@@ -1670,7 +1675,12 @@ a.acceso:focus-visible { outline: 2px solid var(--enlace); outline-offset: 2px; 
    de sus paginas ("> Stocks", "> Movimientos"...), como las dibuja JC. La tarjeta NO es un
    link: cada renglon lo es. El icono va mas chico que una miniatura de AgroClima y sobre el
    fondo de la tarjeta (es un dibujo, no una captura). */
-.acceso-con-enlaces { grid-template-columns: 4.5rem minmax(0, 1fr); align-items: start; }
+/* La foto de la especie (la de la maqueta, 16-oct-2026): vertical como en la hoja de JC, a todo
+   el alto de su caja. */
+.acceso-con-enlaces { align-items: start; }
+.acceso-con-enlaces .acceso-mini { height: auto; aspect-ratio: 240 / 330; }
+.acceso-con-enlaces .acceso-mini img { width: 100%; height: 100%; max-width: none; max-height: none;
+                                       object-fit: cover; }
 .acceso-mini-icono { height: 4.5rem; background: transparent; }
 .acceso-enlaces { list-style: none; margin: .25rem 0 0; padding: 0; display: flex; flex-direction: column;
                   gap: .15rem; font-size: .85rem; }

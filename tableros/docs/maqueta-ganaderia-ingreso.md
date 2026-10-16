@@ -7,13 +7,15 @@ comunes: `specs/modelos/_comunes-ganaderia-ingreso.yaml`. Publicada en `/platafo
 ## Qué trae y dónde quedó
 
 - **N5** miga "Ganadería - Provincia - acceso a datos e informes": literal (`breadcrumb`).
-- **B8:B13** menú lateral (Agricultura ... General): el de siempre. La portada es la primera
-  entrada de Ganadería y la rama declara `portada: ganaderia-ingreso` en `site/navegacion.yaml`.
+- **B8:B13** menú lateral (Agricultura ... General): el de siempre. La rama declara
+  `portada: ganaderia-ingreso` en `site/navegacion.yaml`: el nombre "Ganadería" del menú es el
+  link a la portada (y el sector llega desplegado); la portada no es un renglón del menú.
 - **G6:AL7** "Accesos directos a información por especie - Provincia y departamentos" y
   **G8:AL35** siete grupos (foto + nombre + "> página"), de a dos por fila: Bovinos | Bubalinos
   (Búfalos), Porcinos | Equinos, Ovinos | Caprinos, Apícolas. Panel `accesos-especies`, con el
-  orden y los rótulos de JC. Las fotos se reemplazan por los íconos de especie de su paquete
-  (G49: "EN EL DOCUMENTO 'ICONOS' ESTÁN LAS IMÁGENES ORIGINALES DE LAS ESPECIES").
+  orden y los rótulos de JC. Las fotos son las de la maqueta (`xl/media/image9` a `image15`),
+  con el recorte del Excel, en `site/assets/ganaderia/ingreso/` (16-oct-2026; antes iban los
+  íconos del paquete por la G49).
 - **AL6:BI39** recuadro "Destacados": seis anillos (imágenes 56-61) en tres filas de a dos, el
   texto **AM17** entre la primera y la segunda fila y **AM38** "Elaborado por Pivotal con
   Tecnología Minibox®" al pie. Panel `destacados-hacienda`: los anillos se calculan de los marts

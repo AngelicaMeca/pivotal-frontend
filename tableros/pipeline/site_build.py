@@ -11784,19 +11784,25 @@ def menu_del_sitio(ctx, seccion_actual=None):
     (el mockup de JC los lista todos) pero el template le pone "Proximamente" adentro, sin
     ningun link muerto. El sector de la pagina actual arranca desplegado.
     """
-    ramas_declaradas = {r["id"] for r in ctx.navegacion["ramas"]}
+    ramas_declaradas = {r["id"]: r for r in ctx.navegacion["ramas"]}
     salida = []
     for entrada in ctx.navegacion["menu_lateral"]:
         if entrada["rama"] not in ramas_declaradas:
             raise pr.ErrorDeProtocolo(
                 "menu_lateral nombra la rama %r, que no existe en site/navegacion.yaml"
                 % entrada["rama"])
+        # La PORTADA de la rama (`ramas[].portada`, Ganaderia) no es un renglon del menu: el
+        # nombre del sector lleva a ella y a la vez lo despliega (pedido de la usuaria del
+        # 16-oct-2026: "no me gusta que sea un boton dentro del menu desplegable").
+        portada = ramas_declaradas[entrada["rama"]].get("portada")
         secciones, actual = [], False
         for seccion in ctx.navegacion["secciones"]:
             if seccion["rama"] != entrada["rama"]:
                 continue
             es_actual = seccion_actual is not None and seccion["id"] == seccion_actual
             actual = actual or es_actual
+            if seccion["id"] == portada:
+                continue
             # Una seccion ANUNCIADA (`proximamente`) se dibuja en el menu pero sin link: su
             # spec ya esta escrito y JC la tiene en su maqueta, pero todavia no hay datos para
             # generarle las paginas. Es la misma excepcion acotada a la regla de botones
@@ -11806,6 +11812,8 @@ def menu_del_sitio(ctx, seccion_actual=None):
                               "actual": es_actual,
                               "proximamente": bool(seccion.get("proximamente"))})
         salida.append({"id": entrada["rama"], "titulo": entrada["titulo"],
+                       "href": href_de_rama(ctx.navegacion, entrada["rama"]),
+                       "portada_actual": bool(portada) and seccion_actual == portada,
                        "actual": actual, "secciones": secciones})
     return salida
 
