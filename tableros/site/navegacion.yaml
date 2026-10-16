@@ -46,6 +46,9 @@ ramas:
     bloque: acceso-por-tema
     rama: Clima
     titulo: AgroClima
+    # La PORTADA de la rama (hoja "Clima Ingreso"), como en Ganadería: el nombre "AgroClima" del
+    # menú lateral, el tramo de la miga y el título en la home llevan acá (16-oct-2026).
+    portada: agroclima
     bajada: "Acceso a datos, informes y mapas: las estaciones agrometeorológicas del INTA y los mapas de agua en el suelo y de vegetación."
   - id: economia
     bloque: acceso-por-tema
@@ -415,6 +418,20 @@ secciones:
     # portada de la rama. Va donde va la tira de paginas, y solo en las paginas que no son la
     # portada.
     regresar: "Regresar"
+    # Las páginas de la sección como renglones del menú lateral, en el orden de las tarjetas de
+    # la portada (pedido de la usuaria del 16-oct-2026: "cada seccion ponela en el menu
+    # desplegable para un mas rapido acceso"). `destino` es el id del spec; el build corta si
+    # no es una página publicada. Los rótulos son los de las tarjetas, acortados donde no entran
+    # en el ancho del menú.
+    menu_paginas:
+      - {titulo: "Estaciones agrometeorológicas", destino: tablero-agroclima-estaciones}
+      - {titulo: "AgroMet", destino: 2008-informes-agromet}
+      - {titulo: "Reservas Hídricas ORA", destino: 3001-mapas-ora-humedad-suelo}
+      - {titulo: "Evapotranspiración", destino: 3002-mapas-evapotranspiracion}
+      - {titulo: "Humedad disponible", destino: 3003-mapas-variacion-agua}
+      - {titulo: "Humedad en el suelo", destino: 3004-mapas-porcentaje-agua}
+      - {titulo: "Índice de Vegetación NDVI", destino: 3005-mapas-ndvi}
+      - {titulo: "Índice de Condición VCI", destino: 3006-mapas-vci}
     # Sin pestañas Tablero/Análisis: la rama son páginas sueltas a las que se llega por las
     # tarjetas de la portada, como en las hojas de JC.
     sin_pestanias: true

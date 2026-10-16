@@ -29,6 +29,7 @@ Determinismo: sin timestamps, sin locale, sin azar. Todo diccionario que va a JS
 ordenado y todo listado del disco se lee con sorted(). Dos corridas dan bytes identicos.
 """
 import argparse
+import copy
 import datetime
 import hashlib
 import itertools
@@ -11802,6 +11803,14 @@ def menu_del_sitio(ctx, seccion_actual=None):
             es_actual = seccion_actual is not None and seccion["id"] == seccion_actual
             actual = actual or es_actual
             if seccion["id"] == portada:
+                # La portada puede declarar sus PAGINAS como renglones del menu (`menu_paginas`,
+                # AgroClima: una sola seccion con nueve hojas, 16-oct-2026, "cada seccion
+                # ponela en el menu desplegable para un mas rapido acceso"). El `destino` es el
+                # id del spec; la URL y el renglon actual los resuelve `escribir_pagina`.
+                for item in seccion.get("menu_paginas") or []:
+                    secciones.append({"titulo": item["titulo"], "url": None,
+                                      "destino": item["destino"], "actual": False,
+                                      "proximamente": False})
                 continue
             # Una seccion ANUNCIADA (`proximamente`) se dibuja en el menu pero sin link: su
             # spec ya esta escrito y JC la tiene en su maqueta, pero todavia no hay datos para
@@ -11813,7 +11822,6 @@ def menu_del_sitio(ctx, seccion_actual=None):
                               "proximamente": bool(seccion.get("proximamente"))})
         salida.append({"id": entrada["rama"], "titulo": entrada["titulo"],
                        "href": href_de_rama(ctx.navegacion, entrada["rama"]),
-                       "portada_actual": bool(portada) and seccion_actual == portada,
                        "actual": actual, "secciones": secciones})
     return salida
 
@@ -11977,6 +11985,24 @@ def escribir_sitio(ctx, vistas, tableros):
     def escribir_pagina(ruta, datos):
         """Una pagina = un JSON en src/tableros/contenido/paginas/. La ruta es la URL sin el
         prefijo; las portadas de seccion son <seccion>/index."""
+        # El menu sabe la seccion de la pagina, no la PAGINA: los renglones de `menu_paginas`
+        # y el link de la portada de la rama se marcan aca, que es donde se sabe la URL.
+        url_pagina = "%s/%s" % (PREFIJO, ruta[:-len("/index")] if ruta.endswith("/index")
+                                else ruta)
+        # Copia: el menu por defecto de `comun` lo comparten varias paginas.
+        datos["menu"] = copy.deepcopy(datos.get("menu") or [])
+        for sector in datos["menu"]:
+            if sector.get("href"):
+                sector["portada_actual"] = sector["href"] == url_pagina
+            for renglon in sector["secciones"]:
+                if renglon.get("destino"):
+                    if renglon["destino"] not in url_de:
+                        raise pr.ErrorDeProtocolo(
+                            "`menu_paginas` de site/navegacion.yaml nombra %r, que no es una "
+                            "pagina publicada." % renglon["destino"])
+                    renglon["url"] = url_de[renglon["destino"]][len(PREFIJO) + 1:]
+                    renglon["actual"] = url_de[renglon["destino"]] == url_pagina
+                    del renglon["destino"]
         escritor.texto("src/tableros/contenido/paginas/%s.json" % ruta, json_determinista(datos))
 
     # CSS generado desde el theme
