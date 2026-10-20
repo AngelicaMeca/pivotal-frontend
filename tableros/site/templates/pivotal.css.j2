@@ -2934,3 +2934,53 @@ dialog.zoom.zoom-visible::backdrop { opacity: 1; }
 .tablero-columnas .panel[data-panel^="top"] .top-tabla { overflow-x: auto; }
 .tablero-columnas .panel[data-panel^="top"] thead th { white-space: normal; }
 .panel[data-panel^="top"] .ranking-variable { justify-content: flex-start; margin-top: .3rem; }
+
+/* ---------- Visor georreferenciado de las galerias del SEPA (20-oct-2026) ----------
+   La imagen ubicada con la caja del KML del SEPA, recortada a la provincia, con los limites y
+   los nombres de los departamentos encima (visor-georef.js). */
+.visor-mapa { margin: .6rem 0 1rem; }
+.visor-mapa[hidden] { display: none; }
+.visor-barra {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; margin-bottom: .5rem;
+}
+.visor-grupo { display: flex; align-items: center; gap: .25rem; }
+.visor-boton {
+  min-width: 2.1rem; height: 2.1rem; padding: 0 .55rem; border-radius: var(--radio-pildora);
+  border: 1px solid var(--borde-panel); background: var(--fondo-cuadro); color: var(--texto);
+  font: inherit; font-size: 1rem; line-height: 1; cursor: pointer;
+}
+.visor-boton:hover:not(:disabled) { background: var(--fondo-apoyo); }
+.visor-boton:disabled { opacity: .35; cursor: default; }
+.visor-boton:focus-visible, .visor-periodo:focus-visible, .visor-control input:focus-visible {
+  outline: 2px solid var(--enlace); outline-offset: 2px;
+}
+.visor-boton.visor-texto { font-size: .82rem; font-weight: 600; }
+.visor-periodo {
+  height: 2.1rem; padding: 0 .5rem; border-radius: var(--radio-chico);
+  border: 1px solid var(--borde-panel); background: var(--fondo-cuadro); color: var(--texto);
+  font: inherit; font-size: .85rem; max-width: 20rem;
+}
+.visor-control { display: inline-flex; align-items: center; gap: .35rem; font-size: .82rem; }
+.visor-control input[type="range"] { width: 7rem; accent-color: var(--seleccion); }
+.visor-lienzo {
+  position: relative; height: 640px; border: 1px solid var(--borde-panel);
+  border-radius: var(--radio); overflow: hidden; background: var(--fondo-cuadro);
+  touch-action: none; cursor: grab;
+}
+.visor-lienzo.arrastrando { cursor: grabbing; }
+.visor-lienzo canvas { display: block; }
+.visor-tip {
+  position: absolute; pointer-events: none; padding: .2rem .45rem; border-radius: var(--radio-chico);
+  background: var(--texto); color: var(--fondo-cuadro); font-size: .78rem; font-weight: 600;
+  white-space: nowrap;
+}
+.visor-tip[hidden] { display: none; }
+.visor-cargando {
+  position: absolute; left: 50%; top: .8rem; transform: translateX(-50%);
+  font-size: .8rem; color: var(--texto-apoyo); pointer-events: none;
+}
+.visor-cargando:empty { display: none; }
+.visor-nota { margin: .4rem 0 0; font-size: .74rem; color: var(--texto-apoyo); }
+/* La miniatura del periodo que muestra el visor. */
+.galeria-mapa.galeria-elegida button { outline: 2px solid var(--seleccion); outline-offset: 2px; }
+@media (max-width: 760px) { .visor-lienzo { height: 460px; } }

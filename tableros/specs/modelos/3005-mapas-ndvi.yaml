@@ -56,3 +56,13 @@ origen:
   archivo: "0000000000 Maqueta Clima 1.xlsx"
   hojas: ["ClimNDVI"]
   recibido: 2026-10-14
+
+# VISOR GEORREFERENCIADO (20-oct-2026, pedido de la usuaria): cada imagen se ubica en el mapa
+# con la caja del KML del SEPA (configs/dims/sepa-kml.yaml). La galeria sigue debajo, y una
+# miniatura elige el periodo del visor.
+georreferencia:
+  kml: NDVI_DECADA
+  # `usar` o `ignorar` la rotacion que trae el KML (se decide mirando si los limites calzan).
+  rotacion: usar
+  nota: >-
+    El SEPA no publica KML para el NDVI de 16 días: se ubica con el del NDVI decádico (NDVI_DECADA.kml), cuyas imágenes tienen el mismo marco. Se verificó que los límites departamentales calzan.

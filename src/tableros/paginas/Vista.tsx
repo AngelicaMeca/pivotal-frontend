@@ -159,6 +159,9 @@ function Galeria({ elementos }: { elementos: Elemento[] }) {
         <figure key={i} className="cuadro">
           <h2>{elemento.titulo}</h2>
           <p className="subtitulo">{elemento.subtitulo}</p>
+          {/* El visor georreferenciado (galerias del SEPA con KML): la imagen ubicada en el
+              mapa de la provincia. Lo arma visor-georef.js si el build manda `visor`. */}
+          <div className="visor-mapa" data-visor-mapa="" hidden></div>
           <div className="galeria-cuerpo">
             <div className="galeria-lateral" data-galeria-lateral="" hidden></div>
             <div className="galeria" data-galeria=""></div>

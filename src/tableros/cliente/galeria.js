@@ -12,6 +12,8 @@
    La miniatura y la imagen grande son DOS archivos: la grande pesa 1,2 MB y son 28, asi que
    bajarlas todas para dibujar una grilla serian 33 MB. La grande se baja recien al abrir el
    popup, que es el mismo criterio que la capa departamental y el panel de precios. */
+import crearVisor from "./visor-georef";
+
 export default function iniciar(PIVOTAL) {
 
   /* `mapas` y `i` son lo que permite pasar de uno al siguiente sin cerrar: el popup deja de
@@ -21,7 +23,7 @@ export default function iniciar(PIVOTAL) {
   var popup = { dialogo: null, caja: null, imagen: null, titulo: null,
                 anim: null, desde: null, cerrando: false,
                 mapas: [], i: 0, anterior: null, siguiente: null,
-                visor: null, porcentaje: null };
+                visor: null, porcentaje: null, georef: null };
 
   /* ================= zoom del mapa ampliado (revision de JC del 16-oct-2026) =================
      "NO SE LES PUEDE HACER ZOOM (llega maximo al 25%)... A ESTO DEBERIAMOS LLEGAR": el mapa se
@@ -309,7 +311,12 @@ export default function iniciar(PIVOTAL) {
     boton.appendChild(img);
     var pie = document.createElement("figcaption");
     pie.textContent = mapa.rotulo;
-    boton.addEventListener("click", function () { abrirPopup(figura, mapa); });
+    /* Con visor georreferenciado la miniatura elige el periodo del visor; sin el, abre el
+       popup como siempre (la galeria ORA, los mapas forrajeros). */
+    boton.addEventListener("click", function () {
+      if (popup.georef) { popup.georef.ir(popup.mapas.indexOf(mapa)); }
+      else { abrirPopup(figura, mapa); }
+    });
     figura.appendChild(boton);
     figura.appendChild(pie);
     return figura;
@@ -322,7 +329,9 @@ export default function iniciar(PIVOTAL) {
     var lateral = caja.querySelector("[data-galeria-lateral]");
     if (!lateral) { return; }
     PIVOTAL.vaciar(lateral);
-    var hayDestacado = elemento.destacado !== undefined && elemento.destacado !== null;
+    /* Con visor, el mapa mas reciente ya esta grande arriba: el lateral queda en la definicion. */
+    var hayDestacado = !elemento.visor
+      && elemento.destacado !== undefined && elemento.destacado !== null;
     lateral.hidden = !hayDestacado && !elemento.definicion;
     if (lateral.hidden) { return; }
     if (hayDestacado) {
@@ -401,6 +410,19 @@ export default function iniciar(PIVOTAL) {
         grilla.appendChild(figura);
         popup.figuras[indice] = figura;
       });
+      /* El visor georreferenciado (galerias del SEPA con KML). "Imagen original" abre el mismo
+         popup de siempre, con la imagen del SEPA entera y su leyenda. */
+      var hueco = cajas[i].querySelector("[data-visor-mapa]");
+      if (elemento.visor && hueco) {
+        popup.georef = crearVisor(hueco, elemento, {
+          original: function (indice, boton) { abrirPopup(boton, elemento.mapas[indice]); },
+          alElegir: function (indice) {
+            popup.figuras.forEach(function (f, j) {
+              if (f) { f.classList.toggle("galeria-elegida", j === indice); }
+            });
+          }
+        });
+      }
     });
   });
 }

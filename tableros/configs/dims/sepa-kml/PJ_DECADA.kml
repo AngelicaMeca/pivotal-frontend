@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<GroundOverlay>
+	<name>PORCENTUAJE DE AGUA EN EL SUELO</name>
+	<description>Representa la relación porcentual entre el contenido de agua disponible para la vegetación que tiene el perfil (al final del período informado) y la capacidad potencial del suelo para retener agua útil.</description>
+	<color>8affffff</color>
+	<Icon>
+		<href>https://sepa.inta.gob.ar/productos/sepaproductos/PJ_DECADA.jpg</href>
+		<viewBoundScale>0.75</viewBoundScale>
+	</Icon>
+	<LatLonBox>
+		<north>-18.57492526935249</north>
+		<south>-43.51825311382918</south>
+		<east>-49.33925374310136</east>
+		<west>-69.64195958366558</west>
+		<rotation>0.2833048999309539</rotation>
+	</LatLonBox>
+</GroundOverlay>
+</kml>

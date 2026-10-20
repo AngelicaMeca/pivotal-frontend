@@ -53,6 +53,7 @@ from pipeline import comercializacion as com
 from pipeline import lecheria as lec
 from pipeline import vegetales as veg
 from pipeline import clima as cl
+from pipeline import sepa_kml
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DIR_MODELOS = os.path.join(RAIZ, "specs", "modelos")
@@ -11385,6 +11386,24 @@ def construir_galeria_clima(ctx, spec):
             "titulo": definicion["titulo"],
             "parrafos": [limpiar(p) for p in definicion["parrafos"]],
             "enlace": definicion.get("enlace")}
+    # El VISOR georreferenciado (20-oct-2026): la caja del KML del SEPA que ubica las imagenes
+    # de esta galeria en el mapa (configs/dims/sepa-kml.yaml). Las imagenes son las mismas de la
+    # galeria; el navegador las dibuja recortadas a la provincia con zoom y transparencia.
+    georef = spec.get("georreferencia")
+    if georef:
+        ruta = os.path.join(RAIZ, "configs", "dims", "sepa-kml", georef["kml"] + ".kml")
+        if not os.path.exists(ruta):
+            raise pr.ErrorDeProtocolo("%s pide el KML %s, que no esta en configs/dims/sepa-kml/ "
+                                      "(correr python -m pipeline.sepa_kml)."
+                                      % (spec["id"], georef["kml"]))
+        caja = sepa_kml.caja(ruta)
+        if georef.get("rotacion") == "ignorar":
+            caja["rotacion"] = 0.0
+        elif georef.get("rotacion") != "usar":
+            raise pr.ErrorDeProtocolo("%s: `georreferencia.rotacion` tiene que ser usar o "
+                                      "ignorar." % spec["id"])
+        elemento["visor"] = {"caja": caja, "geojson": GEOJSON, "kml": georef["kml"] + ".kml",
+                             "nota": limpiar(georef["nota"])}
     if filas is not None:
         elemento["filas"] = filas
         # `cabeceras` y no `columnas`: `columnas` es la clave de las TABLAS y

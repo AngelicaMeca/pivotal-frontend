@@ -1,0 +1,36 @@
+# KML del SEPA (Instituto de Clima y Agua, CIRN-INTA) con los que se UBICAN en el mapa las
+# imagenes de las galerias de AgroClima (pedido de la usuaria del 20-oct-2026: "extraigas los
+# archivos kml correspondientes a esos mapas ... y los incorpores en el dashboard con un buen
+# visualizador").
+#
+# Que es un KML del SEPA: un GroundOverlay. NO trae datos: es la imagen de la ultima decada de
+# todo el pais (un JPG o GIF en sepaproductos/) con la caja en latitud y longitud donde va.
+# Cada producto publica UNO solo (`<PRODUCTO>_DECADA.kml`), pero todas las imagenes del producto
+# tienen el MISMO marco que la del KML (el JPG del KML de PJ es byte a byte el de la ultima
+# decada de la serie), asi que la caja ubica cualquier decada. Se verifico dibujando los limites
+# departamentales del GeoJSON sobre una imagen de cada galeria (20-oct-2026, docs/maqueta-clima.md).
+#
+# Los archivos se bajan con `python -m pipeline.sepa_kml` a configs/dims/sepa-kml/ y se
+# commitean (pesan menos de 1 KB): el sitio nunca le pide nada al SEPA.
+#
+# Condiciones de uso del SEPA (sepa.inta.gob.ar/terminos/): uso no comercial salvo autorizacion
+# expresa del Instituto de Clima y Agua, sin modificar la informacion y citando la fuente. La
+# autorizacion para Pivotal queda pendiente (aviso a Francisco y JC del 20-oct-2026).
+
+descargado: 2026-10-20
+kml:
+  PJ_DECADA:
+    url: "https://sepa.inta.gob.ar/productos/geosepa/agua_en_suelo/pj/kml/PJ_DECADA.kml"
+    producto: "Porcentaje de agua en el suelo (decádico)"
+  DB_DECADA:
+    url: "https://sepa.inta.gob.ar/productos/geosepa/agua_en_suelo/db/kml/DB_DECADA.kml"
+    producto: "Variación del agua disponible (decádico)"
+  ET_DECADA:
+    url: "https://sepa.inta.gob.ar/productos/sepaproductos/ET_DECADA.kml"
+    producto: "Evapotranspiración real máxima (decádica)"
+  NDVI_DECADA:
+    url: "https://sepa.inta.gob.ar/productos/sepaproductos/NDVI_DECADA.kml"
+    producto: "NDVI (composición decádica)"
+    # El SEPA no publica KML para el NDVI de 16 dias ni para el VCI. Sus imagenes tienen el mismo
+    # marco (1919 x 2622) que la de este KML y se verifico que calzan con los limites: esas dos
+    # galerias se ubican con esta caja y lo dicen en su nota.

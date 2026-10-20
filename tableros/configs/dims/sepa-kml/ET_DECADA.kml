@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<GroundOverlay>
+	<name>Evapotranspiración Real máxima cada 10 días</name>
+	<color>7dffffff</color>
+	<Icon>
+		<href>https://sepa.inta.gob.ar/productos/sepaproductos/ET_DECADA.gif</href>
+		<viewBoundScale>0.75</viewBoundScale>
+	</Icon>
+	<LatLonBox>
+		<north>-22.6880361003205</north>
+		<south>-43.60834635324435</south>
+		<east>-53.18572042035342</east>
+		<west>-70.20943062072224</west>
+	</LatLonBox>
+</GroundOverlay>
+</kml>

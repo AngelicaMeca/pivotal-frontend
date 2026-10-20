@@ -71,3 +71,13 @@ origen:
   archivo: "0000000000 Maqueta Clima 1.xlsx"
   hojas: ["ClimVAD"]
   recibido: 2026-10-14
+
+# VISOR GEORREFERENCIADO (20-oct-2026, pedido de la usuaria): cada imagen se ubica en el mapa
+# con la caja del KML del SEPA (configs/dims/sepa-kml.yaml). La galeria sigue debajo, y una
+# miniatura elige el periodo del visor.
+georreferencia:
+  kml: DB_DECADA
+  # `usar` o `ignorar` la rotacion que trae el KML (se decide mirando si los limites calzan).
+  rotacion: ignorar
+  nota: >-
+    Ubicada en el mapa con el KML que publica el SEPA para este producto (DB_DECADA.kml). La rotación de 0,28° que trae el KML no se aplica: sin ella los límites departamentales calzan con los de la imagen.

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<GroundOverlay>
+	<name>NDVI_DECADA.gif</name>
+	<description>Representa el valor máximo de NDVI entre el 01 y el 10 del mes en curso.</description>
+	<color>a6ffffff</color>
+	<Icon>
+		<href>https://sepa.inta.gob.ar/productos/sepaproductos/NDVI_DECADA.gif</href>
+		<viewBoundScale>0.75</viewBoundScale>
+	</Icon>
+	<LatLonBox>
+		<north>-16.4794851602543</north>
+		<south>-59.66757122415673</south>
+		<east>-47.47556668911453</east>
+		<west>-79.55418091363067</west>
+	</LatLonBox>
+</GroundOverlay>
+</kml>
