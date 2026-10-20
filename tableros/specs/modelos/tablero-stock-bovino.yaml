@@ -84,6 +84,11 @@ indicadores:
 # ZOOM: ampliar un cuadro a pantalla completa (Francisco, 24-sep-2026)
 # ---------------------------------------------------------------------------
 zoom_de_los_cuadros:
+  # RETIRADO el 20-oct-2026 en todos los tableros (revision de JC del 16-oct-2026: "EL ZOOM NO
+  # FUNCIONA COMO TAL, SOLO AUMENTA LOS TEXTOS... RESUMEN: ELIMINAR ESTA OPCION, AL MENOS PARA
+  # ESTE TIPO DE DATOS"). Ningun panel declara la accion `zoom`; el mecanismo sigue en el sitio.
+  # Lo que sigue es el registro de como era.
+  estado: retirado
   pedido_por: "Francisco, 24-sep-2026"
   palabra_de_jc: "Zoom"
   origen: >
@@ -165,9 +170,6 @@ paneles:
       rotulo_provincia: "Provincia"
       rotulo_cambiar: "Seleccione otro departamento si desea visualizar"
       miga: "Dto {Departamento}"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
-
   tabla-departamentos:
     # Titulo literal de JC (cuadro de texto de la fila 16 de su hoja).
     titulo: "Sgo. del Estero - Stocks bovinos por categoría, totales y cantidad de UP por departamento - año {anio}"
@@ -184,9 +186,6 @@ paneles:
     # Titulo que JC escribe DENTRO de la imagen del gráfico, no en una celda.
     titulo: "Sgo del Estero - Evolución del stock total bovinos - años {desde} a {hasta}"
     medida_nombre: "Stock total"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
-
   tabla-evolucion:
     titulo: "Sgo. del Estero - Evolución del stock bovino por categoría y totales - años {desde} a {hasta}"
     encabezado_anio: ""
@@ -194,9 +193,6 @@ paneles:
 
   evolucion-categorias:
     titulo: "Sgo del Estero - Evolución del stock por categoría años {desde} a {hasta}"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
-
   tabla-departamento-anios:
     titulo: "Sgo. del Estero - Evolución del stock bovino total por departamento - años {desde} a {hasta}"
     encabezado_geo: "Departamento"
@@ -219,9 +215,6 @@ paneles:
   anillo-departamentos:
     titulo: "Sgo del Estero - Participación departamentos en el stock total - {anio}"
     cuantos: 7
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
-
   # El cuarto cuadro de la hoja (fila 90 a 151): "Bovinos, caravanas en existencia y promedio
   # de solicitudes". No hay base de caravanas en la entrega (backlog 84): JC pega la captura
   # del tablero de control de SENASA. Por pedido de Francisco (12-oct-2026: "hardcodealo y no
@@ -254,9 +247,6 @@ paneles:
       Cifras del tablero de control de SENASA para Santiago del Estero, año 2025, transcriptas
       a mano: no se actualizan con el resto de la página.
     fuente: "Fuente: SENASA"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
-
   # Disposicion en COLUMNAS (12-oct-2026, "reacomoda... para que no haya espacios vacios"):
   # cada banda tiene dos columnas que se apilan a su ritmo, como las hojas de JC (graficos a
   # la izquierda, tablas a la derecha). Las bandas agrupan cuadros de alto parecido; los

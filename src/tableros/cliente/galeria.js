@@ -20,7 +20,129 @@ export default function iniciar(PIVOTAL) {
      miniatura que se esta viendo y no a la del principio. */
   var popup = { dialogo: null, caja: null, imagen: null, titulo: null,
                 anim: null, desde: null, cerrando: false,
-                mapas: [], i: 0, anterior: null, siguiente: null };
+                mapas: [], i: 0, anterior: null, siguiente: null,
+                visor: null, porcentaje: null };
+
+  /* ================= zoom del mapa ampliado (revision de JC del 16-oct-2026) =================
+     "NO SE LES PUEDE HACER ZOOM (llega maximo al 25%)... A ESTO DEBERIAMOS LLEGAR": el mapa se
+     amplia de verdad, hasta el 800% de su tamaño REAL (como los visores de imagenes que el
+     propone, viewer.js y zoom-vanilla), sin librerias: rueda del mouse o pellizco centrados
+     en el puntero, arrastre para moverse, doble clic, y los botones - / % / + de la barra.
+     El porcentaje que se muestra es contra el tamaño real de la imagen, que es como lo mide
+     JC ("LAS ABRI Y PUSE ZOOM AL 100%... probe llevar el zoom al 260%").
+     La imagen se escala con un transform desde su esquina, adentro de una caja que recorta: el
+     tamaño de la caja (y del popup) no cambia, cambia lo que se ve adentro. */
+  var ZOOM_MAXIMO_REAL = 8;
+  var ZOOM_DOBLE_CLIC_REAL = 2.6;
+  var zoom = { s: 1, x: 0, y: 0, punteros: {}, arrastre: null, pellizco: null };
+
+  /* Cuanto de la imagen REAL entra en un pixel de la caja con escala 1. */
+  function realPorEscala() {
+    var img = popup.imagen;
+    return img && img.naturalWidth && img.clientWidth ? img.clientWidth / img.naturalWidth : 1;
+  }
+
+  function escalaMaxima() {
+    return Math.max(1, ZOOM_MAXIMO_REAL / realPorEscala());
+  }
+
+  function aplicarZoom() {
+    var img = popup.imagen;
+    var w = img.clientWidth, h = img.clientHeight;
+    /* La imagen siempre cubre su caja: no se la puede arrastrar hasta dejar un borde vacio. */
+    zoom.x = Math.min(0, Math.max(w - zoom.s * w, zoom.x));
+    zoom.y = Math.min(0, Math.max(h - zoom.s * h, zoom.y));
+    img.style.transform = zoom.s === 1 ? "" :
+      "translate(" + zoom.x + "px, " + zoom.y + "px) scale(" + zoom.s + ")";
+    popup.visor.classList.toggle("ampliado", zoom.s > 1);
+    popup.porcentaje.textContent = Math.round(zoom.s * realPorEscala() * 100) + "%";
+  }
+
+  /* Escala nueva manteniendo quieto el punto de la pantalla (px, py): lo que esta bajo el
+     puntero sigue bajo el puntero. */
+  function zoomEn(px, py, escala) {
+    var nueva = Math.min(escalaMaxima(), Math.max(1, escala));
+    var caja = popup.visor.getBoundingClientRect();
+    var qx = (px - caja.left - zoom.x) / zoom.s;
+    var qy = (py - caja.top - zoom.y) / zoom.s;
+    zoom.s = nueva;
+    zoom.x = nueva === 1 ? 0 : px - caja.left - nueva * qx;
+    zoom.y = nueva === 1 ? 0 : py - caja.top - nueva * qy;
+    aplicarZoom();
+  }
+
+  function zoomAlCentro(factor) {
+    var caja = popup.visor.getBoundingClientRect();
+    zoomEn(caja.left + caja.width / 2, caja.top + caja.height / 2, zoom.s * factor);
+  }
+
+  function reiniciarZoom() {
+    zoom.s = 1; zoom.x = 0; zoom.y = 0; zoom.punteros = {};
+    zoom.arrastre = null; zoom.pellizco = null;
+    if (popup.visor) { aplicarZoom(); }
+  }
+
+  function botonDeZoom(texto, rotulo, accion) {
+    var boton = document.createElement("button");
+    boton.type = "button";
+    boton.className = "galeria-zoom-boton";
+    boton.textContent = texto;
+    boton.setAttribute("aria-label", rotulo);
+    boton.title = rotulo;
+    boton.addEventListener("click", accion);
+    return boton;
+  }
+
+  function engancharZoom(visor) {
+    visor.addEventListener("wheel", function (evento) {
+      evento.preventDefault();
+      zoomEn(evento.clientX, evento.clientY, zoom.s * Math.exp(-evento.deltaY * 0.0015));
+    }, { passive: false });
+    /* Doble clic: al 260% real, que es a donde JC dice que hay que llegar; otro doble clic
+       vuelve al mapa entero. */
+    visor.addEventListener("dblclick", function (evento) {
+      if (zoom.s > 1) { reiniciarZoom(); return; }
+      zoomEn(evento.clientX, evento.clientY,
+             Math.max(1.5, ZOOM_DOBLE_CLIC_REAL / realPorEscala()));
+    });
+    visor.addEventListener("pointerdown", function (evento) {
+      zoom.punteros[evento.pointerId] = { x: evento.clientX, y: evento.clientY };
+      visor.setPointerCapture(evento.pointerId);
+      var ids = Object.keys(zoom.punteros);
+      if (ids.length === 2) {
+        var a = zoom.punteros[ids[0]], b = zoom.punteros[ids[1]];
+        zoom.pellizco = { d: Math.hypot(a.x - b.x, a.y - b.y), s: zoom.s };
+        zoom.arrastre = null;
+      } else if (zoom.s > 1) {
+        zoom.arrastre = { x: evento.clientX - zoom.x, y: evento.clientY - zoom.y };
+      }
+    });
+    visor.addEventListener("pointermove", function (evento) {
+      if (!zoom.punteros[evento.pointerId]) { return; }
+      zoom.punteros[evento.pointerId] = { x: evento.clientX, y: evento.clientY };
+      var ids = Object.keys(zoom.punteros);
+      if (zoom.pellizco && ids.length === 2) {
+        var a = zoom.punteros[ids[0]], b = zoom.punteros[ids[1]];
+        var d = Math.hypot(a.x - b.x, a.y - b.y);
+        if (zoom.pellizco.d > 0) {
+          zoomEn((a.x + b.x) / 2, (a.y + b.y) / 2, zoom.pellizco.s * d / zoom.pellizco.d);
+        }
+        return;
+      }
+      if (zoom.arrastre) {
+        zoom.x = evento.clientX - zoom.arrastre.x;
+        zoom.y = evento.clientY - zoom.arrastre.y;
+        aplicarZoom();
+      }
+    });
+    function soltar(evento) {
+      delete zoom.punteros[evento.pointerId];
+      if (Object.keys(zoom.punteros).length < 2) { zoom.pellizco = null; }
+      zoom.arrastre = null;
+    }
+    visor.addEventListener("pointerup", soltar);
+    visor.addEventListener("pointercancel", soltar);
+  }
 
   function crearDialogo() {
     var dialogo = document.createElement("dialog");
@@ -38,7 +160,17 @@ export default function iniciar(PIVOTAL) {
     cerrar.textContent = "✕";
     cerrar.setAttribute("aria-label", "Cerrar");
     cerrar.addEventListener("click", function () { cerrarPopup(); });
+    var controles = document.createElement("div");
+    controles.className = "galeria-zoom";
+    controles.setAttribute("role", "group");
+    controles.setAttribute("aria-label", "Zoom del mapa");
+    popup.porcentaje = botonDeZoom("100%", "Volver al tamaño inicial", reiniciarZoom);
+    popup.porcentaje.classList.add("galeria-zoom-pct");
+    controles.appendChild(botonDeZoom("\u2212", "Alejar", function () { zoomAlCentro(1 / 1.5); }));
+    controles.appendChild(popup.porcentaje);
+    controles.appendChild(botonDeZoom("+", "Acercar", function () { zoomAlCentro(1.5); }));
     cab.appendChild(popup.titulo);
+    cab.appendChild(controles);
     cab.appendChild(cerrar);
     var cuerpo = document.createElement("div");
     cuerpo.className = "info-cuerpo galeria-grande";
@@ -46,8 +178,15 @@ export default function iniciar(PIVOTAL) {
     popup.imagen.alt = "";
     popup.anterior = flecha("anterior", "\u2039", "Mapa anterior", -1);
     popup.siguiente = flecha("siguiente", "\u203a", "Mapa siguiente", 1);
+    popup.visor = document.createElement("div");
+    popup.visor.className = "galeria-visor";
+    popup.visor.appendChild(popup.imagen);
+    engancharZoom(popup.visor);
+    /* Al terminar de bajar la imagen se conoce su tamaño real: recien ahi el porcentaje dice
+       la verdad. */
+    popup.imagen.addEventListener("load", aplicarZoom);
     cuerpo.appendChild(popup.anterior);
-    cuerpo.appendChild(popup.imagen);
+    cuerpo.appendChild(popup.visor);
     cuerpo.appendChild(popup.siguiente);
     caja.appendChild(cab);
     caja.appendChild(cuerpo);
@@ -69,6 +208,9 @@ export default function iniciar(PIVOTAL) {
     dialogo.addEventListener("keydown", function (evento) {
       if (evento.key === "ArrowLeft") { evento.preventDefault(); mover(-1); }
       else if (evento.key === "ArrowRight") { evento.preventDefault(); mover(1); }
+      else if (evento.key === "+" || evento.key === "=") { evento.preventDefault(); zoomAlCentro(1.5); }
+      else if (evento.key === "-") { evento.preventDefault(); zoomAlCentro(1 / 1.5); }
+      else if (evento.key === "0") { evento.preventDefault(); reiniciarZoom(); }
     });
     document.body.appendChild(dialogo);
     popup.dialogo = dialogo;
@@ -100,6 +242,8 @@ export default function iniciar(PIVOTAL) {
 
   function mostrar(indice) {
     popup.i = indice;
+    /* Cada mapa arranca entero: el zoom del anterior no se arrastra al siguiente. */
+    reiniciarZoom();
     var mapa = popup.mapas[indice];
     /* `titulo` lo manda el build cuando el rotulo de la grilla no alcanza para saber que se
        esta viendo (las galerias de AgroClima le suman el año, y la ORA el cultivo y la fecha). */

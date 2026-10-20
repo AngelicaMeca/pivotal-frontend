@@ -53,8 +53,6 @@ paneles:
       rotulo_provincia: "Provincia"
       rotulo_cambiar: "Seleccione otro departamento si desea visualizar"
       miga: "Dto {Departamento}"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   tabla-tipos:
     titulo: "Sgo. del Estero - Movimientos cabezas equinas por categoría y DTE Totales provincia - años {desde} a {hasta} (parcial)"
     rotulos_franja:
@@ -68,13 +66,9 @@ paneles:
     rotulo_total: "PROVINCIA"
   anillo-categorias:
     titulo: "Sgo del Estero - Participación por categoría en movimientos totales año {anio}"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   anillo-departamentos:
     titulo: "Sgo del Estero - Participación de departamentos de origen en los movimientos totales año {anio}"
     cuantos: 5
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   # Sin mapa ni cuadros por departamento: la base 230 NO trae el departamento de ORIGEN
   # (solo la provincia, ver su config), asi que lo que JC pide "por Departamento" no se puede
   # armar con este dato (backlog 89). Quedan la serie por tipo y la composicion por categoria,

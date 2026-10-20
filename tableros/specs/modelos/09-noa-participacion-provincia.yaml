@@ -133,6 +133,11 @@ cabecera:
 
 # publicada-a-ratificar: pública por orden de Facu (10-ago-2026), a la espera de la
 # ratificación de Francisco. Si Francisco la baja, vuelve a "pendiente de Francisco".
-estado: publicada-a-ratificar
+# NO-PUBLICADA desde el 20-oct-2026: revision de JC del 16-oct-2026 ("REVISION AGRICULTURA
+# AL 16 OCT.docx"): "ELIMINAR ESTO URGENTE... AUN NO PASE LA MAQUETA PARA
+# ESTO y va en un apartado PORQUE CONTEMPLA AGRI Y GANADERIA" (ira con mapas de calor a nivel
+# NOA). Ademas: nunca "cuanto pesa" para hablar de participacion o relevancia.
+# Queda como registro de sus reglas, sin pagina.
+estado: no-publicada
 
 origen: {tipo: modelo-analisis, detalle: "hoja 'Modelo  Analisis' base 9, GRAF 5 (filas 124 a 144) y cálculo e (fila 31)", fecha: 2026-07-30}

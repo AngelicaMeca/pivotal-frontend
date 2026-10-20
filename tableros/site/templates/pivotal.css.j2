@@ -162,6 +162,14 @@ body {
    territorial y la comparacion NOA. Solo los dibujan las secciones que los declaran en
    site/navegacion.yaml (`botones_cabecera`); el resto sigue con el boton deshabilitado. */
 a.boton-cabecera { text-decoration: none; display: inline-block; }
+/* El boton que es un LOGO (el del SID, revision de JC del 16-oct-2026): la imagen va blanca
+   sobre transparente y apoya sobre el cromo del area, sin el borde de pildora de los otros. */
+.boton-cabecera.con-logo {
+  border-color: transparent; padding: .1rem .3rem;
+  display: inline-flex; align-items: center; gap: .45rem;
+}
+.boton-cabecera.con-logo[disabled] { opacity: .9; }
+.boton-logo { display: block; height: 2.6rem; width: auto; }
 a.boton-cabecera:hover { background: color-mix(in srgb, var(--sobre-cromo) 16%, transparent); }
 .prox {
   font-family: var(--rotulos); font-size: .52rem; text-transform: uppercase;
@@ -185,6 +193,13 @@ a.boton-cabecera:hover { background: color-mix(in srgb, var(--sobre-cromo) 16%, 
   font-weight: 600;
 }
 .cabecera-banderas .bandera.deshabilitada { opacity: .6; cursor: not-allowed; }
+/* Desde el 20-oct-2026 son BANDERAS otra vez (JC: "POR FAVOR AGREGAR LAS BANDERAS"), las de su
+   maqueta del SID: la imagen ocupa la pildora entera, sin la sigla. */
+.cabecera-banderas .bandera:has(.bandera-imagen) { padding: 0; border: 0; background: none; }
+.bandera-imagen { display: block; height: 1.15rem; width: auto; border-radius: 3px; }
+.cabecera-banderas .bandera.activa .bandera-imagen {
+  outline: 2px solid var(--sobre-cromo); outline-offset: 1px;
+}
 /* Texto solo para lectores de pantalla (el nombre completo del idioma). */
 .sr-solo {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
@@ -1047,6 +1062,12 @@ a { color: var(--enlace); }
 /* Los toggles internos del panel (PROD. / SEMBRADA / REND.) son chips cuadrados y chicos:
    no compiten con los chips del selector de cultivo. */
 .panel-toggle { display: flex; gap: .2rem; flex: 0 0 auto; }
+.panel-toggle[hidden] { display: none; }
+.panel-toggle button:disabled { opacity: .45; cursor: not-allowed; }
+/* El selector de variable del ranking (revision de JC del 16-oct-2026), debajo del titulo. */
+.panel-cab-mockup .ranking-variable { justify-content: center; margin-top: .25rem; }
+/* Un panel del mockup sin titulo (la tabla de campañas de otra maqueta) no deja el renglon. */
+.panel-cab-mockup h2:empty, .panel-cab-mockup .panel-sub:empty { display: none; }
 .panel-toggle button {
   font: inherit; font-family: var(--rotulos); font-size: .62rem; text-transform: uppercase;
   letter-spacing: .08em; padding: .2rem .4rem; cursor: pointer; border-radius: var(--radio-chico);
@@ -1527,6 +1548,30 @@ dialog.info.info-galeria[open] { display: flex; align-items: center; justify-con
   min-width: 16rem;
 }
 
+/* El ZOOM del mapa ampliado (revision de JC del 16-oct-2026: "NO SE LES PUEDE HACER ZOOM...
+   A ESTO DEBERIAMOS LLEGAR"). La caja recorta y la imagen se escala adentro desde su esquina
+   (galeria.js): el popup no cambia de tamaño. Los botones - / % / + van en la barra del titulo. */
+.galeria-visor {
+  position: relative; overflow: hidden; line-height: 0;
+  touch-action: none; cursor: zoom-in; border-radius: var(--radio-chico);
+}
+.galeria-visor.ampliado { cursor: grab; }
+.galeria-visor.ampliado:active { cursor: grabbing; }
+.galeria-visor img {
+  display: block; transform-origin: 0 0; user-select: none; -webkit-user-drag: none;
+}
+.galeria-zoom { flex: 0 0 auto; display: flex; align-items: center; gap: .25rem; }
+.galeria-zoom-boton {
+  min-width: 2.1rem; height: 2.1rem; padding: 0 .5rem; border-radius: var(--radio-pildora);
+  border: 1px solid var(--borde-panel); background: var(--fondo-cuadro); color: var(--texto);
+  font: inherit; font-size: 1rem; line-height: 1; cursor: pointer;
+}
+.galeria-zoom-boton:hover { background: var(--fondo-apoyo); }
+.galeria-zoom-boton:focus-visible { outline: 2px solid var(--enlace); outline-offset: 2px; }
+.galeria-zoom-pct {
+  min-width: 3.6rem; font-family: var(--rotulos); font-size: .7rem; letter-spacing: .04em;
+}
+
 /* ---------- galerias de AgroClima (maqueta "0000000000 Maqueta Clima 1.xlsx", 14-oct-2026) ----
    Las hojas de mapas de JC tienen un LATERAL a la izquierda -el mapa mas reciente en grande y
    debajo el cuadro con la definicion del producto- y la grilla a la derecha, seis por fila. El
@@ -1907,6 +1952,10 @@ dialog.info.info-visible::backdrop { opacity: 1; }
 /* Alto FIJO y generoso para cada grafico del popup: aca no compite con nada, la pagina
    scrollea. `flex-basis` no aplica porque el cuadro no es un contenedor flex. */
 .info-cuadro > .grafico { height: 380px; }
+/* "ACHICAR LOS GRAFICOS DE MAS INFORMACION" (revision de JC del 16-oct-2026): en la columna
+   de cultivos extensivos el popup ya no lleva la cartera ni los rankings, solo el cuadro del
+   cultivo, y va mas bajo. El dashboard de cultivos intensivos tiene sus propios altos. */
+.info-cuerpo:not(.info-tablero) > .info-cuadro > .grafico { height: 260px; }
 /* Un cuadro que es SOLO tabla (los informes por tipo de movimiento de la hoja "Agri 2") usa el
    mismo armazon que los demas, asi que trae su hueco de grafico sin usar. Vacio no ocupa: sin
    esta linea reservaba los 380px y entre el titulo y la tabla quedaba media pantalla en

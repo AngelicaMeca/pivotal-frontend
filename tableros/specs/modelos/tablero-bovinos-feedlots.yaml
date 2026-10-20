@@ -59,13 +59,9 @@ paneles:
     # regimen elegido.
     titulo: "{regimen}"
     medida: cabezas
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   anillo-departamentos:
     titulo: "Sgo del Estero - Participación departamentos en el stock total {regimen} - 2025"
     cuantos: 6
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   tabla-eac:
     titulo: "Sgo. del Estero - Stocks bovinos en Engorde a Corral (EAC) por categoría, totales y UP por departamento - año {anio}"
     encabezado_geo: "Departamento"

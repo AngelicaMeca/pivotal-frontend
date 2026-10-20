@@ -170,7 +170,7 @@ logo_provincia:
   # negro: no se lee sobre un cromo oscuro, por eso va la negativa.
   archivo: "/logo-provincia-sde.png"
 logo: null                   # logo Pivotal: sigue pendiente (semana 3-ago)
-pie: "Pivotal · Elaboración propia en base a fuentes oficiales citadas en cada cuadro"
+pie: "Elaboración propia en base a fuentes oficiales citadas en cada cuadro"
 # Pie de tecnologia del Modelo 2 de JC (aprobado el 10-ago, backlog 35).
 pie_tecnologia: "Tecnología Pivotal: B3, Minibox y ∞ Prompt"
 

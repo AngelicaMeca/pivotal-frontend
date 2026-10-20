@@ -125,14 +125,18 @@ secciones:
     # que JC los dibujo. El build los resuelve a URLs y los deja viajar con la seleccion
     # vigente (persistencia_de_filtros). Si la vista destino no esta publicada (ej. si
     # Francisco baja la comparacion NOA, backlog 11), el boton no se dibuja.
+    #
+    # Revision de JC del 16-oct-2026 ("REVISION AGRICULTURA AL 16 OCT.docx"): las dos paginas
+    # a las que llevaban salieron del sitio publico. "Datos por departamento" se reemplaza por
+    # el logo del SID (Sistema de Informacion Departamental, maqueta "Maqueta SID 1.xlsx"), que
+    # integra toda la informacion de cada departamento; y la comparacion NOA ("Cuanto pesa
+    # Santiago del Estero en el NOA") no tiene maqueta todavia: va en un apartado propio que
+    # contempla agricultura y ganaderia. Los dos quedan en la cabecera apagados, con
+    # "Próximamente" (`proximamente: true`, sin `vista`): asi esta dibujado en la maqueta del SID.
     botones_cabecera:
-      - {texto: "Santiago en el NOA", vista: 09-noa-participacion-provincia}
-      - {texto: "Datos por Departamento", vista: 09-departamento-datos}
-    # Las dos unicas paginas ademas del tablero, SUELTAS: se generan en la seccion pero no
-    # hay listado que las agrupe. Se llega por los botones de cabecera y el click del mapa.
-    vistas_sueltas:
-      - 09-departamento-datos
-      - 09-noa-participacion-provincia
+      - {texto: "Santiago en el NOA", proximamente: true}
+      - {texto: "SID - Sistema de Información Departamental", imagen: sid/logo-sid.png,
+         proximamente: true}
     grupos: []
 
   # Agricultura > Cultivos intensivos (frutas y hortalizas). Tres bases que comparten mart,
@@ -369,31 +373,11 @@ secciones:
     # igual: dejarla afuera de la tira la volvería inalcanzable salvo por el menú lateral.
     grupos: []
 
-  # ---------------------------------------------------------------------------
-  # GENERAL · Infraestructura y riesgo (capas del IGN, 14-oct-2026, backlog 104)
-  # ---------------------------------------------------------------------------
-  # Pedido de JC por WhatsApp: "Rutas provinciales, nacionales y caminos rurales (Red vial
-  # primaria, secundaria y terciaria); Tendidos ferroviarios; Amenazas hidrometeorologicas",
-  # del catálogo Capas SIG del IGN. Es la primera sección de la rama General (hasta acá salía
-  # "Próximamente"). No sale de una base del índice de JC: el contexto es `capas-ign`
-  # (configs/dims/capas-ign/). JC no dibujó maqueta: el armado es nuestro (backlog 106).
-  # Las mismas capas se prenden también sobre los mapas de agricultura y ganadería (opt-in
-  # por spec, apagadas al abrir).
-  - id: infraestructura-y-riesgo
-    familia: capas-ign
-    rama: general
-    ruta: [General, Infraestructura y riesgo]
-    url: general/infraestructura-y-riesgo
-    titulo: "Infraestructura y riesgo"
-    bajada_corta: "Rutas, caminos rurales, ferrocarril y amenazas hidrometeorológicas (IGN)."
-    bajada: >
-      La red vial nacional, provincial y rural de Santiago del Estero, el tendido ferroviario y
-      sus estaciones, y los eventos adversos de origen hidrometeorológico registrados por
-      departamento entre 1970 y 2015. Capas del Instituto Geográfico Nacional.
-    paginas_de_seccion:
-      - {texto: "Red vial y ferrocarril", tablero: true}
-      - {texto: "Amenazas hidrometeorológicas", vista: tablero-infraestructura-amenazas}
-    grupos: []
+  # GENERAL · Infraestructura y riesgo (capas del IGN) SALIO del sitio publico el 20-oct-2026
+  # (revision de JC del 16-oct-2026: "NUNCA PASE MAQUETA DE GENERAL AUN", "SACAR COMPLETO ESO
+  # DE RIESGO HIDROLOGICO"). Sus specs quedan como registro en estado no-publicada; la rama
+  # General vuelve a dibujarse con "Próximamente". Las capas siguen en configs/dims/capas-ign/
+  # para cuando JC mande la maqueta de "Infraestructura" (con un visor SIG con zoom real).
 
   # ---------------------------------------------------------------------------
   # AGROCLIMA · datos, informes y mapas (maqueta "0000000000 Maqueta Clima 1.xlsx", 14-oct-2026)

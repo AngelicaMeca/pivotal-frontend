@@ -142,7 +142,12 @@ sensibilidad: normal        # es dato provincial por departamento, no comparacio
 # dato departamental") y el boton de cabecera "Datos por Departamento" funciona. Las
 # reglas del mockup aplican tambien aca (KPIs sin variacion, titulos literales, eje
 # visible): interpretacion anotada en backlog 40.
-estado: publicada
+# NO-PUBLICADA desde el 20-oct-2026: revision de JC del 16-oct-2026 ("REVISION AGRICULTURA
+# AL 16 OCT.docx"): "ESTO DEBE ELIMINARSE... PARA ESO ES EL SID (Sistema de
+# Informacion Departamental) QUE INTEGRA TODA LA INFO DISPONIBLE DE CADA DEPARTAMENTO". En
+# la cabecera de cultivos extensivos el boton paso a ser el logo del SID (Próximamente).
+# Queda como registro de sus reglas, sin pagina.
+estado: no-publicada
 
 origen:
   tipo: decision-de-facu

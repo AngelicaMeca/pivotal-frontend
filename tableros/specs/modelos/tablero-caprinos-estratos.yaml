@@ -55,12 +55,8 @@ paneles:
   anillo-estratos-up:
     titulo: "Sgo del Estero - Caprinos - Participación de los estratos en la cantidad de UP - año {anio}"
     subtitulo: "En unidades productivas (RENSPA)"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   anillo-estratos:
     titulo: "Sgo del Estero - Caprinos - Participación de los estratos en la cantidad de cabezas - año {anio}"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   # La tabla grande ocupa cuatro filas; a su izquierda, en el orden de JC: el mapa, la tabla
   # resumen y los dos anillos (primero el de UP).
   # Disposicion en COLUMNAS (12-oct-2026, "vuelve a revisar, hay tableros donde todavia hay

@@ -14,6 +14,12 @@
 id: tablero-infraestructura-amenazas
 tipo: tablero
 familia: capas-ign
+# NO-PUBLICADA desde el 20-oct-2026: revision de JC del 16-oct-2026 ("REVISION AGRICULTURA
+# AL 16 OCT.docx"): "NUNCA PASE MAQUETA DE GENERAL AUN!!!" y "SACAR
+# COMPLETO ESO DE RIESGO HIDROLOGICO" (DESINVENTAR esta desactualizado desde 2015). La seccion
+# salio de site/navegacion.yaml.
+# Queda como registro de sus reglas, sin pagina.
+estado: no-publicada
 seccion: infraestructura-y-riesgo
 pagina: amenazas-hidrometeorologicas
 
@@ -41,8 +47,6 @@ paneles:
     rotulo_total: "Total"
     unidad: "registros"
     rotulos_departamento: true
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   tabla-eventos-departamento:
     titulo: "Sgo. del Estero - Registros de eventos adversos por departamento y tipo de evento, 1970-2015"
     subtitulo: "En cantidad de registros"
@@ -52,8 +56,6 @@ paneles:
   anillo-eventos:
     titulo: "Sgo. del Estero - Composición de los registros por tipo de evento, 1970-2015"
     cuantos: 5
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   tabla-sinagir:
     titulo: "Región NOA - Nivel de exposición por amenaza hidrometeorológica (SINAGIR, PNRRD 2018-2023)"
     subtitulo: "Nivel publicado por el IGN, tal cual"

@@ -81,8 +81,6 @@ paneles:
       rotulo_provincia: "Provincia"
       rotulo_cambiar: "Seleccione otro departamento si desea visualizar"
       miga: "Dto {Departamento}"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   tabla-evolucion:
     titulo: "Sgo. del Estero - Evolución de stocks equinos por categoría y totales - años {desde} a {hasta}"
     encabezado_anio: ""
@@ -92,8 +90,6 @@ paneles:
     titulo: "Sgo del Estero - Evolución del stock equino por categoría años {desde} a {hasta}"
     # JC arranca este grafico en 2012, aunque la serie total venga desde 2008.
     desde: 2012
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   tabla-departamento-anios:
     titulo: "Sgo. del Estero - Evolución del stock equino total por departamento - años {desde} a {hasta}"
     encabezado_geo: "Departamento"
@@ -105,8 +101,6 @@ paneles:
   evolucion-total:
     titulo: "Sgo del Estero - Evolución del stock total equidos - años {desde} a {hasta}"
     medida_nombre: "Stock total"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   tabla-estratos:
     titulo: "Sgo. del Estero - Estratos del stock equino, totales, Establecimientos y UP - año {anio}"
     encabezado_estrato: "Estratos"
@@ -129,17 +123,11 @@ paneles:
     titulo: "Sgo del Estero - Equinos, Participación por departamento en el stock total año {anio}"
     cuantos: 9
     fuente: "Fuente: SENASA"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   anillo-estratos:
     titulo: "Sgo del Estero - Participación de los estratos en el stock total año {anio}"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   anillo-estratos-up:
     titulo: "Sgo del Estero - Participación de los estratos en la cantidad de UP - año {anio}"
     subtitulo: "En unidades productivas (RENSPA)"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   # La faena: el tablero de control de SENASA que JC pega al pie de su hoja. Eran dos
   # imagenes; la usuaria pidio el 13-oct-2026 "no quiero que sean imagenes, hardcodealos si
   # hace falta". No hay base de faena equina: los numeros se TRANSCRIBIERON de las capturas
@@ -163,8 +151,6 @@ paneles:
       SENASA publica esta torta sin cifras: las proporciones se midieron sobre su gráfico y
       son aproximadas.
     fuente: "Fuente: SENASA"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   cifras-faena-totales:
     titulo: "Équidos faenados y remanentes en establecimientos"
     subtitulo: "Año 2025"
@@ -201,8 +187,6 @@ paneles:
       Los valores marcados con "≈" (julio de Lamar y de Land, octubre de Land) SENASA los
       dibuja sin número: se leyeron de su gráfico y cierran con el total de 5.760 faenados.
     fuente: "Fuente: SENASA"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   disposicion: columnas
   orden:
     - {id: mapa, ancho: 4, columna: izq}

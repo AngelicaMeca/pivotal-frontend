@@ -1483,9 +1483,51 @@ export default function iniciar(PIVOTAL) {
        - `columnas` + `filas`: TABLA calcada del mockup de JC (cultivos, tercera tanda:
          Puesto | Departamento | Superficie Semb. (ha) | % sobre Total prov.);
        - `barras`: lista de barras con puesto y participacion (hacienda, stock). */
+  /* La variable del ranking que eligio el usuario (revision de JC del 16-oct-2026: "LA OPCION
+     DE SELECCIONAR QUE VARIABLE DEL RANKING DESEO VER"). Vive aca y no en la clave del combo:
+     las tres variantes ya viajan en el panel, asi que cambiar de variable no baja nada. Se
+     conserva al cambiar de cultivo o de campaña; si la elegida no tiene datos ahi (superficie
+     con "Todos"), se ve la que el build marca por defecto. */
+  var rankingElegido = null;
+
   function pintarTop(nodo, panel) {
     var lista = nodo.querySelector("[data-barras]");
     PIVOTAL.vaciar(lista);
+    var toggle = nodo.querySelector("[data-ranking-variable]");
+    if (panel.variantes) {
+      var disponible = function (v) { return v && !v.vacio; };
+      var elegida = panel.variantes.filter(function (v) { return v.v === rankingElegido; })[0];
+      if (!disponible(elegida)) {
+        elegida = panel.variantes.filter(function (v) { return v.v === panel.variante_defecto; })[0];
+      }
+      if (toggle) {
+        PIVOTAL.vaciar(toggle);
+        toggle.hidden = false;
+        toggle.setAttribute("role", "group");
+        toggle.setAttribute("aria-label", "Variable del ranking");
+        panel.variantes.forEach(function (v) {
+          var boton = document.createElement("button");
+          boton.type = "button";
+          boton.textContent = v.t;
+          boton.setAttribute("aria-pressed", v === elegida ? "true" : "false");
+          /* Una variante sin datos no se puede elegir (regla de JC: "QUE NO PUEDA PONERSE
+             ACTIVO"), y el motivo queda a mano. */
+          if (v.vacio) {
+            boton.disabled = true;
+            boton.title = v.vacio;
+          }
+          boton.addEventListener("click", function () {
+            rankingElegido = v.v;
+            pintarTop(nodo, panel);
+          });
+          toggle.appendChild(boton);
+        });
+      }
+      PIVOTAL.glosa(nodo, "[data-titulo]", elegida.titulo, null);
+      panel = { columnas: elegida.columnas, filas: elegida.filas };
+    } else if (toggle) {
+      toggle.hidden = true;
+    }
     if (panel.columnas) {
       /* El ranking sigue siendo PROVINCIAL (regla de JC: los datos del ranking no cambian con
          el departamento), pero marca la fila del departamento elegido, como lo dibuja el en su
@@ -2648,7 +2690,7 @@ export default function iniciar(PIVOTAL) {
       PIVOTAL.vaciar(info.cuerpo);
       var aviso = document.createElement("p");
       aviso.className = "info-vacio";
-      aviso.textContent = "No se pudieron cargar los datos. Probá de nuevo en unos segundos.";
+      aviso.textContent = "No se pudieron cargar los datos. Intente nuevamente en unos segundos.";
       info.cuerpo.appendChild(aviso);
     });
   }
@@ -2784,6 +2826,12 @@ export default function iniciar(PIVOTAL) {
       }
       dibujante(nodo, panel);
     });
+    /* "Más información" muestra los datos de UN cultivo (revision de JC del 16-oct-2026): con
+       "Todos" no hay ninguno y el boton no se ofrece. El combo lo dice con `mas_informacion`. */
+    Array.prototype.forEach.call(
+      document.querySelectorAll('[data-utilidad="mas-informacion"]'), function (boton) {
+        boton.style.display = combo.mas_informacion === false ? "none" : "";
+      });
     nivelarBandas();
   });
 

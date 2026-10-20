@@ -48,14 +48,10 @@ paneles:
   anillo-estratos:
     titulo: "Sgo del Estero - Ovinos - Participación de los estratos en la cantidad de cabezas - año {anio}"
     fuente: "Fuente: SENASA"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   anillo-estratos-up:
     titulo: "Sgo del Estero - Ovinos - Participación de los estratos en la cantidad de UP - año {anio}"
     subtitulo: "En unidades productivas (RENSPA)"
     fuente: "Fuente: SENASA"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   disposicion: columnas
   orden:
     - {id: mapa, ancho: 4, columna: izq}

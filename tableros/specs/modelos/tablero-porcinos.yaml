@@ -70,8 +70,6 @@ paneles:
       rotulo_provincia: "Provincia"
       rotulo_cambiar: "Seleccione otro departamento si desea visualizar"
       miga: "Dto {Departamento}"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   tabla-departamentos:
     titulo: "Sgo. del Estero - Stocks porcinos por categoría y totales por departamento - año {anio}"
     encabezado_geo: ""
@@ -88,8 +86,6 @@ paneles:
     titulo: "Sgo del Estero - Evolución del stock total porcinos - años {desde} a {hasta}"
     medida_nombre: "Stock total"
     fuente: "Fuente: MAGyP"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   tabla-evolucion:
     titulo: "Sgo. del Estero - Evolución del stock porcino por categoría y totales - años {desde} a {hasta}"
     encabezado_anio: ""
@@ -99,8 +95,6 @@ paneles:
   evolucion-categorias:
     titulo: "Sgo del Estero - Evolución del stock porcino por categoría años {desde} a {hasta}"
     fuente: "Fuente: MAGyP"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   tabla-departamento-anios:
     titulo: "Sgo. del Estero - Evolución del stock porcino total por departamento - años {desde} a {hasta}"
     encabezado_geo: ""
@@ -110,8 +104,6 @@ paneles:
     titulo: "Sgo del Estero - Porcinos, Participación por departamento en el stock total año {anio}"
     cuantos: 7
     fuente: "Fuente: MAGyP"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   # Disposicion en COLUMNAS (12-oct-2026, "reacomoda... para que no haya espacios vacios"):
   # cada banda tiene dos columnas que se apilan a su ritmo, como las hojas de JC (graficos a
   # la izquierda, tablas a la derecha). Las bandas agrupan cuadros de alto parecido; los

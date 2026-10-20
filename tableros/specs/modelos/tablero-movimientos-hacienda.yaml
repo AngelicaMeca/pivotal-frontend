@@ -155,19 +155,11 @@ cruzar_datos:
 paneles:
   anillo:
     titulo: "Participación por categoría"
-    # Zoom: este cuadro se puede ampliar a pantalla completa (ver `zoom_de_los_cuadros`).
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
-
   mapa:
     titulo: "Movimientos por departamento"
     # Contar animales y contar papeles son dos tipos de variable distintos y no comparten
     # escala de color (_comunes-base-85.tipos_de_variable).
     medidas: [cabezas, documentos]
-    # Zoom: este cuadro se puede ampliar a pantalla completa (ver `zoom_de_los_cuadros`).
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
-
   tendencia:
     # Mes a mes y no año a año: la base tiene cuatro años cerrados y la serie anual salia con
     # cuatro puntos, casi plana. La hacienda se mueve por temporada, y eso es lo que el panel
@@ -192,10 +184,6 @@ paneles:
         ninguna: "Ninguna"
         opciones:
           - {v: documentos, t: "DTE emitidos (documentos)"}
-    # Zoom: este cuadro se puede ampliar a pantalla completa (ver `zoom_de_los_cuadros`).
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
-
   top:
     titulo: "Top 5 departamentos de origen"
     cuantos: 5

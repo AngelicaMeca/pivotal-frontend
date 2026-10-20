@@ -55,8 +55,6 @@ paneles:
     titulo: "Stocks"
     medida: cabezas
     fuente: "Fuente: SENASA"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   tabla-departamentos:
     titulo: "Sgo. del Estero - Stock caprino por categoría, totales y cantidad de UP por departamento - año {anio}"
     encabezado_geo: "Departamento"
@@ -74,8 +72,6 @@ paneles:
     titulo: "Sgo del Estero - Evolución del stock total caprinos - años {desde} a {hasta}"
     medida_nombre: "Stock total"
     fuente: "Fuente: MAGyP"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   tabla-evolucion:
     titulo: "Sgo. del Estero - Evolución del stock caprino por categoría y totales - años {desde} a {hasta}"
     encabezado_anio: ""
@@ -87,14 +83,10 @@ paneles:
     # JC arranca este grafico en 2012, aunque la serie total venga desde 2009.
     desde: 2012
     fuente: "Fuente: MAGyP"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   anillo-departamentos:
     titulo: "Sgo del Estero - Caprinos, Participación por departamento en el stock total año {anio}"
     cuantos: 5
     fuente: "Fuente: MAGyP"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   # Como en la hoja de JC: el grafico por categoria a la izquierda y el anillo a la derecha.
   # Disposicion en COLUMNAS (12-oct-2026, "vuelve a revisar, hay tableros donde todavia hay
   # tarjetas que se ven asi"): la grilla de filas estiraba cada cuadro al alto del mas alto

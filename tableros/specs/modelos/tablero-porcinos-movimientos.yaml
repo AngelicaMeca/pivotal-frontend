@@ -62,8 +62,6 @@ paneles:
       rotulo_provincia: "Provincia"
       rotulo_cambiar: "Seleccione otro departamento si desea visualizar"
       miga: "Dto {Departamento}"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   tabla-tipos:
     titulo: "Sgo. del Estero - Movimientos porcinos por tipo, categoría y DTE Totales provincia - años {desde} a {hasta} (parcial)"
     titulo_departamento: "Sgo. del Estero - Movimientos porcinos por tipo, categoría y DTE - Dto {departamento} - año {anio}"
@@ -93,23 +91,15 @@ paneles:
     encabezado: "Pcia. Origen"
   anillo-categorias:
     titulo: "Sgo del Estero - Participación por categoría en movimientos totales año {anio}"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   anillo-departamentos:
     titulo: "Sgo del Estero - Participación de departamentos de origen en los movimientos totales año {anio}"
     cuantos: 5
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   anillo-provincias-destino:
     titulo: "Sgo del Estero - Participación de las provincias de destino en los movimientos de EXTRACCIÓN año {anio}"
     cuantos: 4
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   anillo-provincias-origen:
     titulo: "Sgo del Estero - Participación de las provincias de origen en los movimientos de INTRODUCCIÓN año {anio}"
     cuantos: 5
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   disposicion: columnas
   orden:
     - {id: mapa, ancho: 4, columna: izq}

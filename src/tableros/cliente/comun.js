@@ -226,7 +226,7 @@ export default function crearPivotal() {
   /* El mensaje de un cuadro cuando la bajada de sus datos fallo. No es lo mismo que "no hay
      datos para esta combinacion": ahi el dato no existe, aca no llego. Decirlo distinto
      importa porque la salida tambien es distinta (reintentar, no cambiar de filtro). */
-  var FALLO_AL_BAJAR = "No se pudieron cargar los datos. Probá de nuevo en unos segundos.";
+  var FALLO_AL_BAJAR = "No se pudieron cargar los datos. Intente nuevamente en unos segundos.";
 
   /* Una bajada que se pide una sola vez, sin cachear los fracasos.
 

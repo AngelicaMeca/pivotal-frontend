@@ -66,8 +66,6 @@ paneles:
     rotulos_departamento: true
     titulo: "Razas y categorías"
     fuente: "Fuente: SENASA"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   # Texto LITERAL de JC (cuadro de texto bajo el mapa, filas 39-48).
   texto-notas:
     titulo: ""
@@ -121,29 +119,21 @@ paneles:
   anillo-razas:
     titulo: "Sgo del Estero - Participación por raza en la venta para faena - año {anio}"
     cuantos: 3
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   anillo-departamentos:
     titulo: "Sgo del Estero - Participación por Departamento en la venta para faena - año {anio}"
     cuantos: 4
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   precios-razas-1:
     titulo: "Precio promedio mensual por raza - SDE - todas las cat. - $/kg en pie"
     razas: ["LÍNEA HÍBRIDA MATERNA", "YORKSHIRE / LARGE-WHITE"]
     etiquetas: {"YORKSHIRE / LARGE-WHITE": "Yorkshire"}
     desde: 2025
     fuente: "Fuente: MAGyP - ARCA"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   precios-categorias:
     titulo: "Precio promedio mensual Híbrida Materna - Capón y Cerda - SDE - $/kg en pie"
     raza: "LÍNEA HÍBRIDA MATERNA"
     categorias: ["Porcina Capón", "Porcina Cerda / Chancha"]
     desde: 2025
     fuente: "Fuente: MAGyP - ARCA"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   disposicion: columnas
   orden:
     - {id: mapa, ancho: 4, columna: izq}

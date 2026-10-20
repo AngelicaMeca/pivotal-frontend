@@ -67,8 +67,6 @@ paneles:
     # puesto. El regreso es la tira de paginas.
     lleva_a: "ganaderia/bovinos/feed-lots-hilton-y-tambos?regimen=tambo&departamento="
     rotulo_accion: "Seleccione departamento para ver las existencias en tambos"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   tabla-cuenca:
     titulo: "Sgo. del Estero - Evolución de indicadores económicos de la Cuenca Lechera Provincial"
     subtitulo: "Tambos, litros, pesos por litro y pesos corrientes"
@@ -110,8 +108,6 @@ paneles:
       - {nombre: "Sgo Estero", variable: precio_litro, provincia: "Santiago del Estero"}
       - {nombre: "Córdoba", variable: precio_litro, provincia: "CORDOBA"}
       - {nombre: "Prom Nacional", variable: precio_litro, provincia: "Total del pais"}
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   precios-leche-2:
     titulo: "Precio Pagado al Productor (PPP) por proteína y sólidos útiles en leche - Sgo del Estero, en $ corrientes/Kg"
     subtitulo: "En pesos corrientes por kilo"
@@ -120,8 +116,6 @@ paneles:
     series:
       - {nombre: "Proteína", variable: precio_proteina, provincia: "Santiago del Estero"}
       - {nombre: "Sólidos útiles", variable: precio_solidos, provincia: "Santiago del Estero"}
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   imagen-tambos:
     # Sin titulo, como en la hoja de JC: la captura trae el suyo adentro (E147).
     titulo: ""

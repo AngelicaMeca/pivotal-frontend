@@ -66,8 +66,6 @@ paneles:
     titulo: "Stocks"
     medida: cabezas
     fuente: "Fuente: SENASA"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   tabla-evolucion:
     titulo: "Sgo. del Estero - Stocks bubalinos por categoría y totales - años {desde} a {hasta}"
     encabezado_anio: "Año"
@@ -142,13 +140,9 @@ paneles:
     fuente: "Fuente: MAGyP - Resolución 470/2012"
   anillo-estratos:
     titulo: "Sgo del Estero - Bubalinos, Participación por estrato en el total de cabezas - año {anio}"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   anillo-estratos-up:
     titulo: "Sgo del Estero - Bubalinos, Participación por estrato en el total de U.P. - año {anio}"
     subtitulo: "En unidades productivas (RENSPA)"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   # La faena sale de Siocarnes (base 89): los bubalinos vienen en el mismo archivo que los
   # bovinos (`faena` en _comunes-stock-bubalinos).
   tabla-faena:
@@ -169,14 +163,10 @@ paneles:
     titulo: "Sgo del Estero - Bubalinos Precio declarado venta a faena - Novillo y Novillito - $/Kg en pie"
     categorias: ["Bubalino Novillito", "Bubalino Novillo"]
     desde: 2025
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   precios-faena-2:
     titulo: "Sgo del Estero - Bubalinos Precio declarado venta a faena - Ternero y Torito - $/Kg en pie"
     categorias: ["Bubalino Ternero", "Bubalino Torito"]
     desde: 2025
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   disposicion: columnas
   orden:
     - {id: mapa, ancho: 4, columna: izq}

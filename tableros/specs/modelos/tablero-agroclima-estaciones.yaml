@@ -71,8 +71,6 @@ paneles:
   lineas-temperatura:
     titulo: "Sgo del Estero - Est. agrometeorológica {ESTACION} - Temperatura Abrigo 150cm ({desde} al {hasta})"
     subtitulo: "Temperatura media diaria"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   orden:
     - {id: mapa-estaciones, ancho: 4, columna: izq}
     - {id: texto-definiciones, ancho: 4, columna: izq}

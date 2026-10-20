@@ -207,6 +207,11 @@ indicadores:
 # ZOOM: ampliar un cuadro a pantalla completa (Francisco, 24-sep-2026)
 # ---------------------------------------------------------------------------
 zoom_de_los_cuadros:
+  # RETIRADO el 20-oct-2026 en todos los tableros (revision de JC del 16-oct-2026: "EL ZOOM NO
+  # FUNCIONA COMO TAL, SOLO AUMENTA LOS TEXTOS... RESUMEN: ELIMINAR ESTA OPCION, AL MENOS PARA
+  # ESTE TIPO DE DATOS"). Ningun panel declara la accion `zoom`; el mecanismo sigue en el sitio.
+  # Lo que sigue es el registro de como era.
+  estado: retirado
   pedido_por: "Francisco, 24-sep-2026"
   palabra_de_jc: "Zoom"
   origen: >
@@ -248,6 +253,8 @@ zoom_de_los_cuadros:
 # CRUZAR DATOS: la comparacion adentro del zoom (Francisco, 24-sep-2026)
 # ---------------------------------------------------------------------------
 cruzar_datos:
+  # RETIRADO el 20-oct-2026 junto con el zoom, que era el unico lugar donde vivia.
+  estado: retirado
   pedido_por: "Francisco, 24-sep-2026"
   que_pidio: >
     Dos formas de cruce, elegidas por el explicitamente: dos VALORES DEL MISMO FILTRO
@@ -474,23 +481,6 @@ paneles:
     # tabla-datos). Barras agrupadas de una medida de CONTEO sobre el eje izquierdo y una
     # linea de una medida de VOLUMEN sobre el eje derecho, compartiendo categorias.
     forma: combo
-    # Zoom: este cuadro se puede ampliar a pantalla completa (ver `zoom_de_los_cuadros`).
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
-    # CRUZAR DATOS (ver `cruzar_datos`): los dos desplegables que el zoom le pone a
-    # este cuadro. Se compara por PRODUCTO: cebolla contra papa sobre los mismos años.
-    comparacion:
-      filtro: producto
-      rotulo: "Comparar con"
-      ninguno: "Sin comparación"
-      # Plantillas de texto con slots. El navegador SUSTITUYE, no escribe: la leyenda,
-      # el título y la nota del cuadro comparado salen de acá.
-      plantilla_serie: "{valor} · {medida}"
-      plantilla_titulo: "{titulo} · comparado con {otro}"
-      plantilla_titulo_medida: "{titulo} · con {medida}"
-      plantilla_nota: "{nota} {otra}"
-      nota: "La comparación se ve solo acá: «Generar PDF» imprime siempre el tablero completo."
-      # Sin segunda medida: este cuadro YA cruza dos medidas (los bultos declarados y las toneladas, cada una con su eje) y la fuente no informa una tercera.
     origen_en_la_maqueta: "hoja Agri 2, chart9, ancla G9:AD23"
     titulo_protocolo: "{Producto} - Sgo del Estero - DTV Envíos - Cant {bultos} y tn por año"
     titulo_literal_de_jc: "Cebolla - Sgo del Estero - DTV Envíos  - Cant bolsas y tn por año"
@@ -548,9 +538,6 @@ paneles:
   apiladas:
     # FORMA NUEVA. Barras apiladas, una serie por categoria, el total es el alto de la pila.
     forma: apiladas
-    # Zoom: este cuadro se puede ampliar a pantalla completa (ver `zoom_de_los_cuadros`).
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
     origen_en_la_maqueta: "hoja Agri 2, chart10, ancla G27:AD42"
     titulo_protocolo: "{Producto} - Sgo del Estero - DTV Envíos - tn por Dto. de origen"
     titulo_literal_de_jc: "Cebolla - Sgo del Estero - DTV Envíos  - tn por Dto. de origen"
@@ -614,9 +601,6 @@ paneles:
     # 2-ene-2017 al 9-abr-2026. Los mismos controles que estaban dibujados ahora FUNCIONAN y el
     # grafico de lineas de JC (chart8) se dibuja.
     forma: precios
-    # Zoom: este cuadro se puede ampliar a pantalla completa (ver `zoom_de_los_cuadros`).
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
     origen_en_la_maqueta: "hoja Agri 2, chart8 (ancla AE14:BI30) + los objetos de las filas 5 a 12"
     estado: publicado
 

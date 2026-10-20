@@ -16,6 +16,12 @@
 id: tablero-infraestructura-y-riesgo
 tipo: tablero
 familia: capas-ign
+# NO-PUBLICADA desde el 20-oct-2026: revision de JC del 16-oct-2026 ("REVISION AGRICULTURA
+# AL 16 OCT.docx"): "NUNCA PASE MAQUETA DE GENERAL AUN!!!" y "SACAR
+# COMPLETO ESO DE RIESGO HIDROLOGICO" (DESINVENTAR esta desactualizado desde 2015). La seccion
+# salio de site/navegacion.yaml.
+# Queda como registro de sus reglas, sin pagina.
+estado: no-publicada
 seccion: infraestructura-y-riesgo
 
 titulo: "Infraestructura y riesgo"
@@ -50,8 +56,6 @@ paneles:
       - {id: rutas-nacionales, prendida: true}
       - {id: ferrocarril, prendida: true}
       - {id: estaciones-ferrocarril, prendida: true}
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   tabla-red-vial:
     titulo: "Sgo. del Estero - Red vial por jerarquía y tipo de calzada"
     subtitulo: "En kilómetros"

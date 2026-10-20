@@ -105,6 +105,17 @@ function FiltroBarra({ filtro }: { filtro: Filtro }) {
   );
 }
 
+/* La bandera de idioma: la imagen de la maqueta del SID de JC ("POR FAVOR AGREGAR LAS
+   BANDERAS", revision del 16-oct-2026); sin imagen, la sigla de antes. */
+function BanderaVisible({ bandera }: { bandera: Comun["banderas_idioma"][number] }) {
+  return bandera.imagen ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img className="bandera-imagen" src={bandera.imagen} alt="" aria-hidden="true" />
+  ) : (
+    <span aria-hidden="true">{bandera.codigo.toUpperCase()}</span>
+  );
+}
+
 export default function Cascara({ pagina, children }: { pagina: Comun; children: ReactNode }) {
   const { theme } = pagina;
   const logo = theme.logo_provincia;
@@ -137,11 +148,34 @@ export default function Cascara({ pagina, children }: { pagina: Comun; children:
           {/* Botones de cabecera que declara la seccion; viajan con la seleccion vigente
               (data-conserva). Sin declaracion queda el boton deshabilitado "Proximamente". */}
           {pagina.botones_cabecera.length ? (
-            pagina.botones_cabecera.map((boton) => (
-              <a key={boton.href} className="boton-cabecera" href={boton.href} data-conserva="">
-                {boton.texto}
-              </a>
-            ))
+            pagina.botones_cabecera.map((boton) => {
+              /* Con `imagen` el boton es un LOGO (el del SID, revision de JC del 16-oct-2026:
+                 "CAMBIAR 'DATOS POR DEPARTAMENTO' POR EL LOGO DE SID"). */
+              const contenido = boton.imagen ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img className="boton-logo" src={boton.imagen} alt={boton.texto} />
+              ) : (
+                boton.texto
+              );
+              const clase = boton.imagen ? "boton-cabecera con-logo" : "boton-cabecera";
+              /* Sin `href`: anunciado y todavia sin pagina. Apagado y con "Próximamente", la
+                 misma excepcion acotada a la regla de botones muertos que las banderas. */
+              return boton.href ? (
+                <a key={boton.texto} className={clase} href={boton.href} data-conserva="">
+                  {contenido}
+                </a>
+              ) : (
+                <button
+                  key={boton.texto}
+                  type="button"
+                  className={clase}
+                  disabled
+                  title={`${boton.texto} · Próximamente`}
+                >
+                  {contenido} <span className="prox">Próximamente</span>
+                </button>
+              );
+            })
           ) : pagina.boton_proximamente ? (
             /* El boton deshabilitado del mockup. Solo lo dibujan las secciones que LO ESPERAN:
                antes salia en cualquier pagina sin botones declarados, y en pasturas y forrajes
@@ -158,7 +192,7 @@ export default function Cascara({ pagina, children }: { pagina: Comun; children:
                 bandera.activa ? (
                   <span key={bandera.codigo} className="bandera activa" title={bandera.nombre}>
                     <span className="sr-solo">{bandera.nombre}</span>
-                    <span aria-hidden="true">{bandera.codigo.toUpperCase()}</span>
+                    <BanderaVisible bandera={bandera} />
                   </span>
                 ) : (
                   <span
@@ -167,7 +201,7 @@ export default function Cascara({ pagina, children }: { pagina: Comun; children:
                     title={`${bandera.nombre} · Próximamente`}
                   >
                     <span className="sr-solo">{bandera.nombre} · Próximamente</span>
-                    <span aria-hidden="true">{bandera.codigo.toUpperCase()}</span>
+                    <BanderaVisible bandera={bandera} />
                   </span>
                 ),
               )}
@@ -405,11 +439,12 @@ export default function Cascara({ pagina, children }: { pagina: Comun; children:
             </>
           ) : null}
 
-          {/* Pie del Modelo 2 + el pie de datos: la fecha sale del manifiesto de la entrega */}
+          {/* Pie del Modelo 2. Revision de JC del 16-oct-2026: "Elaboración propia" va
+              después de "Tecnología Pivotal" y "datos actualizados a..." sale ("es un tanto
+              polémico... YO LO ELIMINARÍA MIENTRAS TANTO"). */}
           <footer className="pie-sitio">
             <p className="pie-tec">{theme.pie_tecnologia}</p>
-            <p className="pie-linea">Pivotal · datos actualizados a {pagina.fecha_datos}</p>
-            <p className="pie-linea pie-menor">{theme.pie}</p>
+            <p className="pie-linea">{theme.pie}</p>
           </footer>
         </div>
       </div>

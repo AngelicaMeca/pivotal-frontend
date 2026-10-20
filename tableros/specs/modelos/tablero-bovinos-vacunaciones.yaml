@@ -63,8 +63,6 @@ paneles:
       rotulo_provincia: "Provincia"
       rotulo_cambiar: "Seleccione otro departamento si desea visualizar"
       miga: "Dto {Departamento}"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   tabla-departamentos:
     titulo: "Sgo. del Estero - Evolución de 1ra vacunación bovina por categoría y totales por departamento - año {anio}"
     encabezado_geo: "Departamento"
@@ -83,8 +81,6 @@ paneles:
     nota: >
       2024 queda por debajo del real: la fuente trae dos celdas rotas ese año (Sarmiento y
       Juan F. Ibarra) que no se corrigen hasta que SENASA o JC las confirmen.
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   tabla-evolucion:
     titulo: "Sgo. del Estero - Evolución de 1ra vacunación bovina por categoría y totales - años {desde} a {hasta}"
     encabezado_anio: ""
@@ -101,8 +97,6 @@ paneles:
       El stock es la existencia al cierre del año que publica el MAGyP (página Stocks); la
       vacunación, las cabezas vacunadas en la 1ra campaña según SENASA. Son dos fuentes y no se
       suman ni se restan.
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   tabla-departamento-anios:
     titulo: "Sgo. del Estero - Evolución de 1ra vacunación bovina por departamento y totales - años {desde} a {hasta}"
     encabezado_geo: "Departamento"

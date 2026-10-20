@@ -46,9 +46,13 @@ cabecera:
   botones:
     # Las DOS únicas navegaciones de cabecera. Viajan con el cultivo y la campaña vigentes
     # (formato_v1.navegacion.persistencia_de_filtros).
-    - {id: santiago-en-el-noa, etiqueta: "Santiago en el NOA", destino: 09-noa-participacion-provincia,
-       nota: "habilitado por orden de Facu (10-ago, segunda tanda); ratificación de Francisco PENDIENTE: si la baja, el botón no se dibuja"}
-    - {id: datos-por-departamento, etiqueta: "Datos por Departamento", destino: 09-departamento-datos}
+    # Revision de JC del 16-oct-2026: las dos paginas salieron del sitio publico y los dos
+    # botones quedan APAGADOS con "Próximamente" (site/navegacion.yaml). "Datos por
+    # Departamento" pasa a ser el LOGO del SID (Sistema de Información Departamental, maqueta
+    # "Maqueta SID 1.xlsx"); la comparacion NOA espera su maqueta (agricultura y ganaderia).
+    - {id: santiago-en-el-noa, etiqueta: "Santiago en el NOA", proximamente: true}
+    - {id: sid, etiqueta: "SID - Sistema de Información Departamental", imagen: sid/logo-sid.png,
+       proximamente: true}
   banderas_idioma:
     # Donde estaba el título duplicado ("ahí iban las banderas de idiomas"). Backlog 33, RESUELTA.
     posicion: "arriba a la derecha, como el mockup"
@@ -117,6 +121,11 @@ con_cultivo_todos:
 # ZOOM: ampliar un cuadro a pantalla completa (Francisco, 24-sep-2026)
 # ---------------------------------------------------------------------------
 zoom_de_los_cuadros:
+  # RETIRADO el 20-oct-2026 en todos los tableros (revision de JC del 16-oct-2026: "EL ZOOM NO
+  # FUNCIONA COMO TAL, SOLO AUMENTA LOS TEXTOS... RESUMEN: ELIMINAR ESTA OPCION, AL MENOS PARA
+  # ESTE TIPO DE DATOS"). Ningun panel declara la accion `zoom`; el mecanismo sigue en el sitio.
+  # Lo que sigue es el registro de como era.
+  estado: retirado
   pedido_por: "Francisco, 24-sep-2026"
   palabra_de_jc: "Zoom"
   origen: >
@@ -158,6 +167,8 @@ zoom_de_los_cuadros:
 # CRUZAR DATOS: la comparacion adentro del zoom (Francisco, 24-sep-2026)
 # ---------------------------------------------------------------------------
 cruzar_datos:
+  # RETIRADO el 20-oct-2026 junto con el zoom, que era el unico lugar donde vivia.
+  estado: retirado
   pedido_por: "Francisco, 24-sep-2026"
   que_pidio: >
     Dos formas de cruce, elegidas por el explicitamente: dos VALORES DEL MISMO FILTRO
@@ -255,11 +266,8 @@ paneles:
   alto: fluye
 
   mapa:
-    # Capas de contexto del IGN (rutas, caminos rurales, ferrocarril y estaciones; pedido de
-    # JC del 14-oct-2026, backlog 104). APAGADAS al abrir: con todo apagado el mapa es el de
-    # siempre. Se prenden desde el control "Capas" del cuadro (tambien en el zoom) y lo que se
-    # prende sale en el PDF. El orden es el de dibujo: la primera queda abajo.
-    capas: [caminos-terciarios, rutas-provinciales, rutas-nacionales, ferrocarril, estaciones-ferrocarril]
+    # Sin capas de contexto del IGN ni control "Capas" (revision de JC del 16-oct-2026:
+    # "SACAR URGENTE ESTAS CAPAS DE RED VIAL Y FFCC DONDE HAY DATOS AGRO O GANADERIA").
     # Columna izquierda ENTERA, grande, proporción geográfica CORRECTA (JC: "El mapa es una
     # miniatura y está deformado"; regla formato_v1.tercera_tanda.mapa_grande). La caja se
     # adapta al mapa, nunca al revés.
@@ -271,9 +279,6 @@ paneles:
     # El navegador los esconde igual si la caja queda chica para leerlos (mapa de menos de
     # 340 px: ahí 27 nombres encimados ensucian y no se leen).
     rotulos_departamento: true
-    # Zoom: este cuadro se puede ampliar a pantalla completa (ver `zoom_de_los_cuadros`).
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
     # SIN la superficie SEMBRADA: lo dice JC en el rotulo de su propia rampa de mapas, hoja
     # "Agri 1" de la maqueta: "SUPERFICIE COSECHADA (no considerar para mapa la sembrada)".
     # La secuencia fija de las cuatro variables es la de los KPIs y la tabla, no la del mapa:
@@ -331,36 +336,7 @@ paneles:
     # RESUELTA). El período sale de las campañas realmente graficadas: el mockup dice
     # "2013/14 a 2024/25" pero la ventana sigue en 10 mientras JC no la amplíe (backlog 32).
     nota_interpretacion: "'Total' se lee como el recorte total (soja total, agregado provincial). Backlog 39."
-    # CRUZAR DATOS (ver `cruzar_datos`): los dos desplegables que el zoom le pone a
-    # este cuadro. Se compara por CULTIVO, que es el sujeto del cuadro: soja contra maíz sobre las mismas campañas.
-    comparacion:
-      filtro: cultivo
-      rotulo: "Comparar con"
-      ninguno: "Sin comparación"
-      # Plantillas de texto con slots. El navegador SUSTITUYE, no escribe: la leyenda,
-      # el título y la nota del cuadro comparado salen de acá.
-      plantilla_serie: "{valor} · {medida}"
-      plantilla_titulo: "{titulo} · comparado con {otro}"
-      plantilla_titulo_medida: "{titulo} · con {medida}"
-      plantilla_nota: "{nota} {otra}"
-      nota: "La comparación se ve solo acá: «Generar PDF» imprime siempre el tablero completo."
-      medidas:
-        rotulo: "Segunda medida"
-        ninguna: "Ninguna"
-        opciones:
-          - {v: rendimiento_kg_ha, t: "Rendimiento (kg/ha)"}
-        # Por que el rendimiento y no la superficie SEMBRADA, que es la otra variable que este
-        # cuadro no dibuja: sembrada y cosechada son el MISMO tipo de variable (superficie) y
-        # el protocolo les da la misma rampa, asi que las dos lineas saldrian del mismo color
-        # y no habria como distinguirlas; darle otro color a una de ellas seria romper la
-        # regla mas fuerte del protocolo. La sembrada ya se lee en la tabla de datos y en el
-        # ranking del mismo tablero. Queda como pregunta para JC en el backlog.
-        # El rendimiento, en cambio, tiene rampa propia (es un cociente, no un volumen) y otra
-        # unidad, asi que entra con su color y con su propio eje a la derecha.
     medidas: [sup_cosechada_ha, produccion_tn]
-    # Zoom: este cuadro se puede ampliar a pantalla completa (ver `zoom_de_los_cuadros`).
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
     grafico: lineas
     eje_vertical:
       visible: true                # JC: "no está el eje vertical y tampoco la escala"
@@ -389,9 +365,6 @@ paneles:
     top_n: 5
     resto: "Resto"
     sin_cifra_central: true
-    # Zoom: este cuadro se puede ampliar a pantalla completa (ver `zoom_de_los_cuadros`).
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
     # Cuarta tanda ("queda muy chico por el número en el medio; prefiero sacarlo y que quede
     # bien"): el anillo va SIN el total en el centro y usa el espacio del panel. El total
     # "(fina y gruesa)" se muestra fuera del centro (subtítulo o pie del panel). Es una
@@ -404,7 +377,14 @@ paneles:
     # de campañas lado a lado, sin título de panel (el mockup no le dibuja uno). Deroga la
     # regla "una sola serie" de la segunda tanda (mockup literal es posterior y manda;
     # interpretación anotada en backlog 38). Con 10 campañas los bloques cierran 5 y 5.
-    sin_titulo: true
+    # CON TITULO desde el 20-oct-2026 (revision de JC del 16-oct-2026: "FALTAN TITULOS DE
+    # CULTIVO... Agregar EL CULTIVO AL QUE HACE REFERENCIA LA TABLA (ESTO ESTABA BIEN DEFINIDO
+    # EN LOS PROTOCOLOS)" y "En TODOS LOS CULTIVOS, en este cuadro FALTAN LOS TÍTULOS (En este
+    # caso, Departamento Aguirre)"). Mismo formato de protocolo que el grafico de arriba:
+    # cultivo - Sgo del Estero - area - variables - campañas. Con "Todos" la tabla es solo la
+    # produccion y el titulo lo dice.
+    titulo_protocolo: "{Cultivo} - Sgo del Estero - {Area} - Superficie cosechada, producción y rendimiento - Campañas {desde} a {hasta}"
+    titulo_protocolo_todos: "Todos los cultivos - Sgo del Estero - {Area} - Producción (fina y gruesa) - Campañas {desde} a {hasta}"
     formato: dos-bloques-de-campanias
     columnas_por_bloque: ["Campaña", "Superficie Cos. (Ha)", "Producción (Tn)", "Rendimiento Kg/ha"]
     medidas: [sup_cosechada_ha, produccion_tn, rendimiento_kg_ha]
@@ -417,9 +397,29 @@ paneles:
 
   top:
     # La tabla de ranking del mockup, con su título literal y sus columnas tal cual.
-    titulo_protocolo: "Ranking de sup. Sembrada sobre el total provincial"
-    columnas: ["Puesto", "Departamento", "Superficie Semb. (ha)", "% sobre Total prov."]
-    medida: sup_sembrada_ha
+    # Revision de JC del 16-oct-2026:
+    #  - el titulo lleva el CULTIVO (y la campaña): "A LA TABLA DE DATOS DE RANKING LE FALTA EL
+    #    NOMBRE DEL CULTIVO" / "FALTAN TITULOS DE CULTIVO";
+    #  - "YO PONDRIA EN LA 'PRINCIPAL' LA OPCION DE SELECCIONAR QUE VARIABLE DEL RANKING DESEO
+    #    VER (producc, superf y rendim)": las tres variables viajan en el panel y un toggle
+    #    adentro del cuadro elige cual se ve (no multiplica las combinaciones del tablero);
+    #  - "FALTA AGREGAR RANKING TODOS LOS CULTIVOS EN CADA DEPARTAMENTO O EN LA ENTRADA DE LA
+    #    PROVINCIA": con "Todos" el ranking es el de PRODUCCION (fina y gruesa), la unica
+    #    variable que se suma entre cultivos; superficie y rendimiento quedan apagados con su
+    #    motivo (formato_v1.agregacion).
+    # La primera variante es la de la maqueta (superficie sembrada) y es la que abre.
+    variantes:
+      - {medida: sup_sembrada_ha, etiqueta: "Superficie",
+         titulo: "{Cultivo} - Ranking de sup. Sembrada sobre el total provincial - Campaña {campania}",
+         columnas: ["Puesto", "Departamento", "Superficie Semb. (ha)", "% sobre Total prov."]}
+      - {medida: produccion_tn, etiqueta: "Producción",
+         titulo: "{Cultivo} - Ranking de producción sobre el total provincial - Campaña {campania}",
+         columnas: ["Puesto", "Departamento", "Producción (tn)", "% sobre Total prov."]}
+      - {medida: rendimiento_kg_ha, etiqueta: "Rendimiento",
+         titulo: "{Cultivo} - Ranking de rendimiento por departamento - Campaña {campania}",
+         columnas: ["Puesto", "Departamento", "Rendimiento (kg/ha)"]}
+    # Con "Todos" el cultivo se nombra asi en el titulo.
+    nombre_todos: "Todos los cultivos (fina y gruesa)"
     cuantos: 10
     transformaciones_de: 09-ranking-cultivo-sup-sembrada
 
@@ -438,7 +438,8 @@ paneles:
   # relacionada" eran cinco promesas repetidas de lo que ya está en el backlog (8, 44, 45).
   # Misma decisión que ya se había tomado en cultivos intensivos el 23-sep-2026.
   acciones_de_tablero:
-    # "Más información": abre un POPUP con la sección 5 de la maqueta (bloques 5.1 a 5.4).
+    # "Más información": abre un POPUP con la sección 5 de la maqueta (desde el 20-oct-2026,
+    # solo el bloque 5.3: los datos especificos del cultivo; ver `mas-informacion`).
     # JC lo define así: "Se refiere a la ampliación de gráficos y datos, tanto provinciales
     # como departamentales. NO CONTIENE OPCIONES DE SELECCIÓN, ES ESTÁTICO".
     - {id: mas-informacion, etiqueta: "Más información", flecha: true,
@@ -462,35 +463,18 @@ paneles:
   # (provincia o el departamento elegido) y, para el bloque 5.3, el cultivo vigente.
   mas-informacion:
     titulo: "Más información"
-    # 5.1 y 5.2: la misma pareja de cuadros para los cultivos de verano y para los de
-    # invierno. Van SEPARADOS porque comparten lote: sumarlos contaría dos veces las mismas
-    # hectáreas (nota `verano-invierno` de _comunes-base-9).
-    cartera:
-      titulo_absoluto: "Sgo del Estero - {Area} - Evolución de la producción por cartera de cultivos de {Estacion} - Campañas {desde} a {hasta} - En tn"
-      titulo_porcentual: "Sgo del Estero - {Area} - Evolución de la producción por cartera de cultivos de {Estacion} - Campañas {desde} a {hasta} - En %"
-      # Títulos literales de los gráficos 3 y 4 de su hoja "Agri 1", con el área como único
-      # slot agregado (sus cuadros son provinciales; el popup también se abre en un
-      # departamento, y ahí el título tiene que decirlo).
-      subtitulo_porcentual: "En porcentaje sobre el total de la estación"
-      encabezado_primera_columna: "Cultivo"
+    # Revision de JC del 16-oct-2026 ("DATOS REITERADOS - ACHICAR LOS GRAFICOS DE MAS
+    # INFORMACION"): "Cuando se accede a 'mas información' DEBERIA APARECER DATOS DE CADA
+    # CULTIVO, NO REITERAR LAS 'CAMPAÑAS DE INVIERNO Y VERANO' así como el Ranking. A ESO LO
+    # AGREGAREMOS EN LA 'PAGINA DE INICIO DE AGRI'... ELIMINEMOS la 'cartera de cultivos' y
+    # dejemos (al menos por ahora) LOS DATOS ESPECIFICOS DE CADA CULTIVO (achicando los
+    # graficos)". Salieron los bloques 5.1/5.2 (`cartera`) y 5.4 (`rankings`): el constructor
+    # solo arma los bloques que el spec declara. Con "Todos" no hay dato especifico de un
+    # cultivo y el boton no se dibuja.
     # 5.3: "Muestra el impacto del Rendimiento". Barras de producción + línea de rendimiento.
     produccion_rendimiento:
       titulo: "Sgo del Estero - {Area} - {Cultivo} - Evolución de la producción y rendimientos - Campañas {desde} a {hasta}"
       encabezado_primera_columna: "Variable"
-    # 5.4: "RANKINGS POR DEPARTAMENTO - ESTO SOLO EN EL AREA PROVINCIAL". Sus tres rankings:
-    # 5.3.1 superficies cosechadas (NO van las sembradas), 5.3.2 producción, 5.3.3 rendimientos.
-    # Los tres van en UNA sola sección, las tablas una al lado de la otra (Francisco,
-    # 2-oct-2026). Es como los lista JC: un solo título de sección ("5.4. RANKINGS POR
-    # DEPARTAMENTO") y debajo sus tres variables. Y es lo que se quiere leer: son el mismo
-    # recorte -los departamentos de la campaña- visto por tres variables, y puestas una al lado
-    # de la otra se ve de un vistazo qué departamento manda en superficie pero no en
-    # rendimiento. Apiladas eran tres pantallas de scroll que no se podían comparar.
-    rankings:
-      titulo: "Sgo del Estero - Rankings por departamento - Campaña {campania}"
-      # El título de CADA tabla es su variable y nada más: el resto ya lo dice el título de la
-      # sección y repetirlo tres veces en tres columnas angostas no entra ni aporta.
-      titulo_tabla: "{Variable}"
-      medidas: [sup_cosechada_ha, produccion_tn, rendimiento_kg_ha]
 
   # Disposición calcada de la hoja "Agri 1": columna izquierda = mapa (a lo alto, él solo) +
   # pie de tecnología; columna derecha = chips de cultivo, tarjeta + KPIs, fila de gráficos

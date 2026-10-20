@@ -64,8 +64,6 @@ paneles:
   anillo-estratos:
     titulo: "Sgo del Estero - Porcinos - Participación de los estratos en la cantidad de cabezas - año {anio}"
     fuente: "Fuente: SENASA"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   disposicion: columnas
   orden:
     - {id: mapa, ancho: 4, columna: izq}

@@ -716,6 +716,9 @@ def copiar_iconos(escritor, theme):
 #   mas-informacion  abre el popup con la seccion 5 de la maqueta (bloques 5.1 a 5.4)
 ACCIONES_UTILIDAD = ("exportar-pdf", "zoom", "mas-informacion")
 
+# Las banderas de idioma de la cabecera: las de la maqueta del SID de JC (site/assets/banderas/).
+BANDERAS_IDIOMA = {"es": "banderas/es.png", "en": "banderas/en.png", "pt": "banderas/pt.png"}
+
 
 def accion_de_cuadro(item, destino, url_de, slug_tablero, id_panel, variante=None):
     """Un item del pie de un cuadro: "Más información →" o "Generar PDF".
@@ -2543,7 +2546,7 @@ ETIQUETA_APERTURA = {"total": "Total", "categoria": "Por categoría",
 # la fuente no abre los documentos por categoria. Ver hacienda.CATEGORIA_DE_DOCUMENTOS.
 SIN_CATEGORIA_EN_DOCUMENTOS = (
     "Los documentos de tránsito no se abren por categoría: un mismo DTE puede amparar animales "
-    "de varias. Elegí la categoría «Total», o cambiá la medida a cabezas.")
+    "de varias. Seleccione la categoría «Total» o cambie la medida a cabezas.")
 
 
 class ContextoHacienda:
@@ -5560,10 +5563,10 @@ def campania_previa(ctx, campania):
 # JC (_protocolo-presentacion.formato_v1.agregacion). El texto va en pantalla, no en un log.
 MOTIVO_TODOS_SUPERFICIE = (
     "Con «Todos» la superficie no se muestra: los cultivos de invierno y de verano comparten "
-    "lote, y sumarlos contaría las mismas hectáreas dos veces. Elegí un cultivo.")
+    "lote, y sumarlos contaría las mismas hectáreas dos veces. Seleccione un cultivo.")
 MOTIVO_TODOS_RENDIMIENTO = (
     "El rendimiento es una variable única de cada cultivo: no existe un rendimiento de todos "
-    "los cultivos mezclados. Elegí un cultivo.")
+    "los cultivos mezclados. Seleccione un cultivo.")
 MOTIVO_TODOS = {"sup_sembrada_ha": MOTIVO_TODOS_SUPERFICIE,
                 "sup_cosechada_ha": MOTIVO_TODOS_SUPERFICIE,
                 "rendimiento_kg_ha": MOTIVO_TODOS_RENDIMIENTO}
@@ -5945,7 +5948,8 @@ def eje_millones(valores):
             "nombre": "Millones"}
 
 
-def panel_tabla_datos_cultivos(ctx, spec, campania, cultivos, todos, pie, geos=None):
+def panel_tabla_datos_cultivos(ctx, spec, campania, cultivos, todos, pie, geos=None,
+                               cultivo_titulo="", area=None):
     """Forma `tabla-datos`: los numeros crudos bajo el grafico de evolucion, LITERAL al
     mockup Modelo 2 (tercera tanda del 10-ago): DOS bloques de campañas lado a lado, con las
     columnas que dibuja JC ("Campaña", "Superficie Cos. (Ha)", "Producción (Tn)",
@@ -5954,8 +5958,16 @@ def panel_tabla_datos_cultivos(ctx, spec, campania, cultivos, todos, pie, geos=N
 
     La campaña elegida queda marcada. El rendimiento es de la fuente para un cultivo y no
     existe para "Todos" (ahi la tabla queda en produccion sola).
+
+    Desde el 20-oct-2026 lleva TITULO si el spec lo declara (`titulo_protocolo`): revision de
+    JC del 16-oct-2026, "FALTAN TITULOS DE CULTIVO... Agregar EL CULTIVO AL QUE HACE
+    REFERENCIA LA TABLA". El area es "Total" o "Departamento X", como en el grafico de arriba.
     """
     declarado = spec["paneles"]["tabla-datos"]
+    plantilla = declarado.get("titulo_protocolo_todos" if todos else "titulo_protocolo") or ""
+    titulo = titulo_literal(plantilla, Cultivo=cultivo_titulo,
+                            Area=("Departamento " + area) if area else "Total",
+                            desde=ctx.ventana[0], hasta=ctx.ventana[-1])
     medidas = [m for m in declarado["medidas"] if not (todos and m != "produccion_tn")]
     # Columnas literales del mockup (spec, columnas_por_bloque), recortadas a las medidas
     # legales del filtro: la etiqueta se toma del spec por posicion de la medida.
@@ -5972,61 +5984,88 @@ def panel_tabla_datos_cultivos(ctx, spec, campania, cultivos, todos, pie, geos=N
                 hubo = True
         filas.append({"campania": c, "celdas": celdas, "actual": c == campania})
     if not hubo:
-        return panel_vacio("", "No hay datos de este cultivo en este departamento."
+        return panel_vacio(titulo, "No hay datos de este cultivo en este departamento."
                            if geos else
                            "No hay datos de este cultivo en la ventana de campañas.")
     mitad = (len(filas) + 1) // 2
     bloques = [{"columnas": columnas, "filas": parte}
                for parte in (filas[:mitad], filas[mitad:]) if parte]
     return {
-        "titulo": "",              # el mockup no le dibuja titulo (spec, sin_titulo)
+        "titulo": titulo,
         "subtitulo": "",
         "pie": pie,
         "bloques": bloques,
     }
 
 
-def panel_top_sembrada(ctx, spec, campania, cultivos, todos, pie):
-    """La tabla de ranking del mockup, LITERAL (tercera tanda): titulo y columnas calcados
-    ("Ranking de sup. Sembrada sobre el total provincial"; Puesto, Departamento, Superficie
-    Semb. (ha), % sobre Total prov.). Es una TABLA, no una lista de barras: el mockup la
-    dibuja asi y tablero.js la dibuja como tabla cuando el panel trae `columnas`."""
+def panel_top_cultivos(ctx, spec, campania, cultivos, todos, pie, cultivo_titulo):
+    """La tabla de ranking del mockup (titulo y columnas de JC: "Ranking de sup. Sembrada
+    sobre el total provincial"; Puesto, Departamento, Superficie Semb. (ha), % sobre Total
+    prov.). Es una TABLA, no una lista de barras: tablero.js la dibuja como tabla cuando el
+    panel trae `columnas`.
+
+    Revision de JC del 16-oct-2026: (a) el titulo nombra el CULTIVO y la campaña; (b) la
+    variable del ranking se elige ("producc, superf y rendim"): las tres variantes viajan en
+    el panel (`variantes`) y el toggle del cuadro elige cual se ve, sin multiplicar las
+    combinaciones del tablero; (c) con "Todos" hay ranking, el de PRODUCCION (fina y gruesa),
+    que es la unica variable que se suma entre cultivos. Las otras dos quedan apagadas con su
+    motivo. El ranking sigue siendo provincial: con un departamento elegido solo se marca su
+    fila ("salvo los datos de los RANKINGS").
+    """
     declarado = spec["paneles"]["top"]
-    titulo = declarado["titulo_protocolo"]
-    medida = declarado["medida"]
-    if todos and medida in MOTIVO_TODOS:
-        return panel_vacio(titulo, MOTIVO_TODOS[medida])
-    filas = []
-    for geo in ctx.hechos.deptos:
-        valor = suma_depto(ctx, geo, campania, cultivos, medida)
-        if valor is not None:
-            filas.append((geo, ctx.hechos.nombre[geo], valor))
-    if not filas:
-        return panel_vacio(titulo,
-                           "Ningún departamento informó esta variable en la campaña elegida.")
-    ordenados = ordenar_desc(filas)
-    puesto_de = puestos([(g, v) for g, _, v in ordenados])
-    recorte = ordenados[:declarado["cuantos"]]
-    total = total_provincia_cultivos(ctx, campania, cultivos, medida)
-    etiquetas = declarado["columnas"]
+    nombre = declarado.get("nombre_todos", cultivo_titulo) if todos else cultivo_titulo
+    variantes = []
+    for decl in declarado["variantes"]:
+        medida = decl["medida"]
+        titulo = titulo_literal(decl["titulo"], Cultivo=nombre, campania=campania)
+        base = {"v": medida, "t": decl["etiqueta"], "titulo": titulo}
+        if todos and medida in MOTIVO_TODOS:
+            variantes.append(dict(base, vacio=MOTIVO_TODOS[medida]))
+            continue
+        filas = []
+        for geo in ctx.hechos.deptos:
+            valor = medida_provincial(ctx, campania, cultivos, medida, [geo])
+            if valor is not None:
+                filas.append((geo, ctx.hechos.nombre[geo], valor))
+        if not filas:
+            variantes.append(dict(base, vacio="Ningún departamento informó esta variable en "
+                                              "la campaña elegida."))
+            continue
+        ordenados = ordenar_desc(filas)
+        puesto_de = puestos([(g, v) for g, _, v in ordenados])
+        recorte = ordenados[:declarado["cuantos"]]
+        # El rendimiento es un cociente: no tiene "% sobre el total" (no hay total que sumar).
+        con_pct = len(decl["columnas"]) > 3
+        total = (total_provincia_cultivos(ctx, campania, cultivos, medida)
+                 if con_pct else None)
+        etiquetas = decl["columnas"]
+        columnas = [{"etiqueta": etiquetas[0], "num": False},
+                    {"etiqueta": etiquetas[1], "num": False},
+                    {"etiqueta": etiquetas[2], "num": True}]
+        if con_pct:
+            columnas.append({"etiqueta": etiquetas[3], "num": True})
+        variantes.append(dict(base, columnas=columnas, filas=[
+            # `geo` no se dibuja: le sirve al navegador para marcar la fila del departamento
+            # elegido, que es lo que JC resalta en su hoja "Agri 1 Dto".
+            {"geo": geo,
+             "celdas": ["%d°" % puesto_de[geo], nombre_geo,
+                        ctx.precision.texto(valor, medida, "departamento")]
+             + ([participacion_texto(valor, total)] if con_pct else [])}
+            for geo, nombre_geo, valor in recorte]))
+    # Abre en la primera variante con datos: la de la maqueta (superficie sembrada) para un
+    # cultivo, la produccion para "Todos".
+    defecto = next((v["v"] for v in variantes if not v.get("vacio")), None)
+    if defecto is None:
+        return panel_vacio(variantes[0]["titulo"], variantes[0]["vacio"])
+    elegida = next(v for v in variantes if v["v"] == defecto)
     return {
-        "titulo": titulo,
+        "titulo": elegida["titulo"],
         "subtitulo": "",
         "pie": pie,
-        "columnas": [{"etiqueta": etiquetas[0], "num": False},
-                     {"etiqueta": etiquetas[1], "num": False},
-                     {"etiqueta": etiquetas[2], "num": True},
-                     {"etiqueta": etiquetas[3], "num": True}],
-        # `geo` no se dibuja: le sirve al navegador para marcar la fila del departamento
-        # elegido, que es lo que JC resalta en su hoja "Agri 1 Dto" (ahi ALBERDI aparece
-        # pintado en el 4to puesto). El ranking en si NO cambia: sigue siendo provincial
-        # ("salvo los datos de los RANKINGS").
-        "filas": [{"geo": geo,
-                   "celdas": ["%d°" % puesto_de[geo],
-                              nombre,
-                              ctx.precision.texto(valor, medida, "departamento"),
-                              participacion_texto(valor, total)]}
-                  for geo, nombre, valor in recorte],
+        "columnas": elegida["columnas"],
+        "filas": elegida["filas"],
+        "variantes": variantes,
+        "variante_defecto": defecto,
     }
 
 
@@ -6233,10 +6272,13 @@ def capa_mas_informacion(ctx, spec, pie):
     popup y meterlo en el payload del tablero lo haria pesar de mas para todos. Mismo criterio
     que la capa departamental y que el panel de precios.
     """
+    declarado = spec["paneles"]["mas-informacion"]
     capa = {}
     for geo in ["provincia"] + list(ctx.hechos.deptos):
         bloques = []
-        for estacion in ["verano", "invierno"]:
+        # 5.1 y 5.2 solo si el spec los declara: la revision de JC del 16-oct-2026 los saco
+        # ("ELIMINEMOS la 'cartera de cultivos'"); el constructor queda para cuando vuelvan.
+        for estacion in (["verano", "invierno"] if declarado.get("cartera") else []):
             bloques.append({"id": estacion + "-tn", "forma": "apiladas",
                             "panel": _info_cartera(ctx, spec, geo, estacion, False, pie)})
             bloques.append({"id": estacion + "-pct", "forma": "apiladas",
@@ -6255,7 +6297,10 @@ def capa_mas_informacion(ctx, spec, pie):
             "bloques": bloques,
             "por_valor": {"filtro": "cultivo", "bloques": por_cultivo},
             # Los rankings son provinciales por regla de JC: en un departamento no se dibujan.
-            "rankings": _info_rankings(ctx, spec, pie) if geo == "provincia" else None,
+            # Y solo si el spec los declara (tambien salieron el 16-oct-2026: "NO REITERAR...
+            # el Ranking", que ahora se elige por variable en el tablero).
+            "rankings": (_info_rankings(ctx, spec, pie)
+                         if geo == "provincia" and declarado.get("rankings") else None),
         }
     return capa
 
@@ -6304,8 +6349,10 @@ def construir_tablero_cultivos(ctx, spec):
         for campania in ctx.ventana:
             tendencia = panel_tendencia_cosecha_produccion(ctx, spec, campania, lista, todos,
                                                            pie, nombre_contexto)
-            tabla = panel_tabla_datos_cultivos(ctx, spec, campania, lista, todos, pie)
-            top = panel_top_sembrada(ctx, spec, campania, lista, todos, pie)
+            tabla = panel_tabla_datos_cultivos(ctx, spec, campania, lista, todos, pie,
+                                               cultivo_titulo=nombre_contexto)
+            top = panel_top_cultivos(ctx, spec, campania, lista, todos, pie,
+                                     nombre_contexto)
             kpis = indicadores_cultivos(ctx, spec, campania, lista, todos)
             # La tarjeta de contexto del mockup: QUE se esta viendo, escrito y no tacito
             # (formato_v1.parametros_explicitos). Con el icono del cultivo en COLOR, como en
@@ -6317,6 +6364,9 @@ def construir_tablero_cultivos(ctx, spec):
                 tablero["combos"]["|".join([cultivo, campania, variable])] = {
                     "contexto": contexto,
                     "kpis": kpis,
+                    # "Más información" muestra los datos ESPECIFICOS del cultivo (revision de
+                    # JC del 16-oct-2026): con "Todos" no hay ninguno y el boton se esconde.
+                    "mas_informacion": not todos,
                     "paneles": {
                         "mapa": panel_mapa_cultivos(ctx, spec, campania, lista, variable,
                                                     pie, todos),
@@ -6378,8 +6428,9 @@ def capa_departamental_cultivos(ctx, spec, cultivos, etiquetas, pie):
                             [geo], nombre),
                         "anillo": panel_anillo_participacion(ctx, spec, campania, pie,
                                                              [geo], nombre),
-                        "tabla-datos": panel_tabla_datos_cultivos(ctx, spec, campania, lista,
-                                                                  todos, pie, [geo]),
+                        "tabla-datos": panel_tabla_datos_cultivos(
+                            ctx, spec, campania, lista, todos, pie, [geo],
+                            cultivo_titulo=nombre_contexto, area=nombre),
                     },
                 }
         capa[geo] = {"nombre": nombre, "combos": combos,
@@ -12028,6 +12079,19 @@ def escribir_sitio(ctx, vistas, tableros):
                 % (archivo_logo, relativa))
         escritor.copia(origen_logo, "public/plataforma/" + relativa)
 
+    # Las banderas de idioma y los logos de los botones de cabecera (el del SID).
+    imagenes_de_cabecera = set(BANDERAS_IDIOMA.values())
+    for seccion_nav in ctx.navegacion["secciones"]:
+        for boton in seccion_nav.get("botones_cabecera") or []:
+            if boton.get("imagen"):
+                imagenes_de_cabecera.add(boton["imagen"])
+    for relativa in sorted(imagenes_de_cabecera):
+        origen_imagen = os.path.join(DIR_ASSETS, relativa)
+        if not os.path.exists(origen_imagen):
+            raise pr.ErrorDeProtocolo("La cabecera pide site/assets/%s, que no existe."
+                                      % relativa)
+        escritor.copia(origen_imagen, "public/plataforma/" + relativa)
+
     # Las imagenes de los cuadros `imagen-*` (capturas de tableros de otros organismos).
     for relativa in imagenes_de_paneles(tableros):
         origen_imagen = os.path.join(DIR_ASSETS, relativa)
@@ -12194,16 +12258,27 @@ def escribir_sitio(ctx, vistas, tableros):
             if len(hermanas) > 1:
                 extras["tira_de_secciones"] = hermanas
         if seccion.get("cabecera_banderas"):
-            # Desde el 22-sep-2026 van como SIGLA en monoespaciada (ES / EN / PT) y no como
-            # banderita: a este tamaño las tres banderas no se distinguen, y la sigla es la
-            # forma en que el sitio institucional escribe los rotulos chicos.
+            # Desde el 20-oct-2026 vuelven a ser BANDERAS (revision de JC del 16-oct-2026: "POR
+            # FAVOR AGREGAR LAS BANDERAS!!!!!!!"): las de su maqueta del SID (Argentina, Reino
+            # Unido y Brasil), en site/assets/banderas/. La sigla viaja igual en el texto
+            # accesible. Del 22-sep al 20-oct iban como sigla en monoespaciada.
             extras["banderas_idioma"] = [
-                {"codigo": "es", "nombre": "Español", "activa": True},
-                {"codigo": "en", "nombre": "Inglés", "activa": False},
-                {"codigo": "pt", "nombre": "Português", "activa": False},
-            ]
+                {"codigo": codigo, "nombre": nombre, "activa": activa,
+                 "imagen": "%s/%s" % (PREFIJO, BANDERAS_IDIOMA[codigo])}
+                for codigo, nombre, activa in (("es", "Español", True),
+                                               ("en", "Inglés", False),
+                                               ("pt", "Português", False))]
         botones = []
         for boton in seccion.get("botones_cabecera") or []:
+            # Un boton `proximamente` no lleva a ningun lado: se dibuja apagado con
+            # "Próximamente" (la misma excepcion acotada a la regla de botones muertos que las
+            # banderas). Con `imagen` el boton es un LOGO (el del SID, revision de JC del
+            # 16-oct-2026: "CAMBIAR 'DATOS POR DEPARTAMENTO' POR EL LOGO DE SID").
+            if boton.get("proximamente"):
+                botones.append({"texto": boton["texto"], "href": None,
+                                "imagen": ("%s/%s" % (PREFIJO, boton["imagen"])
+                                           if boton.get("imagen") else None)})
+                continue
             destino = boton["vista"]
             if destino not in url_de:
                 raise pr.ErrorDeProtocolo(
@@ -12213,7 +12288,9 @@ def escribir_sitio(ctx, vistas, tableros):
             vista_destino = vistas_por_slug.get(destino)
             if vista_destino is not None and not vista_destino["publicable"]:
                 continue
-            botones.append({"texto": boton["texto"], "href": url_de[destino]})
+            botones.append({"texto": boton["texto"], "href": url_de[destino],
+                            "imagen": ("%s/%s" % (PREFIJO, boton["imagen"])
+                                       if boton.get("imagen") else None)})
         if botones:
             extras["botones_cabecera"] = botones
         return extras

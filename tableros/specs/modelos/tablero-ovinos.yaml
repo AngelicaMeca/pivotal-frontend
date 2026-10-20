@@ -64,8 +64,6 @@ paneles:
     titulo: "Stocks"
     medida: cabezas
     fuente: "Fuente: SENASA"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   tabla-departamentos:
     titulo: "Sgo. del Estero - Stocks ovinos por categoría, totales y cantidad de Establecimientos y UP por departamento - año {anio}"
     encabezado_geo: "Departamento"
@@ -82,15 +80,11 @@ paneles:
     titulo: "Sgo del Estero - Evolución del stock total ovinos - años {desde} a {hasta}"
     medida_nombre: "Stock total"
     fuente: "Fuente: MAGyP"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   evolucion-categorias:
     titulo: "Sgo del Estero - Evolución del stock ovino por categoría años {desde} a {hasta}"
     # JC arranca este grafico en 2012, aunque la serie total venga desde 2008.
     desde: 2012
     fuente: "Fuente: MAGyP"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   tabla-evolucion:
     titulo: "Sgo. del Estero - Evolución del stock ovino por categoría y totales - años {desde} a {hasta}"
     encabezado_anio: ""
@@ -100,8 +94,6 @@ paneles:
     titulo: "Sgo del Estero - Ovinos, Participación por departamento en el stock total año {anio}"
     cuantos: 5
     fuente: "Fuente: SENASA"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   disposicion: columnas
   orden:
     - {id: mapa, ancho: 4, columna: izq}

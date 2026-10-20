@@ -689,10 +689,10 @@ function PanelMockup({ panel, filtro }: { panel: Panel; filtro?: Filtro }) {
         <div className="mapa-cab">
           <TogglePanel filtro={filtro} />
         </div>
-      ) : panel.id !== "tabla-datos" ? (
-        /* `tabla-datos` es el unico panel sin titulo (asi lo dibuja el mockup Modelo 2). La
-           tabla de superficies de la maqueta "Agri 2" SI lo lleva, porque el titulo es de JC
-           ("Estimaciones de superficies cosechadas (*)") y porque depende de los selectores. */
+      ) : (
+        /* `tabla-datos` tambien lleva titulo desde el 20-oct-2026 (revision de JC del
+           16-oct-2026: "FALTAN TITULOS DE CULTIVO"). Lo pinta tablero.js por combinacion; si
+           el build lo manda vacio, el CSS esconde el renglon (`.panel-cab-mockup h2:empty`). */
         <div className="panel-cab panel-cab-mockup">
           {conIconos && filtro ? <ChipsPanel filtro={filtro} /> : null}
           <h2 data-titulo="">
@@ -702,8 +702,13 @@ function PanelMockup({ panel, filtro }: { panel: Panel; filtro?: Filtro }) {
             <Glosa texto={panel.subtitulo} partes={panel.subtitulo_partes} />
           </p>
           {conIconos ? null : <TogglePanel filtro={filtro} />}
+          {/* El ranking elige su variable adentro del cuadro (revision de JC del 16-oct-2026);
+              los botones los arma tablero.js con las `variantes` del panel. */}
+          {panel.id === "top" ? (
+            <div className="panel-toggle ranking-variable" data-ranking-variable="" hidden />
+          ) : null}
         </div>
-      ) : null}
+      )}
       <div className={panel.capas?.length ? "panel-cuerpo con-capas" : "panel-cuerpo"}>
         <CuerpoPanel id={panel.id} mockup panel={panel} />
       </div>

@@ -75,7 +75,9 @@ export type Comun = {
   filtros_periodo: Filtro[];
   filtros_barra: Filtro[];
   pestanias: { texto: string; href: string; actual: boolean }[];
-  botones_cabecera: Enlace[];
+  // `href` nulo = boton anunciado y todavia sin pagina (se dibuja apagado con "Próximamente").
+  // `imagen`: el boton es un logo (el del SID); `texto` queda como texto accesible.
+  botones_cabecera: { texto: string; href: string | null; imagen?: string | null }[];
   // Las otras paginas de la seccion, dibujadas a la derecha de la banda del breadcrumb (es
   // donde las pone JC). `href` vacio = declarada y todavia sin construir: se muestra apagada.
   // La tira de SECCIONES HERMANAS (en ganadería, las especies). Va arriba de la de
@@ -94,7 +96,7 @@ export type Comun = {
   // declara botones propios. Lo esperan las secciones del mockup Modelo 2; una sección
   // que no lo espera no debe prometer una página que no existe.
   boton_proximamente: boolean;
-  banderas_idioma: { codigo: string; nombre: string; activa: boolean }[];
+  banderas_idioma: { codigo: string; nombre: string; activa: boolean; imagen?: string }[];
   // Definiciones de los terminos marcados en ESTA pagina (site/glosario.yaml). Vacio si no
   // hay ninguno: ahi la cascara no dibuja el recuadro de aclaraciones.
   glosario: Record<string, Termino>;

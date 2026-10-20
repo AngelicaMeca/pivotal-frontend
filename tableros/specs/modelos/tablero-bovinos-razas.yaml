@@ -71,8 +71,6 @@ paneles:
       rotulo_provincia: "Provincia"
       rotulo_cambiar: "Seleccione otro departamento si desea visualizar"
       miga: "Dto {Departamento}"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   tabla-categorias:
     titulo: "Sgo. del Estero - Bovinos - Evolución de las categorías y subcategorías vendidas para faena - Tns, precio promedio y VBP (*) - Año {anio}"
     subtitulo: "En toneladas, pesos por kilo y millones de pesos corrientes"
@@ -90,8 +88,6 @@ paneles:
   anillo-categorias:
     titulo: "Sgo del Estero - Participación por categoría total en la venta para faena - año {anio}"
     fuente: "Fuente: MAGyP"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   tabla-razas-departamentos:
     titulo: "Sgo. del Estero - Distribución de las tn enviadas a faena por raza y departamento de origen. % del total y peso promedio - Año {anio}"
     fuente: "Fuente: MAGyP - ARCA"
@@ -113,28 +109,20 @@ paneles:
     titulo: "Sgo del Estero - Participación por raza en la venta para faena - año {anio}"
     cuantos: 5
     fuente: "Fuente: MAGyP"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   anillo-departamentos:
     titulo: "Sgo del Estero - Participación por Departamento en la venta para faena - año {anio}"
     cuantos: 5
     fuente: "Fuente: MAGyP"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   precios-razas-1:
     titulo: "Precio declarado venta a faena - Aberdeen Angus y Braford - $/Kg en pie"
     razas: ["Aberdeen Angus", "Braford"]
     desde: 2025
     fuente: "Fuente: MAGyP - ARCA"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   precios-razas-2:
     titulo: "Precio declarado venta a faena - Bovino Criollo y Otras razas - $/Kg en pie"
     razas: ["Bovino Criollo", "Otra 99"]
     desde: 2025
     fuente: "Fuente: MAGyP - ARCA"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   disposicion: columnas
   orden:
     - {id: mapa, ancho: 4, columna: izq}

@@ -63,8 +63,6 @@ paneles:
     titulo: "Estratos"
     medida: cabezas
     fuente: "Fuente: SENASA"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   # El cuadro de texto de JC bajo el mapa (filas 40-50), literal.
   texto-definiciones:
     titulo: ""
@@ -82,14 +80,10 @@ paneles:
   anillo-estratos:
     titulo: "Sgo del Estero - Bovinos - Participación de los estratos en la cantidad de cabezas - año {anio}"
     fuente: "Fuente: SENASA"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   anillo-estratos-up:
     titulo: "Sgo del Estero - Bovinos - Participación de los estratos en la cantidad de UP - año {anio}"
     subtitulo: "En unidades productivas"
     fuente: "Fuente: SENASA"
-    acciones:
-      - {id: zoom, etiqueta: "Zoom", icono: zoom, accion: zoom}
   tabla-estratos:
     # El titulo de JC sin "por categoría" ni "por departamento", que es justo lo que la fuente
     # no abre (ver el aviso de la nota).
