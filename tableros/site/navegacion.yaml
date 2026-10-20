@@ -90,6 +90,14 @@ ramas:
     titulo: Registros
     bajada: "Padrones de empresas y establecimientos con domicilio en la provincia."
 
+# --- Botones de cabecera de TODAS las secciones ---
+# El logo del SID en la cabecera de cada seccion (pedido de la usuaria del 20-oct-2026): lleva a la
+# portada del SID desde cualquier parte. Va despues de los botones propios de la seccion, y una
+# seccion que ya lo declara (cultivos extensivos, el propio SID) no lo repite.
+botones_cabecera_todas:
+  - {texto: "SID - Sistema de Información Departamental", imagen: sid/logo-sid.png,
+     vista: tablero-sid, sin_conservar: true}
+
 # --- Menu lateral (Modelo 2 de JC, aprobado el 10-ago-2026) ---
 # Los seis sectores del menu lateral verde, en el orden y con los rotulos en que JC los dibujo
 # en su mockup (y en la captura del tema visual): Inicio arriba y despues estos, desplegables.

@@ -12721,7 +12721,14 @@ def escribir_sitio(ctx, vistas, tableros):
                                                ("en", "Inglés", False),
                                                ("pt", "Português", False))]
         botones = []
-        for boton in seccion.get("botones_cabecera") or []:
+        # Los botones de TODAS las secciones (`botones_cabecera_todas` en navegacion.yaml: el
+        # logo del SID, 20-oct-2026) van despues de los propios; uno que la seccion ya declara
+        # (mismo texto) no se repite.
+        propios = seccion.get("botones_cabecera") or []
+        textos_propios = {b["texto"] for b in propios}
+        comunes = [b for b in ctx.navegacion.get("botones_cabecera_todas") or []
+                   if b["texto"] not in textos_propios]
+        for boton in list(propios) + comunes:
             # Un boton `proximamente` no lleva a ningun lado: se dibuja apagado con
             # "Próximamente" (la misma excepcion acotada a la regla de botones muertos que las
             # banderas). Con `imagen` el boton es un LOGO (el del SID, revision de JC del
