@@ -16,6 +16,51 @@
 
 import * as echarts from "echarts";
 
+/* ================= regresar al tablero anterior (20-oct-2026) =================
+   Se entra al SID desde el logo de la cabecera de cualquier seccion. Al apretarlo se guarda la
+   pagina de la que se sale -con sus filtros, que no siempre estan en la URL- y su nombre; las
+   paginas del SID muestran "Regresar a <ese tablero>". Moverse adentro del SID no lo pisa: el
+   logo de una pagina del SID no guarda nada. Va en sessionStorage (por pestaña, se borra al
+   cerrarla) y en try: con el almacenamiento bloqueado simplemente no aparece el link. */
+var CLAVE_ORIGEN = "pivotal.origen";
+
+function engancharOrigen() {
+  var regresar = document.querySelector("[data-regresar-origen]");
+  if (regresar) {
+    var origen = null;
+    try { origen = JSON.parse(window.sessionStorage.getItem(CLAVE_ORIGEN) || "null"); }
+    catch { origen = null; }
+    if (origen && origen.url) {
+      regresar.setAttribute("href", origen.url);
+      var texto = regresar.querySelector("[data-regresar-texto]");
+      if (texto) { texto.textContent = regresar.dataset.regresarOrigen + " " + origen.titulo; }
+      regresar.hidden = false;
+    }
+    return;
+  }
+  Array.prototype.forEach.call(document.querySelectorAll("a[data-recordar-origen]"), function (a) {
+    a.addEventListener("click", function () {
+      var parametros = new URLSearchParams(window.location.search);
+      /* Los filtros puestos en los controles, que en las paginas sin capa departamental no
+         viajan en la URL. */
+      Array.prototype.forEach.call(document.querySelectorAll("[data-control][data-filtro]"),
+        function (nodo) {
+          if (nodo.dataset.valor) { parametros.set(nodo.dataset.filtro, nodo.dataset.valor); }
+        });
+      var consulta = parametros.toString();
+      var nombrada = document.querySelector("[data-nombre-pagina]");
+      var titulo = (nombrada && nombrada.dataset.nombrePagina)
+        || (document.title || "").split(" · ")[0];
+      try {
+        window.sessionStorage.setItem(CLAVE_ORIGEN, JSON.stringify({
+          url: window.location.pathname + (consulta ? "?" + consulta : ""),
+          titulo: titulo || "la página anterior"
+        }));
+      } catch { /* sin almacenamiento no hay "Regresar": no pasa nada mas */ }
+    });
+  });
+}
+
 export default function crearPivotal() {
 
   /* `comparar` es la comparacion vigente del zoom (ver "cruzar datos", mas abajo). Vive en el
@@ -1686,5 +1731,6 @@ export default function crearPivotal() {
       return PIVOTAL.arrancar(contenedor.dataset.datos, pintarVista(dibujar));
     }
   };
+  engancharOrigen();
   return PIVOTAL;
 }

@@ -83,7 +83,14 @@ export type Comun = {
     imagen?: string | null;
     // Un logo que lleva a la portada de otra area (el SID) no arrastra los filtros.
     sin_conservar?: boolean;
+    // Y recuerda la pagina de la que se sale, para el "Regresar a" del area destino.
+    recordar_origen?: boolean;
   }[];
+  // El rotulo del link de vuelta a la pagina desde la que se entro al area (SID: "Regresar
+  // a"). Nulo en las demas secciones.
+  regresar_origen?: string | null;
+  // El nombre de la pagina para ese "Regresar a" ("Cultivos extensivos", "Bovinos - Movimientos").
+  nombre_pagina?: string | null;
   // El menu lateral del SID: los departamentos en vez de los sectores. `elegir`: el renglon
   // cambia el departamento de ESTA pagina sin recargarla.
   menu_departamentos: { texto: string; geo: string; href: string; elegir: boolean }[];

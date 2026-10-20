@@ -2913,6 +2913,16 @@ dialog.zoom.zoom-visible::backdrop { opacity: 1; }
 .panel-cab > .panel-toggle:has(> button:nth-child(5)) { flex: 1 1 100%; flex-wrap: wrap; order: 2; }
 
 /* ---------- SID (maqueta "0000000000 Maqueta SID 1.xlsx", 20-oct-2026) ---------- */
+/* "Regresar a <tablero>": la vuelta a la pagina desde la que se entro al SID, en la banda. */
+.regresar-origen {
+  flex: 0 0 auto; color: var(--sobre-cromo); text-decoration: none; font-size: .84rem;
+  font-weight: 600; padding: .2rem .65rem; border: 1px solid var(--sobre-cromo);
+  border-radius: var(--radio-pildora); white-space: nowrap;
+}
+.regresar-origen:hover { background: color-mix(in srgb, var(--sobre-cromo) 16%, transparent); }
+.regresar-origen:focus-visible { outline: 2px solid var(--sobre-cromo); outline-offset: 2px; }
+.regresar-origen[hidden] { display: none; }
+.imprimiendo .regresar-origen { display: none; }
 /* El mapa de ubicacion: la provincia con el departamento elegido, arriba a la izquierda de cada
    hoja. En la portada es el selector y va mas alto. */
 .panel[data-panel="mapa--ubicacion"] .grafico { height: 360px; flex: 0 0 auto; }

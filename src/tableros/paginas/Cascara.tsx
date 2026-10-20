@@ -126,7 +126,10 @@ export default function Cascara({ pagina, children }: { pagina: Comun; children:
     // formato_v1.cromada_por_area): el <body> es del layout común, así que ponerle la clase
     // desde la página obligaría a esperar al navegador y la cabecera se vería un instante del
     // color equivocado. Las variables CSS se heredan: envolver la página alcanza.
-    <div className={pagina.clase_cuerpo ? `pagina ${pagina.clase_cuerpo}` : "pagina"}>
+    <div
+      className={pagina.clase_cuerpo ? `pagina ${pagina.clase_cuerpo}` : "pagina"}
+      data-nombre-pagina={pagina.nombre_pagina || undefined}
+    >
       <header className="cabecera">
         {/* Logo provincial (theme.logo_provincia.archivo, parametrizado por cliente). Sin
             asset: wordmark sobrio de texto. */}
@@ -166,6 +169,7 @@ export default function Cascara({ pagina, children }: { pagina: Comun; children:
                   className={clase}
                   href={boton.href}
                   data-conserva={boton.sin_conservar ? undefined : ""}
+                  data-recordar-origen={boton.recordar_origen ? "" : undefined}
                 >
                   {contenido}
                 </a>
@@ -189,6 +193,14 @@ export default function Cascara({ pagina, children }: { pagina: Comun; children:
             <button type="button" className="boton-cabecera" disabled title="Próximamente">
               Datos por Departamento <span className="prox">Próximamente</span>
             </button>
+          ) : null}
+          {/* "Regresar a <tablero>": vuelve a la pagina desde la que se entro al area
+              (el SID). El destino lo guardo el navegador al apretar el logo; sin eso queda
+              oculto (comun.js), nunca un link a ningun lado. */}
+          {pagina.regresar_origen ? (
+            <a className="regresar-origen" href="" data-regresar-origen={pagina.regresar_origen} hidden>
+              ← <span data-regresar-texto="">{pagina.regresar_origen}</span>
+            </a>
           ) : null}
           {pagina.banderas_idioma.length ? (
             // Donde estaba el titulo van las banderas es/en/pt (tercera tanda, backlog 33)

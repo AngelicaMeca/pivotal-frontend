@@ -12439,7 +12439,8 @@ def escribir_sitio(ctx, vistas, tableros):
              "menu": menu_del_sitio(ctx), "con_menu": True,
              "clase_cuerpo": "", "botones_cabecera": [], "boton_proximamente": False,
              "paginas_de_seccion": [], "tira_de_secciones": [],
-             "banderas_idioma": [], "menu_departamentos": [],
+             "banderas_idioma": [], "menu_departamentos": [], "regresar_origen": None,
+             "nombre_pagina": None,
              "base": PREFIJO, "inicio": INICIO}
 
     logo_pagina = dict(theme.get("logo_provincia") or {})
@@ -12752,9 +12753,19 @@ def escribir_sitio(ctx, vistas, tableros):
                                        if boton.get("imagen") else None),
                             # Un logo que lleva a la portada de su area (el SID) no arrastra
                             # los filtros de la pagina: son de otra cosa.
-                            "sin_conservar": bool(boton.get("sin_conservar"))})
+                            "sin_conservar": bool(boton.get("sin_conservar")),
+                            # Y recuerda de donde se salio, para poder regresar (ver
+                            # `regresar_al_origen`).
+                            "recordar_origen": bool(boton.get("recordar_origen"))})
         if botones:
             extras["botones_cabecera"] = botones
+        # "Regresar a <tablero>": las paginas de un area a la que se entra desde otras (el SID)
+        # ofrecen volver a la pagina de la que se vino. El destino lo guarda el navegador al
+        # apretar el logo; sin eso el link no se dibuja.
+        if seccion.get("regresar_al_origen"):
+            extras["regresar_origen"] = seccion["regresar_al_origen"]
+        # Como se nombra esta pagina en el "Regresar a" del SID.
+        extras["nombre_pagina"] = seccion["titulo"]
         return extras
 
     # Paginas de vista
@@ -13004,6 +13015,9 @@ def escribir_sitio(ctx, vistas, tableros):
             ruta_pagina = "_privado/%s" % tablero["slug"]
             reservados.append(tablero)
         extras = extras_de_seccion(seccion, portada=not nombre_pagina)
+        if nombre_pagina:
+            extras["nombre_pagina"] = "%s - %s" % (
+                seccion["titulo"], tablero["spec"].get("titulo_pagina") or tablero["titulo"])
         # El menu lateral del SID son los departamentos. En una pagina de un departamento cada
         # renglon cambia el departamento de ESA pagina; en la portada, lleva a su agricultura.
         if tablero.get("departamentos_menu"):

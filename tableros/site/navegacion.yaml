@@ -96,7 +96,7 @@ ramas:
 # seccion que ya lo declara (cultivos extensivos, el propio SID) no lo repite.
 botones_cabecera_todas:
   - {texto: "SID - Sistema de Información Departamental", imagen: sid/logo-sid.png,
-     vista: tablero-sid, sin_conservar: true}
+     vista: tablero-sid, sin_conservar: true, recordar_origen: true}
 
 # --- Menu lateral (Modelo 2 de JC, aprobado el 10-ago-2026) ---
 # Los seis sectores del menu lateral verde, en el orden y con los rotulos en que JC los dibujo
@@ -156,7 +156,7 @@ secciones:
       # Lleva a la portada del SID (20-oct-2026, maqueta "Maqueta SID 1.xlsx"). No arrastra
       # cultivo ni campaña: el SID es otra area.
       - {texto: "SID - Sistema de Información Departamental", imagen: sid/logo-sid.png,
-         vista: tablero-sid, sin_conservar: true}
+         vista: tablero-sid, sin_conservar: true, recordar_origen: true}
     grupos: []
 
   # Agricultura > Cultivos intensivos (frutas y hortalizas). Tres bases que comparten mart,
@@ -428,6 +428,9 @@ secciones:
          vista: tablero-sid, sin_conservar: true}
     # El menu lateral son los departamentos; en la portada cada uno abre su agricultura.
     menu_departamentos: {lleva_a: tablero-sid-agricultura}
+    # "Regresar" al tablero desde el que se entro al SID (pedido de la usuaria del 20-oct-2026):
+    # el logo del SID de las otras secciones recuerda de donde se salio, con sus filtros.
+    regresar_al_origen: "Regresar a"
     # La tira de la fila 5 de las hojas de JC: Agricultura | Ganadería | General | Agroclima.
     # General y Agroclima no tienen maqueta todavia. No va en la portada.
     paginas_solo_internas: true
