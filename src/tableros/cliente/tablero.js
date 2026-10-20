@@ -886,7 +886,16 @@ export default function iniciar(PIVOTAL) {
       if (t.href) { tarjeta.href = t.href; }
       else if (!conEnlaces) { tarjeta.setAttribute("aria-disabled", "true"); }
       var mini = document.createElement("span");
-      mini.className = "acceso-mini" + (t.miniatura_icono ? " acceso-mini-icono" : "");
+      mini.className = "acceso-mini" + (t.miniatura_icono ? " acceso-mini-icono" : "")
+        + (t.miniaturas ? " acceso-mini-cuadricula" : "");
+      /* Varias fotos en cuadricula (la tarjeta "Ganadería" de "SID Ingreso"). */
+      (t.miniaturas || []).forEach(function (src) {
+        var foto = document.createElement("img");
+        foto.src = src;
+        foto.alt = "";
+        foto.decoding = "async";
+        mini.appendChild(foto);
+      });
       if (t.miniatura) {
         var img = document.createElement("img");
         img.src = t.miniatura;
@@ -918,7 +927,9 @@ export default function iniciar(PIVOTAL) {
           var li = document.createElement("li");
           if (e.href) {
             var a = document.createElement("a");
-            a.href = e.href;
+            /* En el SID las paginas de cada especie se abren en el departamento elegido. */
+            var dto = panel.con_departamento ? PIVOTAL.departamento() : "";
+            a.href = dto ? e.href + "?departamento=" + encodeURIComponent(dto) : e.href;
             a.textContent = e.texto;
             li.appendChild(a);
           } else {
@@ -2051,7 +2062,10 @@ export default function iniciar(PIVOTAL) {
 
   /* El dibujante de un panel: por su id; los `imagen-*`, `texto-*`, `cifras-*` y `fija-*`
      comparten. */
-  function dibujanteDe(id) {
+  function dibujanteDe(idCompleto) {
+    /* `<forma>--<nombre>`: un cuadro con nombre propio dibujado con una forma que ya existe
+       (los dos anillos y las cuatro barras apiladas de la agricultura del SID). */
+    var id = idCompleto.indexOf("--") > 0 ? idCompleto.split("--")[0] : idCompleto;
     if (DIBUJANTES[id]) { return DIBUJANTES[id]; }
     if (id.indexOf("imagen-") === 0) { return pintarImagen; }
     if (id.indexOf("texto-") === 0) { return pintarTexto; }
@@ -2810,6 +2824,10 @@ export default function iniciar(PIVOTAL) {
     paneles.forEach(function (nodo) {
       var panel = combo.paneles[nodo.dataset.panel];
       if (!panel) { return; }
+      /* Un cuadro que no va en esta seleccion (el SID: la hoja de "Todos los cultivos" y la de
+         un cultivo no tienen los mismos cuadros) se esconde entero; no es un cuadro sin datos. */
+      nodo.hidden = !!panel.oculto;
+      if (panel.oculto) { return; }
       if (panel.vacio) { apagar(nodo, panel.vacio); return; }
       encender(nodo);
       /* Titulo y subtitulo pueden traer terminos del glosario marcados (regla de JC de las

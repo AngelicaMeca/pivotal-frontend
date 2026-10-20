@@ -35,6 +35,7 @@ import hashlib
 import itertools
 import json
 import os
+import re
 import shutil
 import sys
 import unicodedata
@@ -7384,8 +7385,24 @@ def panel_stock_tabla_evolucion(ctx, spec, anio, pie, geo=None):
     }
 
 
-def panel_stock_tabla_departamento_anios(ctx, spec, anio, pie):
-    """Cuadro 3: la matriz departamento x anio del total de cabezas."""
+def _titulo_departamento_anios(ctx, titulo, geo):
+    """ "... stock bovino total por departamento - ..." -> "... stock bovino total Dto AGUIRRE
+    - ..." (JC, "SID Muestra Dto-xGanad" G87-G88). Si el titulo no dice "por departamento", el
+    departamento va al final, como en los otros cuadros recortados."""
+    if not geo:
+        return titulo
+    if "por departamento" in titulo:
+        return titulo.replace("por departamento", "Dto %s" % ctx.hechos.nombre[geo], 1)
+    return _con_departamento(ctx, titulo, geo)
+
+
+def panel_stock_tabla_departamento_anios(ctx, spec, anio, pie, geo=None):
+    """Cuadro 3: la matriz departamento x anio del total de cabezas.
+
+    Con un departamento elegido (`geo`) es SOLO su fila, y el titulo nombra al departamento en
+    vez de decir "por departamento" (JC, hoja "SID Muestra Dto-xGanad", G86-G88: "De la tabla
+    original, SOLO PONER LOS DATOS DEL DEPARTAMENTO Y NO DE TODA LA PROVINCIA / PONER EL NOMBRE
+    DEL DEPARTAMENTO EN VEZ DE 'POR DEPARTAMENTO'"). Vale en Ganaderia y en el SID."""
     declarado = spec["paneles"]["tabla-departamento-anios"]
     # Los anios del DETALLE departamental, que en ovinos y caprinos no son los de la serie
     # provincial (la serie arranca en 2008 y los departamentos son la foto de 2025).
@@ -7396,19 +7413,27 @@ def panel_stock_tabla_departamento_anios(ctx, spec, anio, pie):
     columnas += [{"etiqueta": str(a), "num": True} for a in anios]
     # `sin_total`: JC no pone la fila TOTAL PROV en esta matriz ("GanBov ST", "GanEqui"): el
     # total por anio ya esta en la tabla de evolucion de al lado.
-    filas = [] if declarado.get("sin_total") else [
-        {"celdas": [declarado["rotulo_total"]]
-                   + [_celda_cab(ctx, ctx.hechos.total_anual(a, ctx.agregado)) for a in anios],
-         "actual": True}]
-    for geo in sorted(ctx.hechos.deptos_con_stock(),
-                      key=lambda g: pr.clave_alfabetica(ctx.hechos.nombre[g])):
-        filas.append({"geo": geo,
-                      "celdas": [ctx.hechos.nombre[geo]]
-                                + [_celda_cab(ctx, ctx.hechos.total_depto(a, geo, ctx.agregado))
-                                   for a in anios]})
+    if geo:
+        filas = [{"geo": geo, "actual": True,
+                  "celdas": [ctx.hechos.nombre[geo]]
+                            + [_celda_cab(ctx, ctx.hechos.total_depto(a, geo, ctx.agregado))
+                               for a in anios]}]
+    else:
+        filas = [] if declarado.get("sin_total") else [
+            {"celdas": [declarado["rotulo_total"]]
+                       + [_celda_cab(ctx, ctx.hechos.total_anual(a, ctx.agregado))
+                          for a in anios],
+             "actual": True}]
+        for otro in sorted(ctx.hechos.deptos_con_stock(),
+                           key=lambda g: pr.clave_alfabetica(ctx.hechos.nombre[g])):
+            filas.append({"geo": otro,
+                          "celdas": [ctx.hechos.nombre[otro]]
+                                    + [_celda_cab(ctx, ctx.hechos.total_depto(a, otro,
+                                                                              ctx.agregado))
+                                       for a in anios]})
     return {
-        "titulo": titulo_literal(declarado["titulo"],
-                                 desde=str(anios[0]), hasta=str(anios[-1])),
+        "titulo": _titulo_departamento_anios(ctx, titulo_literal(
+            declarado["titulo"], desde=str(anios[0]), hasta=str(anios[-1])), geo),
         "subtitulo": ctx.subtitulo_unidad("cabezas"),
         "pie": pie,
         "nota": limpiar(declarado.get("nota") or ""),
@@ -7500,7 +7525,7 @@ def _porcion(ctx, nombre, valor, total, color, unidad):
             "pct": pr.fmt_pct(valor / total * 100, 1) if total else "S/D", "color": color}
 
 
-def panel_stock_anillo_departamentos(ctx, spec, anio, pie):
+def panel_stock_anillo_departamentos(ctx, spec, anio, pie, geo=None):
     """Participacion por departamento en el stock: los N primeros y el "Resto".
 
     Es el anillo que JC pega al pie de la columna izquierda en las hojas de stock de cada
@@ -7519,8 +7544,15 @@ def panel_stock_anillo_departamentos(ctx, spec, anio, pie):
         return panel_vacio(titulo, "No hay stock por departamento para la selección.")
     total = sum(v for v, _ in valores)
     cuantos = int(declarado.get("cuantos", 7))
-    partes = [(n, v) for v, n in valores[:cuantos]]
-    resto = sum(v for v, _ in valores[cuantos:])
+    primeros = valores[:cuantos]
+    # Con un departamento elegido, ese departamento FIGURA siempre aunque no este entre los
+    # primeros (JC, "SID Muestra Dto-xGanad" G95: "SEA CUAL FUERE LA PARTICIPACION DEL
+    # DEPARTAMENTO, SIEMPRE DEBERA FIGURAR EL QUE SE ESTA ANALIZANDO, AUNQUE SEA EN % MUY BAJOS").
+    elegido = ctx.hechos.nombre.get(geo) if geo else None
+    if elegido and all(n != elegido for _, n in primeros):
+        primeros = primeros + [(v, n) for v, n in valores if n == elegido]
+    partes = [(n, v) for v, n in primeros]
+    resto = total - sum(v for v, _ in primeros)
     if resto:
         partes.append((declarado.get("rotulo_resto", "Resto"), resto))
     colores = ctx.colores.por_categoria([n for n, _ in partes], respetar_orden=True)
@@ -7720,6 +7752,8 @@ PANELES_DEPARTAMENTALES = {
     "evolucion-categorias": panel_stock_barras_categorias,
     "tabla-evolucion": panel_stock_tabla_evolucion,
     "evolucion-vs-otra": panel_stock_contra_otra_base,
+    # La matriz departamento x anio queda en la fila del departamento (JC, SID G86-G88).
+    "tabla-departamento-anios": panel_stock_tabla_departamento_anios,
 }
 
 
@@ -7728,7 +7762,13 @@ PANELES_DEPARTAMENTALES = {
 # stocks y UP por categorías" del departamento: sus UP solo estan en la base por estrato).
 PANELES_DEPARTAMENTALES_POR_ANIO = {
     "tabla-estratos": panel_stock_tabla_estratos,
+    # El anillo por departamento con el elegido siempre adentro (JC, SID G95).
+    "anillo-departamentos": panel_stock_anillo_departamentos,
 }
+
+# Los que cambian con el departamento SIEMPRE, sin que el spec lo declare: son reglas de JC
+# para toda la informacion departamental de stock.
+SIEMPRE_CON_DEPARTAMENTO = ("anillo-departamentos",)
 
 
 def capa_departamental_stock(ctx, spec, anios, pie):
@@ -7742,7 +7782,8 @@ def capa_departamental_stock(ctx, spec, anios, pie):
     ids = [p["id"] for p in spec["paneles"]["orden"] if p["id"] in PANELES_DEPARTAMENTALES]
     por_anio = [p["id"] for p in spec["paneles"]["orden"]
                 if p["id"] in PANELES_DEPARTAMENTALES_POR_ANIO
-                and (spec["paneles"].get(p["id"]) or {}).get("cambia_con_departamento")]
+                and (p["id"] in SIEMPRE_CON_DEPARTAMENTO
+                     or (spec["paneles"].get(p["id"]) or {}).get("cambia_con_departamento"))]
     capa = {}
     for geo in ctx.hechos.deptos_con_stock():
         combos, claves = {}, []
@@ -7973,6 +8014,9 @@ def imagenes_de_paneles(tableros):
             if id_panel.startswith("accesos-") and isinstance(declarado, dict):
                 rutas.update(t["imagen"] for t in declarado["tarjetas"]
                              if t.get("miniatura") == "imagen")
+                for t in declarado["tarjetas"]:
+                    if t.get("miniatura") == "imagenes":
+                        rutas.update(t["imagenes"])
     return sorted(rutas)
 
 
@@ -10574,6 +10618,10 @@ def panel_accesos(ctx, spec, id_panel):
             # Una imagen fija de site/assets/ (la tapa de AgroMet en su tarjeta, Grupo 121 de
             # "Clima Ingreso"): la copia `imagenes_de_paneles`, que corta si no existe.
             tarjeta["miniatura"] = "%s/%s" % (PREFIJO, item["imagen"])
+        elif item.get("miniatura") == "imagenes":
+            # Varias fotos en cuadricula de 2x2 (las cuatro especies de la tarjeta "Ganaderia"
+            # de "SID Ingreso"); tambien las copia `imagenes_de_paneles`.
+            tarjeta["miniaturas"] = ["%s/%s" % (PREFIJO, r) for r in item["imagenes"]]
         elif item.get("miniatura") == "galeria":
             galeria = pr.cargar_yaml(os.path.join(DIR_MODELOS, item["destino"] + ".yaml"))
             galeria["slug_vista"] = item["destino"]
@@ -10668,6 +10716,7 @@ class ContextoGanaderiaIngreso:
         self.navegacion = pr.cargar_yaml(os.path.join(DIR_SITE, "navegacion.yaml"))
         self.colores = pr.Colores(self.protocolo, self.comunes, self.theme)
         self.especies, self.nombre_especie = {}, {}
+        self.por_depto = {}
         self.fuentes = set()
         anios_por_especie = []
         for decl in self.comunes["especies"]:
@@ -10692,6 +10741,19 @@ class ContextoGanaderiaIngreso:
                     unidades = datos.total_estratos_provincia(anio, up["medida"])
                 if cabezas is not None and unidades is not None:
                     valores[anio] = {"cabezas": cabezas, "up": unidades}
+            # Lo mismo por DEPARTAMENTO (el SID, hoja "SID Muestra Dto-Dto 2": "Hay que generar
+            # estos graficos para el departamento"). Sale de los mismos marts y con la misma
+            # regla de UP que la provincia.
+            por_depto = {}
+            for (anio, geo, categoria, medida), valor in datos.depto.items():
+                if categoria != agregado or medida != "cabezas":
+                    continue
+                if up["de"] == "serie":
+                    unidades = datos.depto.get((anio, geo, agregado, up["medida"]))
+                else:
+                    unidades = datos.total_estratos_depto(anio, geo, up["medida"])
+                por_depto[(anio, geo)] = {"cabezas": valor, "up": unidades}
+            self.por_depto[decl["id"]] = por_depto
             if not valores:
                 raise pr.ErrorDeProtocolo("La especie %s no tiene ningun anio con cabezas y UP."
                                           % decl["id"])
@@ -10704,6 +10766,15 @@ class ContextoGanaderiaIngreso:
                                       "ningun anio con cabezas y UP.")
         # El ultimo anio con dato de TODAS: un anillo con anios mezclados no es participacion.
         self.anio = max(comunes_anios)
+
+    def valor_depto(self, especie, medida, geo, anio=None):
+        """Las cabezas o UP de una especie en un departamento, en el anio de la portada. Una
+        especie sin fila en ese departamento es None (no informo), no cero."""
+        if especie not in self.por_depto:
+            raise pr.ErrorDeProtocolo("Un cuadro del SID nombra la especie %r, que no esta en "
+                                      "_comunes-ganaderia-ingreso." % especie)
+        fila = self.por_depto[especie].get((anio or self.anio, geo))
+        return fila.get(medida) if fila else None
 
     def valor(self, especie, medida):
         if especie not in self.especies:
@@ -10766,6 +10837,327 @@ def construir_tablero_ganaderia_ingreso(ctx, spec):
         else:
             paneles[id_panel] = panel_accesos(ctx, spec, id_panel)
     tablero["combos"][""] = {"paneles": paneles}
+    return tablero
+
+
+# ==========================================================================
+# SID · Sistema de Informacion Departamental (maqueta "0000000000 Maqueta SID 1.xlsx",
+# 20-oct-2026; lectura en docs/maqueta-sid.md)
+# ==========================================================================
+# Un cuadro que NO va en la seleccion vigente: la misma pagina del SID dibuja la hoja "SID
+# Muestra Dto-1" (todos los cultivos) o la "SID Muestra Dto-xCultivo" (un cultivo), que no
+# tienen los mismos cuadros. El navegador lo esconde (`oculto`); `vacio` es solo para que
+# `verificar_tablero` no le pida pie de fuente a un cuadro que no se dibuja.
+OCULTO = {"titulo": "", "oculto": True, "vacio": "no corresponde a esta seleccion"}
+
+# Los cuadros de cada una de las dos hojas de agricultura del SID.
+SID_AGRI_TODOS = ("mapa", "anillo--todos", "tendencia--todos", "apiladas--verano-tn",
+                  "apiladas--verano-pct", "apiladas--invierno-tn", "apiladas--invierno-pct")
+SID_AGRI_CULTIVO = ("top", "tabla-datos", "tendencia", "anillo", "combo--prod-rend")
+SID_CARTERA = (("verano", False, "apiladas--verano-tn"), ("verano", True, "apiladas--verano-pct"),
+               ("invierno", False, "apiladas--invierno-tn"),
+               ("invierno", True, "apiladas--invierno-pct"))
+
+
+class ContextoSid:
+    """El SID no tiene base propia: junta la agricultura de la base 9 (sus hojas de cultivos) y
+    el stock de ganaderia de los marts de cada especie (la hoja de "Todas las especies"), que
+    son exactamente los datos que JC pone en su maqueta."""
+
+    familia = "sid"
+
+    def __init__(self, agri, ganaderia):
+        self.agri = agri
+        self.ganaderia = ganaderia
+        self.comunes = pr.cargar_comunes(self.familia)
+        self.protocolo = agri.protocolo
+        self.theme = agri.theme
+        self.navegacion = agri.navegacion
+        self.colores = agri.colores
+        self.departamentos = departamentos_sid(self.comunes)
+
+    def nombre(self, geo):
+        """El nombre del departamento como lo escriben los cuadros (el canonico de dim_geo)."""
+        return self.agri.hechos.nombre.get(geo) or nombres_extra_geojson()[geo]
+
+
+def _clave_depto(nombre):
+    return re.sub(r"[^A-Z]", "", sin_tildes_mayuscula(nombre))
+
+
+def departamentos_sid(comunes):
+    """Los departamentos del menu del SID, en el orden y con el nombre que les da JC (columna B
+    de sus cinco hojas: "Gral Taboada", "La Banda", "Río Hondo"), con su geo_id. Se buscan por
+    nombre en el GeoJSON de la provincia; uno que no se encuentre, o uno del GeoJSON que falte
+    en la lista, corta la corrida: el menu tiene que nombrar a los 27."""
+    geo = nombres_extra_geojson()
+    por_clave = {_clave_depto(n): g for g, n in geo.items()}
+    alias = comunes["departamentos"].get("alias") or {}
+    salida = []
+    for nombre in comunes["departamentos"]["nombres"]:
+        candidatos = [_clave_depto(nombre)] + [_clave_depto(a) for a in alias.get(nombre, [])]
+        encontrado = next((por_clave[c] for c in candidatos if c in por_clave), None)
+        if encontrado is None:
+            raise pr.ErrorDeProtocolo(
+                "El departamento %r del SID (_comunes-sid.yaml) no esta en el GeoJSON de la "
+                "provincia. Declarar su nombre en `departamentos.alias`." % nombre)
+        salida.append((encontrado, nombre))
+    faltan = sorted(set(geo) - {g for g, _ in salida})
+    if faltan:
+        raise pr.ErrorDeProtocolo("Al menu del SID le faltan departamentos: %s"
+                                  % ", ".join(geo[g] for g in faltan))
+    return salida
+
+
+def panel_mapa_ubicacion(ctx, declarado, pie, selecciona=False, ficha=None):
+    """El mapa de UBICACION del SID: la provincia con todos los departamentos del mismo color.
+    Con un departamento elegido el navegador atenua los demas y deja solo su nombre, que es el
+    dibujo de JC (el departamento en negro sobre la provincia en blanco). Es el selector: en la
+    portada el clic abre el departamento (`ficha`) y adentro lo cambia en el acto
+    (`selecciona`)."""
+    deptos = [{"id": g, "nombre": ctx.nombre(g), "v": 1, "t": "", "filas": [],
+               "color": declarado["color"]} for g, _ in ctx.departamentos]
+    return {
+        "titulo": declarado.get("titulo", ""),
+        "subtitulo": "",
+        "pie": pie,
+        "geojson": GEOJSON,
+        "accion": declarado.get("rotulo_accion"),
+        "rotulos": bool(declarado.get("rotulos_departamento")),
+        "accion_con_departamento": declarado.get("rotulo_cambiar"),
+        "selecciona": selecciona,
+        "ficha": ficha,
+        "aspecto": aspecto_mapa(), "relacion": relacion_mapa(),
+        "deptos": deptos,
+        "unidad": "",
+        "escala": {"unidad": "", "tramos": []},
+        "total": "",
+    }
+
+
+def url_de_pagina_sid(ctx, spec_id, consulta=""):
+    """La URL de una pagina del SID por el id de su spec (`pagina` de su seccion)."""
+    spec = pr.cargar_yaml(os.path.join(DIR_MODELOS, spec_id + ".yaml"))
+    seccion = next(x for x in ctx.navegacion["secciones"] if x["id"] == spec["seccion"])
+    pagina = spec.get("pagina")
+    return "%s/%s%s%s" % (PREFIJO, seccion["url"], "/" + pagina if pagina else "", consulta)
+
+
+def _ranking_sid(declarado, valores, total, unidad, pie, texto):
+    """Una tabla de ranking por departamento de la portada del SID: puesto, departamento, valor
+    y % sobre el total provincial, de mayor a menor. `valores` es [(geo, nombre, valor)]."""
+    filas = [(g, n, v) for g, n, v in valores if v]
+    ordenados = ordenar_desc(filas)
+    puesto_de = puestos([(g, v) for g, _, v in ordenados])
+    return {
+        "titulo": declarado["titulo"],
+        "subtitulo": declarado.get("subtitulo", ""),
+        "pie": pie,
+        "columnas": [{"etiqueta": "Puesto", "num": False},
+                     {"etiqueta": "Departamento", "num": False},
+                     {"etiqueta": declarado["columna"], "num": True},
+                     {"etiqueta": "% sobre Total prov.", "num": True}],
+        "filas": [{"geo": g, "celdas": ["%d°" % puesto_de[g], n, texto(v),
+                                        participacion_texto(v, total)]}
+                  for g, n, v in ordenados],
+    }
+
+
+def _fuente_ganaderia_sid(gan):
+    """La cita de los cuadros de stock del SID: los organismos de los marts de las especies,
+    como en la portada de Ganaderia."""
+    return "Fuente: %s" % " - ".join(sorted(gan.fuentes, key=pr.clave_alfabetica))
+
+
+def construir_tablero_sid(ctx, spec):
+    """La portada del SID (hoja "SID Ingreso"): que es el SID, que informacion contiene, el mapa
+    para elegir el departamento y los RANKINGS POR DEPARTAMENTO que JC pide en la H73 ("FALTA
+    AGREGAR RANKING DE PRODUCCION DE TODOS LOS CULTIVOS Y DE TODAS LAS CABEZAS (GENERAL, GANADO
+    MAYOR Y MENOR)"). Sin filtros."""
+    agri, gan = ctx.agri, ctx.ganaderia
+    tablero = tablero_base(ctx, spec, [])
+    paneles = {}
+    for item in spec["paneles"]["orden"]:
+        id_panel = item["id"]
+        declarado = spec["paneles"][id_panel]
+        if id_panel.startswith("texto-"):
+            paneles[id_panel] = panel_texto(spec, id_panel)
+        elif id_panel.startswith("accesos-"):
+            paneles[id_panel] = panel_accesos(ctx, spec, id_panel)
+        elif id_panel == "mapa--ubicacion":
+            paneles[id_panel] = panel_mapa_ubicacion(
+                ctx, declarado, declarado["fuente"],
+                ficha=url_de_pagina_sid(ctx, declarado["lleva_a"], "?departamento="))
+        elif id_panel.startswith("top--"):
+            if declarado["de"] == "produccion":
+                campania = agri.campania_defecto
+                cultivos = cultivos_con_datos(agri)
+                valores = [(g, ctx.nombre(g),
+                            medida_provincial(agri, campania, cultivos, "produccion_tn", [g]))
+                           for g, _ in ctx.departamentos]
+                total = medida_provincial(agri, campania, cultivos, "produccion_tn")
+                panel = _ranking_sid(
+                    declarado, valores, total, "tn", agri.pie(spec),
+                    lambda v: agri.precision.texto(v, "produccion_tn", "departamento"))
+                panel["titulo"] = titulo_literal(panel["titulo"], campania=campania)
+            else:
+                especies = declarado["especies"]
+                valores = []
+                for g, _ in ctx.departamentos:
+                    partes = [gan.valor_depto(e, "cabezas", g) for e in especies]
+                    valores.append((g, ctx.nombre(g),
+                                    sum(p for p in partes if p) if any(partes) else None))
+                total = sum(gan.valor(e, "cabezas") for e in especies)
+                panel = _ranking_sid(declarado, valores, total, "cabezas",
+                                     _fuente_ganaderia_sid(gan),
+                                     lambda v: pr.fmt_numero(v, 0))
+                panel["titulo"] = titulo_literal(panel["titulo"], anio=str(gan.anio))
+            paneles[id_panel] = panel
+        else:
+            raise pr.ErrorDeProtocolo("El tablero %s no sabe armar el cuadro %s"
+                                      % (spec["id"], id_panel))
+    tablero["combos"][""] = {"paneles": paneles}
+    tablero["departamentos_menu"] = ctx.departamentos
+    return tablero
+
+
+def construir_tablero_sid_agricultura(ctx, spec):
+    """Agricultura de UN departamento en el SID. Es una sola pagina con las dos hojas de JC:
+    "SID Muestra Dto-1" con el cultivo en "Todos" (por defecto: "POR DEFECTO SE MUESTRA LA
+    OPCION TODOS LOS CULTIVOS") y "SID Muestra Dto-xCultivo" con un cultivo elegido. El cultivo
+    se elige con los mismos chips que Agricultura ("EXACTAMENTE IGUAL QUE EN AGRI") y solo los
+    que el departamento tiene ("ESTA PERFECTO ESTO QUE SOLO SEA POSIBLE SELECCIONAR CULTIVOS DE
+    ESE DTO"). Los cuadros que no van en la hoja vigente se esconden (`OCULTO`).
+
+    Lo provincial (el mapa de calor de produccion y el ranking) va en el combo; lo del
+    departamento va en la capa departamental, un archivo por departamento, igual que el clic
+    del mapa de cultivos extensivos. La cartera de cultivos de verano e invierno no depende del
+    cultivo ni de la campaña: viaja una vez por departamento (`comunes`)."""
+    agri = ctx.agri
+    hechos = agri.hechos
+    cultivos = cultivos_visibles(agri)
+    etiquetas = {c: hechos.cultivo_para_titulo(c) for c in cultivos}
+    etiquetas[TODOS] = "Todos"
+    opciones_cultivo = con_iconos_de_cultivo(agri, opciones(cultivos + [TODOS], etiquetas))
+    opciones_cultivo[-1]["grande"] = True
+    tablero = tablero_base(ctx, spec, [
+        {"id": "cultivo", "etiqueta": "Cultivo", "zona": "selector",
+         "opciones": opciones_cultivo, "defecto": TODOS},
+        filtro_campania(agri),
+    ])
+    # Partido por cultivo, como cultivos extensivos: el navegador baja el del cultivo elegido.
+    tablero["particion"] = "cultivo"
+    pie = agri.pie(spec)
+    ubicacion = panel_mapa_ubicacion(ctx, spec["paneles"]["mapa--ubicacion"], pie,
+                                     selecciona=True)
+    for cultivo in cultivos + [TODOS]:
+        todos = cultivo == TODOS
+        lista = cultivos_del_filtro(agri, cultivo)
+        nombre_contexto = "Todos los cultivos" if todos else etiquetas[cultivo]
+        for campania in agri.ventana:
+            paneles = {"mapa--ubicacion": ubicacion}
+            if todos:
+                paneles["mapa"] = panel_mapa_cultivos(agri, spec, campania, lista,
+                                                      "produccion_tn", pie, True)
+                paneles["top"] = OCULTO
+            else:
+                paneles["mapa"] = OCULTO
+                paneles["top"] = panel_top_cultivos(agri, spec, campania, lista, False, pie,
+                                                    nombre_contexto)
+            tablero["combos"]["|".join([cultivo, campania])] = {"paneles": paneles}
+    capa = {}
+    for geo, _ in ctx.departamentos:
+        nombre = ctx.nombre(geo)
+        comunes = {id_panel: _info_cartera(agri, spec, geo, estacion, pct, pie)
+                   for estacion, pct, id_panel in SID_CARTERA}
+        combos, claves = {}, []
+        for cultivo in cultivos + [TODOS]:
+            todos = cultivo == TODOS
+            lista = cultivos_del_filtro(agri, cultivo)
+            nombre_contexto = "Todos los cultivos" if todos else etiquetas[cultivo]
+            prod_rend = None if todos else _info_prod_rendimiento(agri, spec, geo, cultivo, pie)
+            for campania in agri.ventana:
+                tendencia = panel_tendencia_cosecha_produccion(
+                    agri, spec, campania, lista, todos, pie, nombre_contexto, [geo], nombre)
+                anillo = panel_anillo_participacion(agri, spec, campania, pie, [geo], nombre)
+                if todos:
+                    p = {"anillo--todos": anillo, "tendencia--todos": tendencia}
+                    p.update({i: OCULTO for i in ("tabla-datos", "tendencia", "anillo",
+                                                  "combo--prod-rend")})
+                else:
+                    p = {"tendencia": tendencia, "anillo": anillo,
+                         "tabla-datos": panel_tabla_datos_cultivos(
+                             agri, spec, campania, lista, False, pie, [geo],
+                             cultivo_titulo=nombre_contexto, area=nombre),
+                         "combo--prod-rend": prod_rend}
+                    p.update({i: OCULTO for i in SID_AGRI_TODOS if i != "mapa"})
+                clave = "|".join([cultivo, campania])
+                combos[clave] = {"paneles": p}
+                if not tendencia.get("vacio"):
+                    claves.append(clave)
+        capa[geo] = {"nombre": nombre, "combos": combos, "comunes": comunes,
+                     "claves": sorted(claves)}
+    tablero["capa_departamental"] = capa
+    tablero["departamento_obligatorio"] = ctx.departamentos[0][0]
+    tablero["departamentos_menu"] = ctx.departamentos
+    return tablero
+
+
+def panel_anillo_hacienda_sid(ctx, declarado, geo, pie):
+    """Un anillo de la hoja "SID Muestra Dto-Dto 2": la hacienda mayor y menor, o las especies
+    de cada una, en cabezas o en UP, DEL DEPARTAMENTO. Son los seis de la portada de Ganaderia
+    recortados ("Hay que generar estos graficos para el departamento. Yo puse de ejemplo los de
+    la provincia"). Una especie sin registro en el departamento no suma (no es lo mismo que
+    cero, y la nota lo dice)."""
+    gan = ctx.ganaderia
+    medida = declarado["medida"]
+    titulo = declarado["titulo"].format(anio=gan.anio, departamento=ctx.nombre(geo))
+    partes = []
+    for p in declarado["porciones"]:
+        valores = [gan.valor_depto(e, medida, geo) for e in p["especies"]]
+        partes.append((p["nombre"], sum(v for v in valores if v) if any(valores) else 0))
+    total = sum(v for _, v in partes)
+    if not total:
+        return panel_vacio(titulo, "El departamento no registra existencias de estas especies "
+                                   "en %d." % gan.anio)
+    colores = gan.colores.por_categoria([n for n, _ in partes], respetar_orden=True)
+    return {
+        "titulo": titulo,
+        "subtitulo": "En %s" % UNIDAD_DE_HACIENDA[medida],
+        "pie": pie,
+        "porciones": [{"n": n, "v": v, "pct": pr.fmt_pct(v / total * 100, 2),
+                       "t": "%s %s" % (pr.fmt_numero(v, 0), UNIDAD_DE_HACIENDA[medida]),
+                       "color": colores[n]} for n, v in partes if v],
+    }
+
+
+def construir_tablero_sid_ganaderia(ctx, spec):
+    """Ganaderia de UN departamento en el SID, "Todas las especies" (hoja "SID Muestra Dto-Dto
+    2"): el mapa de ubicacion, las especies con sus paginas (las mismas de Ganaderia, ya en el
+    departamento: "EN ESENCIA ES LO MISMO QUE SE VE EN GANADERIA PERO TRASLADADA A ESTA AREA DEL
+    SID") y los seis anillos de participacion del departamento. Sin filtros: el anio es el de
+    la portada de Ganaderia, el ultimo con dato de todas las especies."""
+    tablero = tablero_base(ctx, spec, [])
+    pie_anillos = _fuente_ganaderia_sid(ctx.ganaderia)
+    paneles = {"mapa--ubicacion": panel_mapa_ubicacion(
+        ctx, spec["paneles"]["mapa--ubicacion"], spec["paneles"]["mapa--ubicacion"]["fuente"],
+        selecciona=True)}
+    ids_anillos = [p["id"] for p in spec["paneles"]["orden"] if p["id"].startswith("anillo--")]
+    for item in spec["paneles"]["orden"]:
+        if item["id"].startswith("accesos-"):
+            paneles[item["id"]] = panel_accesos(ctx, spec, item["id"])
+            # Los links llevan el departamento elegido (lo agrega el navegador).
+            paneles[item["id"]]["con_departamento"] = True
+    tablero["combos"][""] = {"paneles": paneles}
+    capa = {}
+    for geo, _ in ctx.departamentos:
+        p = {i: panel_anillo_hacienda_sid(ctx, spec["paneles"][i], geo, pie_anillos)
+             for i in ids_anillos}
+        capa[geo] = {"nombre": ctx.nombre(geo), "combos": {"": {"paneles": p}},
+                     "claves": [""]}
+    tablero["capa_departamental"] = capa
+    tablero["departamento_obligatorio"] = ctx.departamentos[0][0]
+    tablero["departamentos_menu"] = ctx.departamentos
     return tablero
 
 
@@ -11129,7 +11521,21 @@ def resolver_tarjetas(tablero, url_de):
     puede llevar a una pagina que no existe."""
     for combo in tablero["combos"].values():
         for panel in combo.get("paneles", {}).values():
+            if panel.get("tarjetas"):
+                panel["tarjetas"] = [
+                    t for t in panel["tarjetas"]
+                    if not t.get("enlaces")
+                    or any(not str(e.get("destino") or "").startswith("sid:")
+                           or e["destino"] in url_de for e in t["enlaces"])]
             for tarjeta in panel.get("tarjetas") or []:
+                # Un link a una pagina de ganaderia DENTRO del SID (`sid:<spec>`) que no se
+                # publico -porque esa pagina no tiene datos por departamento- no se ofrece, y la
+                # especie que se queda sin ninguno tampoco (texto de JC en "SID Ingreso").
+                if tarjeta.get("enlaces"):
+                    tarjeta["enlaces"] = [
+                        e for e in tarjeta["enlaces"]
+                        if not str(e.get("destino") or "").startswith("sid:")
+                        or e["destino"] in url_de]
                 for enlace in tarjeta.get("enlaces") or []:
                     destino = enlace.pop("destino", None)
                     if destino and destino not in url_de:
@@ -11163,6 +11569,10 @@ TABLEROS = {
     "tablero-agroclima-estaciones": construir_tablero_estaciones,
     # Ganaderia: portada de la rama (maqueta "Maqueta INGRESO a GANADERIA.xlsx", 15-oct-2026)
     "tablero-ganaderia-ingreso": construir_tablero_ganaderia_ingreso,
+    # SID (maqueta "0000000000 Maqueta SID 1.xlsx", 20-oct-2026)
+    "tablero-sid": construir_tablero_sid,
+    "tablero-sid-agricultura": construir_tablero_sid_agricultura,
+    "tablero-sid-ganaderia": construir_tablero_sid_ganaderia,
 }
 
 
@@ -11979,6 +12389,21 @@ def alto_de(tablero):
     return declarado
 
 
+def por_especie_url(por_especie, seccion):
+    """La ruta de la primera pagina del SID de una especie (su portada de stocks)."""
+    return next(propias[0][2] for s, propias in por_especie if s["id"] == seccion["id"])
+
+
+def menu_departamentos(departamentos, url_base, en_la_pagina):
+    """El menu lateral del SID: "Inicio" y los 27 departamentos (columna B de las hojas de JC).
+    En una pagina de un departamento cada renglon es la MISMA pagina con otro departamento y el
+    navegador lo cambia en el acto (`elegir`); en la portada lleva a la agricultura del
+    departamento."""
+    return [{"texto": nombre, "geo": geo, "elegir": en_la_pagina,
+             "href": "%s?departamento=%s" % (url_base, geo)}
+            for geo, nombre in departamentos]
+
+
 def tablero_para_pagina(tablero):
     return {"slug": tablero["slug"], "titulo": tablero["titulo"],
             "ruta_datos": tablero["ruta_datos"],
@@ -11994,7 +12419,10 @@ def tablero_para_pagina(tablero):
             # dibuja solo con un departamento elegido (hoja "Agri 3-b" de JC) y el de cultivos
             # extensivos esta siempre. Viaja como una clase del nodo del tablero.
             "mapa_por_departamento": bool(
-                tablero["paneles"].get("mapa_solo_con_departamento"))}
+                tablero["paneles"].get("mapa_solo_con_departamento")),
+            # El SID siempre mira UN departamento: sin uno en la URL arranca en este (el primero
+            # del menu, Aguirre, que es el que dibuja JC) y no hay "Provincia" a donde volver.
+            "departamento_obligatorio": tablero.get("departamento_obligatorio")}
 
 
 def escribir_sitio(ctx, vistas, tableros):
@@ -12011,7 +12439,7 @@ def escribir_sitio(ctx, vistas, tableros):
              "menu": menu_del_sitio(ctx), "con_menu": True,
              "clase_cuerpo": "", "botones_cabecera": [], "boton_proximamente": False,
              "paginas_de_seccion": [], "tira_de_secciones": [],
-             "banderas_idioma": [],
+             "banderas_idioma": [], "menu_departamentos": [],
              "base": PREFIJO, "inicio": INICIO}
 
     logo_pagina = dict(theme.get("logo_provincia") or {})
@@ -12132,6 +12560,28 @@ def escribir_sitio(ctx, vistas, tableros):
                 url_de.setdefault(tab["slug"], "%s/%s" % (PREFIJO, seccion["url"]))
     for slug in ctx.navegacion["privadas"]["vistas"]:
         url_de[slug] = "%s/_privado/%s" % (PREFIJO, slug)
+    # SID: las paginas de GANADERIA que tienen datos por departamento se publican tambien
+    # ADENTRO del area del SID, ya en el departamento (hoja "SID Muestra Dto-xGanad": "EN
+    # ESENCIA ES LO MISMO QUE SE VE EN GANADERIA PERO TRASLADADA A ESTA AREA DEL SID"). No se
+    # arma ningun dato nuevo: la pagina del SID usa el MISMO JSON que la de Ganaderia, con la
+    # cascara del SID y el departamento obligatorio. Las que no tienen capa departamental no se
+    # publican en el SID ("no todos los datos existen a nivel departamental, por ende solo se
+    # podran visualizar aquellos que cumplen esta condicion", texto de JC en "SID Ingreso").
+    seccion_sid = next((x for x in secciones if x.get("ganaderia_por_departamento")), None)
+    clones_sid = []
+    if seccion_sid:
+        cfg_sid = seccion_sid["ganaderia_por_departamento"]
+        for tab in tableros:
+            if not tab.get("capa_departamental") or tab["spec"].get("reservado"):
+                continue
+            sec = next((x for x in secciones if x["id"] == tab["seccion"]), None)
+            if sec is None or sec.get("rama") != cfg_sid["rama"]:
+                continue
+            ruta_sid = "%s/%s" % (cfg_sid["url"], sec["url"].split("/")[-1])
+            if tab["spec"].get("pagina"):
+                ruta_sid += "/" + tab["spec"]["pagina"]
+            url_de["sid:" + tab["slug"]] = "%s/%s" % (PREFIJO, ruta_sid)
+            clones_sid.append((tab, sec, ruta_sid))
     # Una rama con PORTADA (`ramas[].portada` en site/navegacion.yaml: Ganaderia desde el
     # 15-oct-2026) lleva a ella desde el tramo de la rama en la miga y desde su titulo en la
     # home, en vez del ancla de la rama en la home.
@@ -12226,7 +12676,9 @@ def escribir_sitio(ctx, vistas, tableros):
         if seccion.get("regresar") and not portada:
             tira.append({"texto": seccion["regresar"],
                          "href": "%s/%s" % (PREFIJO, seccion["url"]), "actual": False})
-        if tira:
+        # `paginas_solo_internas` (SID): la tira Agricultura | Ganadería | General | Agroclima
+        # es de las paginas de UN departamento; la portada no la dibuja (hoja "SID Ingreso").
+        if tira and not (portada and seccion.get("paginas_solo_internas")):
             extras["paginas_de_seccion"] = tira
         # La tira de SECCIONES HERMANAS, arriba de la de paginas. Es la fila 6 de todas las
         # hojas de la maqueta de ganaderia: Bovinos | Bubalinos | Porcinos | Equinos | Ovinos
@@ -12290,7 +12742,10 @@ def escribir_sitio(ctx, vistas, tableros):
                 continue
             botones.append({"texto": boton["texto"], "href": url_de[destino],
                             "imagen": ("%s/%s" % (PREFIJO, boton["imagen"])
-                                       if boton.get("imagen") else None)})
+                                       if boton.get("imagen") else None),
+                            # Un logo que lleva a la portada de su area (el SID) no arrastra
+                            # los filtros de la pagina: son de otra cosa.
+                            "sin_conservar": bool(boton.get("sin_conservar"))})
         if botones:
             extras["botones_cabecera"] = botones
         return extras
@@ -12384,7 +12839,9 @@ def escribir_sitio(ctx, vistas, tableros):
             tablero["indice_informacion"] = escribir_capa_informacion(
                 escritor, tablero, carpeta_tab, ruta_tab)
         if tablero.get("capa_departamental"):
-            seleccion = ((tablero["spec"].get("paneles") or {}).get("mapa") or {})                 .get("seleccion_departamento") or {}
+            paneles_spec = tablero["spec"].get("paneles") or {}
+            seleccion = ((paneles_spec.get("mapa") or paneles_spec.get("mapa--ubicacion") or {})
+                         .get("seleccion_departamento") or {})
             tablero["indice_departamental"] = escribir_capa_departamental(
                 escritor, tablero, carpeta_tab, ruta_tab, seleccion.get("miga"))
         tablero["capas_catalogo"] = catalogo_del_tablero(tablero)
@@ -12539,8 +12996,18 @@ def escribir_sitio(ctx, vistas, tableros):
         if tablero["spec"].get("reservado"):
             ruta_pagina = "_privado/%s" % tablero["slug"]
             reservados.append(tablero)
-        escribir_pagina(ruta_pagina, pagina(
-            "tablero",
+        extras = extras_de_seccion(seccion, portada=not nombre_pagina)
+        # El menu lateral del SID son los departamentos. En una pagina de un departamento cada
+        # renglon cambia el departamento de ESA pagina; en la portada, lleva a su agricultura.
+        if tablero.get("departamentos_menu"):
+            url_aqui = "%s/%s" % (PREFIJO, ruta_pagina[:-len("/index")]
+                                  if ruta_pagina.endswith("/index") else ruta_pagina)
+            extras["menu_departamentos"] = menu_departamentos(
+                tablero["departamentos_menu"],
+                url_aqui if tablero.get("capa_departamental")
+                else url_de[seccion["menu_departamentos"]["lleva_a"]],
+                bool(tablero.get("capa_departamental")))
+        argumentos = dict(
             tablero=tablero_para_pagina(tablero), paneles=paneles,
             acciones_tablero=acciones_tablero,
             notas=tablero.get("notas") or [],
@@ -12553,8 +13020,63 @@ def escribir_sitio(ctx, vistas, tableros):
             filtro_selector=selector[0] if selector else None,
             menu=menu_del_sitio(ctx, seccion["id"]),
             pestanias=pestanias_de(seccion, "tablero"),
-            titulo_pestania="%s · %s" % (tablero["titulo"], theme["titulo_sitio"]),
-            **extras_de_seccion(seccion, portada=not nombre_pagina)))
+            titulo_pestania="%s · %s" % (tablero["titulo"], theme["titulo_sitio"]))
+        # Lo que la pagina del SID de esta misma pagina de ganaderia reusa (ver mas abajo).
+        tablero["_argumentos_pagina"] = argumentos
+        escribir_pagina(ruta_pagina, pagina("tablero", **argumentos, **extras))
+
+    # Las paginas de GANADERIA dentro del SID: la misma pagina con la cascara del SID, el
+    # departamento obligatorio y dos tiras -las especies arriba y las paginas de la especie al
+    # lado de la miga-, como en la hoja "SID Muestra Dto-xGanad" de JC. Solo las especies y
+    # paginas con datos por departamento.
+    if clones_sid:
+        tablero_sid = next(t for t in tableros if t["seccion"] == seccion_sid["id"]
+                           and t.get("departamentos_menu"))
+        departamentos = tablero_sid["departamentos_menu"]
+        url_portada_sid = url_de[seccion_sid["ganaderia_por_departamento"]["inicio"]]
+        url_ganaderia_sid = url_de[seccion_sid["ganaderia_por_departamento"]["portada"]]
+        por_especie = []
+        for sec in secciones:
+            propias = [c for c in clones_sid if c[1]["id"] == sec["id"]]
+            if propias:
+                # Primero la portada de la especie (su pagina de stocks), como en Ganaderia.
+                propias.sort(key=lambda c: bool(c[0]["spec"].get("pagina")))
+                por_especie.append((sec, propias))
+        for tab, sec, ruta_sid in clones_sid:
+            argumentos = copy.deepcopy(tab["_argumentos_pagina"])
+            extras = extras_de_seccion(seccion_sid, portada=False)
+            extras["tira_de_secciones"] = (
+                [{"texto": "Todas las especies", "href": url_ganaderia_sid, "actual": False}]
+                + [{"texto": s_esp["titulo"], "href": "%s/%s" % (PREFIJO, propias[0][2]),
+                    "actual": s_esp["id"] == sec["id"]} for s_esp, propias in por_especie])
+            tira = []
+            for entrada in sec.get("paginas_de_seccion") or [{"texto": sec["titulo"],
+                                                               "tablero": True}]:
+                slug = (tablero_de_seccion[sec["id"]]["slug"] if entrada.get("tablero")
+                        else entrada.get("vista"))
+                href = url_de.get("sid:%s" % slug) if slug else None
+                if href:
+                    tira.append({"texto": entrada["texto"], "href": href,
+                                 "actual": slug == tab["slug"]})
+            extras["paginas_de_seccion"] = tira
+            miga = [{"texto": "SID", "href": url_portada_sid},
+                    {"texto": "", "dinamico": "departamento"},
+                    {"texto": "Ganadería", "href": url_ganaderia_sid},
+                    {"texto": sec["titulo"], "href": None}]
+            if tab["spec"].get("pagina"):
+                miga[-1]["href"] = "%s/%s" % (PREFIJO, por_especie_url(por_especie, sec))
+                miga.append({"texto": tab["spec"].get("titulo_pagina") or tab["titulo"],
+                             "href": None})
+            argumentos["miga"] = miga
+            argumentos["tablero"]["departamento_obligatorio"] = departamentos[0][0]
+            argumentos["pestanias"] = []
+            argumentos["menu"] = menu_del_sitio(ctx, seccion_sid["id"])
+            argumentos["titulo_pestania"] = "SID · %s · %s" % (
+                argumentos["titulo_pestania"].split(" · ")[0], theme["titulo_sitio"])
+            extras["menu_departamentos"] = menu_departamentos(
+                departamentos, "%s/%s" % (PREFIJO, ruta_sid), True)
+            escribir_pagina(ruta_sid if tab["spec"].get("pagina") else ruta_sid + "/index",
+                            pagina("tablero", **argumentos, **extras))
 
     # Lista completa de vistas de la seccion: lo que antes era la portada, ahora el "extra".
     for seccion in secciones:
@@ -12756,7 +13278,10 @@ def main(args=None):
                  # dim_geo para los nombres de los departamentos).
                  ContextoCapasIgn.familia: capas_ign,
                  ContextoAgroclima.familia: agroclima,
-                 ContextoGanaderiaIngreso.familia: ganaderia_ingreso, **especies}
+                 ContextoGanaderiaIngreso.familia: ganaderia_ingreso,
+                 # El SID junta la agricultura de la base 9 y el stock de la portada de
+                 # Ganaderia: no lee nada que no lean ya esas dos.
+                 ContextoSid.familia: ContextoSid(ctx, ganaderia_ingreso), **especies}
 
     with open(os.path.join(DIR_SITE, "colores-cultivo.yaml"), "w", encoding="utf-8") as f:
         f.write(escribir_asignacion_colores(ctx))

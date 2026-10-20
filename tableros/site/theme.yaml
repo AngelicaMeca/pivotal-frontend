@@ -119,6 +119,20 @@ cromadas:
       - "crema #f1dccb sobre cromo_oscuro #4b5d6b = 5,15:1"
       - "cocoa #2b1c18 sobre seleccion #a9b8c4 = 8,07:1"
       - "enlace #3b4e5c sobre fondo_cuadro #fbf4ec = 7,92:1"
+  sid:
+    # SID (maqueta "0000000000 Maqueta SID 1.xlsx", 20-oct-2026): JC pinta la cabecera y el menu
+    # de sus cinco hojas en NEGRO (color de tema 1 de Excel) y el logo del SID va blanco sobre
+    # negro. Cromada grafito; los colores de los DATOS no cambian.
+    cromo: "#1c1c1c"           # grafito: cabecera, menu lateral, banda
+    cromo_oscuro: "#474747"    # grafito medio: tira de paginas y departamento activo del menu
+    seleccion: "#c9c1b6"       # gris calido claro: chip SELECCIONADO y acentos
+    borde_panel: "#d3cdc4"     # gris calido muy claro: borde fino de panel y chips
+    enlace: "#333333"          # grafito: links y acciones de texto sobre la crema
+    contraste_medido:
+      - "crema #f1dccb sobre cromo #1c1c1c = 12,85:1"
+      - "crema #f1dccb sobre cromo_oscuro #474747 = 7,01:1"
+      - "cocoa #2b1c18 sobre seleccion #c9c1b6 = 9,19:1"
+      - "enlace #333333 sobre fondo_cuadro #fbf4ec = 11,58:1"
   clima:
     # AGROCLIMA (14-oct-2026, maqueta "0000000000 Maqueta Clima 1.xlsx"). JC no le asigno color
     # a la rama: su maqueta usa la plantilla azul de todas sus hojas. No es agricola ni

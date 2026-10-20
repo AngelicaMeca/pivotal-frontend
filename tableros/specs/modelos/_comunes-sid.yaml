@@ -1,0 +1,46 @@
+# Comunes del SID (Sistema de Información Departamental), maqueta de JC
+# "0000000000 Maqueta SID 1.xlsx" (20-oct-2026; lectura en docs/maqueta-sid.md).
+#
+# El SID no tiene base propia: sus hojas muestran la agricultura de la base 9 y el stock de las
+# especies de ganaderia, recortados a UN departamento. Lo unico propio es el MENU: los 27
+# departamentos de la provincia, que JC escribe en la columna B de sus cinco hojas (B7:B33).
+
+id: _comunes-sid
+familia: sid
+
+departamentos:
+  # En el orden y con el nombre de JC. El build busca cada uno en el GeoJSON de la provincia
+  # (sin tildes ni puntuacion) y corta si alguno no aparece o si falta uno de los 27.
+  nombres:
+    - Aguirre
+    - Alberdi
+    - Atamisqui
+    - Avellaneda
+    - Belgrano
+    - Capital
+    - Choya
+    - Copo
+    - Figueroa
+    - Gral Taboada
+    - Guasayán
+    - Jiménez
+    - Juan F. Ibarra
+    - La Banda
+    - Loreto
+    - Mitre
+    - Moreno
+    - Ojo de Agua
+    - Pellegrini
+    - Quebrachos
+    - Río Hondo
+    - Rivadavia
+    - Robles
+    - Salavina
+    - San Martín
+    - Sarmiento
+    - Silípica
+  # Los que JC abrevia o nombra distinto que el GeoJSON.
+  alias:
+    "Gral Taboada": ["General Taboada"]
+    "La Banda": ["Banda"]
+    "Juan F. Ibarra": ["Juan Felipe Ibarra"]

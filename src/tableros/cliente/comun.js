@@ -458,6 +458,12 @@ export default function crearPivotal() {
      lado, que es el estado de la hoja "Agri 1". */
   function pintarMigaDepartamental(parametros) {
     if (!hayCapa()) { return; }
+    /* El menu de departamentos del SID marca el elegido. */
+    Array.prototype.forEach.call(
+      document.querySelectorAll(".menu-departamentos a[data-geo]"), function (a) {
+        if (a.dataset.geo === estado.dto) { a.setAttribute("aria-current", "page"); }
+        else { a.removeAttribute("aria-current"); }
+      });
     /* El estado viaja al CSS: hay paginas cuyo contenido cambia con el departamento y no solo
        sus numeros. En pasturas y forrajes el mapa existe solo con uno elegido, porque ahi la
        pagina es la hoja "Agri 3-b" de JC y sin el es la "Agri 3". Es una clase y no un
@@ -472,7 +478,7 @@ export default function crearPivotal() {
          mapa), asi que no lo escribe el enganche generico de [data-miga-dinamica]: se escribe
          aca con la plantilla del build ("Dto {Departamento}"). */
       var rotulo = paso.querySelector("[data-miga-dinamica]");
-      var plantilla = estado.datos.capa_departamental.miga;
+      var plantilla = estado.datos.capa_departamental.miga || "Dto {Departamento}";
       if (rotulo && plantilla) {
         rotulo.textContent = estado.dto
           ? plantilla.replace("{Departamento}", nombreDepartamento()) : "";
@@ -545,8 +551,20 @@ export default function crearPivotal() {
      conoce se ignora: se queda en la provincia. */
   function preseleccionarDepartamento() {
     if (!hayCapa()) { return; }
+    var archivos = estado.datos.capa_departamental.archivos;
     var pedido = new URLSearchParams(window.location.search).get("departamento");
-    if (pedido && estado.datos.capa_departamental.archivos[pedido]) { estado.dto = pedido; }
+    if (pedido && archivos[pedido]) { estado.dto = pedido; return; }
+    /* El SID siempre mira UN departamento: sin uno valido en la URL arranca en el que dice la
+       pagina (el primero del menu) o, si ese no tiene datos aca, en el primero que si. */
+    var fijo = departamentoObligatorio();
+    if (fijo) { estado.dto = archivos[fijo] ? fijo : (Object.keys(archivos).sort()[0] || ""); }
+  }
+
+  /* El departamento con que arranca una pagina que no tiene vista provincial (el SID). Vacio
+     en todas las demas: ahi "ninguno" es la provincia. */
+  function departamentoObligatorio() {
+    var tablero = document.getElementById("tablero");
+    return (tablero && tablero.dataset.departamentoObligatorio) || "";
   }
 
   /* Cambia el departamento (o vuelve a la provincia con ""). Lo llama el clic del mapa y el
@@ -554,6 +572,9 @@ export default function crearPivotal() {
   function elegirDepartamento(geo, recordable) {
     var nuevo = geo || "";
     if (nuevo === estado.dto) { return Promise.resolve(); }
+    /* En el SID no hay provincia a la que volver: volver a clickear el departamento elegido en
+       el mapa no hace nada. */
+    if (!nuevo && departamentoObligatorio()) { return Promise.resolve(); }
     if (recordable) { recordar(foto()); }
     estado.dto = nuevo;
     return refrescar();

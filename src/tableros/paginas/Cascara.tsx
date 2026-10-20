@@ -161,7 +161,12 @@ export default function Cascara({ pagina, children }: { pagina: Comun; children:
               /* Sin `href`: anunciado y todavia sin pagina. Apagado y con "Próximamente", la
                  misma excepcion acotada a la regla de botones muertos que las banderas. */
               return boton.href ? (
-                <a key={boton.texto} className={clase} href={boton.href} data-conserva="">
+                <a
+                  key={boton.texto}
+                  className={clase}
+                  href={boton.href}
+                  data-conserva={boton.sin_conservar ? undefined : ""}
+                >
                   {contenido}
                 </a>
               ) : (
@@ -217,7 +222,30 @@ export default function Cascara({ pagina, children }: { pagina: Comun; children:
       </header>
 
       <div className="marco">
-        {pagina.con_menu ? (
+        {pagina.con_menu && pagina.menu_departamentos?.length ? (
+          /* El menu del SID (columna B de las hojas de JC): "Inicio" y los 27 departamentos.
+             En una pagina de un departamento cada renglon cambia el departamento en el acto
+             (comun.js, `data-elegir-departamento`) y conserva lo demas que este elegido; el
+             renglon actual lo marca comun.js. */
+          <aside className="menu-lateral menu-departamentos" aria-label="Departamentos">
+            <a className="menu-inicio" href={pagina.inicio}>
+              Inicio
+            </a>
+            <ul>
+              {pagina.menu_departamentos.map((d) => (
+                <li key={d.geo}>
+                  <a
+                    href={d.href}
+                    data-geo={d.geo}
+                    data-elegir-departamento={d.elegir ? d.geo : undefined}
+                  >
+                    {d.texto}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </aside>
+        ) : pagina.con_menu ? (
           <aside className="menu-lateral" aria-label="Secciones">
             <a className="menu-inicio" href={pagina.inicio}>
               Inicio
@@ -299,6 +327,8 @@ export default function Cascara({ pagina, children }: { pagina: Comun; children:
                     key={entrada.texto}
                     href={entrada.href}
                     aria-current={entrada.actual ? "page" : undefined}
+                    /* Las especies del SID viajan con el departamento elegido. */
+                    data-conserva={entrada.href.includes("?") ? undefined : ""}
                   >
                     {entrada.texto}
                   </a>

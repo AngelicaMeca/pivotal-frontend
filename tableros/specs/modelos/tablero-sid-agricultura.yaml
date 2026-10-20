@@ -1,0 +1,136 @@
+# SID · Agricultura de un departamento (hojas "SID Muestra Dto-1" y "SID Muestra Dto-xCultivo"
+# de la maqueta de JC "0000000000 Maqueta SID 1.xlsx", 20-oct-2026; lectura en
+# docs/maqueta-sid.md). "EN LA MAQUETA DEL DTO AGUIRRE ESTAN LAS BASES E INSTRUCCIONES - IGUALES
+# PARA LOS 27 DEPARTAMENTOS".
+#
+# Es UNA pagina con las dos hojas de JC:
+#  - cultivo en "Todos" (por defecto: "POR DEFECTO SE MUESTRA LA OPCION TODOS LOS CULTIVOS"):
+#    a la izquierda el mapa de ubicacion, el mapa de calor de produccion ("SE INTEGRA ESTE MAPA
+#    EN LA VARIABLE PRODUCCION"), el anillo de participacion y la evolucion de la produccion;
+#    a la derecha los cuadros de cartera de verano e invierno, en tn y en %, con su tabla
+#    ("SE AGREGAN LOS GRAFICOS Y CUADROS QUE FIGURAN EN MAS INFORMACION PARA EL CASO DE
+#    CULTIVOS");
+#  - un cultivo elegido ("DESDE LA OPCION DEL MENU DE CULTIVOS (EXACTAMENTE IGUAL QUE EN AGRI)
+#    SE SELECCIONA CADA CULTIVO"): el mapa de ubicacion, el ranking (provincial, con la fila
+#    del departamento marcada) y la tabla de campañas; a la derecha la evolucion, el anillo y
+#    el cuadro de produccion y rendimiento de "Más información" ("ACA ESTA MODIFICADO EL
+#    CONTENIDO, PORQUE AGREGA UN GRAFICO DE MAS INFORMACION").
+# Los cuadros de la otra hoja se esconden. Solo se pueden elegir los cultivos que el
+# departamento tiene ("ESTA PERFECTO ESTO QUE SOLO SEA POSIBLE SELECCIONAR CULTIVOS DE ESE DTO").
+#
+# El departamento se elige en el menu lateral o en el mapa de ubicacion, y viaja en la URL.
+
+id: tablero-sid-agricultura
+tipo: tablero
+familia: sid
+seccion: sid
+pagina: agricultura
+titulo_pagina: "Agricultura"
+
+titulo: "SID - Agricultura"
+subtitulo: "Departamento elegido · cultivos extensivos"
+breadcrumb: "SID - {departamento} - Agricultura - {cultivo}"
+
+indicadores: []
+
+paneles:
+  alto: fluye
+  disposicion: columnas
+  acciones_de_tablero:
+    - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
+
+  mapa--ubicacion:
+    rotulos_departamento: true
+    # El departamento elegido en oscuro sobre la provincia, como lo dibuja JC.
+    color: "#2b2b2b"
+    rotulo_accion: "Seleccione otro departamento si desea visualizar"
+
+  # El mapa de calor de produccion (solo con "Todos"). Mismas reglas que el de cultivos
+  # extensivos; el clic cambia el departamento.
+  mapa:
+    rotulos_departamento: true
+    click_departamento: en-la-misma-vista
+    variables: [produccion_tn]
+    seleccion_departamento:
+      miga: "Departamento {Departamento}"
+
+  tendencia:
+    titulo_protocolo: "{Cultivo} - Sgo del Estero - Total - Evolución de la superficie cosechada y producción - Campañas {desde} a {hasta}"
+    titulo_protocolo_departamento: "{Cultivo} - Sgo del Estero - Departamento {Departamento} - Evolución de la superficie cosechada y producción - Campañas {desde} a {hasta}"
+    medidas: [sup_cosechada_ha, produccion_tn]
+  tendencia--todos: {usa: tendencia}
+
+  anillo:
+    titulo_protocolo: "Sgo del Estero - Campaña {campania} - Participación porcentual por cultivo en el total de la producción (fina y gruesa)"
+    titulo_protocolo_departamento: "Sgo del Estero - Departamento {Departamento} Campaña {campania} - Participación porcentual por cultivo en el total de la producción (fina y gruesa)"
+    medida: produccion_tn
+    top_n: 5
+    resto: "Resto"
+  anillo--todos: {usa: anillo}
+
+  tabla-datos:
+    titulo_protocolo: "{Cultivo} - Sgo del Estero - {Area} - Superficie cosechada, producción y rendimiento - Campañas {desde} a {hasta}"
+    titulo_protocolo_todos: "Todos los cultivos - Sgo del Estero - {Area} - Producción (fina y gruesa) - Campañas {desde} a {hasta}"
+    columnas_por_bloque: ["Campaña", "Superficie Cos. (Ha)", "Producción (Tn)", "Rendimiento Kg/ha"]
+    medidas: [sup_cosechada_ha, produccion_tn, rendimiento_kg_ha]
+
+  # El ranking es PROVINCIAL y marca la fila del departamento (en la hoja de JC, AGUIRRE en el
+  # 9° puesto). Las mismas tres variantes que cultivos extensivos.
+  top:
+    variantes:
+      - {medida: sup_sembrada_ha, etiqueta: "Superficie",
+         titulo: "{Cultivo} - Ranking de sup. Sembrada sobre el total provincial - Campaña {campania}",
+         columnas: ["Puesto", "Departamento", "Superficie Semb. (ha)", "% sobre Total prov."]}
+      - {medida: produccion_tn, etiqueta: "Producción",
+         titulo: "{Cultivo} - Ranking de producción sobre el total provincial - Campaña {campania}",
+         columnas: ["Puesto", "Departamento", "Producción (tn)", "% sobre Total prov."]}
+      - {medida: rendimiento_kg_ha, etiqueta: "Rendimiento",
+         titulo: "{Cultivo} - Ranking de rendimiento por departamento - Campaña {campania}",
+         columnas: ["Puesto", "Departamento", "Rendimiento (kg/ha)"]}
+    nombre_todos: "Todos los cultivos (fina y gruesa)"
+    cuantos: 10
+
+  # Los cuadros de "Más información" de cultivos extensivos, que en el SID van a la vista.
+  mas-informacion:
+    cartera:
+      titulo_absoluto: "Sgo del Estero - {Area} - Evolución de la producción por cartera de cultivos de {Estacion} - Campañas {desde} a {hasta} - En tn"
+      titulo_porcentual: "Sgo del Estero - {Area} - Evolución de la producción por cartera de cultivos de {Estacion} - Campañas {desde} a {hasta} - En %"
+      subtitulo_porcentual: "En porcentaje sobre el total de la estación"
+      encabezado_primera_columna: "Cultivo"
+    produccion_rendimiento:
+      titulo: "Sgo del Estero - {Area} - {Cultivo} - Evolución de la producción y rendimientos - Campañas {desde} a {hasta}"
+      encabezado_primera_columna: "Variable"
+  apiladas--verano-tn: {usa: mas-informacion.cartera}
+  apiladas--verano-pct: {usa: mas-informacion.cartera}
+  apiladas--invierno-tn: {usa: mas-informacion.cartera}
+  apiladas--invierno-pct: {usa: mas-informacion.cartera}
+  combo--prod-rend: {usa: mas-informacion.produccion_rendimiento}
+
+  # Una sola banda de dos columnas: cada hoja de JC usa la mitad de los cuadros y el resto
+  # se esconde, asi que cada columna se apila sin huecos en las dos.
+  orden:
+    - {id: mapa--ubicacion, ancho: 5, columna: izq}
+    - {id: mapa, ancho: 5, columna: izq}
+    - {id: anillo--todos, ancho: 5, columna: izq}
+    - {id: tendencia--todos, ancho: 5, columna: izq}
+    - {id: top, tabla: true, ancho: 5, columna: izq}
+    - {id: tabla-datos, ancho: 5, columna: izq, compacta: true}
+    - {id: apiladas--verano-tn, ancho: 7, columna: der}
+    - {id: apiladas--verano-pct, ancho: 7, columna: der}
+    - {id: apiladas--invierno-tn, ancho: 7, columna: der}
+    - {id: apiladas--invierno-pct, ancho: 7, columna: der}
+    - {id: tendencia, ancho: 7, columna: der, en_par: true}
+    - {id: anillo, ancho: 7, columna: der, en_par: true}
+    - {id: combo--prod-rend, ancho: 7, columna: der}
+
+fuente:
+  pie: "Fuente: MAGyP (Ministerio de Agricultura, Ganadería y Pesca)"
+  organismo_esperado: "MAGyP"
+
+sensibilidad: normal
+estado: publicada
+origen:
+  tipo: maqueta de JC
+  archivo: "0000000000 Maqueta SID 1.xlsx"
+  hojas: ["SID Muestra Dto-1", "SID Muestra Dto-xCultivo"]
+  recibido: 2026-10-20

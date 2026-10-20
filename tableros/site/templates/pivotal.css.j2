@@ -255,6 +255,16 @@ a.boton-cabecera:hover { background: color-mix(in srgb, var(--sobre-cromo) 16%, 
 }
 .menu-sector li a:hover { background: color-mix(in srgb, var(--sobre-cromo) 14%, transparent); }
 .menu-sector li a[aria-current] { background: var(--cromo-oscuro); font-weight: 650; }
+/* El menu del SID: los 27 departamentos (columna B de las hojas de JC), con el elegido marcado. */
+.menu-departamentos ul { list-style: none; margin: 0; padding: 0; display: flex;
+                         flex-direction: column; gap: .05rem; }
+.menu-departamentos li a {
+  display: block; color: color-mix(in srgb, var(--sobre-cromo) 92%, transparent);
+  text-decoration: none; font-size: .82rem; padding: .16rem .5rem; border-radius: var(--radio-chico);
+}
+.menu-departamentos li a:hover { background: color-mix(in srgb, var(--sobre-cromo) 14%, transparent); }
+.menu-departamentos li a[aria-current] { background: var(--cromo-oscuro); font-weight: 650; }
+.menu-departamentos li a:focus-visible { outline: 2px solid var(--sobre-cromo); outline-offset: 1px; }
 /* Seccion ANUNCIADA en el menu: el rotulo esta, apagado, y al lado dice "Próximamente".
    Se lee como lo que es -algo que va a estar- y no como un link roto. Mismo tratamiento que
    el resto de lo deshabilitado del sitio. */
@@ -603,6 +613,10 @@ a { color: var(--enlace); }
    bubalinos). */
 .par-en-columna { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .55rem; }
 .par-en-columna > .panel { min-width: 0; }
+/* Un cuadro que no va en la seleccion vigente (el SID) no ocupa lugar, y su pareja se queda
+   con el ancho entero. */
+.tablero .panel[hidden] { display: none !important; }
+.par-en-columna:has(> .panel[hidden]) { grid-template-columns: minmax(0, 1fr); }
 @media (max-width: 1000px) { .par-en-columna { grid-template-columns: minmax(0, 1fr); } }
 /* La nota de un cuadro AL COSTADO de su tabla (`nota_al_lado`), como JC pega sus cuadros de
    texto (*)/(**) junto a las tablas de faena y de leche. */
@@ -1758,6 +1772,16 @@ a.acceso:focus-visible { outline: 2px solid var(--enlace); outline-offset: 2px; 
 .acceso-con-enlaces .acceso-mini img { width: 100%; height: 100%; max-width: none; max-height: none;
                                        object-fit: cover; }
 .acceso-mini-icono { height: 4.5rem; background: transparent; }
+/* Una tarjeta con icono Y links (las especies del SID): el icono no toma la proporcion de foto. */
+.acceso-con-enlaces .acceso-mini-icono { aspect-ratio: auto; height: 4.5rem; }
+.acceso-con-enlaces .acceso-mini-icono img { object-fit: contain; }
+/* Varias fotos en cuadricula de 2x2 (la tarjeta "Ganadería" de "SID Ingreso"). */
+.acceso-mini-cuadricula {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 3px;
+  background: transparent;
+}
+.acceso-mini-cuadricula img { width: 100%; height: 100%; max-width: none; max-height: none;
+                              object-fit: cover; }
 .acceso-enlaces { list-style: none; margin: .25rem 0 0; padding: 0; display: flex; flex-direction: column;
                   gap: .15rem; font-size: .85rem; }
 .acceso-enlaces li::before { content: "> "; color: var(--texto-apoyo); }
@@ -2887,3 +2911,16 @@ dialog.zoom.zoom-visible::backdrop { opacity: 1; }
    resto no cambia. */
 .panel-cab:has(> .panel-toggle > button:nth-child(5)) { flex-wrap: wrap; }
 .panel-cab > .panel-toggle:has(> button:nth-child(5)) { flex: 1 1 100%; flex-wrap: wrap; order: 2; }
+
+/* ---------- SID (maqueta "0000000000 Maqueta SID 1.xlsx", 20-oct-2026) ---------- */
+/* El mapa de ubicacion: la provincia con el departamento elegido, arriba a la izquierda de cada
+   hoja. En la portada es el selector y va mas alto. */
+.panel[data-panel="mapa--ubicacion"] .grafico { height: 360px; flex: 0 0 auto; }
+.rama-sid .tablero-columnas .banda-columnas:first-of-type .panel[data-panel="mapa--ubicacion"] .grafico {
+  height: 420px;
+}
+.tablero-columnas > .panel-selector { margin-bottom: .55rem; }
+/* Los rankings del SID: la misma tabla que el ranking de cultivos extensivos. */
+.tablero-columnas .panel[data-panel^="top"] .top-tabla { overflow-x: auto; }
+.tablero-columnas .panel[data-panel^="top"] thead th { white-space: normal; }
+.panel[data-panel^="top"] .ranking-variable { justify-content: flex-start; margin-top: .3rem; }

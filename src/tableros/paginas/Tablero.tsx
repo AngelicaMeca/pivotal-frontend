@@ -238,7 +238,11 @@ function ControlCapas({ capas, modo, rotulo }: { capas?: CapaDeMapa[]; modo?: st
   );
 }
 
-function CuerpoPanel({ id: idPanel, mockup = false, panel }: { id: string; mockup?: boolean; panel?: Panel }) {
+function CuerpoPanel({ id: idPanelCompleto, mockup = false, panel }: { id: string; mockup?: boolean; panel?: Panel }) {
+  /* `<forma>--<nombre>`: un cuadro con nombre propio que se dibuja con una forma que ya existe
+     (el SID tiene dos anillos, dos evoluciones y cuatro barras apiladas en la misma pagina:
+     `anillo--todos`, `apiladas--verano-tn`). Lo mismo hace tablero.js con el dibujante. */
+  const idPanel = idPanelCompleto.includes("--") ? idPanelCompleto.split("--")[0] : idPanelCompleto;
   const id = idPanel.startsWith("imagen-") ? "imagen"
     : idPanel.startsWith("texto-") ? "texto"
     // Una tabla escrita en el spec (equivalencias de categorias de "GanBuba ST").
@@ -398,7 +402,8 @@ function CuerpoPanel({ id: idPanel, mockup = false, panel }: { id: string; mocku
     cuerpo = <div className="tabla-datos" data-tabla-datos=""></div>;
   } else if (id === "top") {
     // TABLA calcada del mockup (cultivos) o lista de barras (hacienda, stock)
-    cuerpo = mockup ? (
+    // `tabla` (spec): el ranking es una TABLA tambien fuera del mockup (el SID).
+    cuerpo = mockup || panel?.tabla ? (
       <div className="tabla-datos top-tabla" data-barras=""></div>
     ) : (
       <ul className="lista-barras" data-barras=""></ul>
@@ -641,6 +646,10 @@ function PanelComun({ panel, filtro }: { panel: Panel; filtro?: Filtro }) {
           </p>
         </div>
         <TogglePanel filtro={filtro} />
+        {/* El ranking que elige su variable adentro del cuadro (SID, como en Agricultura). */}
+        {panel.id === "top" && panel.tabla ? (
+          <div className="panel-toggle ranking-variable" data-ranking-variable="" hidden />
+        ) : null}
       </div>
 
       <div className={panel.capas?.length ? "panel-cuerpo con-capas" : "panel-cuerpo"}>
@@ -909,6 +918,9 @@ export default function Tablero({ pagina }: { pagina: PaginaTablero }) {
      (hacienda, stock). En el mockup Modelo 2 van dentro de la columna derecha, y la maqueta
      "Agri 2" directamente no tiene: va de los chips a los paneles. */
   const conIndicadoresArriba = !selector && tablero.disposicion !== "grilla-2x2";
+  /* El mockup de cultivos extensivos es el UNICO que pone el selector grande adentro de su
+     columna derecha. Con `columnas` (el SID) el selector va arriba de las bandas. */
+  const mockupConSelector = Boolean(selector) && tablero.disposicion !== "columnas";
 
   /* Como resuelve el alto, decidido por el SPEC (site_build.ALTOS_DE_TABLERO) y no por este
      archivo: con "fluye" el tablero lleva la clase `alto-fluido`, que en el CSS le devuelve a
@@ -963,7 +975,7 @@ export default function Tablero({ pagina }: { pagina: PaginaTablero }) {
             <PanelMockup panel={porId["tabla-superficie"]} filtro={filtros["tabla-superficie"]} />
           </div>
         </div>
-      ) : selector ? (
+      ) : mockupConSelector && selector ? (
         // ---- DISPOSICION DEL MOCKUP MODELO 2 (cultivos, tercera tanda del 10-ago-2026) ----
         <div
           className={clasesTablero("tablero con-selector tablero-mockup")}
@@ -1001,7 +1013,11 @@ export default function Tablero({ pagina }: { pagina: PaginaTablero }) {
       ) : tablero.disposicion === "columnas" ? (
         // ---- Disposicion en COLUMNAS (ganaderia): bandas de dos columnas independientes ----
         <div className={clasesTablero("tablero tablero-columnas")} id="tablero"
-             data-datos={tablero.ruta_datos}>
+             data-datos={tablero.ruta_datos}
+             data-departamento-obligatorio={tablero.departamento_obligatorio || undefined}>
+          {/* Los chips de cultivo con icono, los MISMOS de Agricultura (el SID: "DESDE LA
+              OPCION DEL MENU DE CULTIVOS (EXACTAMENTE IGUAL QUE EN AGRI)"). */}
+          {selector ? <SelectorCultivo filtro={selector} /> : null}
           {bandasEnColumnas(paneles).map((banda, i) =>
             "fila" in banda ? (
               <div className="banda-con-titulo" key={i}>
@@ -1084,7 +1100,7 @@ export default function Tablero({ pagina }: { pagina: PaginaTablero }) {
           arriba, y no `disposicion !== "mockup"`: `mockup` es el valor por defecto y lo
           traen tambien los tableros que caen en la grilla generica, asi que mirar eso
           dejaba la tira sin dibujar. */}
-      {!selector && tablero.disposicion !== "grilla-2x2" && accionesDelPie?.length ? (
+      {!mockupConSelector && tablero.disposicion !== "grilla-2x2" && accionesDelPie?.length ? (
         <div className="acciones-tablero">
           <AccionesDeCuadro acciones={accionesDelPie} />
         </div>

@@ -74,6 +74,16 @@ ramas:
     # nombra la provincia (los mapas y tablas de las capas del IGN, 14-oct-2026).
     nombres_departamento:
       "BANDA": "LA BANDA"
+  # SID - Sistema de Información Departamental (maqueta "0000000000 Maqueta SID 1.xlsx",
+  # 20-oct-2026): toda la informacion de UN departamento. No es un sector del menu lateral: se
+  # entra por el logo del SID en la cabecera y por la home, y adentro el menu lateral son los
+  # 27 departamentos (columna B de las hojas de JC).
+  - id: sid
+    bloque: acceso-por-territorio
+    rama: SID
+    titulo: "SID"
+    portada: sid
+    bajada: "Sistema de Información Departamental: agricultura y ganadería de cada departamento, con su ranking provincial."
   - id: registros
     bloque: acceso-por-territorio
     rama: Departamento
@@ -135,8 +145,10 @@ secciones:
     # "Próximamente" (`proximamente: true`, sin `vista`): asi esta dibujado en la maqueta del SID.
     botones_cabecera:
       - {texto: "Santiago en el NOA", proximamente: true}
+      # Lleva a la portada del SID (20-oct-2026, maqueta "Maqueta SID 1.xlsx"). No arrastra
+      # cultivo ni campaña: el SID es otra area.
       - {texto: "SID - Sistema de Información Departamental", imagen: sid/logo-sid.png,
-         proximamente: true}
+         vista: tablero-sid, sin_conservar: true}
     grupos: []
 
   # Agricultura > Cultivos intensivos (frutas y hortalizas). Tres bases que comparten mart,
@@ -378,6 +390,51 @@ secciones:
   # DE RIESGO HIDROLOGICO"). Sus specs quedan como registro en estado no-publicada; la rama
   # General vuelve a dibujarse con "Próximamente". Las capas siguen en configs/dims/capas-ign/
   # para cuando JC mande la maqueta de "Infraestructura" (con un visor SIG con zoom real).
+
+  # ---------------------------------------------------------------------------
+  # SID · Sistema de Información Departamental (maqueta "0000000000 Maqueta SID 1.xlsx",
+  # 20-oct-2026; lectura en docs/maqueta-sid.md)
+  # ---------------------------------------------------------------------------
+  # Cinco hojas de JC en una seccion: la portada ("SID Ingreso"), la agricultura del
+  # departamento ("SID Muestra Dto-1" y "Dto-xCultivo", una sola pagina), la ganaderia del
+  # departamento ("SID Muestra Dto-Dto 2") y las paginas de cada especie ("Dto-xGanad"), que son
+  # las de Ganaderia ya en el departamento y se publican solas (`ganaderia_por_departamento`).
+  - id: sid
+    familia: sid
+    rama: sid
+    ruta: [SID, Sistema de Información Departamental]
+    url: sid
+    titulo: "Sistema de Información Departamental"
+    bajada_corta: "Toda la información disponible de cada departamento, con su ranking provincial."
+    bajada: >
+      El Sistema de Información Departamental reúne la información de un departamento de
+      Santiago del Estero -agricultura y ganadería por ahora- con el puesto que ocupa en la
+      provincia en cada actividad.
+    sin_pestanias: true
+    cabecera_banderas: true
+    # La cabecera de las hojas del SID: "Santiago en el NOA" (sin maqueta todavia) y el logo
+    # del SID, que vuelve a la portada.
+    botones_cabecera:
+      - {texto: "Santiago en el NOA", proximamente: true}
+      - {texto: "SID - Sistema de Información Departamental", imagen: sid/logo-sid.png,
+         vista: tablero-sid, sin_conservar: true}
+    # El menu lateral son los departamentos; en la portada cada uno abre su agricultura.
+    menu_departamentos: {lleva_a: tablero-sid-agricultura}
+    # La tira de la fila 5 de las hojas de JC: Agricultura | Ganadería | General | Agroclima.
+    # General y Agroclima no tienen maqueta todavia. No va en la portada.
+    paginas_solo_internas: true
+    paginas_de_seccion:
+      - {texto: "Agricultura", vista: tablero-sid-agricultura}
+      - {texto: "Ganadería", vista: tablero-sid-ganaderia}
+      - {texto: "General"}
+      - {texto: "Agroclima"}
+    # Las paginas de Ganaderia con datos por departamento, adentro del SID.
+    ganaderia_por_departamento:
+      rama: ganaderia
+      url: sid/ganaderia
+      portada: tablero-sid-ganaderia
+      inicio: tablero-sid
+    grupos: []
 
   # ---------------------------------------------------------------------------
   # AGROCLIMA · datos, informes y mapas (maqueta "0000000000 Maqueta Clima 1.xlsx", 14-oct-2026)

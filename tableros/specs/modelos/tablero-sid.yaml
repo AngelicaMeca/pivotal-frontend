@@ -1,0 +1,127 @@
+# Portada del SID - Sistema de Información Departamental (hoja "SID Ingreso" de la maqueta de JC
+# "0000000000 Maqueta SID 1.xlsx", 20-oct-2026; lectura en docs/maqueta-sid.md).
+#
+# Calcada de la hoja: a la izquierda "¿Qué es el SID?" (el texto de JC, cuadro de texto 50), en
+# el medio "¿Qué información contiene?" (las tarjetas de Agricultura y Ganadería con sus fotos y
+# la de "De próxima incorporación") y a la derecha el mapa para elegir el departamento. Abajo,
+# "RANKINGS POR DEPARTAMENTO", que en la maqueta esta vacio con la nota de JC en la H73: "FALTA
+# AGREGAR RANKING DE PRODUCCION DE TODOS LOS CULTIVOS Y DE TODAS LAS CABEZAS (GENERAL, GANADO
+# MAYOR Y MENOR)". Son esos cuatro.
+#
+# El menu lateral son los 27 departamentos (columna B de la hoja): cada uno abre su agricultura,
+# que es la primera pagina del departamento ("SID Muestra Dto-1").
+#
+# Correcciones al texto de JC (se publica literal salvo esto): "jeraquías" -> "jerarquías",
+# "allí de registren" -> "allí se registren" y ".." -> ".". Donde JC pega los logos de B³ AgriFood
+# y ∞ Prompt adentro del texto, se escriben sus nombres.
+
+id: tablero-sid
+tipo: tablero
+familia: sid
+seccion: sid
+
+titulo: "SID - Sistema de Información Departamental"
+subtitulo: "Provincia de Santiago del Estero · toda la información disponible de cada departamento"
+breadcrumb: "SID - Sistema de Información Departamental"
+
+indicadores: []
+
+paneles:
+  alto: fluye
+  disposicion: columnas
+  acciones_de_tablero:
+    - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
+
+  texto-que-es:
+    titulo: "¿Qué es el SID?"
+    parrafos:
+      - texto: >-
+          El Sistema de Información Departamental es un Sistema específico con tecnología
+          B³ AgriFood, ∞ Prompt y Minibox que selecciona toda aquella información referida a un
+          Departamento específico con un esquema de organización a nivel de jerarquías
+          comprensible y fácil de interpretar.
+      - texto: >-
+          La actualización de datos e información resultante es inmediata a medida que las
+          bases se actualizan.
+      - texto: >-
+          Es necesario aclarar que no todos los datos existen a nivel departamental, por ende
+          sólo se podrán visualizar aquellos que cumplen esta condición.
+      - texto: >-
+          El SID permite acceder a todos los datos departamentales de manera actualizada,
+          incluyendo un sistema de ranking del puesto que ocupa cada departamento en una
+          actividad o variable específica.
+      - texto: >-
+          En breve incluiremos una herramienta de registros donde los usuarios que allí se
+          registren recibirán en su mail o WhatsApp las novedades de datos incorporados o
+          actualizaciones realizadas.
+      - texto: >-
+          La información se incorporará progresivamente de nuestras más de 280 bases de datos,
+          mapas y análisis que se agregarán posteriormente.
+    fuente: "Pivotal · Sistema de Información Departamental"
+
+  accesos-contenido:
+    titulo: "¿Qué información contiene?"
+    pie: "Fuentes: MAGyP y SENASA · cada página cita la fuente de su base"
+    tarjetas:
+      # Los rotulos son los de JC (cuadros de texto 57, 54 y 70), incluido "12 Cultivos".
+      - titulo: "Agricultura"
+        bajada: "Superficies sembradas · Superficies cosechadas · Producción · Rendimientos · 12 Cultivos"
+        miniatura: imagen
+        imagen: sid/agricultura.png
+        destino: tablero-sid-agricultura
+      - titulo: "Ganadería"
+        bajada: "Stocks · Estratos y UP · Movimientos · Razas y envíos a faena · Tambos · Engorde a Corral · Cuota Hilton · 7 Especies"
+        miniatura: imagenes
+        imagenes: [sid/ganaderia-1.jpg, sid/ganaderia-2.jpg, sid/ganaderia-3.jpg, sid/ganaderia-4.jpg]
+        destino: tablero-sid-ganaderia
+      - titulo: "De próxima incorporación"
+        bajada: "Expendio de combustibles · Variables climáticas · Mapas de infraestructura"
+        proximamente: "Próximamente"
+
+  mapa--ubicacion:
+    rotulo_accion: "Seleccione Departamento"
+    rotulos_departamento: true
+    # Todos del mismo tono: es un selector, no un mapa de calor.
+    color: "#cfc4b4"
+    lleva_a: tablero-sid-agricultura
+    fuente: "Fuente: IGN - Límites departamentales"
+
+  # RANKINGS POR DEPARTAMENTO (JC, H73). Los 27 departamentos, de mayor a menor.
+  top--produccion:
+    de: produccion
+    titulo: "Producción de todos los cultivos (fina y gruesa) - Campaña {campania}"
+    columna: "Producción (tn)"
+  top--cabezas:
+    de: cabezas
+    titulo: "Stock total de cabezas - Todas las especies - Año {anio}"
+    columna: "Cabezas"
+    especies: [bovinos, bubalinos, equinos, porcinos, ovinos, caprinos]
+  top--mayor:
+    de: cabezas
+    titulo: "Hacienda mayor (bovinos, bubalinos y equinos) - Año {anio}"
+    columna: "Cabezas"
+    especies: [bovinos, bubalinos, equinos]
+  top--menor:
+    de: cabezas
+    titulo: "Hacienda menor (porcinos, ovinos y caprinos) - Año {anio}"
+    columna: "Cabezas"
+    especies: [porcinos, ovinos, caprinos]
+
+  orden:
+    - {id: texto-que-es, ancho: 4, columna: izq}
+    - {id: accesos-contenido, ancho: 4, columna: centro}
+    - {id: mapa--ubicacion, ancho: 4, columna: der}
+    - {id: top--produccion, tabla: true, ancho: 3, columna: fila, titulo_fila: "RANKINGS POR DEPARTAMENTO"}
+    - {id: top--cabezas, tabla: true, ancho: 3, columna: fila}
+    - {id: top--mayor, tabla: true, ancho: 3, columna: fila}
+    - {id: top--menor, tabla: true, ancho: 3, columna: fila}
+
+filtros: []
+
+sensibilidad: normal
+estado: publicada
+origen:
+  tipo: maqueta de JC
+  archivo: "0000000000 Maqueta SID 1.xlsx"
+  hojas: ["SID Ingreso"]
+  recibido: 2026-10-20

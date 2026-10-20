@@ -264,7 +264,9 @@ paneles:
     - {id: evolucion-categorias, ancho: 4, columna: izq, nueva_banda: true}
     - {id: anillo-departamentos, ancho: 4, columna: izq}
     - {id: tabla-departamento-anios, ancho: 8, columna: der, compacta: true}
-    - {id: cifras-caravanas, ancho: 12}
+    # Solo en la provincia (JC, hoja "SID Muestra Dto-xGanad" G108: "ESTE GRAFICO NO DEBE IR EN
+    # DEPARTAMENTOS - ELIMINAR EN LA INFO DEPARTAMENTAL, TANTO EN SID COMO EN GANADERIA").
+    - {id: cifras-caravanas, ancho: 12, solo_provincia: true}
 
 # ---------------------------------------------------------------------------
 # FILTROS

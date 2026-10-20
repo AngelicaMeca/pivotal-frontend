@@ -77,7 +77,16 @@ export type Comun = {
   pestanias: { texto: string; href: string; actual: boolean }[];
   // `href` nulo = boton anunciado y todavia sin pagina (se dibuja apagado con "Próximamente").
   // `imagen`: el boton es un logo (el del SID); `texto` queda como texto accesible.
-  botones_cabecera: { texto: string; href: string | null; imagen?: string | null }[];
+  botones_cabecera: {
+    texto: string;
+    href: string | null;
+    imagen?: string | null;
+    // Un logo que lleva a la portada de otra area (el SID) no arrastra los filtros.
+    sin_conservar?: boolean;
+  }[];
+  // El menu lateral del SID: los departamentos en vez de los sectores. `elegir`: el renglon
+  // cambia el departamento de ESTA pagina sin recargarla.
+  menu_departamentos: { texto: string; geo: string; href: string; elegir: boolean }[];
   // Las otras paginas de la seccion, dibujadas a la derecha de la banda del breadcrumb (es
   // donde las pone JC). `href` vacio = declarada y todavia sin construir: se muestra apagada.
   // La tira de SECCIONES HERMANAS (en ganadería, las especies). Va arriba de la de
@@ -189,6 +198,8 @@ export type CapaDeMapa = {
 
 export type Panel = {
   id: string;
+  // Un ranking (`top`) que se dibuja como TABLA fuera del mockup de cultivos (el SID).
+  tabla?: boolean;
   titulo: string;
   titulo_partes?: ParteDeTexto[];
   subtitulo?: string;
@@ -256,6 +267,8 @@ export type PaginaTablero = Comun & {
     kpis?: number;
     // El mapa se dibuja solo con un departamento elegido (pasturas y forrajes).
     mapa_por_departamento?: boolean;
+    // El SID siempre mira UN departamento: el geo_id con que arranca si la URL no trae uno.
+    departamento_obligatorio?: string | null;
   };
   paneles: Panel[];
   filtros_panel: Record<string, Filtro>;

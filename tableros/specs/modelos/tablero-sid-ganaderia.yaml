@@ -1,0 +1,157 @@
+# SID · Ganadería de un departamento, "Todas las especies" (hoja "SID Muestra Dto-Dto 2" de la
+# maqueta de JC "0000000000 Maqueta SID 1.xlsx", 20-oct-2026; lectura en docs/maqueta-sid.md).
+#
+# A la izquierda el mapa de ubicacion; a la derecha "Seleccione especie": cada especie con sus
+# paginas, que son las MISMAS de Ganaderia ya en el departamento ("EN ESENCIA ES LO MISMO QUE SE
+# VE EN GANADERIA PERO TRASLADADA A ESTA AREA DEL SID", hoja "SID Muestra Dto-xGanad"). Debajo,
+# los seis anillos de participacion de la portada de Ganaderia recortados al departamento ("Hay
+# que generar estos graficos para el departamento. Yo puse de ejemplo los de la provincia (inicio
+# Ganaderia)").
+#
+# Solo se ofrecen las paginas que existen a nivel departamental (texto de JC en "SID Ingreso":
+# "no todos los datos existen a nivel departamental, por ende sólo se podrán visualizar aquellos
+# que cumplen esta condición"): el build saca los links a paginas sin capa departamental y la
+# especie que se queda sin ninguno. Hoy son bovinos, porcinos, equinos y ovinos.
+
+id: tablero-sid-ganaderia
+tipo: tablero
+familia: sid
+seccion: sid
+pagina: ganaderia
+titulo_pagina: "Ganadería"
+
+titulo: "SID - Ganadería"
+subtitulo: "Departamento elegido · todas las especies"
+breadcrumb: "SID - {departamento} - Ganadería - Todas las especies"
+
+indicadores: []
+
+paneles:
+  alto: fluye
+  disposicion: columnas
+  acciones_de_tablero:
+    - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
+
+  mapa--ubicacion:
+    rotulos_departamento: true
+    color: "#2b2b2b"
+    rotulo_accion: "Seleccione otro departamento si desea visualizar"
+    fuente: "Fuente: IGN - Límites departamentales"
+    seleccion_departamento:
+      miga: "Departamento {Departamento}"
+
+  accesos-especies:
+    titulo: "Seleccione especie"
+    pie: "Fuentes: SENASA y MAGyP · cada página cita la fuente de su base"
+    # `sid:<spec>` es la pagina de ganaderia de ese spec adentro del SID.
+    tarjetas:
+      - titulo: "Bovinos"
+        miniatura: icono
+        icono: bovinos
+        enlaces:
+          - {texto: "Stocks", destino: "sid:tablero-stock-bovino"}
+          - {texto: "Indicadores", destino: "sid:tablero-bovinos-indicadores"}
+          - {texto: "Movimientos", destino: "sid:tablero-bovinos-movimientos"}
+          - {texto: "Vacunaciones", destino: "sid:tablero-bovinos-vacunaciones"}
+          - {texto: "Producc Leche", destino: "sid:tablero-bovinos-leche"}
+          - {texto: "Estratos y UP", destino: "sid:tablero-bovinos-estratos"}
+          - {texto: "Razas", destino: "sid:tablero-bovinos-razas"}
+          - {texto: "Feed Lots, Hilton y Tambos", destino: "sid:tablero-bovinos-feedlots"}
+      - titulo: "Bubalinos"
+        miniatura: icono
+        icono: bubalinos
+        enlaces:
+          - {texto: "Stocks", destino: "sid:tablero-bubalinos"}
+      - titulo: "Porcinos"
+        miniatura: icono
+        icono: porcinos
+        enlaces:
+          - {texto: "Stocks", destino: "sid:tablero-porcinos"}
+          - {texto: "Estratos y UP", destino: "sid:tablero-porcinos-estratos"}
+          - {texto: "Movimientos", destino: "sid:tablero-porcinos-movimientos"}
+          - {texto: "Razas", destino: "sid:tablero-porcinos-razas"}
+      - titulo: "Equinos"
+        miniatura: icono
+        icono: equinos
+        enlaces:
+          - {texto: "Stocks, UP y Estratos", destino: "sid:tablero-equinos"}
+          - {texto: "Movimientos", destino: "sid:tablero-equinos-movimientos"}
+      - titulo: "Ovinos"
+        miniatura: icono
+        icono: ovinos
+        enlaces:
+          - {texto: "Stocks, Establec. y UP", destino: "sid:tablero-ovinos"}
+          - {texto: "Movimientos", destino: "sid:tablero-ovinos-movimientos"}
+          - {texto: "Estratos", destino: "sid:tablero-ovinos-estratos"}
+      - titulo: "Caprinos"
+        miniatura: icono
+        icono: caprinos
+        enlaces:
+          - {texto: "Stocks, Establecim. y UP", destino: "sid:tablero-caprinos"}
+          - {texto: "Estratos", destino: "sid:tablero-caprinos-estratos"}
+      - titulo: "Apícola"
+        miniatura: icono
+        icono: apicolas
+        enlaces:
+          - {texto: "Apiarios y colmenas", destino: "sid:tablero-apicola"}
+
+  # Los seis anillos de "Destacados" de la portada de Ganaderia, recortados al departamento.
+  # Titulos de JC con el departamento.
+  anillo--hacienda-cabezas:
+    titulo: "Sgo. del Estero - Dto {departamento} - Participación de la hacienda mayor y menor en el stock total en cabezas - año {anio}"
+    medida: cabezas
+    porciones:
+      - {nombre: "Hacienda mayor", especies: [bovinos, bubalinos, equinos]}
+      - {nombre: "Hacienda menor", especies: [porcinos, ovinos, caprinos]}
+  anillo--hacienda-up:
+    titulo: "Sgo. del Estero - Dto {departamento} - Participación de la hacienda mayor y menor en el stock total en UP - año {anio}"
+    medida: up
+    porciones:
+      - {nombre: "Hacienda mayor", especies: [bovinos, bubalinos, equinos]}
+      - {nombre: "Hacienda menor", especies: [porcinos, ovinos, caprinos]}
+  anillo--mayor-cabezas:
+    titulo: "Sgo del Estero - Dto {departamento} - Hacienda mayor - Participación en el total de cabezas por especie - {anio}"
+    medida: cabezas
+    porciones:
+      - {nombre: "Bovinos", especies: [bovinos]}
+      - {nombre: "Bubalinos", especies: [bubalinos]}
+      - {nombre: "Equinos", especies: [equinos]}
+  anillo--mayor-up:
+    titulo: "Sgo del Estero - Dto {departamento} - Hacienda mayor - Participación en el total de UP por especie - {anio}"
+    medida: up
+    porciones:
+      - {nombre: "Bovinos", especies: [bovinos]}
+      - {nombre: "Bubalinos", especies: [bubalinos]}
+      - {nombre: "Equinos", especies: [equinos]}
+  anillo--menor-cabezas:
+    titulo: "Sgo del Estero - Dto {departamento} - Hacienda menor - Participación en el total de cabezas por especie - {anio}"
+    medida: cabezas
+    porciones:
+      - {nombre: "Porcinos", especies: [porcinos]}
+      - {nombre: "Ovinos", especies: [ovinos]}
+      - {nombre: "Caprinos", especies: [caprinos]}
+  anillo--menor-up:
+    titulo: "Sgo del Estero - Dto {departamento} - Hacienda menor - Participación en el total de UP por especie - {anio}"
+    medida: up
+    porciones:
+      - {nombre: "Porcinos", especies: [porcinos]}
+      - {nombre: "Ovinos", especies: [ovinos]}
+      - {nombre: "Caprinos", especies: [caprinos]}
+
+  orden:
+    - {id: mapa--ubicacion, ancho: 4, columna: izq}
+    - {id: accesos-especies, ancho: 8, columna: der}
+    - {id: anillo--hacienda-cabezas, ancho: 4, columna: fila}
+    - {id: anillo--hacienda-up, ancho: 4, columna: fila}
+    - {id: anillo--mayor-cabezas, ancho: 4, columna: fila}
+    - {id: anillo--mayor-up, ancho: 4, columna: fila}
+    - {id: anillo--menor-cabezas, ancho: 4, columna: fila}
+    - {id: anillo--menor-up, ancho: 4, columna: fila}
+
+sensibilidad: normal
+estado: publicada
+origen:
+  tipo: maqueta de JC
+  archivo: "0000000000 Maqueta SID 1.xlsx"
+  hojas: ["SID Muestra Dto-Dto 2", "SID Muestra Dto-xGanad"]
+  recibido: 2026-10-20
