@@ -57,7 +57,11 @@ export default function iniciar(PIVOTAL) {
     contenedor.classList.remove("alto-fijo");
     contenedor.style.removeProperty("height");
     if (ANGOSTO.matches) { return; }   /* en angosto los paneles se apilan y el alto lo pone el contenido */
-    var arriba = contenedor.getBoundingClientRect().top + window.pageYOffset;
+    /* En pantalla ancha scrollea `.contenido` y no la ventana (CSS, "solo scrollea el
+       contenido"): la posicion del tablero en la pagina suma el scroll de esa caja. */
+    var caja = contenedor.closest(".contenido");
+    var arriba = contenedor.getBoundingClientRect().top + window.pageYOffset
+      + (caja ? caja.scrollTop : 0);
     var disponible = window.innerHeight - arriba - AIRE_ABAJO;
     if (disponible < ALTO_MINIMO) { return; }
     contenedor.style.height = disponible + "px";

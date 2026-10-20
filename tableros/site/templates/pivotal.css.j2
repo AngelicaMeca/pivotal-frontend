@@ -273,6 +273,20 @@ a.boton-cabecera:hover { background: color-mix(in srgb, var(--sobre-cromo) 16%, 
 }
 
 .contenido { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+/* SOLO SCROLLEA EL CONTENIDO (20-oct-2026, pedido de la usuaria: "que solo se scrolee el
+   dashboard y el menu lateral quede fijo"). En pantalla ancha la pagina mide la ventana: la
+   cabecera y el menu lateral quedan quietos y el que scrollea es `.contenido` (el menu tiene
+   su propio scroll si no entra). En angosto el menu va arriba y la pagina scrollea entera,
+   como siempre; al imprimir manda la hoja (ver `.imprimiendo` mas abajo). Lo que mida la
+   posicion de algo contra la pagina tiene que sumar el scroll de `.contenido`, no el de la
+   ventana (tablero.js, ajustarAlto). */
+@media (min-width: 1001px) {
+  html:not(.imprimiendo) body { height: 100vh; height: 100dvh; overflow: hidden; }
+  html:not(.imprimiendo) .pagina { height: 100%; overflow: hidden; }
+  html:not(.imprimiendo) .marco { overflow: hidden; }
+  html:not(.imprimiendo) .menu-lateral { overflow-y: auto; overscroll-behavior: contain; }
+  html:not(.imprimiendo) .contenido { overflow-y: auto; min-height: 0; }
+}
 
 /* ---------- banda verde: breadcrumb + selector de periodo ----------
    La ruta jerarquica a la izquierda (cada nivel linkea a SU nivel) y el selector de campaña
@@ -2438,6 +2452,11 @@ table.matriz-od th.esquina { font-weight: 500; color: var(--texto-apoyo); }
    sola descripcion del formato sirve para la foto, para lo que se ve un instante en pantalla
    y para lo que sale impreso; con @media print habria dos y podrian discrepar. */
 @media print { @page { size: A4 landscape; margin: 8mm; } }
+/* Imprimiendo con el menu del navegador (sin la clase `imprimiendo`): la pagina vuelve a
+   crecer entera, si no la hoja solo saldria con lo que entra en la ventana. */
+@media print {
+  body, .pagina, .marco, .menu-lateral, .contenido { height: auto !important; overflow: visible !important; }
+}
 
 /* La clase va en <html> y no en <body> para poder tocar el tamaño de la raiz: TODO el sitio
    mide en rem, asi que bajar la raiz achica de una sola vez tipografias, aires y altos
