@@ -5,9 +5,8 @@
    Diseño: TEMA VISUAL del 10-ago-2026 (Facu, en persona con JC presente), regla en
    _protocolo-presentacion.formato_v1.tema_visual. Lo que define la cascara:
      - Cabecera blanca con el logo provincial a la izquierda y una franja verde con los
-       botones de cabecera que declare la seccion, el titulo y las banderas es/en/pt. En las
-       secciones que declaran `cabecera_banderas` el titulo no se dibuja: las banderas van en
-       su lugar.
+       botones de cabecera que declare la seccion y las banderas es/en/pt. El titulo de la
+       pagina no se dibuja (queda para lectores de pantalla).
      - Menu lateral VERDE: "Inicio" + sectores desplegables (site/navegacion.yaml). Sector sin
        secciones publicadas = "Proximamente", sin links muertos. La home va sin menu.
      - Banda VERDE de breadcrumb; el selector de PERIODO va a la derecha como tira de pestañitas.
@@ -203,16 +202,12 @@ export default function Cascara({ pagina, children }: { pagina: Comun; children:
               ← <span data-regresar-texto="">{pagina.regresar_origen}</span>
             </a>
           ) : null}
-          {/* El titulo de la pagina, salvo en las secciones cuya maqueta pone las banderas en su
-              lugar (`cabecera_banderas`, tercera tanda, backlog 33). */}
-          {pagina.titulo_por_banderas ? null : (
-            <div className="cabecera-titulo">
-              <h1>{titulo}</h1>
-              {pagina.subtitulo_cabecera ? <p>{pagina.subtitulo_cabecera}</p> : null}
-            </div>
-          )}
+          {/* El titulo y la bajada ya no se dibujan en la cabecera (pedido de la usuaria del
+              21-oct-2026: "saca este tipo de encabezado"). El h1 queda para lectores de
+              pantalla: la pagina sigue teniendo su titulo. */}
+          <h1 className="sr-solo">{titulo}</h1>
           {/* Las banderas es/en/pt: en todas las paginas (navegacion.yaml,
-              cabecera_banderas_todas), al lado del titulo o en su lugar. */}
+              cabecera_banderas_todas). */}
           {pagina.banderas_idioma.length ? (
             <div className="cabecera-banderas" aria-label="Idiomas">
               {pagina.banderas_idioma.map((bandera) =>

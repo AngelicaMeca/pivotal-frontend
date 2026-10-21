@@ -181,8 +181,6 @@ a.boton-cabecera:hover { background: color-mix(in srgb, var(--sobre-cromo) 16%, 
    activa; ingles y portugues deshabilitadas con "Próximamente" (tooltip): excepcion
    acotada a la regla de botones muertos. */
 .cabecera-banderas { margin-left: auto; display: flex; align-items: center; gap: .5rem; }
-/* Al lado del titulo (todas las paginas desde el 21-oct-2026) el titulo ya empuja a la derecha. */
-.cabecera-titulo + .cabecera-banderas { margin-left: 1.1rem; flex: 0 0 auto; }
 /* Siglas ES / EN / PT: a este tamaño tres banderitas no se distinguen, y el rotulo chico en
    monoespaciada versalita es como escribe estas cosas el sitio. */
 .cabecera-banderas .bandera {
@@ -208,15 +206,6 @@ a.boton-cabecera:hover { background: color-mix(in srgb, var(--sobre-cromo) 16%, 
   clip-path: inset(50%); white-space: nowrap; border: 0;
 }
 
-.cabecera-titulo { margin-left: auto; text-align: right; min-width: 0; }
-.cabecera-titulo h1 {
-  margin: 0; font-family: var(--titulos); font-size: 1.15rem; font-weight: 400;
-  letter-spacing: -.005em; color: var(--sobre-cromo);
-}
-.cabecera-titulo p {
-  margin: .05rem 0 0; font-size: .74rem; color: color-mix(in srgb, var(--sobre-cromo) 75%, transparent);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
 .marca-estado {
   font-family: var(--rotulos); font-size: .6rem; text-transform: uppercase;
   letter-spacing: .12em; border: 1px solid color-mix(in srgb, var(--sobre-cromo) 60%, transparent); border-radius: var(--radio-chico);

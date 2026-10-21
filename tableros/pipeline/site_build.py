@@ -12483,7 +12483,6 @@ def escribir_sitio(ctx, vistas, tableros):
              "paginas_de_seccion": [], "tira_de_secciones": [],
              "banderas_idioma": (banderas_idioma()
                                  if ctx.navegacion.get("cabecera_banderas_todas") else []),
-             "titulo_por_banderas": False,
              "menu_departamentos": [], "regresar_origen": None,
              "nombre_pagina": None,
              "base": PREFIJO, "inicio": INICIO}
@@ -12756,9 +12755,7 @@ def escribir_sitio(ctx, vistas, tableros):
             if len(hermanas) > 1:
                 extras["tira_de_secciones"] = hermanas
         if seccion.get("cabecera_banderas"):
-            # La maqueta de estas secciones pone las banderas EN LUGAR del titulo.
             extras["banderas_idioma"] = banderas_idioma()
-            extras["titulo_por_banderas"] = True
         botones = []
         # Los botones de TODAS las secciones (`botones_cabecera_todas` en navegacion.yaml: el
         # logo del SID, 20-oct-2026) van despues de los propios; uno que la seccion ya declara
