@@ -11402,6 +11402,17 @@ def construir_galeria_clima(ctx, spec):
         elif georef.get("rotacion") != "usar":
             raise pr.ErrorDeProtocolo("%s: `georreferencia.rotacion` tiene que ser usar o "
                                       "ignorar." % spec["id"])
+        # La caja del KML corrida unos px respecto de los limites que dibuja la imagen: el spec
+        # puede traer la caja medida contra esos limites (ver el comentario en cada spec).
+        ajustada = georef.get("caja_ajustada")
+        if ajustada:
+            if set(ajustada) != {"norte", "sur", "este", "oeste"}:
+                raise pr.ErrorDeProtocolo("%s: `georreferencia.caja_ajustada` lleva norte, sur, "
+                                          "este y oeste." % spec["id"])
+            if caja["rotacion"] and georef["rotacion"] == "usar":
+                raise pr.ErrorDeProtocolo("%s: la caja ajustada se mide sin rotacion; con "
+                                          "`caja_ajustada` va `rotacion: ignorar`." % spec["id"])
+            caja.update({k: float(v) for k, v in ajustada.items()})
         elemento["visor"] = {"caja": caja, "geojson": GEOJSON, "kml": georef["kml"] + ".kml",
                              "nota": limpiar(georef["nota"])}
     if filas is not None:

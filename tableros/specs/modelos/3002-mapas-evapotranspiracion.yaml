@@ -86,6 +86,20 @@ origen:
 georreferencia:
   kml: ET_DECADA
   # `usar` o `ignorar` la rotacion que trae el KML (se decide mirando si los limites calzan).
-  rotacion: usar
+  rotacion: ignorar
+  # Caja AJUSTADA (21-oct-2026, pedido de la usuaria: "los bordes de la provincia y los
+  # departamentos no coinciden con el borde negro"). La caja del KML deja la imagen corrida
+  # unos px respecto de los limites que ella misma trae dibujados. Esta caja se midio
+  # buscando el corrimiento y la escala que pegan los limites del GeoJSON del sitio a las
+  # lineas de la imagen: en et_202604_1.gif la distancia media de cada limite del GeoJSON a la
+  # linea de la imagen paso de 2,04 px (caja del KML) a 0,56 px; en et_202609_3.gif, de 2,32 a
+  # 0,63 px.
+  # Todas las imagenes del producto tienen el mismo marco, asi que vale para toda la galeria.
+  # Se mide sin rotacion, por eso `rotacion: ignorar`.
+  caja_ajustada:
+    norte: -22.659980
+    sur: -43.587303
+    este: -53.227861
+    oeste: -70.253909
   nota: >-
     Ubicada en el mapa con el KML que publica el SEPA para este producto (ET_DECADA.kml).

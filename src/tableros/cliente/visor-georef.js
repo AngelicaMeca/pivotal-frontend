@@ -19,6 +19,7 @@
 
 var ZOOM_MAXIMO = 14;     // veces el encuadre inicial
 var ALTO_LIENZO = 640;    // px; en pantallas angostas lo baja el CSS
+var BANDA = 4;            // px de la imagen del SEPA a cada lado de un limite (ver limpiar)
 
 export default function crearVisor(nodo, elemento, opciones) {
   var caja = elemento.visor.caja;
@@ -26,7 +27,7 @@ export default function crearVisor(nodo, elemento, opciones) {
   var estado = {
     i: elemento.destacado || 0, opacidad: 1, todoElPais: false,
     s: 1, tx: 0, ty: 0, encuadre: null, deptos: [], k: 1,
-    imagenes: {}, punteros: {}, arrastre: null, pellizco: null, sobre: null
+    imagenes: {}, limpias: {}, punteros: {}, arrastre: null, pellizco: null, sobre: null
   };
 
   // ---------- armado ----------
@@ -93,7 +94,10 @@ export default function crearVisor(nodo, elemento, opciones) {
   lienzo.appendChild(tip);
   lienzo.appendChild(cargando);
   var nota = el("p", "visor-nota");
-  nota.textContent = elemento.visor.nota;
+  // El visor muestra la imagen limpia (ver limpiar()): la nota lo dice.
+  nota.textContent = elemento.visor.nota + " En el visor la imagen se ubica con una caja"
+    + " ajustada a los límites que trae dibujados, esos límites se reemplazan por los del sitio y"
+    + " se agranda sin mover ningún punto; “Imagen original” la muestra tal cual se publica.";
   nodo.appendChild(barra);
   nodo.appendChild(lienzo);
   nodo.appendChild(nota);
@@ -201,29 +205,40 @@ export default function crearVisor(nodo, elemento, opciones) {
     var img = estado.imagenes[estado.i];
     if (img && img.complete && img.naturalWidth) {
       var a = pantalla(caja.oeste, caja.norte), b = pantalla(caja.este, caja.sur);
-      // Mas cerca que la resolucion de la imagen se ven los pixeles del SEPA tal cual, sin
-      // suavizar: es el dato que hay, no se inventa detalle.
-      g.imageSmoothingEnabled = (b[0] - a[0]) < img.naturalWidth * 1.5;
-      g.save();
-      // Recortada a la provincia, salvo que se pida el pais entero (ahi se ve la leyenda).
-      if (!estado.todoElPais) { g.clip(provincia); }
-      // La rotacion del KML (en grados, antihoraria) gira la imagen sobre el centro de su caja.
-      if (caja.rotacion) {
-        var cx = (a[0] + b[0]) / 2, cy = (a[1] + b[1]) / 2;
-        g.translate(cx, cy);
-        g.rotate(-caja.rotacion * Math.PI / 180);
-        g.translate(-cx, -cy);
-      }
+      var limpia = estado.limpias[estado.i] || (estado.limpias[estado.i] = limpiar(img));
+      g.imageSmoothingEnabled = true;
+      g.imageSmoothingQuality = "high";
       g.globalAlpha = estado.opacidad;
-      g.drawImage(img, a[0], a[1], b[0] - a[0], b[1] - a[1]);
+      // Fuera de la provincia (solo con "Mostrar todo el pais", que es donde se ve la leyenda)
+      // va la imagen del SEPA tal cual.
+      if (estado.todoElPais) {
+        g.save();
+        var afuera = new Path2D();
+        afuera.rect(0, 0, ancho, alto);
+        afuera.addPath(provincia);
+        g.clip(afuera, "evenodd");
+        rotarComoElKml(a, b);
+        g.drawImage(img, a[0], a[1], b[0] - a[0], b[1] - a[1]);
+        g.restore();
+      }
+      // Adentro, la version limpia: sin las lineas de limites que trae la imagen y con los
+      // bordes de cada color suavizados (ver limpiar()).
+      g.save();
+      g.clip(provincia);
+      rotarComoElKml(a, b);
+      var r0 = limpia.recorte, W = img.naturalWidth, H = img.naturalHeight;
+      g.drawImage(limpia.lienzo,
+                  a[0] + (b[0] - a[0]) * r0.x / W, a[1] + (b[1] - a[1]) * r0.y / H,
+                  (b[0] - a[0]) * r0.w / W, (b[1] - a[1]) * r0.h / H);
       g.restore();
       g.globalAlpha = 1;
     }
-    // Limites de los departamentos y de la provincia
+    // Limites de los departamentos y de la provincia: son los UNICOS que se ven (los de la
+    // imagen se borran), asi que no hay doble linea.
     g.lineJoin = "round";
     g.strokeStyle = color("--texto", "#2b1c18");
-    g.globalAlpha = 0.55;
-    g.lineWidth = 0.8;
+    g.globalAlpha = 0.7;
+    g.lineWidth = 1;
     estado.deptos.forEach(function (d) {
       var c = new Path2D();
       d.anillos.forEach(function (an) {
@@ -273,6 +288,101 @@ export default function crearVisor(nodo, elemento, opciones) {
     }
     canvas.setAttribute("aria-label", (mapas[estado.i].titulo || mapas[estado.i].rotulo)
       + " - Santiago del Estero");
+  }
+
+  // La rotacion del KML (en grados, antihoraria) gira la imagen sobre el centro de su caja.
+  function rotarComoElKml(a, b) {
+    if (!caja.rotacion) { return; }
+    var cx = (a[0] + b[0]) / 2, cy = (a[1] + b[1]) / 2;
+    g.translate(cx, cy);
+    g.rotate(-caja.rotacion * Math.PI / 180);
+    g.translate(-cx, -cy);
+  }
+
+  /* ---------- la imagen limpia (21-oct-2026) ----------
+     Pedido de la usuaria: "no quiero que se vean tan pixelados, y tienen como un doble margen
+     por cada departamento". Las dos cosas salen de la imagen del SEPA: es la del pais entero, asi
+     que la provincia ocupa unos 230 a 400 px de ancho y al agrandarla se ven los pixeles; y trae
+     dibujados sus propios limites departamentales (negros o grises), que quedaban al lado de los
+     del GeoJSON que dibuja el visor.
+
+     Se arma una vez por imagen, solo con el recorte de la provincia (limpiarPixeles, abajo):
+     1. Lineas fuera. Solo se toca la BANDA de pocos px alrededor de cada limite del GeoJSON, y
+        ahi solo los pixeles que son linea: grises o negros, o de un color de linea de ESA imagen.
+        Los colores de linea se miden en cada imagen: son los que dentro de la provincia aparecen
+        muchisimo mas pegados a los limites que lejos de ellos (en evapotranspiracion la linea es
+        semitransparente y sale verde oscuro, no gris). El hueco se rellena con los vecinos.
+     2. Sin pixelado y sin mover nada (segunda revision de la usuaria: "no quiero que se vea
+        pixelado pero tampoco quiero que le cambies de lugar los puntos"). Se agranda 4 veces con
+        Scale2x aplicado dos veces: cada pixel de la imagen queda en SU lugar, con su color, y lo
+        unico que cambia es que la escalera de un borde diagonal se redondea. Un punto suelto
+        sigue siendo un punto en el mismo lugar. Despues el navegador lo dibuja con suavizado.
+     La imagen original sigue disponible tal cual en "Imagen original" y en las miniaturas. */
+
+  function limpiar(img) {
+    var W = img.naturalWidth, H = img.naturalHeight;
+    var A = mundo(caja.oeste, caja.norte), B = mundo(caja.este, caja.sur);
+    var C = [(A[0] + B[0]) / 2, (A[1] + B[1]) / 2];
+    var giro = (caja.rotacion || 0) * Math.PI / 180;
+    var cos = Math.cos(giro), sin = Math.sin(giro);
+    // Punto del mundo -> pixel de la imagen (deshaciendo la rotacion con que se dibuja).
+    function aImagen(m) {
+      var dx = m[0] - C[0], dy = m[1] - C[1];
+      var x = cos * dx - sin * dy + C[0], y = sin * dx + cos * dy + C[1];
+      return [(x - A[0]) / (B[0] - A[0]) * W, (y - A[1]) / (B[1] - A[1]) * H];
+    }
+    var e = estado.encuadre, xs = [], ys = [];
+    [[e[0], e[1]], [e[2], e[1]], [e[0], e[3]], [e[2], e[3]]].forEach(function (m) {
+      var p = aImagen(m); xs.push(p[0]); ys.push(p[1]);
+    });
+    var x0 = Math.max(0, Math.floor(Math.min.apply(null, xs)) - 8);
+    var y0 = Math.max(0, Math.floor(Math.min.apply(null, ys)) - 8);
+    var x1 = Math.min(W, Math.ceil(Math.max.apply(null, xs)) + 8);
+    var y1 = Math.min(H, Math.ceil(Math.max.apply(null, ys)) + 8);
+    var w = x1 - x0, h = y1 - y0;
+
+    var fuente = document.createElement("canvas");
+    fuente.width = w; fuente.height = h;
+    var gf = fuente.getContext("2d", { willReadFrequently: true });
+    gf.drawImage(img, -x0, -y0);
+    var px = new Uint32Array(gf.getImageData(0, 0, w, h).data.buffer.slice(0));
+
+    // Tres mascaras del tamaño del recorte, rasterizadas con los limites del GeoJSON: la banda
+    // donde se borran lineas, una banda ancha (lo que queda afuera es "lejos de todo limite") y
+    // la provincia rellena.
+    function mascara(ancho) {
+      var lienzoM = document.createElement("canvas");
+      lienzoM.width = w; lienzoM.height = h;
+      var gm = lienzoM.getContext("2d", { willReadFrequently: true });
+      gm.beginPath();
+      estado.deptos.forEach(function (d) {
+        d.anillos.forEach(function (an) {
+          an.forEach(function (c, n) {
+            var p = aImagen(mundo(c[0], c[1]));
+            if (n) { gm.lineTo(p[0] - x0, p[1] - y0); } else { gm.moveTo(p[0] - x0, p[1] - y0); }
+          });
+          gm.closePath();
+        });
+      });
+      if (ancho) {
+        gm.lineWidth = ancho;
+        gm.lineJoin = "round";
+        gm.stroke();
+      } else {
+        gm.fill();
+      }
+      return gm.getImageData(0, 0, w, h).data;
+    }
+    var mascaras = { banda: mascara(2 * BANDA), ancha: mascara(6 * BANDA), provincia: mascara(0) };
+
+    var limpio = limpiarPixeles(px, mascaras, w, h);
+    var lienzo = document.createElement("canvas");
+    lienzo.width = limpio.ancho; lienzo.height = limpio.alto;
+    var gl = lienzo.getContext("2d");
+    var salida = gl.createImageData(limpio.ancho, limpio.alto);
+    new Uint32Array(salida.data.buffer).set(limpio.pixeles);
+    gl.putImageData(salida, 0, 0);
+    return { lienzo: lienzo, recorte: { x: x0, y: y0, w: w, h: h } };
   }
 
   // ---------- periodo ----------
@@ -467,4 +577,118 @@ export default function crearVisor(nodo, elemento, opciones) {
       nodo.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
+}
+
+/* El trabajo pixel por pixel de limpiar(), sin canvas (asi se puede probar fuera del navegador).
+   px: Uint32Array RGBA del recorte. mascaras: {banda, ancha, provincia}, cada una el RGBA de un
+   canvas del tamaño del recorte (alfa > 0 = adentro). Devuelve el recorte agrandado 4 veces. */
+export function limpiarPixeles(px, mascaras, w, h) {
+  px = px.slice(0);
+  var N = w * h, i, x, y;
+  var banda = new Uint8Array(N);
+  var cerca = new Uint32Array(4096), lejos = new Uint32Array(4096), nCerca = 0, nLejos = 0;
+  for (i = 0; i < N; i++) {
+    banda[i] = mascaras.banda[i * 4 + 3] ? 1 : 0;
+    if (!mascaras.provincia[i * 4 + 3]) { continue; }
+    if (banda[i]) { cerca[grupo(px[i])]++; nCerca++; } else if (!mascaras.ancha[i * 4 + 3]) {
+      lejos[grupo(px[i])]++; nLejos++;
+    }
+  }
+  // Colores de linea de esta imagen: al menos 20 pixeles pegados a los limites y, en proporcion,
+  // 8 veces mas frecuentes ahi que lejos de todo limite.
+  var deLinea = new Uint8Array(4096);
+  for (var k = 0; k < 4096; k++) {
+    if (cerca[k] >= 20 && (cerca[k] / nCerca) >= 8 * ((lejos[k] + 1) / Math.max(1, nLejos))) {
+      deLinea[k] = 1;
+    }
+  }
+  function esLinea(c) {
+    var r = c & 255, g = (c >> 8) & 255, b = (c >> 16) & 255;
+    var max = Math.max(r, g, b), min = Math.min(r, g, b);
+    return max <= 50 || (max - min <= 45 && max <= 180) || deLinea[grupo(c)] === 1;
+  }
+
+  // 1. Lineas fuera: en la banda, lo que es linea (y un pixel alrededor, el halo del JPG). Lo que
+  // parece linea fuera de la banda (`dudoso`) queda, pero no se usa para rellenar.
+  var hueco = new Uint8Array(N), dudoso = new Uint8Array(N);
+  for (i = 0; i < N; i++) {
+    if (esLinea(px[i])) { dudoso[i] = 1; if (banda[i]) { hueco[i] = 1; } }
+  }
+  var crecido = hueco.slice(0);
+  for (y = 0; y < h; y++) {
+    for (x = 0; x < w; x++) {
+      if (!hueco[y * w + x]) { continue; }
+      for (var dy = -1; dy <= 1; dy++) {
+        for (var dx = -1; dx <= 1; dx++) {
+          var xx = x + dx, yy = y + dy;
+          if (xx >= 0 && yy >= 0 && xx < w && yy < h && banda[yy * w + xx]) { crecido[yy * w + xx] = 1; }
+        }
+      }
+    }
+  }
+  hueco = crecido;
+  // El hueco se rellena de afuera hacia adentro con el color mas repetido entre los vecinos.
+  for (var pasada = 0; pasada < 24; pasada++) {
+    var rellenos = [];
+    for (y = 0; y < h; y++) {
+      for (x = 0; x < w; x++) {
+        i = y * w + x;
+        if (!hueco[i]) { continue; }
+        var elegido = -1, votos = 0, cuentas = {};
+        for (var ey = -1; ey <= 1; ey++) {
+          for (var ex = -1; ex <= 1; ex++) {
+            var x2 = x + ex, y2 = y + ey;
+            if (x2 < 0 || y2 < 0 || x2 >= w || y2 >= h) { continue; }
+            var j = y2 * w + x2;
+            if (hueco[j] || (dudoso[j] && pasada < 12)) { continue; }
+            var gr = grupo(px[j]);
+            cuentas[gr] = (cuentas[gr] || 0) + 1;
+            if (cuentas[gr] > votos) { votos = cuentas[gr]; elegido = px[j]; }
+          }
+        }
+        if (elegido !== -1) { rellenos.push(i, elegido); }
+      }
+    }
+    if (!rellenos.length && pasada >= 12) { break; }
+    for (var m = 0; m < rellenos.length; m += 2) {
+      px[rellenos[m]] = rellenos[m + 1];
+      hueco[rellenos[m]] = 0;
+      dudoso[rellenos[m]] = 0;
+    }
+  }
+
+  // 2. Agrandar 4 veces sin mover nada: Scale2x dos veces.
+  var una = escala2x(px, w, h);
+  var dos = escala2x(una, 2 * w, 2 * h);
+  for (i = 0; i < dos.length; i++) { dos[i] = (dos[i] | 0xff000000) >>> 0; }
+  return { pixeles: dos, ancho: 4 * w, alto: 4 * h };
+}
+
+/* Scale2x (EPX): cada pixel P pasa a ser 2x2. Una esquina toma el color del vecino solo cuando
+   los dos vecinos que tocan esa esquina son iguales entre si y distintos de los otros dos: es una
+   escalera diagonal y la esquina la redondea. En cualquier otro caso las cuatro quedan P, asi que
+   un punto suelto sigue entero en su lugar. "Igual" es el mismo grupo de color (ruido del JPG). */
+function escala2x(px, w, h) {
+  var out = new Uint32Array(4 * w * h), ow = 2 * w;
+  for (var y = 0; y < h; y++) {
+    for (var x = 0; x < w; x++) {
+      var P = px[y * w + x];
+      var A = y > 0 ? px[(y - 1) * w + x] : P;       // arriba
+      var B = x < w - 1 ? px[y * w + x + 1] : P;     // derecha
+      var C = x > 0 ? px[y * w + x - 1] : P;         // izquierda
+      var D = y < h - 1 ? px[(y + 1) * w + x] : P;   // abajo
+      var a = grupo(A), b = grupo(B), c = grupo(C), d = grupo(D);
+      var o = 2 * y * ow + 2 * x;
+      out[o] = (c === a && c !== d && a !== b) ? A : P;
+      out[o + 1] = (a === b && a !== c && b !== d) ? B : P;
+      out[o + ow] = (d === c && d !== b && c !== a) ? C : P;
+      out[o + ow + 1] = (b === d && b !== a && d !== c) ? D : P;
+    }
+  }
+  return out;
+}
+
+// Colores que el JPG separo por ruido cuentan como el mismo (16 niveles por canal).
+function grupo(v) {
+  return ((v & 255) >> 4) | ((((v >> 8) & 255) >> 4) << 4) | ((((v >> 16) & 255) >> 4) << 8);
 }
