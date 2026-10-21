@@ -722,6 +722,18 @@ ACCIONES_UTILIDAD = ("exportar-pdf", "zoom", "mas-informacion")
 BANDERAS_IDIOMA = {"es": "banderas/es.png", "en": "banderas/en.png", "pt": "banderas/pt.png"}
 
 
+def banderas_idioma():
+    """Las banderas de la cabecera. Desde el 20-oct-2026 vuelven a ser BANDERAS (revision de JC
+    del 16-oct-2026: "POR FAVOR AGREGAR LAS BANDERAS!!!!!!!"): las de su maqueta del SID
+    (Argentina, Reino Unido y Brasil), en site/assets/banderas/. La sigla viaja igual en el texto
+    accesible. Del 22-sep al 20-oct iban como sigla en monoespaciada. Van en las secciones con
+    `cabecera_banderas` o, con `cabecera_banderas_todas` en navegacion.yaml, en todas las paginas."""
+    return [{"codigo": codigo, "nombre": nombre, "activa": activa,
+             "imagen": "%s/%s" % (PREFIJO, BANDERAS_IDIOMA[codigo])}
+            for codigo, nombre, activa in (("es", "Español", True), ("en", "Inglés", False),
+                                           ("pt", "Português", False))]
+
+
 def accion_de_cuadro(item, destino, url_de, slug_tablero, id_panel, variante=None):
     """Un item del pie de un cuadro: "Más información →" o "Generar PDF".
 
@@ -12469,7 +12481,10 @@ def escribir_sitio(ctx, vistas, tableros):
              "menu": menu_del_sitio(ctx), "con_menu": True,
              "clase_cuerpo": "", "botones_cabecera": [], "boton_proximamente": False,
              "paginas_de_seccion": [], "tira_de_secciones": [],
-             "banderas_idioma": [], "menu_departamentos": [], "regresar_origen": None,
+             "banderas_idioma": (banderas_idioma()
+                                 if ctx.navegacion.get("cabecera_banderas_todas") else []),
+             "titulo_por_banderas": False,
+             "menu_departamentos": [], "regresar_origen": None,
              "nombre_pagina": None,
              "base": PREFIJO, "inicio": INICIO}
 
@@ -12741,16 +12756,9 @@ def escribir_sitio(ctx, vistas, tableros):
             if len(hermanas) > 1:
                 extras["tira_de_secciones"] = hermanas
         if seccion.get("cabecera_banderas"):
-            # Desde el 20-oct-2026 vuelven a ser BANDERAS (revision de JC del 16-oct-2026: "POR
-            # FAVOR AGREGAR LAS BANDERAS!!!!!!!"): las de su maqueta del SID (Argentina, Reino
-            # Unido y Brasil), en site/assets/banderas/. La sigla viaja igual en el texto
-            # accesible. Del 22-sep al 20-oct iban como sigla en monoespaciada.
-            extras["banderas_idioma"] = [
-                {"codigo": codigo, "nombre": nombre, "activa": activa,
-                 "imagen": "%s/%s" % (PREFIJO, BANDERAS_IDIOMA[codigo])}
-                for codigo, nombre, activa in (("es", "Español", True),
-                                               ("en", "Inglés", False),
-                                               ("pt", "Português", False))]
+            # La maqueta de estas secciones pone las banderas EN LUGAR del titulo.
+            extras["banderas_idioma"] = banderas_idioma()
+            extras["titulo_por_banderas"] = True
         botones = []
         # Los botones de TODAS las secciones (`botones_cabecera_todas` en navegacion.yaml: el
         # logo del SID, 20-oct-2026) van despues de los propios; uno que la seccion ya declara

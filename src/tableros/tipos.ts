@@ -113,6 +113,7 @@ export type Comun = {
   // que no lo espera no debe prometer una página que no existe.
   boton_proximamente: boolean;
   banderas_idioma: { codigo: string; nombre: string; activa: boolean; imagen?: string }[];
+  titulo_por_banderas: boolean;
   // Definiciones de los terminos marcados en ESTA pagina (site/glosario.yaml). Vacio si no
   // hay ninguno: ahi la cascara no dibuja el recuadro de aclaraciones.
   glosario: Record<string, Termino>;

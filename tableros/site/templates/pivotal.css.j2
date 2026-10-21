@@ -181,6 +181,8 @@ a.boton-cabecera:hover { background: color-mix(in srgb, var(--sobre-cromo) 16%, 
    activa; ingles y portugues deshabilitadas con "Próximamente" (tooltip): excepcion
    acotada a la regla de botones muertos. */
 .cabecera-banderas { margin-left: auto; display: flex; align-items: center; gap: .5rem; }
+/* Al lado del titulo (todas las paginas desde el 21-oct-2026) el titulo ya empuja a la derecha. */
+.cabecera-titulo + .cabecera-banderas { margin-left: 1.1rem; flex: 0 0 auto; }
 /* Siglas ES / EN / PT: a este tamaño tres banderitas no se distinguen, y el rotulo chico en
    monoespaciada versalita es como escribe estas cosas el sitio. */
 .cabecera-banderas .bandera {

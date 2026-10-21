@@ -5,8 +5,9 @@
    Diseño: TEMA VISUAL del 10-ago-2026 (Facu, en persona con JC presente), regla en
    _protocolo-presentacion.formato_v1.tema_visual. Lo que define la cascara:
      - Cabecera blanca con el logo provincial a la izquierda y una franja verde con los
-       botones de cabecera que declare la seccion. En las secciones que declaran
-       `cabecera_banderas` el titulo no se dibuja: van las banderas es/en/pt.
+       botones de cabecera que declare la seccion, el titulo y las banderas es/en/pt. En las
+       secciones que declaran `cabecera_banderas` el titulo no se dibuja: las banderas van en
+       su lugar.
      - Menu lateral VERDE: "Inicio" + sectores desplegables (site/navegacion.yaml). Sector sin
        secciones publicadas = "Proximamente", sin links muertos. La home va sin menu.
      - Banda VERDE de breadcrumb; el selector de PERIODO va a la derecha como tira de pestañitas.
@@ -202,8 +203,17 @@ export default function Cascara({ pagina, children }: { pagina: Comun; children:
               ← <span data-regresar-texto="">{pagina.regresar_origen}</span>
             </a>
           ) : null}
+          {/* El titulo de la pagina, salvo en las secciones cuya maqueta pone las banderas en su
+              lugar (`cabecera_banderas`, tercera tanda, backlog 33). */}
+          {pagina.titulo_por_banderas ? null : (
+            <div className="cabecera-titulo">
+              <h1>{titulo}</h1>
+              {pagina.subtitulo_cabecera ? <p>{pagina.subtitulo_cabecera}</p> : null}
+            </div>
+          )}
+          {/* Las banderas es/en/pt: en todas las paginas (navegacion.yaml,
+              cabecera_banderas_todas), al lado del titulo o en su lugar. */}
           {pagina.banderas_idioma.length ? (
-            // Donde estaba el titulo van las banderas es/en/pt (tercera tanda, backlog 33)
             <div className="cabecera-banderas" aria-label="Idiomas">
               {pagina.banderas_idioma.map((bandera) =>
                 bandera.activa ? (
@@ -223,12 +233,7 @@ export default function Cascara({ pagina, children }: { pagina: Comun; children:
                 ),
               )}
             </div>
-          ) : (
-            <div className="cabecera-titulo">
-              <h1>{titulo}</h1>
-              {pagina.subtitulo_cabecera ? <p>{pagina.subtitulo_cabecera}</p> : null}
-            </div>
-          )}
+          ) : null}
           <span className="marca-estado">beta</span>
         </div>
       </header>
