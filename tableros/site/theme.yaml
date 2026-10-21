@@ -163,15 +163,16 @@ cromadas:
 # isologotipo multicolor que trajo Facu el 10-ago (site/assets/logo-provincia.png): los dos
 # archivos quedan en el repo como registro de lo que hubo antes, sin referenciar.
 #
-# La `bajada` se sigue dibujando chica debajo del logo. El wordmark de texto queda como
-# fallback si otro cliente no trae asset (F3).
+# Sin `bajada`: la leyenda de texto con el nombre del gobierno provincial que iba chica
+# debajo del logo se saco a pedido de la usuaria (21-oct-2026). Si otro cliente la necesita,
+# basta con declarar `bajada` aca. El wordmark de texto queda como fallback si otro cliente
+# no trae asset (F3).
 #
 # LIMITACION CONOCIDA: el archivo de JC mide 287x96, o sea que en la cabecera (3,8rem de alto)
 # se dibuja a 179 px de ancho y en una pantalla de alta densidad queda un poco blando. Si la
 # provincia tiene el original en mayor resolucion, se reemplaza el archivo y listo.
 logo_provincia:
   nombre: "Santiago del Estero"
-  bajada: "Gobierno de la Provincia de Santiago del Estero"
   # El ISOLOGOTIPO NEGATIVO oficial, sacado del manual de marca (MANUAL_MARCA_SDE_2025.pdf,
   # pagina 11: "Isologotipo positivo/negativo"). PNG blanco sobre fondo TRANSPARENTE, asi que
   # apoya sobre el cromo de cada area -verde en agricultura, cocoa en ganaderia- sin recuadro.

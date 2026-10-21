@@ -138,12 +138,12 @@ export default function Cascara({ pagina, children }: { pagina: Comun; children:
             <a className="logo-con-imagen" href={pagina.inicio}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img className="logo-imagen" src={logo.archivo} alt={logo.nombre} />
-              <span className="logo-bajada">{logo.bajada}</span>
+              {logo.bajada ? <span className="logo-bajada">{logo.bajada}</span> : null}
             </a>
           ) : (
             <a className="logo-wordmark" href={pagina.inicio}>
               <span className="logo-nombre">{logo.nombre}</span>
-              <span className="logo-bajada">{logo.bajada}</span>
+              {logo.bajada ? <span className="logo-bajada">{logo.bajada}</span> : null}
             </a>
           )}
         </div>
