@@ -19,6 +19,7 @@
 
 var ZOOM_MAXIMO = 14;     // veces el encuadre inicial
 var ALTO_LIENZO = 640;    // px; en pantallas angostas lo baja el CSS
+var BANDA = 4.5;          // px de la imagen a cada lado de un limite donde se busca su linea
 
 export default function crearVisor(nodo, elemento, opciones) {
   var caja = elemento.visor.caja;
@@ -231,17 +232,14 @@ export default function crearVisor(nodo, elemento, opciones) {
       g.restore();
       g.globalAlpha = 1;
     }
-    // Limites de los departamentos y de la provincia. La imagen del SEPA trae los suyos y la
-    // caja (ajustada, ver los specs) los deja justo debajo de estos: se dibujan opacos y con el
-    // grosor de la linea del SEPA para TAPARLA, asi se ve una sola. Lo que no se hace es borrar
-    // la linea de la imagen: rellenar el hueco inventaba manchas y estrias (21-oct-2026).
-    var pxSepa = img && img.naturalWidth
-      ? (pantalla(caja.este, 0)[0] - pantalla(caja.oeste, 0)[0]) / img.naturalWidth : 1;
+    // Limites de los departamentos y de la provincia, FINOS (pedido de la usuaria del
+    // 21-oct-2026: "el borde de la provincia y departamentos es demasiado grueso"). Los de la
+    // imagen del SEPA ya no se ven: sinLineas() los saca antes de agrandar.
     g.lineJoin = "round";
     g.lineCap = "round";
     g.strokeStyle = color("--texto", "#2b1c18");
     g.globalAlpha = 1;
-    var grosor = Math.min(5, Math.max(1, 1.8 * pxSepa));
+    var grosor = 1;
     estado.deptos.forEach(function (d) {
       var c = new Path2D();
       d.anillos.forEach(function (an) {
@@ -251,10 +249,10 @@ export default function crearVisor(nodo, elemento, opciones) {
         });
         c.closePath();
       });
-      g.lineWidth = d === estado.sobre ? grosor + 1.5 : grosor;
+      g.lineWidth = d === estado.sobre ? 2.2 : grosor;
       g.stroke(c);
     });
-    g.lineWidth = Math.min(6, Math.max(1.6, 2.6 * pxSepa));
+    g.lineWidth = 1.6;
     g.stroke(provincia);
     // Nombres: solo cuando hay lugar (mas cerca que el encuadre inicial o en un lienzo grande)
     if (estado.s >= escalaEncuadre * 0.95 && ancho > 420) {
@@ -300,9 +298,9 @@ export default function crearVisor(nodo, elemento, opciones) {
      la del pais entero: la provincia ocupa 230 a 400 px de ancho y al agrandarla se ven los
      pixeles. Se agranda el recorte de la provincia con un contorno suave (agrandarPixeles): cada
      pixel queda en SU lugar con SU color y lo unico que cambia es que el escalon entre dos
-     colores se vuelve curva; un punto suelto sigue siendo el mismo punto. No se borra ni se rellena
-     nada (se probo borrar las lineas del SEPA y rellenar: quedaban manchas y estrias que no estan
-     en el original). Despues el navegador lo dibuja con suavizado.
+     colores se vuelve curva; un punto suelto sigue siendo el mismo punto. Antes se sacan las
+     lineas de limites que trae la imagen (sinLineas), para que se vean solo las del sitio, finas.
+     Despues el navegador lo dibuja con suavizado.
      La imagen original sigue disponible tal cual en "Imagen original" y en las miniaturas. */
   function agrandar(img) {
     var W = img.naturalWidth, H = img.naturalHeight;
@@ -331,6 +329,35 @@ export default function crearVisor(nodo, elemento, opciones) {
     var gf = fuente.getContext("2d", { willReadFrequently: true });
     gf.drawImage(img, -x0, -y0);
     var px = new Uint32Array(gf.getImageData(0, 0, w, h).data.buffer.slice(0));
+
+    // Tres mascaras del tamaño del recorte con los limites del GeoJSON: la banda donde se busca
+    // la linea del SEPA, una banda ancha (lo que queda afuera es "lejos de todo limite") y la
+    // provincia rellena.
+    function mascara(ancho) {
+      var lienzoM = document.createElement("canvas");
+      lienzoM.width = w; lienzoM.height = h;
+      var gm = lienzoM.getContext("2d", { willReadFrequently: true });
+      gm.beginPath();
+      estado.deptos.forEach(function (d) {
+        d.anillos.forEach(function (an) {
+          an.forEach(function (c, n) {
+            var p = aImagen(mundo(c[0], c[1]));
+            if (n) { gm.lineTo(p[0] - x0, p[1] - y0); } else { gm.moveTo(p[0] - x0, p[1] - y0); }
+          });
+          gm.closePath();
+        });
+      });
+      if (ancho) {
+        gm.lineWidth = ancho;
+        gm.lineJoin = "round";
+        gm.stroke();
+      } else {
+        gm.fill();
+      }
+      return gm.getImageData(0, 0, w, h).data;
+    }
+    px = sinLineas(px, { banda: mascara(2 * BANDA), ancha: mascara(6 * BANDA),
+                         provincia: mascara(0) }, w, h);
     var grande = agrandarPixeles(px, w, h);
     var lienzo = document.createElement("canvas");
     lienzo.width = grande.ancho; lienzo.height = grande.alto;
@@ -571,6 +598,67 @@ export function agrandarPixeles(px, w, h) {
     }
   }
   return { pixeles: out, ancho: ow, alto: oh };
+}
+
+/* Saca las lineas de limites que trae dibujadas la imagen del SEPA, sin manchar (21-oct-2026).
+   px: Uint32Array RGBA del recorte; mascaras: {banda, ancha, provincia}, el RGBA de un canvas
+   del tamaño del recorte cada una (alfa > 0 = adentro). Devuelve una copia.
+   1. Solo se mira la BANDA de pocos px alrededor de cada limite del GeoJSON (la caja ajustada
+      deja la linea del SEPA ahi), y en ella solo lo que es linea: gris o negro; un color de
+      linea de ESA imagen (en evapotranspiracion la linea es semitransparente y sale verde
+      oscuro): los que dentro de la provincia aparecen muchisimo mas pegados a los limites que
+      lejos; o un color que lejos de los limites casi no existe (la mezcla que el JPG hace entre
+      la linea negra y lo que cruza: amarillo + negro = oliva). Un punto de color de la escala
+      pegado al limite NO es nada de eso y queda.
+   2. Cada pixel de linea toma el color del pixel limpio MAS CERCANO (los dos lados de la linea
+      avanzan a la vez hasta encontrarse en el medio). Un intento anterior rellenaba con el color
+      mas repetido de los vecinos, pasada tras pasada, y arrastraba colores a lo largo de la
+      linea: quedaban estrias y manchas. Asi no: cada lado llega solo hasta la mitad. */
+export function sinLineas(px, mascaras, w, h) {
+  var N = w * h, i, k;
+  var banda = new Uint8Array(N);
+  var cerca = new Uint32Array(4096), lejos = new Uint32Array(4096), nCerca = 0, nLejos = 0;
+  for (i = 0; i < N; i++) {
+    banda[i] = mascaras.banda[i * 4 + 3] ? 1 : 0;
+    if (!mascaras.provincia[i * 4 + 3]) { continue; }
+    k = grupo(px[i]);
+    if (banda[i]) { cerca[k]++; nCerca++; } else if (!mascaras.ancha[i * 4 + 3]) { lejos[k]++; nLejos++; }
+  }
+  nLejos = Math.max(1, nLejos);
+  var deLinea = new Uint8Array(4096);
+  for (k = 0; k < 4096; k++) {
+    if (cerca[k] >= 20 && cerca[k] / nCerca >= 8 * (lejos[k] + 1) / nLejos) { deLinea[k] = 1; }
+  }
+  var raro = Math.max(1, 0.0005 * nLejos);
+  var limpio = px.slice(0), hecho = new Uint8Array(N), cola = new Int32Array(N), fin = 0;
+  for (i = 0; i < N; i++) {
+    var c = px[i], r = c & 255, g = (c >> 8) & 255, b = (c >> 16) & 255;
+    var max = Math.max(r, g, b), min = Math.min(r, g, b);
+    k = grupo(c);
+    var linea = banda[i] && (max <= 50 || (max - min <= 45 && max <= 180) || deLinea[k] === 1 ||
+                             lejos[k] < raro);
+    if (!linea) { hecho[i] = 1; }
+  }
+  // Los limpios que tocan una linea arrancan la cola; se avanza en anillos (4 vecinos).
+  for (i = 0; i < N; i++) {
+    if (!hecho[i]) { continue; }
+    var x = i % w, y = (i - x) / w;
+    if ((x > 0 && !hecho[i - 1]) || (x < w - 1 && !hecho[i + 1]) ||
+        (y > 0 && !hecho[i - w]) || (y < h - 1 && !hecho[i + w])) { cola[fin++] = i; }
+  }
+  for (var ini = 0; ini < fin; ini++) {
+    var j = cola[ini], jx = j % w, jy = (j - jx) / w;
+    var vecinos = [jx > 0 ? j - 1 : -1, jx < w - 1 ? j + 1 : -1, jy > 0 ? j - w : -1,
+                   jy < h - 1 ? j + w : -1];
+    for (var v = 0; v < 4; v++) {
+      var n = vecinos[v];
+      if (n < 0 || hecho[n]) { continue; }
+      hecho[n] = 1;
+      limpio[n] = limpio[j];
+      cola[fin++] = n;
+    }
+  }
+  return limpio;
 }
 
 // Colores que el JPG separo por ruido cuentan como el mismo (16 niveles por canal).
