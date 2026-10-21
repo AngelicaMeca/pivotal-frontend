@@ -298,9 +298,9 @@ export default function crearVisor(nodo, elemento, opciones) {
      Pedidos de la usuaria: "no quiero que se vean tan pixelados" y "tampoco quiero que le
      cambies de lugar los puntos que marcan sectores en el mapa original". La imagen del SEPA es
      la del pais entero: la provincia ocupa 230 a 400 px de ancho y al agrandarla se ven los
-     pixeles. Se agranda 4 veces el recorte de la provincia con Scale2x aplicado dos veces: cada
-     pixel queda en SU lugar con SU color y lo unico que cambia es que la escalera de un borde
-     diagonal se redondea; un punto suelto sigue siendo el mismo punto. No se borra ni se rellena
+     pixeles. Se agranda el recorte de la provincia con un contorno suave (agrandarPixeles): cada
+     pixel queda en SU lugar con SU color y lo unico que cambia es que el escalon entre dos
+     colores se vuelve curva; un punto suelto sigue siendo el mismo punto. No se borra ni se rellena
      nada (se probo borrar las lineas del SEPA y rellenar: quedaban manchas y estrias que no estan
      en el original). Despues el navegador lo dibuja con suavizado.
      La imagen original sigue disponible tal cual en "Imagen original" y en las miniaturas. */
@@ -536,35 +536,41 @@ export default function crearVisor(nodo, elemento, opciones) {
 }
 
 /* El trabajo pixel por pixel de agrandar(), sin canvas (asi se puede probar fuera del
-   navegador). px: Uint32Array RGBA del recorte. Devuelve el recorte agrandado 4 veces. */
-export function agrandarPixeles(px, w, h) {
-  var dos = escala2x(escala2x(px, w, h), 2 * w, 2 * h);
-  for (var i = 0; i < dos.length; i++) { dos[i] = (dos[i] | 0xff000000) >>> 0; }
-  return { pixeles: dos, ancho: 4 * w, alto: 4 * h };
-}
+   navegador). px: Uint32Array RGBA del recorte. Devuelve el recorte agrandado F veces (F entre
+   4 y 8, para que salga de unos 1.600 px de ancho).
 
-/* Scale2x (EPX): cada pixel P pasa a ser 2x2. Una esquina toma el color del vecino solo cuando
-   los dos vecinos que tocan esa esquina son iguales entre si y distintos de los otros dos: es una
-   escalera diagonal y la esquina la redondea. En cualquier otro caso las cuatro quedan P, asi que
-   un punto suelto sigue entero en su lugar. "Igual" es el mismo grupo de color (ruido del JPG). */
-function escala2x(px, w, h) {
-  var out = new Uint32Array(4 * w * h), ow = 2 * w;
-  for (var y = 0; y < h; y++) {
-    for (var x = 0; x < w; x++) {
-      var P = px[y * w + x];
-      var A = y > 0 ? px[(y - 1) * w + x] : P;       // arriba
-      var B = x < w - 1 ? px[y * w + x + 1] : P;     // derecha
-      var C = x > 0 ? px[y * w + x - 1] : P;         // izquierda
-      var D = y < h - 1 ? px[(y + 1) * w + x] : P;   // abajo
-      var a = grupo(A), b = grupo(B), c = grupo(C), d = grupo(D);
-      var o = 2 * y * ow + 2 * x;
-      out[o] = (c === a && c !== d && a !== b) ? A : P;
-      out[o + 1] = (a === b && a !== c && b !== d) ? B : P;
-      out[o + ow] = (d === c && d !== b && c !== a) ? C : P;
-      out[o + ow + 1] = (b === d && b !== a && d !== c) ? D : P;
+   CONTORNO SUAVE (21-oct-2026, "puedes hacer que se vean menos pixelados?"): cada pixel nuevo
+   mira los 4 pixeles de la imagen que lo rodean y toma el color (agrupado, por el ruido del JPG)
+   que mas pesa con pesos bilineales; el color exacto es el del pixel de ese grupo mas cercano.
+   El centro de cada pixel de la imagen pesa casi entero, asi que conserva SU color: ningun punto
+   se mueve ni desaparece. Lo que cambia es el espacio ENTRE pixeles: el borde entre dos colores
+   pasa a ser una curva en vez de un escalon, y no se mezclan colores (no aparecen tonos que no
+   esten en la imagen). Reemplaza a Scale2x, que en los mapas con mucho moteado (ET, NDVI)
+   inventaba formas de gusano. */
+export function agrandarPixeles(px, w, h) {
+  var F = Math.max(4, Math.min(8, Math.round(1600 / w)));
+  var ow = w * F, oh = h * F, out = new Uint32Array(ow * oh);
+  var claves = [0, 0, 0, 0], pesos = [0, 0, 0, 0], colores = [0, 0, 0, 0], mejor = [0, 0, 0, 0];
+  for (var oy = 0; oy < oh; oy++) {
+    var v = (oy + 0.5) / F - 0.5, y0 = Math.floor(v), fy = v - y0;
+    for (var ox = 0; ox < ow; ox++) {
+      var u = (ox + 0.5) / F - 0.5, x0 = Math.floor(u), fx = u - x0, n = 0;
+      for (var q = 0; q < 4; q++) {
+        var sx = Math.min(w - 1, Math.max(0, x0 + (q & 1)));
+        var sy = Math.min(h - 1, Math.max(0, y0 + (q >> 1)));
+        var peso = ((q & 1) ? fx : 1 - fx) * ((q >> 1) ? fy : 1 - fy);
+        var c = px[sy * w + sx], k = grupo(c), t = 0;
+        while (t < n && claves[t] !== k) { t++; }
+        if (t === n) { claves[t] = k; pesos[t] = 0; mejor[t] = -1; n++; }
+        pesos[t] += peso;
+        if (peso > mejor[t]) { mejor[t] = peso; colores[t] = c; }
+      }
+      var gana = 0;
+      for (var z = 1; z < n; z++) { if (pesos[z] > pesos[gana]) { gana = z; } }
+      out[oy * ow + ox] = (colores[gana] | 0xff000000) >>> 0;
     }
   }
-  return out;
+  return { pixeles: out, ancho: ow, alto: oh };
 }
 
 // Colores que el JPG separo por ruido cuentan como el mismo (16 niveles por canal).
