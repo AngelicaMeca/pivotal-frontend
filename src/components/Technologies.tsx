@@ -113,7 +113,8 @@ const items: AccordionItem[] = technologies.map((tech, i) => {
   };
 });
 
-export default function Technologies() {
+// The home numbers it 04; the B³ AgriFood Provincia page (/plataforma) reuses it as 01.
+export default function Technologies({ index = "04" }: { index?: string }) {
   return (
     <section
       id="tecnologia"
@@ -122,7 +123,7 @@ export default function Technologies() {
       <Container>
         <Reveal>
           <SectionHeading
-            index="04"
+            index={index}
             eyebrow="El motor"
             title="Tres tecnologías propietarias, un solo sistema."
             tone="dark"
