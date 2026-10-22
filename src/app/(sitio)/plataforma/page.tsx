@@ -84,18 +84,9 @@ function Encabezado({ entrar }: { entrar: Entrada }) {
 
 function Portada({ entrar, soluciones }: { entrar: Entrada; soluciones: Solucion[] }) {
   return (
-    <section
-      className="swiss-grid-bg-dark relative overflow-hidden bg-cocoa pt-20 pb-24 md:pt-28 md:pb-32"
-      style={{ backgroundImage: "linear-gradient(155deg, #2b1c18 0%, #2b1c18 55%, #3a281f 100%)" }}
-    >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-clay/20 blur-[110px]"
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -bottom-32 left-0 h-96 w-96 rounded-full bg-olive/40 blur-[110px]"
-      />
+    // Mismo fondo plano que la sección de tecnologías que sigue (cocoa con la grilla), sin
+    // degradados ni resplandores: las dos se leen como un solo bloque.
+    <section className="swiss-grid-bg-dark relative overflow-hidden bg-cocoa pt-20 pb-8 md:pt-28 md:pb-12">
       <Container className="relative">
         <div className="grid grid-cols-1 items-center gap-14 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-16">
           <Reveal>
