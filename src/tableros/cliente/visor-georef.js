@@ -24,19 +24,40 @@
    renglon) y se dibujan en un panel FIJO al costado del lienzo. Antes se recortaba el recuadro
    de la propia imagen; la usuaria lo pidio dibujado ("hardcodea la escala de colores... no me
    gusta que los hayas puesto como imagen"), asi que ahora es DOM: se arma una sola vez, no
-   depende de que la imagen cargue y no la tocan ni el zoom ni el cambio de periodo. */
+   depende de que la imagen cargue y no la tocan ni el zoom ni el cambio de periodo.
+
+   LA ESPERA (27-oct-2026, pedido de la usuaria: "los mapas demoran mucho en cargar... hace que
+   aparezca una pantalla de 'cargando' mientras se espera"). El mapa del SEPA pesa 1,6 MB y
+   antes el lienzo quedaba en blanco hasta que terminaba de bajar y de prepararse: medido con
+   la red a 4 Mbps, ocho segundos sin nada en pantalla. Ahora:
+     1. la imagen se pide al crear el visor, en paralelo con los limites, y en prioridad alta,
+        para que no haga cola detras de las miniaturas de la grilla (que pasaron a "low");
+     2. mientras baja se dibuja la MINIATURA desenfocada, que pesa 56 KB;
+     3. apenas llega la imagen se dibuja tal cual, y recien despues -en otro cuadro, con la
+        pantalla de carga a la vista- se hace lo caro: sacarle las lineas y agrandarla;
+     4. la pantalla de carga tapa el lienzo y dice en que etapa esta; se va cuando el mapa esta
+        listo de verdad, no cuando termino la bajada;
+     5. con el visor quieto se adelanta el periodo de al lado, uno solo, para que la flecha no
+        vuelva a esperar. */
 
 var ZOOM_MAXIMO = 14;     // veces el encuadre inicial
 var ALTO_LIENZO = 640;    // px; en pantallas angostas lo baja el CSS
 var BANDA = 4.5;          // px de la imagen a cada lado de un limite donde se busca su linea
 
 export default function crearVisor(nodo, elemento, opciones) {
+  /* DOS cajas (27-oct-2026). `caja` es la de la imagen del SEPA entera, que es la de su KML.
+     `cajaRecorte` es la del RECORTE DE LA PROVINCIA que publica el build al lado de cada
+     original: los mismos pixeles, sin reescalar, pero sin el resto del pais. Pesa entre cuatro
+     y veintidos veces menos y es lo que el visor dibuja; la imagen entera se baja SOLO si se
+     pide "Mostrar todo el pais", que es el unico momento en que se ve algo de afuera. */
   var caja = elemento.visor.caja;
+  var cajaRecorte = elemento.visor.recorte || null;
   var mapas = elemento.mapas;
   var estado = {
     i: elemento.destacado || 0, opacidad: 1, todoElPais: false,
     s: 1, tx: 0, ty: 0, encuadre: null, deptos: [], k: 1,
-    imagenes: {}, limpias: {}, punteros: {}, arrastre: null, pellizco: null, sobre: null
+    imagenes: {}, minis: {}, completas: {}, limpias: {}, preparando: null, vecino: null,
+    punteros: {}, arrastre: null, pellizco: null, sobre: null
   };
 
   // ---------- armado ----------
@@ -74,6 +95,8 @@ export default function crearVisor(nodo, elemento, opciones) {
   todo.type = "checkbox";
   todo.addEventListener("change", function () {
     estado.todoElPais = todo.checked;
+    // Lo de afuera de la provincia solo esta en la imagen entera, que no se bajo todavia.
+    if (todo.checked) { pedirCompleta(estado.i); }
     dibujar();
   });
   var rotuloTodo = el("label", "visor-control");
@@ -103,10 +126,28 @@ export default function crearVisor(nodo, elemento, opciones) {
   var escala = leyenda ? armarEscala(leyenda) : null;
   var tip = el("div", "visor-tip");
   tip.hidden = true;
+  /* La PANTALLA DE CARGA (27-oct-2026, pedido de la usuaria: "hace que aparezca una pantalla de
+     'cargando' mientras se espera"). Tapa el lienzo entero y se queda hasta que el mapa esta
+     PREPARADO, no hasta que la imagen termino de bajar: lo que viene despues de la bajada
+     -sacarle las lineas y agrandarla- es un cuarto de segundo mas de trabajo. */
   var cargando = el("div", "visor-cargando");
+  cargando.setAttribute("role", "status");
+  cargando.hidden = true;
+  var giro = el("span", "visor-giro");
+  giro.setAttribute("aria-hidden", "true");
+  var textoCargando = el("span", "visor-cargando-texto");
+  cargando.appendChild(giro);
+  cargando.appendChild(textoCargando);
+  /* El AVISO chico, arriba del mapa: para lo que se esta bajando mientras el mapa YA se ve
+     (hoy, la imagen del pais entero). No puede ser la pantalla de carga, que tapa el lienzo:
+     taparia justo el mapa que ya esta bien. */
+  var aviso = el("div", "visor-aviso");
+  aviso.setAttribute("role", "status");
+  aviso.hidden = true;
   lienzo.appendChild(canvas);
   lienzo.appendChild(tip);
   lienzo.appendChild(cargando);
+  lienzo.appendChild(aviso);
   var nota = el("p", "visor-nota");
   // El visor muestra la imagen agrandada (ver agrandar()): la nota lo dice.
   nota.textContent = elemento.visor.nota + " En el visor la imagen se ubica con una caja"
@@ -220,33 +261,59 @@ export default function crearVisor(nodo, elemento, opciones) {
     g.fillStyle = color("--fondo-cuadro", "#fbf4ec");
     g.fillRect(0, 0, ancho, alto);
     var provincia = caminoProvincia();
+    /* El mapa se dibuja con LO MEJOR QUE HAY en este momento, y nunca se espera a nada
+       (27-oct-2026). Son tres etapas y cada una reemplaza a la anterior sin que el lienzo
+       quede en blanco: la miniatura borrosa (56 KB, llega en menos de medio segundo), la
+       imagen del SEPA tal cual (1,6 MB) y la imagen limpia y agrandada, que es la buena. */
     var img = estado.imagenes[estado.i];
-    if (img && img.complete && img.naturalWidth) {
-      var a = pantalla(caja.oeste, caja.norte), b = pantalla(caja.este, caja.sur);
-      var limpia = estado.limpias[estado.i] || (estado.limpias[estado.i] = agrandar(img));
+    var hayImagen = !!(img && img.complete && img.naturalWidth);
+    var limpia = hayImagen ? estado.limpias[estado.i] : null;
+    var previa = estado.minis[estado.i];
+    var hayPrevia = !hayImagen && previa && previa.complete && previa.naturalWidth;
+    if (hayImagen || hayPrevia) {
+      // Cada imagen con SU caja: la que se dibuja adentro de la provincia puede ser el recorte
+      // y la miniatura es siempre del pais entero.
+      var cajaImg = cajaDelPeriodo(estado.i);
       g.imageSmoothingEnabled = true;
       g.imageSmoothingQuality = "high";
       g.globalAlpha = estado.opacidad;
       // Fuera de la provincia (solo con "Mostrar todo el pais", que es donde se ve la leyenda)
-      // va la imagen del SEPA tal cual.
-      if (estado.todoElPais) {
+      // va la imagen ENTERA, que es la unica que tiene algo afuera.
+      var completa = estado.completas[estado.i];
+      if (estado.todoElPais && completa && completa.complete && completa.naturalWidth) {
+        var ca = pantalla(caja.oeste, caja.norte), cb = pantalla(caja.este, caja.sur);
         g.save();
         var afuera = new Path2D();
         afuera.rect(0, 0, ancho, alto);
         afuera.addPath(provincia);
         g.clip(afuera, "evenodd");
-        rotarComoElKml(a, b);
-        g.drawImage(img, a[0], a[1], b[0] - a[0], b[1] - a[1]);
+        rotarComoElKml(ca, cb, caja);
+        g.drawImage(completa, ca[0], ca[1], cb[0] - ca[0], cb[1] - ca[1]);
         g.restore();
       }
       // Adentro, la imagen agrandada sin pixelado (ver agrandar()).
       g.save();
       g.clip(provincia);
-      rotarComoElKml(a, b);
-      var r0 = limpia.recorte, W = img.naturalWidth, H = img.naturalHeight;
-      g.drawImage(limpia.lienzo,
-                  a[0] + (b[0] - a[0]) * r0.x / W, a[1] + (b[1] - a[1]) * r0.y / H,
-                  (b[0] - a[0]) * r0.w / W, (b[1] - a[1]) * r0.h / H);
+      if (limpia) {
+        var a = pantalla(cajaImg.oeste, cajaImg.norte), b = pantalla(cajaImg.este, cajaImg.sur);
+        rotarComoElKml(a, b, cajaImg);
+        var r0 = limpia.recorte, W = img.naturalWidth, H = img.naturalHeight;
+        g.drawImage(limpia.lienzo,
+                    a[0] + (b[0] - a[0]) * r0.x / W, a[1] + (b[1] - a[1]) * r0.y / H,
+                    (b[0] - a[0]) * r0.w / W, (b[1] - a[1]) * r0.h / H);
+      } else if (hayImagen) {
+        // Bajo pero todavia no se preparo: va tal cual, con las lineas que trae dibujadas.
+        var ia = pantalla(cajaImg.oeste, cajaImg.norte), ib = pantalla(cajaImg.este, cajaImg.sur);
+        rotarComoElKml(ia, ib, cajaImg);
+        g.drawImage(img, ia[0], ia[1], ib[0] - ia[0], ib[1] - ia[1]);
+      } else {
+        // La miniatura, DESENFOCADA: se lee como "esto todavia no es el mapa" y no como un
+        // mapa de mala calidad. Es del pais entero, asi que va con la caja entera.
+        var ma = pantalla(caja.oeste, caja.norte), mb = pantalla(caja.este, caja.sur);
+        rotarComoElKml(ma, mb, caja);
+        g.filter = "blur(3px)";
+        g.drawImage(previa, ma[0], ma[1], mb[0] - ma[0], mb[1] - ma[1]);
+      }
       g.restore();
       g.globalAlpha = 1;
     }
@@ -338,12 +405,13 @@ export default function crearVisor(nodo, elemento, opciones) {
     return caja;
   }
 
-  // La rotacion del KML (en grados, antihoraria) gira la imagen sobre el centro de su caja.
-  function rotarComoElKml(a, b) {
-    if (!caja.rotacion) { return; }
+  // La rotacion del KML (en grados, antihoraria) gira la imagen sobre el centro de SU caja, que
+  // no es la misma para la imagen entera y para el recorte de la provincia.
+  function rotarComoElKml(a, b, suCaja) {
+    if (!suCaja.rotacion) { return; }
     var cx = (a[0] + b[0]) / 2, cy = (a[1] + b[1]) / 2;
     g.translate(cx, cy);
-    g.rotate(-caja.rotacion * Math.PI / 180);
+    g.rotate(-suCaja.rotacion * Math.PI / 180);
     g.translate(-cx, -cy);
   }
 
@@ -357,11 +425,11 @@ export default function crearVisor(nodo, elemento, opciones) {
      lineas de limites que trae la imagen (sinLineas), para que se vean solo las del sitio, finas.
      Despues el navegador lo dibuja con suavizado.
      La imagen original sigue disponible tal cual en "Imagen original" y en las miniaturas. */
-  function agrandar(img) {
+  function agrandar(img, suCaja) {
     var W = img.naturalWidth, H = img.naturalHeight;
-    var A = mundo(caja.oeste, caja.norte), B = mundo(caja.este, caja.sur);
+    var A = mundo(suCaja.oeste, suCaja.norte), B = mundo(suCaja.este, suCaja.sur);
     var C = [(A[0] + B[0]) / 2, (A[1] + B[1]) / 2];
-    var giro = (caja.rotacion || 0) * Math.PI / 180;
+    var giro = (suCaja.rotacion || 0) * Math.PI / 180;
     var cos = Math.cos(giro), sin = Math.sin(giro);
     // Punto del mundo -> pixel de la imagen (deshaciendo la rotacion con que se dibuja).
     function aImagen(m) {
@@ -423,7 +491,126 @@ export default function crearVisor(nodo, elemento, opciones) {
     return { lienzo: lienzo, recorte: { x: x0, y: y0, w: w, h: h } };
   }
 
-  // ---------- periodo ----------
+  // ---------- carga del periodo ----------
+  /* La pantalla de carga. Con `texto` vacio se va; `falla` le saca el girador y deja el
+     motivo escrito, porque ahi ya no hay nada que esperar. */
+  function mostrarCargando(texto, falla) {
+    textoCargando.textContent = texto || "";
+    cargando.classList.toggle("visor-falla", !!falla);
+    cargando.hidden = !texto;
+  }
+
+  function avisar(texto) {
+    aviso.textContent = texto || "";
+    aviso.hidden = !texto;
+  }
+
+  function capaLista(i) { return !!estado.limpias[i]; }
+
+  /* De donde sale el dibujo de la provincia para el periodo i: el recorte si el build lo
+     publico, y si no la imagen entera, que es como funcionaba antes. */
+  function fuenteDelPeriodo(i) {
+    return (cajaRecorte && mapas[i].recorte) ? mapas[i].recorte : mapas[i].grande;
+  }
+
+  function cajaDelPeriodo(i) {
+    return (cajaRecorte && mapas[i].recorte) ? cajaRecorte : caja;
+  }
+
+  /* La imagen grande del periodo. `prioridad` es la del navegador: la que se esta mirando va
+     en "high" para que no haga cola detras de las decenas de miniaturas de la grilla, que van
+     en "low" (galeria.js). */
+  function pedirImagen(i, prioridad) {
+    var img = estado.imagenes[i];
+    if (img) { return img; }
+    img = new Image();
+    img.decoding = "async";
+    img.fetchPriority = prioridad || "auto";
+    img.onload = function () {
+      // Sin los limites todavia no hay nada que dibujar: lo retoma ir(), al que llama cargarGeo.
+      if (estado.i !== i || !estado.encuadre) { return; }
+      mostrarCargando("Preparando el mapa…");
+      dibujar();
+      prepararCapa(i);
+    };
+    img.onerror = function () {
+      if (estado.i === i) { mostrarCargando("No se pudo cargar la imagen del SEPA.", true); }
+    };
+    img.src = fuenteDelPeriodo(i);
+    estado.imagenes[i] = img;
+    return img;
+  }
+
+  /* La imagen ENTERA del pais. Solo hace falta para "Mostrar todo el pais": es la pesada y por
+     eso no se baja al abrir. Mientras llega, el mapa de la provincia sigue a la vista y el
+     aviso de la barra dice que falta. */
+  function pedirCompleta(i) {
+    if (!cajaRecorte || !mapas[i].recorte) { return estado.imagenes[i]; }
+    var completa = estado.completas[i];
+    if (completa) { return completa; }
+    completa = new Image();
+    completa.decoding = "async";
+    avisar("Cargando el país entero…");
+    completa.onload = function () {
+      if (estado.i === i && estado.todoElPais) { avisar(""); dibujar(); }
+    };
+    completa.onerror = function () {
+      if (estado.i === i) { avisar("No se pudo cargar la imagen del país."); }
+    };
+    completa.src = mapas[i].grande;
+    estado.completas[i] = completa;
+    return completa;
+  }
+
+  /* La MINIATURA del periodo, que es la vista previa mientras baja la grande: 56 KB contra
+     1,6 MB. Es el mismo archivo que dibuja la grilla de abajo, asi que el navegador la pide
+     una sola vez. */
+  function pedirMini(i) {
+    var mini = estado.minis[i];
+    if (mini || !mapas[i].mini) { return mini || null; }
+    mini = new Image();
+    mini.decoding = "async";
+    mini.fetchPriority = "high";
+    mini.onload = function () { if (estado.i === i && !capaLista(i)) { dibujar(); } };
+    mini.src = mapas[i].mini;
+    estado.minis[i] = mini;
+    return mini;
+  }
+
+  /* La capa limpia y agrandada, que es lo CARO del visor: sacarle a la imagen las lineas de
+     limites que trae dibujadas y agrandarla pixel por pixel son unos 250 ms de hilo principal.
+     Por eso no se calcula dentro de dibujar(): el visor pinta primero lo que ya tiene y la
+     deja para dos cuadros despues, que es lo que hace falta para que la pantalla de carga
+     llegue a verse. Sin esa espera el navegador se congela con el lienzo todavia en blanco. */
+  function prepararCapa(i) {
+    if (capaLista(i) || estado.preparando === i || !estado.encuadre) { return; }
+    var img = estado.imagenes[i];
+    if (!img || !img.complete || !img.naturalWidth) { return; }
+    estado.preparando = i;
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        estado.preparando = null;
+        if (!capaLista(i)) { estado.limpias[i] = agrandar(img, cajaDelPeriodo(i)); }
+        if (estado.i === i) { mostrarCargando(""); dibujar(); precargarVecino(i); }
+      });
+    });
+  }
+
+  /* El periodo de al lado se adelanta para que la flecha no vuelva a esperar, pero SOLO cuando
+     el que se esta mirando ya esta dibujado y pasaron dos segundos sin que nadie toque nada.
+     La primera version lo pedia al entrar a un periodo, antes de que su propia imagen hubiera
+     terminado de bajar: las dos se repartian el ancho de banda y el mapa que el usuario tenia
+     delante pasó de tardar cinco segundos a tardar ocho. Un adelanto que le compite a lo que
+     se esta mirando no es un adelanto. */
+  function precargarVecino(i) {
+    if (estado.vecino) { clearTimeout(estado.vecino); }
+    estado.vecino = setTimeout(function () {
+      if (estado.i !== i || !capaLista(i)) { return; }
+      var j = i + 1 < mapas.length ? i + 1 : i - 1;
+      if (j >= 0 && !estado.imagenes[j]) { pedirImagen(j, "low"); }
+    }, 2000);
+  }
+
   function ir(i) {
     if (i < 0 || i >= mapas.length) { return; }
     estado.i = i;
@@ -431,26 +618,16 @@ export default function crearVisor(nodo, elemento, opciones) {
     anterior.disabled = i === 0;
     siguiente.disabled = i === mapas.length - 1;
     if (opciones.alElegir) { opciones.alElegir(i); }
-    var img = estado.imagenes[i];
-    if (!img) {
-      img = new Image();
-      img.decoding = "async";
-      img.src = mapas[i].grande;
-      estado.imagenes[i] = img;
-    }
-    if (img.complete && img.naturalWidth) {
-      cargando.textContent = "";
-      dibujar();
-      return;
-    }
-    cargando.textContent = "Cargando imagen del SEPA…";
+    var img = pedirImagen(i, "high");
+    avisar("");
+    if (estado.todoElPais) { pedirCompleta(i); }
+    var listo = img.complete && img.naturalWidth;
+    if (!listo) { pedirMini(i); }
+    mostrarCargando(capaLista(i) ? ""
+                    : listo ? "Preparando el mapa…" : "Cargando el mapa del SEPA…");
     dibujar();
-    img.onload = function () {
-      if (estado.i === i) { cargando.textContent = ""; dibujar(); }
-    };
-    img.onerror = function () {
-      if (estado.i === i) { cargando.textContent = "No se pudo cargar la imagen."; }
-    };
+    if (listo) { prepararCapa(i); }
+    if (capaLista(i)) { precargarVecino(i); }
   }
 
   function mover(paso) { ir(estado.i + paso); }
@@ -602,11 +779,18 @@ export default function crearVisor(nodo, elemento, opciones) {
     }).observe(lienzo);
   }
 
+  /* La imagen del periodo de arranque se pide YA, en paralelo con los limites, y no al final
+     de la cadena (script -> datos -> limites -> imagen): es la pieza mas pesada de la pagina y
+     antes salia a pedirla casi un segundo tarde. La miniatura va con ella para tener algo que
+     mostrar enseguida. */
+  mostrarCargando("Cargando el mapa del SEPA…");
+  pedirImagen(estado.i, "high");
+  pedirMini(estado.i);
   cargarGeo().then(function () {
     encuadrar();
     ir(estado.i);
   }, function () {
-    cargando.textContent = "No se pudieron cargar los límites de los departamentos.";
+    mostrarCargando("No se pudieron cargar los límites de los departamentos.", true);
   });
 
   return {

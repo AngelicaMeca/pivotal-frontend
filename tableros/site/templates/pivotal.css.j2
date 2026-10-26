@@ -2989,11 +2989,40 @@ dialog.zoom.zoom-visible::backdrop { opacity: 1; }
   white-space: nowrap;
 }
 .visor-tip[hidden] { display: none; }
+/* La PANTALLA DE CARGA del visor (27-oct-2026, pedido de la usuaria: "hace que aparezca una
+   pantalla de 'cargando' mientras se espera"). Tapa el lienzo entero: antes era un rotulo
+   chico arriba del mapa y con el lienzo vacio no se leia como "esperá", se leia como un cuadro
+   que no cargo. El fondo deja ver por abajo la miniatura desenfocada que dibuja el visor
+   mientras baja la imagen buena. */
 .visor-cargando {
-  position: absolute; left: 50%; top: .8rem; transform: translateX(-50%);
-  font-size: .8rem; color: var(--texto-apoyo); pointer-events: none;
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: .65rem; padding: 1rem;
+  background: color-mix(in srgb, var(--fondo-cuadro) 78%, transparent);
+  font-size: .82rem; color: var(--texto-apoyo); text-align: center; pointer-events: none;
 }
-.visor-cargando:empty { display: none; }
+.visor-cargando[hidden] { display: none; }
+.visor-giro {
+  width: 1.8rem; height: 1.8rem; border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--texto-apoyo) 30%, transparent);
+  border-top-color: var(--cromo);
+  animation: visor-girar .9s linear infinite;
+}
+@keyframes visor-girar { to { transform: rotate(360deg); } }
+/* Quien pidio menos movimiento ve el girador andando mucho mas lento, no quieto: quieto
+   parecería colgado, que es lo contrario de lo que tiene que decir. */
+@media (prefers-reduced-motion: reduce) { .visor-giro { animation-duration: 3s; } }
+/* Sin nada mas que esperar no va girador: queda el motivo escrito. */
+.visor-cargando.visor-falla .visor-giro { display: none; }
+/* El aviso chico: para lo que se baja mientras el mapa YA se ve (la imagen del pais entero).
+   Va arriba, sin tapar nada, que es lo que hacia el rotulo de carga antes de ser pantalla. */
+.visor-aviso {
+  position: absolute; left: 50%; top: .6rem; transform: translateX(-50%);
+  padding: .2rem .6rem; border-radius: 999px;
+  background: color-mix(in srgb, var(--fondo-cuadro) 88%, transparent);
+  border: 1px solid var(--borde-panel);
+  font-size: .76rem; color: var(--texto-apoyo); pointer-events: none;
+}
+.visor-aviso[hidden] { display: none; }
 .visor-nota { margin: .4rem 0 0; font-size: .74rem; color: var(--texto-apoyo); }
 /* La miniatura del periodo que muestra el visor. */
 .galeria-mapa.galeria-elegida button { outline: 2px solid var(--seleccion); outline-offset: 2px; }

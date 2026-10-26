@@ -7,15 +7,29 @@
 # leerlas: van en site/assets/ y se commitean, como el logo del manual de marca y los iconos de
 # JC. El build las copia a public/plataforma/mapas/clima/<serie>/.
 #
-# De cada mapa hay DOS archivos:
+# De cada mapa hay TRES archivos (dos en la galeria de la ORA, que no tiene visor):
 #   <nombre>.<gif|jpg>   el ORIGINAL, tal cual llego de SharePoint (sha256 abajo). Es el que
-#                        abre el popup.
+#                        abre el popup ("Imagen original") y el que dibuja "Mostrar todo el
+#                        pais".
 #   <nombre>-mini.jpg    la miniatura, 400 px de ancho, JPEG calidad 85. Es la que dibuja la
 #                        grilla: son 115 mapas y con los originales la galeria bajaria 110 MB.
 #                        Se generaron UNA vez (14-oct-2026) con System.Drawing de Windows
 #                        (escalado bicubico de alta calidad) y se commitean junto al original.
 #                        No se regeneran en el build: el pipeline no depende de ninguna
 #                        libreria de imagenes.
+#   <nombre>-sde.<png|jpg>  el RECORTE A LA PROVINCIA (27-oct-2026), que es lo que baja el
+#                        VISOR georreferenciado y lo unico que en la practica se mira. La imagen
+#                        del SEPA es el pais entero y el visor la dibuja recortada, o sea que de
+#                        1,6 MB usaba el 6%: con eso el mapa tardaba ocho segundos en aparecer
+#                        ("cuando hago el deploy a produccion, los mapas demoran mucho en
+#                        cargar", la usuaria). Pesa entre 5 y 11 veces menos. Se generan a mano
+#                        con `python -m pipeline.recorte_sepa --escribir` (necesita Pillow, que
+#                        NO es dependencia del pipeline) y se commitean, igual que la miniatura;
+#                        el rectangulo es de pixeles ENTEROS del original, asi que no mueve la
+#                        georreferenciacion. Su posicion en la imagen la declara cada spec en
+#                        `assets.recorte: {x, y}` y el build CORTA si a un mapa publicado le
+#                        falta su recorte o si no mide lo mismo que los demas de la galeria.
+#                        Solo las cinco galerias del SEPA: la ORA no lleva visor.
 #
 # El ROTULO de cada mapa (fechas) no se escribe en ningun lado: lo calcula el build a partir del
 # NOMBRE del archivo (site_build.periodo_de_mapa_clima), con la regla de cada producto que

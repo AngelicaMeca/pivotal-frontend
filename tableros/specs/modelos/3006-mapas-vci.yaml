@@ -23,7 +23,7 @@ subtitulo_cuadro: "Del período más reciente al más antiguo · clic en un mapa
 serie: vci
 assets:
   carpeta: "site/assets/clima/vci"
-  patron: "^vi_(?P<anio>\\d{4})(?P<dia>\\d{3})(?P<mini>-mini)?\\.(?P<ext>gif|jpg)$"
+  patron: "^vi_(?P<anio>\\d{4})(?P<dia>\\d{3})(?P<mini>-mini)?(?P<sde>-sde)?\\.(?P<ext>gif|jpg|png)$"
 periodo: dias-julianos
 dias: 8
 orden: descendente
@@ -68,6 +68,15 @@ georreferencia:
   kml: NDVI_DECADA
   # `usar` o `ignorar` la rotacion que trae el KML (se decide mirando si los limites calzan).
   rotacion: ignorar
+  # EL RECORTE DE LA PROVINCIA (27-oct-2026, pedido de la usuaria: "los mapas demoran mucho en
+  # cargar"). La imagen del SEPA es el pais entero y el visor dibuja la provincia sola: de ese
+  # peso usaba el 6%. Al lado de cada original hay un `<nombre>-sde.<ext>` con la caja de la
+  # provincia y nada mas, que es lo que baja el visor; el original se baja solo cuando hace
+  # falta de verdad ("Imagen original" y "Mostrar todo el pais"). Son diez veces menos.
+  # `x` e `y` son la esquina del recorte en pixeles de la imagen original: con eso y el tamanio
+  # del archivo recortado el build saca su caja en grados, exacta, sin reescalar nada. Los
+  # genera `python -m pipeline.recorte_sepa --escribir`, que tambien escribe estos dos numeros.
+  recorte: {x: 841, y: 545}
   # LA ESCALA, ESCRITA ACA Y NO RECORTADA DE LA IMAGEN (26-oct-2026, pedido de la usuaria:
   # "hardcodea la escala de colores de los mapas de calor de agroclima, no me gusta que los
   # hayas puesto como imagen"). Es la misma decision que la faena equina de SENASA y las

@@ -157,6 +157,13 @@ function Galeria({ elementos }: { elementos: Elemento[] }) {
     <>
       {elementos.map((elemento, i) => (
         <figure key={i} className="cuadro">
+          {/* El mapa que abre el visor se pide desde el HTML y no al final de la cadena
+              script -> datos -> límites -> imagen (27-oct-2026, "los mapas demoran mucho en
+              cargar"). Es la pieza más pesada de la página, así que arranca con lo primero y
+              con prioridad alta; React sube el link al <head>. */}
+          {elemento.precarga ? (
+            <link rel="preload" as="image" href={elemento.precarga} fetchPriority="high" />
+          ) : null}
           <h2>{elemento.titulo}</h2>
           <p className="subtitulo">{elemento.subtitulo}</p>
           {/* El visor georreferenciado (galerias del SEPA con KML): la imagen ubicada en el

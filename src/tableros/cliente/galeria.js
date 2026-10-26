@@ -287,6 +287,54 @@ export default function iniciar(PIVOTAL) {
     });
   }
 
+  /* Mientras la miniatura no bajo, su `src` es un pixel transparente: la caja ya tiene su
+     tamaño reservado por el CSS y asi no aparece el icono de imagen rota. */
+  var PIXEL = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+  var observadores = [];
+
+  /* EL QUE SCROLLEA NO ES LA VENTANA. En los tableros la pagina entra en `div.contenido`
+     (`overflow: auto`) adentro de un `body` que no scrollea, asi que un IntersectionObserver
+     sin `root` mira la ventana y la miniatura queda tapada por ESE recorte intermedio. Y el
+     `rootMargin` no ayuda: por norma agranda la caja de la RAIZ nada mas, los recortes del
+     medio se aplican sin margen. Medido: con la raiz por omision, las 12 miniaturas del NDVI
+     se quedaban en el pixel transparente para siempre -tambien las de la primera fila, que
+     estan a la vista- porque arrancan 20 px abajo del borde de `.contenido`. La raiz es el
+     ancestro que scrollea de verdad. */
+  function raizDeScroll(nodo) {
+    for (var n = nodo.parentElement; n && n !== document.body; n = n.parentElement) {
+      var y = getComputedStyle(n).overflowY;
+      if ((y === "auto" || y === "scroll") && n.scrollHeight > n.clientHeight) { return n; }
+    }
+    return null;  // la ventana
+  }
+
+  function observadorDe(raiz) {
+    for (var i = 0; i < observadores.length; i++) {
+      if (observadores[i].raiz === raiz) { return observadores[i].obs; }
+    }
+    var obs = new IntersectionObserver(function (entradas) {
+      entradas.forEach(function (e) {
+        if (!e.isIntersecting) { return; }
+        obs.unobserve(e.target);
+        e.target.src = e.target.dataset.perezosa;
+        delete e.target.dataset.perezosa;
+      });
+    }, { root: raiz, rootMargin: "300px 0px" });
+    observadores.push({ raiz: raiz, obs: obs });
+    return obs;
+  }
+
+  function perezosamente(img, src) {
+    img.src = PIXEL;
+    if (!window.IntersectionObserver) { img.src = src; return; }
+    img.dataset.perezosa = src;
+    /* La raiz se busca con la imagen YA COLGADA del documento: recien ahi tiene ancestros. */
+    requestAnimationFrame(function () {
+      if (!img.dataset.perezosa) { return; }
+      observadorDe(raizDeScroll(img)).observe(img);
+    });
+  }
+
   /* Una miniatura con su rotulo, que abre el popup en ESE mapa. `perezosa` deja que las de
      abajo del pliegue se bajen cuando hacen falta (son decenas). */
   function figuraDe(mapa, perezosa) {
@@ -296,7 +344,6 @@ export default function iniciar(PIVOTAL) {
     boton.type = "button";
     boton.setAttribute("aria-label", "Ampliar " + (mapa.titulo || mapa.rotulo));
     var img = document.createElement("img");
-    img.src = mapa.mini;
     img.alt = mapa.titulo || mapa.rotulo;
     /* La caja de la miniatura se reserva ANTES de que la imagen baje (ver el CSS de
        `.galeria-mapa img`). Si el build manda el tamaño de la miniatura -los mapas de clima
@@ -306,8 +353,20 @@ export default function iniciar(PIVOTAL) {
       img.height = mapa.alto;
       img.style.aspectRatio = mapa.ancho + " / " + mapa.alto;
     }
-    if (perezosa) { img.loading = "lazy"; }
     img.decoding = "async";
+    /* Las de la grilla se bajan RECIEN AL ACERCARSE A LA PANTALLA, y en la prioridad mas baja
+       (27-oct-2026). Son decenas de 56 KB y con `loading="lazy"` a secas el navegador igual
+       las pedia casi todas de entrada -su umbral es de mas de mil pixeles y con red lenta es
+       todavia mas generoso-, antes que el mapa grande del visor, que es lo unico que se esta
+       mirando. Eso es un mega de cola delante de lo que importa. Con el observador el margen
+       es de 300 px, que alcanza para que ninguna llegue tarde al ojo. */
+    if (perezosa) {
+      img.loading = "lazy";
+      img.fetchPriority = "low";
+      perezosamente(img, mapa.mini);
+    } else {
+      img.src = mapa.mini;
+    }
     boton.appendChild(img);
     var pie = document.createElement("figcaption");
     pie.textContent = mapa.rotulo;

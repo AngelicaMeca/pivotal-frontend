@@ -125,6 +125,9 @@ export type Elemento = {
   nota?: string;
   clase?: string;
   advertencia?: string;
+  // La imagen que el cuadro va a mostrar apenas pueda, para pedirla desde el HTML (ver Galeria
+  // en paginas/Vista.tsx). Hoy la pone el visor de las galerias del SEPA.
+  precarga?: string;
 };
 
 export type Vista = {

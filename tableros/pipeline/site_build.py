@@ -11309,7 +11309,9 @@ def mapas_clima(spec):
         clave = (desde, grupo.get("cultivo") or "")
         entrada = entradas.setdefault(clave, {"desde": desde, "hasta": hasta, "rotulo": rotulo,
                                               "cultivo": grupo.get("cultivo")})
-        campo = "mini" if grupo["mini"] else "grande"
+        # Tres archivos por mapa: el original, la miniatura de la grilla y el RECORTE de la
+        # provincia, que es el que baja el visor (ver `recorte` en el spec).
+        campo = "sde" if grupo.get("sde") else ("mini" if grupo["mini"] else "grande")
         if campo in entrada:
             raise pr.ErrorDeProtocolo("Dos archivos para el mismo mapa en %s: %s y %s."
                                       % (spec["assets"]["carpeta"], entrada[campo], nombre))
@@ -11340,6 +11342,8 @@ def mapas_clima(spec):
                        key=lambda e: (-e["desde"].toordinal(), orden.index(e["cultivo"])))
 
     ruta_publica = "%s/mapas/clima/%s" % (PREFIJO, spec["serie"])
+    recorte = (spec.get("georreferencia") or {}).get("recorte")
+    medidas_recorte, medidas_original = set(), set()
     mapas, archivos = [], []
     for e in lista:
         ancho, alto = _dimensiones_imagen(os.path.join(carpeta, e["mini"]))
@@ -11349,11 +11353,25 @@ def mapas_clima(spec):
         else:
             rotulo = "%s %s" % (por_cultivo[e["cultivo"]], e["cultivo"])
             titulo = "%s · %s" % (rotulo, e["rotulo"])
-        mapas.append({"clave": e["grande"].rsplit(".", 1)[0], "rotulo": rotulo, "titulo": titulo,
-                      "mini": "%s/%s" % (ruta_publica, e["mini"]),
-                      "grande": "%s/%s" % (ruta_publica, e["grande"]),
-                      "ancho": ancho, "alto": alto})
-        for nombre in (e["grande"], e["mini"]):
+        mapa = {"clave": e["grande"].rsplit(".", 1)[0], "rotulo": rotulo, "titulo": titulo,
+                "mini": "%s/%s" % (ruta_publica, e["mini"]),
+                "grande": "%s/%s" % (ruta_publica, e["grande"]),
+                "ancho": ancho, "alto": alto}
+        nombres = [e["grande"], e["mini"]]
+        if recorte is not None:
+            if not e.get("sde"):
+                raise pr.ErrorDeProtocolo(
+                    "Al mapa %s de %s le falta su recorte de la provincia (%s-sde). El visor "
+                    "baja el recorte y no el pais entero; se genera con "
+                    "`python -m pipeline.recorte_sepa --escribir` y se commitea junto al "
+                    "original, igual que la miniatura."
+                    % (e["grande"], spec["assets"]["carpeta"], e["grande"].rsplit(".", 1)[0]))
+            mapa["recorte"] = "%s/%s" % (ruta_publica, e["sde"])
+            nombres.append(e["sde"])
+            medidas_recorte.add(_dimensiones_imagen(os.path.join(carpeta, e["sde"])))
+            medidas_original.add(_dimensiones_imagen(os.path.join(carpeta, e["grande"])))
+        mapas.append(mapa)
+        for nombre in nombres:
             archivos.append((os.path.join(carpeta, nombre),
                              "public/plataforma/mapas/clima/%s/%s" % (spec["serie"], nombre)))
     if not mapas:
@@ -11375,7 +11393,31 @@ def mapas_clima(spec):
     # con imagen en la fecha mas reciente, que es el mismo primero de la lista).
     destacado = 0
     anios = sorted({e["hasta"].year for e in lista})
-    return mapas, destacado, filas, columnas, archivos, anios
+    # La geometria del recorte EN PIXELES. Una sola caja ubica toda la galeria, asi que si dos
+    # recortes no miden lo mismo (o dos originales) la caja estaria mintiendo en alguno: eso
+    # corta. Pasarla a grados es cosa de construir_galeria_clima, que es quien tiene la caja
+    # del KML.
+    recorte_px = None
+    if recorte is not None:
+        if len(medidas_recorte) != 1 or len(medidas_original) != 1:
+            raise pr.ErrorDeProtocolo(
+                "Los recortes de %s no miden todos lo mismo (recortes: %s; originales: %s). "
+                "Volve a generarlos con `python -m pipeline.recorte_sepa --escribir`."
+                % (spec["assets"]["carpeta"], sorted(medidas_recorte), sorted(medidas_original)))
+        ancho_r, alto_r = medidas_recorte.pop()
+        ancho_o, alto_o = medidas_original.pop()
+        if set(recorte) != {"x", "y"}:
+            raise pr.ErrorDeProtocolo("%s: `georreferencia.recorte` lleva x e y, nada mas."
+                                      % spec["slug_vista"])
+        x, y = int(recorte["x"]), int(recorte["y"])
+        if x < 0 or y < 0 or x + ancho_r > ancho_o or y + alto_r > alto_o:
+            raise pr.ErrorDeProtocolo(
+                "%s: el recorte que declara el spec (%d, %d) con el archivo de %dx%d se sale de "
+                "la imagen de %dx%d." % (spec["slug_vista"], x, y, ancho_r, alto_r,
+                                         ancho_o, alto_o))
+        recorte_px = {"x": x, "y": y, "ancho": ancho_r, "alto": alto_r,
+                      "ancho_original": ancho_o, "alto_original": alto_o}
+    return mapas, destacado, filas, columnas, archivos, anios, recorte_px
 
 
 def leyenda_del_sepa(id_spec, declarada):
@@ -11411,11 +11453,30 @@ def leyenda_del_sepa(id_spec, declarada):
     return {"titulo": limpiar(declarada.get("titulo") or ""), "clases": clases}
 
 
+def caja_del_recorte(id_spec, caja, px):
+    """La caja en grados del recorte de la provincia, a partir de la caja de la imagen entera y
+    de donde cae el recorte en pixeles (site_build.mapas_clima)."""
+    if caja.get("rotacion"):
+        raise pr.ErrorDeProtocolo(
+            "%s: el recorte de la provincia es un rectangulo de la imagen, asi que no se puede "
+            "usar con un KML rotado (%g grados). O se ignora la rotacion o se saca `recorte`."
+            % (id_spec, caja["rotacion"]))
+    ancho_total = caja["este"] - caja["oeste"]
+    alto_total = caja["sur"] - caja["norte"]
+    return {
+        "oeste": caja["oeste"] + ancho_total * px["x"] / float(px["ancho_original"]),
+        "este": caja["oeste"] + ancho_total * (px["x"] + px["ancho"]) / float(px["ancho_original"]),
+        "norte": caja["norte"] + alto_total * px["y"] / float(px["alto_original"]),
+        "sur": caja["norte"] + alto_total * (px["y"] + px["alto"]) / float(px["alto_original"]),
+        "rotacion": 0.0,
+    }
+
+
 def construir_galeria_clima(ctx, spec):
     """Una galeria de mapas de AgroClima. Un solo cuadro, SIN filtros: es la hoja de JC, una
     grilla de miniaturas en orden descendente con el popup del original."""
     vista = vista_base(ctx, spec, "galeria.html", [])
-    mapas, destacado, filas, columnas, archivos, anios = mapas_clima(spec)
+    mapas, destacado, filas, columnas, archivos, anios, recorte_px = mapas_clima(spec)
     if len(anios) == 1:
         texto_anios = str(anios[0])
     else:
@@ -11469,6 +11530,16 @@ def construir_galeria_clima(ctx, spec):
         elemento["visor"] = {"caja": caja, "geojson": GEOJSON, "kml": georef["kml"] + ".kml",
                              "nota": limpiar(georef["nota"]),
                              "leyenda": leyenda_del_sepa(spec["slug_vista"], georef.get("leyenda"))}
+        # La caja del RECORTE de la provincia, en grados. Sale de una regla de tres sobre la
+        # caja de la imagen entera: el recorte son pixeles enteros del original, sin reescalar,
+        # asi que la cuenta es exacta y el visor apunta igual que antes.
+        if recorte_px:
+            elemento["visor"]["recorte"] = caja_del_recorte(spec["slug_vista"], caja, recorte_px)
+        # PRECARGA (27-oct-2026, "los mapas demoran mucho en cargar"): el mapa con el que abre
+        # el visor viaja a la PAGINA -no al combo- para que el HTML lo pida de entrada. El
+        # combo se baja despues del script, y los limites despues del combo: hasta hoy la
+        # imagen mas pesada de la pagina era lo ultimo en salir a pedirse.
+        elemento["precarga"] = mapas[destacado].get("recorte") or mapas[destacado]["grande"]
     if filas is not None:
         elemento["filas"] = filas
         # `cabeceras` y no `columnas`: `columnas` es la clave de las TABLAS y
@@ -12383,7 +12454,7 @@ def pestanias_de(seccion, actual):
 # en public/plataforma/data, y la pagina los baja en el navegador.
 CAMPOS_VISTA = ("slug", "tipo", "titulo", "reservada", "motivo_reserva", "advertencias",
                 "ruta_datos", "notas", "enlaces")
-CAMPOS_ELEMENTO = ("titulo", "subtitulo", "pie", "nota", "clase", "advertencia")
+CAMPOS_ELEMENTO = ("titulo", "subtitulo", "pie", "nota", "clase", "advertencia", "precarga")
 
 
 def vista_para_pagina(vista):
