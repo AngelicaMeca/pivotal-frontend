@@ -311,16 +311,4 @@ export type PaginaPrivado = Comun & {
   privadas: { titulo: string; bajada: string; vistas: Ficha[] };
 };
 
-export type PaginaHome = Comun & {
-  ramas: {
-    id: string;
-    titulo: string;
-    // La portada de la rama, si declara una (Ganaderia): el titulo lleva ahi.
-    href?: string | null;
-    bajada: string;
-    secciones: { titulo: string; url: string; cantidad: number }[];
-    pendientes: string[];
-  }[];
-};
-
-export type Pagina = PaginaVista | PaginaTablero | PaginaSeccion | PaginaPrivado | PaginaHome;
+export type Pagina = PaginaVista | PaginaTablero | PaginaSeccion | PaginaPrivado;

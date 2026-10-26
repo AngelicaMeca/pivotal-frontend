@@ -61,7 +61,7 @@ make build      # pipeline completo: staging + marts + validaciones + sitio
 make site       # solo regenerar el contenido de los tableros
 make check      # validaciones solamente
 make web        # build y lint del sitio completo
-make dev        # el sitio en modo desarrollo en :3000 (tableros en /plataforma/tableros)
+make dev        # el sitio en modo desarrollo en :3000 (tableros en /plataforma)
 make serve      # compilar y servir el sitio en :3000
 ```
 

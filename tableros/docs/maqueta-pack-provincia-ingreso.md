@@ -6,7 +6,9 @@ dibujo (`xl/drawings/drawing1.xml`) y con la hoja exportada a PDF desde Excel.
 
 Es la portada de B³ AgriFood Provincia, ANTES de los tableros. Publicada en `/plataforma`
 (`src/app/(sitio)/plataforma/page.tsx`), que antes era la lista de accesos directos; el botón
-"Ingresar a los tableros" lleva a `/plataforma/tableros`. No pasa por el pipeline: no tiene datos.
+"Ingresar a los tableros" abre la seccion que declara `entrada:` en `site/navegacion.yaml` (hoy
+Cultivos extensivos; hasta el 26-oct-2026 era `/plataforma/tableros`, la home que se saco). No
+pasa por el pipeline: no tiene datos.
 
 **Diseño (22-oct-2026, pedido de la usuaria):** se respetan los TEXTOS, no la estructura de la
 maqueta. La página usa las piezas animadas de la landing principal: tarjetas que suben al pasar

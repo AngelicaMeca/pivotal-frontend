@@ -15,8 +15,8 @@ Lo corre el agente constructor-dashboards. Es la etapa `site` de pipeline/cli.py
 
 Desde septiembre de 2026 los tableros viven dentro del sitio institucional, bajo /plataforma
 (decision de Francisco). Este archivo sigue componiendo TODO el contenido; el sitio solo lo
-dibuja. /plataforma/tableros es la home, /plataforma/<seccion> el tablero de cada base y
-/plataforma/<seccion>/<slug> cada vista.
+dibuja. /plataforma/<seccion> es el tablero de cada base y /plataforma/<seccion>/<slug> cada
+vista; /plataforma es la PORTADA, que no pasa por aca (no tiene datos: src/app/(sitio)/).
 
 Reglas que este archivo hace cumplir (si alguna falla, el build corta):
   - todo cuadro tiene titulo de protocolo completo y pie de fuente
@@ -74,7 +74,11 @@ GENERADOS_PUBLICOS = ("data", "geo", "iconos", "_privado", "mapas", "clima")
 # Donde quedan montados los tableros dentro del sitio. Toda URL que escribe este archivo lleva
 # el prefijo, y ninguna termina en barra (el sitio no usa trailingSlash).
 PREFIJO = "/plataforma"
-INICIO = PREFIJO + "/tableros"          # la home de los tableros
+# "Inicio" es la PORTADA de B3 AgriFood Provincia (/plataforma), que no genera este archivo.
+# Hasta el 26-oct-2026 era /plataforma/tableros, la home con el arbol tematico del indice; se
+# saco a pedido de la usuaria (listaba bases sin maqueta ni pagina, justo lo que JC pide dejar
+# fuera de la version publica, y la portada ya es la puerta de entrada).
+INICIO = PREFIJO
 GEOJSON = PREFIJO + "/geo/sde-departamentos.geojson"
 DIR_CONFIGS = os.path.join(RAIZ, "configs")
 
@@ -12197,55 +12201,23 @@ def escribir_datos_precios(escritor, tablero, carpeta_datos, ruta_publica):
     return bloque["pagina"]
 
 
-def construir_home(ctx, vistas_por_slug):
-    """La home sale del arbol tematico del indice de JC. Las ramas sin datos se muestran igual."""
-    manifiesto = pr.cargar_yaml(os.path.join(DIR_CONFIGS, "manifiesto-indice.yaml"))
-    secciones = ctx.navegacion["secciones"]
-    ramas = []
-    for declaracion in ctx.navegacion["ramas"]:
-        pendientes, publicadas = [], []
-        for base in manifiesto["bases"]:
-            tema = base.get("tema")
-            if not tema or tema.get("bloque") != declaracion["bloque"]:
-                continue
-            ruta = tema.get("ruta") or []
-            if not ruta or ruta[0] != declaracion["rama"]:
-                continue
-            pendientes.append("%s · %s" % (base["descripcion"], base["fuente"] or "sin fuente"))
-        for seccion in secciones:
-            if seccion["rama"] != declaracion["id"]:
-                continue
-            # Una seccion ANUNCIADA no entra en la lista de accesos directos de la home: su
-            # pagina no existe todavia y seria un link muerto. Sigue contandose como pendiente
-            # por el manifiesto del indice, que es de donde salen los "y N bases mas".
-            if seccion.get("proximamente"):
-                continue
-            cantidad = sum(1 for grupo in seccion["grupos"] for slug in grupo["vistas"]
-                           if slug in vistas_por_slug)
-            # `bajada` viaja para que la LANDING (src/lib/dashboard.ts, fuera de los tableros)
-            # arme su lista de accesos directos leyendo esto y no una copia a mano: la copia
-            # se quedo vieja cuando entro cultivos intensivos. `bajada_corta` es la frase de
-            # una linea que entra en esa lista; sin ella se usa la bajada larga de la seccion.
-            publicadas.append({"url": seccion["url"], "titulo": seccion["titulo"],
-                               "bajada": limpiar(seccion.get("bajada_corta")
-                                                 or seccion.get("bajada") or ""),
-                               "cantidad": cantidad})
-        listado = []
-        if not publicadas:
-            listado = sorted(pendientes)[:5]
-            if len(pendientes) > len(listado):
-                listado.append("y %d bases más declaradas en el índice"
-                               % (len(pendientes) - len(listado)))
-        # El `id` ancla la rama en la home (`#rama-agricultura`): es el nivel intermedio del
-        # breadcrumb, que tiene que linkear a SU nivel y no a la home a secas
-        # (formato_v1.navegacion.breadcrumb, bug que encontro JC).
-        # `href`: la portada de la rama, si declara una (Ganaderia): el titulo de la rama en la
-        # home lleva ahi.
-        ramas.append({"id": declaracion["id"], "titulo": declaracion["titulo"],
-                      "href": href_de_rama(ctx.navegacion, declaracion["id"]),
-                      "bajada": limpiar(declaracion["bajada"]),
-                      "secciones": publicadas, "pendientes": listado})
-    return ramas
+def entrada_a_los_tableros(navegacion):
+    """La seccion que abre el boton "Ingresar a los tableros" de la portada (`entrada:` en
+    site/navegacion.yaml). Devuelve su URL y su titulo para src/tableros/contenido/entrada.json,
+    que es lo unico que la landing lee de los tableros (src/lib/dashboard.ts).
+
+    Va por el YAML y no escrita en el sitio porque es la regla de siempre: un segundo lugar
+    donde anotar la misma URL se queda viejo. Una entrada que no sea una seccion publicada
+    corta la corrida: el boton de la portada no puede llevar a una pagina que no existe."""
+    id_entrada = navegacion.get("entrada")
+    if not id_entrada:
+        raise pr.ErrorDeProtocolo("site/navegacion.yaml no declara `entrada`: es la seccion que "
+                                  "abre el boton \"Ingresar a los tableros\" de la portada.")
+    seccion = next((s for s in navegacion["secciones"] if s["id"] == id_entrada), None)
+    if seccion is None or seccion.get("proximamente"):
+        raise pr.ErrorDeProtocolo("`entrada` de site/navegacion.yaml nombra %r, que no es una "
+                                  "seccion publicada." % id_entrada)
+    return {"url": "%s/%s" % (PREFIJO, seccion["url"]), "titulo": seccion["titulo"]}
 
 
 def href_de_rama(navegacion, id_rama):
@@ -12268,7 +12240,11 @@ def miga_de_tablero(seccion, spec):
     """El breadcrumb del tablero. Si el spec declara uno (el del mockup de JC), se sigue tramo
     por tramo: cada nivel linkea a SU nivel y los tramos entre llaves ("{cultivo}") quedan
     dinamicos, atados al selector de la pagina (los actualiza comun.js)."""
-    rama_href = seccion.get("href_rama") or "%s#rama-%s" % (INICIO, seccion["rama"])
+    # La PORTADA de la rama, si declara una (Ganaderia, AgroClima, SID). Sin portada el tramo
+    # queda sin link: antes anclaba en la home (`#rama-agricultura`) y la home ya no existe, y
+    # mandarlo a la portada del sitio seria el bug que marco JC -un nivel del breadcrumb tiene
+    # que linkear a SU nivel y no a la home a secas-, asi que mejor texto suelto.
+    rama_href = seccion.get("href_rama")
     declarado = spec.get("breadcrumb")
     if not declarado:
         return [{"texto": "Inicio", "href": INICIO},
@@ -12844,8 +12820,7 @@ def escribir_sitio(ctx, vistas, tableros):
                     % vista["slug"])
             base_url = carpeta["url"]
             miga = [{"texto": "Inicio", "href": INICIO},
-                    {"texto": carpeta["ruta"][0],
-                     "href": carpeta.get("href_rama") or "%s#rama-%s" % (INICIO, carpeta["rama"])},
+                    {"texto": carpeta["ruta"][0], "href": carpeta.get("href_rama")},
                     {"texto": carpeta["titulo"], "href": "%s/%s" % (PREFIJO, carpeta["url"])},
                     {"texto": vista["titulo"], "href": None}]
             carpeta_datos, ruta_publica = "public/plataforma/data", PREFIJO + "/data"
@@ -13212,15 +13187,11 @@ def escribir_sitio(ctx, vistas, tableros):
         subtitulo_cabecera="No se enlaza desde ninguna parte del sitio",
         titulo_pestania="Material reservado · %s" % theme["titulo_sitio"]))
 
-    # Home. SIN menu lateral (cuarta tanda, home_sin_menu_lateral: "el sidebar en la pagina
-    # principal no tiene que estar; tiene que aparecer recien cuando se entra a un dashboard"):
-    # el menu tematico se dibuja recien dentro de las secciones.
-    escribir_pagina("tableros", pagina(
-        "home",
-        ramas=construir_home(ctx, vistas_por_slug),
-        con_menu=False,
-        subtitulo_cabecera=theme["bajada_sitio"],
-        titulo_pestania=theme["titulo_sitio"]))
+    # La puerta de entrada a los tableros, para el boton de la portada. NO va en paginas/: ahi
+    # cada JSON es una URL del sitio (src/tableros/contenido.ts lista la carpeta entera), asi
+    # que un archivo que no es una pagina generaria una ruta rota.
+    escritor.texto("src/tableros/contenido/entrada.json",
+                   json_determinista(entrada_a_los_tableros(ctx.navegacion)))
 
     # Las capas del IGN, tal cual estan en configs/dims/capas-ign/ (como el GeoJSON de los
     # departamentos). Solo las que nombra algun tablero.

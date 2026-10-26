@@ -4,57 +4,30 @@
 import fs from "node:fs";
 import path from "node:path";
 
-export const DASHBOARD_HOME = "/plataforma/tableros";
-
-const INDICE = path.join(
-  process.cwd(),
-  "src",
-  "tableros",
-  "contenido",
-  "paginas",
-  "tableros.json",
-);
-
-// False when this build had no dashboard content (e.g. Vercel before the SharePoint
-// credentials are set): the platform page then shows them as "en preparación".
-export function hasDashboards(): boolean {
-  return fs.existsSync(INDICE);
-}
-
-export type DashboardView = { name: string; detail: string; href: string };
-export type DashboardSection = { area: string; views: DashboardView[] };
-
-// Forma de lo que publica el pipeline en paginas/tableros.json (ver site_build.ramas_de_home)
-type IndiceTableros = {
-  ramas: {
-    titulo: string;
-    secciones: { url: string; titulo: string; bajada?: string }[];
-  }[];
-};
-
-/* Las secciones publicadas, agrupadas por área, LEÍDAS DEL CONTENIDO GENERADO.
+/* La PUERTA DE ENTRADA a los tableros, LEÍDA DEL CONTENIDO GENERADO.
  *
- * Antes esta lista estaba escrita a mano acá y se quedó vieja: cuando entró Cultivos
- * intensivos, el tablero apareció en el menú de /plataforma pero no en esta página, que es
- * justamente la que invita a entrar. Un segundo lugar donde anotar lo mismo se desactualiza
- * siempre; ahora la única fuente es `tableros/site/navegacion.yaml`, que es donde se declara
- * una sección, y de ahí sale también la frase de una línea (`bajada_corta`).
+ * Hasta el 26-oct-2026 esto era la constante `/plataforma/tableros`: la home con el árbol
+ * temático del índice de JC. Esa vista se sacó (pedido de la usuaria) porque listaba bases sin
+ * maqueta ni página -justo lo que JC pide dejar fuera de la versión pública- y porque la
+ * portada de `/plataforma` ya es la entrada. Ahora la sección que abre el botón se declara en
+ * `tableros/site/navegacion.yaml` (`entrada:`) y el pipeline escribe acá su URL.
+ *
+ * Por qué no escribirla a mano en este archivo: es la misma razón por la que la lista de
+ * accesos directos dejó de estar acá. Un segundo lugar donde anotar la misma URL se queda
+ * viejo, y acá el síntoma sería el peor de todos: el botón que invita a entrar llevando a
+ * ninguna parte.
  *
  * Se lee en el build, no al pedir la página: el contenido lo genera `npm run build` antes de
- * compilar el sitio (scripts/tableros.mjs). Sin contenido devuelve una lista vacía y la
- * página muestra las áreas "en preparación".
+ * compilar el sitio (scripts/tableros.mjs). Sin contenido (por ejemplo, Vercel antes de cargar
+ * las credenciales de SharePoint) devuelve null y la página muestra los tableros "en
+ * preparación", con "Solicitar una demo" en vez de "Ingresar a los tableros".
  */
-export function dashboardSections(): DashboardSection[] {
-  if (!hasDashboards()) return [];
-  const indice = JSON.parse(fs.readFileSync(INDICE, "utf8")) as IndiceTableros;
-  return indice.ramas
-    .filter((rama) => rama.secciones.length > 0)
-    .map((rama) => ({
-      area: rama.titulo,
-      views: rama.secciones.map((seccion) => ({
-        name: seccion.titulo,
-        detail: seccion.bajada ?? "",
-        href: `/plataforma/${seccion.url}`,
-      })),
-    }));
+const ENTRADA = path.join(process.cwd(), "src", "tableros", "contenido", "entrada.json");
+
+// Lo que escribe el pipeline (ver site_build.entrada_a_los_tableros).
+export type EntradaTableros = { url: string; titulo: string };
+
+export function entradaTableros(): EntradaTableros | null {
+  if (!fs.existsSync(ENTRADA)) return null;
+  return JSON.parse(fs.readFileSync(ENTRADA, "utf8")) as EntradaTableros;
 }

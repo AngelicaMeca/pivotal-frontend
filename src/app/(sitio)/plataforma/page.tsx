@@ -7,7 +7,7 @@ import Reveal from "@/components/Reveal";
 import SectionHeading from "@/components/SectionHeading";
 import Technologies from "@/components/Technologies";
 import { SolucionesShowcase, TarjetasPortada, type Solucion } from "@/components/PackProvincia";
-import { DASHBOARD_HOME, hasDashboards } from "@/lib/dashboard";
+import { entradaTableros } from "@/lib/dashboard";
 
 export const metadata: Metadata = {
   title: "B³ AgriFood Provincia · Pivotal",
@@ -235,10 +235,12 @@ function soluciones(disponibles: boolean): Solucion[] {
 
 export default function PlataformaPage() {
   // Sin contenido de tableros en este build (p. ej. Vercel sin credenciales de SharePoint), el
-  // botón de entrada pasa a pedir una demo, como antes.
-  const disponibles = hasDashboards();
-  const entrar: Entrada = disponibles
-    ? { href: DASHBOARD_HOME, texto: "Ingresar a los tableros" }
+  // botón de entrada pasa a pedir una demo, como antes. La página que abre la declara
+  // tableros/site/navegacion.yaml (`entrada:`), no este archivo.
+  const entrada = entradaTableros();
+  const disponibles = entrada !== null;
+  const entrar: Entrada = entrada
+    ? { href: entrada.url, texto: "Ingresar a los tableros" }
     : { href: "/#contacto", texto: "Solicitar una demo" };
   const lista = soluciones(disponibles);
 

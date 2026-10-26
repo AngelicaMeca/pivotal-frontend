@@ -1,16 +1,24 @@
-# Layout del sitio: que ramas tiene la home, en que orden, y como se agrupan las vistas
-# dentro de cada seccion publicada.
+# Layout del sitio: que sectores tiene el menu lateral, en que orden, y como se agrupan las
+# vistas dentro de cada seccion publicada.
 #
-# El ARBOL de la home no se escribe aca: sale de configs/manifiesto-indice.yaml, que es el
-# indice de JC. Aca solo va el ORDEN de las ramas y como se rotula cada una, porque el indice
-# no declara un orden y el sitio necesita uno estable (si no, la home cambia entre builds).
+# Aca va el ORDEN de las ramas y como se rotula cada una: el sitio necesita uno estable y el
+# indice de JC (configs/manifiesto-indice.yaml) no declara ninguno.
 #
 # El orden de los grupos y de las vistas de una seccion tambien vive aca: el protocolo de
 # numeracion de cuadros exige "un dato explicito del layout, no el orden de lectura del disco".
 #
 # Lo lee pipeline/site_build.py.
 
-# --- Ramas de la home, en orden. `bloque` y `rama` matchean tema.bloque/tema.ruta[0] ---
+# --- La PUERTA DE ENTRADA a los tableros (26-oct-2026, pedido de la usuaria al sacar la home
+# `/plataforma/tableros`): el id de la seccion que abre el boton "Ingresar a los tableros" de la
+# portada. El build resuelve su URL y la escribe en src/tableros/contenido/entrada.json, que es
+# lo unico que lee la landing (src/lib/dashboard.ts): asi la URL se declara en UN solo lugar.
+# Cultivos extensivos y no el SID porque su menu lateral son los SECTORES: desde ahi se llega a
+# todo, y al SID ademas por su logo en la cabecera.
+entrada: cultivos-extensivos
+
+# --- Ramas (sectores del menu lateral), en orden. `bloque` y `rama` matchean
+# tema.bloque/tema.ruta[0] del indice de JC ---
 ramas:
   - id: agricultura
     bloque: acceso-por-tema
