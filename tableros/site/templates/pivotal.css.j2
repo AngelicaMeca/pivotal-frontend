@@ -169,7 +169,10 @@ a.boton-cabecera { text-decoration: none; display: inline-block; }
   display: inline-flex; align-items: center; gap: .45rem;
 }
 .boton-cabecera.con-logo[disabled] { opacity: .9; }
-.boton-logo { display: block; height: 2.6rem; width: auto; }
+/* 3rem y no 2.6 (JC, revision del 16-oct-2026: "AGRANDAR UN POCO EL LOGO PORQUE NO SE ALCANZA A
+   LEER. LA OPCION SERIA UNA LEYENDA MOUSEOVER"): el logo crece un poco y ademas lleva su nombre
+   completo en el mouseover (Cascara.tsx). */
+.boton-logo { display: block; height: 3rem; width: auto; }
 a.boton-cabecera:hover { background: color-mix(in srgb, var(--sobre-cromo) 16%, transparent); }
 .prox {
   font-family: var(--rotulos); font-size: .52rem; text-transform: uppercase;
@@ -2960,6 +2963,27 @@ dialog.zoom.zoom-visible::backdrop { opacity: 1; }
 }
 .visor-lienzo.arrastrando { cursor: grabbing; }
 .visor-lienzo canvas { display: block; }
+/* La ESCALA fija al costado del mapa ampliable (26-oct-2026; JC: "¿Y SI SE DIVIDE LA PANTALLA,
+   SUPONGAMOS UN 20% DONDE ESTE LA ESCALA QUE NO VARIE Y EN EL OTRO 80% PONEMOS EL MAPA
+   AMPLIABLE?"). El recuadro de referencias de la imagen del SEPA, recortado por visor-georef.js;
+   el panel va BLANCO porque el recuadro de la imagen lo es, y asi el recorte no deja marco. Sin
+   escala declarada el cuerpo es el lienzo solo. */
+.visor-cuerpo { display: grid; grid-template-columns: minmax(0, 1fr); gap: .8rem; align-items: start; }
+.visor-cuerpo:has(> .visor-escala) { grid-template-columns: minmax(0, 1fr) clamp(10rem, 20%, 15rem); }
+.visor-escala {
+  border: 1px solid var(--borde-panel); border-radius: var(--radio); background: #fff;
+  padding: .55rem; min-width: 0;
+}
+.visor-escala canvas { display: block; width: 100%; height: auto; }
+.visor-escala.sin-imagen canvas { display: none; }
+.visor-escala-pie {
+  margin: .45rem 0 0; font-family: var(--rotulos); font-size: .6rem; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--texto-apoyo); text-align: center;
+}
+@media (max-width: 760px) {
+  .visor-cuerpo:has(> .visor-escala) { grid-template-columns: minmax(0, 1fr); }
+  .visor-escala { max-width: 16rem; }
+}
 .visor-tip {
   position: absolute; pointer-events: none; padding: .2rem .45rem; border-radius: var(--radio-chico);
   background: var(--texto); color: var(--fondo-cuadro); font-size: .78rem; font-weight: 600;

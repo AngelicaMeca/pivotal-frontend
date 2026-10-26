@@ -168,6 +168,9 @@ export default function Cascara({ pagina, children }: { pagina: Comun; children:
                   key={boton.texto}
                   className={clase}
                   href={boton.href}
+                  /* Un boton con logo lleva su nombre completo en el mouseover (JC, revision del
+                     16-oct-2026: "no se alcanza a leer. La opcion seria una leyenda mouseover"). */
+                  title={boton.imagen ? boton.texto : undefined}
                   data-conserva={boton.sin_conservar ? undefined : ""}
                   data-recordar-origen={boton.recordar_origen ? "" : undefined}
                 >

@@ -68,6 +68,14 @@ georreferencia:
   kml: NDVI_DECADA
   # `usar` o `ignorar` la rotacion que trae el KML (se decide mirando si los limites calzan).
   rotacion: ignorar
+  # ESCALA FIJA AL COSTADO (26-oct-2026; revision de JC del 16-oct: "LOS MAPAS DE AGROCLIMA
+  # ... NO CONTIENEN LAS ESCALAS ... ¿Y SI SE DIVIDE LA PANTALLA, SUPONGAMOS UN 20% DONDE ESTE
+  # LA ESCALA QUE NO VARIE Y EN EL OTRO 80% PONEMOS EL MAPA AMPLIABLE???"). El recuadro de
+  # referencias que el SEPA dibuja en cada imagen, en fracciones del ancho y del alto de la
+  # imagen (0 a 1). El visor lo recorta de la imagen del periodo elegido y lo muestra fijo al
+  # costado del mapa, sin zoom. Medido sobre las imagenes de la galeria (vi_2026073.jpg a vi_2026249.jpg (1919x2622)): el recuadro
+  # blanco va en los px 1120, 1469, 1470, 1976 y es el mismo en todas las fechas del producto.
+  leyenda: {izquierda: 0.5836, arriba: 0.5603, derecha: 0.7660, abajo: 0.7536}
   # Caja AJUSTADA (21-oct-2026, pedido de la usuaria: "los bordes de la provincia y los
   # departamentos no coinciden con el borde negro"). La caja del KML deja la imagen corrida
   # unos px respecto de los limites que ella misma trae dibujados. Esta caja se midio

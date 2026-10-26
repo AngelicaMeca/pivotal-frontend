@@ -47,7 +47,7 @@ paneles:
     - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
   mapa-capas:
     titulo: "Santiago del Estero - Red vial y ferrocarril"
-    subtitulo: "Prendé o apagá cada capa; pasá el mouse por un trazo para ver qué es"
+    subtitulo: "Active o desactive cada capa; pase el mouse por un trazo para ver qué es"
     # Las capas del mapa, en el orden en que se dibujan (la primera abajo). `prendida` es como
     # arranca la pagina. La terciaria arranca apagada: son ~11.700 tramos y 2 MB.
     capas:

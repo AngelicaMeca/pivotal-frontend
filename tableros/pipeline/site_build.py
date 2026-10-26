@@ -11425,8 +11425,25 @@ def construir_galeria_clima(ctx, spec):
                 raise pr.ErrorDeProtocolo("%s: la caja ajustada se mide sin rotacion; con "
                                           "`caja_ajustada` va `rotacion: ignorar`." % spec["id"])
             caja.update({k: float(v) for k, v in ajustada.items()})
+        # La ESCALA fija al costado del mapa (26-oct-2026; JC, revision del 16-oct: "LOS MAPAS
+        # DE AGROCLIMA ... NO CONTIENEN LAS ESCALAS ... ¿Y SI SE DIVIDE LA PANTALLA ... LA
+        # ESCALA QUE NO VARIE Y EN EL OTRO 80% PONEMOS EL MAPA AMPLIABLE?"): el recuadro de
+        # referencias de la imagen del SEPA, en fracciones de su ancho y su alto. El visor lo
+        # recorta de la imagen del periodo elegido y lo dibuja aparte, sin zoom. Sin `leyenda`
+        # el visor sale como antes (la escala solo con "Mostrar todo el país").
+        leyenda = georef.get("leyenda")
+        if leyenda is not None:
+            if set(leyenda) != {"izquierda", "arriba", "derecha", "abajo"}:
+                raise pr.ErrorDeProtocolo("%s: `georreferencia.leyenda` lleva izquierda, arriba, "
+                                          "derecha y abajo (fracciones de la imagen)." % spec["id"])
+            leyenda = {k: float(v) for k, v in leyenda.items()}
+            if (not all(0.0 <= v <= 1.0 for v in leyenda.values())
+                    or leyenda["izquierda"] >= leyenda["derecha"]
+                    or leyenda["arriba"] >= leyenda["abajo"]):
+                raise pr.ErrorDeProtocolo("%s: `georreferencia.leyenda` va en fracciones de 0 a 1, "
+                                          "con izquierda < derecha y arriba < abajo." % spec["id"])
         elemento["visor"] = {"caja": caja, "geojson": GEOJSON, "kml": georef["kml"] + ".kml",
-                             "nota": limpiar(georef["nota"])}
+                             "nota": limpiar(georef["nota"]), "leyenda": leyenda}
     if filas is not None:
         elemento["filas"] = filas
         # `cabeceras` y no `columnas`: `columnas` es la clave de las TABLAS y
