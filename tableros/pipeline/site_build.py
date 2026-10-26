@@ -11378,6 +11378,39 @@ def mapas_clima(spec):
     return mapas, destacado, filas, columnas, archivos, anios
 
 
+def leyenda_del_sepa(id_spec, declarada):
+    """La escala de una galeria del SEPA, ESCRITA en el spec (`georreferencia.leyenda`).
+
+    Hasta el 26-oct-2026 era la caja del recuadro que el SEPA dibuja adentro de la imagen y el
+    visor la recortaba de ahi. Ahora se transcribe: titulo literal del recuadro y una clase por
+    renglon, con su color medido sobre el relleno de la muestra. Pedido de la usuaria
+    ("hardcodea la escala de colores... no me gusta que los hayas puesto como imagen"), el
+    mismo criterio que la faena equina de SENASA y las caravanas. Dibujada, la escala no
+    depende de que la imagen cargue y se lee con la tipografia del sitio.
+
+    `grupo` es el encabezado que el SEPA pone sobre un tramo de la escala ("Disminución",
+    "Aumento" en la variacion del agua) y es lo unico que distingue dos clases con el mismo
+    texto ("< 30 mm" en los dos grupos), asi que viaja pegado a la clase."""
+    if declarada is None:
+        return None
+    if set(declarada) - {"titulo", "clases"} or not declarada.get("clases"):
+        raise pr.ErrorDeProtocolo("%s: `georreferencia.leyenda` lleva `titulo` (opcional) y "
+                                  "`clases` (una por renglon de la escala)." % id_spec)
+    clases = []
+    for clase in declarada["clases"]:
+        if set(clase) - {"color", "texto", "grupo"} or not clase.get("color") \
+                or not clase.get("texto"):
+            raise pr.ErrorDeProtocolo("%s: cada clase de `georreferencia.leyenda` lleva `color`, "
+                                      "`texto` y, si el SEPA la agrupa, `grupo`." % id_spec)
+        color = str(clase["color"]).upper()
+        if not re.fullmatch(r"#[0-9A-F]{6}", color):
+            raise pr.ErrorDeProtocolo("%s: el color %r de `georreferencia.leyenda` no es un "
+                                      "#RRGGBB." % (id_spec, clase["color"]))
+        clases.append({"color": color, "texto": limpiar(clase["texto"]),
+                       "grupo": limpiar(clase["grupo"]) if clase.get("grupo") else None})
+    return {"titulo": limpiar(declarada.get("titulo") or ""), "clases": clases}
+
+
 def construir_galeria_clima(ctx, spec):
     """Una galeria de mapas de AgroClima. Un solo cuadro, SIN filtros: es la hoja de JC, una
     grilla de miniaturas en orden descendente con el popup del original."""
@@ -11411,43 +11444,31 @@ def construir_galeria_clima(ctx, spec):
         if not os.path.exists(ruta):
             raise pr.ErrorDeProtocolo("%s pide el KML %s, que no esta en configs/dims/sepa-kml/ "
                                       "(correr python -m pipeline.sepa_kml)."
-                                      % (spec["id"], georef["kml"]))
+                                      % (spec["slug_vista"], georef["kml"]))
         caja = sepa_kml.caja(ruta)
         if georef.get("rotacion") == "ignorar":
             caja["rotacion"] = 0.0
         elif georef.get("rotacion") != "usar":
             raise pr.ErrorDeProtocolo("%s: `georreferencia.rotacion` tiene que ser usar o "
-                                      "ignorar." % spec["id"])
+                                      "ignorar." % spec["slug_vista"])
         # La caja del KML corrida unos px respecto de los limites que dibuja la imagen: el spec
         # puede traer la caja medida contra esos limites (ver el comentario en cada spec).
         ajustada = georef.get("caja_ajustada")
         if ajustada:
             if set(ajustada) != {"norte", "sur", "este", "oeste"}:
                 raise pr.ErrorDeProtocolo("%s: `georreferencia.caja_ajustada` lleva norte, sur, "
-                                          "este y oeste." % spec["id"])
+                                          "este y oeste." % spec["slug_vista"])
             if caja["rotacion"] and georef["rotacion"] == "usar":
                 raise pr.ErrorDeProtocolo("%s: la caja ajustada se mide sin rotacion; con "
-                                          "`caja_ajustada` va `rotacion: ignorar`." % spec["id"])
+                                          "`caja_ajustada` va `rotacion: ignorar`." % spec["slug_vista"])
             caja.update({k: float(v) for k, v in ajustada.items()})
         # La ESCALA fija al costado del mapa (26-oct-2026; JC, revision del 16-oct: "LOS MAPAS
         # DE AGROCLIMA ... NO CONTIENEN LAS ESCALAS ... ¿Y SI SE DIVIDE LA PANTALLA ... LA
-        # ESCALA QUE NO VARIE Y EN EL OTRO 80% PONEMOS EL MAPA AMPLIABLE?"): el recuadro de
-        # referencias de la imagen del SEPA, en fracciones de su ancho y su alto. El visor lo
-        # recorta de la imagen del periodo elegido y lo dibuja aparte, sin zoom. Sin `leyenda`
-        # el visor sale como antes (la escala solo con "Mostrar todo el país").
-        leyenda = georef.get("leyenda")
-        if leyenda is not None:
-            if set(leyenda) != {"izquierda", "arriba", "derecha", "abajo"}:
-                raise pr.ErrorDeProtocolo("%s: `georreferencia.leyenda` lleva izquierda, arriba, "
-                                          "derecha y abajo (fracciones de la imagen)." % spec["id"])
-            leyenda = {k: float(v) for k, v in leyenda.items()}
-            if (not all(0.0 <= v <= 1.0 for v in leyenda.values())
-                    or leyenda["izquierda"] >= leyenda["derecha"]
-                    or leyenda["arriba"] >= leyenda["abajo"]):
-                raise pr.ErrorDeProtocolo("%s: `georreferencia.leyenda` va en fracciones de 0 a 1, "
-                                          "con izquierda < derecha y arriba < abajo." % spec["id"])
+        # ESCALA QUE NO VARIE Y EN EL OTRO 80% PONEMOS EL MAPA AMPLIABLE?"). Sin `leyenda` el
+        # visor sale sin ella (la escala queda solo en "Mostrar todo el país").
         elemento["visor"] = {"caja": caja, "geojson": GEOJSON, "kml": georef["kml"] + ".kml",
-                             "nota": limpiar(georef["nota"]), "leyenda": leyenda}
+                             "nota": limpiar(georef["nota"]),
+                             "leyenda": leyenda_del_sepa(spec["slug_vista"], georef.get("leyenda"))}
     if filas is not None:
         elemento["filas"] = filas
         # `cabeceras` y no `columnas`: `columnas` es la clave de las TABLAS y

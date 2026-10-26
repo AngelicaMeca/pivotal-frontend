@@ -2946,24 +2946,42 @@ dialog.zoom.zoom-visible::backdrop { opacity: 1; }
 .visor-lienzo canvas { display: block; }
 /* La ESCALA fija al costado del mapa ampliable (26-oct-2026; JC: "¿Y SI SE DIVIDE LA PANTALLA,
    SUPONGAMOS UN 20% DONDE ESTE LA ESCALA QUE NO VARIE Y EN EL OTRO 80% PONEMOS EL MAPA
-   AMPLIABLE?"). El recuadro de referencias de la imagen del SEPA, recortado por visor-georef.js;
-   el panel va BLANCO porque el recuadro de la imagen lo es, y asi el recorte no deja marco. Sin
+   AMPLIABLE?"). Las clases las declara el spec y las dibuja visor-georef.js: no es un recorte
+   de la imagen, asi que el panel es uno mas del sitio y usa su cromo y su tipografia. Sin
    escala declarada el cuerpo es el lienzo solo. */
 .visor-cuerpo { display: grid; grid-template-columns: minmax(0, 1fr); gap: .8rem; align-items: start; }
 .visor-cuerpo:has(> .visor-escala) { grid-template-columns: minmax(0, 1fr) clamp(10rem, 20%, 15rem); }
 .visor-escala {
-  border: 1px solid var(--borde-panel); border-radius: var(--radio); background: #fff;
-  padding: .55rem; min-width: 0;
+  border: 1px solid var(--borde-panel); border-radius: var(--radio); background: var(--fondo-cuadro);
+  padding: .7rem .75rem; min-width: 0;
 }
-.visor-escala canvas { display: block; width: 100%; height: auto; }
-.visor-escala.sin-imagen canvas { display: none; }
+.visor-escala-titulo {
+  margin: 0 0 .5rem; text-align: center; font-weight: 650; font-size: .82rem; color: var(--texto);
+}
+.visor-escala-clases { margin: 0; padding: 0; list-style: none; }
+.visor-escala-clase { display: flex; align-items: center; gap: .45rem; margin: .18rem 0; }
+/* La muestra lleva borde: la primera clase de la evapotranspiracion es BLANCA ("Sin datos") y
+   sin borde no se veria contra el fondo del panel. `flex: 0 0 auto` para que no la achique un
+   texto largo ("Cursos y cuerpos de agua"). */
+.visor-escala-muestra {
+  flex: 0 0 auto; width: 1.3rem; height: .8rem; border: 1px solid var(--borde-panel);
+  border-radius: 2px;
+}
+.visor-escala-texto { font-size: .74rem; line-height: 1.2; color: var(--texto); }
+/* El encabezado de un tramo de la escala ("Disminución", "Aumento"): es lo unico que distingue
+   dos clases con el mismo texto. */
+.visor-escala-grupo {
+  margin: .5rem 0 .15rem; font-family: var(--rotulos); font-size: .6rem; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--texto-apoyo);
+}
+.visor-escala-clases > .visor-escala-grupo:first-child { margin-top: 0; }
 .visor-escala-pie {
-  margin: .45rem 0 0; font-family: var(--rotulos); font-size: .6rem; letter-spacing: .06em;
+  margin: .6rem 0 0; font-family: var(--rotulos); font-size: .55rem; letter-spacing: .06em;
   text-transform: uppercase; color: var(--texto-apoyo); text-align: center;
 }
 @media (max-width: 760px) {
   .visor-cuerpo:has(> .visor-escala) { grid-template-columns: minmax(0, 1fr); }
-  .visor-escala { max-width: 16rem; }
+  .visor-escala { max-width: 18rem; }
 }
 .visor-tip {
   position: absolute; pointer-events: none; padding: .2rem .45rem; border-radius: var(--radio-chico);

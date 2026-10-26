@@ -64,14 +64,34 @@ georreferencia:
   kml: NDVI_DECADA
   # `usar` o `ignorar` la rotacion que trae el KML (se decide mirando si los limites calzan).
   rotacion: usar
-  # ESCALA FIJA AL COSTADO (26-oct-2026; revision de JC del 16-oct: "LOS MAPAS DE AGROCLIMA
-  # ... NO CONTIENEN LAS ESCALAS ... ¿Y SI SE DIVIDE LA PANTALLA, SUPONGAMOS UN 20% DONDE ESTE
-  # LA ESCALA QUE NO VARIE Y EN EL OTRO 80% PONEMOS EL MAPA AMPLIABLE???"). El recuadro de
-  # referencias que el SEPA dibuja en cada imagen, en fracciones del ancho y del alto de la
-  # imagen (0 a 1). El visor lo recorta de la imagen del periodo elegido y lo muestra fijo al
-  # costado del mapa, sin zoom. Medido sobre las imagenes de la galeria (iv_2026081.gif a iv_2026257.gif (1919x2622)): el recuadro
-  # blanco va en los px 1164, 1500, 1422, 1920 y es el mismo en todas las fechas del producto.
-  leyenda: {izquierda: 0.6066, arriba: 0.5721, derecha: 0.7410, abajo: 0.7323}
+  # LA ESCALA, ESCRITA ACA Y NO RECORTADA DE LA IMAGEN (26-oct-2026, pedido de la usuaria:
+  # "hardcodea la escala de colores de los mapas de calor de agroclima, no me gusta que los
+  # hayas puesto como imagen"). Es la misma decision que la faena equina de SENASA y las
+  # caravanas: lo que la fuente publica dibujado se transcribe a datos y lo dibuja el sitio.
+  # Asi la escala no depende de que la imagen cargue, entra en el ancho que le toque y se lee
+  # con la tipografia del sitio.
+  #
+  # Responde al pedido de JC del 16-oct-2026: "LOS MAPAS DE AGROCLIMA SE VEN PERFECTOS... SOLO
+  # QUE NO CONTIENEN LAS ESCALAS... ¿Y SI SE DIVIDE LA PANTALLA, SUPONGAMOS UN 20% DONDE ESTE
+  # LA ESCALA QUE NO VARIE Y EN EL OTRO 80% PONEMOS EL MAPA AMPLIABLE???". El visor la dibuja
+  # fija al costado del mapa: el zoom y el arrastre no la tocan.
+  #
+  # Los textos son LITERALES del recuadro que trae la imagen; el titulo tambien. El color de
+  # cada clase NO se saca de una sola imagen: es la MEDIANA POR CANAL del relleno de esa muestra
+  # medido en 10 de las 12 imagenes de la galeria. Las otras dos quedan afuera porque la
+  # cuantizacion del GIF les deja dos clases vecinas del mismo color y no se pueden separar.
+  # Entre las 10 la diferencia maxima por canal es de 29, de ahi la mediana.
+  leyenda:
+    titulo: "Referencias"
+    clases:
+      - {color: "#0B0FCB", texto: "0.01 a 0.1"}
+      - {color: "#AB11CB", texto: "0.11 a 0.2"}
+      - {color: "#F80301", texto: "0.21 a 0.3"}
+      - {color: "#D4980E", texto: "0.31 a 0.4"}
+      - {color: "#FDFD03", texto: "0.41 a 0.5"}
+      - {color: "#7FEE15", texto: "0.51 a 0.6"}
+      - {color: "#14EA1A", texto: "0.61 a 0.7"}
+      - {color: "#2A9734", texto: "> 0.71"}
   # Caja AJUSTADA (21-oct-2026, pedido de la usuaria: "los bordes de la provincia y los
   # departamentos no coinciden con el borde negro"). La caja del KML deja la imagen corrida
   # unos px respecto de los limites que ella misma trae dibujados. Esta caja se midio

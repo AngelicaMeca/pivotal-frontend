@@ -19,11 +19,12 @@
 
    La ESCALA (26-oct-2026; JC, revision del 16-oct-2026: "LOS MAPAS DE AGROCLIMA SE VEN
    PERFECTOS ... SOLO QUE NO CONTIENEN LAS ESCALAS ... ¿Y SI SE DIVIDE LA PANTALLA, SUPONGAMOS
-   UN 20% DONDE ESTE LA ESCALA QUE NO VARIE Y EN EL OTRO 80% PONEMOS EL MAPA AMPLIABLE?"): el
-   recuadro de referencias que el SEPA dibuja en cada imagen se recorta de la imagen del
-   periodo elegido (`visor.leyenda`, fracciones declaradas en el spec) y se muestra en un panel
-   FIJO al costado del lienzo. El zoom y el arrastre mueven solo el mapa; la escala no cambia
-   con ellos, y al cambiar el periodo se recorta de la imagen nueva. */
+   UN 20% DONDE ESTE LA ESCALA QUE NO VARIE Y EN EL OTRO 80% PONEMOS EL MAPA AMPLIABLE?"): las
+   clases del SEPA van ESCRITAS en el spec (`visor.leyenda`: titulo, color y texto de cada
+   renglon) y se dibujan en un panel FIJO al costado del lienzo. Antes se recortaba el recuadro
+   de la propia imagen; la usuaria lo pidio dibujado ("hardcodea la escala de colores... no me
+   gusta que los hayas puesto como imagen"), asi que ahora es DOM: se arma una sola vez, no
+   depende de que la imagen cargue y no la tocan ni el zoom ni el cambio de periodo. */
 
 var ZOOM_MAXIMO = 14;     // veces el encuadre inicial
 var ALTO_LIENZO = 640;    // px; en pantallas angostas lo baja el CSS
@@ -96,20 +97,10 @@ export default function crearVisor(nodo, elemento, opciones) {
   var lienzo = el("div", "visor-lienzo");
   var canvas = document.createElement("canvas");
   canvas.setAttribute("role", "img");
-  // El panel de la escala, solo si el spec declaro el recuadro (`leyenda`).
+  // El panel de la escala, solo si el spec declara sus clases (`leyenda`). Es el MISMO dibujo
+  // para todas las fechas del producto, asi que se arma una vez y no se vuelve a tocar.
   var leyenda = elemento.visor.leyenda || null;
-  var escala = null, lienzoEscala = null;
-  if (leyenda) {
-    escala = el("aside", "visor-escala");
-    escala.setAttribute("aria-label", "Escala de referencia del mapa");
-    lienzoEscala = document.createElement("canvas");
-    lienzoEscala.setAttribute("role", "img");
-    lienzoEscala.setAttribute("aria-label", "Escala de referencia del mapa, tal como la publica el SEPA");
-    escala.appendChild(lienzoEscala);
-    var pieEscala = el("p", "visor-escala-pie");
-    pieEscala.textContent = "Escala del SEPA para este producto";
-    escala.appendChild(pieEscala);
-  }
+  var escala = leyenda ? armarEscala(leyenda) : null;
   var tip = el("div", "visor-tip");
   tip.hidden = true;
   var cargando = el("div", "visor-cargando");
@@ -121,7 +112,8 @@ export default function crearVisor(nodo, elemento, opciones) {
   nota.textContent = elemento.visor.nota + " En el visor la imagen se ubica con una caja"
     + " ajustada a los límites que trae dibujados y se agranda sin mover ningún punto;"
     + " “Imagen original” la muestra tal cual se publica."
-    + (leyenda ? " La escala del costado es la de la propia imagen del SEPA y no cambia con el zoom." : "");
+    + (leyenda ? " Las referencias del costado son las que publica el SEPA para este producto,"
+                 + " transcriptas: no cambian con el zoom ni con el período." : "");
   nodo.appendChild(barra);
   cuerpo.appendChild(lienzo);
   if (escala) { cuerpo.appendChild(escala); }
@@ -309,34 +301,41 @@ export default function crearVisor(nodo, elemento, opciones) {
       + " - Santiago del Estero");
   }
 
-  /* La escala: el recuadro de referencias recortado de la imagen del periodo elegido, al ancho
-     del panel y con la proporcion del recuadro. Se dibuja de la imagen ORIGINAL (no de la
-     agrandada, que es solo el recorte de la provincia) y no depende de s/tx/ty: el zoom y el
-     arrastre no la tocan. */
-  function dibujarEscala() {
-    if (!lienzoEscala) { return; }
-    var img = estado.imagenes[estado.i];
-    var listo = img && img.complete && img.naturalWidth;
-    escala.classList.toggle("sin-imagen", !listo);
-    if (!listo) { return; }
-    var W = img.naturalWidth, H = img.naturalHeight;
-    var sx = Math.round(leyenda.izquierda * W), sy = Math.round(leyenda.arriba * H);
-    var sw = Math.max(1, Math.round((leyenda.derecha - leyenda.izquierda) * W));
-    var sh = Math.max(1, Math.round((leyenda.abajo - leyenda.arriba) * H));
-    var ancho = escala.clientWidth || 200;
-    var alto = Math.round(ancho * sh / sw);
-    var r = window.devicePixelRatio || 1;
-    lienzoEscala.width = Math.round(ancho * r);
-    lienzoEscala.height = Math.round(alto * r);
-    lienzoEscala.style.width = ancho + "px";
-    lienzoEscala.style.height = alto + "px";
-    var ge = lienzoEscala.getContext("2d");
-    ge.setTransform(r, 0, 0, r, 0, 0);
-    ge.imageSmoothingEnabled = true;
-    ge.imageSmoothingQuality = "high";
-    ge.fillStyle = "#fff";
-    ge.fillRect(0, 0, ancho, alto);
-    ge.drawImage(img, sx, sy, sw, sh, 0, 0, ancho, alto);
+  /* La escala, dibujada de las clases que declara el spec: el titulo del recuadro del SEPA y
+     un renglon por clase (muestra de color + texto), con el encabezado de grupo cuando el SEPA
+     agrupa ("Disminución" / "Aumento"). La muestra lleva borde porque la primera clase de la
+     evapotranspiracion es BLANCA ("Sin datos") y sin borde no se veria. */
+  function armarEscala(definicion) {
+    var caja = el("aside", "visor-escala");
+    caja.setAttribute("aria-label", "Escala de referencia del mapa");
+    if (definicion.titulo) {
+      var titulo = el("p", "visor-escala-titulo");
+      titulo.textContent = definicion.titulo;
+      caja.appendChild(titulo);
+    }
+    var lista = el("ul", "visor-escala-clases");
+    var grupo = null;
+    definicion.clases.forEach(function (clase) {
+      if (clase.grupo && clase.grupo !== grupo) {
+        var encabezado = el("li", "visor-escala-grupo");
+        encabezado.textContent = clase.grupo;
+        lista.appendChild(encabezado);
+      }
+      grupo = clase.grupo || null;
+      var item = el("li", "visor-escala-clase");
+      var muestra = el("span", "visor-escala-muestra");
+      muestra.style.background = clase.color;
+      var texto = el("span", "visor-escala-texto");
+      texto.textContent = clase.texto;
+      item.appendChild(muestra);
+      item.appendChild(texto);
+      lista.appendChild(item);
+    });
+    caja.appendChild(lista);
+    var pie = el("p", "visor-escala-pie");
+    pie.textContent = "Escala del SEPA para este producto";
+    caja.appendChild(pie);
+    return caja;
   }
 
   // La rotacion del KML (en grados, antihoraria) gira la imagen sobre el centro de su caja.
@@ -442,14 +441,12 @@ export default function crearVisor(nodo, elemento, opciones) {
     if (img.complete && img.naturalWidth) {
       cargando.textContent = "";
       dibujar();
-      dibujarEscala();
       return;
     }
     cargando.textContent = "Cargando imagen del SEPA…";
     dibujar();
-    dibujarEscala();
     img.onload = function () {
-      if (estado.i === i) { cargando.textContent = ""; dibujar(); dibujarEscala(); }
+      if (estado.i === i) { cargando.textContent = ""; dibujar(); }
     };
     img.onerror = function () {
       if (estado.i === i) { cargando.textContent = "No se pudo cargar la imagen."; }
@@ -601,7 +598,6 @@ export default function crearVisor(nodo, elemento, opciones) {
         estado.tx = canvas.clientWidth / 2 - centroX * estado.s;
         estado.ty = canvas.clientHeight / 2 - centroY * estado.s;
         dibujar();
-        dibujarEscala();
       }, 120);
     }).observe(lienzo);
   }

@@ -87,14 +87,41 @@ georreferencia:
   kml: ET_DECADA
   # `usar` o `ignorar` la rotacion que trae el KML (se decide mirando si los limites calzan).
   rotacion: ignorar
-  # ESCALA FIJA AL COSTADO (26-oct-2026; revision de JC del 16-oct: "LOS MAPAS DE AGROCLIMA
-  # ... NO CONTIENEN LAS ESCALAS ... ¿Y SI SE DIVIDE LA PANTALLA, SUPONGAMOS UN 20% DONDE ESTE
-  # LA ESCALA QUE NO VARIE Y EN EL OTRO 80% PONEMOS EL MAPA AMPLIABLE???"). El recuadro de
-  # referencias que el SEPA dibuja en cada imagen, en fracciones del ancho y del alto de la
-  # imagen (0 a 1). El visor lo recorta de la imagen del periodo elegido y lo muestra fijo al
-  # costado del mapa, sin zoom. Medido sobre las imagenes de la galeria (et_202604_1.gif a et_202609_3.gif (1818x2237)): el recuadro
-  # blanco va en los px 1338, 469, 1705, 1284 y es el mismo en todas las fechas del producto.
-  leyenda: {izquierda: 0.7360, arriba: 0.2097, derecha: 0.9378, abajo: 0.5740}
+  # LA ESCALA, ESCRITA ACA Y NO RECORTADA DE LA IMAGEN (26-oct-2026, pedido de la usuaria:
+  # "hardcodea la escala de colores de los mapas de calor de agroclima, no me gusta que los
+  # hayas puesto como imagen"). Es la misma decision que la faena equina de SENASA y las
+  # caravanas: lo que la fuente publica dibujado se transcribe a datos y lo dibuja el sitio.
+  # Asi la escala no depende de que la imagen cargue, entra en el ancho que le toque y se lee
+  # con la tipografia del sitio.
+  #
+  # Responde al pedido de JC del 16-oct-2026: "LOS MAPAS DE AGROCLIMA SE VEN PERFECTOS... SOLO
+  # QUE NO CONTIENEN LAS ESCALAS... ¿Y SI SE DIVIDE LA PANTALLA, SUPONGAMOS UN 20% DONDE ESTE
+  # LA ESCALA QUE NO VARIE Y EN EL OTRO 80% PONEMOS EL MAPA AMPLIABLE???". El visor la dibuja
+  # fija al costado del mapa: el zoom y el arrastre no la tocan.
+  #
+  # Los textos son LITERALES del recuadro que trae la imagen; el titulo tambien. El color de
+  # cada clase NO se saca de una sola imagen: es la MEDIANA POR CANAL del relleno de esa muestra
+  # medido en las 18 imagenes de la galeria. Hace falta porque el GIF se cuantiza imagen por
+  # imagen y cada muestra toma el color de paleta mas cercano: la clase "0 - 0,49 mm" sale ROJA
+  # (#F00A0C) en et_202604_1.gif y NARANJA (#F05F0B) en et_202609_3.gif, que es una fecha con
+  # poco rojo en el mapa. La primera version de esta escala se midio sobre esa imagen corrida y
+  # publicaba naranja una clase que el SEPA dibuja roja. La mediana se queda con el color que la
+  # fuente repite y descarta el desvio.
+  leyenda:
+    titulo: "mm/día"
+    clases:
+      - {color: "#FFFFFF", texto: "Sin datos"}
+      - {color: "#F50A06", texto: "0 - 0,49 mm"}
+      - {color: "#F2914F", texto: "0,5 - 0,99 mm"}
+      - {color: "#FEA403", texto: "1 - 1,49 mm"}
+      - {color: "#FDD503", texto: "1,5 - 1,99 mm"}
+      - {color: "#FEFE00", texto: "2 - 2,49 mm"}
+      - {color: "#A2A0A4", texto: "2,5 - 2,99 mm"}
+      - {color: "#87DFD1", texto: "3 - 3,49 mm"}
+      - {color: "#6FD495", texto: "3,5 - 3,99 mm"}
+      - {color: "#5FC458", texto: "4 - 4,49 mm"}
+      - {color: "#88D628", texto: "4,5 - 4,99 mm"}
+      - {color: "#0E6108", texto: "5 - 5,49 mm"}
   # Caja AJUSTADA (21-oct-2026, pedido de la usuaria: "los bordes de la provincia y los
   # departamentos no coinciden con el borde negro"). La caja del KML deja la imagen corrida
   # unos px respecto de los limites que ella misma trae dibujados. Esta caja se midio
