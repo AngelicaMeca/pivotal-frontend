@@ -116,83 +116,6 @@ function BanderaVisible({ bandera }: { bandera: Comun["banderas_idioma"][number]
   );
 }
 
-/* Las DOS tiras de navegacion del area, dibujadas ADENTRO del contenido y no en la banda del
-   breadcrumb (revision de JC del 25-oct-2026, ganaderia). Arriba la ESPECIE, con la misma
-   grilla de cajitas con icono que los cultivos de Agricultura; debajo, las PAGINAS de esa
-   especie. El orden es la jerarquia que reclama JC: "primero la ESPECIE, luego las variables
-   QUE PUEDEN SELECCIONARSE DE ESA ESPECIE, sino PARECIERA QUE LAS VARIABLES SON APLICABLES A
-   TODAS LAS ESPECIES".
-
-   No son filtros: cada entrada es un <a> a otra pagina, igual que cuando vivian en la banda.
-   Lo unico que cambia es donde se dibujan y con que lenguaje visual. */
-export function NavegacionDeArea({ pagina }: { pagina: Comun }) {
-  if (!pagina.navegacion_en_contenido) return null;
-  const especies = pagina.tira_de_secciones;
-  const paginas = pagina.paginas_de_seccion;
-  if (!especies.length && !paginas.length) return null;
-  return (
-    <div className="navegacion-area">
-      {especies.length ? (
-        <nav className="selector-secciones" aria-label="Secciones del área">
-          {especies.map((entrada) =>
-            entrada.href ? (
-              <a
-                key={entrada.texto}
-                className="chip-cultivo"
-                href={entrada.href}
-                aria-current={entrada.actual ? "page" : undefined}
-                /* Una entrada que YA trae su propia query no se toca: comun.js reescribe el
-                   href partiendo por "?" y le borraria justo lo que la hace distinta. */
-                data-conserva={entrada.href.includes("?") ? undefined : ""}
-              >
-                {entrada.icono ? (
-                  <span className="chip-ico-caja">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img className="ico-bn" src={entrada.icono} alt="" />
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img className="ico-color" src={entrada.icono_color} alt="" />
-                  </span>
-                ) : (
-                  <span className="chip-ico-caja chip-ico-vacia"></span>
-                )}
-                <span className="chip-nombre">{entrada.texto}</span>
-              </a>
-            ) : (
-              <span key={entrada.texto} className="chip-cultivo chip-prox" title="Próximamente">
-                <span className="chip-ico-caja chip-ico-vacia"></span>
-                <span className="chip-nombre">{entrada.texto}</span>
-              </span>
-            ),
-          )}
-        </nav>
-      ) : null}
-      {paginas.length ? (
-        <nav className="tira-paginas tira-paginas-contenido" aria-label="Páginas de la sección">
-          {paginas.map((entrada) =>
-            entrada.href ? (
-              <a
-                key={entrada.texto}
-                href={entrada.href}
-                aria-current={entrada.actual ? "page" : undefined}
-                data-conserva={
-                  entrada.href.startsWith("#") || entrada.departamento ? undefined : ""
-                }
-                data-elegir-departamento={entrada.departamento || undefined}
-              >
-                {entrada.texto}
-              </a>
-            ) : (
-              <span key={entrada.texto} className="tira-prox" title="Próximamente">
-                {entrada.texto} <span className="prox">Próximamente</span>
-              </span>
-            ),
-          )}
-        </nav>
-      ) : null}
-    </div>
-  );
-}
-
 export default function Cascara({ pagina, children }: { pagina: Comun; children: ReactNode }) {
   const { theme } = pagina;
   const logo = theme.logo_provincia;
@@ -403,14 +326,7 @@ export default function Cascara({ pagina, children }: { pagina: Comun; children:
               paginas. Las dos viven ADENTRO de la banda de cromo, que es donde el sitio
               pone su navegacion; una banda clara propia arriba se leia como un pedazo
               pegado entre la cabecera y el breadcrumb. */}
-          <div
-            className={
-              "banda" +
-              (pagina.tira_de_secciones.length && !pagina.navegacion_en_contenido
-                ? " banda-dos-filas"
-                : "")
-            }
-          >
+          <div className={"banda" + (pagina.tira_de_secciones.length ? " banda-dos-filas" : "")}>
             {/* La tira de SECCIONES HERMANAS, arriba de la banda del breadcrumb. En ganaderia
               son las especies, que es como las dibuja JC en la fila 6 de las 21 hojas de su
               maqueta: siempre a la vista y con la actual marcada.
@@ -418,7 +334,7 @@ export default function Cascara({ pagina, children }: { pagina: Comun; children:
               ("analizar como seria el mejor regreso de las paginas internas a la principal"):
               el regreso no es un boton aparte, es que la tira nunca se va. Una especie sin
               datos todavia se dibuja apagada con "Próximamente", igual que en el menu. */}
-            {pagina.tira_de_secciones.length && !pagina.navegacion_en_contenido ? (
+            {pagina.tira_de_secciones.length ? (
               <nav className="tira-secciones" aria-label="Secciones del área">
                 {pagina.tira_de_secciones.map((entrada) =>
                 entrada.href ? (
@@ -483,7 +399,7 @@ export default function Cascara({ pagina, children }: { pagina: Comun; children:
                 JC en su maqueta de pasturas y forrajes. Una pagina todavia sin construir se
                 muestra apagada con "Próximamente": el rotulo esta -el lector tiene que saber
                 que la pagina existe en el plan- pero no se dibuja un link muerto. */}
-            {pagina.paginas_de_seccion.length && !pagina.navegacion_en_contenido ? (
+            {pagina.paginas_de_seccion.length ? (
               <nav className="tira-paginas" aria-label="Páginas de la sección">
                 {pagina.paginas_de_seccion.map((entrada) =>
                   entrada.href ? (

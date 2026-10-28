@@ -12575,11 +12575,6 @@ def escribir_sitio(ctx, vistas, tableros):
              "menu": menu_del_sitio(ctx), "con_menu": True,
              "clase_cuerpo": "", "botones_cabecera": [], "boton_proximamente": False,
              "paginas_de_seccion": [], "tira_de_secciones": [],
-             # `navegacion_en_contenido`: las dos tiras (especies y paginas) NO van en la
-             # banda del breadcrumb sino adentro del contenido, como la grilla de cultivos de
-             # Agricultura (revision de JC del 25-oct-2026). Lo declara la rama
-             # (`tira_en_contenido`).
-             "navegacion_en_contenido": False,
              "banderas_idioma": (banderas_idioma()
                                  if ctx.navegacion.get("cabecera_banderas_todas") else []),
              "menu_departamentos": [], "regresar_origen": None,
@@ -12838,35 +12833,21 @@ def escribir_sitio(ctx, vistas, tableros):
         # menu lateral: el rotulo esta y al lado dice que todavia no.
         rama_cfg = next((r for r in (ctx.navegacion.get("ramas") or [])
                          if r.get("id") == seccion.get("rama")), None)
-        # La PORTADA de la rama no lleva la tira: es la pagina que presenta las especies con
-        # sus tarjetas, asi que repetirlas arriba en chips no agrega nada (hoja "Ganad
-        # Ingreso" de JC, que tampoco las dibuja).
-        portada_rama = rama_cfg.get("portada") if rama_cfg else None
-        if (rama_cfg and rama_cfg.get("tira_de_secciones")
-                and seccion["id"] != portada_rama):
+        if rama_cfg and rama_cfg.get("tira_de_secciones"):
             hermanas = []
             for otra in ctx.navegacion["secciones"]:
                 if otra.get("rama") != seccion.get("rama"):
                     continue
-                if otra.get("oculta") or otra["id"] == portada_rama:
+                if otra.get("oculta"):
                     continue
-                entrada = {
+                hermanas.append({
                     "texto": otra.get("titulo_corto") or otra["titulo"],
                     "href": None if otra.get("proximamente")
                             else "%s/%s" % (PREFIJO, otra["url"]),
                     "actual": otra["id"] == seccion["id"],
-                }
-                # El icono de la seccion (las especies de ganaderia): los MISMOS dos PNG de
-                # JC que usan los chips de cultivo, B&W en reposo y color en el elegido.
-                if otra.get("icono"):
-                    entrada["icono"] = ruta_icono("bn", otra["icono"])
-                    entrada["icono_color"] = ruta_icono("color", otra["icono"])
-                hermanas.append(entrada)
+                })
             if len(hermanas) > 1:
                 extras["tira_de_secciones"] = hermanas
-                # La tira baja al CONTENIDO (con la de paginas debajo) cuando la rama lo pide.
-                if rama_cfg.get("tira_en_contenido"):
-                    extras["navegacion_en_contenido"] = True
         if seccion.get("cabecera_banderas"):
             extras["banderas_idioma"] = banderas_idioma()
         botones = []

@@ -8,7 +8,7 @@
 import type { ReactNode } from "react";
 import type { Elemento, PaginaVista } from "@/tableros/tipos";
 import Arranque, { type TipoDePagina } from "./Arranque";
-import Cascara, { NavegacionDeArea } from "./Cascara";
+import Cascara from "./Cascara";
 import Glosa from "./Glosa";
 
 /* Cascara de un cuadro: titulo de protocolo arriba y pie de fuente abajo. Titulo y pie son
@@ -211,8 +211,6 @@ export default function Vista({ pagina }: { pagina: PaginaVista }) {
 
   return (
     <Cascara pagina={pagina}>
-      {/* Las dos tiras del area (ganaderia: especie y pagina) cuando bajan al contenido. */}
-      <NavegacionDeArea pagina={pagina} />
       {vista.reservada ? (
         <p className="aviso reservado">
           <strong>Vista no publicada.</strong> {vista.motivo_reserva}

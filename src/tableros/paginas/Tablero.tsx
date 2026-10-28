@@ -39,7 +39,7 @@ import type {
   Panel,
 } from "@/tableros/tipos";
 import Arranque from "./Arranque";
-import Cascara, { NavegacionDeArea } from "./Cascara";
+import Cascara from "./Cascara";
 import Glosa from "./Glosa";
 
 function TarjetasKpi({ contexto, cantidad = 4 }: { contexto: boolean; cantidad?: number }) {
@@ -924,11 +924,12 @@ export default function Tablero({ pagina }: { pagina: PaginaTablero }) {
      (hacienda, stock). En el mockup Modelo 2 van dentro de la columna derecha, y la maqueta
      "Agri 2" directamente no tiene: va de los chips a los paneles. */
   const conIndicadoresArriba = !selector && tablero.disposicion !== "grilla-2x2";
-  /* Ganaderia, revision de JC del 25-oct-2026: la cabecera de la pagina (las dos tiras de
-     navegacion y los indicadores) va DENTRO de la columna derecha de la primera banda, que
-     es como queda en Agricultura y como lo dibuja JC en sus 21 hojas: "En Agri el mapa llega
-     hasta arriba y los datos destacados debajo de los iconos de los cultivos. NO se mantiene
-     en ganaderia". Con la cabecera a todo el ancho, el mapa arrancaba una fila mas abajo. */
+  /* Ganaderia, revision de JC del 25-oct-2026: la cabecera de la pagina (el link a la matriz
+     origen-destino y los indicadores) va DENTRO de la columna derecha de la primera banda,
+     que es como queda en Agricultura y como lo dibuja JC en sus 21 hojas: "En Agri el mapa
+     llega hasta arriba y los datos destacados debajo de los iconos de los cultivos. NO se
+     mantiene en ganaderia". Con la cabecera a todo el ancho, el mapa arrancaba una fila mas
+     abajo. */
   const bandas = tablero.disposicion === "columnas" ? bandasEnColumnas(paneles) : [];
   const primeraBanda = bandas.length ? bandas[0] : null;
   const cabeceraEnColumna =
@@ -959,9 +960,6 @@ export default function Tablero({ pagina }: { pagina: PaginaTablero }) {
 
   return (
     <Cascara pagina={pagina}>
-      {/* Las dos tiras del area (especie y pagina) cuando bajan al contenido y NO entran en
-          la columna de la primera banda. */}
-      {cabeceraEnColumna ? null : <NavegacionDeArea pagina={pagina} />}
       {!cabeceraEnColumna && accionesArriba?.length ? (
         <div className="acciones-tablero acciones-arriba">
           <AccionesDeCuadro acciones={accionesArriba} />
@@ -1085,12 +1083,11 @@ export default function Tablero({ pagina }: { pagina: PaginaTablero }) {
                 {banda.der.length ? (
                   <div className="columna">
                     {/* La cabecera de la pagina, arriba de la columna derecha de la PRIMERA
-                        banda: las dos tiras de navegacion y los indicadores, con el mapa
-                        llegando hasta arriba a su izquierda (maqueta de JC, revision del
-                        25-oct-2026). */}
+                        banda: el link a la matriz origen-destino y los indicadores, con el
+                        mapa llegando hasta arriba a su izquierda (maqueta de JC, revision
+                        del 25-oct-2026). */}
                     {i === 0 && cabeceraEnColumna ? (
                       <div className="cabecera-columna">
-                        <NavegacionDeArea pagina={pagina} />
                         {accionesArriba?.length ? (
                           <div className="acciones-tablero acciones-arriba">
                             <AccionesDeCuadro acciones={accionesArriba} />

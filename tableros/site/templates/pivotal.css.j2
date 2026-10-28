@@ -1370,45 +1370,11 @@ a { color: var(--enlace); }
   .chip-grande { align-self: auto; padding: .16rem .6rem; }
 }
 
-/* ---------- las DOS tiras del area, adentro del contenido (ganaderia, 25-oct-2026) --------
-   Revision de JC: la seleccion de ESPECIE tiene que leerse como la de cultivo en Agricultura
-   ("ESTA ABSOLUTAMENTE CLARA LA POSIBILIDAD DE SELECCION DE CADA CULTIVO, MIENTRAS QUE NO ASI
-   EN GANADERIA"), y las paginas de esa especie tienen que colgar de ella y no quedar
-   "descolgadas y desconectadas" en la banda del breadcrumb. Por eso las dos bajan al
-   contenido, una arriba de la otra, en el orden de la jerarquia: especie, despues variables.
-   Las cajitas son las MISMAS que las de cultivo (`.chip-cultivo`): solo cambia que acá cada
-   una es un <a> y el elegido se marca con `aria-current` en vez de `aria-pressed`. */
-.navegacion-area { display: flex; flex-direction: column; gap: .3rem; margin: 0 0 .55rem; }
-.selector-secciones {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
-  gap: .25rem .35rem; align-items: center;
-}
-.selector-secciones .chip-cultivo { text-decoration: none; color: inherit; }
-.selector-secciones .chip-cultivo[aria-current="page"] .ico-bn { display: none; }
-.selector-secciones .chip-cultivo[aria-current="page"] .ico-color { display: block; }
-.selector-secciones .chip-cultivo[aria-current="page"] .chip-nombre {
-  background: var(--seleccion); border-color: var(--seleccion); color: var(--sobre-seleccion);
-}
-.selector-secciones .chip-prox { opacity: .5; cursor: not-allowed; }
-/* La tira de PAGINAS, debajo de la de especies: cajitas con borde como las dibuja JC en la
-   fila 10 de sus hojas, con la pagina abierta maciza. Sobre el lienzo y no sobre el cromo,
-   asi que no hereda el color de la version de la banda.
-   La especificidad extra (`.navegacion-area` delante) no es decorativa: `.tira-paginas a`
-   pinta sus links con el color de ARRIBA del cromo y vive mas abajo en este archivo, asi que
-   con la misma especificidad ganaba ella y las paginas se leian como deshabilitadas. */
-.navegacion-area .tira-paginas-contenido { margin-left: 0; gap: .25rem; }
-.navegacion-area .tira-paginas-contenido a,
-.navegacion-area .tira-paginas-contenido .tira-prox {
-  border: 1px solid var(--borde-panel); border-radius: var(--radio-pildora);
-  background: var(--fondo-cuadro); color: var(--texto);
-  font-size: .72rem; font-weight: 650; padding: .16rem .6rem;
-}
-.navegacion-area .tira-paginas-contenido a:hover { background: var(--fondo-apoyo); }
-.navegacion-area .tira-paginas-contenido a[aria-current="page"] {
-  background: var(--seleccion); border-color: var(--seleccion); color: var(--sobre-seleccion);
-}
-/* La cabecera de la pagina adentro de la columna derecha de la primera banda: las tiras y los
-   indicadores, con el mapa llegando hasta arriba a su izquierda (como en Agricultura). */
+/* ---------- la cabecera de la pagina dentro de la columna derecha (ganaderia, 25-oct-2026)
+   Revision de JC: "En Agri el mapa llega hasta arriba y los datos destacados debajo de los
+   iconos de los cultivos. NO se mantiene en ganaderia". Con la banda de indicadores a todo
+   el ancho, el mapa arrancaba una fila mas abajo que en Agricultura; metiendola en la
+   columna derecha de la primera banda, el mapa recupera esa altura. */
 .cabecera-columna { display: flex; flex-direction: column; }
 /* Los indicadores en FLEX y no en la grilla de columnas iguales: la tarjeta de contexto
    ("Datos 2025" con el icono de la especie) mide lo que mide su texto -con una columna de
@@ -1418,9 +1384,6 @@ a { color: var(--enlace); }
 .cabecera-columna .kpi { flex: 1 1 8rem; min-width: 0; }
 .cabecera-columna .kpi-contexto { flex: 0 1 auto; }
 .cabecera-columna .kpi-contexto-nombre { white-space: nowrap; }
-@media (max-width: 1000px) {
-  .selector-secciones { display: flex; flex-wrap: wrap; }
-}
 
 /* Copia del grafico a alta resolucion para imprimir: vive escondida hasta que se imprime
    (la cuelga comun.js al lado del canvas). */

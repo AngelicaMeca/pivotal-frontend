@@ -27,18 +27,17 @@ ramas:
     bajada: "Qué se siembra, dónde y con qué resultado."
   - id: ganaderia
     bloque: acceso-por-tema
-    # La tira de ESPECIES vuelve el 25-oct-2026 por revision de JC, y vuelve DISTINTA: ya no
-    # es una fila de texto arriba de la banda (asi estuvo hasta el 12-oct-2026, cuando se
-    # apago por repetir el menu lateral), sino la MISMA grilla de cajitas con icono que los
-    # cultivos de Agricultura, dibujada adentro del contenido. Es lo que pide JC:
-    # "En Agri, ESTA ABSOLUTAMENTE CLARA LA POSIBILIDAD DE SELECCION DE CADA CULTIVO,
-    # MIENTRAS QUE NO ASI EN GANADERIA, donde la seleccion pasa a un menu de texto a la
-    # izquierda QUE NO EXISTE EN AGRI. La maqueta de GANA se hizo manteniendo la estructura
-    # de agri". `en_contenido: true` es lo que la saca de la banda del breadcrumb y la baja
-    # al contenido, con la tira de PAGINAS debajo: primero la ESPECIE, despues las variables
-    # de esa especie ("Hay que tener en cuenta las jerarquias").
-    tira_de_secciones: true
-    tira_en_contenido: true
+    # Sin `tira_de_secciones` desde el 12-oct-2026: la tira de especies arriba de la banda
+    # del breadcrumb (fila 6 de la maqueta) repetia el menu lateral, que ya lista las mismas
+    # especies. Pedido explicito: "saca el menu superior porque repite el lateral". El
+    # mecanismo sigue en el build y en Cascara.tsx: se vuelve a prender con
+    # `tira_de_secciones: true`.
+    # 13-oct-2026 (decision de la usuaria): la tira queda APAGADA y se respeta el pedido del
+    # 12-oct. La navegacion por especie vive en el menu lateral (backlog 76, nota para JC).
+    # 28-oct-2026 (decision de la usuaria): JC vuelve a pedirla en su revision del 25-oct, y
+    # bajada al contenido ("primero la ESPECIE, luego las variables"). Se probo asi y la
+    # usuaria pidio dejarlo como estaba: la tira de especies sigue APAGADA y la de paginas
+    # sigue en la banda del breadcrumb. Queda para hablarlo con JC.
     rama: Ganadería
     titulo: Ganadería
     bajada: "Existencias, movimientos y faena por departamento."
@@ -290,9 +289,6 @@ secciones:
     grupos: []
 
   - id: bovinos
-    # El icono de la especie en la tira de especies del contenido (el mismo PNG de JC que
-    # lleva la tarjeta "Datos" de la pagina).
-    icono: bovinos
     base: 48
     rama: ganaderia
     ruta: [Ganadería, Bovinos]
@@ -327,9 +323,6 @@ secciones:
     grupos: []
 
   - id: bubalinos
-    # El icono de la especie en la tira de especies del contenido (el mismo PNG de JC que
-    # lleva la tarjeta "Datos" de la pagina).
-    icono: bubalinos
     base: 183
     rama: ganaderia
     ruta: [Ganadería, Bubalinos]
@@ -343,9 +336,6 @@ secciones:
     grupos: []
 
   - id: porcinos
-    # El icono de la especie en la tira de especies del contenido (el mismo PNG de JC que
-    # lleva la tarjeta "Datos" de la pagina).
-    icono: porcinos
     base: 232
     rama: ganaderia
     ruta: [Ganadería, Porcinos]
@@ -363,9 +353,6 @@ secciones:
     grupos: []
 
   - id: equinos
-    # El icono de la especie en la tira de especies del contenido (el mismo PNG de JC que
-    # lleva la tarjeta "Datos" de la pagina).
-    icono: equinos
     base: 229
     rama: ganaderia
     ruta: [Ganadería, Equinos]
@@ -381,9 +368,6 @@ secciones:
     grupos: []
 
   - id: ovinos
-    # El icono de la especie en la tira de especies del contenido (el mismo PNG de JC que
-    # lleva la tarjeta "Datos" de la pagina).
-    icono: ovinos
     base: 157
     rama: ganaderia
     ruta: [Ganadería, Ovinos]
@@ -400,9 +384,6 @@ secciones:
     grupos: []
 
   - id: caprinos
-    # El icono de la especie en la tira de especies del contenido (el mismo PNG de JC que
-    # lleva la tarjeta "Datos" de la pagina).
-    icono: caprinos
     base: 177
     rama: ganaderia
     ruta: [Ganadería, Caprinos]
@@ -418,9 +399,6 @@ secciones:
     grupos: []
 
   - id: apicola
-    # El icono de la especie en la tira de especies del contenido (el mismo PNG de JC que
-    # lleva la tarjeta "Datos" de la pagina).
-    icono: apicolas
     base: 30
     rama: ganaderia
     ruta: [Ganadería, Apícola]
