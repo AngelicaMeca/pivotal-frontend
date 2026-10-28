@@ -742,6 +742,10 @@ a { color: var(--enlace); }
   flex: 0 0 auto; display: flex; justify-content: flex-end; padding: .1rem .15rem .15rem 0;
 }
 .acciones-tablero .panel-acciones { gap: .45rem; }
+/* Las acciones que piden ir ARRIBA (el link a la matriz origen-destino, revision de JC del
+   25-oct-2026): al lado de las tiras de navegacion y pegadas a la izquierda, que es donde JC
+   lo dibuja en la fila 14 de su hoja. Al pie quedaba detras de toda la pagina. */
+.acciones-tablero.acciones-arriba { justify-content: flex-start; margin-bottom: .5rem; }
 .acciones-tablero .panel-accion {
   /* Se desarma el tratamiento de "pie de cuadro" que trae `.panel-accion`: aca no es una nota
      al pie de una cita de fuente, es un boton. */
@@ -1366,6 +1370,58 @@ a { color: var(--enlace); }
   .chip-grande { align-self: auto; padding: .16rem .6rem; }
 }
 
+/* ---------- las DOS tiras del area, adentro del contenido (ganaderia, 25-oct-2026) --------
+   Revision de JC: la seleccion de ESPECIE tiene que leerse como la de cultivo en Agricultura
+   ("ESTA ABSOLUTAMENTE CLARA LA POSIBILIDAD DE SELECCION DE CADA CULTIVO, MIENTRAS QUE NO ASI
+   EN GANADERIA"), y las paginas de esa especie tienen que colgar de ella y no quedar
+   "descolgadas y desconectadas" en la banda del breadcrumb. Por eso las dos bajan al
+   contenido, una arriba de la otra, en el orden de la jerarquia: especie, despues variables.
+   Las cajitas son las MISMAS que las de cultivo (`.chip-cultivo`): solo cambia que acá cada
+   una es un <a> y el elegido se marca con `aria-current` en vez de `aria-pressed`. */
+.navegacion-area { display: flex; flex-direction: column; gap: .3rem; margin: 0 0 .55rem; }
+.selector-secciones {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
+  gap: .25rem .35rem; align-items: center;
+}
+.selector-secciones .chip-cultivo { text-decoration: none; color: inherit; }
+.selector-secciones .chip-cultivo[aria-current="page"] .ico-bn { display: none; }
+.selector-secciones .chip-cultivo[aria-current="page"] .ico-color { display: block; }
+.selector-secciones .chip-cultivo[aria-current="page"] .chip-nombre {
+  background: var(--seleccion); border-color: var(--seleccion); color: var(--sobre-seleccion);
+}
+.selector-secciones .chip-prox { opacity: .5; cursor: not-allowed; }
+/* La tira de PAGINAS, debajo de la de especies: cajitas con borde como las dibuja JC en la
+   fila 10 de sus hojas, con la pagina abierta maciza. Sobre el lienzo y no sobre el cromo,
+   asi que no hereda el color de la version de la banda.
+   La especificidad extra (`.navegacion-area` delante) no es decorativa: `.tira-paginas a`
+   pinta sus links con el color de ARRIBA del cromo y vive mas abajo en este archivo, asi que
+   con la misma especificidad ganaba ella y las paginas se leian como deshabilitadas. */
+.navegacion-area .tira-paginas-contenido { margin-left: 0; gap: .25rem; }
+.navegacion-area .tira-paginas-contenido a,
+.navegacion-area .tira-paginas-contenido .tira-prox {
+  border: 1px solid var(--borde-panel); border-radius: var(--radio-pildora);
+  background: var(--fondo-cuadro); color: var(--texto);
+  font-size: .72rem; font-weight: 650; padding: .16rem .6rem;
+}
+.navegacion-area .tira-paginas-contenido a:hover { background: var(--fondo-apoyo); }
+.navegacion-area .tira-paginas-contenido a[aria-current="page"] {
+  background: var(--seleccion); border-color: var(--seleccion); color: var(--sobre-seleccion);
+}
+/* La cabecera de la pagina adentro de la columna derecha de la primera banda: las tiras y los
+   indicadores, con el mapa llegando hasta arriba a su izquierda (como en Agricultura). */
+.cabecera-columna { display: flex; flex-direction: column; }
+/* Los indicadores en FLEX y no en la grilla de columnas iguales: la tarjeta de contexto
+   ("Datos 2025" con el icono de la especie) mide lo que mide su texto -con una columna de
+   grilla le quedaba "Datos 20..."- y los demas se reparten el resto. Sirve para cualquier
+   cantidad de indicadores, que cambia de hoja en hoja. */
+.cabecera-columna .kpis { display: flex; flex-wrap: wrap; margin-bottom: .55rem; }
+.cabecera-columna .kpi { flex: 1 1 8rem; min-width: 0; }
+.cabecera-columna .kpi-contexto { flex: 0 1 auto; }
+.cabecera-columna .kpi-contexto-nombre { white-space: nowrap; }
+@media (max-width: 1000px) {
+  .selector-secciones { display: flex; flex-wrap: wrap; }
+}
+
 /* Copia del grafico a alta resolucion para imprimir: vive escondida hasta que se imprime
    (la cuelga comun.js al lado del canvas). */
 .grafico-impreso { display: none; }
@@ -1394,6 +1450,11 @@ a { color: var(--enlace); }
   margin: .5rem 0 0; padding: 0; list-style: none; font-size: .8rem;
   display: grid; grid-template-columns: 1fr 1fr; gap: .1rem .9rem;
 }
+/* Desde el 25-oct-2026 los nombres y porcentajes van AFUERA de cada porcion, como en
+   agricultura, y la leyenda en lista no se dibuja (tablero.js le pone `hidden`). La regla
+   explicita hace falta porque el `display: grid` de arriba le gana al `[hidden]` del
+   navegador. El markup sigue: el cuadro se arma igual y volver atras es borrar esta linea. */
+.anillo-leyenda[hidden] { display: none; }
 .anillo-leyenda li { display: flex; align-items: center; gap: .4rem; }
 .anillo-leyenda .muestra {
   width: .6rem; height: .6rem; border-radius: var(--radio-chico); flex: 0 0 auto;
@@ -2185,6 +2246,19 @@ dialog.info.info-visible::backdrop { opacity: 1; }
 .tabla-datos th.elegida { color: var(--texto); }
 .tabla-datos tr.actual td.elegida { background: var(--borde-panel); }
 
+/* Un valor NEGATIVO, pintado como lo pinta JC en su maqueta del balance de movimientos
+   (revision del 25-oct-2026: "ES MUY IMPORTANTE DESTACAR LOS VALORES NEGATIVOS!!!!!").
+   Numero en rojo sobre un fondo rojo muy claro, que es su dibujo: lo que tiene que saltar
+   a la vista es cuales categorias quedan en POSITIVO, porque eso es lo que dice si hay
+   invernada o terminacion. Lo marca tablero.js mirando el texto de la celda. */
+.tabla-datos td.celda-negativa {
+  color: var(--negativo);
+  background: color-mix(in srgb, var(--negativo) 11%, transparent);
+}
+.tabla-datos tr.actual td.celda-negativa {
+  background: color-mix(in srgb, var(--negativo) 18%, transparent);
+}
+
 /* Lista de barras (Top N): nombre arriba, barra y valor abajo. */
 .lista-barras { margin: 0; padding: 0; list-style: none; }
 .lista-barras li { margin: 0 0 .55rem; }
@@ -2564,6 +2638,36 @@ table.matriz-od th.esquina { font-weight: 500; color: var(--texto-apoyo); }
    tamaño que tenia el canvas en su caja, sin deformarla. */
 .imprimiendo .grafico-en-pantalla { display: none; }
 .imprimiendo .grafico-impreso { display: block; width: 100%; height: 100%; object-fit: contain; }
+
+/* ---------- el PDF de un tablero que FLUYE (JC, 25-oct-2026: "PDF fuera de escala") --------
+   Las hojas de ganaderia no entran en una hoja A4: una matriz de 27 departamentos por 12
+   anios no se achica sin volverse ilegible. Forzarla igual (la clase `alto-fijo`, que es lo
+   que hace un tablero de UNA pantalla) daba nueve hojas con los cuadros partidos al medio.
+   Con `imprimiendo-fluye` -se la pone comun.js cuando el tablero lleva `alto-fluido`- la hoja
+   deja de medir una pantalla y el PDF son varias hojas A4 apaisadas, cada cuadro entero.
+   El ancho sigue siendo el del papel (281mm): eso no cambia. */
+.imprimiendo-fluye body { height: auto; overflow: visible; }
+.imprimiendo-fluye .contenido, .imprimiendo-fluye main, .imprimiendo-fluye #tablero {
+  height: auto; min-height: 0;
+}
+/* Nada se parte entre dos hojas: ni un cuadro, ni una banda de indicadores, ni un renglon. */
+.imprimiendo-fluye .panel, .imprimiendo-fluye .kpi, .imprimiendo-fluye .banda-en-fila,
+.imprimiendo-fluye .tabla-anio, .imprimiendo-fluye .tabla-datos tr,
+.imprimiendo-fluye .notas details { break-inside: avoid; }
+/* Una tabla que sigue en la hoja siguiente repite su encabezado. */
+.imprimiendo-fluye .tabla-datos thead { display: table-header-group; }
+/* Los altos que `nivelarBandas` le escribio a cada grafico estan medidos contra la VENTANA.
+   En la hoja la caja es otra (281mm y sin menu lateral), asi que se pisan con la medida del
+   papel: si no, el PDF sale con los graficos estirados, que es la otra mitad de "fuera de
+   escala". El mapa lleva su propia medida porque la provincia es alta y angosta. */
+.imprimiendo-fluye [data-grafico], .imprimiendo-fluye .anillo-caja {
+  height: 58mm !important; min-height: 0 !important; flex: 0 0 auto !important;
+}
+.imprimiendo-fluye .panel[data-panel^="mapa"] > .panel-cuerpo > [data-grafico] {
+  height: 115mm !important;
+}
+/* Las tablas con scroll propio se imprimen ENTERAS: en papel no hay scroll. */
+.imprimiendo-fluye [data-scroll-interno] .tabla-datos { max-height: none !important; overflow: visible; }
 
 /* ---------- Zoom: un cuadro a PANTALLA COMPLETA (Francisco, 24-sep-2026) ----------
    El "Zoom" que JC dibuja al pie de sus cuadros, al lado de "Generar PDF" (maqueta de

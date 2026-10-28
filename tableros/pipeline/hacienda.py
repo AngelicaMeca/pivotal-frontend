@@ -51,7 +51,10 @@ UNIDAD = {"cabezas": "cabezas", "documentos": "dte",
           "ingreso_establecimiento": "cabezas", "egreso_establecimiento": "cabezas",
           "balance_cabezas": "cabezas"}
 
-ETIQUETA_MEDIDA = {"cabezas": "Cabezas movidas", "documentos": "DTE emitidos",
+# "Movimientos de hacienda" y no "Cabezas movidas" desde el 25-oct-2026: lo pidio JC mirando
+# la matriz origen-destino ("solo cambiaria 'cabezas movidas' por 'MOVIMIENTOS DE HACIENDA'
+# como en todas las otras tablas"). La UNIDAD sigue siendo cabezas y se dice en el subtitulo.
+ETIQUETA_MEDIDA = {"cabezas": "Movimientos de hacienda", "documentos": "DTE emitidos",
                    "ingreso_establecimiento": "Ingresos", "egreso_establecimiento": "Egresos"}
 
 NOMBRE_EJE = {"cabezas": "Cabezas", "dte": "Documentos"}

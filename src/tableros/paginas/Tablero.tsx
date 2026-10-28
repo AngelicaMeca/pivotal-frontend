@@ -39,7 +39,7 @@ import type {
   Panel,
 } from "@/tableros/tipos";
 import Arranque from "./Arranque";
-import Cascara from "./Cascara";
+import Cascara, { NavegacionDeArea } from "./Cascara";
 import Glosa from "./Glosa";
 
 function TarjetasKpi({ contexto, cantidad = 4 }: { contexto: boolean; cantidad?: number }) {
@@ -910,14 +910,34 @@ export default function Tablero({ pagina }: { pagina: PaginaTablero }) {
     paneles,
     filtros_panel: filtros,
     filtro_selector: selector,
-    acciones_tablero: accionesDelPie,
+    acciones_tablero: accionesDelTablero,
   } = pagina;
+  /* Una accion puede pedir ir ARRIBA del tablero en vez de la tira del pie: es el link a la
+     matriz origen-destino, que JC dibuja en la fila 14 de su hoja y que al pie quedaba
+     despues de toda la pagina (revision del 25-oct-2026, "Esta abajo y habria que subirla").
+     "Generar PDF" sigue al pie, que es donde el lo pone (celda BE113). */
+  const accionesArriba = accionesDelTablero?.filter((a) => a.arriba);
+  const accionesDelPie = accionesDelTablero?.filter((a) => !a.arriba);
   const porId = Object.fromEntries(paneles.map((panel) => [panel.id, panel]));
 
   /* Las tarjetas de indicadores viven ARRIBA del tablero y solo en la disposicion generica
      (hacienda, stock). En el mockup Modelo 2 van dentro de la columna derecha, y la maqueta
      "Agri 2" directamente no tiene: va de los chips a los paneles. */
   const conIndicadoresArriba = !selector && tablero.disposicion !== "grilla-2x2";
+  /* Ganaderia, revision de JC del 25-oct-2026: la cabecera de la pagina (las dos tiras de
+     navegacion y los indicadores) va DENTRO de la columna derecha de la primera banda, que
+     es como queda en Agricultura y como lo dibuja JC en sus 21 hojas: "En Agri el mapa llega
+     hasta arriba y los datos destacados debajo de los iconos de los cultivos. NO se mantiene
+     en ganaderia". Con la cabecera a todo el ancho, el mapa arrancaba una fila mas abajo. */
+  const bandas = tablero.disposicion === "columnas" ? bandasEnColumnas(paneles) : [];
+  const primeraBanda = bandas.length ? bandas[0] : null;
+  const cabeceraEnColumna =
+    tablero.disposicion === "columnas" &&
+    !!primeraBanda &&
+    !("fila" in primeraBanda) &&
+    !("ancha" in primeraBanda) &&
+    primeraBanda.izq.length > 0 &&
+    primeraBanda.der.length > 0;
   /* El mockup de cultivos extensivos es el UNICO que pone el selector grande adentro de su
      columna derecha. Con `columnas` (el SID) el selector va arriba de las bandas. */
   const mockupConSelector = Boolean(selector) && tablero.disposicion !== "columnas";
@@ -939,7 +959,15 @@ export default function Tablero({ pagina }: { pagina: PaginaTablero }) {
 
   return (
     <Cascara pagina={pagina}>
-      {conIndicadoresArriba ? (
+      {/* Las dos tiras del area (especie y pagina) cuando bajan al contenido y NO entran en
+          la columna de la primera banda. */}
+      {cabeceraEnColumna ? null : <NavegacionDeArea pagina={pagina} />}
+      {!cabeceraEnColumna && accionesArriba?.length ? (
+        <div className="acciones-tablero acciones-arriba">
+          <AccionesDeCuadro acciones={accionesArriba} />
+        </div>
+      ) : null}
+      {conIndicadoresArriba && !cabeceraEnColumna ? (
         <>
           <div className="kpis" id="kpis">
             <TarjetasKpi contexto={tablero.tarjeta_contexto} cantidad={tablero.kpis ?? 4} />
@@ -1018,7 +1046,7 @@ export default function Tablero({ pagina }: { pagina: PaginaTablero }) {
           {/* Los chips de cultivo con icono, los MISMOS de Agricultura (el SID: "DESDE LA
               OPCION DEL MENU DE CULTIVOS (EXACTAMENTE IGUAL QUE EN AGRI)"). */}
           {selector ? <SelectorCultivo filtro={selector} /> : null}
-          {bandasEnColumnas(paneles).map((banda, i) =>
+          {bandas.map((banda, i) =>
             "fila" in banda ? (
               <div className="banda-con-titulo" key={i}>
                 {banda.titulo ? <h2 className="titulo-banda">{banda.titulo}</h2> : null}
@@ -1056,6 +1084,34 @@ export default function Tablero({ pagina }: { pagina: PaginaTablero }) {
                 ) : null}
                 {banda.der.length ? (
                   <div className="columna">
+                    {/* La cabecera de la pagina, arriba de la columna derecha de la PRIMERA
+                        banda: las dos tiras de navegacion y los indicadores, con el mapa
+                        llegando hasta arriba a su izquierda (maqueta de JC, revision del
+                        25-oct-2026). */}
+                    {i === 0 && cabeceraEnColumna ? (
+                      <div className="cabecera-columna">
+                        <NavegacionDeArea pagina={pagina} />
+                        {accionesArriba?.length ? (
+                          <div className="acciones-tablero acciones-arriba">
+                            <AccionesDeCuadro acciones={accionesArriba} />
+                          </div>
+                        ) : null}
+                        {conIndicadoresArriba ? (
+                          <>
+                            {/* `.kpis` y no `.kpis-grilla`: la grilla del mockup fija cinco
+                                columnas (contexto + 4) y los tableros de ganaderia no
+                                siempre tienen cuatro indicadores. */}
+                            <div className="kpis" id="kpis">
+                              <TarjetasKpi
+                                contexto={tablero.tarjeta_contexto}
+                                cantidad={tablero.kpis ?? 4}
+                              />
+                            </div>
+                            <p className="kpis-nota" data-kpis-nota=""></p>
+                          </>
+                        ) : null}
+                      </div>
+                    ) : null}
                     <PanelesDeColumna paneles={banda.der} filtros={filtros} />
                   </div>
                 ) : null}

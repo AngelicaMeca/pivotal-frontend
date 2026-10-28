@@ -50,7 +50,12 @@ indicadores:
 paneles:
   alto: fluye
   acciones_de_tablero:
-    - {id: volver-leche, etiqueta: "Volver a Producc Leche", vista: tablero-bovinos-leche}
+    # Era "Volver a Producc Leche", con la pagina de leche escrita en el spec porque de ahi
+    # sale el clic del mapa de tambos. JC llego aca desde Razas y el boton le ofrecia volver a
+    # una pagina en la que no habia estado (25-oct-2026: "¿POR QUE NO PONER SIMPLEMENTE
+    # 'REGRESAR A LA PANTALLA ANTERIOR'? A ESTO YA LO VI VARIAS VECES"). Ahora vuelve por la
+    # historia del navegador, y si no hay a donde volver no se dibuja.
+    - {id: volver-atras, etiqueta: "Regresar a la pantalla anterior", accion: volver-atras}
     - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
   mapa:
     # Nombres de los departamentos sobre el mapa: desvio de la maqueta (ver la cabecera).
@@ -61,7 +66,8 @@ paneles:
     medida: cabezas
   anillo-departamentos:
     titulo: "Sgo del Estero - Participación departamentos en el stock total {regimen} - 2025"
-    cuantos: 6
+    # Cinco y "Resto" (regla de JC del 25-oct-2026); su maqueta dibujaba seis.
+    cuantos: 5
   tabla-eac:
     titulo: "Sgo. del Estero - Stocks bovinos en Engorde a Corral (EAC) por categoría, totales y UP por departamento - año {anio}"
     encabezado_geo: "Departamento"

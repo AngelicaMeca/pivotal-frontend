@@ -480,7 +480,10 @@ slots:
       # frase dice "cabezas movidas" porque el dato es un FLUJO: un animal que se movio tres veces
       # cuenta tres. "Cabezas" a secas es el stock, y esa es la base 48, que todavia no entro; su
       # medida se va a llamar distinto (existencias) justamente para que las dos no se pisen.
-      cabezas:                 {frase: "cabezas movidas",        genero: f_plural}
+      # "movimientos" y no "cabezas movidas" (JC, 25-oct-2026): con el sujeto al lado el
+      # titulo queda "Movimientos de la hacienda bovina...", que es como nombra el resto de
+      # sus cuadros. La unidad (cabezas) la sigue diciendo el subtitulo.
+      cabezas:                 {frase: "movimientos",           genero: m_plural}
       documentos:              {frase: "documentos de tránsito", genero: m_plural}
       ingreso_establecimiento: {frase: "ingresos",               genero: m_plural}
       egreso_establecimiento:  {frase: "egresos",                genero: m_plural}

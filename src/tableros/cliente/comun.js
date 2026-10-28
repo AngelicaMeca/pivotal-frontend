@@ -970,13 +970,21 @@ export default function crearPivotal() {
     /* El tablero se reparte el alto de la hoja con las mismas reglas con que se reparte el de
        la ventana (`alto-fijo`). En pantalla esa clase la pone tablero.js solo si la ventana es
        ancha; la hoja mide siempre lo mismo, asi que si no esta, aca se pone. */
+    /* ... salvo que el tablero FLUYA (ganaderia, agricultura desde el 30-sep-2026). Ahi el
+       contenido no entra en una hoja -una tabla de 27 departamentos por 12 anios no se
+       achica- y meterlo a la fuerza en 194mm era lo que JC vio el 25-oct-2026: "PDF fuera de
+       escala", nueve hojas con los cuadros partidos al medio. Un tablero que fluye se imprime
+       en VARIAS hojas A4, con cada cuadro entero (CSS, `.imprimiendo-fluye`). */
     var tablero = document.getElementById("tablero");
-    var altoPuesto = tablero && !tablero.classList.contains("alto-fijo");
+    var fluye = tablero && tablero.classList.contains("alto-fluido");
+    var altoPuesto = tablero && !fluye && !tablero.classList.contains("alto-fijo");
     if (altoPuesto) { tablero.classList.add("alto-fijo"); }
+    if (fluye) { document.documentElement.classList.add("imprimiendo-fluye"); }
     redibujarYEsperar().then(imagenesDeGraficos).then(function () {
       var limpiar = function () {
         window.removeEventListener("afterprint", limpiar);
         document.documentElement.classList.remove("imprimiendo");
+        document.documentElement.classList.remove("imprimiendo-fluye");
         if (altoPuesto) { tablero.classList.remove("alto-fijo"); }
         sacarImagenes();
         delete boton.dataset.ocupado;
@@ -1375,7 +1383,24 @@ export default function crearPivotal() {
     reacomodar();
   }
 
-  var ACCIONES = { "exportar-pdf": exportarPdf, "zoom": abrirZoom };
+  /* "Regresar a la pantalla anterior": vuelve de verdad por donde se vino, en vez de
+     prometer una pagina fija. Lo pidio JC el 25-oct-2026 al encontrarse en Feed Lots con un
+     "Volver a Producc Leche" despues de haber llegado desde Razas: "¿POR QUE NO PONER
+     SIMPLEMENTE 'REGRESAR A LA PANTALLA ANTERIOR'?". Sin historia dentro del sitio no hay a
+     donde volver y el boton no se dibuja: un link muerto es peor que no tenerlo. */
+  function volverAtras() { window.history.back(); }
+
+  function hayPantallaAnterior() {
+    if (window.history.length <= 1) { return false; }
+    /* Sin referrer (pestaña nueva, link pegado) el `back` sacaria al visitante del sitio. */
+    if (!document.referrer) { return false; }
+    try {
+      return new URL(document.referrer).origin === window.location.origin;
+    } catch { return false; }
+  }
+
+  var ACCIONES = { "exportar-pdf": exportarPdf, "zoom": abrirZoom,
+                   "volver-atras": volverAtras };
 
   /* Los botones de accion: los del panel UTILIDADES (cultivos extensivos) y los del pie de
      cada cuadro (maqueta "Agri 2": un "Generar PDF" por panel). Son el mismo boton dibujado
@@ -1505,7 +1530,12 @@ export default function crearPivotal() {
 
   function engancharUtilidades() {
     engancharGlosario();
+    var conHistoria = hayPantallaAnterior();
     Array.prototype.forEach.call(document.querySelectorAll("[data-utilidad]"), function (boton) {
+      if (boton.dataset.utilidad === "volver-atras" && !conHistoria) {
+        boton.hidden = true;
+        return;
+      }
       var hacer = ACCIONES[boton.dataset.utilidad];
       if (hacer) { boton.addEventListener("click", function () { hacer(boton); }); }
     });

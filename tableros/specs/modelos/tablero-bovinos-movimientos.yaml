@@ -64,7 +64,11 @@ paneles:
   acciones_de_tablero:
     # El boton de JC (cuadro de texto de la fila 14 y la flecha al pie de su hoja): lleva a
     # la matriz de movimientos internos departamento x departamento.
-    - {id: matriz-od, etiqueta: "Matrices Origen Destino (OD)", vista: 85-matriz-od-interna, flecha: true}
+    # `arriba` desde el 25-oct-2026: JC lo quiere donde el lo dibuja, en la fila 14, y no al
+    # pie ("POR FAVOR CAMBIAR DE UBICACION EL LINK DE ACCESO... Esta abajo y habria que
+    # subirla"). Al pie quedaba despues de toda la pagina y no se veia sin scrollear.
+    - {id: matriz-od, etiqueta: "Matrices Origen Destino (OD)", vista: 85-matriz-od-interna,
+       flecha: true, arriba: true}
     - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
   mapa:
     # Nombres de los departamentos sobre el mapa: desvio de la maqueta (ver la cabecera).

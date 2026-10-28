@@ -121,7 +121,8 @@ paneles:
   # el stock y en las UP.
   anillo-departamentos:
     titulo: "Sgo del Estero - Equinos, Participación por departamento en el stock total año {anio}"
-    cuantos: 9
+    # Cinco y "Resto" (regla de JC del 25-oct-2026); su maqueta dibujaba nueve.
+    cuantos: 5
     fuente: "Fuente: SENASA"
   anillo-estratos:
     titulo: "Sgo del Estero - Participación de los estratos en el stock total año {anio}"

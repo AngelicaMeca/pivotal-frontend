@@ -720,7 +720,9 @@ def copiar_iconos(escritor, theme):
 #   exportar-pdf     imprime el tablero entero con la seleccion vigente (el PDF lo arma el navegador)
 #   zoom             abre ESE cuadro a pantalla completa, con sus controles en grande
 #   mas-informacion  abre el popup con la seccion 5 de la maqueta (bloques 5.1 a 5.4)
-ACCIONES_UTILIDAD = ("exportar-pdf", "zoom", "mas-informacion")
+# `volver-atras`: "Regresar a la pantalla anterior" (JC, 25-oct-2026). Vuelve por la historia
+# del navegador y no a una pagina escrita en el spec, que era lo que lo confundia.
+ACCIONES_UTILIDAD = ("exportar-pdf", "zoom", "mas-informacion", "volver-atras")
 
 # Las banderas de idioma de la cabecera: las de la maqueta del SID de JC (site/assets/banderas/).
 BANDERAS_IDIOMA = {"es": "banderas/es.png", "en": "banderas/en.png", "pt": "banderas/pt.png"}
@@ -772,6 +774,11 @@ def accion_de_cuadro(item, destino, url_de, slug_tablero, id_panel, variante=Non
               # de DTV y el de la derecha el mapa de las estimaciones de superficie. En la
               # hoja "Agri 1" hay uno solo y esto viaja en None.
               "variante": variante,
+              # `arriba`: la accion va ARRIBA del tablero y no en la tira del pie. Lo pidio JC
+              # el 25-oct-2026 para el link a la matriz origen-destino ("POR FAVOR CAMBIAR DE
+              # UBICACION EL LINK DE ACCESO... Esta abajo y habria que subirla"), que el mismo
+              # dibuja en la fila 14 de su hoja "GanBov DTE". "Generar PDF" se queda abajo.
+              "arriba": bool(item.get("arriba")),
               "rotulo": item.get("rotulo", "Próximamente")}
     if item.get("icono"):
         salida["icono"] = ruta_icono("color", item["icono"])
@@ -7560,7 +7567,9 @@ def panel_stock_anillo_departamentos(ctx, spec, anio, pie, geo=None):
     if not valores:
         return panel_vacio(titulo, "No hay stock por departamento para la selección.")
     total = sum(v for v, _ in valores)
-    cuantos = int(declarado.get("cuantos", 7))
+    # Cinco y "Resto" por defecto: regla de JC del 25-oct-2026 mirando el anillo de
+    # departamentos ("NORMALMENTE NO CONVIENE PONER MAS DE 5 ANTES DE 'RESTO'").
+    cuantos = int(declarado.get("cuantos", 5))
     primeros = valores[:cuantos]
     # Con un departamento elegido, ese departamento FIGURA siempre aunque no este entre los
     # primeros (JC, "SID Muestra Dto-xGanad" G95: "SEA CUAL FUERE LA PARTICIPACION DEL
@@ -9591,7 +9600,7 @@ def panel_apicola_ranking(ctx, spec, pie):
 def panel_apicola_anillo(ctx, spec, pie):
     declarado = spec["paneles"]["anillo-departamentos"]
     partes, total = _top_y_resto([(ctx.geo.nombre.get(g, str(g)), ctx.de(g, "colmenas"))
-                                  for g in ctx.deptos()], int(declarado.get("cuantos", 6)))
+                                  for g in ctx.deptos()], int(declarado.get("cuantos", 5)))
     colores = ctx.colores.por_categoria([n for n, _ in partes], respetar_orden=True)
     centro, prefijo = pr.fmt_compacto(total)
     return {"titulo": titulo_literal(declarado["titulo"], anio=str(ctx.anio)),
@@ -12566,6 +12575,11 @@ def escribir_sitio(ctx, vistas, tableros):
              "menu": menu_del_sitio(ctx), "con_menu": True,
              "clase_cuerpo": "", "botones_cabecera": [], "boton_proximamente": False,
              "paginas_de_seccion": [], "tira_de_secciones": [],
+             # `navegacion_en_contenido`: las dos tiras (especies y paginas) NO van en la
+             # banda del breadcrumb sino adentro del contenido, como la grilla de cultivos de
+             # Agricultura (revision de JC del 25-oct-2026). Lo declara la rama
+             # (`tira_en_contenido`).
+             "navegacion_en_contenido": False,
              "banderas_idioma": (banderas_idioma()
                                  if ctx.navegacion.get("cabecera_banderas_todas") else []),
              "menu_departamentos": [], "regresar_origen": None,
@@ -12824,21 +12838,35 @@ def escribir_sitio(ctx, vistas, tableros):
         # menu lateral: el rotulo esta y al lado dice que todavia no.
         rama_cfg = next((r for r in (ctx.navegacion.get("ramas") or [])
                          if r.get("id") == seccion.get("rama")), None)
-        if rama_cfg and rama_cfg.get("tira_de_secciones"):
+        # La PORTADA de la rama no lleva la tira: es la pagina que presenta las especies con
+        # sus tarjetas, asi que repetirlas arriba en chips no agrega nada (hoja "Ganad
+        # Ingreso" de JC, que tampoco las dibuja).
+        portada_rama = rama_cfg.get("portada") if rama_cfg else None
+        if (rama_cfg and rama_cfg.get("tira_de_secciones")
+                and seccion["id"] != portada_rama):
             hermanas = []
             for otra in ctx.navegacion["secciones"]:
                 if otra.get("rama") != seccion.get("rama"):
                     continue
-                if otra.get("oculta"):
+                if otra.get("oculta") or otra["id"] == portada_rama:
                     continue
-                hermanas.append({
+                entrada = {
                     "texto": otra.get("titulo_corto") or otra["titulo"],
                     "href": None if otra.get("proximamente")
                             else "%s/%s" % (PREFIJO, otra["url"]),
                     "actual": otra["id"] == seccion["id"],
-                })
+                }
+                # El icono de la seccion (las especies de ganaderia): los MISMOS dos PNG de
+                # JC que usan los chips de cultivo, B&W en reposo y color en el elegido.
+                if otra.get("icono"):
+                    entrada["icono"] = ruta_icono("bn", otra["icono"])
+                    entrada["icono_color"] = ruta_icono("color", otra["icono"])
+                hermanas.append(entrada)
             if len(hermanas) > 1:
                 extras["tira_de_secciones"] = hermanas
+                # La tira baja al CONTENIDO (con la de paginas debajo) cuando la rama lo pide.
+                if rama_cfg.get("tira_en_contenido"):
+                    extras["navegacion_en_contenido"] = True
         if seccion.get("cabecera_banderas"):
             extras["banderas_idioma"] = banderas_idioma()
         botones = []

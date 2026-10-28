@@ -71,7 +71,9 @@ paneles:
   anillo-departamentos:
     # Titulo de JC, con la errata "colmenaas" corregida.
     titulo: "Sgo del Estero - Cantidad de colmenas, Participación por departamento en el total año {anio}"
-    cuantos: 6
+    # Cinco y "Resto": regla de JC del 25-oct-2026 ("NORMALMENTE NO CONVIENE PONER MAS
+    # DE 5 ANTES DE 'RESTO'"). JC dibujaba seis en su maqueta.
+    cuantos: 5
   # Disposicion en COLUMNAS (12-oct-2026, "reacomoda... para que no haya espacios vacios"):
   # cada banda tiene dos columnas que se apilan a su ritmo, como las hojas de JC (graficos a
   # la izquierda, tablas a la derecha). Las bandas agrupan cuadros de alto parecido; los

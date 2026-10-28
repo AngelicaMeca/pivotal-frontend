@@ -102,7 +102,8 @@ paneles:
     fuente: "Fuente: MAGyP"
   anillo-departamentos:
     titulo: "Sgo del Estero - Porcinos, Participación por departamento en el stock total año {anio}"
-    cuantos: 7
+    # Cinco y "Resto" (regla de JC del 25-oct-2026); su maqueta dibujaba siete.
+    cuantos: 5
     fuente: "Fuente: MAGyP"
   # Disposicion en COLUMNAS (12-oct-2026, "reacomoda... para que no haya espacios vacios"):
   # cada banda tiene dos columnas que se apilan a su ritmo, como las hojas de JC (graficos a

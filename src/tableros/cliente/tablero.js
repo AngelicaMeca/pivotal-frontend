@@ -97,6 +97,28 @@ export default function iniciar(PIVOTAL) {
      la tarjeta (13-oct-2026: "no me gusta que queden espacios asi vacios en las tarjetas").
      Con tope por fila para que una tabla no termine con renglones de doble alto. */
   var TOPE_FILA = 14;
+  /* Hasta cuanto hueco vale la pena estirar el ultimo cuadro de la columna corta. Por encima
+     de esto el cuadro queda con crema vacia adentro y conviene dejarlo medir su contenido. */
+  var HUECO_QUE_SE_ESTIRA = 60;
+  /* TOPE de alto de un grafico al nivelar (JC, 25-oct-2026). Estirar un cuadro hasta que su
+     columna cierre con la tabla de al lado lo deformaba: "Estan desproporcionados..." por las
+     barras del stock, y "¿PODRIAMOS ACHICAR ESTOS GRAFICOS? Quedan grandes y
+     desproporcionados" por los anillos de estratos. El alto se para aca y lo que falte para
+     emparejar la banda lo absorbe el ultimo cuadro y las filas de las tablas, que es el mismo
+     camino que ya se usaba cuando un grafico tocaba su piso.
+     El MAPA no tiene tope: la provincia es alta y angosta y recortarlo lo achica de verdad. */
+  var TOPE_ANILLO = 320;         /* px: mas alto que esto el anillo deja de leerse como anillo */
+  var TOPE_BARRAS = 380;         /* px: tope del resto de los graficos del tablero */
+  var PROPORCION_MAXIMA = 0.85;  /* y nunca mas alto que este porcentaje de su propio ancho */
+
+  function topeDeCaja(caja) {
+    var panel = caja.closest(".panel");
+    var forma = (panel && panel.getAttribute("data-panel")) || "";
+    if (forma.indexOf("mapa") === 0) { return Infinity; }
+    var ancho = caja.getBoundingClientRect().width;
+    var tope = caja.classList.contains("anillo-caja") ? TOPE_ANILLO : TOPE_BARRAS;
+    return ancho ? Math.min(tope, ancho * PROPORCION_MAXIMA) : tope;
+  }
 
   function cajaElastica(panel) {
     var graf = panel.querySelector("[data-grafico]");
@@ -197,16 +219,23 @@ export default function iniciar(PIVOTAL) {
 
       grupos.forEach(function (g) {
         var falta = meta - g.alto;
-        if (!g.cajas.length || Math.abs(falta) < 2) { return; }
+        if (!g.cajas.length) { return; }
         var altos = g.cajas.map(function (c) { return c.getBoundingClientRect().height; });
-        var margen = altos.map(function (h) {
-          return falta > 0 ? h * (TOPE_CRECER - 1) : Math.max(0, h - Math.max(PISO_MINIMO, h * PISO_GRAFICO));
+        var topes = g.cajas.map(topeDeCaja);
+        /* Un grafico que YA nace mas alto que su tope se achica aunque la banda no lo pida:
+           el tope es una regla de proporcion del cuadro, no solo un limite del estirado. */
+        var pasados = altos.some(function (h, i) { return h > topes[i] + 2; });
+        if (Math.abs(falta) < 2 && !pasados) { return; }
+        var margen = altos.map(function (h, i) {
+          return falta > 0 ? Math.max(0, Math.min(h * (TOPE_CRECER - 1), topes[i] - h))
+            : Math.max(0, h - Math.max(PISO_MINIMO, h * PISO_GRAFICO));
         });
         var total = margen.reduce(function (a, b) { return a + b; }, 0);
-        if (!total) { return; }
-        var mover = Math.min(Math.abs(falta), total) * (falta > 0 ? 1 : -1);
+        if (!total && !pasados) { return; }
+        var mover = total ? Math.min(Math.abs(falta), total) * (falta > 0 ? 1 : -1) : 0;
         g.cajas.forEach(function (caja, i) {
-          fijarCaja(caja, Math.round(altos[i] + mover * margen[i] / total));
+          var alto = altos[i] + (total ? mover * margen[i] / total : 0);
+          fijarCaja(caja, Math.round(Math.min(alto, Math.max(topes[i], PISO_MINIMO))));
         });
       });
 
@@ -230,7 +259,17 @@ export default function iniciar(PIVOTAL) {
           });
         }
       });
-      banda.classList.add("banda-nivelada");
+      /* Nivelar es estirar el ULTIMO cuadro de la columna corta hasta el pie de la banda.
+         Eso sirve cuando falta poco; cuando falta mucho -la vista departamental deja una
+         tabla de UNA fila al lado de dos graficos- el cuadro queda con media pantalla de
+         crema vacia, que es justo lo que JC marco el 25-oct-2026: "Si bien se dejo en claro
+         que solo va esa linea, no tiene sentido dejar todo ese espacio vacio". Con un hueco
+         grande la banda NO se nivela y cada columna termina donde termina su contenido. */
+      var hueco = 0;
+      var alturas = grupos.map(function (g) { return g.col.getBoundingClientRect().height; });
+      var masAlta = Math.max.apply(null, alturas);
+      alturas.forEach(function (h) { hueco = Math.max(hueco, masAlta - h); });
+      if (hueco <= HUECO_QUE_SE_ESTIRA) { banda.classList.add("banda-nivelada"); }
     });
   }
 
@@ -295,6 +334,22 @@ export default function iniciar(PIVOTAL) {
     });
   }
 
+  /* El departamento elegido, pegado al titulo de un cuadro que sigue siendo PROVINCIAL.
+     JC, 25-oct-2026: "LA TABLA NO EXPRESA EN QUE DEPARTAMENTO ESTA, SALVO POR LA FILA
+     RESALTADA, OBVIANDO LA REGLA DE ORO DE LA SECUENCIA DE TITULACION DE TABLAS O GRAFICOS
+     (producto/especie, provincia, departamento)". Se decide por el DATO -el cuadro trae una
+     fila del departamento elegido- y no por una lista de cuadros escrita a mano: asi vale
+     para toda la rama sin enumerar, y un cuadro que ya nombra al departamento (los de la
+     capa departamental, que lo traen del build) no lo repite. */
+  function sufijoDepartamento(panel) {
+    var elegido = PIVOTAL.departamento();
+    if (!elegido || !panel || !panel.filas || !panel.filas.length) { return ""; }
+    var nombre = PIVOTAL.nombreDepartamento();
+    if (!nombre || (panel.titulo || "").indexOf(nombre) >= 0) { return ""; }
+    var tiene = panel.filas.some(function (f) { return f && f.geo === elegido; });
+    return tiene ? " - Dto " + nombre : "";
+  }
+
   /* -------- anillo -------- */
   function pintarAnillo(nodo, panel) {
     /* El centro se dibuja solo si el JSON trae `centro` (hacienda, stock). En cultivos el
@@ -307,8 +362,18 @@ export default function iniciar(PIVOTAL) {
     texto(nodo, "[data-centro-nota]", panel.centro_nota);
     texto(nodo, "[data-total-anillo]", panel.total_linea);
 
+    /* Los nombres y los porcentajes van AFUERA de cada porcion, con su guia, y no en una
+       lista de colores debajo. Es regla de JC (revision del 25-oct-2026, comparando el
+       anillo de ganaderia con el de agricultura): "EL USUARIO NO DEBE BUSCAR 'MACHEAR' EL
+       COLOR CON EL PORCENTAJE Y EL DEPARTAMENTO, mientras que en agri es muy sencillo".
+       Vale para TODOS los anillos del sitio: lo que pide es uniformar. La cifra del centro
+       se queda donde esta ("el total en el centro esta muy bien"), y la leyenda en lista
+       deja de dibujarse. */
+    var etiquetasAfuera = true;
+
     var leyenda = nodo.querySelector("[data-leyenda]");
     PIVOTAL.vaciar(leyenda);
+    if (leyenda) { leyenda.hidden = etiquetasAfuera; }
     panel.porciones.forEach(function (porcion) {
       var li = document.createElement("li");
       var muestra = document.createElement("span");
@@ -327,12 +392,6 @@ export default function iniciar(PIVOTAL) {
       leyenda.appendChild(li);
     });
 
-    /* Dos disposiciones del mismo panel:
-       - tablero con selector grande (cultivos, captura del 10-ago): el donut GRANDE con
-         nombre y porcentaje afuera de cada porcion, sin leyenda en lista (el CSS la esconde);
-       - tablero sin selector (hacienda, stock): donut compacto y la leyenda en HTML abajo,
-         que es donde entran los nombres sin apretar el grafico. */
-    var etiquetasAfuera = contenedor.classList.contains("con-selector");
     var chart = PIVOTAL.grafico(nodo.querySelector("[data-grafico]"));
     chart.setOption({
       animation: false,
@@ -361,6 +420,11 @@ export default function iniciar(PIVOTAL) {
           },
           fontSize: 10,
           lineHeight: 12,
+          /* Un nombre largo PARTE EN DOS RENGLONES, nunca se corta con puntos suspensivos.
+             Por defecto ECharts trunca ("Hacienda ...") cuando al costado del anillo no le
+             entra el texto, que es justo lo que JC no quiere: el rotulo tiene que decir de
+             que porcion esta hablando. Pasa en los anillos chicos de tres columnas (SID). */
+          overflow: "break",
           color: PIVOTAL.color("--texto")
         } : { show: false },
         labelLine: etiquetasAfuera
@@ -1437,7 +1501,17 @@ export default function iniciar(PIVOTAL) {
       celdas.forEach(function (celda, i) {
         var td = document.createElement("td");
         td.textContent = celda;
-        td.className = claseDeColumna(columnas[i]);
+        var clase = claseDeColumna(columnas[i]);
+        /* Un valor NEGATIVO se destaca, como lo pinta JC en su maqueta del balance de
+           movimientos (25-oct-2026: "ES MUY IMPORTANTE DESTACAR LOS VALORES NEGATIVOS!!!!!").
+           Su motivo: de un vistazo se ve que categorias son positivas, que es lo que dice si
+           hay invernada o terminacion. Se mira el TEXTO de la celda -ya viene formateado por
+           el build- y se pide un digito despues del signo: el guion solo es "sin existencias"
+           en esa misma tabla y no es un numero. */
+        if (columnas[i] && columnas[i].num && /^-\s*\d/.test(String(celda))) {
+          clase += (clase ? " " : "") + "celda-negativa";
+        }
+        td.className = clase;
         tr.appendChild(td);
       });
       tbody.appendChild(tr);
@@ -2834,7 +2908,11 @@ export default function iniciar(PIVOTAL) {
          aclaraciones): es donde viven "superficie cosechada", "rendimiento" o "cabezas", y
          cambian con lo que el usuario elige, asi que no los puede dibujar el servidor. Sin
          terminos marcados `glosa` escribe el texto plano, igual que antes. */
-      PIVOTAL.glosa(nodo, "[data-titulo]", panel.titulo, panel.titulo_partes);
+      var sufijo = sufijoDepartamento(panel);
+      PIVOTAL.glosa(nodo, "[data-titulo]", (panel.titulo || "") + sufijo,
+                    sufijo && panel.titulo_partes
+                      ? panel.titulo_partes.concat([{ t: sufijo }])
+                      : panel.titulo_partes);
       PIVOTAL.glosa(nodo, "[data-subtitulo]", panel.subtitulo, panel.subtitulo_partes);
       texto(nodo, "[data-pie]", panel.pie);
       texto(nodo, "[data-nota]", panel.nota);

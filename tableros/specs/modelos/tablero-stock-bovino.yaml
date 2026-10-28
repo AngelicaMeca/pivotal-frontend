@@ -214,7 +214,9 @@ paneles:
   # total - 2025"): sus siete primeros y el resto.
   anillo-departamentos:
     titulo: "Sgo del Estero - Participación departamentos en el stock total - {anio}"
-    cuantos: 7
+    # Cinco y "Resto" y no los siete de su maqueta: regla de JC del 25-oct-2026,
+    # "NORMALMENTE NO CONVIENE PONER MAS DE 5 ANTES DE 'RESTO'".
+    cuantos: 5
   # El cuarto cuadro de la hoja (fila 90 a 151): "Bovinos, caravanas en existencia y promedio
   # de solicitudes". No hay base de caravanas en la entrega (backlog 84): JC pega la captura
   # del tablero de control de SENASA. Por pedido de Francisco (12-oct-2026: "hardcodealo y no

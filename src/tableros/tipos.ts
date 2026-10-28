@@ -99,7 +99,20 @@ export type Comun = {
   // La tira de SECCIONES HERMANAS (en ganadería, las especies). Va arriba de la de
   // páginas y está siempre a la vista: es lo que hace que no haga falta un botón de
   // "volver", porque nunca te fuiste del lugar. Vacía en las ramas que no la declaran.
-  tira_de_secciones: { texto: string; href: string | null; actual: boolean }[];
+  // `icono`/`icono_color`: los dos PNG de JC (B&W en reposo, color en la elegida). Con ellos
+  // la tira se dibuja como la grilla de cajitas de los cultivos de Agricultura.
+  tira_de_secciones: {
+    texto: string;
+    href: string | null;
+    actual: boolean;
+    icono?: string;
+    icono_color?: string;
+  }[];
+  // `navegacion_en_contenido`: las dos tiras bajan de la banda del breadcrumb al contenido,
+  // arriba de los datos y debajo de nada (revision de JC del 25-oct-2026: primero la ESPECIE,
+  // despues las variables de esa especie). La banda queda con la miga y el periodo, como en
+  // Agricultura.
+  navegacion_en_contenido: boolean;
   paginas_de_seccion: {
     texto: string;
     href: string | null;
@@ -158,6 +171,9 @@ export type AccionDeCuadro = {
   accion: string | null;
   rotulo: string;
   icono?: string;
+  // La accion va ARRIBA del tablero y no en la tira del pie (el link a la matriz
+  // origen-destino, revision de JC del 25-oct-2026).
+  arriba?: boolean;
 };
 
 // El panel de precios del MCBA (base 8), el cuarto cuadro de la maqueta "Agri 2". Tiene
