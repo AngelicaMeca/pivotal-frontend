@@ -378,10 +378,15 @@ def filas_identicas(ctx, base):
     """ % (lista, base.tabla, lista), "n")
     if not n:
         return []
+    # El desempate por todas las columnas NO es decorativo: casi todos los grupos repetidos
+    # empatan en `veces` (en la base 144 son todos 3 o 4), asi que con `ORDER BY veces DESC` a
+    # secas los 10 ejemplos que devolvia DuckDB cambiaban de una corrida a la otra y el archivo
+    # de hallazgos salia distinto sin que cambiara ni un dato. Es la misma trampa que ya estaba
+    # anotada en `conteos_identicos_entre_periodos`.
     filas = q(ctx.con, """
         SELECT %s, count(*) veces FROM %s GROUP BY %s HAVING count(*) > 1
-        ORDER BY veces DESC LIMIT 10
-    """ % (lista, base.tabla, lista))
+        ORDER BY veces DESC, %s LIMIT 10
+    """ % (lista, base.tabla, lista, lista))
     return [hallazgo(
         "duplicados", "observacion", base=base.nro,
         titulo="Filas exactamente iguales, repetidas en el archivo", casos=n,

@@ -190,15 +190,15 @@ hallazgos:
   - base_id=89 | hoja=2025 | ambito=sde | grano_tiempo=anio_mes | anio=2025 | mes=2 | provincia=sde |
     provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=MORENO
     | geo_nombre=MORENO | geo_id=86119 | es_agregado_geo=False | zona_destino=ZONA 10                        B
-    | raza=Bovino Criollo | especie=bovinos | categoria=Bovino Vaca Regular (6 o más dientes) | variable=precio_cabeza
-    | medida=precio | medida_etiqueta=Precio por cabeza | unidad=$/cab | agregable=False | fuente=SENASA
-    - Siocarnes | veces=1521
-  - base_id=89 | hoja=2025 | ambito=sde | grano_tiempo=anio_mes | anio=2025 | mes=2 | provincia=sde |
-    provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=MORENO
-    | geo_nombre=MORENO | geo_id=86119 | es_agregado_geo=False | zona_destino=ZONA 10                        B
     | raza=Bovino Criollo | especie=bovinos | categoria=Bovino Vaca Regular (6 o más dientes) | variable=operaciones
     | medida=operaciones | medida_etiqueta=Operaciones | unidad=operaciones | agregable=True | valor=1.0
     | fuente=SENASA - Siocarnes | veces=1521
+  - base_id=89 | hoja=2025 | ambito=sde | grano_tiempo=anio_mes | anio=2025 | mes=2 | provincia=sde |
+    provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=MORENO
+    | geo_nombre=MORENO | geo_id=86119 | es_agregado_geo=False | zona_destino=ZONA 10                        B
+    | raza=Bovino Criollo | especie=bovinos | categoria=Bovino Vaca Regular (6 o más dientes) | variable=precio_cabeza
+    | medida=precio | medida_etiqueta=Precio por cabeza | unidad=$/cab | agregable=False | fuente=SENASA
+    - Siocarnes | veces=1521
   - base_id=89 | hoja=2024 | ambito=sde | grano_tiempo=anio_mes | anio=2024 | mes=3 | provincia=sde |
     provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=ROBLES
     | geo_nombre=ROBLES | geo_id=86161 | es_agregado_geo=False | zona_destino=ZONA 10                        B
@@ -220,15 +220,15 @@ hallazgos:
   - base_id=89 | hoja=2025 | ambito=sde | grano_tiempo=anio_mes | anio=2025 | mes=2 | provincia=sde |
     provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=AGUIRRE
     | geo_nombre=AGUIRRE | geo_id=86007 | es_agregado_geo=False | zona_destino=ZONA 10                        B
-    | raza=Bovino Criollo | especie=bovinos | categoria=Bovino Vaca Regular (6 o más dientes) | variable=precio_cabeza
-    | medida=precio | medida_etiqueta=Precio por cabeza | unidad=$/cab | agregable=False | fuente=SENASA
-    - Siocarnes | veces=905
-  - base_id=89 | hoja=2025 | ambito=sde | grano_tiempo=anio_mes | anio=2025 | mes=2 | provincia=sde |
-    provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=AGUIRRE
-    | geo_nombre=AGUIRRE | geo_id=86007 | es_agregado_geo=False | zona_destino=ZONA 10                        B
     | raza=Bovino Criollo | especie=bovinos | categoria=Bovino Vaca Regular (6 o más dientes) | variable=operaciones
     | medida=operaciones | medida_etiqueta=Operaciones | unidad=operaciones | agregable=True | valor=1.0
     | fuente=SENASA - Siocarnes | veces=905
+  - base_id=89 | hoja=2025 | ambito=sde | grano_tiempo=anio_mes | anio=2025 | mes=2 | provincia=sde |
+    provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=AGUIRRE
+    | geo_nombre=AGUIRRE | geo_id=86007 | es_agregado_geo=False | zona_destino=ZONA 10                        B
+    | raza=Bovino Criollo | especie=bovinos | categoria=Bovino Vaca Regular (6 o más dientes) | variable=precio_cabeza
+    | medida=precio | medida_etiqueta=Precio por cabeza | unidad=$/cab | agregable=False | fuente=SENASA
+    - Siocarnes | veces=905
   - base_id=89 | hoja=2022 | ambito=sde | grano_tiempo=anio | anio=2022 | provincia=sde | provincia_nombre=SANTIAGO
     DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=JIMENEZ | geo_nombre=JIMENEZ
     | geo_id=86091 | es_agregado_geo=False | zona_destino=ZONA 10                        B | raza=Braford
@@ -245,8 +245,8 @@ hallazgos:
     provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=ROBLES
     | geo_nombre=ROBLES | geo_id=86161 | es_agregado_geo=False | zona_destino=ZONA 10                        B
     | raza=Bovino Criollo | especie=bovinos | categoria=Bovino Vaca Especial Joven Liviana hasta 430 kilos
-    (6 dientes) | variable=precio_cabeza | medida=precio | medida_etiqueta=Precio por cabeza | unidad=$/cab
-    | agregable=False | fuente=SENASA - Siocarnes | veces=822
+    (6 dientes) | variable=operaciones | medida=operaciones | medida_etiqueta=Operaciones | unidad=operaciones
+    | agregable=True | valor=1.0 | fuente=SENASA - Siocarnes | veces=822
   propuesta: 'Publicar sin ellas seria corregir en silencio: se dejan y se pregunta.'
   pregunta_jc: Hay filas repetidas identicas. Se pueden descartar las copias?
 - check: duplicados
@@ -259,15 +259,15 @@ hallazgos:
   - base_id=90 | hoja=2024 | ambito=sde | grano_tiempo=anio_mes | anio=2024 | mes=10 | provincia=sde |
     provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=JUAN
     F. IBARRA | geo_nombre=JUAN F. IBARRA | geo_id=86098 | es_agregado_geo=False | zona_destino=ZONA 6                         P
-    | raza=LÍNEA HÍBRIDA MATERNA | especie=porcinos | categoria=Porcina Capón | variable=precio_cabeza
-    | medida=precio | medida_etiqueta=Precio por cabeza | unidad=$/cab | agregable=False | fuente=SENASA
-    - Siocarnes | veces=289
-  - base_id=90 | hoja=2024 | ambito=sde | grano_tiempo=anio_mes | anio=2024 | mes=10 | provincia=sde |
-    provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=JUAN
-    F. IBARRA | geo_nombre=JUAN F. IBARRA | geo_id=86098 | es_agregado_geo=False | zona_destino=ZONA 6                         P
     | raza=LÍNEA HÍBRIDA MATERNA | especie=porcinos | categoria=Porcina Capón | variable=operaciones |
     medida=operaciones | medida_etiqueta=Operaciones | unidad=operaciones | agregable=True | valor=1.0
     | fuente=SENASA - Siocarnes | veces=289
+  - base_id=90 | hoja=2024 | ambito=sde | grano_tiempo=anio_mes | anio=2024 | mes=10 | provincia=sde |
+    provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=JUAN
+    F. IBARRA | geo_nombre=JUAN F. IBARRA | geo_id=86098 | es_agregado_geo=False | zona_destino=ZONA 6                         P
+    | raza=LÍNEA HÍBRIDA MATERNA | especie=porcinos | categoria=Porcina Capón | variable=precio_cabeza
+    | medida=precio | medida_etiqueta=Precio por cabeza | unidad=$/cab | agregable=False | fuente=SENASA
+    - Siocarnes | veces=289
   - base_id=90 | hoja=2025 | ambito=sde | grano_tiempo=anio_mes | anio=2025 | mes=1 | provincia=sde |
     provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=SAN
     MARTIN | geo_nombre=SAN MARTIN | geo_id=86175 | es_agregado_geo=False | zona_destino=ZONA 6                         P
