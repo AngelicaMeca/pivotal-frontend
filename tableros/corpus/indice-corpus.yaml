@@ -1,0 +1,178 @@
+# Base de informes de contexto (ERS de Mapas y Contexto IA, RF7 a RF9 y RF28 a RF30).
+#
+# Es el registro de los informes de coyuntura que le dan CONTEXTO al agente de IA: lo que
+# estaba pasando en el sector cuando se midio un dato, y de que organismo, camara o centro de
+# investigacion sale ese relato. `pipeline/corpus.py` lo obedece; no hay nada hardcodeado ahi.
+#
+# ---------------------------------------------------------------------------------------------
+# TRES COSAS QUE HAY QUE SABER ANTES DE TOCAR ESTO
+#
+# 1. **Esto NO se publica.** RF29 y RF30 son explicitos: la base de contexto es insumo de la
+#    SAAS y no se expone en la web publica, ni su contenido ni su estructura. El build del
+#    sitio no lee esta carpeta, y `pipeline/corpus.py verificar-no-publicado` corta la corrida
+#    si un archivo del corpus aparecio en lo que se publica. Si alguna vez hace falta citar un
+#    informe en una pagina publica, eso es una decision de Francisco, no un cambio de config.
+#
+# 2. **Sin metadatos no se indexa** (RF7.1). Un informe que no diga su fuente, su periodo de
+#    referencia, su sector y su alcance territorial NO entra al indice: queda registrado con
+#    su motivo, visible en el inventario, y espera a que alguien complete el dato. El motivo
+#    es que el agente tiene que poder CITAR lo que usa (RF28.3), y un fragmento sin fuente ni
+#    fecha no se puede citar, se puede repetir.
+#
+# 3. **Los documentos no viven en el repo.** Igual que los PDF del AgroMet: el archivo esta en
+#    SharePoint y aca viaja su metadata y su tamanio. Lo que si se versiona es el TEXTO
+#    extraido (`corpus/texto/<id>.txt`) y el indice (`corpus/indice/`), porque son chicos,
+#    deterministas y son lo que de verdad se consulta.
+#
+# ---------------------------------------------------------------------------------------------
+
+vocabularios:
+  # RF7: el tipo de institucion es parte de lo que le da validez metodologica al contexto, asi
+  # que es un vocabulario cerrado y no texto libre. Un valor no declarado corta.
+  tipo_institucion:
+    - organismo-publico
+    - camara
+    - institucion
+    - centro-de-investigacion
+  alcance_territorial:
+    - nacional
+    - provincial
+    - departamental
+    - regional
+    - internacional
+  sector:
+    - agricultura
+    - ganaderia
+    - lecheria
+    - clima
+    - apicultura
+    - forestal
+    - economia
+    - infraestructura
+  # RF7.3: el alcance temporal arranca en 2016 y no depende de la ventana del Beta.
+  periodo_minimo: 2016
+
+# Que variables del sistema puede respaldar un informe (RF7.4). El id es el de la medida o la
+# vista a la que el informe le da sustento metodologico; `pipeline/corpus.py` valida que exista.
+variables_respaldables:
+  - id: superficie-cultivada
+    etiqueta: "Superficie cultivada por departamento"
+  - id: superficie-mnc
+    etiqueta: "Superficie por cultivo del Mapa Nacional de Cultivos"
+  - id: stock-ganadero
+    etiqueta: "Existencias ganaderas por departamento"
+  - id: movimientos-hacienda
+    etiqueta: "Movimientos de hacienda (DTE)"
+  - id: recursos-forrajeros
+    etiqueta: "Bandas de recursos forrajeros"
+  - id: clima-diario
+    etiqueta: "Series diarias de las estaciones del INTA"
+
+# Lotes de carga (RF7.2). Un lote declara los metadatos que comparten sus documentos y cada
+# documento despues puede refinar lo suyo: es la unica forma de que 2.000 archivos entren sin
+# tipear 2.000 veces el mismo organismo, y de que se pueda corregir uno sin tocar el resto.
+lotes:
+  - id: inta-mnc
+    descripcion: "Informes de campania del Mapa Nacional de Cultivos del INTA"
+    organismo: "Instituto Nacional de Tecnologia Agropecuaria (INTA)"
+    tipo_institucion: centro-de-investigacion
+    sector: agricultura
+    alcance_territorial: nacional
+    origen: zenodo
+    # RF7.4: todos los de este lote respaldan la misma variable.
+    respalda:
+      - superficie-mnc
+
+documentos:
+
+  # Primera carga real de la base. Son los informes de las siete campanias del Mapa Nacional
+  # de Cultivos: estan en el repositorio del INTA, se bajaron para leer sus tablas de clases
+  # (configs/series-mapas-cultivos.yaml) y son exactamente lo que RF7.4 llama respaldo
+  # metodologico -explican como se construyo el mapa del que sale la superficie por cultivo-.
+  # Sirven para arrancar porque tienen todos los metadatos obligatorios y una fuente citable.
+
+  - id: inta-mnc-2018-2019
+    lote: inta-mnc
+    titulo: "Mapa Nacional de Cultivos campana 2018/2019"
+    fecha_publicacion: 2019-09-01
+    periodo_referencia: {desde: 2018-07-01, hasta: 2019-06-30}
+    archivo: "Mapa Nacional de Cultivos campana 2018_2019.pdf"
+    bytes: 35719709
+    md5: d4c4e0851cbcf7f9ba680b5b61a574c2
+    url: https://doi.org/10.5281/zenodo.8286326
+
+  - id: inta-mnc-2019-2020
+    lote: inta-mnc
+    titulo: "Mapa Nacional de Cultivos campana 2019/2020"
+    fecha_publicacion: 2020-10-01
+    periodo_referencia: {desde: 2019-06-01, hasta: 2020-05-31}
+    archivo: "Mapa Nacional de Cultivos campana 2019_2020.pdf"
+    bytes: 18607918
+    md5: de3cfda20928033ce7b02c88ed76ed24
+    url: https://doi.org/10.5281/zenodo.8286310
+
+  - id: inta-mnc-2020-2021
+    lote: inta-mnc
+    titulo: "Informe Mapa Nacional de Cultivos campana 2020/2021"
+    fecha_publicacion: 2021-09-01
+    periodo_referencia: {desde: 2020-06-01, hasta: 2021-05-31}
+    archivo: "Informe Mapa Nacional de Cultivos campana 2020_2021.pdf"
+    bytes: 36207994
+    md5: b95f8338d8236e4d1043634967f07ec0
+    url: https://doi.org/10.5281/zenodo.8286318
+
+  - id: inta-mnc-2021-2022
+    lote: inta-mnc
+    titulo: "Informe Mapa Nacional de Cultivos campana 2021/2022"
+    fecha_publicacion: 2022-09-01
+    periodo_referencia: {desde: 2021-06-01, hasta: 2022-05-31}
+    archivo: "Informe Mapa Nacional de Cultivos campana 2021_2022.pdf"
+    bytes: 26154881
+    md5: 9111c2166f1c074430e435aa90cb6c59
+    url: https://doi.org/10.5281/zenodo.8284081
+
+  - id: inta-mnc-2022-2023
+    lote: inta-mnc
+    titulo: "Informe Mapa Nacional de Cultivos campana 2022/2023"
+    fecha_publicacion: 2023-11-01
+    periodo_referencia: {desde: 2022-06-01, hasta: 2023-06-30}
+    archivo: "Informe Mapa Nacional de Cultivos campana 2022_2023.pdf"
+    bytes: 42137753
+    md5: 81e2c146e60296a35e95f414f7344972
+    url: https://doi.org/10.5281/zenodo.10103323
+
+  - id: inta-mnc-2023-2024
+    lote: inta-mnc
+    titulo: "Informe Mapa Nacional de Cultivos campana 2023/2024"
+    fecha_publicacion: 2024-10-01
+    periodo_referencia: {desde: 2023-06-01, hasta: 2024-05-31}
+    archivo: "Informe Mapa Nacional de Cultivos campana 2023_2024.pdf"
+    bytes: 16373135
+    md5: e0935af6ca416db6dd1eec3a2bebbe1f
+    url: https://doi.org/10.5281/zenodo.13984185
+
+  - id: inta-mnc-2024-2025
+    lote: inta-mnc
+    titulo: "Informe Mapa Nacional de Cultivos campana 2024/2025"
+    fecha_publicacion: 2025-11-20
+    periodo_referencia: {desde: 2024-06-01, hasta: 2025-06-30}
+    archivo: "Informe Mapa Nacional de Cultivos campana 2024_2025.pdf"
+    bytes: 18802510
+    md5: 346468d0ee104ea985804c8533189d4a
+    url: https://doi.org/10.5281/zenodo.17652712
+
+# Los ~2.000 informes que ya reunio el analista (RF7.2) entran por un lote nuevo cuando esten
+# en SharePoint: se declara el lote con los metadatos que comparten y se corre
+# `python -m pipeline.corpus cargar-lote`, que escribe una entrada por archivo y deja en
+# `sin_indexar` las que les falte un metadato obligatorio.
+
+# La cobertura que se espera tener, para que RF9.1 pueda decir que falta. Sin esto el hueco no
+# se puede detectar: una combinacion sector x anio sin informes puede ser que falte cargarlos
+# o que ese sector no se siga, y son dos cosas distintas.
+cobertura_esperada:
+  desde: 2016
+  sectores:
+    - agricultura
+    - ganaderia
+    - lecheria
+    - clima

@@ -1,0 +1,388 @@
+==================== pagina 1 ====================
+Mapa Nacional de Cultivos
+campaña 2023/2024
+Versión 1
+Publicación N°6
+de Abelleyra D1, Iturralde Elortegui M2, Zelaya K3, Portillo J4, Melilli M5,
+Franzoni A6,Volante J6, Goytía Y7, Kurtz D8, Ybarra D8, Barrios R8,
+Benedetti P9, Morales C9, Berriolo J10, Lanceta Pereyra M10,11, Scavone A10,
+Murray F12, Santillan J13, Continelli N14, Gerlero G14, Salas D15, Reinaldi J16,
+Lopez Juane P17, Gomez D17, Krapovickas S18, Sapino V19, Regonat A20,
+Cracogna M21, Espíndola C21, Valiente S22, Parodi M23, Colombo F24, Scarel
+J25, Ayala J26, Martins L27, Basanta M27, Rausch A24, Almada G28, Boero L29,
+Calcha J29, Chiavassa A19, Calandroni M30, Murillo M3, Pascale B31, Borrachi
+S32, Erreguerena J33, Besteiro I31, Oyesqui L2, Lazaeta M34, Pezzola A35,
+Winschel C35, Rodriguez Pérez J1, German A1, Vitale JP1.
+1Instituto de Clima y Agua 13AER Quines 25AER Calchaquí
+2AER Olavarría 14AER Malbran 26AER San Javier
+3EEA Balcarce 15AER Añatuya 27AER Esperanza
+4EEA Pergamino 16AER Quimilí 28AER Pellegrini
+5AER Junín 17AER Bandera 29AER Gálvez
+6EEA Salta 18AER Sachayoj 30FCA – UNMdP
+7EEA Saenz Peña 19EEA Rafaela 31AER Lobería
+8EEA Corrientes 20AER Reconquista 32AER Mar del Plata
+9EEA Famaillá 21AER Las Toscas 33AER Necochea
+10CEI Barrow (MDA-INTA) 22AER San Cristobal 34AER Cuenca del Salado
+11OIT San Cayetano 23AER Tostado 35EEA Hilario Ascasubi
+12AER San Luis 24AER Ceres
+Instituto Nacional de Tecnología Agropecuaria
+==================== pagina 2 ====================
+1
+INSTITUTO NACIONAL DE TECNOLOGÍA AGROPECUARIA
+CENTRO DE INVESTIGACIÓN EN RECURSOS NATURALES
+PROGRAMA NACIONAL DE RECURSOS NATURALES Y GESTIÓN
+AMBIENTAL
+2023-PD-L03-I092 - Herramientas, tecnologías y aplicaciones para la
+gestión sostenible de los recursos naturales y el ambiente en los
+territorios
+PROYECTO MAPBIOMAS
+RED JECAM-GEOGLAM
+Octubre de 2024
+==================== pagina 3 ====================
+2
+Índice
+Introducción 3
+Metodología 3
+Resultados 7
+Exactitud obtenida 7
+Mapas 12
+Información derivada del Mapa Nacional de Cultivos 45
+Agradecimientos 47
+Referencias 47
+==================== pagina 4 ====================
+3
+1. Introducción
+Este informe presenta el Mapa Nacional de Cultivos (MNC) correspondiente a la campaña
+2023/2024, que constituye la producción de un sexto mapa en campañas agrícolas
+consecutivas, realizados en alta resolución y con una extensión que cubre las principales
+regiones agrícolas de Argentina. Así mismo, se logró dar continuidad a la obtención de
+información a campo de las diferentes regiones agrícolas en diferentes momentos de cada
+campaña, que constituye un aspecto clave que define la calidad de los mapas. A través de una
+metodología ágil, y con la participación de numerosos agentes de unidades de INTA
+distribuidas a lo largo del territorio se cumplió con este objetivo.
+De esta manera se completa una secuencia de mapas de las campañas agrícolas: 2018/2019,
+2019/2020, 2020/2021, 2021/2022, 2022/2023 y 2023/2024. Este tipo de información permite
+caracterizar la dinámica temporal de la siembra de cultivos en Argentina, y evaluar aspectos
+como la intensidad de siembra (número de cultivos sembrados por año), el grado de rotación
+agrícola y agrícola-ganadera, la dominancia de especies y grupos de especies en las
+secuencias (e.g. porcentaje de gramíneas) y la incidencia del monocultivo (e.g. de Abelleyra et
+al., 2024).
+2. Metodología
+La metodología consistió en la realización de clasificaciones supervisadas a partir de índices
+obtenidos de imágenes satelitales de la plataforma Landsat y Sentinel 2. Se tomaron muestras
+de entrenamiento a partir de relevamientos a campo durante dos momentos de la campaña
+agrícola 2023/2024. En áreas con faltante de datos de campo, se consideró información
+complementaria a partir de referentes, productores e interpretación visual.
+Se consideró una zonificación que incluye las principales áreas agrícolas del país, basada en
+las zonas del Panorama Agrícola Semanal (PAS) de la Bolsa de Cereales de Buenos Aires
+(2019). Esta zonificación agrupa departamentos o partidos en 15 zonas en función de la
+distribución y abundancia de cultivos. En este trabajo se consideraron las zonas I a XV (Figura
+2) con modificaciones. También se consideró una zonificación de áreas agroecológicas de
+Burkart (1989), para evitar incluir dentro de departamentos zonas áridas o con relieve muy
+marcado que impida la presencia de cultivos.
+Para cada zona se realizaron clasificaciones supervisadas en forma independiente, es decir
+clasificaciones que son entrenadas con muestras de referencia, que brindan información
+georeferenciada del tipo de cultivo y otras clases no agrícolas observadas en un número de
+lotes o parches a lo largo de la campaña considerada (2023/2024).
+==================== pagina 5 ====================
+4
+Figura 2. Área de estudio considerada para el Mapa Nacional de Cultivos 2023/2024. Líneas
+negras: zonificación basada en zonas PAS (Bolsa de Cereales de Buenos Aires, 2019). Líneas
+rojas: recorridos realizados durante la campaña de invierno de 2023 (A) y verano de 2024 (B).
+Las muestras de entrenamiento se obtuvieron principalmente a través de relevamientos a lo
+largo de diversas rutas y caminos buscando cubrir las principales áreas agrícolas de las zonas
+definidas (Figura 2). Se realizaron relevamientos desde vehículos para la toma de muestras de
+acuerdo a lo propuesto en la red JECAM (2018), siguiendo un protocolo propio de muestreo
+(LINK). Los recorridos se realizaron en dos momentos del año: 1) entre agosto y diciembre de
+2023 (para identificar cultivos de campaña de invierno) y 2) entre febrero y mayo de 2024 (para
+identificar cultivos de campaña de verano). Los puntos fueron convertidos a polígonos de 50
+metros de radio con un método semi-automático, asegurando que describan un área
+homogénea (correspondiente a la misma descripción clase) dentro de un lote o parche de
+vegetación. También se incorporaron muestras complementarias de interpretación visual y
+observación de series de tiempo en zonas no agrícolas. En todos los casos se trató de
+información georreferenciada a partir de la cual se generaron polígonos de entrenamiento y de
+validación.
+En este trabajo se definieron clases para describir lo ocurrido en cada lote en dos momentos de
+la campaña agrícola: 1) invierno 2023 y 2) verano 2024. Consideramos la definición de cultivos
+==================== pagina 6 ====================
+5
+agrícolas propuesta por la red JECAM (2018), que considera una cobertura herbácea plantada
+y cosechada dentro de los 12 meses. Como excepción, también se incluye a los cultivos de
+caña de azúcar. Para cada zona se definieron clases de cultivos que en conjunto representaron
+hasta el 95 % del área sembrada (basadas en estadísticas de MAGyP, 2018) de los
+departamentos incluidos en cada zona PAS, durante 5 campañas agrícolas. La totalidad de
+clases consideradas se pueden observar en las Tablas 1 y 2.
+Tabla 1. Clases definidas para el Mapa Nacional de Cultivos de la campaña de invierno 2023 y
+su descripción. La columna ID representa la identificación numérica de cada clase en el
+INV
+mapa generado.
+ID Clase Descripción
+INV
+Incluyecultivosdetrigo,cebada,avenaycenteno,comotambién
+16 Cerealesdeinvierno
+verdeosdeinviernodegramíneas
+19 CañadeAzúcar Plantacióndecañadeazúcar
+24 Arveja Cultivosdearveja
+6 Garbanzo Cultivosdegarbanzo
+26 Papa Cultivosdepapaenprimavera/verano(enregionesCuyoyNOA)
+17 Otroscultivos Incluyecultivosdecoberturayotroscultivosdemenorrelevancia
+18 Barbecho Lotessincultivodeinviernoduranteelperíodoconsiderado
+Incluyeherbáceasperennesnativasyexóticas(pastizales,
+20 NoAgrícola
+pasturas)yleñosasnativaseimplantadas.
+Mediante la herramienta Google Earth Engine, se generaron índices a partir del catálogo de
+imágenes LANDSAT (30 metros de resolución) y Sentinel 2 disponibles para el área de estudio
+durante la campaña 2023-2024. Para los mapas de invierno 2023 se consideró el período entre
+el 1 de junio y el 31 de diciembre de 2023. Para los mapas de verano se consideró el período 1
+de septiembre de 2023 al 31 de mayo de 2024. Se utilizaron dos tipos de índices: 1) índices
+basados en métricas que describen la distribución de frecuencias (percentiles, desvío estándar)
+de los valores observados en 2 subperíodos de tiempo, y 2) índices que describen la dinámica
+temporal de índices de vegetación a lo largo de la campaña (e.g. momento de inicio y fin,
+máximos, pendientes, etc.) y que pueden describir mejor la dinámica de cultivos que presentan
+una estacionalidad muy marcada.
+Se realizaron separadamente clasificaciones para cada una de las 15 zonas en que se divide el
+mapa, considerando una zona buffer de 50 Km sobre el contorno de cada zona. Las muestras
+obtenidas fueron separadas en dos grupos: 1) muestras de entrenamiento que corresponden al
+60% de los polígonos de cada clase y 2) muestras de validación, representando el 40%
+restante de los polígonos de cada clase. Las muestras de entrenamiento fueron utilizadas para
+correr el clasificador Random Forest sobre la plataforma Google Earth Engine. Con las
+muestras de validación se generaron indicadores del error de clasificación como exactitud
+general, de usuario y de productor e índice Kappa (Congalton, 1991). Se aplicaron dos pasadas
+de un filtro espacial de vecindad con ventana (kernel) de 1 pixel (Souza and Azevedo, 2017)
+para corregir la presencia de píxeles aislados dentro de lotes o parches de vegetación. También
+--- tabla 1 ---
+ID INV | Clase | Descripción
+16 | Cerealesdeinvierno | Incluyecultivosdetrigo,cebada,avenaycenteno,comotambién verdeosdeinviernodegramíneas
+19 | CañadeAzúcar | Plantacióndecañadeazúcar
+24 | Arveja | Cultivosdearveja
+6 | Garbanzo | Cultivosdegarbanzo
+26 | Papa | Cultivosdepapaenprimavera/verano(enregionesCuyoyNOA)
+17 | Otroscultivos | Incluyecultivosdecoberturayotroscultivosdemenorrelevancia
+18 | Barbecho | Lotessincultivodeinviernoduranteelperíodoconsiderado
+20 | NoAgrícola | Incluyeherbáceasperennesnativasyexóticas(pastizales, pasturas)yleñosasnativaseimplantadas.
+==================== pagina 7 ====================
+6
+se aplicaron máscaras de cuerpos de agua (Pekel et al., 2016), tejidos urbanos (IGN, 2019) y
+áreas inundables, basada en el mapa de coberturas de Volante y colaboradores (2010) y en
+indicadores de probabilidad de humedales. En postprocesamiento se aplicaron reglas para
+mantener estables las clases agrícolas y no agrícolas en los mapas de invierno y verano.
+Tabla 2. Clases definidas para el Mapa Nacional de Cultivos de la campaña de verano 2022 y
+su descripción. La columna ID representa la identificación numérica de cada clase en el
+VER
+mapa generado.
+ID Clase Descripción
+VER
+11 Soja Cultivodesoja,sindiscriminarsiesdeprimeraosegunda
+10 Maíz Cultivodemaíz
+12 Girasol Cultivodegirasol
+13 Poroto Cultivodeporoto
+15 Algodón Cultivodealgodón
+14 Cañadeazúcar Plantacióndecañadeazúcar
+17 Arroz Cultivodearroz
+16 Maní Cultivodemaní
+19 Girasol-CV CultivodeGirasolseguidodeotrocultivodeverano
+18 SorgoGR Cultivodesorgoensistemadeproducciónparagrano
+Cultivodepapadurantefindeprimavera/verano(Sudestede
+26 Papa
+BuenosAires)
+28 VerdeodeSorgo VerdeodeSorgoenconfiguraciónparausoforrajero
+30 Tabaco CultivodeTabaco
+21 Barbecho Lotessincultivodeveranoduranteelperíodoconsiderado
+Incluyeherbáceasperennesnativasyexóticas(pastizales,
+22 Noagrícola
+pasturas)yleñosasnativaseimplantadas
+--- tabla 1 ---
+ID VER | Clase | Descripción
+11 | Soja | Cultivodesoja,sindiscriminarsiesdeprimeraosegunda
+10 | Maíz | Cultivodemaíz
+12 | Girasol | Cultivodegirasol
+13 | Poroto | Cultivodeporoto
+15 | Algodón | Cultivodealgodón
+14 | Cañadeazúcar | Plantacióndecañadeazúcar
+17 | Arroz | Cultivodearroz
+16 | Maní | Cultivodemaní
+19 | Girasol-CV | CultivodeGirasolseguidodeotrocultivodeverano
+18 | SorgoGR | Cultivodesorgoensistemadeproducciónparagrano
+26 | Papa | Cultivodepapadurantefindeprimavera/verano(Sudestede BuenosAires)
+28 | VerdeodeSorgo | VerdeodeSorgoenconfiguraciónparausoforrajero
+30 | Tabaco | CultivodeTabaco
+21 | Barbecho | Lotessincultivodeveranoduranteelperíodoconsiderado
+22 | Noagrícola | Incluyeherbáceasperennesnativasyexóticas(pastizales, pasturas)yleñosasnativaseimplantadas
+==================== pagina 8 ====================
+7
+3. Resultados
+a. Exactitud obtenida
+La exactitud general y el índice Kappa fueron en promedio de 0,91 y 0,85 respectivamente para
+los mapas de invierno 2023, y de 0,89 y 0,83 respectivamente para los mapas de verano 2024
+(Tablas 5 y 6). Las tablas 7 a 10 muestran las exactitudes de usuario y productor por clase para
+cada campaña.
+Tabla 5. Exactitud general, índice Kappa y número de clases por zona (invierno 2023).
+==================== pagina 9 ====================
+8
+Tabla 6. Exactitud general, índice Kappa y número de clases por zona (verano 2024).
+==================== pagina 10 ====================
+9
+Tabla 7. Exactitudes de productor por zona para el mapa de invierno 2023.
+==================== pagina 11 ====================
+10
+Tabla 8. Exactitudes de usuario por zona para el mapa de invierno 2023.
+==================== pagina 12 ====================
+11
+Tabla 9. Exactitudes de productor por zona para el mapa de verano 2024.
+Tabla 10. Promedio de Exactitudes de usuario por zona para el mapa de verano 2024.
+==================== pagina 13 ====================
+12
+b. Mapas
+A continuación se muestran los mapas de los períodos de invierno 2023 y verano 2024
+generados a nivel nacional (Figuras 3 y 4), y también mostrando el detalle de cada zona
+(Figuras 5 a 34). Se puede acceder a ellos desde una aplicación para la visualización en la
+web: https://ee-deabelle.projects.earthengine.app/view/mnc23-24. También se pueden
+descargar en formato geotiff desde el repositorio Zenodo
+(https://doi.org/10.5281/zenodo.13984185), y están disponibles en la nueva plataforma de datos
+geoespaciales del INTA (https://geo.inta.gob.ar/).
+==================== pagina 14 ====================
+13
+Figura 3. Mapa Nacional de Cultivos invierno 2023.
+==================== pagina 15 ====================
+14
+Figura 4. Mapa Nacional de Cultivos verano 2024.
+==================== pagina 16 ====================
+15
+Figura 5. Mapa de Cultivos invierno 2023. Zona I (NOA).
+==================== pagina 17 ====================
+16
+Figura 6. Mapa de Cultivos invierno 2023. Zona II (NEA).
+==================== pagina 18 ====================
+17
+Figura 7. Mapa de Cultivos invierno 2023. Zona III (Centro-Norte de Córdoba).
+==================== pagina 19 ====================
+18
+Figura 8. Mapa de Cultivos . Zona IV (Sur de Córdoba).
+==================== pagina 20 ====================
+19
+Figura 9. Mapa de Cultivos invierno 2023. Zona V (Centro Norte de Santa Fe).
+==================== pagina 21 ====================
+20
+Figura 10. Mapa de Cultivos invierno 2023. Zona VI (Núcleo Norte).
+==================== pagina 22 ====================
+21
+Figura 11. Mapa de Cultivos invierno 2023. Zona VII (Núcleo Sur).
+==================== pagina 23 ====================
+22
+Figura 12. Mapa de Cultivos invierno 2023. Zona VIII (Centro Este de Entre Ríos).
+==================== pagina 24 ====================
+23
+Figura 13. Mapa de Cultivos invierno 2023. Zona IX (Norte de La Pampa - Oeste de Buenos
+Aires).
+==================== pagina 25 ====================
+24
+Figura 14. Mapa de Cultivos invierno 2023. Zona X (Centro de Buenos Aires).
+==================== pagina 26 ====================
+25
+Figura 15. Mapa de Cultivos invierno 2023. Zona XI (Sudoeste de Buenos Aires - Sur de La
+Pampa).
+==================== pagina 27 ====================
+26
+Figura 16. Mapa de Cultivos invierno 2023. Zona XII (Sudeste de Buenos Aires).
+==================== pagina 28 ====================
+27
+Figura 17. Mapa de Cultivos invierno 2023. Zona XIII (San Luis).
+==================== pagina 29 ====================
+28
+Figura 18. Mapa de Cultivos invierno 2023. Zona XIV (Cuenca del Salado).
+==================== pagina 30 ====================
+29
+Figura 19. Mapa de Cultivos invierno 2023. Zona XVb (Corrientes).
+==================== pagina 31 ====================
+30
+Figura 20. Mapa de Cultivos verano 2024. Zona I (NOA).
+==================== pagina 32 ====================
+31
+Figura 21. Mapa de Cultivos verano 2024. Zona II (NEA).
+==================== pagina 33 ====================
+32
+Figura 22. Mapa de Cultivos verano 2024. Zona III (Centro-Norte de Córdoba).
+==================== pagina 34 ====================
+33
+Figura 23. Mapa de Cultivos verano 2024. Zona IV (Sur de Córdoba).
+==================== pagina 35 ====================
+34
+Figura 24. Mapa de Cultivos verano 2024. Zona V (Centro Norte de Santa Fe).
+==================== pagina 36 ====================
+35
+Figura 25. Mapa de Cultivos verano 2024. Zona VI (Núcleo Norte).
+==================== pagina 37 ====================
+36
+Figura 26. Mapa de Cultivos verano 2024. Zona VII (Núcleo Sur).
+==================== pagina 38 ====================
+37
+Figura 27. Mapa de Cultivos verano 2024. Zona VIII (Centro Este de Entre Ríos).
+==================== pagina 39 ====================
+38
+Figura 28. Mapa de Cultivos verano 2024. Zona IX (Norte de La Pampa - Oeste de Buenos
+Aires).
+==================== pagina 40 ====================
+39
+Figura 29. Mapa de Cultivos verano 2024. Zona X (Centro de Buenos Aires).
+==================== pagina 41 ====================
+40
+Figura 30. Mapa de Cultivos verano 2024. Zona XI (Sudoeste de Buenos Aires).
+==================== pagina 42 ====================
+41
+Figura 31. Mapa de Cultivos verano 2024. Zona XII (Sudeste de Buenos Aires).
+==================== pagina 43 ====================
+42
+Figura 32. Mapa de Cultivos verano 2024. Zona XIII (San Luis).
+==================== pagina 44 ====================
+43
+Figura 33. Mapa de Cultivos verano 2024. Zona XIV (Cuenca del Salado).
+==================== pagina 45 ====================
+44
+Figura 34. Mapa de Cultivos verano 2024. Zona XVb (Corrientes).
+==================== pagina 46 ====================
+45
+4. Información derivada del Mapa Nacional de Cultivos
+El Mapa Nacional de Cultivos permite identificar zonas o capas con la presencia de
+determinados cultivos, y así evaluar sobre ellas diversos índices o modelos. En la Figura 35 se
+muestra el valor de un índice utilizado en la clasificación, Inicio de Estación de Crecimiento,
+aplicado sobre la capa de cultivos de maíz. Este índice fue obtenido a partir de la dinámica del
+Índice de Vegetación Normalizado (IVN) derivado de imágenes Sentinel 2. Representa el
+momento en que se inicia la curva de crecimiento del IVN (e.g. cuando alcanza el 50 % de la
+amplitud máxima de IVN) y guarda relación con la fecha de siembra de los cultivos, en este
+caso del maíz. Se pueden observar, regiones con mayor homogeneidad y fechas tardías de
+maíz como en el NOA, NEA, Oeste Pampeano, y SudOeste de la provincia de Buenos Aires,
+otras zonas con predominio de fechas tempranas como en el Este de la provincia de Entre Ríos
+y zonas con mayor variabilidad de fechas de siembra como la zona núcleo y centro de Buenos
+Aires.
+==================== pagina 47 ====================
+46
+Figura 35. Momento de inicio de estación de crecimiento en cultivos de maíz derivado del
+Índice de Vegetación Normalizado a partir de imágenes Sentinel 2.
+==================== pagina 48 ====================
+47
+5. Agradecimientos
+Queremos agradecer a Mg. Ing. Agr. Pablo Scandaliaris y Mg. Ing. Agr. Carmina Fandos, de la
+EEA Obispo Colombres, y a Andrea Moreno por la provisión de información complementaria.
+6. Referencias
+Bolsa de Cereales de Buenos Aires. 2019. Panorama Agrícola Semanal. Departamento de
+Estimaciones Agrícolas. Newsletter, Bolsa de Cereales de Buenos Aires.
+<http://www.bolsadecereales.com/ver-acerca-del-panorama-agricola-semanal-78# - Acceso
+27/08/2019>
+Burkart R., Bárbaro O., Sanchez R.O., Gómez D.A. 1999. Ecorregiones de la Argentina.
+Administración de Parques Nacionales y Secretaría de Recursos Naturales y Desarrollo
+Sustentable: Buenos Aires, Argentina.
+Congalton, R.G. 1991. A Review of Assessing the Accuracy of Classifications of Remotely
+Sensed Data. Remote Sensing of Environment, 37:35-46.
+de Abelleyra, D., Banchero, S., Verón, S. 2024. Characterization of crop sequences in
+Argentina. Spatial distribution and determinants. Agricultural Systems, 220, 104069.
+Instituto Geográfico Nacional (IGN). 2019. CAPAS SIG.
+<http://www.ign.gob.ar/NuestrasActividades/InformacionGeoespacial/CapasSIG - Acceso:
+27/08/2019>
+Joint Experiment of Crop Assessment and Monitoring (JECAM). 2018. JECAM Guidelines for
+cropland and crop type definition and field data collection.
+<http://jecam.org/wp-content/uploads/2018/10/JECAM_Guidelines_for_Field_Data_Collection_v
+1_0.pdf - Acceso: 27/08/2020>
+Pekel J.F., Cottam A., Gorelick N., Belward A.S. 2016. High-resolution mapping of global
+surface water and its long-term changes. Nature 540, 418-422.
+Souza C., Azevedo T. 2017. Mapbiomas general handbook. MapBiomas: San Pablo, Brasil, p.
+1–23.

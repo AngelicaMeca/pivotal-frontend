@@ -72,7 +72,12 @@ TIPOS_CONTENIDO = ("visor-web", "capa-descargable", "servicio-ogc", "repositorio
 ALCANCES = ("nacional", "provincial", "regional", "departamental")
 MODOS_ACCESO = ("visor-embebible", "descarga-directa", "catalogo-con-descarga", "ogc-wms",
                 "ogc-wfs", "exportacion-desde-app")
-MODOS_VISUALIZACION = ("visor-del-organismo", "visor-propio")
+MODOS_VISUALIZACION = ("visor-del-organismo", "visor-del-organismo-embebido",
+                       "visor-propio")
+# RF24.2: el visor del organismo incrustado en el sitio. Es un modo aparte y no un detalle
+# de presentacion, porque no todos los visores se dejan embeber y declararlo mal deja un
+# iframe EN BLANCO en produccion, que es peor que el enlace que habia.
+EMBEBIDO = "visor-del-organismo-embebido"
 INDICACIONES = ("cruzar-con-limites-departamentales", "exportar-capa",
                 "evaluar-utilidad-analitica", "evaluar-modo-de-acceso", "cruzar-con-otra-capa")
 CRITERIOS_NORMALIZACION = ("interseccion-por-superficie", "asignacion-por-centroide",
@@ -161,6 +166,29 @@ def verificar(catalogo, raiz=RAIZ):
                 if not mv.get("criterio"):
                     fallos.append("%s: `modo_visualizacion` sin `criterio` (RF14): el ERS pide "
                                   "registrar que fundamento la decision." % fid)
+                # RF24.2 y RF22.4: un visor que se incrusta necesita su encuadre y, sobre
+                # todo, la MEDICION de que el organismo lo deja embeber. Los visores del
+                # INTA y el de la ORA mandan `X-Frame-Options: SAMEORIGIN` y adentro de un
+                # iframe salen en blanco: sin este bloqueo, declarar uno embebible de oido
+                # publica una pantalla vacia y nadie se entera hasta que un visitante la ve.
+                if mv["resuelto"] == EMBEBIDO:
+                    ve = fuente.get("visualizacion_embebida") or {}
+                    if not ve:
+                        fallos.append(
+                            "%s: dice visualizarse con el visor del organismo EMBEBIDO y no "
+                            "trae `visualizacion_embebida` (RF24.2)." % fid)
+                    else:
+                        if not ve.get("encuadre"):
+                            fallos.append("%s: visor embebido sin `encuadre` (RF22.4)." % fid)
+                        if not (ve.get("embebible") or {}).get("verificado"):
+                            fallos.append(
+                                "%s: visor embebido sin `embebible.verificado`. Hay que MEDIR "
+                                "que el organismo no manda X-Frame-Options ni frame-ancestors "
+                                "antes de incrustarlo: si los manda, el iframe sale en blanco."
+                                % fid)
+                        if not (ve.get("embebible") or {}).get("medicion"):
+                            fallos.append("%s: visor embebido sin `embebible.medicion`, o sea "
+                                          "sin decir COMO se verifico." % fid)
             if not licencia:
                 fallos.append("%s: estado %s sin `licencia` (RF15)." % (fid, estado))
 

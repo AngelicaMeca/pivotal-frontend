@@ -1,0 +1,498 @@
+==================== pagina 1 ====================
+Mapa Nacional de Cultivos
+campaña 2018/2019
+Colección 1 (Versión 1)
+Publicación N°1
+Coordinación:
+de Abelleyra, Diego1
+Banchero, Santiago1
+Verón, Santiago1,4,5
+Mosciaro, Jesús2
+Volante, José2
+Participantes:
+Boasso, Miguel2
+Castrillo, Silvana
+Dacunto, Luciana
+Ferraina, Antonella1
+Franzoni, Agustín
+Gaitán, Juan3
+Gomez Taffarel, María Cielo
+Moreno, Andrea
+Propato, Tamara1
+1 Instituto de Clima y Agua, Centro Nacional de Investigaciones Agropecuarias (CIRN), Instituto Nacional de Tecnología
+Agropecuaria (INTA); 2 Estación Experimental Agropecuaria Salta, Centro Regional Salta-Jujuy, INTA; 3 Instituto deSuelos,
+CIRN, INTA; 4Universidad de Buenos Aires, Facultad de Agronomía (FAUBA), Departamento de Métodos Cuantitativos y
+SistemasdeInformación;5CONICET,ConsejoNacionaldeInvestigacionesCientíficasyTécnicas,Argentina.
+==================== pagina 2 ====================
+1
+INSTITUTO NACIONAL DE TECNOLOGÍA AGROPECUARIA
+CENTRO DE INVESTIGACIÓN EN RECURSOS NATURALES
+INSTITUTO DE CLIMA Y AGUA
+INSTITUTO DE SUELOS
+CENTRO REGIONAL SALTA - JUJUY
+ESTACIÓN EXPERIMENTAL AGROPECUARIA SALTA
+PROGRAMA NACIONAL DE RECURSOS NATURALES Y GESTIÓN
+AMBIENTAL
+PROYECTO MAPBIOMAS (Convenio 26121)
+RED JECAM-GEOGLAM
+Sitio Argentina
+Septiembre de 2019
+==================== pagina 3 ====================
+2
+Índice
+1. Introducción 3
+2. Metodología 4
+3. Resultados 10
+a. Exactitud obtenida 10
+b. Mapas generados 12
+4. Consideraciones Finales 27
+==================== pagina 4 ====================
+3
+1. Introducción
+La disponibilidad de mapas que describan de manera precisa la localización de los principales
+cultivos extensivos de grano a escala nacional es un prerrequisito para numerosas
+aplicaciones. Por ejemplo, la estimación del área sembrada, el seguimiento del estado
+fisiológico de los cultivos, la estimación del rendimiento, y por último de la producción agrícola,
+requieren información georeferenciada. Conocer la distribución espacial de los cultivos permite
+estratificar el área para el muestreo a campo y de esta manera optimizar los recursos de los
+programas de estimación de la superficie sembrada con cada cultivo anualmente. Además,
+proveen una manera objetiva de cuantificar la ocurrencia de doble cultivos y así mejorar la
+estimación del área sembrada. De la misma manera, los sistemas de monitoreo del estado y el
+rendimiento de cultivos que frecuentemente integran la información satelital de cada
+departamento sin discriminar área agrícola de no agrícola podrían beneficiarse al considerar la
+superficie efectivamente sembrada con cada cultivo. En conjunto, la mejora en la estimación
+del área sembrada y del rendimiento de cada cultivo disminuye el error en la estimación de la
+producción agrícola total del país y de la contribución de cada región. Mejorar la estimación de
+la producción agrícola tiene beneficios a múltiples escalas. A escala local permite por ejemplo
+anticipar la necesidad de almacenamiento, a escala regional la utilización de puertos y la
+demanda de transporte, a escala nacional los ingresos fiscales y la generación de divisas y a
+escala internacional los precios de los granos y potenciales proveedores de granos.
+Finalmente, si estos mapas se producen de manera periódica permiten caracterizar a nivel de
+lote aspectos clave de la sustentabilidad del manejo agrícola: la rotación de cultivos y la
+intensidad de uso, es decir la cantidad de cultivos por estación de crecimiento (o campaña
+agrícola).
+A pesar de su importancia, existen pocos ejemplos de mapas de cultivos a escala nacional.
+Estados Unidos, Canadá y Europa poseen programas de seguimiento e inventario de cultivos
+agrícolas. Más recientemente Ucrania ha generado su primer mapa nacional de cultivos
+(Kussul et al. 2017). Un aspecto común entre estos programas es la utilización de información
+satelital. La información provista por satelites de observacion de la tierra es particularmente
+adecuada para la generación de mapas de cultivos debido a su capacidad para registrar la
+radiación reflejada por la superficie del planeta de manera periódica, sistemática y objetiva a lo
+largo de extensas superficies. En particular los radiómetros ópticos proveen imágenes de la
+superficie en diferentes porciones del espectro electromagnético, usualmente en el visible,
+infrarrojo cercano, infrarrojo de onda corta e infrarrojo térmico. Si bien teóricamente la
+información espectrotemporal -es decir el conjunto de las adquisiciones satelitales a lo largo del
+tiempo de información del espectro electromagnético- debería permitir la discriminación de
+cultivos, esto frecuentemente está impedido por dos razones: la nubosidad que disminuye la
+información útil en un dado periodo, y la diversidad espaciotemporal de fechas de siembra para
+un mismo cultivo.
+==================== pagina 5 ====================
+4
+La producción agrícola argentina se ha incrementado en gran medida durante los últimos años,
+pasando la producción de los principales granos (soja, maíz, trigo y girasol) de 34 a 143
+millones de toneladas entre 1990 y 2019. En 2013, Argentina fue el tercer exportador mundial
+de soja y maíz y el décimo tercero de trigo (FAOSTAT, 2018) representando la agricultura una
+fuente de divisas y de ingresos fiscales clave para el país. En 2010 se estableció en San
+Antonio de Areco un sitio de estudio de la iniciativa JECAM-GEOGLAM (Experimento Conjunto
+para la estimación del área y monitoreo de cultivos o Joint Experiment on Crop Assessment
+and Monitoring en ingles - www.jecam.org). El objetivo de la iniciativa JECAM es desarrollar y
+validar metodologías de estimación del área sembrada con cultivos y su seguimiento temporal
+a partir de información satelital. En este trabajo nuestro objetivo fue generar un mapa de tipos
+de cultivo para el área agrícola extensiva de Argentina. Para ello capitalizamos la disponibilidad
+de plataformas de almacenamiento y procesamiento de imágenes satelitales en la nube y de
+nuevos algoritmos de clasificación supervisada, junto con la experiencia previa en la
+generación de mapas regionales de los grupos de trabajo de INTA involucrados en este trabajo.
+2. Metodología
+El mapa se desarrolló a partir de clasificaciones supervisadas a partir de índices obtenidos de
+escenas Landsat con muestras obtenidas a partir de relevamientos a campo durante la
+campaña agrícola 2018/2019. En la figura 1 se puede ver el flujo de trabajo desarrollado.
+Figura 1. Flujo de trabajo para la generación del mapa nacional de cultivos 2018/2019.
+Se consideró una zonificación que incluye las principales áreas agropecuarias del país basada
+en las zonas del Panorama Agrícola Semanal (PAS) de la Bolsa de Cereales de Buenos Aires
+(2019), conocidas como Zonas PAS. Esta zonificación, agrupa departamentos o partidos en 15
+zonas en función de la distribución y abundancia de cultivos. En este trabajo se consideraron
+las zonas I a XIV (Figura 2). A su vez, estas zonas fueron modificadas según una zonificación
+de áreas agroecológicas de Burkart (1989), para evitar incluir dentro de departamentos zonas
+==================== pagina 6 ====================
+5
+áridas o con relieve muy marcado que impida la presencia de cultivos y por lo tanto no fueron
+relevadas en este trabajo.
+Para cada zona se realizaron en forma independiente, clasificaciones supervisadas, es decir
+clasificaciones que son entrenadas con muestras de referencia que brindan información
+georeferenciada del tipo de cultivo y otras clases no agrícolas observado en un número de lotes
+a lo largo de la campaña considerada (2018/2019).
+Figura 2. Zonas PAS consideradas para el Mapa Nacional de Cultivos 2018/2019. Líneas
+negras: zonas PAS originales (Bolsa de Cereales de Buenos Aires, 2019); Líneas rojas: zonas
+PAS modificadas según Ecorregiones (Burkart, 1999). Líneas azules: recorridos realizados
+durante las campañas de invierno y de verano.
+==================== pagina 7 ====================
+6
+Para la obtención de muestras se realizaron relevamientos a lo largo de diversas rutas del país
+buscando cubrir las principales áreas agrícolas de las zonas definidas (Figura 2). Se siguieron
+recomendaciones de relevamiento de muestras sobre vehículo difundidas por la red JECAM
+(2018), que junto con la experiencia previa de relevamiento de los grupos del Instituto de Clima
+y Agua y la EEA Salta, permitieron realizar un protocolo de muestreo. Los recorridos se
+realizaron en dos momentos del año: 1) octubre y noviembre de 2018 (para identificar cultivos
+de campaña de invierno) y en marzo y abril de 2019 (para identificar cultivos de campaña de
+verano). Se recorrieron más de 15.000 Km y se registraron más de 13200 puntos
+georeferenciados. Los puntos fueron convertidos a polígonos de 50 m de radio con un método
+semi-automático, asegurando que describan un área homogénea (correspondiente a la misma
+descripción clase) dentro de un lote o parche de vegetación.
+ID Clase Descripción
+N1
+0 Maiz Únicocultivosembradoenlacampaña
+1 Soja1ra Únicocultivosembradoenlacampaña
+Doblecultivoconcultivosdeinvierno(trigo,cebada,centeno,avena),verdeos
+2 CI-Soja deinviernoocultivosdecoberturaysojacomocultivodeverano
+Doblecultivoconcultivosdeinvierno(trigo,cebada,centeno,avena),verdeos
+3 CI-Maiz deinviernoocultivosdecoberturaymaízcomocultivodeverano
+4 MANI Únicocultivosembradoenlacampaña
+5 Girasol Únicocultivosembradoenlacampaña
+CIsincultivo Cultivosdeinvierno(trigo,cebada,centeno,avena),verdeosdeinviernoo
+6 verano cultivosdecobertura.Únicocultivosembradoenlacampaña
+7 Ganaderia Tierrasconusoganadero.Incluyepasturasypastizalesnaturales
+8 Leñosanatural Tierrasconcoberturadeespeciesleñosasmayoral20%.
+9 Leñosascultivadas Plantacionesforestalesyfrutales
+11 Algodon Únicocultivosembradoenlacampaña
+12 Poroto Únicocultivosembradoenlacampaña
+13 Caña Únicocultivopresenteenlacampaña
+14 Girasol-CV DoblecultivodeGirasolyuncultivodeverano(soloenZonaII-NEA)
+15 Mascara Incluyecuerposdeagua,humedalesyáreasurbanas.
+Tabla 1. Clases definidas para el Mapa Nacional de Cultivos de la campaña 2018/2019 y su
+descripción. La columna ID representa el la identificación numérica de cada clase en el mapa
+N1
+generado.
+En este trabajo se definieron clases que describen lo ocurrido en cada lote a lo largo de toda
+una campaña, con lo que no solo se puede identificar el tipo de cultivo, sino la presencia de de
+--- tabla 1 ---
+ID N1 | Clase | Descripción | 
+0 | Maiz | Únicocultivosembradoenlacampaña | 
+1 | Soja1ra | Únicocultivosembradoenlacampaña | 
+2 | CI-Soja | Doblecultivoconcultivosdeinvierno(trigo,cebada,centeno,avena),verdeos deinviernoocultivosdecoberturaysojacomocultivodeverano | 
+3 | CI-Maiz | Doblecultivocon | cultivosdeinvierno(trigo,cebada,centeno,avena),verdeos
+ |  | deinviernoocultivosdecoberturaymaízcomocultivodeverano | 
+4 | MANI | Únicocultivosembradoenlacampaña | 
+5 | Girasol | Únicocultivosembradoenlacampaña | 
+6 | CIsincultivo verano | Cultivosdeinvierno(trigo,cebada,centeno,avena),verdeosdeinviernoo cultivosdecobertura.Únicocultivosembradoenlacampaña | 
+7 | Ganaderia | Tierrasconusoganadero.Incluyepasturasypastizalesnaturales | 
+8 | Leñosanatural | Tierrasconcoberturadeespeciesleñosasmayoral20%. | 
+9 | Leñosascultivadas | Plantacionesforestalesyfrutales | 
+11 | Algodon | Únicocultivosembradoenlacampaña | 
+12 | Poroto | Únicocultivosembradoenlacampaña | 
+13 | Caña | Únicocultivopresenteenlacampaña | 
+14 | Girasol-CV | DoblecultivodeGirasolyuncultivodeverano(soloenZonaII-NEA) | 
+15 | Mascara | Incluyecuerposdeagua,humedalesyáreasurbanas. | 
+--- tabla 2 ---
+Cultivosdeinvierno(trigo,cebada,centeno,avena),verdeosdeinviernoo
+cultivosdecobertura.Únicocultivosembradoenlacampaña
+==================== pagina 8 ====================
+7
+dobles cultivos y cultivos únicos. Para cada zona se definieron clases de cultivos que en
+conjunto representaron hasta el 90 % del área sembrada (basadas en estadísticas del
+MINAGRO, 2018) de los departamentos incluidos en cada zona PAS, de las últimas 5
+campañas. También se registraron otras clases no agrícolas con la finalidad de discriminar el
+área agrícola y no agrícola. La totalidad de clases definidas se puede observar en la Tabla 1.
+Mediante la herramienta Google Earth Engine, se generaron índices a partir del catálogo de
+imágenes LANDSAT (30 m de resolución) disponibles para el área de estudio durante el
+período comprendido entre el 1 de junio de 2018 y el 31 de mayo de 2019. Se consideraron los
+índices desarrollados en el marco de la inciativa MapBiomas Chaco (chaco.mapbiomas.org)
+basados en métricas que describen la distribución de frecuencias (e.g. percentiles, desvío
+estándar) de los valores observados en 3 períodos de tiempo: invierno (del 1 de agosto al de 30
+noviembre), verano (del 1 de enero al 30 de marzo) y período anual (del 1 de junio de 2018 al
+31 de mayo de 2019). A su vez se incorporaron nuevos índices que describen la dinámica
+temporal de los indicadores a lo largo de la campaña (e.g. momento de máximos y mínimos,
+pendientes, etc.) y que pueden describir mejor la dinámica de cultivos que presentan una
+estacionalidad muy marcada.
+Para asignar las muestras a las clases definidas (Tabla 1), se verificó sobre zonas agrícolas
+que un mismo sitio de muestreo haya sido registrado durante el relevamiento de invierno y
+durante el relevamiento de verano. El número de muestras finalmente asignado por clase y por
+zona se muestra en la Tabla 2. Las muestras obtenidas fueron separadas en dos grupos: 1)
+muestras de entrenamiento que correspondieron al 60 % de los polígonos obtenidos de cada
+clase y 2) muestras de validación que corresponden al 40 % restante de los polígonos
+obtenidos de cada clase. Las muestras de entrenamiento fueron utilizadas para correr el el
+clasificador Random Forest también sobre la plataforma Google Earth Engine. Con las
+muestras de validación se generaron indicadores del error de clasificación como Exactitud
+general, de usuario y de productor e índice Kappa (Congalton, 1991). Se realizó una
+clasificación por separado para cada zona PAS, pero en casos de presencia de clases con
+escaso número de muestras, se utilizaron muestras de otras zonas pertenecientes a un mismo
+gradiente latitudinal. Se aplicó un filtro espacial basado en la metodología de Mapbiomas
+(Souza and Azevedo, 2017) para corregir la presencia de píxeles aislados dentro de lotes o
+parches de vegetación. También se aplicaron máscaras de cuerpos de agua (Pekel et al.,
+2016), ejidos urbanos (IGN, 2019) y áreas de humedales basada en el mapa de coberturas de
+Volante et al. (2010).
+==================== pagina 9 ====================
+8
+CI- CI- Leñosa Leñosas Girasol-
+Zona Maiz Soja Soja Maiz Maní Girasol CI Ganadería natural cultivadas Algodón Poroto Caña CV Total
+I 103 160 31 53 192 178 82 92 90 981
+II 39 35 10 9 9 196 95 18 29 393
+III 75 65 59 16 30 5 250
+IV 29 26 20 5 9 54 1 144
+V 13 27 30 6 1 357 67 501
+VI 98 103 83 16 41 3 344
+VII 138 105 111 8 244 1 607
+VIII 47 70 68 5 254 50 13 507
+IX 20 28 27 18 50 143
+X 12 3 2 9 195 221
+XI 14 14 14 11 30 176 4 263
+XII 32 36 21 14 91 118 6 318
+XIII 41 35 8 35 22 141
+XIV 10 135 145
+Tabla 2. Número de polígonos asignados por clase y por zona que cumplen con el requisito de
+dos observaciones en invierno y en verano.
+--- tabla 1 ---
+Zona | Maiz | Soja | CI- Soja | CI- Maiz | Maní | Girasol | CI | Ganadería | Leñosa natural | Leñosas cultivadas | Algodón | Poroto | Caña | Girasol- CV | Total
+I | 103 | 160 | 31 | 53 |  |  |  | 192 | 178 | 82 |  | 92 | 90 |  | 981
+II | 39 | 35 | 10 | 9 |  | 9 |  | 196 | 95 |  | 18 |  |  | 29 | 393
+III | 75 | 65 | 59 | 16 |  |  |  | 30 | 5 |  |  |  |  |  | 250
+IV | 29 | 26 | 20 | 5 | 9 |  |  | 54 | 1 |  |  |  |  |  | 144
+V | 13 | 27 | 30 | 6 |  | 1 |  | 357 | 67 |  |  |  |  |  | 501
+VI | 98 | 103 | 83 | 16 |  |  |  | 41 | 3 |  |  |  |  |  | 344
+VII | 138 | 105 | 111 | 8 |  |  |  | 244 | 1 |  |  |  |  |  | 607
+VIII | 47 | 70 | 68 | 5 |  |  |  | 254 | 50 | 13 |  |  |  |  | 507
+IX | 20 | 28 | 27 | 18 |  |  |  | 50 |  |  |  |  |  |  | 143
+X | 12 | 3 | 2 |  |  | 9 |  | 195 |  |  |  |  |  |  | 221
+XI | 14 | 14 | 14 |  |  | 11 | 30 | 176 | 4 |  |  |  |  |  | 263
+XII | 32 | 36 | 21 |  |  | 14 | 91 | 118 |  | 6 |  |  |  |  | 318
+XIII | 41 | 35 |  |  | 8 |  |  | 35 | 22 |  |  |  |  |  | 141
+XIV | 10 |  |  |  |  |  |  | 135 |  |  |  |  |  |  | 145
+==================== pagina 10 ====================
+9
+3. Resultados
+a. Exactitud obtenida
+La exactitud general y el índice Kappa fueron en promedio de xx y xx respectivamente,
+mostrando gran variación entre zonas (Tabla 3). Zonas con alta proporción de tierras agrícolas
+como la III (Centro Norte de Córdoba), VI (Núcleo Norte) y VII (Núcelo Sur) mostraron altos
+valores de exactitud e índice Kappa, mientras que zonas con proporciones intermedias de
+cultivos y zonas no agrícolas mostraron menores exactitudes. Zonas con baja proporción de
+cultivos como la X (Centro de Buenos Aires) y XIV (Cuenca del Salado) mostraron altos valores
+de exactitud. Por su parte, zonas de gran extensión y alto número de clases como I (NOA) y II
+(NEA) mostraron exactitudes intermedias. Zonas con alto número de muestras en sus clases
+principales en general mostraron altas exactitudes (Zonas VI, VII y VIII).
+Con respecto a la exactitud por clase, las clases agrícolas de Maíz y Soja y Trigo como únicos
+cultivos y CI-Soja mostraron en general altas exactitudes de usuario y productor (Tablas 4 y 5);
+mientras que otras clases menos representadas en superficie como CI-Maíz, Maní o Girasol
+mostraron bajos valores de exactitud. CI-Maíz en algunas zonas mostró gran confusión con la
+clase CI-Soja seguramente debido a la similitud en sus ciclos fenológicos. Mientras que Maní
+mostró confusión con Maíz y Soja como únicos cultivos. En general se observaron mayores
+exactitudes de usuario que de productor.
+ZonaPAS OvAcc Kappa Nclases
+I 0.67 0.61 9
+II 0.77 0.69 9
+III 0.86 0.83 6
+IV 0.75 0.69 7
+V 0.80 0.52 7
+VI 0.83 0.77 6
+VII 0.90 0.85 6
+VIII 0.84 0.80 7
+IX 0.71 0.59 6
+X 0.90 0.83 5
+XI 0.82 0.60 7
+XII 0.85 0.78 7
+XIII 0.73 0.65 5
+XIV 0.91 0.75 4
+promedio 0.81 0.71 6.50
+Tabla 3. Exactitud general, índice Kappa y número de clases de cada zona.
+--- tabla 1 ---
+ZonaPAS | OvAcc | Kappa | Nclases
+I | 0.67 | 0.61 | 9
+II | 0.77 | 0.69 | 9
+III | 0.86 | 0.83 | 6
+IV | 0.75 | 0.69 | 7
+V | 0.80 | 0.52 | 7
+VI | 0.83 | 0.77 | 6
+VII | 0.90 | 0.85 | 6
+VIII | 0.84 | 0.80 | 7
+IX | 0.71 | 0.59 | 6
+X | 0.90 | 0.83 | 5
+XI | 0.82 | 0.60 | 7
+XII | 0.85 | 0.78 | 7
+XIII | 0.73 | 0.65 | 5
+XIV | 0.91 | 0.75 | 4
+promedio | 0.81 | 0.71 | 6.50
+==================== pagina 11 ====================
+10
+Zona Soja CI- CI- Leñosa Leñosas Girasol
+PAS Maiz 1ra Soja Maiz Maní Girasol CI Ganadería natural cultivadas Algodón Poroto Caña -CV
+I 0.62 0.59 0.74 0.77 0.52 0.83 0.99 0.66 0.86
+II 0.78 0.75 - - - 0.69 0.94 - 0.90
+III 0.83 0.92 0.83 0.87 0.89 -
+IV 0.92 0.79 0.72 - - 0.68 -
+V 0.89 0.58 0.51 - 1.00 0.81 0.96
+VI 0.93 0.93 0.71 0.86 0.69 -
+VII 0.90 0.91 0.88 - 0.90 -
+VIII 0.83 0.90 0.71 - 0.83 0.99 -
+IX 0.47 0.74 0.55 - 0.75 1.00
+X 0.91 0.82 0.90 - 0.93
+1.0
+XI - - - - 0 0.81 -
+0.8
+XII - - - - 5 0.84 -
+XIII 0.77 0.57 - - 0.78 1.00
+XIV - - - 0.94
+Tabla 4. Exactitudes de usuario por zona. Se muestran únicamente clases con más de 20
+muestras por zona.
+Zona Soja CI- CI- Leñosa Leñosas Girasol-
+PAS Maiz 1ra Soja Maiz Maní Girasol CI Ganadería natural cultivadas Algodón Poroto Caña CV
+I 0.41 0.80 0.24 0.48 0.83 0.82 0.61 0.30 0.79
+II 0.47 0.48 - - - 0.97 0.81 - 0.68
+III 0.94 0.84 0.82 0.40 0.73 -
+IV 0.87 0.89 0.85 - - 0.86 -
+V 0.14 0.47 0.43 - 0.53 0.98 0.51
+VI 0.94 0.84 0.96 0.18 0.70 -
+VII 0.91 0.90 0.87 - 0.94 -
+VIII 0.94 0.80 0.86 - 0.96 0.75 0.81
+IX 0.83 0.45 0.74 - 0.82 0.70
+X 0.19 0.96 0.88 - 0.97
+XI - - - - 0.34 1.00 0.62
+XII - - - - 0.92 0.98 0.15
+XIII 0.70 0.85 - 0.81 0.84
+XIV - - - 0.99
+Tabla 5. Exactitudes de productor por zona. Se muestran únicamente clases con más de 20
+muestras por zona.
+--- tabla 1 ---
+Zona PAS | Maiz | Soja 1ra | CI- Soja | CI- Maiz | Maní | Girasol | CI | Ganadería | Leñosa natural | Leñosas cultivadas | Algodón | Poroto | Caña | Girasol -CV
+I | 0.62 | 0.59 | 0.74 | 0.77 |  |  |  | 0.52 | 0.83 | 0.99 |  | 0.66 | 0.86 | 
+II | 0.78 | 0.75 | - | - |  | - |  | 0.69 | 0.94 |  | - |  |  | 0.90
+III | 0.83 | 0.92 | 0.83 | 0.87 |  |  |  | 0.89 | - |  |  |  |  | 
+IV | 0.92 | 0.79 | 0.72 | - | - |  |  | 0.68 | - |  |  |  |  | 
+V | 0.89 | 0.58 | 0.51 | - |  | 1.00 |  | 0.81 | 0.96 |  |  |  |  | 
+VI | 0.93 | 0.93 | 0.71 | 0.86 |  |  |  | 0.69 | - |  |  |  |  | 
+VII | 0.90 | 0.91 | 0.88 | - |  |  |  | 0.90 | - |  |  |  |  | 
+VIII | 0.83 | 0.90 | 0.71 | - |  |  |  | 0.83 | 0.99 | - |  |  |  | 
+IX | 0.47 | 0.74 | 0.55 | - |  |  |  | 0.75 | 1.00 |  |  |  |  | 
+X | 0.91 | 0.82 | 0.90 |  |  | - |  | 0.93 |  |  |  |  |  | 
+XI | - | - | - |  |  | - | 1.0 0 | 0.81 | - |  |  |  |  | 
+XII | - | - | - |  |  | - | 0.8 5 | 0.84 |  | - |  |  |  | 
+XIII | 0.77 | 0.57 | - |  | - |  |  | 0.78 | 1.00 |  |  |  |  | 
+XIV | - | - | - |  |  |  |  | 0.94 |  |  |  |  |  | 
+--- tabla 2 ---
+Zona PAS | Maiz | Soja 1ra | CI- Soja | CI- Maiz | Maní | Girasol | CI | Ganadería | Leñosa natural | Leñosas cultivadas | Algodón | Poroto | Caña | Girasol- CV
+I | 0.41 | 0.80 | 0.24 | 0.48 |  |  |  | 0.83 | 0.82 | 0.61 |  | 0.30 | 0.79 | 
+II | 0.47 | 0.48 | - | - |  | - |  | 0.97 | 0.81 |  | - |  |  | 0.68
+III | 0.94 | 0.84 | 0.82 | 0.40 |  |  |  | 0.73 | - |  |  |  |  | 
+IV | 0.87 | 0.89 | 0.85 | - | - |  |  | 0.86 | - |  |  |  |  | 
+V | 0.14 | 0.47 | 0.43 | - |  | 0.53 |  | 0.98 | 0.51 |  |  |  |  | 
+VI | 0.94 | 0.84 | 0.96 | 0.18 |  |  |  | 0.70 | - |  |  |  |  | 
+VII | 0.91 | 0.90 | 0.87 | - |  |  |  | 0.94 | - |  |  |  |  | 
+VIII | 0.94 | 0.80 | 0.86 | - |  |  |  | 0.96 | 0.75 | 0.81 |  |  |  | 
+IX | 0.83 | 0.45 | 0.74 | - |  |  |  | 0.82 | 0.70 |  |  |  |  | 
+X | 0.19 | 0.96 | 0.88 |  |  | - |  | 0.97 |  |  |  |  |  | 
+XI | - | - | - |  |  | - | 0.34 | 1.00 | 0.62 |  |  |  |  | 
+XII | - | - | - |  |  | - | 0.92 | 0.98 |  | 0.15 |  |  |  | 
+XIII | 0.70 | 0.85 |  |  | - |  |  | 0.81 | 0.84 |  |  |  |  | 
+XIV | - | - | - |  |  |  |  | 0.99 |  |  |  |  |  | 
+==================== pagina 12 ====================
+11
+b. Mapas generados
+A continuación se muestran los mapas generados tanto a nivel nacional (Figura 3), como
+también mostrando el detalle de cada zona PAS (Figuras 4 a 17). También se pueden visulaizar
+los mapas desde GeoINTA (www.geointa.inta.gob.ar) o desde una herramienta para la
+visualización desde la web: https://deabelle.users.earthengine.app/view/mncv1r1
+Esta herramienta permite hacer zoom sobre la clasificación a la escala deseada. A su vez,
+permite modificar las imágenes de fondo, alternando entre imágenes de Google Earth y mapas
+de referencia con caminos y división política.
+==================== pagina 13 ====================
+12
+Figura 3. Mapa Nacional de Cultivos campaña 2018/2019.
+==================== pagina 14 ====================
+13
+Figura 4. Mapa de Cultivos campaña 2018/2019. Zona I (NOA).
+==================== pagina 15 ====================
+14
+Figura 5. Mapa de Cultivos campaña 2018/2019. Zona II (NEA).
+==================== pagina 16 ====================
+15
+Figura 6. Mapa de Cultivos campaña 2018/2019. Zona III (Centro Norte de Córodba)
+==================== pagina 17 ====================
+16
+Figura 7. Mapa de Cultivos campaña 2018/2019. Zona IV (Sur de Córdoba).
+==================== pagina 18 ====================
+17
+Figura 8. Mapa de Cultivos campaña 2018/2019. Zona V (Centro Norte de Santa Fé)
+==================== pagina 19 ====================
+18
+Figura 9. Mapa de Cultivos campaña 2018/2019. Zona VI (Núcleo Norte)
+==================== pagina 20 ====================
+19
+Figura 10. Mapa de Cultivos campaña 2018/2019. Zona VII (Núcelo Sur)
+==================== pagina 21 ====================
+20
+Figura 11. Mapa de Cultivos campaña 2018/2019. Zona VIII (Centro Este de Entre Ríos)
+==================== pagina 22 ====================
+21
+Figura 12. Mapa de Cultivos campaña 2018/2019. Zona IX (Norte de La Pampa - Oeste de
+Buenos Aires)
+==================== pagina 23 ====================
+22
+Figura 13. Mapa de Cultivos campaña 2018/2019. Zona X (Centro de Buenos Aires)
+==================== pagina 24 ====================
+23
+Figura 14. Mapa de Cultivos campaña 2018/2019. Zona XI (Sudoeste de Buenos Aires)
+==================== pagina 25 ====================
+24
+Figura 15. Mapa de Cultivos campaña 2018/2019. Zona XII (Sudeste de Buenos Aires)
+==================== pagina 26 ====================
+25
+Figura 16. Mapa de Cultivos campaña 2018/2019. Zona XIII (San Luis)
+==================== pagina 27 ====================
+26
+Figura 17. Mapa de Cultivos campaña 2018/2019. Zona XIV (Cuenca del Salado)
+4. Consideraciones Finales
+Este informe muestra la primera versión del mapa de cultivos sobre las principales zonas
+agrícolas argentinas realizado a pocos meses de finalizada la campaña 2018/2019. La
+exactitud general obtenida en promedio fue de 80 %. Identificamos algunos aspectos que
+pueden ser mejorados en futuras versiones:
+1) La definición de clases de este trabajo que identifica no solo cultivos, sino la presencia
+en un mismo sitio de simples o dobles cultivos, lo que permite visualizar en un único
+mapa lo ocurrido a lo largo de toda la campaña. Sin embargo, nos obliga a considerar
+solamente muestras agrícolas de sitios que hayan relevados en dos momentos durante
+el año, lo que reduce en forma considerable el número de muestras disponible a utilizar,
+pudiendo algunas clases quedar poco representadas. Se está trabajando en una
+versión del mapa para cada estación (campaña de invierno y de verano) de la que se
+dispone de mayor cantidad de muestras por clase.
+==================== pagina 28 ====================
+27
+2) Dado que se tomaron muestras de distintos tipos además de las agrícolas (e.g. leñosas
+nativas e implantadas, ganadería), se buscó en esta versión también mapear estas
+clases. Sin embargo, como resultado del mapa vemos cierto grado de confusión entre
+estas, en particular en regiones dentro de la zona que no fueron relevadas, dado que en
+este trabajo se priorizó la circulación por caminos con mayor cantidad de lotes agrícolas.
+3) Se observó confusión particularmente entre algunas clases (e.g. CI-Soja vs CI-Maíz;
+Soja de 1ra vs. Maní), por lo que se deberán analizar nuevos índices que permitan una
+mejor la separación en estos casos.
+4) La zonificación podría mejorarse mediante la subdivisión de clases de gran extensión
+como la I y II y mediante el uso de variables ambientales además de las relacionadas
+con la producción. Se prevé evaluar otras alternativas de zonificación del área agrícola
+Argentina.
+5. Referencias
+Bolsa de Cereales de Buenos Aires. 2019. Panorama Agrícola Semanal. Departamento de
+Estimaciones Agrícolas. Newsletter, Bolsa de Cereales de Buenos Aires.
+<http://www.bolsadecereales.com/ver-acerca-del-panorama-agricola-semanal-78# - Acceso
+27/08/2019>
+Burkart R, Bárbaro O, Sanchez RO, Gómez DA. 1999. Ecorregiones de la Argentina.
+Administración de Parques Nacionales y Secretaria de Recursos Naturales y Desarrollo
+Sustentable: Buenos Aires, Argentina.
+Congalton RG. 1991. A Review of Assessing the Accuracy of Classifications of Remotely
+Sensed Data. Remote Sensing of Environment, 37:35-46
+Instituto Geográfico Nacional (IGN). 2019. CAPAS SIG.
+<http://www.ign.gob.ar/NuestrasActividades/InformacionGeoespacial/CapasSIG - Acceso:
+27/08/2019>
+Joint Experiment of Crop Assessment and Monitoring (JECAM). 2018. JECAM Guidelines for
+cropland and crop type definition and field data collection.
+<http://jecam.org/wp-content/uploads/2018/10/JECAM_Guidelines_for_Field_Data_Collection_v
+1_0.pdf - Acceso: 27/08/2019>
+MINAGRO. 2018. Estimaciones Agrícolas. Subsecretaría de Agricultura, Dirección Nacional de
+Estimaciones, Delegaciones y Estudios Económicos. Ministerio de Agroindustria, República
+Argentina. <https://www.agroindustria.gob.ar/datosagroindustriales - Acceso 1/12/2018>
+==================== pagina 29 ====================
+28
+Pekel JF, Cottam A, Gorelick N, Belward AS. 2016. High-resolution mapping of global surface
+water and its long-term changes. Nature 540, 418-422.
+Souza C, Azevedo T. 2017. Mapbiomas general handbook. MapBiomas: San Pablo, Brasil, p.
+1–23.
+Volante JN, Ayesa JA, Bubenik K, Collado AD, Ferreyra E, Lopez C, Navarro de Rau MF,
+Pezzola A, Puente M. 2010. Cartografía de cobertura del suelo de la República Argentina
+según el sistema de clasificación LCSS-FAO año 2007-08. En: Congreso Argentino de la
+Ciencia del Suelo. 22. 2010 05-06 31-04. 31 de mayo al 4 de junio de 2010. Rosario, Santa Fé.
+Argentina.

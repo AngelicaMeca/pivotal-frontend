@@ -238,7 +238,10 @@ export function geoDeMapa(proyeccion, opciones) {
      relleno, el borde y los nombres se los lleva el geo. */
   if (conZoom && opciones.departamentos) {
     var d = opciones.departamentos;
-    geo.tooltip = { show: true };
+    /* El cartel del departamento. El geo NO hereda el formatter del tooltip global,
+       asi que viene con el cromo: sin esto el geo muestra `show: true` y despues no
+       dibuja nada, que es lo que pasaba con la consulta departamental de RF25. */
+    geo.tooltip = d.tooltip || { show: true };
     geo.label = d.label;
     geo.labelLayout = d.labelLayout;
     geo.itemStyle = d.itemStyle;
@@ -332,6 +335,14 @@ function series(catalogo, ids, opciones) {
    que sumarle a la opcion de ECharts: {geo, series} o null si no hay ninguna capa lista.
    `redibujar` es el dibujante del cuadro con su panel: se guarda en el nodo para que el
    checkbox llame siempre al ultimo. */
+/* Las capas prendidas de este cuadro, para quien las necesite afuera: la consulta
+   departamental de RF25 muestra los valores de las capas ACTIVAS, y cuales estan activas lo
+   decide el visitante con el control, no el build. */
+export function capasPrendidas(nodo, catalogo) {
+  if (!catalogo || !catalogo.capas) { return []; }
+  return prendidas(nodo, catalogo);
+}
+
 export function capasDelMapa(nodo, catalogo, redibujar, proyeccion, opciones) {
   if (!catalogo || !catalogo.capas || !nodo.querySelector("input[data-capa]")) { return null; }
   nodo.capasRedibujar = redibujar;

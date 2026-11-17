@@ -55,6 +55,8 @@ from pipeline import vegetales as veg
 from pipeline import clima as cl
 from pipeline import sepa_kml
 from pipeline import fuentes_geo
+from pipeline import capas_departamento as cap_dep
+from pipeline import corpus
 from pipeline import vigencia_geo
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -9809,10 +9811,11 @@ class ContextoCapasIgn:
 
     familia = "capas-ign"
     # La propiedad que abre cada capa de lineas en la tabla de km.
-    APERTURA = {"rutas-nacionales": "calzada", "rutas-provinciales": "calzada",
-                "caminos-terciarios": "calzada", "ferrocarril": "estado",
-                # El tendido electrico abre por NIVEL de tension (15-nov-2026).
-                "tendido-media-tension": "tension"}
+    # La propiedad que abre cada capa de lineas (el tendido electrico abre por NIVEL de
+    # tension, 15-nov-2026). Vive en `capas_departamento` porque los km por departamento
+    # (RF25) tienen que usar el MISMO corte que esta tabla provincial: con dos copias, un
+    # corte nuevo en un lado dejaba los dos numeros sin poder compararse.
+    APERTURA = cap_dep.APERTURA
 
     def __init__(self, con):
         self.protocolo = pr.cargar_protocolo()
@@ -9905,6 +9908,47 @@ def indicadores_red_vial(ctx, spec):
     return salida
 
 
+def valores_por_departamento(ctx, spec):
+    """{capa: {etiqueta, deptos: {geo_id: texto}}} para la consulta departamental (RF25).
+
+    Sale de `configs/dims/capas-por-departamento.csv`, que se calcula una vez con
+    `python -m pipeline.capas_departamento` y se commitea. Si todavia no se calculo, el mapa
+    sale igual que antes y el tooltip muestra solo el nombre: la consulta es un agregado al
+    mapa, no una condicion para dibujarlo.
+
+    El numero viene YA ESCRITO, con su unidad, como todo el texto de este sitio: un "12" al
+    lado de "Rutas nacionales" no dice si son kilometros o rutas. Y un departamento sin nada
+    de esa capa trae su texto y no un hueco: hay departamentos sin una sola ruta nacional, y
+    eso es un dato, no un dato que falta.
+    """
+    datos = cap_dep.leer()
+    if not datos:
+        return {}
+    catalogos = {}
+    for ruta, _carpeta in cap_dep.CATALOGOS:
+        cat = pr.cargar_yaml(ruta) or {}
+        catalogos.update(((cat.get("publicacion") or {}).get("capas") or {}))
+    salida = {}
+    for declarada in spec["paneles"]["mapa-capas"]["capas"]:
+        cid = declarada["id"]
+        if cid not in datos:
+            continue
+        dicho = catalogos.get(cid) or {}
+        es_km = datos[cid]["medida"] == "km"
+        porDepto = datos[cid]["por_departamento"]
+        textos = {}
+        for geo_id in ctx.geo.deptos:
+            valores = porDepto.get(geo_id)
+            if not valores:
+                textos[geo_id] = "sin trazas" if es_km else "ninguna"
+                continue
+            total = sum(valores.values())
+            textos[geo_id] = ((pr.fmt_numero(total, 1) + " km") if es_km
+                              else pr.fmt_numero(total, 0))
+        salida[cid] = {"etiqueta": dicho.get("etiqueta") or cid, "deptos": textos}
+    return salida
+
+
 def panel_mapa_capas(ctx, spec):
     """El mapa de la portada: los departamentos de fondo NEUTRO (no es un mapa de calor) y las
     capas del IGN encima. Las capas no viajan aca: las dibuja el navegador desde el catalogo
@@ -9922,7 +9966,12 @@ def panel_mapa_capas(ctx, spec):
             # Sobre un mapa de calor el encuadre sigue fijo, que es como JC valido esas maquetas.
             "zoom": any(bool(p.get("zoom")) for p in spec["paneles"]["orden"]
                         if p["id"] == "mapa-capas"),
-            "deptos": [{"id": g, "nombre": ctx.nombre(g)} for g in ctx.geo.deptos]}
+            "deptos": [{"id": g, "nombre": ctx.nombre(g)} for g in ctx.geo.deptos],
+            # RF25: el valor de cada capa POR DEPARTAMENTO, para que el visitante pueda elegir
+            # uno y consultarlos. Viajan los de todas las capas que la pagina declara -son 304
+            # numeros, nada- y el navegador muestra los de las capas PRENDIDAS: cuales estan
+            # prendidas lo decide el visitante, asi que no se puede resolver aca.
+            "por_departamento": valores_por_departamento(ctx, spec)}
 
 
 def panel_tabla_red_vial(ctx, spec):
@@ -10682,6 +10731,21 @@ _FUENTES_POR_URL = None
 _CAIDAS = None
 
 
+def embebible(fuente_id):
+    """Si el catalogo resolvio que ESA fuente se ve con el visor del organismo embebido (RF24.2).
+
+    La decision no se toma aca: el catalogo la trae resuelta y con la medicion de que el
+    organismo deja embeber su visor, y `fuentes_geo` corta la corrida si falta alguna de las
+    dos cosas. Aca solo se consulta.
+    """
+    for fuente in fuentes_geo.cargar()["fuentes"]:
+        if fuente.get("id") != fuente_id:
+            continue
+        mv = fuente.get("modo_visualizacion") or {}
+        return mv.get("resuelto") == fuentes_geo.EMBEBIDO
+    return False
+
+
 def fuentes_caidas_hoy():
     """Los ids de fuente que hay que marcar como no disponibles (RF23.1).
 
@@ -10760,6 +10824,13 @@ def panel_accesos(ctx, spec, id_panel):
                     "La tarjeta %r de %s declara el externo %r: tiene que ser una URL https."
                     % (item["titulo"], spec["id"], item["externo"]))
             tarjeta["externo"] = item["externo"]
+            # RF24.2: si el catalogo resolvio que esta fuente se ve con el visor del organismo
+            # EMBEBIDO, la tarjeta lo abre adentro del sitio con el encuadre de RF22.4 en vez
+            # de mandar al visitante a otra pestania. Solo las cinco que se midieron: los
+            # visores del INTA y el de la ORA mandan X-Frame-Options y adentro de un iframe
+            # saldrian en blanco, asi que esas siguen abriendo afuera (fuentes_geo.EMBEBIDO).
+            if embebible(fuente_id):
+                tarjeta["visor_embebido"] = True
         # Una tarjeta con VARIOS links (portada de Ganaderia, "Ganad Ingreso" de JC: cada especie
         # con la lista de sus paginas). La tarjeta no es un link; cada renglon lo es, y el que no
         # tiene pagina todavia va apagado con su "Próximamente".
@@ -11934,7 +12005,12 @@ def resolver_tarjetas(tablero, url_de):
                 # resuelve contra `url_de` y se marca para abrirla en otra pestaña.
                 if tarjeta.get("externo"):
                     tarjeta["href"] = tarjeta.pop("externo")
-                    tarjeta["fuera_del_sitio"] = True
+                    # RF24.2: el visor que se puede incrustar se abre ADENTRO del sitio. El
+                    # `href` se conserva igual a proposito -sigue siendo un `<a>` con su URL,
+                    # asi que un Ctrl+clic o el boton del medio abren el visor del organismo
+                    # como siempre- y lo unico que cambia es que el clic normal lo muestra en
+                    # el popup. Si el JS no corre, el enlace funciona igual.
+                    tarjeta["fuera_del_sitio"] = not tarjeta.get("visor_embebido")
                     continue
                 if not destino:
                     tarjeta["href"] = None
@@ -13606,6 +13682,13 @@ def main(args=None):
     # corrida aca y no llega al sitio.
     fuentes_geo.verificar_o_cortar(avisar=lambda t: print("[fuentes-geo] AVISO %s" % t))
 
+    # LA BASE DE CONTEXTO, por el mismo criterio (ERS, RF7.1, RF29 y RF30). Aca se controla que
+    # este bien declarada; que no se haya filtrado a lo publicado se controla AL FINAL, cuando
+    # el sitio ya esta escrito y hay algo que mirar.
+    _, avisos_corpus = corpus.verificar_o_cortar()
+    for aviso in avisos_corpus:
+        print("[corpus] AVISO %s" % aviso)
+
     con = duckdb.connect()
     hechos = Hechos(con)
     hacienda = hac.Hacienda(con)
@@ -13738,6 +13821,12 @@ def main(args=None):
     for slug in sorted(sin_unidad_en_subtitulo):
         print("[site]   AVISO   %-40s cuadro sin unidad unica en el subtitulo: %s"
               % (slug, ", ".join(sorted(sin_unidad_en_subtitulo[slug]))))
+    # RF29 y RF30: la base de informes de contexto es insumo de la SAAS y NO se expone en la
+    # web publica. El material geoespacial SI va a los dos productos, asi que lo unico que
+    # separa una cosa de la otra es esta regla, y una regla sin control se rompe en el primer
+    # copiado de carpetas. Se controla con el sitio ya escrito.
+    corpus.verificar_no_publicado()
+
     total = sum(1 for _ in escritor.escritos)
     print("[site] %d archivos escritos en el sitio (src/tableros y public/plataforma)" % total)
     if ns.hashes:

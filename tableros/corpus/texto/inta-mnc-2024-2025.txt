@@ -1,0 +1,378 @@
+==================== pagina 1 ====================
+Mapa Nacional de Cultivos
+campaña 2024/2025
+Versión 1
+Publicación N°7
+de Abelleyra D1, Iturralde Elortegui M2, Zelaya K3, Portillo J4, Melilli M5, Volante
+J6,Franzoni A6,López Morillo CS6, Goytía Y7, Murray F8, Santillan J9, Berriolo J10,
+Lanceta Pereyra M10,11, Scavone A10, Continelli N12, Gerlero G12, Salas D13,
+Reinaldi J14, Lopez Juane P15, Gomez D15, Krapovickas S16, Sapino V17, Regonat
+A18, Cracogna M19, Espíndola C19, Valiente S20, Parodi M21, Colombo F22, Scarel
+J23, Ayala J24, Martins L25, Basanta M26, Rausch A22, Almada G27, Boero L28,
+Calcha J29, Chiavassa A17, Calandroni M30, Pascal B31, Borracci S32, Erreguerena
+J33, Besteiro I31, Oyesqui L2, Lazaeta M34, Loizaga UD35, Murillo M36, Barragán
+M37, Ferro M37, Centaure R37, Maekawa M38, Schaber C38, Martín G38, Demateis
+F38, Varillas G39, Adra M40, Tolosa E40, Coliqueo M40, Kurtz D41, Ybarra D41,
+Barrios R41, Benedetti P3, Morales C3, Pezzola A42, Winschel C42, Rodriguez
+Pérez J1, Peralta A, Benítez L, German A1, Vitale JP1.
+1Instituto de Clima y Agua 15AER Bandera 29AER Castellanos
+2AER Olavarría 16AER Sachayoj 30FCA – UNMdP
+3EEA Famaillá 17EEA Rafaela 31AER Lobería
+4EEA Pergamino 18AER Reconquista 32AER Mar del Plata
+5AER Junín 19AER Las Toscas 33AER Necochea
+6EEA Salta 20AER San Cristobal 34EEA Cuenca del Salado
+7EEA Saenz Peña 21AER Tostado 35AER Balcarce
+8AER San Luis 22AER Ceres 36EEA Balcarce
+9AER Quines 23AER Calchaquí 37AER Lincoln
+10CEI Barrow (MDA-INTA) 24AER San Javier 38AER Trenque Lauquen
+11OIT San Cayetano 25AER Esperanza 39OIT Saliqueló
+12AER Malbran 26AER Cruz del Eje 40AER Pehuajó
+13AER Añatuya 27AER Pellegrini 41EEA Corrientes
+14AER Quimilí 28AER Gálvez 42EEA Hilario Ascasubi
+==================== pagina 2 ====================
+1
+INSTITUTO NACIONAL DE TECNOLOGÍA AGROPECUARIA
+PROGRAMA NACIONAL DE RECURSOS NATURALES Y GESTIÓN
+AMBIENTAL
+2023-PD-L03-I092 - Herramientas, tecnologías y aplicaciones para la
+gestión sostenible de los recursos naturales y el ambiente en los
+territorios
+PROYECTO MAPBIOMAS
+RED JECAM-GEOGLAM
+Noviembre de 2025
+==================== pagina 3 ====================
+2
+Índice
+Introducción 3
+Metodología 3
+Resultados 7
+Exactitud obtenida 7
+Mapas 11
+Referencias 44
+==================== pagina 4 ====================
+3
+1. Introducción
+Este informe presenta el Mapa Nacional de Cultivos (MNC) correspondiente a la campaña
+2024/2025, que constituye la producción de un séptimo par de mapas en campañas agrícolas
+consecutivas, realizados en alta resolución y con una extensión que cubre las principales
+regiones agrícolas de Argentina. Así mismo, se logró dar continuidad a la obtención de
+información a campo de las diferentes regiones agrícolas en diferentes momentos de cada
+campaña, que constituye un aspecto clave que determina la calidad de los mapas generados y
+permite conocer su nivel de error. A través de una metodología de relevamiento ágil, y con la
+participación de numerosos agentes de unidades de INTA distribuidas a lo largo del territorio se
+cumplió nuevamente con este objetivo.
+De esta manera se completa una secuencia de mapas de las campañas agrícolas: 2018/2019,
+2019/2020, 2020/2021, 2021/2022, 2022/2023, 2023/2024 y 2024/2025. Este tipo de información
+permite caracterizar la dinámica temporal de la siembra de cultivos en Argentina, y evaluar
+aspectos como la intensidad de siembra (número de cultivos sembrados por año), el grado de
+rotación agrícola y agrícola-ganadera, la dominancia de especies y grupos de especies en las
+secuencias (e.g. porcentaje de gramíneas) y el grado de incidencia de prácticas como la rotación
+o el monocultivo (e.g. de Abelleyra, 2024; de Abelleyra et al., 2024).
+Se destaca que la serie de mapas generados puede ser libremente descargada o visualizada en
+su resolución máxima (30 metros). Esto ha permitido la utilización de esta serie de mapas en
+sectores públicos y privados, incluyendo temáticas productivas y científicas. Algunos ejemplos
+de uso incluyeron la optimización de la ubicación de plantas de biocombustibles (Guido et al.,
+2024), la planificación de caminos rurales, la realización de informes por parte de inmobiliarias
+rurales y consultoras, y la evaluación de incidencia de adversidades sobre el área agrícola (e.g.
+inundaciones, fuegos (Cavallero et al., 2023)).
+2. Metodología
+La metodología consistió en la realización de clasificaciones supervisadas a partir de índices
+obtenidos de imágenes satelitales de la plataforma Landsat y Sentinel 2. Se tomaron muestras
+de entrenamiento a partir de relevamientos a campo durante dos momentos de la campaña
+agrícola 2024/2025. En áreas con faltante de datos de campo, se consideró información
+complementaria a partir de referentes, productores e interpretación visual.
+Se consideró una zonificación que incluye las principales áreas agrícolas del país, basada en las
+zonas del Panorama Agrícola Semanal (PAS) de la Bolsa de Cereales de Buenos Aires (2019).
+Esta zonificación agrupa departamentos o partidos en 15 zonas en función de la distribución y
+abundancia de cultivos. En este trabajo se consideraron las zonas I a XV (Figura 2) con
+modificaciones. También se consideró una zonificación de áreas agroecológicas de Burkart
+(1989), para evitar incluir dentro de departamentos zonas áridas o con relieve muy marcado que
+impida la presencia de cultivos.
+Para cada zona se realizaron clasificaciones supervisadas en forma independiente, es decir
+clasificaciones que son entrenadas con muestras de referencia, que brindan información
+==================== pagina 5 ====================
+4
+georeferenciada del tipo de cultivo y otras clases no agrícolas observadas en un número de lotes
+o parches a lo largo de la campaña considerada (2024/2025).
+Figura 2. Área de estudio considerada para el Mapa Nacional de Cultivos 2024/2025. Líneas
+negras: zonificación basada en zonas PAS (Bolsa de Cereales de Buenos Aires, 2019). Líneas
+rojas: recorridos realizados durante la campaña de invierno de 2024 (A) y verano de 2025 (B).
+Las muestras de entrenamiento se obtuvieron principalmente a través de relevamientos a lo largo
+de diversas rutas y caminos buscando cubrir las principales áreas agrícolas de las zonas
+definidas (Figura 2). Se realizaron relevamientos desde vehículos (windshield surveys) para la
+toma de muestras en concordancia con lo propuesto en la red JECAM (2018), siguiendo un
+protocolo propio de muestreo (LINK). Los recorridos se realizaron en dos momentos del año: 1)
+entre agosto y diciembre de 2024 (para identificar cultivos de campaña de invierno) y 2) entre
+febrero y junio de 2025 (para identificar cultivos de campaña de verano). Los relevamientos
+fueron realizados con diferentes herramientas, entre las que se incluyeron GPS de mano y
+planillas y planos en papel, aplicaciones para celulares y tablets (e.g. Tracklia, QField,
+KoboCollect e INTA Territorios). Esta campaña se incorporó una app de desarrollo propio (en
+Android) que permite recolectar rápidamente puntos georreferenciados sobre caminos y generar
+automáticamente las muestras de entrenamiento y validación. Los puntos recolectados con las
+diferentes herramientas fueron convertidos a polígonos de 50 metros de radio, y editadas en
+software GIS para asegurar que describan un área homogénea dentro de un lote o parche de
+==================== pagina 6 ====================
+5
+vegetación. También se incorporaron muestras complementarias de interpretación visual y
+observación de series de tiempo en zonas no agrícolas o con falta de datos.
+Se definieron clases para describir lo ocurrido en cada lote en dos momentos de la campaña
+agrícola: 1) invierno 2024 y 2) verano 2025. Consideramos la definición de cultivos agrícolas
+propuesta por la red JECAM (2018), que considera una cobertura herbácea plantada y
+cosechada dentro de los 12 meses. Como excepción, también se incluye a los cultivos de caña
+de azúcar. Las clases consideradas se pueden observar en las Tablas 1 y 2.
+Tabla 1. Clases definidas para el Mapa Nacional de Cultivos de la campaña de invierno 2024 y
+su descripción. La columna ID representa la identificación numérica de cada clase en el mapa
+INV
+generado.
+ID Clase Descripción
+INV
+Incluye cultivos de trigo, cebada, avena y centeno, como también
+16 Cereales de invierno
+verdeos de invierno de gramíneas
+19 Caña de Azúcar Plantación de caña de azúcar
+24 Arveja Cultivo de arveja
+6 Garbanzo Cultivo de garbanzo
+17 Otros cultivos Incluye cultivos de cobertura y otros cultivos de menor relevancia
+18 Barbecho Lotes sin cultivo de invierno durante el período considerado
+Incluye herbáceas perennes nativas y exóticas (pastizales,
+20 No Agrícola
+pasturas) y leñosas nativas e implantadas.
+Mediante la herramienta Google Earth Engine, se generaron índices a partir del catálogo de
+imágenes LANDSAT (30 metros de resolución) y Sentinel 2 disponibles para el área de estudio
+durante la campaña 2024-2025. Para los mapas de invierno 2024 se consideró el período entre
+el 1 de junio y el 31 de diciembre de 2024. Para los mapas de verano se consideró el período 1
+de septiembre de 2024 al 30 de junio de 2025. Se utilizaron dos tipos de índices: 1) índices
+basados en métricas que describen la distribución de frecuencias (percentiles, desvío estándar)
+de los valores observados en dos subperíodos de tiempo, y 2) índices que describen la dinámica
+temporal de índices de vegetación a lo largo de la campaña (e.g. momento de inicio y fin,
+máximos, pendientes, etc.) y que pueden describir mejor la dinámica de cultivos que presentan
+una estacionalidad muy marcada.
+Se realizaron separadamente clasificaciones para cada una de las 15 zonas en que se divide el
+mapa. Las muestras obtenidas fueron separadas en dos grupos: 1) muestras de entrenamiento
+que corresponden al 60% de los polígonos de cada clase y 2) muestras de validación,
+representando el 40% restante de los polígonos de cada clase. Las muestras de entrenamiento
+fueron utilizadas para correr el clasificador Random Forest sobre la plataforma Google Earth
+Engine. Con las muestras de validación se generaron indicadores del error de clasificación como
+exactitud general, de usuario y de productor e índice Kappa (Congalton, 1991). Se aplicaron dos
+pasadas de un filtro espacial de vecindad con ventana (kernel) de 1 pixel (Souza and Azevedo,
+2017) para corregir la presencia de píxeles aislados dentro de lotes o parches de vegetación.
+También se aplicaron máscaras de cuerpos de agua (Pekel et al., 2016), tejidos urbanos (IGN,
+--- tabla 1 ---
+ID INV | Clase | Descripción
+16 | Cereales de invierno | Incluye cultivos de trigo, cebada, avena y centeno, como también verdeos de invierno de gramíneas
+19 | Caña de Azúcar | Plantación de caña de azúcar
+24 | Arveja | Cultivo de arveja
+6 | Garbanzo | Cultivo de garbanzo
+17 | Otros cultivos | Incluye cultivos de cobertura y otros cultivos de menor relevancia
+18 | Barbecho | Lotes sin cultivo de invierno durante el período considerado
+20 | No Agrícola | Incluye herbáceas perennes nativas y exóticas (pastizales, pasturas) y leñosas nativas e implantadas.
+==================== pagina 7 ====================
+6
+2019) y áreas inundables, basada en el mapa de coberturas de Volante y colaboradores (2010)
+y en indicadores de probabilidad de humedales. En postprocesamiento se aplicaron reglas para
+mantener estables las clases agrícolas y no agrícolas en los mapas de invierno y verano.
+Tabla 2. Clases definidas para el Mapa Nacional de Cultivos de la campaña de verano 2025 y su
+descripción. La columna ID representa la identificación numérica de cada clase en el mapa
+VER
+generado.
+ID Clase Descripción
+VER
+11 Soja Cultivo de soja, sin discriminar si es de primera o segunda
+10 Maíz Cultivo de maíz
+12 Girasol Cultivo de girasol
+13 Poroto Cultivo de poroto
+15 Algodón Cultivo de algodón
+14 Caña de azúcar Plantación de caña de azúcar
+17 Arroz Cultivo de arroz
+16 Maní Cultivo de maní
+19 Girasol-CV Cultivo de Girasol seguido de otro cultivo de verano
+(principalmente maíz o soja)
+18 Sorgo GR Cultivo de sorgo en sistema de producción para grano
+26 Papa Cultivo de papa
+27 Verdeo de Maíz Plantación de maíz en configuración para pastoreo
+28 Verdeo de Sorgo Plantación de sorgo en configuración para pastoreo
+21 Barbecho Lotes sin cultivo de verano durante el período considerado
+Incluye herbáceas perennes nativas y exóticas (pastizales,
+22 No agrícola
+pasturas) y leñosas nativas e implantadas
+--- tabla 1 ---
+ID VER | Clase | Descripción
+11 | Soja | Cultivo de soja, sin discriminar si es de primera o segunda
+10 | Maíz | Cultivo de maíz
+12 | Girasol | Cultivo de girasol
+13 | Poroto | Cultivo de poroto
+15 | Algodón | Cultivo de algodón
+14 | Caña de azúcar | Plantación de caña de azúcar
+17 | Arroz | Cultivo de arroz
+16 | Maní | Cultivo de maní
+19 | Girasol-CV | Cultivo de Girasol seguido de otro cultivo de verano (principalmente maíz o soja)
+18 | Sorgo GR | Cultivo de sorgo en sistema de producción para grano
+26 | Papa | Cultivo de papa
+27 | Verdeo de Maíz | Plantación de maíz en configuración para pastoreo
+28 | Verdeo de Sorgo | Plantación de sorgo en configuración para pastoreo
+21 | Barbecho | Lotes sin cultivo de verano durante el período considerado
+22 | No agrícola | Incluye herbáceas perennes nativas y exóticas (pastizales, pasturas) y leñosas nativas e implantadas
+==================== pagina 8 ====================
+7
+3. Resultados
+a. Exactitud obtenida
+La exactitud general y el índice Kappa fueron en promedio de 0,92 y 0,85 respectivamente para
+los mapas de invierno 2024, y de 0,89 y 0,84 respectivamente para los mapas de verano 2025
+(Tablas 5 y 6). Las tablas 7 a 10 muestran las exactitudes de usuario y productor por clase para
+cada campaña. Las exactitudes por clase mostraron en general mayores valores en las regiones
+del centro y sur del país, mientras que en el norte se obtuvieron menores exactitudes,
+particularmente en verano asociado a eventos de sequía y altas temperaturas que en muchos
+casos impidieron el normal desarrollo de los cultivos.
+Tabla 5. Exactitud general, índice Kappa y número de clases por zona (invierno 2024).
+==================== pagina 9 ====================
+8
+Tabla 6. Exactitud general, índice Kappa y número de clases por zona (verano 2025).
+Tabla 7. Exactitudes de productor por zona para el mapa de invierno 2024.
+==================== pagina 10 ====================
+9
+Tabla 8. Exactitudes de usuario por zona para el mapa de invierno 2024.
+==================== pagina 11 ====================
+10
+Tabla 9. Exactitudes de productor por zona para el mapa de verano 2025.
+==================== pagina 12 ====================
+11
+Tabla 10. Promedio de Exactitudes de usuario por zona para el mapa de verano 2025.
+b. Mapas
+A continuación se muestran los mapas de los períodos de invierno 2024 y verano 2025 generados a nivel nacional (Figuras 3 y 4), y
+también mostrando el detalle de cada zona (Figuras 5 a 34). Se puede acceder a ellos desde una aplicación para la visualización en
+la web: https://ee-deabelle.projects.earthengine.app/view/mnc24-25. También se pueden descargar en formato geotiff desde el
+repositorio Zenodo (https://doi.org/10.5281/zenodo.17652712), y están disponibles en la plataforma de datos geoespaciales del INTA
+(https://geo.inta.gob.ar/).
+==================== pagina 13 ====================
+12
+Figura 3. Mapa Nacional de Cultivos invierno 2024.
+==================== pagina 14 ====================
+13
+Figura 4. Mapa Nacional de Cultivos verano 2025.
+==================== pagina 15 ====================
+14
+Figura 5. Mapa de Cultivos invierno 2024. Zona I (NOA).
+==================== pagina 16 ====================
+15
+Figura 6. Mapa de Cultivos invierno 2024. Zona II (NEA).
+==================== pagina 17 ====================
+16
+Figura 7. Mapa de Cultivos invierno 2024. Zona III (Centro-Norte de Córdoba).
+==================== pagina 18 ====================
+17
+Figura 8. Mapa de Cultivos invierno 2024. Zona IV (Sur de Córdoba).
+==================== pagina 19 ====================
+18
+Figura 9. Mapa de Cultivos invierno 2024. Zona V (Centro Norte de Santa Fe).
+==================== pagina 20 ====================
+19
+Figura 10. Mapa de Cultivos invierno 2024. Zona VI (Núcleo Norte).
+==================== pagina 21 ====================
+20
+Figura 11. Mapa de Cultivos invierno 2024. Zona VII (Núcleo Sur).
+==================== pagina 22 ====================
+21
+Figura 12. Mapa de Cultivos invierno 2024. Zona VIII (Centro Este de Entre Ríos).
+==================== pagina 23 ====================
+22
+Figura 13. Mapa de Cultivos invierno 2024. Zona IX (Norte de La Pampa - Oeste de Buenos
+Aires).
+==================== pagina 24 ====================
+23
+Figura 14. Mapa de Cultivos invierno 2024. Zona X (Centro de Buenos Aires).
+==================== pagina 25 ====================
+24
+Figura 15. Mapa de Cultivos invierno 2024. Zona XI (Sudoeste de Buenos Aires - Sur de La
+Pampa).
+==================== pagina 26 ====================
+25
+Figura 16. Mapa de Cultivos invierno 2024. Zona XII (Sudeste de Buenos Aires).
+==================== pagina 27 ====================
+26
+Figura 17. Mapa de Cultivos invierno 2024. Zona XIII (San Luis).
+==================== pagina 28 ====================
+27
+Figura 18. Mapa de Cultivos invierno 2024. Zona XIV (Cuenca del Salado).
+==================== pagina 29 ====================
+28
+Figura 19. Mapa de Cultivos invierno 2024. Zona XVb (Corrientes).
+==================== pagina 30 ====================
+29
+Figura 20. Mapa de Cultivos verano 2024. Zona I (NOA).
+==================== pagina 31 ====================
+30
+Figura 21. Mapa de Cultivos verano 2024. Zona II (NEA).
+==================== pagina 32 ====================
+31
+Figura 22. Mapa de Cultivos verano 2025. Zona III (Centro-Norte de Córdoba).
+==================== pagina 33 ====================
+32
+Figura 23. Mapa de Cultivos verano 2025. Zona IV (Sur de Córdoba).
+==================== pagina 34 ====================
+33
+Figura 24. Mapa de Cultivos verano 2024. Zona V (Centro Norte de Santa Fe).
+==================== pagina 35 ====================
+34
+Figura 25. Mapa de Cultivos verano 2025. Zona VI (Núcleo Norte).
+==================== pagina 36 ====================
+35
+Figura 26. Mapa de Cultivos verano 2025. Zona VII (Núcleo Sur).
+==================== pagina 37 ====================
+36
+Figura 27. Mapa de Cultivos verano 2025. Zona VIII (Centro Este de Entre Ríos).
+==================== pagina 38 ====================
+37
+Figura 28. Mapa de Cultivos verano 2025. Zona IX (Norte de La Pampa - Oeste de Buenos
+Aires).
+==================== pagina 39 ====================
+38
+Figura 29. Mapa de Cultivos verano 2025. Zona X (Centro de Buenos Aires).
+==================== pagina 40 ====================
+39
+Figura 30. Mapa de Cultivos verano 2025. Zona XI (Sudoeste de Buenos Aires).
+==================== pagina 41 ====================
+40
+Figura 31. Mapa de Cultivos verano 2025. Zona XII (Sudeste de Buenos Aires).
+==================== pagina 42 ====================
+41
+Figura 32. Mapa de Cultivos verano 2025. Zona XIII (San Luis).
+==================== pagina 43 ====================
+42
+Figura 33. Mapa de Cultivos verano 2025. Zona XIV (Cuenca del Salado).
+==================== pagina 44 ====================
+43
+Figura 34. Mapa de Cultivos verano 2025. Zona XVb (Corrientes).
+==================== pagina 45 ====================
+44
+4. Referencias
+Bolsa de Cereales de Buenos Aires. 2019. Panorama Agrícola Semanal. Departamento de
+Estimaciones Agrícolas. Newsletter, Bolsa de Cereales de Buenos Aires.
+<http://www.bolsadecereales.com/ver-acerca-del-panorama-agricola-semanal-78# - Acceso
+27/08/2019>
+Burkart R., Bárbaro O., Sanchez R.O., Gómez D.A. 1999. Ecorregiones de la Argentina.
+Administración de Parques Nacionales y Secretaría de Recursos Naturales y Desarrollo
+Sustentable: Buenos Aires, Argentina.
+Cavallero, L., Peinetti, R., & López, D. R. (2023). Incidencia de fuegos en la Argentina durante
+las últimas dos décadas y su asociación con coberturas y usos del suelo en distintos contextos
+ambientales. Ecología Austral, 33: 641-992.
+Congalton, R.G. 1991. A Review of Assessing the Accuracy of Classifications of Remotely
+Sensed Data. Remote Sensing of Environment, 37:35-46.
+de Abelleyra, D., Banchero, S., Verón, S. 2024. Characterization of crop sequences in Argentina.
+Spatial distribution and determinants. Agricultural Systems, 220, 104069.
+de Abelleyra D. 2024. Análisis de secuencias de cultivos a lo largo de seis campañas del mapa
+nacional de cultivos (2018/2019-2023/2024). Repositorio INTA <URI:
+http://hdl.handle.net/20.500.12123/20554 - Acceso 01/04/2025>
+Guido R.E., Oviedo O.A. 2024. Análisis del efecto de diversas campañas agrícolas en la
+localización óptima de bioplantas basadas en residuos agrícolas. Energías Renovables y Medio
+Ambiente, 54, 11-20.
+Instituto Geográfico Nacional (IGN). 2019. CAPAS SIG.
+<http://www.ign.gob.ar/NuestrasActividades/InformacionGeoespacial/CapasSIG - Acceso:
+27/08/2019>
+Joint Experiment of Crop Assessment and Monitoring (JECAM). 2018. JECAM Guidelines for
+cropland and crop type definition and field data collection. <http://jecam.org/wp-
+content/uploads/2018/10/JECAM_Guidelines_for_Field_Data_Collection_v1_0.pdf - Acceso:
+27/08/2020>
+Pekel J.F., Cottam A., Gorelick N., Belward A.S. 2016. High-resolution mapping of global surface
+water and its long-term changes. Nature 540, 418-422.
+Souza C., Azevedo T. 2017. Mapbiomas general handbook. MapBiomas: San Pablo, Brasil, p.
+1–23.

@@ -11,7 +11,7 @@
    propio JSON, partido por especie y por modo. */
 
 import * as echarts from "echarts";
-import { capasDelMapa, geoDeMapa } from "./capas";
+import { capasDelMapa, capasPrendidas, geoDeMapa } from "./capas";
 
 export default function iniciar(PIVOTAL) {
 
@@ -763,6 +763,29 @@ export default function iniciar(PIVOTAL) {
      de los mapas de calor, con un solo color del tema, asi que la proyeccion, los nombres de
      los departamentos y su acomodo son los de siempre. Los departamentos no se eligen: este
      mapa no tiene clic. */
+  /* El valor de las capas prendidas para un departamento (RF25). Devuelve el pedazo de HTML
+     que va abajo del nombre en el tooltip, o "" si no hay nada que decir: la pagina sin los
+     valores calculados, o todas las capas apagadas. Los textos los escribe el build, con su
+     unidad; aca no se formatea ni se suma nada. */
+  function consultaDepartamental(nodo, panel, geoId) {
+    var tabla = panel.por_departamento;
+    if (!tabla || !geoId) { return ""; }
+    var activas = capasPrendidas(nodo, (PIVOTAL.datos() || {}).capas);
+    var renglones = [];
+    activas.forEach(function (cid) {
+      var capa = tabla[cid];
+      if (!capa) { return; }
+      /* El nombre de la capa va en el gris de apoyo y el numero en el color del texto, para
+         que se distingan de un vistazo. El color se lee del token, no se escribe a mano: el
+         cartel lo dibuja ECharts en un div propio y las clases del sitio no lo alcanzan con
+         la especificidad suficiente, asi que va en linea. */
+      renglones.push('<span style="color:' + PIVOTAL.color("--texto-apoyo") + '">'
+                     + capa.etiqueta + "</span> " + (capa.deptos[geoId] || ""));
+    });
+    if (!renglones.length) { return ""; }
+    return "<br>" + renglones.join("<br>");
+  }
+
   function pintarMapaCapas(nodo, panel) {
     var caja = nodo.querySelector("[data-grafico]");
     var porId = {};
@@ -801,9 +824,17 @@ export default function iniciar(PIVOTAL) {
       /* Con zoom los departamentos los dibuja el GEO (ver `geoDeMapa`), asi que su cromo
          viaja ahi y la serie `map` no se usa: seria una segunda copia invisible del mismo
          mapa. Sin zoom, todo sigue exactamente como antes. */
+      var cartelDelDepartamento = function (p) {
+        var n = nombre(p);
+        if (!n) { return ""; }
+        return "<b>" + n + "</b>" + consultaDepartamental(nodo, panel, p.name);
+      };
       var cromoDepartamentos = {
         label: serieMapa.label, labelLayout: serieMapa.labelLayout,
-        itemStyle: serieMapa.itemStyle, emphasis: serieMapa.emphasis
+        itemStyle: serieMapa.itemStyle, emphasis: serieMapa.emphasis,
+        /* Con zoom los departamentos los dibuja el GEO, y el geo no hereda el formatter del
+           tooltip global: su cartel viaja aca, con el mismo texto que el de la serie. */
+        tooltip: { show: true, confine: true, formatter: cartelDelDepartamento }
       };
       if (conZoom) {
         serieMapa = null;
@@ -818,7 +849,11 @@ export default function iniciar(PIVOTAL) {
         tooltip: {
           trigger: "item",
           confine: true,
-          formatter: function (p) { var n = nombre(p); return n ? "<b>" + n + "</b>" : ""; }
+          /* RF25: el tooltip del departamento lista el valor de las capas PRENDIDAS para
+             ESE departamento. Va en el tooltip del mapa y no en un cuadro aparte porque la
+             pagina de Infraestructura es, por pedido de JC del 15-nov-2026, solo el titulo y
+             el mapa a toda la pagina: un panel nuevo seria mobiliario que el no maqueto. */
+          formatter: cartelDelDepartamento
         },
         series: serieMapa ? [serieMapa] : []
       };
@@ -983,6 +1018,20 @@ export default function iniciar(PIVOTAL) {
         tarjeta.className += " acceso-externo";
         tarjeta.setAttribute("aria-label", t.titulo + " (se abre en el sitio de "
                              + (t.organismo || "la fuente") + ", en otra pestaña)");
+      }
+      /* RF24.2: el visor que el organismo deja embeber se abre en el popup del sitio. Se
+         respetan los modificadores del navegador (Ctrl, Shift, Meta y el boton del medio):
+         ahi el `<a>` hace lo suyo y abre el visor del organismo en otra pestania. */
+      if (t.visor_embebido && t.href) {
+        tarjeta.className += " acceso-embebido";
+        tarjeta.setAttribute("aria-label", t.titulo + " (se abre en esta página, en un visor "
+                             + "de " + (t.organismo || "la fuente") + ")");
+        tarjeta.addEventListener("click", function (evento) {
+          if (evento.metaKey || evento.ctrlKey || evento.shiftKey || evento.altKey
+              || evento.button !== 0) { return; }
+          evento.preventDefault();
+          visorAbrir(t, tarjeta);
+        });
       }
       var mini = document.createElement("span");
       mini.className = "acceso-mini" + (t.miniatura_icono ? " acceso-mini-icono" : "")
@@ -2595,6 +2644,130 @@ export default function iniciar(PIVOTAL) {
      caja crece desde el boton que la abrio y vuelve ahi al cerrar. */
   var info = { dialogo: null, caja: null, cuerpo: null, titulo: null, bajados: {},
                graficos: [], anim: null, desde: null, cerrando: false };
+
+  /* ------------------------------------------------------------------------------------
+     EL VISOR DEL ORGANISMO, EMBEBIDO (RF24.2 del ERS de Mapas).
+
+     Las tarjetas del area "Mapas" llevan al visor del organismo. Para las cinco fuentes que
+     el catalogo resolvio como "visor del organismo embebido" el visor se abre ADENTRO del
+     sitio, en el mismo popup que el resto, con el encuadre que ya trae su URL (RF22.4).
+
+     Por que solo cinco y no las catorce: se midieron las cabeceras de todos los visores el
+     17-nov-2026 y los del INTA (visor.inta.gob.ar y geo-nodo02) y el de la ORA mandan
+     `X-Frame-Options: SAMEORIGIN`, o sea que adentro de un iframe salen EN BLANCO. Esos
+     siguen abriendo en otra pestania, que es peor pero funciona. La decision vive en el
+     catalogo y el pipeline corta si alguien declara uno embebible sin medirlo.
+
+     La tarjeta sigue siendo un `<a>` con su URL de verdad: un Ctrl+clic, el boton del medio o
+     el JS apagado abren el visor del organismo como siempre. Lo unico que cambia es el clic
+     normal. Y por si un organismo le agrega la cabecera manianha, el popup muestra al pie el
+     enlace para abrirlo afuera: si el iframe queda en blanco, hay salida. No se le manda el
+     referer (`referrerpolicy`), asi que el organismo no se entera de que pagina nuestra lo
+     esta mostrando.
+     ------------------------------------------------------------------------------------ */
+  var visor = { dialogo: null, caja: null, cuerpo: null, titulo: null, anim: null,
+                desde: null, cerrando: false };
+
+  function visorCrearDialogo() {
+    var dialogo = document.createElement("dialog");
+    /* Las dos clases: `info` le da el marco, el radio y el cromo que ya tienen los otros
+       dialogos del sitio, e `info-visor` nada mas que el alto del iframe. */
+    dialogo.className = "info info-visor";
+    var caja = document.createElement("div");
+    caja.className = "info-caja";
+    var cab = document.createElement("header");
+    cab.className = "info-cab";
+    visor.titulo = document.createElement("h2");
+    var cerrar = document.createElement("button");
+    cerrar.type = "button";
+    cerrar.className = "info-cerrar";
+    cerrar.textContent = "✕";
+    cerrar.setAttribute("aria-label", "Cerrar");
+    cerrar.addEventListener("click", function () { visorCerrar(); });
+    cab.appendChild(visor.titulo);
+    cab.appendChild(cerrar);
+    visor.cuerpo = document.createElement("div");
+    visor.cuerpo.className = "info-cuerpo visor-embebido";
+    caja.appendChild(cab);
+    caja.appendChild(visor.cuerpo);
+    dialogo.appendChild(caja);
+    dialogo.addEventListener("click", function (evento) {
+      if (evento.target === dialogo) { visorCerrar(); }
+    });
+    dialogo.addEventListener("cancel", function (evento) {
+      if (visor.cerrando) { return; }
+      evento.preventDefault();
+      visorCerrar();
+    });
+    dialogo.addEventListener("close", visorLimpiar);
+    document.body.appendChild(dialogo);
+    visor.dialogo = dialogo;
+    visor.caja = caja;
+    visor.anim = PIVOTAL.animadorDeDialogo(dialogo, caja, "info");
+    return dialogo;
+  }
+
+  function visorAbrir(tarjeta, nodoDeOrigen) {
+    if (!visor.dialogo) { visorCrearDialogo(); }
+    /* El animador espera un RECTANGULO de pantalla, no un nodo. Sin tarjeta de origen -no
+       deberia pasar- crece desde el centro, que es feo pero nunca roto. */
+    visor.desde = nodoDeOrigen ? nodoDeOrigen.getBoundingClientRect() : centroDeLaVentana();
+    visor.titulo.textContent = tarjeta.titulo || "Visor del organismo";
+    PIVOTAL.vaciar(visor.cuerpo);
+
+    var marco = document.createElement("iframe");
+    marco.className = "visor-marco";
+    marco.src = tarjeta.href;
+    marco.title = (tarjeta.titulo || "Visor") + " - "
+      + (tarjeta.organismo || "visor del organismo");
+    marco.setAttribute("referrerpolicy", "no-referrer");
+    marco.setAttribute("loading", "lazy");
+    visor.cuerpo.appendChild(marco);
+
+    var pie = document.createElement("p");
+    pie.className = "visor-pie";
+    var cual = document.createElement("span");
+    cual.textContent = "Visor de " + (tarjeta.organismo || "el organismo") + ".";
+    var afuera = document.createElement("a");
+    afuera.href = tarjeta.href;
+    afuera.target = "_blank";
+    afuera.rel = "noopener noreferrer";
+    afuera.textContent = "Abrir en el sitio del organismo";
+    pie.appendChild(cual);
+    pie.appendChild(afuera);
+    visor.cuerpo.appendChild(pie);
+
+    visor.dialogo.showModal();
+    /* La geometria de destino se vuelve a medir con la caja LIMPIA: al cerrar quedo con el
+       transform de vuelta escrito en linea. Mismo orden que el popup "Mas informacion". */
+    visor.anim.remedir();
+    /* Crece desde la tarjeta que lo abrio. No se anima la opacidad: si el movimiento no llega
+       a correr, lo peor que pasa es que el popup aparezca quieto y entero, nunca invisible. */
+    visor.anim.mover(visor.anim.encajarEn(visor.desde), "none", true, function () {});
+  }
+
+  /* Las tres maneras de cerrar (la cruz, el clic afuera y Escape) pasan por aca, igual que en
+     el popup "Mas informacion": la caja vuelve encogiendose hasta la tarjeta de la que salio y
+     recien al terminar se cierra el dialogo. */
+  function visorCerrar() {
+    if (!visor.dialogo || !visor.dialogo.open || visor.cerrando) { return; }
+    visor.cerrando = true;
+    /* Se arranca de donde esta la caja AHORA, leido antes de cortar la animacion: si la
+       apertura venia a medio camino, la vuelta sigue desde ahi sin saltos. */
+    var desde = getComputedStyle(visor.caja).transform;
+    var hasta = visor.anim.encajarEn(visor.desde || centroDeLaVentana());
+    visor.anim.mover(desde, hasta, false, function () {
+      visor.cerrando = false;
+      visor.dialogo.close();
+    });
+  }
+
+  /* El iframe se SACA al cerrar, no se esconde: un visor de mapas escondido sigue corriendo
+     su JS y pidiendo tiles al organismo. */
+  function visorLimpiar() {
+    if (visor.cuerpo) { PIVOTAL.vaciar(visor.cuerpo); }
+    visor.desde = null;
+  }
 
   function infoCrearDialogo() {
     var dialogo = document.createElement("dialog");

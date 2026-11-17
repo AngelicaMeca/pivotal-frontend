@@ -669,7 +669,7 @@ fuentes:
     fecha_estado: 2026-11-17
     modo_acceso: exportacion-desde-app
     modo_visualizacion:
-      resuelto: visor-del-organismo
+      resuelto: visor-del-organismo-embebido
       criterio: >
         El GEOVisor de la CONAE es un MapStore: JC anotó "EXPORTAR MAP-STORE", o sea que la capa
         se podría sacar de ahí. Mientras eso no se haga, se publica como enlace.
@@ -682,6 +682,21 @@ fuentes:
     indicacion_original: "EXPORTAR MAP-STORE"
     publicado_en: [specs/modelos/tablero-mapas-ingreso.yaml]
     publicado_como: enlace
+    # RF24.2: el visor del organismo se incrusta en el sitio, con el encuadre de
+    # RF22.4. Se declara embebible SOLO porque se midio; ver `embebible.medicion`.
+    visualizacion_embebida:
+      encuadre: >
+        El geoportal abre en el visor; la capa de bosque nativo se prende
+        adentro, como anoto JC.
+      encuadre_en_la_url: true
+      embebible:
+        verificado: 2026-11-17
+        medicion: >
+          Medido el 17-nov-2026 pidiendo la portada del visor y leyendo sus cabeceras: no
+          manda X-Frame-Options ni frame-ancestors, asi que se deja embeber. Los
+          visores del INTA (visor.inta.gob.ar y geo-nodo02) y el de la ORA mandan
+          `X-Frame-Options: SAMEORIGIN` y salen EN BLANCO adentro de un iframe:
+          esos siguen abriendo en otra pestania y no hay que volver a intentarlo.
 
   - id: inta-aptitud-tierras
     nombre: "Aptitud de Tierras"
@@ -782,7 +797,7 @@ fuentes:
     fecha_estado: 2026-11-17
     modo_acceso: catalogo-con-descarga
     modo_visualizacion:
-      resuelto: visor-del-organismo
+      resuelto: visor-del-organismo-embebido
       criterio: >
         Por ahora enlace. JC anotó "PERMITE DESCARGA DE GEODATOS", así que es candidata a
         ingesta propia: el dato ya es departamental y no habría que cruzar nada.
@@ -795,6 +810,21 @@ fuentes:
     indicacion_original: "PERMITE DESCARGA DE GEODATOS"
     publicado_en: [specs/modelos/tablero-mapas-ingreso.yaml]
     publicado_como: enlace
+    # RF24.2: el visor del organismo se incrusta en el sitio, con el encuadre de
+    # RF22.4. Se declara embebible SOLO porque se midio; ver `embebible.medicion`.
+    visualizacion_embebida:
+      encuadre: >
+        El portal abre en el indicador de poblacion total con la provincia
+        y sus departamentos seleccionados: el encuadre viaja en la propia URL de JC.
+      encuadre_en_la_url: true
+      embebible:
+        verificado: 2026-11-17
+        medicion: >
+          Medido el 17-nov-2026 pidiendo la portada del visor y leyendo sus cabeceras: no
+          manda X-Frame-Options ni frame-ancestors, asi que se deja embeber. Los
+          visores del INTA (visor.inta.gob.ar y geo-nodo02) y el de la ORA mandan
+          `X-Frame-Options: SAMEORIGIN` y salen EN BLANCO adentro de un iframe:
+          esos siguen abriendo en otra pestania y no hay que volver a intentarlo.
 
   - id: indec-viviendas
     nombre: "Viviendas particulares por departamento"
@@ -806,7 +836,7 @@ fuentes:
     responsable: jc
     fecha_estado: 2026-11-17
     modo_acceso: catalogo-con-descarga
-    modo_visualizacion: {resuelto: visor-del-organismo, criterio: "Igual que indec-poblacion-total."}
+    modo_visualizacion: {resuelto: visor-del-organismo-embebido, criterio: "Igual que indec-poblacion-total."}
     licencia:
       nombre: "Términos del INDEC"
       exige_cita: true
@@ -816,6 +846,20 @@ fuentes:
     indicacion_original: "PERMITE DESCARGA DE GEODATOS"
     publicado_en: [specs/modelos/tablero-mapas-ingreso.yaml]
     publicado_como: enlace
+    # RF24.2: el visor del organismo se incrusta en el sitio, con el encuadre de
+    # RF22.4. Se declara embebible SOLO porque se midio; ver `embebible.medicion`.
+    visualizacion_embebida:
+      encuadre: >
+        El portal abre en el indicador de viviendas con la provincia seleccionada.
+      encuadre_en_la_url: true
+      embebible:
+        verificado: 2026-11-17
+        medicion: >
+          Medido el 17-nov-2026 pidiendo la portada del visor y leyendo sus cabeceras: no
+          manda X-Frame-Options ni frame-ancestors, asi que se deja embeber. Los
+          visores del INTA (visor.inta.gob.ar y geo-nodo02) y el de la ORA mandan
+          `X-Frame-Options: SAMEORIGIN` y salen EN BLANCO adentro de un iframe:
+          esos siguen abriendo en otra pestania y no hay que volver a intentarlo.
 
   - id: indec-densidad
     nombre: "Densidad de población por departamento"
@@ -827,7 +871,7 @@ fuentes:
     responsable: jc
     fecha_estado: 2026-11-17
     modo_acceso: catalogo-con-descarga
-    modo_visualizacion: {resuelto: visor-del-organismo, criterio: "Igual que indec-poblacion-total."}
+    modo_visualizacion: {resuelto: visor-del-organismo-embebido, criterio: "Igual que indec-poblacion-total."}
     licencia:
       nombre: "Términos del INDEC"
       exige_cita: true
@@ -837,6 +881,20 @@ fuentes:
     indicacion_original: "PERMITE DESCARGA DE GEODATOS"
     publicado_en: [specs/modelos/tablero-mapas-ingreso.yaml]
     publicado_como: enlace
+    # RF24.2: el visor del organismo se incrusta en el sitio, con el encuadre de
+    # RF22.4. Se declara embebible SOLO porque se midio; ver `embebible.medicion`.
+    visualizacion_embebida:
+      encuadre: >
+        El portal abre en el indicador de densidad con la provincia seleccionada.
+      encuadre_en_la_url: true
+      embebible:
+        verificado: 2026-11-17
+        medicion: >
+          Medido el 17-nov-2026 pidiendo la portada del visor y leyendo sus cabeceras: no
+          manda X-Frame-Options ni frame-ancestors, asi que se deja embeber. Los
+          visores del INTA (visor.inta.gob.ar y geo-nodo02) y el de la ORA mandan
+          `X-Frame-Options: SAMEORIGIN` y salen EN BLANCO adentro de un iframe:
+          esos siguen abriendo en otra pestania y no hay que volver a intentarlo.
 
   - id: indec-parajes
     nombre: "Parajes por provincia"
@@ -849,7 +907,7 @@ fuentes:
     fecha_estado: 2026-11-17
     modo_acceso: catalogo-con-descarga
     modo_visualizacion:
-      resuelto: visor-del-organismo
+      resuelto: visor-del-organismo-embebido
       criterio: >
         Por ahora enlace, pero es la que más trabajo propio tiene por delante: JC quiere cruzarla
         con la red vial.
@@ -870,6 +928,21 @@ fuentes:
       defina los radios.
     publicado_en: [specs/modelos/tablero-mapas-ingreso.yaml]
     publicado_como: enlace
+    # RF24.2: el visor del organismo se incrusta en el sitio, con el encuadre de
+    # RF22.4. Se declara embebible SOLO porque se midio; ver `embebible.medicion`.
+    visualizacion_embebida:
+      encuadre: >
+        El portal abre en el indicador de parajes con la provincia y sus
+        departamentos seleccionados.
+      encuadre_en_la_url: true
+      embebible:
+        verificado: 2026-11-17
+        medicion: >
+          Medido el 17-nov-2026 pidiendo la portada del visor y leyendo sus cabeceras: no
+          manda X-Frame-Options ni frame-ancestors, asi que se deja embeber. Los
+          visores del INTA (visor.inta.gob.ar y geo-nodo02) y el de la ORA mandan
+          `X-Frame-Options: SAMEORIGIN` y salen EN BLANCO adentro de un iframe:
+          esos siguen abriendo en otra pestania y no hay que volver a intentarlo.
 
   # ============================================================================================
   # A EVALUAR · las dos filas "POR FAVOR VER QUE ES ESTO" de la hoja "VER" del Excel de JC

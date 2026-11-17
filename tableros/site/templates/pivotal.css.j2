@@ -1762,7 +1762,7 @@ a.acceso:focus-visible { outline: 2px solid var(--enlace); outline-offset: 2px; 
 .acceso-no-disponible {
   display: block;
   margin-top: 0.3rem;
-  font-family: var(--mono);
+  font-family: var(--rotulos);
   font-size: 0.68rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1776,6 +1776,51 @@ a.acceso:focus-visible { outline: 2px solid var(--enlace); outline-offset: 2px; 
 .acceso-externo .acceso-titulo::after {
   content: " \2197"; font-weight: 400; color: var(--texto-apoyo);
 }
+
+/* RF24.2: la tarjeta cuyo visor el organismo deja embeber se abre ADENTRO del sitio, asi que
+   no lleva la flecha de "sale del sitio" sino el signo de que se amplia aca. Las dos clases
+   son excluyentes: el build pone una o la otra, nunca las dos. */
+.acceso-embebido .acceso-titulo::after {
+  content: " 9C9"; font-weight: 400; color: var(--texto-apoyo);
+}
+
+/* El popup del visor del organismo. Hereda TODO de `.info` (el marco de 2vmin que hace que el
+   clic afuera cierre, el radio, el borde fino, la barra con el titulo y la cruz): lo unico
+   propio es que el cuerpo es un iframe que ocupa el alto disponible, porque un visor de mapas
+   en una caja chica no sirve para nada. */
+.info-visor .info-cuerpo.visor-embebido {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  /* `min-height: 0` es obligatorio: sin el, un item de flex no baja de su contenido y el
+     iframe no se reparte el alto. Es la misma trampa que ya estaba anotada para las tablas
+     del dashboard del popup. */
+  min-height: 0;
+  padding: 0.6rem 0.8rem 0.8rem;
+}
+
+.visor-marco {
+  flex: 1 1 0;
+  min-height: 380px;
+  width: 100%;
+  border: 1px solid var(--borde-panel);
+  border-radius: var(--radio-chico);
+  background: var(--fondo-cuadro);
+}
+
+.visor-pie {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 0.6rem;
+  align-items: baseline;
+  margin: 0;
+  font-family: var(--rotulos);
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+  color: var(--texto-apoyo);
+}
+
+.visor-pie a { color: var(--enlace); }
 @media (prefers-reduced-motion: reduce) { .acceso { transition: none; } }
 
 /* "Destacados" de AgroMet (columna derecha de "Clima Ingreso", 15-oct-2026). Los dos mapas

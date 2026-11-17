@@ -1,0 +1,469 @@
+==================== pagina 1 ====================
+Mapa Nacional de Cultivos
+campaña 2020/2021
+Versión 1
+Publicación N°3
+de Abelleyra D1, Verón S1, Banchero S1, Iturralde Elortegui M2, Valiente S3,
+Puig O3, Murray F4, Martini JP4, Zelaya K5, Maidana D6, Varlamoff N7,
+Peiretti J7, Benedetti P8, Portillo J9, Melilli M10, Maidana E11, Goytía Y12,
+Sapino V13, Regonat A14, Cracogna F15, Espíndola C15, Parodi M16, Colombo
+F16, Scarel J17, Ayala J18, Martins L19, Basanta M19, Rausch A20, Almada G21,
+Boero L22, Calcha J22, Chiavassa A14, Lopez de Sabando M23, Kurtz D24,
+Marini F25, Sarrailhe S1, Petek M1, Propato T1, Ferraina A1, Pezzola A26,
+Winschel C26, Muñoz S27, Mesa J28, Volante J2
+1Instituto de Clima y Agua 15AER Las Toscas
+2AER Olavarría 16AER Tostado
+3AER Bandera 17AER Calchaquí
+4AER Villa Mercedes 18AER San Javier
+5EEA Balcarce 19AER Esperanza
+6AER Tartagal 20AER Ceres
+7EEA Salta 21AER Pellegrini
+8EEA Famaillá 22AER Galvez
+9EEA Pergamino 23AER Necochea
+10AER Junín 24EEA Corrientes
+11EEA Mercedes 25AER Bahía Blanca
+12EEA Saenz Peña 26EEA Ascasubi
+13EEA Rafaela 27EEA Marcos Juárez
+14AER Reconquista 28AER Ayacucho
+Instituto Nacional de Tecnología Agropecuaria
+==================== pagina 2 ====================
+1
+INSTITUTO NACIONAL DE TECNOLOGÍA AGROPECUARIA
+PROGRAMA NACIONAL DE RECURSOS NATURALES Y GESTIÓN
+AMBIENTAL
+1.6.2.2.PD.I034 - Dinámica de uso y cobertura del suelo a través de
+sensores ópticos y radar
+1.6.2.2.PT.I033 - Manejo sostenible de RRNN del SAAA
+PROYECTO MAPBIOMAS
+RED JECAM-GEOGLAM
+Septiembre de 2021
+==================== pagina 3 ====================
+2
+Índice
+Introducción 3
+Metodología 3
+Resultados 8
+Exactitud obtenida 8
+Mapas 11
+Consideraciones finales 44
+Agradecimientos 44
+Referencias 44
+==================== pagina 4 ====================
+3
+1. Introducción
+Este informe presenta el Mapa Nacional de Cultivos (MNC) correspondiente a la campaña
+2020/2021. Esta nueva edición no solo representa una mejora en términos del número de
+cultivos considerados y de la mayor extensión espacial abordada sino también señala el
+desarrollo de capacidades que permiten la generación periódica y operativa de este producto.
+Desde la primera edición del MNC (2018-2019) el conjunto de agentes de INTA involucrados no
+dejo de crecer, incorporando conocimiento local y técnico, desarrollando y ajustando el
+protocolo de relevamiento, enriqueciendo la evaluación de los resultados, aumentando así la
+provisión de más y mejor información cartográfica al sector agropecuario. En lo inmediato, el
+agregado de esta nueva edición a los MNC de las campañas 2018/2019 y 2019/2020 potencia
+la capacidad de detectar cambios interanuales en la distribución espacial de los cultivos y
+cuantificar de manera objetiva procesos como la expansión y contracción agrícola, monocultivo
+y rotaciones agrícolas y agrícolo-ganaderas. A su vez, en el mediano plazo la información
+provista por estas colecciones de MNC que puedan ser generadas en tiempo real, permitirá el
+desarrollo de nuevos productos, tales como la estimación del rendimiento agrícola a nivel lote,
+pronósticos de producción de granos a nivel departamento y la caracterización de sistemas de
+producción de granos, entre otros. Esto implica un cambio sustancial ya que hasta hace pocos
+años no existía en nuestro país información a escala detallada de la ubicación de los diferentes
+cultivos extensivos con alcance nacional, una herramienta clave para la planificación de la
+producción, transporte, acopio de productos y distribución de insumos. Actualmente estamos
+generando esta información y sus cambios en el tiempo. Argentina se va sumando, así, al
+reducido grupo de países que cuenta con sistemas satelitales de seguimiento de cultivos
+extensivos para grano como los que cuentan los Estados Unidos (NASS), China (CropWatch),
+Canadá (AAFC) y Europa (MARS), entre otros.
+Esta nueva versión incluye una extensión del área mapeada para incluir más sitios de cultivos
+extensivos (NOA, San Luis). También se incorpora la diferenciación de cultivos de arveja, papa
+y verdeos de sorgo. Han participado en esta iniciativa 28 unidades de INTA.
+2. Metodología
+La metodología consistió en la realización de clasificaciones supervisadas a partir de índices
+obtenidos de imágenes satelitales de la plataforma Landsat. Las muestras de entrenamiento y
+validación fueron obtenidas a partir de relevamientos a campo e información complementaria
+correspondientes a la campaña agrícola 2020/2021. En la Figura 1 se puede apreciar un
+esquema del flujo de trabajo desarrollado.
+==================== pagina 5 ====================
+4
+Figura 1. Flujo de trabajo para la generación del Mapa Nacional de Cultivos.
+Se consideró una zonificación que incluye las principales áreas agrícolas del país, basada en
+las zonas del Panorama Agrícola Semanal (PAS) de la Bolsa de Cereales de Buenos Aires
+(2019). Esta zonificación agrupa departamentos o partidos en 15 zonas en función de la
+distribución y abundancia de cultivos. En este trabajo se consideraron las zonas I a XV (Figura
+2) con modificaciones. También se consideró una zonificación de áreas agroecológicas de
+Burkart (1989), para evitar incluir dentro de departamentos zonas áridas o con relieve muy
+marcado que impida la presencia de cultivos.
+Para cada zona se realizaron clasificaciones supervisadas en forma independiente, es decir
+clasificaciones que son entrenadas con muestras de referencia, que brindan información
+georeferenciada del tipo de cultivo y otras clases no agrícolas observadas en un número de
+lotes o parches a lo largo de la campaña considerada (2020/2021).
+==================== pagina 6 ====================
+5
+Figura 2. Área de estudio considerada para el Mapa Nacional de Cultivos 2020/2021. Líneas
+negras: zonificación basada en zonas PAS (Bolsa de Cereales de Buenos Aires, 2019). Líneas
+rojas: recorridos realizados durante la campaña de invierno de 2020 (A) y verano de 2021 (B).
+Las muestras de entrenamiento se obtuvieron de dos maneras:
+A. Relevamientos a lo largo de diversas rutas del país buscando cubrir las principales
+áreas agrícolas de las zonas definidas (Figura 2). Se siguieron recomendaciones de
+relevamiento de muestras sobre vehículo propuestas por la red JECAM (2018), y se
+generó un nuevo protocolo de muestreo (LINK). Los recorridos se realizaron en dos
+momentos del año: 1) agosto a diciembre de 2020 (para identificar cultivos de campaña
+de invierno) y 2) marzo a mayo de 2021 (para identificar cultivos de campaña de
+verano). Los puntos fueron convertidos a polígonos de 50 metros de radio con un
+método semi-automático, asegurando que describan un área homogénea
+(correspondiente a la misma descripción clase) dentro de un lote o parche de
+vegetación.
+B. Información complementaria. Esta se obtuvo a partir de productores, empresas y
+referentes con el objetivo de complementar información en zonas con menor
+disponibilidad de relevamientos. También se incorporaron muestras de interpretación
+==================== pagina 7 ====================
+6
+visual y observación de series de tiempo en zonas no agrícolas. En todos los casos se
+trata también de información georreferenciada a partir de la cual se generaron polígonos
+de entrenamiento.
+En este trabajo se definieron clases que describen lo ocurrido en cada lote en dos momentos
+de la campaña agrícola: 1) invierno 2020 y 2) verano 2021. Consideramos la definición de
+cultivos agrícolas propuesta por la red JECAM (2018), que considera una cobertura herbácea
+plantada y cosechada dentro de los 12 meses. Como excepción, también se incluye a los
+cultivos de caña de azúcar. Para cada zona se definieron clases de cultivos que en conjunto
+representaron hasta el 95 % del área sembrada (basadas en estadísticas de MAGyP, 2018) de
+los departamentos incluidos en cada zona PAS, de las últimas 5 campañas. También se
+registraron otras clases no agrícolas con la finalidad de discriminar el área agrícola y no
+agrícola. La totalidad de clases definidas se pueden observar en las Tablas 1 y 2.
+Tabla 1. Clases definidas para el Mapa Nacional de Cultivos de la campaña de invierno 2020 y
+su descripción. La columna ID representa la identificación numérica de cada clase en el
+INV
+mapa generado.
+ID Clase Descripción
+INV
+Cerealesdeinvierno Incluyecultivosdetrigo,cebada,avenaycenteno,comotambién
+0 verdeosdeinviernodegramíneas
+6 Garbanzo Cultivosdegarbanzo
+24 Arveja Cultivosdearveja
+19 CañadeAzúcar Plantacióndecañadeazúcar
+18 Barbecho Lotessincultivodeinviernoduranteelperíodoconsiderado
+20 NoAgrícola Incluyeherbáceasnocultivadasanualmenteyleñosas
+Mediante la herramienta Google Earth Engine, se generaron índices a partir del catálogo de
+imágenes LANDSAT (30 metros de resolución) disponibles para el área de estudio durante la
+campaña 2020-2021. Para los mapas de invierno 2020 se consideró el período entre el 1 de
+junio de 2020 y el 31 de diciembre de 2020. Para los mapas de verano se consideró el período
+1 de septiembre de 2020 al 31 de mayo de 2021. Se utilizaron dos tipos de índices: 1) índices
+basados en métricas que describen la distribución de frecuencias (e.g. percentiles, desvío
+estándar) de los valores observados en 2 subperíodos de tiempo (MapBiomas Chaco), y 2)
+índices que describen la dinámica temporal de índices de vegetación a lo largo de la campaña
+(e.g. momento de picos, pendientes, etc.) y que pueden describir mejor la dinámica de cultivos
+que presentan una estacionalidad muy marcada.
+--- tabla 1 ---
+ID INV | Clase | Descripción
+0 | Cerealesdeinvierno | Incluyecultivosdetrigo,cebada,avenaycenteno,comotambién verdeosdeinviernodegramíneas
+6 | Garbanzo | Cultivosdegarbanzo
+24 | Arveja | Cultivosdearveja
+19 | CañadeAzúcar | Plantacióndecañadeazúcar
+18 | Barbecho | Lotessincultivodeinviernoduranteelperíodoconsiderado
+20 | NoAgrícola | Incluyeherbáceasnocultivadasanualmenteyleñosas
+==================== pagina 8 ====================
+7
+Tabla 2. Clases definidas para el Mapa Nacional de Cultivos de la campaña de verano 2021 y
+su descripción. La columna ID representa la identificación numérica de cada clase en el
+VER
+mapa generado.
+ID Clase Descripción
+VER
+11 Soja Cultivodesoja,sindiscriminarsiesdeprimeraosegunda
+10 Maíz Cultivodemaíz
+12 Girasol Cultivodegirasol
+13 Poroto Cultivodeporoto
+15 Algodón Cultivodealgodón
+14 Cañadeazúcar Plantacióndecañadeazúcar
+17 Arroz Cultivodearroz
+16 Maní Cultivodemaní
+19 Girasol-CV CultivodeGirasolseguidodeotrocultivodeverano
+18 SorgoGR Cultivodesorgoensistemadeproducciónparagrano
+26 Papa Cultivodepapa
+28 VerdeodeSorgo VerdeodeSorgoenconfiguraciónparausoforrajero
+21 Barbecho Lotessincultivodeveranoduranteelperíodoconsiderado
+22 Noagrícola Incluyeherbáceasperennesnativasyexóticasyleñosas
+Se realizaron separadamente clasificaciones para cada una de las 15 zonas incluyendo clases
+de las que se obtuvieron más de 20 muestras. En los casos de clases relevantes con escaso
+número de muestras se utilizaron muestras de zonas adyacentes pertenecientes a un mismo
+gradiente latitudinal. Las clases finalmente consideradas por zona se muestran en las Tablas 3
+y 4. Las muestras fueron separadas en dos grupos: 1) muestras de entrenamiento que
+corresponden al 60 % de los polígonos de cada clase y 2) muestras de validación, el 40 %
+restante de los polígonos de cada clase. Las muestras de entrenamiento fueron utilizadas para
+correr el clasificador Random Forest, también sobre la plataforma Google Earth Engine. Con
+las muestras de validación se generaron indicadores del error de clasificación como Exactitud
+general, de usuario y de productor e índice Kappa (Congalton, 1991). Se aplicaron dos pasadas
+de un filtro espacial de vecindad con ventana (kernel) de 1 pixel (Souza and Azevedo, 2017)
+para corregir la presencia de píxeles aislados dentro de lotes o parches de vegetación. También
+se aplicaron máscaras de cuerpos de agua (Pekel et al., 2016), ejidos urbanos (IGN, 2019) y
+áreas inundables, basada en el mapa de coberturas de Volante y colaboradores (2010) y en
+indicadores de probabilidad de humedales.
+--- tabla 1 ---
+ID VER | Clase | Descripción
+11 | Soja | Cultivodesoja,sindiscriminarsiesdeprimeraosegunda
+10 | Maíz | Cultivodemaíz
+12 | Girasol | Cultivodegirasol
+13 | Poroto | Cultivodeporoto
+15 | Algodón | Cultivodealgodón
+14 | Cañadeazúcar | Plantacióndecañadeazúcar
+17 | Arroz | Cultivodearroz
+16 | Maní | Cultivodemaní
+19 | Girasol-CV | CultivodeGirasolseguidodeotrocultivodeverano
+18 | SorgoGR | Cultivodesorgoensistemadeproducciónparagrano
+26 | Papa | Cultivodepapa
+28 | VerdeodeSorgo | VerdeodeSorgoenconfiguraciónparausoforrajero
+21 | Barbecho | Lotessincultivodeveranoduranteelperíodoconsiderado
+22 | Noagrícola | Incluyeherbáceasperennesnativasyexóticasyleñosas
+==================== pagina 9 ====================
+8
+Tabla 3. Clases consideradas por zona para el mapa de invierno 2020.
+Tabla 4. Clases consideradas por zona para el mapa de verano 2021.
+3. Resultados
+a. Exactitud obtenida
+La exactitud general y el índice Kappa fueron en promedio de 0,89 y 0,80 respectivamente para
+los mapas de invierno 2020, y de 0,87 y 0,79 respectivamente para los mapas de verano 2021
+(Tablas 5 y 6). Los mapas de invierno, con menor número de clases que los mapas de verano,
+mostraron en general exactitudes altas (por encima del 85%). Algunas zonas mostraron
+exactitudes menores (e.g. zona I: 0,82; zona XI, 0.64). Los mapas de verano mostraron
+exactitudes mayores al 80% en todas las zonas. En algunas zonas se observaron valores por
+encima del 90% (zonas III, VI, VII), todas zonas con un bajo número de clases.
+Con respecto a la exactitud por clase, durante el invierno se observaron valores balanceados
+entre zonas y clases, mostrando clases menos representativas, como arveja y garbanzo,
+menores valores de exactitud (Tabla 7). Los cereales de invierno mostraron gran variabilidad en
+la exactitud entre zonas. Los cultivos de verano más representativos (soja y maíz) mostraron en
+general una exactitud alta (Tabla 8). También mostraron alta exactitud los cultivos de girasol,
+arroz y maní. El cultivo de sorgo mostró gran variabilidad en su exactitud entre zonas,
+dependiendo del número de muestras y casos observados por zona. Las clases con mayor
+dificultad fueron papa y verdeo de sorgo.
+==================== pagina 10 ====================
+9
+Tabla 5. Exactitud general, índice Kappa y número de clases por zona (invierno 2020).
+ZonaPAS OvAcc Kappa Nclases
+I 0,82 0,71 5
+II 0,90 0,85 3
+III 0,95 0,91 3
+IV 0,90 0,83 3
+V 0,86 0,78 3
+VI 0,95 0,92 3
+VII 0,90 0,84 4
+VIII 0,92 0,87 3
+IX 0,91 0,85 3
+X 0,91 0,84 3
+XI 0,64 0,43 3
+XII 0,91 0,86 3
+XIII 0,88 0,78 3
+XIV 0,95 0,84 3
+XVb 0,88 0,63 3
+Promedio 0,89 0,80 3,2
+Tabla 6. Exactitud general, índice Kappa y número de clases por zona (verano 2021).
+ZonaPAS OvAcc Kappa Nclases
+I 0,80 0,74 6
+II 0,85 0,79 9
+III 0,92 0,88 4
+IV 0,89 0,84 5
+V 0,82 0,75 9
+VI 0,94 0,89 4
+VII 0,91 0,82 4
+VIII 0,90 0,84 5
+IX 0,88 0,81 5
+X 0,86 0,78 7
+XI 0,82 0,73 7
+XII 0,82 0,77 8
+XIII 0,87 0,80 7
+XIV 0,88 0,82 5
+XVb 0,87 0,64 5
+Promedio 0.87 0,79 6
+--- tabla 1 ---
+ZonaPAS | OvAcc | Kappa | Nclases
+I | 0,82 | 0,71 | 5
+II | 0,90 | 0,85 | 3
+III | 0,95 | 0,91 | 3
+IV | 0,90 | 0,83 | 3
+V | 0,86 | 0,78 | 3
+VI | 0,95 | 0,92 | 3
+VII | 0,90 | 0,84 | 4
+VIII | 0,92 | 0,87 | 3
+IX | 0,91 | 0,85 | 3
+X | 0,91 | 0,84 | 3
+XI | 0,64 | 0,43 | 3
+XII | 0,91 | 0,86 | 3
+XIII | 0,88 | 0,78 | 3
+XIV | 0,95 | 0,84 | 3
+XVb | 0,88 | 0,63 | 3
+Promedio | 0,89 | 0,80 | 3,2
+--- tabla 2 ---
+ZonaPAS | OvAcc | Kappa | Nclases
+I | 0,80 | 0,74 | 6
+II | 0,85 | 0,79 | 9
+III | 0,92 | 0,88 | 4
+IV | 0,89 | 0,84 | 5
+V | 0,82 | 0,75 | 9
+VI | 0,94 | 0,89 | 4
+VII | 0,91 | 0,82 | 4
+VIII | 0,90 | 0,84 | 5
+IX | 0,88 | 0,81 | 5
+X | 0,86 | 0,78 | 7
+XI | 0,82 | 0,73 | 7
+XII | 0,82 | 0,77 | 8
+XIII | 0,87 | 0,80 | 7
+XIV | 0,88 | 0,82 | 5
+XVb | 0,87 | 0,64 | 5
+Promedio | 0.87 | 0,79 | 6
+==================== pagina 11 ====================
+10
+Tabla 7. Promedio de Exactitudes de usuario y productor por zona para el mapa de invierno
+2020.
+Tabla 8. Promedio de Exactitudes de usuario y productor por zona para el mapa de verano
+2021.
+==================== pagina 12 ====================
+11
+b. Mapas
+A continuación se muestran los mapas de invierno 2020 y verano 2021 generados tanto a nivel
+nacional (Figura 3 y 4), como también mostrando el detalle de cada zona (Figuras 5 a 34). Al
+mapa se puede acceder desde una aplicación para la visualización desde la web:
+https://intalulc.users.earthengine.app/view/mnc20-21. También se pueden visualizar y
+descargar los mapas en formato geotiff desde GeoINTA (www.geointa.inta.gob.ar).
+==================== pagina 13 ====================
+12
+Figura 3. Mapa Nacional de Cultivos invierno 2020.
+==================== pagina 14 ====================
+13
+Figura 4. Mapa Nacional de Cultivos verano 2021.
+==================== pagina 15 ====================
+14
+Figura 5. Mapa de Cultivos invierno 2020. Zona I (NOA).
+==================== pagina 16 ====================
+15
+Figura 6. Mapa de Cultivos invierno 2020. Zona II (NEA).
+==================== pagina 17 ====================
+16
+Figura 7. Mapa de Cultivos invierno 2020. Zona III (Centro-Norte de Córdoba).
+==================== pagina 18 ====================
+17
+Figura 8. Mapa de Cultivos invierno 2020. Zona IV (Sur de Córdoba).
+==================== pagina 19 ====================
+18
+Figura 9. Mapa de Cultivos invierno 2020. Zona V (Centro Norte de Santa Fe).
+==================== pagina 20 ====================
+19
+Figura 10. Mapa de Cultivos invierno 2020. Zona VI (Núcleo Norte).
+==================== pagina 21 ====================
+20
+Figura 11. Mapa de Cultivos invierno 2020. Zona VII (Núcleo Sur).
+==================== pagina 22 ====================
+21
+Figura 12. Mapa de Cultivos invierno 2020. Zona VIII (Centro Este de Entre Ríos).
+==================== pagina 23 ====================
+22
+Figura 13. Mapa de Cultivos invierno 2020. Zona IX (Norte de La Pampa - Oeste de Buenos
+Aires).
+==================== pagina 24 ====================
+23
+Figura 14. Mapa de Cultivos invierno 2020. Zona X (Centro de Buenos Aires).
+==================== pagina 25 ====================
+24
+Figura 15. Mapa de Cultivos invierno 2020. Zona XI (Sudoeste de Buenos Aires - Sur de La
+Pampa).
+==================== pagina 26 ====================
+25
+Figura 16. Mapa de Cultivos invierno 2020. Zona XII (Sudeste de Buenos Aires).
+==================== pagina 27 ====================
+26
+Figura 17. Mapa de Cultivos invierno 2020. Zona XIII (San Luis).
+==================== pagina 28 ====================
+27
+Figura 18. Mapa de Cultivos invierno 2020. Zona XIV (Cuenca del Salado).
+==================== pagina 29 ====================
+28
+Figura 19. Mapa de Cultivos invierno 2020. Zona XVb (Corrientes).
+==================== pagina 30 ====================
+29
+Figura 20. Mapa de Cultivos verano 2021. Zona I (NOA).
+==================== pagina 31 ====================
+30
+Figura 21. Mapa de Cultivos verano 2021. Zona II (NEA).
+==================== pagina 32 ====================
+31
+Figura 22. Mapa de Cultivos verano 2021. Zona III (Centro-Norte de Córdoba).
+==================== pagina 33 ====================
+32
+Figura 23. Mapa de Cultivos verano 2021. Zona IV (Sur de Córdoba).
+==================== pagina 34 ====================
+33
+Figura 24. Mapa de Cultivos verano 2021. Zona V (Centro Norte de Santa Fe).
+==================== pagina 35 ====================
+34
+Figura 25. Mapa de Cultivos verano 2021. Zona VI (Núcleo Norte).
+==================== pagina 36 ====================
+35
+Figura 26. Mapa de Cultivos verano 2021. Zona VII (Núcleo Sur).
+==================== pagina 37 ====================
+36
+Figura 27. Mapa de Cultivos verano 2021. Zona VIII (Centro Este de Entre Ríos).
+==================== pagina 38 ====================
+37
+Figura 28. Mapa de Cultivos verano 2021. Zona IX (Norte de La Pampa - Oeste de Buenos
+Aires).
+==================== pagina 39 ====================
+38
+Figura 29. Mapa de Cultivos verano 2021. Zona X (Centro de Buenos Aires).
+==================== pagina 40 ====================
+39
+Figura 30. Mapa de Cultivos verano 2021. Zona XI (Sudoeste de Buenos Aires).
+==================== pagina 41 ====================
+40
+Figura 31. Mapa de Cultivos verano 2021. Zona XII (Sudeste de Buenos Aires).
+==================== pagina 42 ====================
+41
+Figura 32. Mapa de Cultivos verano 2021. Zona XIII (San Luis).
+==================== pagina 43 ====================
+42
+Figura 33. Mapa de Cultivos verano 2021. Zona XIV (Cuenca del Salado).
+==================== pagina 44 ====================
+43
+Figura 34. Mapa de Cultivos verano 2021. Zona XVb (Corrientes).
+==================== pagina 45 ====================
+44
+4. Consideraciones finales
+Esta nueva publicación del Mapa Nacional de Cultivos aporta información para la
+caracterización de la variabilidad interanual en la distribución de cultivos extensivos en las
+principales regiones agrícolas de Argentina. En la medida en que se pueda dar continuidad a la
+generación de este tipo de mapas con gran detalle y extensión espacial, permitirá disponer de
+series de tiempo extensas que permitirán caracterizar de una manera más robusta procesos de
+cambio que describen los sistemas de producción agropecuaria de las distintas regiones de
+Argentina (rotación, monocultivo, variabilidad de cultivos sembrados por lote), siendo una
+herramienta clave para evaluar la sustentabilidad de la producción agrícola.
+5. Agradecimientos
+Queremos agradecer a productores, empresas y referentes que aportaron información
+complementaria y que permitió mejorar la distribución espacial y temporal de las muestras:
+CRESUD Argentina S.A., Grupo Garabí, Diego Pons y Manuel Vicondo (EEA Manfredi), Julio
+Pietrantonio (AER Bell Ville). También queremos agradecer a referentes que hicieron
+comentarios sobre aspectos metodológicos y resultados de los mapas: Diego Ybarra (EEA
+Corrientes) y Fabián Tejerina (EEA Salta).
+6. Referencias
+Bolsa de Cereales de Buenos Aires. 2019. Panorama Agrícola Semanal. Departamento de
+Estimaciones Agrícolas. Newsletter, Bolsa de Cereales de Buenos Aires.
+<http://www.bolsadecereales.com/ver-acerca-del-panorama-agricola-semanal-78# - Acceso
+27/08/2019>
+Burkart R., Bárbaro O., Sanchez R.O., Gómez D.A. 1999. Ecorregiones de la Argentina.
+Administración de Parques Nacionales y Secretaría de Recursos Naturales y Desarrollo
+Sustentable: Buenos Aires, Argentina.
+Congalton, R.G. 1991. A Review of Assessing the Accuracy of Classifications of Remotely
+Sensed Data. Remote Sensing of Environment, 37:35-46
+Instituto Geográfico Nacional (IGN). 2019. CAPAS SIG.
+<http://www.ign.gob.ar/NuestrasActividades/InformacionGeoespacial/CapasSIG - Acceso:
+27/08/2019>
+Joint Experiment of Crop Assessment and Monitoring (JECAM). 2018. JECAM Guidelines for
+cropland and crop type definition and field data collection.
+==================== pagina 46 ====================
+45
+<http://jecam.org/wp-content/uploads/2018/10/JECAM_Guidelines_for_Field_Data_Collection_v
+1_0.pdf - Acceso: 27/08/2020>
+Ministerio de Agricultura, Ganadería y Pesca (MINAGRO). 2018. Estimaciones Agrícolas.
+Subsecretaría de Agricultura, Dirección Nacional de Estimaciones, Delegaciones y Estudios
+Económicos. Ministerio de Agroindustria, República Argentina.
+<https://www.agroindustria.gob.ar/datosagroindustriales - Acceso 1/12/2018>
+Pekel J.F., Cottam A., Gorelick N., Belward A.S. 2016. High-resolution mapping of global
+surface water and its long-term changes. Nature 540, 418-422.
+Souza C., Azevedo T. 2017. Mapbiomas general handbook. MapBiomas: San Pablo, Brasil, p.
+1–23.

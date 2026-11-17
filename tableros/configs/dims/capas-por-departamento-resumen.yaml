@@ -1,0 +1,69 @@
+generado_por: python -m pipeline.capas_departamento
+para: 'RF25 del ERS de Mapas: los valores de las capas activas por departamento.'
+metodo:
+  puntos: Punto en poligono. Exacto.
+  lineas: Cada segmento se le asigna al departamento que contiene su PUNTO MEDIO y
+    se suma su largo (haversine) ahi. No se corta el segmento en el limite, asi que
+    el total provincial se conserva exacto y lo que puede estar mal atribuido es el
+    pedazo que cruza un limite.
+  corte_en_el_limite: Un pedazo cuyas dos puntas caen en departamentos distintos se
+    parte al medio y se sigue, hasta que coincidan o hasta que baje de 25 metros.
+  cota_de_error: '`cota_error_km` es el largo de los pedazos que quedaron abajo de
+    los 25 metros sin resolverse: es el maximo que podria estar del lado equivocado,
+    no el error real. Sin el corte en el limite esa cota llegaba al 6,56% en el ferrocarril.'
+  no_es: 'No es distancia por camino ni accesibilidad: son kilometros de traza y cantidades
+    de puntos adentro de cada departamento.'
+departamentos: 27
+capas:
+- capa: caminos-terciarios
+  etiqueta: Caminos rurales (red terciaria)
+  medida: km
+  rasgos: 3
+  total_provincial: 30808.422
+  fuera_de_la_provincia_km: 0.264
+  cota_error_km: 11.325
+  cota_error_pct: 0.037
+- capa: estaciones-ferrocarril
+  etiqueta: Estaciones de ferrocarril
+  medida: cuantos
+  rasgos: 89
+  total_provincial: 89
+  fuera_de_la_provincia: 0
+- capa: ferrocarril
+  etiqueta: Ferrocarril
+  medida: km
+  rasgos: 26
+  total_provincial: 1851.148
+  fuera_de_la_provincia_km: 1.075
+  cota_error_km: 0.877
+  cota_error_pct: 0.047
+- capa: localidades
+  etiqueta: Ciudades y pueblos
+  medida: cuantos
+  rasgos: 165
+  total_provincial: 165
+  fuera_de_la_provincia: 0
+- capa: rutas-nacionales
+  etiqueta: Rutas nacionales
+  medida: km
+  rasgos: 74
+  total_provincial: 1518.493
+  fuera_de_la_provincia_km: 0.0
+  cota_error_km: 0.57
+  cota_error_pct: 0.038
+- capa: rutas-provinciales
+  etiqueta: Rutas provinciales
+  medida: km
+  rasgos: 338
+  total_provincial: 8497.225
+  fuera_de_la_provincia_km: 0.992
+  cota_error_km: 2.995
+  cota_error_pct: 0.035
+- capa: tendido-media-tension
+  etiqueta: Tendido eléctrico (media tensión)
+  medida: km
+  rasgos: 3
+  total_provincial: 10014.151
+  fuera_de_la_provincia_km: 0.0
+  cota_error_km: 2.971
+  cota_error_pct: 0.03
