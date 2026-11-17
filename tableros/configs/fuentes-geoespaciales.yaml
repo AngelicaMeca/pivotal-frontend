@@ -236,6 +236,47 @@ fuentes:
       - specs/modelos/tablero-infraestructura-y-riesgo.yaml
     publicado_como: capa
 
+  - id: ign-parajes-bahra
+    nombre: "Parajes (BAHRA - Base de Asentamientos Humanos de la República Argentina)"
+    organismo: "Instituto Geográfico Nacional (IGN), con dato del INDEC"
+    url: https://www.ign.gob.ar/NuestrasActividades/InformacionGeoespacial/CapasSIG
+    tipo_contenido: servicio-ogc
+    alcance: nacional
+    estado: en-ingesta
+    responsable: equipo-datos
+    fecha_estado: 2026-11-17
+    modo_acceso: ogc-wfs
+    modo_visualizacion:
+      resuelto: visor-propio
+      criterio: "Igual que ign-vial-nacional."
+    licencia:
+      nombre: "Datos abiertos del IGN"
+      exige_cita: true
+      atribucion: "Fuente: IGN - BAHRA (dato del INDEC)"
+      redistribucion: permitida
+    indicaciones: [exportar-capa]
+    # No se dibuja en ningun mapa: entra para calcular un indicador. Por eso `ninguno`, que es
+    # lo que habilita a declarar `publicado_en` sin estar en estado `publicada`.
+    publicado_como: ninguno
+    observaciones: >
+      Es OTRA capa que ign-localidades-bahra: `ign:bahra_paraje`, y hace falta porque
+      `localidad_bahra` no trae ni un paraje. Son 1.022 en la provincia contra 165 localidades.
+      Entra el 17-nov-2026 como sujeto del indicador de proximidad a la red pavimentada
+      (RF18.1), NO como capa del mapa: JC no la pidió y la regla del 16-oct es que lo que no
+      está maquetado no se publica. Cada punto trae su departamento en la fila (`cod_depto`).
+      Cuatro parajes vienen con `cod_pcia` 86 y un `cod_depto` de la provincia vecina (San
+      Antonio, Colonia El Bellaco, Pozo Jume y Pozo del Arbolito, todos sobre el límite): no se
+      les inventa departamento, quedan fuera de los conteos y registrados en el resumen.
+    normalizacion:
+      aplicada: false
+      motivo: >
+        Capa de puntos, no un dato por departamento. El indicador que sale de ella sí se
+        agrupa por departamento, pero usando el `cod_depto` que la propia fuente trae en la
+        fila: no hay cruce geométrico contra los límites que haya que validar.
+    publicado_en:
+      - configs/dims/capas-ign.yaml
+      - configs/dims/indicadores-geo.yaml
+
   - id: ign-desinventar
     nombre: "DESINVENTAR - eventos adversos hidrometeorológicos 1970-2015"
     organismo: "Instituto Geográfico Nacional (IGN)"

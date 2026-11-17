@@ -32,6 +32,15 @@ fuente:
 
 descargas_crudas:
   # archivo: [espacio:capa, sha256, bytes]
+  #
+  # OJO con el sha256 de las ocho primeras: GeoServer le estampa a CADA respuesta su
+  # `"timeStamp":"2026-11-17T15:58:34.985Z"`, asi que volver a bajar el mismo archivo da el
+  # MISMO tamanio y OTRO hash (verificado el 17-nov-2026 con provincia.json: 64.643 bytes las
+  # dos veces, hash distinto). O sea que esos ocho valores documentan el archivo que se bajo
+  # ese dia pero NO se pueden verificar contra una bajada nueva. La entrada de parajes usa el
+  # criterio que si se reproduce -el sha256 del archivo con el campo `timeStamp` quitado- y
+  # lleva los dos numeros. Las otras ocho se recalculan asi la proxima vez que se bajen
+  # (backlog 119); no se recalcularon ahora para no volver a bajar 34 MB al aire.
   provincia.json: [ign:provincia, 59e5dc2c8a418d926ef39450dd4a50207e2ea99de24c1d00ae59874927792934, 64643]
   vial_nacional.json: [ign:vial_nacional, e9ee72a62126c1dc0824f41046ee741d806beb325c5c450684819e7125aaa78e, 324847]
   vial_provincial.json: [ign:vial_provincial, d71447b3ccaa448b30a9edc7c0420b2b28e3778210ca3a91041a5b80aeb1845e, 1729671]
@@ -42,6 +51,15 @@ descargas_crudas:
   # DIVISION DEPARTAMENTAL Y LAS PRINCIPALES CIUDADES/PUEBLOS"). Las otras siete capas se
   # volvieron a bajar ese dia y a regenerar: salieron identicas byte a byte a las de octubre.
   localidad_bahra.json: [ign:localidad_bahra, 8d8da02a62ba482f994844432dbee4fc05d6879f5c809f0d239d64c6f487c00a, 179875]
+  # Parajes (BAHRA), bajada el 17-nov-2026: la capa de localidades NO trae parajes, el IGN los
+  # publica aparte. Son el sujeto del indicador de proximidad a la red pavimentada (RF18.1).
+  bahra_paraje.json:
+    capa: ign:bahra_paraje
+    bytes: 960749
+    sha256_de_la_bajada: 8c3ffefb4560c50ee9fe0472974301671de7ab475cdd0086fffc625b8f6cc269
+    # Este es el que sirve para verificar: el archivo sin el `timeStamp` de GeoServer.
+    sha256_sin_timestamp: e479dd85dd009335eefa12636e9e39e3427a87b2afcd80eba9e77ab50f62389e
+    bytes_sin_timestamp: 960710
   desinventar_hidrometeorologico_riesgo.json: [ign_riesgo:desinventar_hidrometeorologico_riesgo, 1e665a51098bc7e5451c82e56ea95925c5922b7eee9adaa88a97655a93f06cd0, 6759163]
   sinagir_amenazas_hidrometeorologicas_riesgo.json: [ign_riesgo:sinagir_amenazas_hidrometeorologicas_riesgo, 7653100ec964bb1b43f9f543203e546ae98a6e77e6f48ce33a8ad4c7d35c843b, 13970379]
 

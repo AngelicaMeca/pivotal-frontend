@@ -1,0 +1,342 @@
+# Generado por `python -m pipeline.proximidad`. No editar a mano.
+# RF18.1 (los radios) y RF18.2 (de que capas sale y con que metodo).
+generado_por: python -m pipeline.proximidad
+fecha: '2026-11-17'
+indicador: proximidad-parajes-red-pavimentada
+requisito: RF18.1
+radios_km:
+- 5
+- 10
+- 20
+- 40
+capas_de_origen:
+  sujeto: capas-ign/parajes.geojson
+  red:
+    rutas-nacionales.geojson:
+      segmentos: 3942
+    rutas-provinciales.geojson:
+      segmentos: 4936
+    caminos-terciarios.geojson:
+      segmentos: 1943
+  calzada_incluida:
+  - Pavimentado
+metodo:
+  medida: 'Distancia en linea recta desde el paraje al punto mas cercano de CUALQUIER
+    tramo pavimentado, medida contra los segmentos de la linea (no contra sus vertices).
+
+    '
+  proyeccion: 'Plano equirrectangular local centrado en la latitud media de la provincia:
+    x = R*cos(lat0)*lon, y = R*lat, con R = 6.371.008,8 m. A las distancias que mide
+    este indicador (decenas de kilometros) el error contra la distancia sobre la esfera
+    queda por debajo del 0,2%, y a cambio el calculo es una resta y una raiz. NO sirve
+    para medir distancias de cientos de kilometros.
+
+    '
+  no_es: 'No es distancia por camino ni tiempo de viaje: es la distancia en linea
+    recta al asfalto mas cercano. Un paraje a 8 km en linea recta puede estar a 30
+    km de manejo.
+
+    '
+  recorte: 'La red se toma ya recortada a la provincia, asi que un paraje del borde
+    puede tener asfalto mas cerca del otro lado del limite y aca figurar mas lejos.
+    Son pocos y se avisa en la nota del cuadro.
+
+    '
+  latitud_media_de_la_red: -27.861252
+provincia:
+  parajes: 1018
+  hasta:
+    5: 364
+    10: 567
+    20: 804
+    40: 974
+  mas_lejos: 44
+  max_km: 75.19
+  promedio_km: 12.29
+departamentos:
+  '86007':
+    parajes: 9
+    hasta:
+      5: 2
+      10: 4
+      20: 8
+      40: 9
+    mas_lejos: 0
+    max_km: 20.17
+    promedio_km: 10.76
+  '86014':
+    parajes: 49
+    hasta:
+      5: 4
+      10: 6
+      20: 16
+      40: 36
+    mas_lejos: 13
+    max_km: 58.06
+    promedio_km: 28.41
+  '86021':
+    parajes: 30
+    hasta:
+      5: 9
+      10: 16
+      20: 25
+      40: 30
+    mas_lejos: 0
+    max_km: 32.44
+    promedio_km: 11.62
+  '86028':
+    parajes: 36
+    hasta:
+      5: 8
+      10: 17
+      20: 31
+      40: 36
+    mas_lejos: 0
+    max_km: 26.76
+    promedio_km: 10.98
+  '86035':
+    parajes: 58
+    hasta:
+      5: 41
+      10: 53
+      20: 58
+      40: 58
+    mas_lejos: 0
+    max_km: 14.88
+    promedio_km: 3.7
+  '86042':
+    parajes: 8
+    hasta:
+      5: 2
+      10: 4
+      20: 7
+      40: 8
+    mas_lejos: 0
+    max_km: 28.42
+    promedio_km: 11.69
+  '86049':
+    parajes: 29
+    hasta:
+      5: 13
+      10: 21
+      20: 29
+      40: 29
+    mas_lejos: 0
+    max_km: 18.34
+    promedio_km: 6.76
+  '86056':
+    parajes: 74
+    hasta:
+      5: 17
+      10: 27
+      20: 40
+      40: 69
+    mas_lejos: 5
+    max_km: 50.94
+    promedio_km: 18.42
+  '86063':
+    parajes: 45
+    hasta:
+      5: 7
+      10: 17
+      20: 30
+      40: 36
+    mas_lejos: 9
+    max_km: 75.19
+    promedio_km: 21.02
+  '86070':
+    parajes: 58
+    hasta:
+      5: 4
+      10: 11
+      20: 28
+      40: 54
+    mas_lejos: 4
+    max_km: 47.8
+    promedio_km: 21.08
+  '86077':
+    parajes: 35
+    hasta:
+      5: 17
+      10: 32
+      20: 35
+      40: 35
+    mas_lejos: 0
+    max_km: 19.66
+    promedio_km: 5.16
+  '86084':
+    parajes: 31
+    hasta:
+      5: 17
+      10: 25
+      20: 31
+      40: 31
+    mas_lejos: 0
+    max_km: 16.04
+    promedio_km: 5.15
+  '86091':
+    parajes: 44
+    hasta:
+      5: 17
+      10: 29
+      20: 42
+      40: 44
+    mas_lejos: 0
+    max_km: 33.35
+    promedio_km: 9.0
+  '86098':
+    parajes: 50
+    hasta:
+      5: 21
+      10: 28
+      20: 47
+      40: 50
+    mas_lejos: 0
+    max_km: 24.73
+    promedio_km: 8.7
+  '86105':
+    parajes: 30
+    hasta:
+      5: 14
+      10: 21
+      20: 26
+      40: 28
+    mas_lejos: 2
+    max_km: 47.57
+    promedio_km: 9.76
+  '86112':
+    parajes: 14
+    hasta:
+      5: 0
+      10: 0
+      20: 5
+      40: 12
+    mas_lejos: 2
+    max_km: 56.83
+    promedio_km: 26.79
+  '86119':
+    parajes: 76
+    hasta:
+      5: 21
+      10: 33
+      20: 53
+      40: 76
+    mas_lejos: 0
+    max_km: 38.61
+    promedio_km: 13.8
+  '86126':
+    parajes: 51
+    hasta:
+      5: 16
+      10: 23
+      20: 36
+      40: 50
+    mas_lejos: 1
+    max_km: 48.49
+    promedio_km: 13.76
+  '86133':
+    parajes: 64
+    hasta:
+      5: 31
+      10: 45
+      20: 56
+      40: 62
+    mas_lejos: 2
+    max_km: 47.7
+    promedio_km: 8.92
+  '86140':
+    parajes: 44
+    hasta:
+      5: 8
+      10: 13
+      20: 29
+      40: 39
+    mas_lejos: 5
+    max_km: 58.85
+    promedio_km: 18.51
+  '86147':
+    parajes: 56
+    hasta:
+      5: 35
+      10: 51
+      20: 56
+      40: 56
+    mas_lejos: 0
+    max_km: 14.26
+    promedio_km: 4.07
+  '86154':
+    parajes: 11
+    hasta:
+      5: 2
+      10: 4
+      20: 9
+      40: 10
+    mas_lejos: 1
+    max_km: 43.64
+    promedio_km: 14.68
+  '86161':
+    parajes: 29
+    hasta:
+      5: 26
+      10: 28
+      20: 29
+      40: 29
+    mas_lejos: 0
+    max_km: 11.72
+    promedio_km: 2.34
+  '86168':
+    parajes: 34
+    hasta:
+      5: 8
+      10: 18
+      20: 25
+      40: 34
+    mas_lejos: 0
+    max_km: 33.3
+    promedio_km: 13.82
+  '86175':
+    parajes: 26
+    hasta:
+      5: 10
+      10: 17
+      20: 26
+      40: 26
+    mas_lejos: 0
+    max_km: 19.19
+    promedio_km: 7.6
+  '86182':
+    parajes: 16
+    hasta:
+      5: 9
+      10: 14
+      20: 16
+      40: 16
+    mas_lejos: 0
+    max_km: 13.89
+    promedio_km: 5.36
+  '86189':
+    parajes: 11
+    hasta:
+      5: 5
+      10: 10
+      20: 11
+      40: 11
+    mas_lejos: 0
+    max_km: 11.04
+    promedio_km: 5.2
+fuera_del_conteo:
+  motivo: la fuente (BAHRA) les pone cod_pcia 86 y un cod_depto de otra provincia;
+    son parajes del limite y no se les inventa departamento
+  parajes:
+  - paraje: San Antonio
+    cod_depto_de_la_fuente: '14112'
+    distancia_km: 33.837
+  - paraje: Colonia El Bellaco
+    cod_depto_de_la_fuente: '82091'
+    distancia_km: 9.927
+  - paraje: Pozo Jume
+    cod_depto_de_la_fuente: '90035'
+    distancia_km: 2.375
+  - paraje: Pozo del Arbolito
+    cod_depto_de_la_fuente: '90035'
+    distancia_km: 0.081

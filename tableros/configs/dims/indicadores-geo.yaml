@@ -1,0 +1,72 @@
+# Indicadores DERIVADOS del cruce de capas geoespaciales (ERS de Mapas, RF18).
+#
+# RF18 pide "indicadores derivados del cruce de capas"; RF18.1 nombra el unico que esta
+# definido hoy -la distancia de los parajes a la red vial pavimentada, en radios
+# configurables- y RF18.2 exige que quede registrado de que capas sale y con que metodo.
+# Eso ultimo es el motivo de que este archivo exista: el indicador NO se calcula con
+# constantes escondidas en el codigo, se declara aca y `pipeline/proximidad.py` lo obedece.
+#
+# No es documentacion: el modulo corta la corrida si una capa declarada no esta, si un radio
+# no viene ordenado o si una capa no trae el atributo por el que se la filtra.
+
+carpeta: indicadores-geo
+
+indicadores:
+
+  proximidad-parajes-red-pavimentada:
+    titulo: Parajes por distancia a la red vial pavimentada
+    requisito: RF18.1
+    estado: validado
+    validado: 2026-11-17
+
+    # --- de donde sale (RF18.2)
+    sujeto:
+      capa: capas-ign/parajes.geojson
+      que_es: >
+        Los 1.022 parajes de la provincia de la capa BAHRA del IGN (dato del INDEC). Es la
+        capa `ign:bahra_paraje`, que es OTRA que la de localidades: `localidad_bahra` no trae
+        ni un paraje. Cada punto trae su departamento en la fila (`cod_depto`), que es lo que
+        se usa para agrupar: no se deduce de la geometria.
+      geo_id_en: geo_id
+      nombre_en: nombre
+
+    red:
+      # Las tres capas viales del IGN, filtradas por su propio atributo de calzada. La red
+      # "pavimentada" es exactamente eso: lo que el IGN declara Pavimentado. Consolidado y
+      # Tierra NO entran, que es el sentido del indicador.
+      atributo_calzada: calzada
+      calzada_incluida: [Pavimentado]
+      capas:
+        - capas-ign/rutas-nacionales.geojson
+        - capas-ign/rutas-provinciales.geojson
+        - capas-ign/caminos-terciarios.geojson
+
+    # --- como se mide (RF18.2)
+    metodo:
+      medida: >
+        Distancia en linea recta desde el paraje al punto mas cercano de CUALQUIER tramo
+        pavimentado, medida contra los segmentos de la linea (no contra sus vertices).
+      proyeccion: >
+        Plano equirrectangular local centrado en CADA PARAJE: x = R*cos(lat_paraje)*(lon -
+        lon_paraje), y = R*(lat - lat_paraje), con R = 6.371.008,8 m. La latitud de referencia
+        tiene que ser la del paraje y no una sola para toda la provincia: entre -25,6 y -30,5
+        el coseno cambia un 2%, y con una referencia unica una distancia de 9,7 km salia 80 m
+        mas larga que la distancia al vertice mas cercano medida con haversine, que es
+        geometricamente imposible.
+      error_medido: >
+        Controlado paraje por paraje (los 1.018) contra la distancia haversine al vertice
+        pavimentado mas cercano, que es una cota superior exacta sobre la esfera: el plano se
+        pasa como maximo 33,6 m, sobre una distancia de 43,6 km, o sea 0,077%. En los parajes
+        que estan a menos de 100 m del asfalto el desvio es de medio metro, del orden del
+        redondeo de las coordenadas de la capa. NO sirve para medir distancias de cientos de
+        kilometros.
+      no_es: >
+        No es distancia por camino ni tiempo de viaje: es la distancia en linea recta al
+        asfalto mas cercano. Un paraje a 8 km en linea recta puede estar a 30 km de manejo.
+      recorte: >
+        La red se toma ya recortada a la provincia, asi que un paraje del borde puede tener
+        asfalto mas cerca del otro lado del limite y aca figurar mas lejos. Son pocos y se
+        avisa en la nota del cuadro.
+
+    # --- los radios (RF18.1: "en radios configurables")
+    radios_km: [5, 10, 20, 40]

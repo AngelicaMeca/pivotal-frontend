@@ -213,6 +213,15 @@ def verificar(catalogo, raiz=RAIZ):
                 fallos.append("%s: `publicado_en` nombra %s, que no existe. Si el archivo se "
                               "renombro o se saco, el catalogo tiene que seguirlo."
                               % (fid, relativa))
+        # Una fuente `publicada` SIN `publicado_como` se colaba: `publica` queda en falso y
+        # con eso se saltean todos los bloqueos de publicacion (la cita obligatoria, el permiso
+        # de redistribucion). Paso de verdad el 17-nov-2026, al insertar una fuente nueva entre
+        # el `publicado_en` de otra y su `publicado_como`: la de arriba se quedo sin forma y
+        # nadie aviso.
+        if estado == "publicada" and forma is None:
+            fallos.append("%s: esta en estado `publicada` y no dice COMO se publica "
+                          "(`publicado_como`). Sin eso no se le controla ni la cita de fuente "
+                          "ni el permiso de redistribucion." % fid)
         if estado == "publicada" and not publicado_en:
             fallos.append("%s: esta en estado `publicada` y no dice en que archivo del repo se "
                           "publica (`publicado_en`)." % fid)

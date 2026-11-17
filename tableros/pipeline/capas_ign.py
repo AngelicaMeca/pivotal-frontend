@@ -339,6 +339,36 @@ def main(entrada, salida, codigo_provincia, ruta_departamentos):
     print("[capas-ign] localidades.geojson: %d puntos, %d bytes"
           % (len(features), escribir(salida, "localidades.geojson", doc)))
 
+    # --- parajes (BAHRA): el asentamiento mas chico que publica el IGN.
+    #
+    # No es lo mismo que la capa de localidades: BAHRA separa los parajes en SU PROPIA capa
+    # (`ign:bahra_paraje`), y por eso `localidad_bahra` no trae ni uno. Son 1.024 en la
+    # provincia contra 165 localidades, y son el sujeto del indicador de proximidad a la red
+    # pavimentada (RF18.1): un paraje a 40 km del asfalto es justamente lo que se quiere ver.
+    #
+    # Se conserva `cod_depto`, que la fuente trae en la fila: no se deduce de la geometria.
+    crudo = leer(entrada, "bahra_paraje.json")
+    features = []
+    for f in crudo["features"]:
+        p = f["properties"]
+        if str(p.get("cod_pcia")) != codigo_provincia:
+            continue
+        punto = f["geometry"]["coordinates"]
+        if f["geometry"]["type"] == "MultiPoint":
+            punto = punto[0]
+        if not limite.adentro(punto):
+            continue
+        features.append({
+            "type": "Feature",
+            "properties": {"nombre": p.get("fna"), "tipo": p.get("tipo_asent"),
+                           "geo_id": p.get("cod_depto")},
+            "geometry": {"type": "Point", "coordinates": redondear(punto)},
+        })
+    features.sort(key=lambda x: (x["properties"]["nombre"] or "", x["geometry"]["coordinates"]))
+    doc = {"type": "FeatureCollection", "features": features}
+    print("[capas-ign] parajes.geojson: %d puntos, %d bytes"
+          % (len(features), escribir(salida, "parajes.geojson", doc)))
+
     # --- DESINVENTAR: registros 1970-2015 por departamento
     crudo = leer(entrada, "desinventar_hidrometeorologico_riesgo.json")
     filas = []
