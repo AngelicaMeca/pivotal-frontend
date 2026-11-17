@@ -11,7 +11,7 @@
    propio JSON, partido por especie y por modo. */
 
 import * as echarts from "echarts";
-import { capasDelMapa } from "./capas";
+import { capasDelMapa, geoDeMapa } from "./capas";
 
 export default function iniciar(PIVOTAL) {
 
@@ -775,6 +775,44 @@ export default function iniciar(PIVOTAL) {
         layoutSize: PIVOTAL.tamanioMapa(caja, panel.relacion)
       };
       var nombre = function (p) { var d = porId[p.name]; return d ? d.nombre : ""; };
+      /* Zoom real sobre la cartografia (`panel.zoom`, pagina de Infraestructura, JC
+         15-nov-2026). Con zoom el sistema de coordenadas es UNO SOLO -el componente `geo`- y
+         la serie de departamentos se le cuelga con `geoIndex: 0`: si cada uno conservara su
+         proyeccion propia, al primer arrastre las rutas quedarian corridas respecto de los
+         departamentos. Sin zoom no cambia nada: la serie se dibuja como siempre. */
+      var conZoom = !!panel.zoom;
+      var serieMapa = {
+        type: "map",
+        map: "provincia",
+        nameProperty: "geo_id",
+        selectedMode: false,
+        z: 2,
+        label: { show: caja.clientWidth >= 300, formatter: nombre, fontSize: 8,
+                 color: PIVOTAL.color("--texto-apoyo") },
+        labelLayout: { hideOverlap: true },
+        emphasis: {
+          label: { show: caja.clientWidth >= 300, formatter: nombre },
+          itemStyle: { areaColor: PIVOTAL.color("--fondo-apoyo") }
+        },
+        itemStyle: { areaColor: PIVOTAL.color("--fondo-apoyo"),
+                     borderColor: PIVOTAL.color("--fondo-cuadro"), borderWidth: 0.8 },
+        data: panel.deptos.map(function (d) { return { name: d.id, value: 0 }; })
+      };
+      /* Con zoom los departamentos los dibuja el GEO (ver `geoDeMapa`), asi que su cromo
+         viaja ahi y la serie `map` no se usa: seria una segunda copia invisible del mismo
+         mapa. Sin zoom, todo sigue exactamente como antes. */
+      var cromoDepartamentos = {
+        label: serieMapa.label, labelLayout: serieMapa.labelLayout,
+        itemStyle: serieMapa.itemStyle, emphasis: serieMapa.emphasis
+      };
+      if (conZoom) {
+        serieMapa = null;
+      } else {
+        serieMapa.aspectScale = proyeccion.aspectScale;
+        serieMapa.layoutCenter = proyeccion.layoutCenter;
+        serieMapa.layoutSize = proyeccion.layoutSize;
+        serieMapa.roam = false;
+      }
       var opcion = {
         animation: false,
         tooltip: {
@@ -782,34 +820,22 @@ export default function iniciar(PIVOTAL) {
           confine: true,
           formatter: function (p) { var n = nombre(p); return n ? "<b>" + n + "</b>" : ""; }
         },
-        series: [{
-          type: "map",
-          map: "provincia",
-          nameProperty: "geo_id",
-          aspectScale: proyeccion.aspectScale,
-          layoutCenter: proyeccion.layoutCenter,
-          layoutSize: proyeccion.layoutSize,
-          roam: false,
-          selectedMode: false,
-          z: 2,
-          label: { show: caja.clientWidth >= 300, formatter: nombre, fontSize: 8,
-                   color: PIVOTAL.color("--texto-apoyo") },
-          labelLayout: { hideOverlap: true },
-          emphasis: {
-            label: { show: caja.clientWidth >= 300, formatter: nombre },
-            itemStyle: { areaColor: PIVOTAL.color("--fondo-apoyo") }
-          },
-          itemStyle: { areaColor: PIVOTAL.color("--fondo-apoyo"),
-                       borderColor: PIVOTAL.color("--fondo-cuadro"), borderWidth: 0.8 },
-          data: panel.deptos.map(function (d) { return { name: d.id, value: 0 }; })
-        }]
+        series: serieMapa ? [serieMapa] : []
       };
+      var opcionesDeCapas = { interactivas: true, halo: PIVOTAL.color("--fondo-cuadro"),
+                              tinta: PIVOTAL.color("--texto-apoyo"), roam: conZoom,
+                              departamentos: cromoDepartamentos };
       var capas = capasDelMapa(nodo, (PIVOTAL.datos() || {}).capas,
                                function () { pintarMapaCapas(nodo, panel); }, proyeccion,
-                               { interactivas: true, halo: PIVOTAL.color("--fondo-cuadro") });
+                               opcionesDeCapas);
       if (capas) {
         opcion.geo = capas.geo;
         opcion.series = opcion.series.concat(capas.series);
+      } else if (conZoom) {
+        /* Con TODAS las capas apagadas `capasDelMapa` devuelve null, pero el geo tiene que
+           existir igual: con zoom ES el mapa (dibuja los departamentos) y es el que recibe la
+           rueda. Sin esto la pagina quedaria en blanco. */
+        opcion.geo = geoDeMapa(proyeccion, opcionesDeCapas);
       }
       chart.setOption(opcion, true);
     });
@@ -949,6 +975,15 @@ export default function iniciar(PIVOTAL) {
         + (conEnlaces ? " acceso-con-enlaces" : "");
       if (t.href) { tarjeta.href = t.href; }
       else if (!conEnlaces) { tarjeta.setAttribute("aria-disabled", "true"); }
+      /* Una tarjeta que lleva al visor del organismo (area "Mapas", JC 15-nov-2026) sale del
+         sitio: se abre en otra pestaña y se marca para que el CSS le ponga su indicador. */
+      if (t.fuera_del_sitio) {
+        tarjeta.target = "_blank";
+        tarjeta.rel = "noopener noreferrer";
+        tarjeta.className += " acceso-externo";
+        tarjeta.setAttribute("aria-label", t.titulo + " (se abre en el sitio de "
+                             + (t.organismo || "la fuente") + ", en otra pestaña)");
+      }
       var mini = document.createElement("span");
       mini.className = "acceso-mini" + (t.miniatura_icono ? " acceso-mini-icono" : "")
         + (t.miniaturas ? " acceso-mini-cuadricula" : "");
@@ -1979,6 +2014,8 @@ export default function iniciar(PIVOTAL) {
     "mapa-capas": pintarMapaCapas,
     "tabla-red-vial": pintarTablaDatos,
     "tabla-ferrocarril": pintarTablaDatos,
+    // El tendido electrico de media tension (JC, 15-nov-2026): km por nivel de tension.
+    "tabla-tendido": pintarTablaDatos,
     "tabla-eventos-departamento": pintarTablaDatos,
     "tabla-sinagir": pintarTablaDatos,
     "anillo-eventos": pintarAnillo,

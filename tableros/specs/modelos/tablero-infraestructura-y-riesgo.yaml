@@ -1,79 +1,115 @@
-# General > Infraestructura y riesgo > Red vial y ferrocarril (PORTADA de la seccion).
-# Pedido de JC del 14-oct-2026 por WhatsApp (backlog 104): "Rutas provinciales, nacionales y
-# caminos rurales (Red vial primaria, secundaria y terciaria); Tendidos ferroviarios;
-# Amenazas hidrometeorologicas", del catalogo Capas SIG del IGN.
+# General > Infraestructura > Redes viales y tendido electrico (PORTADA de la seccion).
 #
-# JC no dibujo maqueta para esto: el armado es nuestro y queda para que lo valide (backlog
-# 106). Lo que cuenta la pagina: un mapa grande de la provincia con los departamentos de fondo
-# NEUTRO (no es un mapa de calor: el dato son las lineas) y las capas encima, con un control
-# para prenderlas y apagarlas; al costado, cuanta red hay y de que calzada, y cuanto
-# ferrocarril queda activo. Los km los calcula el build (haversine sobre el trazado recortado,
-# ver la nota `km-de-red`), nunca el navegador.
+# HISTORIA DE ESTA PAGINA, que explica por que esta como esta:
+#  - 14-oct-2026 (JC, WhatsApp, backlog 104): "Rutas provinciales, nacionales y caminos rurales
+#    (Red vial primaria, secundaria y terciaria); Tendidos ferroviarios; Amenazas
+#    hidrometeorologicas", del catalogo Capas SIG del IGN. Se construyo sin maqueta suya.
+#  - 16-oct-2026 (JC, "REVISION AGRICULTURA AL 16 OCT.docx"): "NUNCA PASE MAQUETA DE GENERAL
+#    AUN!!!" y "SACAR COMPLETO ESO DE RIESGO HIDROLOGICO". La seccion se despublico el 20-oct.
+#  - 15-nov-2026 (JC, comentario en Asana, punto 3.a INFRAESTRUCTURA): "Van los mapas de Redes
+#    viales (primaria, secundaria y terciaria) y el de tendido electrico. [...] La fuente es
+#    IGN, salvo el de tendido electrico que es Secretaria de Energia". JC PIDE ahora
+#    explicitamente las redes viales, asi que la pagina vuelve a publicarse.
+#
+# QUE CAMBIO AL REPUBLICARLA (17-nov-2026), y queda para que JC lo valide (backlog 115):
+#  (a) La seccion se llama "Infraestructura" y NO "Infraestructura y riesgo": lo de riesgo lo
+#      mando sacar el 16-oct y no lo volvio a pedir. La pagina de amenazas sigue
+#      `no-publicada` (tablero-infraestructura-amenazas.yaml).
+#  (b) Entra el TENDIDO ELECTRICO, que es la otra mitad de su pedido del 15-nov. No es del IGN:
+#      es del Consejo Federal de la Energia Electrica con datos de EDESE
+#      (configs/dims/capas-energia.yaml). Suma un KPI, una capa del mapa y su tabla de km.
+#  (c) El FERROCARRIL se queda, aunque el 15-nov no lo nombre: lo pidio el 08-oct ("Ferroviario
+#      (tendidos y estaciones)") y nunca lo retiro; lo unico que mando sacar fue riesgo. Esta
+#      construido y verificado. Si quiere la pagina solo con viales y tendido, se saca el KPI
+#      y la capa y queda igual de coherente.
+#  (d) EL MAPA OCUPA TODA LA PAGINA Y TIENE ZOOM REAL, que es el resto de su pedido del 15-nov:
+#      "SOLO PONEMOS COMO TITULO 'infraestructura' y que el mapa ocupe toda la pagina pudiendo
+#      hacer zoom al maximo. Que el usuario pueda agregar o quitar capas. QUE SE VEA LA DIVISION
+#      DEPARTAMENTAL Y LAS PRINCIPALES CIUDADES/PUEBLOS". Con eso:
+#       - El mapa pasa a `ancho: 12` y `zoom: true` (rueda, pellizco y arrastre, hasta 40x).
+#       - SALIERON LAS TRES TABLAS DE KM (red vial por calzada, ferrocarril por estado y tendido
+#         por nivel). Estaban construidas y verificadas, y no se borro nada: sus armadores
+#         siguen en el pipeline (`PANELES_RED_VIAL` de site_build.py) y el texto de los tres
+#         cuadros esta en el historial de este archivo (commit del 17-nov-2026). Volver a
+#         ponerlas es declararlas en `paneles` y en `paneles.orden`. Se sacaron porque con una
+#         columna de tablas al costado el mapa se queda con poco mas de la mitad de la pagina,
+#         que es justo lo contrario de lo que pide.
+#       - Entra la capa de CIUDADES Y PUEBLOS (BAHRA del IGN), con el nombre escrito al lado
+#         de cada punto. OJO: JC pide "LAS PRINCIPALES" y la fuente no permite elegirlas (no
+#         trae poblacion ni jerarquia), asi que van las 165 y el mapa esconde los nombres que
+#         se encimarian, que aparecen al acercar. Avisado en
+#         configs/dims/capas-ign.yaml -> advertencias_para_jc.
+#       - La DIVISION DEPARTAMENTAL ya se veia (los departamentos son el fondo del mapa) y
+#         sigue con sus nombres escritos.
+#       - La banda de KPIs se queda: es el cromo de toda pagina del sitio, va ARRIBA del mapa y
+#         no le saca ancho. Si JC quiere la pagina con el mapa y nada mas, es `indicadores: []`.
+#
+# Lo que cuenta la pagina: un mapa grande de la provincia con los departamentos de fondo NEUTRO
+# (no es un mapa de calor: el dato son las lineas) y las capas encima, con un control para
+# prenderlas y apagarlas; al costado, cuanta red hay y de que calzada, cuanto ferrocarril queda
+# activo y cuanta linea electrica hay por nivel. Los km los calcula el build (haversine sobre
+# el trazado recortado, ver la nota `km-de-red`), nunca el navegador.
 #
 # Decisiones de la usuaria (14-oct-2026): la seccion es nueva Y las capas tambien se prenden
 # sobre los mapas que ya existen; la red terciaria se publica COMPLETA (apagada al abrir: su
-# archivo de 2 MB se baja recien al prenderla).
+# archivo de 2 MB se baja recien al prenderla). El tendido electrico (3,6 MB) va igual.
 id: tablero-infraestructura-y-riesgo
 tipo: tablero
 familia: capas-ign
-# NO-PUBLICADA desde el 20-oct-2026: revision de JC del 16-oct-2026 ("REVISION AGRICULTURA
-# AL 16 OCT.docx"): "NUNCA PASE MAQUETA DE GENERAL AUN!!!" y "SACAR
-# COMPLETO ESO DE RIESGO HIDROLOGICO" (DESINVENTAR esta desactualizado desde 2015). La seccion
-# salio de site/navegacion.yaml.
-# Queda como registro de sus reglas, sin pagina.
-estado: no-publicada
-seccion: infraestructura-y-riesgo
+estado: publicada
+seccion: infraestructura
 
-titulo: "Infraestructura y riesgo"
-subtitulo: "Provincia de Santiago del Estero · red vial, ferrocarril y amenazas hidrometeorológicas (IGN)"
-titulo_pagina: "Red vial y ferrocarril"
-breadcrumb: "General - Infraestructura y riesgo - Red vial y ferrocarril"
+titulo: "Infraestructura"
+subtitulo: "Provincia de Santiago del Estero · red vial, ferrocarril y tendido eléctrico de media tensión"
+# La miga es solo "Infraestructura": el item "General" del que colgaba esta pagina DESAPARECIO
+# el 17-nov-2026 por pedido de JC, y la seccion es ahora un titulo del menu de la izquierda.
+breadcrumb: "Infraestructura"
 
-# Cinco tarjetas: la red por jerarquia, lo que queda de ferrocarril en servicio y las
-# estaciones. Las variaciones no existen (es una foto de 2026).
+# CUATRO tarjetas, que son EXACTAMENTE las cuatro cosas que JC enumera el 15-nov-2026: "los
+# mapas de Redes viales (primaria, secundaria y terciaria) y el de tendido electrico". Las
+# variaciones no existen (es una foto).
+#
+# El layout de la grilla admite hasta cuatro (`verificar_tablero`), asi que no entran mas. Lo
+# que quedo afuera y donde esta: los km de VIA FERREA ACTIVA y la cantidad de ESTACIONES
+# (ferrocarril, que JC no nombra el 15-nov) siguen en el mapa como capa, con su tooltip; y los
+# km por tipo de calzada, por estado del ramal y por nivel de tension estaban en tres tablas
+# que salieron con el mapa a pagina completa (ver el punto (d) de arriba).
 indicadores:
   - {indicador: km, capa: rutas-nacionales, etiqueta: "Rutas nacionales"}
   - {indicador: km, capa: rutas-provinciales, etiqueta: "Rutas provinciales"}
   - {indicador: km, capa: caminos-terciarios, etiqueta: "Caminos rurales"}
-  - {indicador: km, capa: ferrocarril, estado: Activo, etiqueta: "Vías férreas activas"}
-  - {indicador: estaciones, etiqueta: "Estaciones ferroviarias", nota: "{activas} activas"}
+  - {indicador: km, capa: tendido-media-tension, etiqueta: "Línea de media tensión"}
 kpis_sin_variacion: true
 
-notas_metodologicas: [capas, km-de-red]
+notas_metodologicas: [capas, km-de-red, tendido]
 
 paneles:
   alto: fluye
   acciones_de_tablero:
     - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
   mapa-capas:
-    titulo: "Santiago del Estero - Red vial y ferrocarril"
-    subtitulo: "Active o desactive cada capa; pase el mouse por un trazo para ver qué es"
+    titulo: "Santiago del Estero - Red vial, ferrocarril y tendido eléctrico"
+    subtitulo: "Acerque con la rueda del mouse y arrastre para desplazarse · active o desactive cada capa; pase el mouse por un trazo para ver qué es"
     # Las capas del mapa, en el orden en que se dibujan (la primera abajo). `prendida` es como
-    # arranca la pagina. La terciaria arranca apagada: son ~11.700 tramos y 2 MB.
+    # arranca la pagina. Las dos capas pesadas arrancan apagadas: los caminos rurales son
+    # ~11.700 tramos y 2 MB, y el tendido ~29.500 polilineas y 3,6 MB.
     capas:
       - {id: caminos-terciarios, prendida: false}
+      - {id: tendido-media-tension, prendida: false}
       - {id: rutas-provinciales, prendida: true}
       - {id: rutas-nacionales, prendida: true}
       - {id: ferrocarril, prendida: true}
       - {id: estaciones-ferrocarril, prendida: true}
-  tabla-red-vial:
-    titulo: "Sgo. del Estero - Red vial por jerarquía y tipo de calzada"
-    subtitulo: "En kilómetros"
-    rotulo_total: "TOTAL RED VIAL"
-    filas:
-      - {capa: rutas-nacionales, rotulo: "Nacional (primaria)"}
-      - {capa: rutas-provinciales, rotulo: "Provincial (secundaria)"}
-      - {capa: caminos-terciarios, rotulo: "Rural (terciaria)"}
-    calzadas: [Pavimentado, Consolidado, Tierra]
-  tabla-ferrocarril:
-    titulo: "Sgo. del Estero - Red ferroviaria por estado"
-    subtitulo: "En kilómetros de vía y cantidad de estaciones, apeaderos, desvíos y embarcaderos"
-    rotulo_total: "TOTAL"
-    estados: [Activo, Abandonado, Desmantelado]
-  disposicion: columnas
+      # Las ciudades y pueblos van ULTIMAS para que sus puntos y sus nombres queden sobre las
+      # lineas, y PRENDIDAS: son la referencia que permite ubicarse al acercar.
+      - {id: localidades, prendida: true}
+  # Un solo cuadro a todo el ancho: el mapa ES la pagina.
+  #
+  # `zoom: true` es zoom real sobre la CARTOGRAFIA, no sobre los textos (JC, 15-nov-2026:
+  # "pudiendo hacer zoom al maximo"; y el 16-oct: "EL ZOOM NO FUNCIONA COMO TAL, SOLO AUMENTA
+  # LOS TEXTOS"). Rueda, pellizco y arrastre, hasta 40 veces, que es lo que hace util a la red
+  # terciaria: a la provincia entera es una maraña. Ademas le da al mapa el alto de la pagina.
   orden:
-    - {id: mapa-capas, ancho: 7, columna: izq}
-    - {id: tabla-red-vial, ancho: 5, columna: der}
-    - {id: tabla-ferrocarril, ancho: 5, columna: der}
+    - {id: mapa-capas, ancho: 12, zoom: true}
 
 filtros: []

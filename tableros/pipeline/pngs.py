@@ -145,6 +145,41 @@ def escribir_rgba(ancho, alto, pixeles):
             + _chunk(b"IEND", b""))
 
 
+def escribir_paleta(ancho, alto, indices, paleta, transparentes=()):
+    """Serializa a PNG de PALETA (color type 3), que es el formato de una imagen CLASIFICADA.
+
+    `indices` es un byte por pixel (el numero de entrada de la paleta), `paleta` una lista de
+    (r, g, b) de hasta 256 entradas y `transparentes` los indices que no se dibujan.
+
+    Para el mapa de cultivos esto no es una optimizacion cualquiera: la imagen tiene 17 colores
+    y en RGBA pesaria cuatro veces mas sin agregar un solo tono. Igual que `escribir_rgba`,
+    filtro 0 en todas las lineas para que el resultado no dependa de nada.
+    """
+    if len(paleta) > 256:
+        raise ValueError("Una paleta de PNG admite hasta 256 entradas, se pidieron %d" % len(paleta))
+    if len(indices) != ancho * alto:
+        raise ValueError("La imagen es de %dx%d (%d pixeles) y vinieron %d indices"
+                         % (ancho, alto, ancho * alto, len(indices)))
+    crudo = bytearray()
+    for y in range(alto):
+        crudo.append(0)
+        crudo += indices[y * ancho:(y + 1) * ancho]
+    plte = bytearray()
+    for r, g, b in paleta:
+        plte += bytes((r, g, b))
+    # tRNS de una paleta es un byte de opacidad por entrada, hasta la ultima que la necesite.
+    opacidad = bytearray(255 for _ in paleta)
+    for i in transparentes:
+        opacidad[i] = 0
+    while opacidad and opacidad[-1] == 255:
+        opacidad.pop()
+    ihdr = struct.pack(">IIBBBBB", ancho, alto, 8, 3, 0, 0, 0)
+    salida = FIRMA + _chunk(b"IHDR", ihdr) + _chunk(b"PLTE", bytes(plte))
+    if opacidad:
+        salida += _chunk(b"tRNS", bytes(opacidad))
+    return salida + _chunk(b"IDAT", zlib.compress(bytes(crudo), 9)) + _chunk(b"IEND", b"")
+
+
 # El fondo de los iconos de JC. No se adivina: es el mismo #f7f7f7 en los 202 archivos.
 FONDO = (247, 247, 247)
 # Cuanto se puede alejar un pixel del fondo y seguir contando como fondo. 12 alcanza para el

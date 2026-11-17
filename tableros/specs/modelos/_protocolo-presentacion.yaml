@@ -1242,6 +1242,34 @@ colores:
       estilos:
         - {cuando: {estado: [Activo]}, color: "#2b2b2b", borde: "#fbf4ec", tamanio: 7, rotulo: "activa"}
         - {cuando: {}, color: "#fbf4ec", borde: "#2b2b2b", tamanio: 5, rotulo: "sin servicio"}
+    # Ciudades y pueblos (BAHRA del IGN), que JC pidio el 15-nov-2026 para que el mapa de
+    # Infraestructura se pueda leer ("QUE SE VEA LA DIVISION DEPARTAMENTAL Y LAS PRINCIPALES
+    # CIUDADES/PUEBLOS"). Es cromo de REFERENCIA, no un dato: punto chico gris oscuro con borde
+    # claro -el mismo par que las estaciones de ferrocarril- para que se lea sobre cualquier
+    # fondo y no compita con las lineas, que son el dato de la pagina. Un solo estilo, sin
+    # rotulo de leyenda: el nombre de cada pueblo se escribe al lado del punto.
+    localidades:
+      estilos:
+        - {cuando: {}, color: "#4a4a4a", borde: "#fbf4ec", tamanio: 4, rotulo: ""}
+    # El tendido electrico de media tension (CFEE - Secretaria de Energia, datos de EDESE), que
+    # JC pidio el 15-nov-2026 junto a las redes viales. Color NUEVO, para que JC lo valide
+    # (backlog 115): violeta frio, una familia que no usa ninguna otra capa de contexto -las
+    # viales son el rojo ladrillo, el naranja tostado y el gris tierra, y el ferrocarril los
+    # grises- y que no se confunde con el mapa de calor que tenga debajo. Un nivel se distingue
+    # del otro por ANCHO y luminosidad del mismo tono, que es como se distinguen las rutas.
+    #
+    # Los tres niveles van declarados uno por uno y el estilo general queda SIN rotulo: el
+    # campo `tension` de la fuente no trae unidad documentada (ver configs/dims/capas-energia.yaml,
+    # advertencias_para_jc), asi que el rotulo dice "nivel 13" y no "13 kV". Si el CFEE publica
+    # manana un nivel nuevo, se dibuja punteado con el estilo general y no entra a la leyenda
+    # con el nombre de otro.
+    tendido-media-tension:
+      halo: 0.8
+      estilos:
+        - {cuando: {tension: ["76"]}, color: "#4a3a78", ancho: 1.8, trazo: lleno, rotulo: "nivel 76"}
+        - {cuando: {tension: ["33"]}, color: "#6b58a0", ancho: 1.2, trazo: lleno, rotulo: "nivel 33"}
+        - {cuando: {tension: ["13"]}, color: "#9185bd", ancho: 0.7, trazo: lleno, opacidad: 0.8, rotulo: "nivel 13"}
+        - {cuando: {}, color: "#9185bd", ancho: 0.7, trazo: punteado, opacidad: 0.8, rotulo: ""}
 
   sin_dato:
     hex: "#bdbdbd"

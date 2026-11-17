@@ -632,6 +632,7 @@ function PanelComun({ panel, filtro }: { panel: Panel; filtro?: Filtro }) {
       data-ancho={panel.ancho}
       data-alto={panel.alto}
       data-scroll-interno={panel.scroll_interno ? "" : undefined}
+      data-con-zoom={panel.zoom ? "" : undefined}
       data-compacta={panel.compacta ? "" : undefined}
       data-solo-provincia={panel.solo_provincia ? "" : undefined}
       data-nota-al-lado={panel.nota_al_lado || undefined}

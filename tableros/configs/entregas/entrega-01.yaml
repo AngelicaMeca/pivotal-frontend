@@ -136,11 +136,14 @@ archivos:
   config: configs/bases/48-stocks-bovinos.yaml
   estado: ingerida
   staging: staging/base-48-stocks-bovinos.parquet
-  filas_staging: 4312
+  filas_staging: 4816
   hojas:
     Data stock SDE:
       filas_staging: 4312
       filas_excel: 392
+    Estratificación:
+      filas_staging: 504
+      filas_excel: 14
   valores_nulos: 280
 - archivo: 53 - DTV Algodon SDE.xlsx
   base: 53

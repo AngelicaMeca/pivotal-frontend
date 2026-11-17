@@ -1,0 +1,175 @@
+# Mapas > Mapa Nacional de Cultivos (INTA), campaña 2024/2025.
+#
+# Pedido textual de JC (comentario del 15-nov-2026, punto 4): "MAPA DE CULTIVOS: Lo agregamos
+# como ítem en el desplegable del menú de la izquierda Y QUE SE VEA (incluido el zoom) TAL COMO
+# ESPECTACULARMENTE BIEN HICISTE CON LOS DE AGROCLIMA. Si no se puede agregar la referencia a
+# cada cultivo (debería estar en alguno de los archivos) solo dejémoslo así. Por ahora solo
+# pongamos el último, o sea campaña 2024/2025".
+#
+# Las cuatro cosas que pide, y cómo quedaron:
+#  - "COMO ÍTEM EN EL DESPLEGABLE DEL MENÚ DE LA IZQUIERDA": es un renglón del menú lateral de
+#    la rama "Mapas" (`menu_paginas` de la sección, en site/navegacion.yaml), el mismo mecanismo
+#    que las páginas de AgroClima.
+#  - "QUE SE VEA (INCLUIDO EL ZOOM) TAL COMO ... CON LOS DE AGROCLIMA": es el visor
+#    georreferenciado (`georreferencia`), el mismo de las galerías del SEPA: la imagen ubicada
+#    sobre el mapa de la provincia, con los límites y los nombres de los departamentos encima,
+#    rueda/pellizco/arrastre, opacidad y la escala fija al costado.
+#  - "LA REFERENCIA A CADA CULTIVO ... DEBERÍA ESTAR EN ALGUNO DE LOS ARCHIVOS": ESTÁ, y acá
+#    abajo. El INTA publica al lado de cada ráster su estilo de QGIS (.qml) con el nombre y el
+#    color oficial de cada clase. No hubo que "dejarlo así".
+#  - "POR AHORA SOLO ... CAMPAÑA 2024/2025": se publica esa campaña y nada más. La serie del
+#    INTA tiene siete y cada una es un registro de Zenodo aparte; sumar una es bajarla, correr
+#    `pipeline.mapa_cultivos` y agregar su tramo en `tramos`.
+#
+# SON DOS MAPAS, NO DOS VERSIONES DEL MISMO. El INTA publica la campaña en dos mitades: verano
+# 2024/2025 (soja, maíz, poroto, algodón...) e invierno 2024 (cereales de invierno, garbanzo,
+# arveja...). Un lote puede ser "Cereales de invierno" en uno y "Soja" en el otro, y las dos
+# cosas son ciertas: no se suman ni se comparan. Van los dos en la grilla, el de verano primero
+# porque es el más reciente y es el que tiene los cultivos de más peso en la provincia.
+#
+# De dónde sale la imagen, qué se recortó y qué se midió: configs/dims/mapas-cultivos.yaml.
+familia: agroclima
+seccion: mapas
+slug: 4001-mapa-cultivos
+protocolo: _protocolo-presentacion
+tipo: galeria
+
+titulo: "Mapa Nacional de Cultivos"
+subtitulo: "INTA · campaña 2024/2025 · cobertura de cultivos detectada por satélite, resolución publicada ~210 m"
+breadcrumb: "Mapas - Provincia - Mapa Nacional de Cultivos"
+titulo_protocolo: "INTA - Mapa Nacional de Cultivos - Sgo del Estero - Campaña 2024/2025"
+subtitulo_cuadro: "Las dos mitades de la campaña · clic en un mapa para verlo completo"
+
+serie: cultivos
+assets:
+  carpeta: "site/assets/mapas/cultivos"
+  # `mnc_ver25.png` y su `-mini`. No hay `-sde` como en las galerías del SEPA: acá la imagen
+  # publicada YA es el recorte de la provincia y el original del INTA (un GeoTIFF de 193 MB del
+  # país entero) no se publica en ninguna forma.
+  patron: "^mnc_(?P<tramo>ver|inv)(?P<anio>\\d{2})(?P<mini>-mini)?\\.(?P<ext>png)$"
+  # Se publican bajo mapas/cultivos/ y no bajo mapas/clima/, que es donde van las de AgroClima.
+  publico: cultivos
+
+# El período de cada mitad NO se calcula del nombre del archivo: lo escribe el informe del INTA
+# y acá se transcribe. "Para los mapas de invierno 2024 se consideró el período entre el 1 de
+# junio y el 31 de diciembre de 2024. Para los mapas de verano se consideró el período 1 de
+# septiembre de 2024 al 30 de junio de 2025."
+periodo: campania
+tramos:
+  ver:
+    desde: 2024-09-01
+    hasta: 2025-06-30
+    rotulo: "Campaña de verano 2024/2025"
+  inv:
+    desde: 2024-06-01
+    hasta: 2024-12-31
+    rotulo: "Campaña de invierno 2024"
+
+orden: descendente
+por_fila: 6
+ventana:
+  cuantos: 2
+  motivo: "JC, 15-nov-2026: 'Por ahora solo pongamos el último, o sea campaña 2024/2025' (sus dos mitades)."
+destacado: mas_reciente
+
+definicion:
+  titulo: "MAPA NACIONAL DE CULTIVOS (MNC)"
+  parrafos:
+    # Los dos primeros son del informe del INTA, acortados sin cambiar lo que dicen.
+    - >
+      Mapa de tipo de cultivo de las principales áreas agrícolas de la Argentina para la campaña
+      2024/2025. Se genera por clasificación supervisada a partir de índices de imágenes
+      satelitales Landsat y Sentinel 2, con muestras de entrenamiento tomadas en relevamientos a
+      campo sobre rutas y caminos: entre agosto y diciembre de 2024 para los cultivos de
+      invierno y entre febrero y junio de 2025 para los de verano.
+    - >
+      La campaña se publica en dos mapas, uno por cada mitad. El de invierno clasifica cereales
+      de invierno, garbanzo, arveja y otros cultivos; el de verano, soja, maíz, girasol, poroto,
+      algodón, caña de azúcar, arroz, maní, sorgo y papa. Un mismo lote puede tener un cultivo
+      en cada mitad: los dos mapas se miran por separado y no se suman.
+    # Esto es nuestro, y va porque sin esto el mapa se lee mal (ver las advertencias del config).
+    - >
+      El área sin clasificar se muestra transparente: el INTA procesa las zonas agrícolas
+      definidas por el Panorama Agrícola Semanal de la Bolsa de Cereales, y el oeste de la
+      provincia queda fuera de esa cobertura. Ahí no hay dato, no es que no haya cultivos. El
+      ráster original tiene 30 metros de resolución; acá se publica remuestreado a unos 210
+      metros para que el mapa se pueda dibujar en el navegador.
+  enlace:
+    texto: "Visor y descarga del INTA"
+    href: "https://ee-deabelle.projects.earthengine.app/view/mnc24-25"
+
+fuente:
+  pie: "Fuente: INTA - Mapa Nacional de Cultivos, campaña 2024/2025 (CC BY 4.0)"
+
+sensibilidad: normal
+estado: publicada
+origen:
+  tipo: pedido de JC
+  archivo: "Comentario en Asana del 15-nov-2026 (tarea 1217681319199651)"
+  recibido: 2026-11-15
+
+# VISOR GEORREFERENCIADO. Igual que las galerías del SEPA, con una diferencia: la caja NO sale
+# de un KML sino del propio GeoTIFF. Un ráster trae su georreferencia adentro, así que
+# `pipeline.mapa_cultivos` la lee del archivo, recorta en píxeles enteros e imprime la caja
+# exacta del recorte, que es la que está acá. Por eso tampoco hay `caja_ajustada`: no hay nada
+# que corregir a ojo, y se verificó que los límites departamentales del sitio calzan sobre el
+# dibujo del mapa.
+georreferencia:
+  # La imagen NO trae los límites departamentales dibujados: es un ráster de clases y nada más.
+  # Importa declararlo: el visor, para los mapas del SEPA, borra las líneas que esas imágenes
+  # traen impresas buscando píxeles oscuros o escasos cerca de un límite y rellenándolos con el
+  # vecino. Sobre este ráster esa limpieza se comería el arroz y el sorgo (son casi negros) y
+  # la papa y el maní (son pocos píxeles), y dejaría en negro el área sin clasificar, que tiene
+  # que verse transparente.
+  lineas_en_la_imagen: false
+  # El visor se escribió para las galerías del SEPA y nombra al organismo en cinco textos a la
+  # vista ("Escala del SEPA para este producto", la pantalla de carga, la nota). Acá el mapa es
+  # del INTA.
+  organismo: "INTA"
+  # La imagen publicada YA es el recorte de la provincia, así que no hay "todo el país" que
+  # mostrar: ese control queda fuera. Dibujarlo pondría el recorte de Santiago estirado sobre
+  # las provincias vecinas.
+  imagen_del_pais: false
+  caja:
+    oeste: -65.300154970
+    este: -61.500550813
+    sur: -30.599223691
+    norte: -25.499847149
+  # LA LEYENDA, ESCRITA Y NO RECORTADA DE LA IMAGEN, al costado del mapa ampliable: es lo que
+  # pidió JC el 16-oct-2026 para AgroClima ("¿Y SI SE DIVIDE LA PANTALLA, SUPONGAMOS UN 20%
+  # DONDE ESTÉ LA ESCALA QUE NO VARÍE Y EN EL OTRO 80% PONEMOS EL MAPA AMPLIABLE?") y acá es
+  # además la "referencia a cada cultivo" que pedía el 15-nov.
+  #
+  # Cada color y cada nombre salen del .qml del INTA, sin tocar nada: son los suyos, no una
+  # rampa nuestra. Van las clases que TIENEN píxeles en la provincia, de mayor a menor
+  # superficie dentro del recorte (el reparto medido está en el config); las que el INTA define
+  # y en Santiago no aparecen -Verdeo de Maíz y Arveja- no se dibujan, porque una referencia con
+  # entradas que nunca se ven hace buscar en el mapa algo que no está.
+  #
+  # Es UNA leyenda para los dos mapas (el visor dibuja una sola): por eso lleva las clases de
+  # las dos mitades, agrupadas, y cada grupo dice a qué mapa pertenece. Las dos comparten
+  # "Caña de azúcar" (el mismo #fcc1b3 en los dos estilos) y "No agrícola" (#e6f0c2), así que
+  # esas dos van una sola vez, abajo.
+  leyenda:
+    titulo: "Referencias"
+    clases:
+      - {grupo: "Campaña de verano 2024/2025", color: "#339820", texto: "Soja"}
+      - {color: "#0042ff", texto: "Maíz"}
+      - {color: "#f022db", texto: "Poroto"}
+      - {color: "#b7b9bd", texto: "Algodón"}
+      - {color: "#a41de2", texto: "Girasol"}
+      - {color: "#a32102", texto: "Girasol seguido de otro cultivo de verano"}
+      - {color: "#1e0f6b", texto: "Sorgo para grano"}
+      - {color: "#6699ff", texto: "Verdeo de sorgo"}
+      - {color: "#fbff05", texto: "Maní"}
+      - {color: "#1d1e33", texto: "Arroz"}
+      - {color: "#ff5050", texto: "Papa"}
+      - {color: "#646b63", texto: "Barbecho (sin cultivo de verano)"}
+      - {grupo: "Campaña de invierno 2024", color: "#42f4ce", texto: "Cereales de invierno (trigo, cebada, avena, centeno)"}
+      - {color: "#ec7d74", texto: "Garbanzo"}
+      - {color: "#ff8000", texto: "Otros cultivos y cultivos de cobertura"}
+      - {color: "#646b63", texto: "Barbecho (sin cultivo de invierno)"}
+      - {grupo: "En las dos campañas", color: "#fcc1b3", texto: "Caña de azúcar"}
+      - {color: "#e6f0c2", texto: "No agrícola (pastizales, pasturas y leñosas)"}
+  nota: >-
+    El área que se ve transparente no está clasificada: el INTA procesa las zonas agrícolas del Panorama Agrícola Semanal de la Bolsa de Cereales y el oeste de la provincia queda fuera de esa cobertura. La imagen se publica recortada a la provincia y remuestreada a unos 210 metros desde el ráster original de 30 metros; el original está en el visor y el repositorio del INTA.

@@ -1753,6 +1753,12 @@ a.acceso:focus-visible { outline: 2px solid var(--enlace); outline-offset: 2px; 
 .acceso-detalle { font-size: .8rem; }
 .acceso-bajada { font-size: .8rem; color: var(--texto-apoyo); }
 .acceso-texto .prox { align-self: flex-start; margin-top: .2rem; }
+/* Una tarjeta que lleva al visor del organismo sale del sitio (area "Mapas", JC 15-nov-2026):
+   se avisa con una flecha despues del titulo, para que el usuario sepa antes de hacer clic que
+   abre otra pestaña y se va a otro lado. El `aria-label` del link lo dice en palabras. */
+.acceso-externo .acceso-titulo::after {
+  content: " \2197"; font-weight: 400; color: var(--texto-apoyo);
+}
 @media (prefers-reduced-motion: reduce) { .acceso { transition: none; } }
 
 /* "Destacados" de AgroMet (columna derecha de "Clima Ingreso", 15-oct-2026). Los dos mapas
@@ -2896,6 +2902,15 @@ dialog.zoom.zoom-visible::backdrop { opacity: 1; }
 }
 .panel[data-panel="mapa-capas"] > .panel-cuerpo > .grafico {
   grid-column: 1; grid-row: 1; height: 640px; min-height: 0;
+}
+/* UN MAPA QUE SE RECORRE OCUPA LA PAGINA (JC, 15-nov-2026: "que el mapa ocupe toda la pagina
+   pudiendo hacer zoom al maximo"). Con 640 px fijos el mapa de Infraestructura entraba en la
+   mitad de arriba de la pantalla y abajo quedaba crema: para mirar un camino rural hay que
+   tener lugar. Se toma el alto de la ventana menos la cabecera, la banda y los indicadores
+   (~17rem), con un piso de 640 px -el de siempre- para una pantalla baja. Solo lo lleva el
+   panel que declara `zoom` en su spec: los otros mapas de capas siguen igual. */
+.panel[data-panel="mapa-capas"][data-con-zoom] > .panel-cuerpo > .grafico {
+  height: max(640px, calc(100vh - 17rem));
 }
 .panel[data-panel="mapa-capas"] > .panel-cuerpo > .capas-a-la-vista { grid-column: 2; grid-row: 1; }
 .panel[data-panel="mapa-capas"] > .panel-cuerpo > .cuadro-nota,

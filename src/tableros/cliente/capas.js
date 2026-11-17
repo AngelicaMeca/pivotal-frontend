@@ -197,21 +197,58 @@ function pintarPie(nodo, catalogo, ids) {
 /* El componente `geo` que da las coordenadas a las capas. Misma proyeccion que la serie `map`
    del cuadro (se le pasan los MISMOS aspectScale, layoutCenter y layoutSize), transparente y
    mudo: no se ve, no tiene tooltip y no recibe clics. */
-function geo(proyeccion) {
-  return {
+/* El componente `geo` sobre el que se dibujan las capas. Es transparente y, normalmente,
+   `silent`: esta solo para darles coordenadas.
+
+   Con `opciones.roam` (la pagina de Infraestructura, JC 15-nov-2026: "que el mapa ocupe toda la
+   pagina pudiendo hacer zoom al maximo") deja de ser silent, porque es EL que recibe la rueda y
+   el arrastre, y pasa a ser el UNICO sistema de coordenadas del cuadro: la serie `map` de los
+   departamentos se le cuelga con `geoIndex: 0`, asi el mapa y las capas se mueven juntos. Sin
+   eso cada uno tendria su propio zoom y al primer movimiento las rutas quedarian corridas
+   respecto de los departamentos. `emphasis` sigue deshabilitado: el geo no se pinta ni se
+   resalta, solo capta el gesto. */
+export function geoDeMapa(proyeccion, opciones) {
+  var conZoom = !!(opciones && opciones.roam);
+  var geo = {
     map: "provincia",
     nameProperty: "geo_id",
     aspectScale: proyeccion.aspectScale,
     layoutCenter: proyeccion.layoutCenter,
     layoutSize: proyeccion.layoutSize,
-    roam: false,
-    silent: true,
+    roam: conZoom,
+    // Hasta 40x: a ese acercamiento se lee un camino rural suelto, que es "el maximo" que pide
+    // JC. El minimo es 1 para que no se pueda alejar mas alla de la provincia entera.
+    scaleLimit: conZoom ? { min: 1, max: 40 } : undefined,
+    silent: !conZoom,
     selectedMode: false,
     tooltip: { show: false },
     label: { show: false },
     itemStyle: { areaColor: "rgba(0,0,0,0)", borderColor: "rgba(0,0,0,0)", borderWidth: 0 },
     emphasis: { disabled: true }
   };
+  /* EL GEO DIBUJA LOS DEPARTAMENTOS cuando el mapa tiene zoom.
+
+     Normalmente los departamentos son una serie `map` aparte y este geo es solo un sistema de
+     coordenadas transparente. Con zoom no puede ser asi: para que el mapa y las capas se
+     muevan juntos hay UN solo sistema de coordenadas, y ECharts, cuando una serie `map` se
+     cuelga de un geo con `geoIndex`, IGNORA el `itemStyle` y el `label` de la serie y dibuja
+     las regiones con los del geo. O sea que, si el geo se queda transparente, los
+     departamentos desaparecen: eso fue exactamente lo que pasó al construirlo, y es lo
+     contrario de lo que pide JC ("QUE SE VEA LA DIVISION DEPARTAMENTAL"). Asi que con zoom el
+     relleno, el borde y los nombres se los lleva el geo. */
+  if (conZoom && opciones.departamentos) {
+    var d = opciones.departamentos;
+    geo.tooltip = { show: true };
+    geo.label = d.label;
+    geo.labelLayout = d.labelLayout;
+    geo.itemStyle = d.itemStyle;
+    geo.emphasis = d.emphasis;
+  }
+  return geo;
+}
+
+function geo(proyeccion, opciones) {
+  return geoDeMapa(proyeccion, opciones);
 }
 
 function tooltipDeCapa() {
@@ -237,7 +274,7 @@ function series(catalogo, ids, opciones) {
       var datos = entrada.grupos[i];
       if (!datos.length) { return; }
       if (capa.geometria === "puntos") {
-        salida.push({
+        var punto = {
           type: "scatter", coordinateSystem: "geo", geoIndex: 0, z: z + 2,
           silent: !opciones.interactivas,
           symbol: "circle", symbolSize: estilo.tamanio || 5,
@@ -245,7 +282,23 @@ function series(catalogo, ids, opciones) {
           emphasis: { scale: 1.6 },
           tooltip: opciones.interactivas ? tooltipDeCapa() : { show: false },
           data: datos
-        });
+        };
+        /* Capas que escriben el nombre al lado del punto (las ciudades y pueblos, JC
+           15-nov-2026: "QUE SE VEA... LAS PRINCIPALES CIUDADES/PUEBLOS"). Son 165 y a la
+           provincia entera no entran todos: `hideOverlap` esconde los que se encimarian y, a
+           medida que se hace zoom, van apareciendo. Es la misma regla que ya usan los nombres
+           de los departamentos. El halo claro es para que el nombre se lea sobre una ruta. */
+        if (capa.rotulos) {
+          punto.label = {
+            show: true, position: "right", distance: 3, fontSize: 9,
+            /* Los dos colores los trae el que llama (este modulo no ve `PIVOTAL`): son
+               cromo de interfaz y salen del theme, como los nombres de los departamentos. */
+            color: opciones.tinta, textBorderColor: opciones.halo, textBorderWidth: 2,
+            formatter: function (p) { return (p.data && p.data.name) || ""; }
+          };
+          punto.labelLayout = { hideOverlap: true };
+        }
+        salida.push(punto);
         return;
       }
       var tipo = estilo.trazo === "punteado" ? [4, 3] : "solid";
@@ -296,5 +349,5 @@ export function capasDelMapa(nodo, catalogo, redibujar, proyeccion, opciones) {
   pintarPie(nodo, catalogo, ids);
   var listasYa = listas(nodo, catalogo, function () { nodo.capasRedibujar(); });
   if (!listasYa.length) { return null; }
-  return { geo: geo(proyeccion), series: series(catalogo, listasYa, opciones) };
+  return { geo: geo(proyeccion, opciones), series: series(catalogo, listasYa, opciones) };
 }

@@ -77,13 +77,28 @@ ramas:
     rama: Industria
     titulo: Industria
     bajada: "Establecimientos e insumos de la cadena agroalimentaria."
-  - id: general
+  # --- "GENERAL" DESAPARECIO el 17-nov-2026 (JC, comentario del 15-nov-2026, textual:
+  # "DESAPARECE EL ITEM 'GENERAL'"). En su lugar pide dos items nuevos en el menu de la
+  # izquierda: INFRAESTRUCTURA y MAPAS, que son las dos ramas de abajo. La rama General no
+  # tenia ninguna seccion publicada: solo se dibujaba con "Próximamente".
+  - id: infraestructura
     bloque: acceso-por-tema
-    rama: General
-    titulo: Datos generales
-    bajada: "Población, educación y contexto de la provincia."
+    rama: Infraestructura
+    titulo: Infraestructura
+    bajada: "Red vial, ferrocarril y tendido eléctrico sobre el mapa de la provincia."
+    # El titulo de la rama lleva a su unica pagina, como AgroClima y Ganaderia con su portada.
+    portada: infraestructura
     # Mismo criterio que ganadería: dim_geo canoniza "BANDA" y el sitio la publica como la
     # nombra la provincia (los mapas y tablas de las capas del IGN, 14-oct-2026).
+    nombres_departamento:
+      "BANDA": "LA BANDA"
+  - id: mapas
+    bloque: acceso-por-tema
+    rama: Mapas
+    titulo: Mapas
+    bajada: "Visores y capas de los organismos, y el mapa nacional de cultivos."
+    # El nombre "Mapas" del menu lleva a la portada, como en AgroClima.
+    portada: mapas
     nombres_departamento:
       "BANDA": "LA BANDA"
   # SID - Sistema de Información Departamental (maqueta "0000000000 Maqueta SID 1.xlsx",
@@ -131,7 +146,10 @@ menu_lateral:
   - {rama: clima, titulo: "AgroClima"}
   - {rama: industria, titulo: "Industria"}
   - {rama: economia, titulo: "Economía"}
-  - {rama: general, titulo: "General"}
+  # 17-nov-2026 (JC, 15-nov): "DESAPARECE EL ITEM 'GENERAL'" y "Se agregan dos títulos en el
+  # menú de la izquierda": INFRAESTRUCTURA y MAPAS. Van al final, donde estaba General.
+  - {rama: infraestructura, titulo: "Infraestructura"}
+  - {rama: mapas, titulo: "Mapas"}
 
 # --- Secciones publicadas (las que tienen vistas construidas) ---
 secciones:
@@ -412,11 +430,64 @@ secciones:
     # igual: dejarla afuera de la tira la volvería inalcanzable salvo por el menú lateral.
     grupos: []
 
-  # GENERAL · Infraestructura y riesgo (capas del IGN) SALIO del sitio publico el 20-oct-2026
-  # (revision de JC del 16-oct-2026: "NUNCA PASE MAQUETA DE GENERAL AUN", "SACAR COMPLETO ESO
-  # DE RIESGO HIDROLOGICO"). Sus specs quedan como registro en estado no-publicada; la rama
-  # General vuelve a dibujarse con "Próximamente". Las capas siguen en configs/dims/capas-ign/
-  # para cuando JC mande la maqueta de "Infraestructura" (con un visor SIG con zoom real).
+  # ---------------------------------------------------------------------------
+  # GENERAL · Infraestructura (redes viales del IGN + tendido electrico del CFEE)
+  # ---------------------------------------------------------------------------
+  # Historia: entro el 14-oct-2026 como "Infraestructura y riesgo" (pedido de JC del 14-oct,
+  # backlog 104), SALIO el 20-oct por su revision del 16-oct ("NUNCA PASE MAQUETA DE GENERAL
+  # AUN", "SACAR COMPLETO ESO DE RIESGO HIDROLOGICO") y VUELVE el 17-nov-2026 porque el
+  # 15-nov JC la pide por su nombre (punto 3.a de su comentario: "Van los mapas de Redes
+  # viales (primaria, secundaria y terciaria) y el de tendido electrico").
+  #
+  # Se llama "Infraestructura" y no "Infraestructura y riesgo": lo de riesgo lo mando sacar y
+  # no lo volvio a pedir, asi que la pagina de amenazas hidrometeorologicas sigue
+  # `no-publicada`. Detalle de lo que cambio, en tablero-infraestructura-y-riesgo.yaml.
+  - id: infraestructura
+    familia: capas-ign
+    rama: infraestructura
+    ruta: [Infraestructura]
+    url: infraestructura
+    titulo: "Infraestructura"
+    bajada_corta: "Rutas, caminos rurales, ferrocarril y tendido eléctrico de media tensión."
+    bajada: >
+      La red vial de Santiago del Estero por jerarquía y tipo de calzada, los tendidos y
+      estaciones de ferrocarril y las líneas eléctricas de media tensión, sobre el mapa de la
+      provincia. Capas oficiales del Instituto Geográfico Nacional y del Consejo Federal de la
+      Energía Eléctrica, recortadas al límite provincial.
+    # Una sola pagina: sin pestañas Tablero/Analisis ni listado de vistas.
+    sin_pestanias: true
+    grupos: []
+
+  # ---------------------------------------------------------------------------
+  # MAPAS · portada de visores y capas de organismos + el mapa nacional de cultivos
+  # ---------------------------------------------------------------------------
+  # JC, 15-nov-2026, punto 3.b: "MAPAS: Con el mismo formato de 'Agroclima' hacemos un área de
+  # 'ingreso' con los títulos de los mapas que envié el link"; y punto 4: "MAPA DE CULTIVOS: Lo
+  # agregamos como ítem en el desplegable del menú de la izquierda Y QUE SE VEA (incluido el
+  # zoom) TAL COMO ESPECTACULARMENTE BIEN HICISTE CON LOS DE AGROCLIMA".
+  #
+  # El mapa de cultivos va ACA y no en Agricultura por eso: el pide que sea un item del
+  # desplegable del menu, y el desplegable nuevo es este. Ademas es un mapa de terceros con el
+  # mismo tratamiento que los de AgroClima (imagen georreferenciada con visor), no una vista de
+  # la base 9 de MAGyP.
+  - id: mapas
+    familia: agroclima
+    rama: mapas
+    ruta: [Mapas]
+    url: mapas
+    titulo: "Mapas"
+    bajada_corta: "Visores y capas de INTA, CONAE e INDEC, y el mapa nacional de cultivos."
+    bajada: >
+      Acceso a los visores y catálogos geoespaciales de los organismos -INTA, CONAE e INDEC- y
+      al Mapa Nacional de Cultivos de la campaña 2024/2025, con la cobertura de verano e
+      invierno detectada por satélite sobre el territorio provincial.
+    sin_pestanias: true
+    # Las paginas de la rama como renglones del menu lateral, igual que AgroClima.
+    menu_paginas:
+      - {titulo: "Mapa Nacional de Cultivos", destino: 4001-mapa-cultivos}
+    vistas_sueltas:
+      - 4001-mapa-cultivos
+    grupos: []
 
   # ---------------------------------------------------------------------------
   # SID · Sistema de Información Departamental (maqueta "0000000000 Maqueta SID 1.xlsx",

@@ -52,6 +52,19 @@ export default function crearVisor(nodo, elemento, opciones) {
      pide "Mostrar todo el pais", que es el unico momento en que se ve algo de afuera. */
   var caja = elemento.visor.caja;
   var cajaRecorte = elemento.visor.recorte || null;
+  // Si la imagen trae los limites departamentales dibujados (las del SEPA, si; el raster de
+  // cultivos del INTA, no). Ver `agrandar`.
+  var limpiarLineas = elemento.visor.limpiar_lineas !== false;
+  /* QUIEN PUBLICA LA IMAGEN. El visor nacio para las galerias del SEPA y lo tenia escrito en
+     cinco textos a la vista; el mapa de cultivos es del INTA y decia "Escala del SEPA" abajo
+     de las referencias del INTA. El organismo es dato, no texto del visor: lo declara el spec
+     y por defecto sigue siendo el SEPA. */
+  var organismo = elemento.visor.organismo || "SEPA";
+  /* Si la imagen publicada cubre MAS que la provincia. Las del SEPA son del pais entero, y ahi
+     "Mostrar todo el pais" destapa lo de afuera (que es donde el SEPA imprime su leyenda). La
+     del mapa de cultivos ya viene recortada: el control dibujaria el recorte de la provincia
+     estirado sobre las provincias vecinas, o sea una mentira, asi que no se dibuja. */
+  var hayPais = elemento.visor.imagen_del_pais !== false;
   var mapas = elemento.mapas;
   var estado = {
     i: elemento.destacado || 0, opacidad: 1, todoElPais: false,
@@ -103,18 +116,20 @@ export default function crearVisor(nodo, elemento, opciones) {
   rotuloTodo.appendChild(todo);
   rotuloTodo.appendChild(document.createTextNode(" Mostrar todo el país"));
 
+
   var grupoZoom = el("div", "visor-grupo");
   grupoZoom.appendChild(boton("−", "Alejar", function () { zoomAlCentro(1 / 1.5); }));
   grupoZoom.appendChild(boton("⟲", "Volver al encuadre de la provincia", encuadrar));
   grupoZoom.appendChild(boton("+", "Acercar", function () { zoomAlCentro(1.5); }));
 
-  var original = boton("Imagen original", "Ver la imagen del SEPA tal cual se publica",
+  var original = boton("Imagen original", "Ver la imagen del " + organismo + " tal cual se publica",
                        function () { if (opciones.original) { opciones.original(estado.i, original); } });
   original.classList.add("visor-texto");
 
-  [grupoPeriodo, rotuloOpacidad, rotuloTodo, grupoZoom, original].forEach(function (x) {
-    barra.appendChild(x);
-  });
+  /* El control de "todo el pais" no se ESCONDE, no se dibuja: `.visor-control` declara
+     `display: flex` y le gana al `hidden` del navegador, asi que escondido seguia a la vista. */
+  [grupoPeriodo, rotuloOpacidad, hayPais ? rotuloTodo : null, grupoZoom, original]
+    .forEach(function (x) { if (x) { barra.appendChild(x); } });
 
   var cuerpo = el("div", "visor-cuerpo");
   var lienzo = el("div", "visor-lienzo");
@@ -150,11 +165,16 @@ export default function crearVisor(nodo, elemento, opciones) {
   lienzo.appendChild(aviso);
   var nota = el("p", "visor-nota");
   // El visor muestra la imagen agrandada (ver agrandar()): la nota lo dice.
-  nota.textContent = elemento.visor.nota + " En el visor la imagen se ubica con una caja"
-    + " ajustada a los límites que trae dibujados y se agranda sin mover ningún punto;"
+  nota.textContent = elemento.visor.nota
+    + (limpiarLineas
+       ? " En el visor la imagen se ubica con una caja ajustada a los límites que trae"
+         + " dibujados y se agranda sin mover ningún punto;"
+       : " En el visor la imagen se ubica con la caja que trae su georreferencia y se agranda"
+         + " sin mover ningún punto;")
     + " “Imagen original” la muestra tal cual se publica."
-    + (leyenda ? " Las referencias del costado son las que publica el SEPA para este producto,"
-                 + " transcriptas: no cambian con el zoom ni con el período." : "");
+    + (leyenda ? " Las referencias del costado son las que publica el " + organismo
+                 + " para este producto, transcriptas: no cambian con el zoom ni con el"
+                 + " período." : "");
   nodo.appendChild(barra);
   cuerpo.appendChild(lienzo);
   if (escala) { cuerpo.appendChild(escala); }
@@ -400,7 +420,7 @@ export default function crearVisor(nodo, elemento, opciones) {
     });
     caja.appendChild(lista);
     var pie = el("p", "visor-escala-pie");
-    pie.textContent = "Escala del SEPA para este producto";
+    pie.textContent = "Escala del " + organismo + " para este producto";
     caja.appendChild(pie);
     return caja;
   }
@@ -479,8 +499,18 @@ export default function crearVisor(nodo, elemento, opciones) {
       }
       return gm.getImageData(0, 0, w, h).data;
     }
-    px = sinLineas(px, { banda: mascara(2 * BANDA), ancha: mascara(6 * BANDA),
-                         provincia: mascara(0) }, w, h);
+    /* `sinLineas` borra los limites que la imagen trae DIBUJADOS, que es un problema del SEPA:
+       sus mapas vienen con las lineas de los departamentos impresas y el sitio quiere dibujar
+       las suyas, finas. Una imagen que NO las trae no pasa por ahi, y no es un detalle: es una
+       heuristica que busca pixeles oscuros o raros cerca de un limite y los rellena con el
+       vecino, asi que sobre un raster CLASIFICADO se come clases enteras -el arroz (#1d1e33) y
+       el sorgo (#1e0f6b) son oscuros, y la papa o el mani son pocos pixeles- y de paso rompe la
+       transparencia de lo que la fuente no clasifico, que sale negro. Lo declara el spec
+       (`georreferencia.lineas_en_la_imagen`). */
+    if (limpiarLineas) {
+      px = sinLineas(px, { banda: mascara(2 * BANDA), ancha: mascara(6 * BANDA),
+                           provincia: mascara(0) }, w, h);
+    }
     var grande = agrandarPixeles(px, w, h);
     var lienzo = document.createElement("canvas");
     lienzo.width = grande.ancho; lienzo.height = grande.alto;
@@ -534,7 +564,9 @@ export default function crearVisor(nodo, elemento, opciones) {
       prepararCapa(i);
     };
     img.onerror = function () {
-      if (estado.i === i) { mostrarCargando("No se pudo cargar la imagen del SEPA.", true); }
+      if (estado.i === i) {
+        mostrarCargando("No se pudo cargar la imagen del " + organismo + ".", true);
+      }
     };
     img.src = fuenteDelPeriodo(i);
     estado.imagenes[i] = img;
@@ -624,7 +656,7 @@ export default function crearVisor(nodo, elemento, opciones) {
     var listo = img.complete && img.naturalWidth;
     if (!listo) { pedirMini(i); }
     mostrarCargando(capaLista(i) ? ""
-                    : listo ? "Preparando el mapa…" : "Cargando el mapa del SEPA…");
+                    : listo ? "Preparando el mapa…" : ("Cargando el mapa del " + organismo + "…"));
     dibujar();
     if (listo) { prepararCapa(i); }
     if (capaLista(i)) { precargarVecino(i); }
@@ -783,7 +815,7 @@ export default function crearVisor(nodo, elemento, opciones) {
      de la cadena (script -> datos -> limites -> imagen): es la pieza mas pesada de la pagina y
      antes salia a pedirla casi un segundo tarde. La miniatura va con ella para tener algo que
      mostrar enseguida. */
-  mostrarCargando("Cargando el mapa del SEPA…");
+  mostrarCargando(("Cargando el mapa del " + organismo + "…"));
   pedirImagen(estado.i, "high");
   pedirMini(estado.i);
   cargarGeo().then(function () {
@@ -833,7 +865,12 @@ export function agrandarPixeles(px, w, h) {
       }
       var gana = 0;
       for (var z = 1; z < n; z++) { if (pesos[z] > pesos[gana]) { gana = z; } }
-      out[oy * ow + ox] = (colores[gana] | 0xff000000) >>> 0;
+      /* Se queda con el color del ganador TAL CUAL, alfa incluido. Antes forzaba el alfa a
+         255 (`| 0xff000000`), que sobre las imagenes del SEPA no hacia nada -son opacas- pero
+         sobre un raster clasificado pinta de NEGRO lo que la fuente dejo sin clasificar: un
+         pixel transparente es (0,0,0,0), o sea negro con alfa cero, y al taparle el alfa queda
+         negro a secas. El mapa de cultivos salia con todo el oeste de la provincia en negro. */
+      out[oy * ow + ox] = colores[gana] >>> 0;
     }
   }
   return { pixeles: out, ancho: ow, alto: oh };

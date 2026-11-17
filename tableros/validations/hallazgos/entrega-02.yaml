@@ -27,11 +27,11 @@ resumen:
   - 229
   - 230
   - 232
-  filas_revisadas: 822305
-  checks_corridos: 581
+  filas_revisadas: 822809
+  checks_corridos: 797
   bloqueantes: 2
   observaciones: 13
-  informativos: 34
+  informativos: 38
 hallazgos:
 - check: cobertura-entrega
   severidad: bloqueante
@@ -48,7 +48,7 @@ hallazgos:
   severidad: bloqueante
   base: 48
   titulo: Cantidades con decimales donde solo puede haber numeros enteros
-  casos: 54
+  casos: 72
   detalle: Media cabeza de ganado no existe. Suele pasar cuando la planilla trae un promedio en la columna
     de cantidad.
   ejemplos:
@@ -190,15 +190,15 @@ hallazgos:
   - base_id=89 | hoja=2025 | ambito=sde | grano_tiempo=anio_mes | anio=2025 | mes=2 | provincia=sde |
     provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=MORENO
     | geo_nombre=MORENO | geo_id=86119 | es_agregado_geo=False | zona_destino=ZONA 10                        B
-    | raza=Bovino Criollo | especie=bovinos | categoria=Bovino Vaca Regular (6 o más dientes) | variable=precio_cabeza
-    | medida=precio | medida_etiqueta=Precio por cabeza | unidad=$/cab | agregable=False | fuente=SENASA
-    - Siocarnes | veces=1521
-  - base_id=89 | hoja=2025 | ambito=sde | grano_tiempo=anio_mes | anio=2025 | mes=2 | provincia=sde |
-    provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=MORENO
-    | geo_nombre=MORENO | geo_id=86119 | es_agregado_geo=False | zona_destino=ZONA 10                        B
     | raza=Bovino Criollo | especie=bovinos | categoria=Bovino Vaca Regular (6 o más dientes) | variable=operaciones
     | medida=operaciones | medida_etiqueta=Operaciones | unidad=operaciones | agregable=True | valor=1.0
     | fuente=SENASA - Siocarnes | veces=1521
+  - base_id=89 | hoja=2025 | ambito=sde | grano_tiempo=anio_mes | anio=2025 | mes=2 | provincia=sde |
+    provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=MORENO
+    | geo_nombre=MORENO | geo_id=86119 | es_agregado_geo=False | zona_destino=ZONA 10                        B
+    | raza=Bovino Criollo | especie=bovinos | categoria=Bovino Vaca Regular (6 o más dientes) | variable=precio_cabeza
+    | medida=precio | medida_etiqueta=Precio por cabeza | unidad=$/cab | agregable=False | fuente=SENASA
+    - Siocarnes | veces=1521
   - base_id=89 | hoja=2024 | ambito=sde | grano_tiempo=anio_mes | anio=2024 | mes=3 | provincia=sde |
     provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=ROBLES
     | geo_nombre=ROBLES | geo_id=86161 | es_agregado_geo=False | zona_destino=ZONA 10                        B
@@ -232,15 +232,15 @@ hallazgos:
   - base_id=89 | hoja=2022 | ambito=sde | grano_tiempo=anio | anio=2022 | provincia=sde | provincia_nombre=SANTIAGO
     DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=JIMENEZ | geo_nombre=JIMENEZ
     | geo_id=86091 | es_agregado_geo=False | zona_destino=ZONA 10                        B | raza=Braford
-    | especie=bovinos | categoria=Bovino Vaquillona Regular (4 dientes) | variable=precio_cabeza | medida=precio
-    | medida_etiqueta=Precio por cabeza | unidad=$/cab | agregable=False | fuente=SENASA - Siocarnes |
-    veces=860
-  - base_id=89 | hoja=2022 | ambito=sde | grano_tiempo=anio | anio=2022 | provincia=sde | provincia_nombre=SANTIAGO
-    DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=JIMENEZ | geo_nombre=JIMENEZ
-    | geo_id=86091 | es_agregado_geo=False | zona_destino=ZONA 10                        B | raza=Braford
     | especie=bovinos | categoria=Bovino Vaquillona Regular (4 dientes) | variable=operaciones | medida=operaciones
     | medida_etiqueta=Operaciones | unidad=operaciones | agregable=True | valor=1.0 | fuente=SENASA -
     Siocarnes | veces=860
+  - base_id=89 | hoja=2022 | ambito=sde | grano_tiempo=anio | anio=2022 | provincia=sde | provincia_nombre=SANTIAGO
+    DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=JIMENEZ | geo_nombre=JIMENEZ
+    | geo_id=86091 | es_agregado_geo=False | zona_destino=ZONA 10                        B | raza=Braford
+    | especie=bovinos | categoria=Bovino Vaquillona Regular (4 dientes) | variable=precio_cabeza | medida=precio
+    | medida_etiqueta=Precio por cabeza | unidad=$/cab | agregable=False | fuente=SENASA - Siocarnes |
+    veces=860
   - base_id=89 | hoja=2023 | ambito=sde | grano_tiempo=anio_mes | anio=2023 | mes=5 | provincia=sde |
     provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=ROBLES
     | geo_nombre=ROBLES | geo_id=86161 | es_agregado_geo=False | zona_destino=ZONA 10                        B
@@ -259,27 +259,27 @@ hallazgos:
   - base_id=90 | hoja=2024 | ambito=sde | grano_tiempo=anio_mes | anio=2024 | mes=10 | provincia=sde |
     provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=JUAN
     F. IBARRA | geo_nombre=JUAN F. IBARRA | geo_id=86098 | es_agregado_geo=False | zona_destino=ZONA 6                         P
-    | raza=LÍNEA HÍBRIDA MATERNA | especie=porcinos | categoria=Porcina Capón | variable=precio_cabeza
-    | medida=precio | medida_etiqueta=Precio por cabeza | unidad=$/cab | agregable=False | fuente=SENASA
-    - Siocarnes | veces=289
-  - base_id=90 | hoja=2024 | ambito=sde | grano_tiempo=anio_mes | anio=2024 | mes=10 | provincia=sde |
-    provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=JUAN
-    F. IBARRA | geo_nombre=JUAN F. IBARRA | geo_id=86098 | es_agregado_geo=False | zona_destino=ZONA 6                         P
     | raza=LÍNEA HÍBRIDA MATERNA | especie=porcinos | categoria=Porcina Capón | variable=operaciones |
     medida=operaciones | medida_etiqueta=Operaciones | unidad=operaciones | agregable=True | valor=1.0
     | fuente=SENASA - Siocarnes | veces=289
-  - base_id=90 | hoja=2025 | ambito=sde | grano_tiempo=anio_mes | anio=2025 | mes=1 | provincia=sde |
-    provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=SAN
-    MARTIN | geo_nombre=SAN MARTIN | geo_id=86175 | es_agregado_geo=False | zona_destino=ZONA 6                         P
+  - base_id=90 | hoja=2024 | ambito=sde | grano_tiempo=anio_mes | anio=2024 | mes=10 | provincia=sde |
+    provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=JUAN
+    F. IBARRA | geo_nombre=JUAN F. IBARRA | geo_id=86098 | es_agregado_geo=False | zona_destino=ZONA 6                         P
     | raza=LÍNEA HÍBRIDA MATERNA | especie=porcinos | categoria=Porcina Capón | variable=precio_cabeza
     | medida=precio | medida_etiqueta=Precio por cabeza | unidad=$/cab | agregable=False | fuente=SENASA
-    - Siocarnes | veces=241
+    - Siocarnes | veces=289
   - base_id=90 | hoja=2025 | ambito=sde | grano_tiempo=anio_mes | anio=2025 | mes=1 | provincia=sde |
     provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=SAN
     MARTIN | geo_nombre=SAN MARTIN | geo_id=86175 | es_agregado_geo=False | zona_destino=ZONA 6                         P
     | raza=LÍNEA HÍBRIDA MATERNA | especie=porcinos | categoria=Porcina Capón | variable=operaciones |
     medida=operaciones | medida_etiqueta=Operaciones | unidad=operaciones | agregable=True | valor=1.0
     | fuente=SENASA - Siocarnes | veces=241
+  - base_id=90 | hoja=2025 | ambito=sde | grano_tiempo=anio_mes | anio=2025 | mes=1 | provincia=sde |
+    provincia_nombre=SANTIAGO DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=SAN
+    MARTIN | geo_nombre=SAN MARTIN | geo_id=86175 | es_agregado_geo=False | zona_destino=ZONA 6                         P
+    | raza=LÍNEA HÍBRIDA MATERNA | especie=porcinos | categoria=Porcina Capón | variable=precio_cabeza
+    | medida=precio | medida_etiqueta=Precio por cabeza | unidad=$/cab | agregable=False | fuente=SENASA
+    - Siocarnes | veces=241
   - base_id=90 | hoja=2023 | ambito=sde | grano_tiempo=anio | anio=2023 | provincia=sde | provincia_nombre=SANTIAGO
     DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=JUAN F. IBARRA | geo_nombre=JUAN
     F. IBARRA | geo_id=86098 | es_agregado_geo=False | zona_destino=ZONA 6                         P |
@@ -313,9 +313,9 @@ hallazgos:
   - base_id=90 | hoja=2023 | ambito=sde | grano_tiempo=anio | anio=2023 | provincia=sde | provincia_nombre=SANTIAGO
     DEL ESTERO | provincia_id=86 | nivel_geo=departamento | departamento=JUAN F. IBARRA | geo_nombre=JUAN
     F. IBARRA | geo_id=86098 | es_agregado_geo=False | zona_destino=ZONA 6                         P |
-    raza=LÍNEA HÍBRIDA MATERNA | especie=porcinos | categoria=Porcina Capón | variable=precio_cabeza |
-    medida=precio | medida_etiqueta=Precio por cabeza | unidad=$/cab | agregable=False | fuente=SENASA
-    - Siocarnes | veces=197
+    raza=LÍNEA HÍBRIDA MATERNA | especie=porcinos | categoria=Porcina Capón | variable=operaciones | medida=operaciones
+    | medida_etiqueta=Operaciones | unidad=operaciones | agregable=True | valor=1.0 | fuente=SENASA -
+    Siocarnes | veces=197
   propuesta: 'Publicar sin ellas seria corregir en silencio: se dejan y se pregunta.'
   pregunta_jc: Hay filas repetidas identicas. Se pueden descartar las copias?
 - check: cobertura-hojas
@@ -347,6 +347,15 @@ hallazgos:
     y la clasificacion verano/invierno de cada cultivo). No son datos: va a constructor-reglas para convertirse
     en specs/modelos/base-9-*.yaml.'
   - 'Hoja1: Hoja vacia (dims A1:A1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 30
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Analisis: Las indicaciones de JC para la vista (ranking por departamento, participacion de
+    los 6 principales y el resto, volcado a mapa), no datos.'
   propuesta: Son hojas de calculo o de instrucciones, no de datos.
 - check: cobertura-hojas
   severidad: informativo
@@ -384,18 +393,18 @@ hallazgos:
   casos: 14
   detalle: De 2012 a 2025.
   ejemplos:
-  - '2012: 308 filas'
-  - '2013: 308 filas'
-  - '2014: 308 filas'
-  - '2015: 308 filas'
-  - '2016: 308 filas'
-  - '2017: 308 filas'
-  - '2018: 308 filas'
-  - '2019: 308 filas'
-  - '2020: 308 filas'
-  - '2021: 308 filas'
-  - '2022: 308 filas'
-  - '2023: 308 filas'
+  - '2012: 344 filas'
+  - '2013: 344 filas'
+  - '2014: 344 filas'
+  - '2015: 344 filas'
+  - '2016: 344 filas'
+  - '2017: 344 filas'
+  - '2018: 344 filas'
+  - '2019: 344 filas'
+  - '2020: 344 filas'
+  - '2021: 344 filas'
+  - '2022: 344 filas'
+  - '2023: 344 filas'
 - check: serie
   severidad: informativo
   base: 48
@@ -507,6 +516,32 @@ hallazgos:
   casos: 1
   ejemplos:
   - 'Hoja2: Vacia (1x1).'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 144
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo analisis: Indicaciones de JC para la vista, no datos (su pagina es la de bovinos: "PROCESAR
+    IDEM DTE BOVINOS").'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 145
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo Análisis: Indicaciones de JC para la vista, no datos ("PROCESAR IDEM DTE BOVINOS").'
+  propuesta: Son hojas de calculo o de instrucciones, no de datos.
+- check: cobertura-hojas
+  severidad: informativo
+  base: 151
+  titulo: Hojas del archivo que no se leyeron
+  casos: 1
+  ejemplos:
+  - 'Modelo análisis: Las indicaciones de JC para la vista (tabla simple, volcado a mapas y torta de los
+    5 principales + resto), no datos. Estan reflejadas en tablero-bovinos-feedlots.'
   propuesta: Son hojas de calculo o de instrucciones, no de datos.
 - check: cobertura-hojas
   severidad: informativo

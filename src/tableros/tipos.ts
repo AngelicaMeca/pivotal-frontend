@@ -222,6 +222,11 @@ export type Panel = {
   // La tabla scrollea adentro de su cuadro en vez de estirar las filas que ocupa (ganaderia,
   // paginas de Estratos). Lo declara el spec en `paneles.orden`.
   scroll_interno?: boolean;
+  // El mapa se recorre con la rueda y el arrastre, y por eso ocupa la pagina entera
+  // (Infraestructura; JC, 15-nov-2026: "que el mapa ocupe toda la pagina pudiendo hacer zoom al
+  // maximo"). Lo declara el spec en el panel; aca solo decide el ALTO de la caja, el gesto lo
+  // arma `pintarMapaCapas`.
+  zoom?: boolean;
   // Disposicion "columnas": en que columna de su banda va el cuadro ("izq" o "der"). Si el
   // spec no lo dice, lo decide el ancho (ver bandasEnColumnas en Tablero.tsx).
   columna?: "izq" | "centro" | "der" | "fila";

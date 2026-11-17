@@ -1,0 +1,830 @@
+# CATÁLOGO DE FUENTES GEOESPACIALES
+#
+# Es el registro que pide el ERS "Mapas y Contexto IA" v1.1 (11-nov-2026), RF1 a RF15 y RF22 a
+# RF23, implementado como lo prescribe su propia sección 5.1: "se implementan como registro
+# declarativo versionado... archivos YAML versionados, con la misma mecánica de los modelos y
+# las configuraciones ya existentes", y "los bloqueos de publicación de los RF6, RF15.1, RF15.2
+# y RF17.3 se implementan como validaciones del pipeline que interrumpen la construcción del
+# sitio, no como controles de interfaz".
+#
+# O sea: NO hay pantallas de administración y no hace falta ninguna. El alta de una fuente (RF1)
+# es agregar una entrada acá; la baja (RF3) es ponerle `estado: descartada` con su motivo; el
+# cambio de estado (RF11.1) es editar dos campos; y el catálogo (RF11) y el avance (RF10) se
+# leen de este archivo con `python -m pipeline.fuentes_geo`. El historial de quién cambió qué y
+# cuándo lo da git, que es más confiable que una tabla de auditoría.
+#
+# Quién valida qué: `pipeline/fuentes_geo.py` lo verifica en cada `make build` y CORTA la
+# corrida si algo no cierra. Lo que corta está escrito en ese archivo.
+#
+# ----------------------------------------------------------------------------------------------
+# CÓMO SE LEE UNA ENTRADA
+#
+#   id                    el nombre con el que se la nombra en el resto del repo
+#   nombre                descriptivo, el que vería una persona                        (RF1)
+#   organismo             quién la publica                                             (RF1)
+#   url                   de acceso                                                    (RF1)
+#   tipo_contenido        visor-web | capa-descargable | servicio-ogc | repositorio    (RF1)
+#   alcance               nacional | provincial | regional | departamental             (RF1)
+#   estado                a-evaluar | en-evaluacion | aprobada | en-ingesta |
+#                         normalizada | publicada | descartada | caida               (RF11.1)
+#   responsable           a quién le toca el próximo paso                            (RF11.2)
+#   fecha_estado          cuándo pasó a ese estado                                   (RF11.2)
+#   modo_acceso           visor-embebible | descarga-directa | catalogo-con-descarga |
+#                         ogc-wms | ogc-wfs | exportacion-desde-app                    (RF13)
+#   modo_visualizacion    visor-del-organismo | visor-propio, con `criterio`            (RF14)
+#   licencia              nombre, exige_cita, atribucion, redistribucion                (RF15)
+#                         redistribucion: permitida | no-permitida | a-confirmar
+#   indicaciones          qué hay que hacerle, del vocabulario del RF1.2
+#   observaciones         lo que hay que saber para usarla bien                       (RF1.3)
+#   motivo                obligatorio en `descartada` y en `caida`                      (RF3)
+#   consulta_tecnica      la pregunta concreta a resolver, con `asistencia_especializada` (RF4)
+#   normalizacion         criterio del cruce departamental y quién lo validó       (RF6, RF17)
+#   publicado_en          los archivos del repo que publican material de esta fuente
+#   publicado_como        visor | capa | enlace | imagen | descarga
+#
+# Las indicaciones de tratamiento (RF1.2) son, textual del ERS: "cruzar con límites
+# departamentales", "exportar capa", "evaluar utilidad analítica", "evaluar modo de acceso" y
+# "cruzar con otra capa". Se escriben en kebab-case; el texto original de JC, cuando lo hay, va
+# en `indicacion_original` (RF2.1).
+# ----------------------------------------------------------------------------------------------
+
+version: 1
+actualizado: 2026-11-17
+
+# De dónde salió el inventario inicial (RF2): la planilla de JC. La hoja "VER" son las fuentes a
+# evaluar y la hoja "BAJAR y agregar" las aprobadas, que es la lectura que fija el ERS.
+inventario_importado:
+  archivo: "0000000000 Base datos mapas.xlsx"
+  adjunto_asana: https://app.asana.com/app/asana/-/get_asset?asset_id=1220087701095227
+  subido: 2026-11-01
+  importado: 2026-11-17
+  hojas:
+    VER: a-evaluar
+    "BAJAR y agregar": aprobada
+  nota: >
+    La hoja "BAJAR y agregar" no trae los títulos como texto: cada URL lleva debajo una captura
+    del visor donde el título se lee. Se leyeron de esas capturas, una por una
+    (configs/dims/mapas-ingreso.yaml). La hoja "VER" aporta las dos filas "POR FAVOR VER QUE ES
+    ESTO", que entran como `a-evaluar` con su consulta técnica.
+
+fuentes:
+
+  # ============================================================================================
+  # PUBLICADAS · material que hoy está en el sitio
+  # ============================================================================================
+
+  - id: ign-vial-nacional
+    nombre: "Red vial nacional (red vial primaria)"
+    organismo: "Instituto Geográfico Nacional (IGN)"
+    url: https://www.ign.gob.ar/NuestrasActividades/InformacionGeoespacial/CapasSIG
+    tipo_contenido: servicio-ogc
+    alcance: nacional
+    estado: publicada
+    responsable: equipo-datos
+    fecha_estado: 2026-10-14
+    modo_acceso: ogc-wfs
+    modo_visualizacion:
+      resuelto: visor-propio
+      criterio: >
+        La capa se baja del WFS, se recorta a la provincia y se commitea: el sitio no le pide
+        nada al servidor del IGN en ningún momento. Decidido el 14-oct-2026 porque el IGN se cae
+        seguido (de hecho se cayó el 17-nov-2026, en medio de este trabajo) y una página que
+        depende de su servidor se ve rota sin que nosotros hayamos tocado nada.
+    licencia:
+      nombre: "Datos abiertos del IGN"
+      exige_cita: true
+      atribucion: "Fuente: IGN - Dirección Nacional de Vialidad"
+      redistribucion: permitida
+    indicaciones: [exportar-capa]
+    observaciones: >
+      Pedido textual de JC el 08-oct-2026 y de nuevo el 15-nov-2026: "Redes viales (primaria,
+      secundaria y terciaria)".
+    normalizacion:
+      aplicada: false
+      motivo: >
+        Es una capa de LÍNEAS que se dibuja sobre el mapa, no un dato por departamento: no hay
+        nada que agregar por departamento. Los km por jerarquía y calzada que calcula el build
+        son provinciales (haversine sobre el trazado recortado).
+    publicado_en:
+      - configs/dims/capas-ign.yaml
+      - specs/modelos/tablero-infraestructura-y-riesgo.yaml
+    publicado_como: capa
+
+  - id: ign-vial-provincial
+    nombre: "Red vial provincial (red vial secundaria)"
+    organismo: "Instituto Geográfico Nacional (IGN)"
+    url: https://www.ign.gob.ar/NuestrasActividades/InformacionGeoespacial/CapasSIG
+    tipo_contenido: servicio-ogc
+    alcance: nacional
+    estado: publicada
+    responsable: equipo-datos
+    fecha_estado: 2026-10-14
+    modo_acceso: ogc-wfs
+    modo_visualizacion:
+      resuelto: visor-propio
+      criterio: "Igual que ign-vial-nacional."
+    licencia:
+      nombre: "Datos abiertos del IGN"
+      exige_cita: true
+      atribucion: "Fuente: IGN - Direcciones provinciales de vialidad"
+      redistribucion: permitida
+    indicaciones: [exportar-capa]
+    normalizacion:
+      aplicada: false
+      motivo: "Capa de líneas, igual que ign-vial-nacional."
+    publicado_en:
+      - configs/dims/capas-ign.yaml
+      - specs/modelos/tablero-infraestructura-y-riesgo.yaml
+    publicado_como: capa
+
+  - id: ign-vial-terciaria
+    nombre: "Red vial terciaria (caminos rurales)"
+    organismo: "Instituto Geográfico Nacional (IGN)"
+    url: https://www.ign.gob.ar/NuestrasActividades/InformacionGeoespacial/CapasSIG
+    tipo_contenido: servicio-ogc
+    alcance: nacional
+    estado: publicada
+    responsable: equipo-datos
+    fecha_estado: 2026-10-14
+    modo_acceso: ogc-wfs
+    modo_visualizacion:
+      resuelto: visor-propio
+      criterio: >
+        Igual que ign-vial-nacional, y además son ~11.700 tramos y 2 MB: se publica completa por
+        decisión de la usuaria (14-oct-2026) y la capa arranca APAGADA, así el archivo se baja
+        recién cuando alguien la prende.
+    licencia:
+      nombre: "Datos abiertos del IGN"
+      exige_cita: true
+      atribucion: "Fuente: IGN - Red vial terciaria"
+      redistribucion: permitida
+    indicaciones: [exportar-capa, cruzar-con-otra-capa]
+    observaciones: >
+      JC la quiere cruzar con los parajes del INDEC: "CRUZAR CON RED TERCIARIA Y RUTAS...
+      ESTABLECER RADIOS DE DISTANCIA AL PAVIMENTO" (celda del Excel del 01-nov-2026). Es el
+      RF18.1 del ERS y todavía no está hecho: hace falta la capa de parajes ingestada y el
+      cálculo de distancia, que el pipeline hoy no tiene.
+    normalizacion:
+      aplicada: false
+      motivo: "Capa de líneas, igual que ign-vial-nacional."
+    publicado_en:
+      - configs/dims/capas-ign.yaml
+      - specs/modelos/tablero-infraestructura-y-riesgo.yaml
+    publicado_como: capa
+
+  - id: ign-ferrocarril
+    nombre: "Red ferroviaria: tendidos y estaciones"
+    organismo: "Instituto Geográfico Nacional (IGN)"
+    url: https://www.ign.gob.ar/NuestrasActividades/InformacionGeoespacial/CapasSIG
+    tipo_contenido: servicio-ogc
+    alcance: nacional
+    estado: publicada
+    responsable: equipo-datos
+    fecha_estado: 2026-10-14
+    modo_acceso: ogc-wfs
+    modo_visualizacion:
+      resuelto: visor-propio
+      criterio: "Igual que ign-vial-nacional."
+    licencia:
+      nombre: "Datos abiertos del IGN"
+      exige_cita: true
+      atribucion: "Fuente: IGN - Red ferroviaria"
+      redistribucion: permitida
+    indicaciones: [exportar-capa]
+    observaciones: >
+      Pedida por JC el 08-oct-2026 ("Ferroviario (tendidos y estaciones)"). El 15-nov no la
+      nombra, pero tampoco la retira: lo único que mandó sacar fue riesgo hidrológico. Se
+      mantiene como capa del mapa de Infraestructura.
+    normalizacion:
+      aplicada: false
+      motivo: "Capa de líneas y puntos, igual que ign-vial-nacional."
+    publicado_en:
+      - configs/dims/capas-ign.yaml
+      - specs/modelos/tablero-infraestructura-y-riesgo.yaml
+    publicado_como: capa
+
+  - id: ign-localidades-bahra
+    nombre: "Localidades (BAHRA - Base de Asentamientos Humanos de la República Argentina)"
+    organismo: "Instituto Geográfico Nacional (IGN), con dato del INDEC"
+    url: https://www.ign.gob.ar/NuestrasActividades/InformacionGeoespacial/CapasSIG
+    tipo_contenido: servicio-ogc
+    alcance: nacional
+    estado: publicada
+    responsable: equipo-datos
+    fecha_estado: 2026-11-17
+    modo_acceso: ogc-wfs
+    modo_visualizacion:
+      resuelto: visor-propio
+      criterio: "Igual que ign-vial-nacional."
+    licencia:
+      nombre: "Datos abiertos del IGN"
+      exige_cita: true
+      atribucion: "Fuente: IGN - BAHRA (dato del INDEC)"
+      redistribucion: permitida
+    indicaciones: [exportar-capa]
+    observaciones: >
+      Entra el 17-nov-2026 por el pedido de JC del 15-nov: "QUE SE VEA LA DIVISIÓN DEPARTAMENTAL
+      Y LAS PRINCIPALES CIUDADES/PUEBLOS". OJO: la capa NO trae población ni ninguna jerarquía,
+      así que NO SE PUEDE elegir cuáles son las "principales". Se publican las 165 de la
+      provincia y el mapa esconde los nombres que se encimarían, que aparecen al acercar. Un
+      recorte por importancia necesita otra fuente con población y lo define JC.
+    normalizacion:
+      aplicada: false
+      motivo: "Capa de puntos de referencia, no un dato por departamento."
+    publicado_en:
+      - configs/dims/capas-ign.yaml
+      - specs/modelos/tablero-infraestructura-y-riesgo.yaml
+    publicado_como: capa
+
+  - id: ign-desinventar
+    nombre: "DESINVENTAR - eventos adversos hidrometeorológicos 1970-2015"
+    organismo: "Instituto Geográfico Nacional (IGN)"
+    url: https://www.ign.gob.ar/NuestrasActividades/InformacionGeoespacial/CapasSIG
+    tipo_contenido: servicio-ogc
+    alcance: nacional
+    estado: aprobada
+    responsable: jc
+    fecha_estado: 2026-10-16
+    modo_acceso: ogc-wfs
+    modo_visualizacion:
+      resuelto: visor-propio
+      criterio: "Igual que ign-vial-nacional."
+    licencia:
+      nombre: "Datos abiertos del IGN"
+      exige_cita: true
+      atribucion: "Fuente: IGN - DESINVENTAR"
+      redistribucion: permitida
+    indicaciones: [evaluar-utilidad-analitica]
+    observaciones: >
+      Está ingestada y normalizada por departamento, y su página existe, pero NO se publica: JC
+      la mandó sacar el 16-oct-2026 ("SACAR COMPLETO ESO DE RIESGO HIDROLOGICO", y lo de las
+      amenazas "era solo para ver qué contenía"). Queda aprobada y sin publicar hasta que él la
+      pida. Dos cosas a avisarle si vuelve: tiene subregistro reconocido por la propia metadata
+      del IGN y termina en 2015; y la categoría que trae por departamento es un corte de Jenks
+      NACIONAL, que compara a Santiago contra todo el país y no departamentos entre sí (por eso
+      el mapa usa una rampa propia sobre la cantidad de registros).
+    normalizacion:
+      aplicada: true
+      criterio: interseccion-por-superficie
+      detalle: >
+        La capa del IGN ya viene con el código de departamento: no hubo que cruzar geometrías.
+        El build controla que la suma por tipo de evento de cada departamento dé su total.
+      validada_por: equipo-datos
+      fecha_validacion: 2026-10-14
+    publicado_en:
+      - configs/dims/capas-ign.yaml
+      - specs/modelos/tablero-infraestructura-amenazas.yaml
+    publicado_como: ninguno
+
+  - id: ign-sinagir
+    nombre: "SINAGIR - exposición a amenazas hidrometeorológicas por región"
+    organismo: "Instituto Geográfico Nacional (IGN)"
+    url: https://www.ign.gob.ar/NuestrasActividades/InformacionGeoespacial/CapasSIG
+    tipo_contenido: servicio-ogc
+    alcance: regional
+    estado: aprobada
+    responsable: jc
+    fecha_estado: 2026-10-16
+    modo_acceso: ogc-wfs
+    modo_visualizacion:
+      resuelto: visor-propio
+      criterio: "Igual que ign-vial-nacional."
+    licencia:
+      nombre: "Datos abiertos del IGN"
+      exige_cita: true
+      atribucion: "Fuente: IGN - SINAGIR (PNRRD 2018-2023)"
+      redistribucion: permitida
+    indicaciones: [evaluar-utilidad-analitica]
+    observaciones: >
+      Sin publicar por la misma decisión de JC del 16-oct-2026. Es por REGIÓN (NOA), no por
+      departamento: no se puede dibujar como mapa de la provincia. Además usa una escala 1 a 6
+      según su metadata y la capa trae ceros en inundaciones regionales y ENOS, que se publicarían
+      tal cual y preguntando.
+    normalizacion:
+      aplicada: false
+      motivo: "El grano de la fuente es la región: no hay dato departamental que agregar."
+    publicado_en:
+      - configs/dims/capas-ign.yaml
+      - specs/modelos/tablero-infraestructura-amenazas.yaml
+    publicado_como: ninguno
+
+  - id: energia-media-tension
+    nombre: "Tendido eléctrico de media tensión"
+    organismo: "Consejo Federal de la Energía Eléctrica - Secretaría de Energía, con datos de EDESE"
+    url: https://datos.gob.ar/dataset/energia-sistema-electrico-nacional
+    tipo_contenido: capa-descargable
+    alcance: provincial
+    estado: publicada
+    responsable: equipo-datos
+    fecha_estado: 2026-11-17
+    modo_acceso: descarga-directa
+    modo_visualizacion:
+      resuelto: visor-propio
+      criterio: >
+        Se baja el CSV del recurso de CKAN, se recorta a la provincia y se commitea. Se eligió el
+        CSV y no el SHP porque su columna `geojson` se lee con la biblioteca estándar: un
+        shapefile habría exigido una dependencia nueva, que el repo no admite sin justificación.
+    licencia:
+      nombre: CC-BY-4.0
+      exige_cita: true
+      atribucion: "Fuente: Consejo Federal de la Energía Eléctrica - Secretaría de Energía, con datos de EDESE (CC BY 4.0)"
+      redistribucion: permitida
+    indicaciones: [exportar-capa]
+    observaciones: >
+      Es la segunda mitad del pedido de JC del 15-nov-2026: "el mapa de tendido eléctrico... La
+      fuente es IGN, salvo el de tendido eléctrico que es Secretaría de Energía". PENDIENTE DE
+      PREGUNTAR: la fuente NO documenta en qué unidad está su campo `tension` (los valores son
+      76, 33 y 13). Se publica el número tal cual, con la nota de que la fuente no declara la
+      unidad, y nunca se lo presenta como kV.
+    normalizacion:
+      aplicada: false
+      motivo: "Capa de líneas que se dibuja sobre el mapa; los km por nivel son provinciales."
+    publicado_en:
+      - configs/dims/capas-energia.yaml
+      - specs/modelos/tablero-infraestructura-y-riesgo.yaml
+    publicado_como: capa
+
+  - id: inta-mnc-cultivos
+    nombre: "Mapa Nacional de Cultivos, campaña 2024/2025"
+    organismo: "INTA - Instituto de Clima y Agua"
+    url: https://doi.org/10.5281/zenodo.17652712
+    tipo_contenido: repositorio
+    alcance: nacional
+    estado: publicada
+    responsable: equipo-datos
+    fecha_estado: 2026-11-17
+    modo_acceso: descarga-directa
+    modo_visualizacion:
+      resuelto: visor-propio
+      criterio: >
+        JC lo pidió así, textual (15-nov-2026): "QUE SE VEA (incluido el zoom) TAL COMO
+        ESPECTACULARMENTE BIEN HICISTE CON LOS DE AGROCLIMA", o sea el visor georreferenciado
+        que ya existe. El ráster se recorta a la provincia y se remuestrea; el original nacional
+        de 193 MB no se publica en ninguna forma.
+    licencia:
+      nombre: CC-BY-4.0
+      exige_cita: true
+      atribucion: "Fuente: INTA - Mapa Nacional de Cultivos, campaña 2024/2025 (CC BY 4.0)"
+      redistribucion: permitida
+    indicaciones: [exportar-capa]
+    observaciones: >
+      "Por ahora solo pongamos el último, o sea campaña 2024/2025" (JC). La serie del INTA tiene
+      siete campañas, cada una en su propio registro de Zenodo; la evolución interanual que pide
+      el RF21 del ERS necesita ingestar las otras seis y contar píxeles por clase y departamento,
+      que es trabajo nuevo (cuestiones abiertas 7 y 8 del ERS).
+    normalizacion:
+      aplicada: false
+      motivo: >
+        Todavía no: la superficie por cultivo y departamento es un conteo de píxeles por clase
+        con una proyección de áreas iguales, y el criterio de proyección lo tiene que definir
+        JC (RF20.3 y RF21 del ERS, cuestiones abiertas 7 y 8). Hoy el mapa se publica como
+        imagen georreferenciada, no como dato departamental.
+    publicado_en:
+      - configs/dims/mapas-cultivos.yaml
+      - specs/modelos/4001-mapa-cultivos.yaml
+    publicado_como: visor
+
+  - id: sepa-inta
+    nombre: "SEPA - Sistema de Estimación de Pérdidas Agrícolas (evapotranspiración, humedad, NDVI, VCI)"
+    organismo: "INTA - Instituto de Clima y Agua"
+    url: https://sepa.inta.gob.ar/productos/
+    tipo_contenido: repositorio
+    alcance: nacional
+    estado: publicada
+    responsable: equipo-datos
+    fecha_estado: 2026-10-20
+    modo_acceso: descarga-directa
+    modo_visualizacion:
+      resuelto: visor-propio
+      criterio: >
+        Las imágenes se ubican con la caja del KML del SEPA y se dibujan en el visor propio, con
+        los límites departamentales encima y la escala escrita al costado (pedido de JC del
+        16-oct-2026 sobre las escalas).
+    licencia:
+      nombre: "Condiciones de uso del SEPA"
+      exige_cita: true
+      atribucion: "Fuente: SEPA - INTA (Instituto de Clima y Agua)"
+      redistribucion: a-confirmar
+    indicaciones: [evaluar-modo-de-acceso]
+    observaciones: >
+      LAS CONDICIONES DE USO DEL SEPA PIDEN AUTORIZACIÓN PARA USO COMERCIAL. Está avisado a
+      Francisco y a JC y sigue sin resolverse. Por eso `redistribucion: a-confirmar`: las
+      imágenes se publican recortadas dentro del visor, con su cita, y no como archivo
+      descargable.
+    normalizacion:
+      aplicada: false
+      motivo: "Imagen georreferenciada, no dato por departamento."
+    publicado_en:
+      - configs/dims/mapas-clima.yaml
+      - specs/modelos/3002-mapas-evapotranspiracion.yaml
+      - specs/modelos/3003-mapas-variacion-agua.yaml
+      - specs/modelos/3004-mapas-porcentaje-agua.yaml
+      - specs/modelos/3005-mapas-ndvi.yaml
+      - specs/modelos/3006-mapas-vci.yaml
+    publicado_como: visor
+
+  - id: ora-reservas-agua
+    nombre: "ORA - Reservas de agua en el suelo por cultivo"
+    organismo: "Oficina de Riesgo Agropecuario (ORA), Secretaría de Agricultura"
+    url: https://www.ora.gob.ar/
+    tipo_contenido: repositorio
+    alcance: nacional
+    estado: publicada
+    responsable: equipo-datos
+    fecha_estado: 2026-10-14
+    modo_acceso: descarga-directa
+    modo_visualizacion:
+      resuelto: visor-del-organismo
+      criterio: >
+        Se publica la imagen de la ORA en la galería, SIN visor georreferenciado: la ORA publica
+        shapefiles con valores por zona (~120 MB por semana) y ubicarla bien exige un visor
+        vectorial que el pipeline todavía no tiene. Queda pendiente.
+    licencia:
+      nombre: "Datos abiertos de la ORA"
+      exige_cita: true
+      atribucion: "Fuente: ORA - Oficina de Riesgo Agropecuario"
+      redistribucion: permitida
+    indicaciones: [evaluar-modo-de-acceso]
+    normalizacion:
+      aplicada: false
+      motivo: "Imagen por zonas de la fuente, no dato por departamento."
+    publicado_en:
+      - configs/dims/mapas-clima.yaml
+      - specs/modelos/3001-mapas-ora-humedad-suelo.yaml
+    publicado_como: imagen
+
+  # ============================================================================================
+  # APROBADAS Y PUBLICADAS COMO ENLACE · el área "Mapas" (JC, 15-nov-2026, punto 3.b)
+  #
+  # Las trece de la hoja "BAJAR y agregar" de su Excel. Están APROBADAS (el ERS manda leer esa
+  # hoja así, RF2) y publicadas como ENLACE al visor del organismo: ninguna está ingestada, y
+  # linkear no es redistribuir. Los títulos, las URL y las miniaturas están en
+  # configs/dims/mapas-ingreso.yaml; acá va lo que el ERS pide de cada fuente.
+  # ============================================================================================
+
+  - id: inta-visor-cuencas-noa
+    nombre: "Cuencas hídricas del noroeste Argentino"
+    organismo: "INTA"
+    url: https://visor.inta.gob.ar/es#5.45/-25.045/-65.584
+    tipo_contenido: visor-web
+    alcance: regional
+    estado: publicada
+    responsable: jc
+    fecha_estado: 2026-11-17
+    modo_acceso: visor-embebible
+    modo_visualizacion:
+      resuelto: visor-del-organismo
+      criterio: >
+        La capa no está ingestada y las condiciones de acceso a los geoservicios del INTA están
+        sin resolver (ver inta-geoservicios). Se publica como enlace al visor del organismo, en
+        otra pestaña.
+    licencia:
+      nombre: "A confirmar con el INTA"
+      exige_cita: true
+      atribucion: "Fuente: INTA - Instituto Nacional de Tecnología Agropecuaria"
+      redistribucion: a-confirmar
+    indicaciones: [evaluar-modo-de-acceso, cruzar-con-limites-departamentales]
+    observaciones: >
+      Es una capa DENTRO del visor del INTA: el enlace abre el visor en el encuadre que mandó JC,
+      pero el visor arranca con sus capas por defecto, así que hay que prenderla en el menú de la
+      izquierda (la tarjeta lo indica).
+    publicado_en: [specs/modelos/tablero-mapas-ingreso.yaml]
+    publicado_como: enlace
+
+  - id: inta-visor-cursos-agua-noa
+    nombre: "Cursos de Agua Noroeste Argentino"
+    organismo: "INTA"
+    url: https://visor.inta.gob.ar/es#6.38/-25.739/-66.292
+    tipo_contenido: visor-web
+    alcance: regional
+    estado: publicada
+    responsable: jc
+    fecha_estado: 2026-11-17
+    modo_acceso: visor-embebible
+    modo_visualizacion: {resuelto: visor-del-organismo, criterio: "Igual que inta-visor-cuencas-noa."}
+    licencia:
+      nombre: "A confirmar con el INTA"
+      exige_cita: true
+      atribucion: "Fuente: INTA - Instituto Nacional de Tecnología Agropecuaria"
+      redistribucion: a-confirmar
+    indicaciones: [evaluar-modo-de-acceso]
+    publicado_en: [specs/modelos/tablero-mapas-ingreso.yaml]
+    publicado_como: enlace
+
+  - id: inta-visor-areas-deforestadas
+    nombre: "Areas ganaderas deforestadas durante 2008-2017"
+    organismo: "INTA"
+    url: https://visor.inta.gob.ar/es#6.49/-26.617/-65.338
+    tipo_contenido: visor-web
+    alcance: regional
+    estado: publicada
+    responsable: jc
+    fecha_estado: 2026-11-17
+    modo_acceso: visor-embebible
+    modo_visualizacion: {resuelto: visor-del-organismo, criterio: "Igual que inta-visor-cuencas-noa."}
+    licencia:
+      nombre: "A confirmar con el INTA"
+      exige_cita: true
+      atribucion: "Fuente: INTA - Instituto Nacional de Tecnología Agropecuaria"
+      redistribucion: a-confirmar
+    indicaciones: [evaluar-modo-de-acceso, cruzar-con-limites-departamentales]
+    observaciones: >
+      El título va como lo escribe el INTA, "Areas" sin tilde incluido: es el nombre de la capa
+      en su visor.
+    publicado_en: [specs/modelos/tablero-mapas-ingreso.yaml]
+    publicado_como: enlace
+
+  - id: inta-visor-cobertura-suelo
+    nombre: "Cobertura del suelo de la Republica Argentina. Año 2006-2007 (LCCS-FAO)"
+    organismo: "INTA"
+    url: https://visor.inta.gob.ar/es#7.68/-26.549/-64.776
+    tipo_contenido: visor-web
+    alcance: nacional
+    estado: publicada
+    responsable: jc
+    fecha_estado: 2026-11-17
+    modo_acceso: visor-embebible
+    modo_visualizacion: {resuelto: visor-del-organismo, criterio: "Igual que inta-visor-cuencas-noa."}
+    licencia:
+      nombre: "A confirmar con el INTA"
+      exige_cita: true
+      atribucion: "Fuente: INTA - Instituto Nacional de Tecnología Agropecuaria"
+      redistribucion: a-confirmar
+    indicaciones: [evaluar-modo-de-acceso, evaluar-utilidad-analitica]
+    observaciones: >
+      Es de 2006-2007: veinte años. Para cobertura actual conviene el Mapa Nacional de Cultivos
+      (inta-mnc-cultivos) o la cobertura de bosque nativo 2020 de la CONAE.
+    publicado_en: [specs/modelos/tablero-mapas-ingreso.yaml]
+    publicado_como: enlace
+
+  - id: conae-bosque-nativo-2020
+    nombre: "Cobertura bosque nativo Argentina 2020"
+    organismo: "CONAE - Comisión Nacional de Actividades Espaciales"
+    url: https://geoportal.conae.gov.ar/mapstore/#/viewer/openlayers/geoportal
+    tipo_contenido: visor-web
+    alcance: nacional
+    estado: publicada
+    responsable: jc
+    fecha_estado: 2026-11-17
+    modo_acceso: exportacion-desde-app
+    modo_visualizacion:
+      resuelto: visor-del-organismo
+      criterio: >
+        El GEOVisor de la CONAE es un MapStore: JC anotó "EXPORTAR MAP-STORE", o sea que la capa
+        se podría sacar de ahí. Mientras eso no se haga, se publica como enlace.
+    licencia:
+      nombre: "A confirmar con la CONAE"
+      exige_cita: true
+      atribucion: "Fuente: CONAE - Comisión Nacional de Actividades Espaciales"
+      redistribucion: a-confirmar
+    indicaciones: [exportar-capa, evaluar-modo-de-acceso]
+    indicacion_original: "EXPORTAR MAP-STORE"
+    publicado_en: [specs/modelos/tablero-mapas-ingreso.yaml]
+    publicado_como: enlace
+
+  - id: inta-aptitud-tierras
+    nombre: "Aptitud de Tierras"
+    organismo: "INTA"
+    url: https://geo-nodo02.inta.gob.ar/catalogue/#/dataset/140
+    tipo_contenido: capa-descargable
+    alcance: nacional
+    estado: publicada
+    responsable: jc
+    fecha_estado: 2026-11-17
+    modo_acceso: catalogo-con-descarga
+    modo_visualizacion: {resuelto: visor-del-organismo, criterio: "Igual que inta-visor-cuencas-noa."}
+    licencia:
+      nombre: "A confirmar con el INTA"
+      exige_cita: true
+      atribucion: "Fuente: INTA - Instituto Nacional de Tecnología Agropecuaria"
+      redistribucion: a-confirmar
+    indicaciones: [evaluar-modo-de-acceso, cruzar-con-limites-departamentales]
+    publicado_en: [specs/modelos/tablero-mapas-ingreso.yaml]
+    publicado_como: enlace
+
+  - id: inta-suelo-sde
+    nombre: "Suelo Santiago del Estero"
+    organismo: "INTA"
+    url: https://geo-nodo02.inta.gob.ar/catalogue/#/dataset/135
+    tipo_contenido: capa-descargable
+    alcance: provincial
+    estado: publicada
+    responsable: jc
+    fecha_estado: 2026-11-17
+    modo_acceso: catalogo-con-descarga
+    modo_visualizacion: {resuelto: visor-del-organismo, criterio: "Igual que inta-visor-cuencas-noa."}
+    licencia:
+      nombre: "A confirmar con el INTA"
+      exige_cita: true
+      atribucion: "Fuente: INTA - Mapa de suelos de Santiago del Estero (Angueira C., 2007)"
+      redistribucion: a-confirmar
+    indicaciones: [evaluar-modo-de-acceso, cruzar-con-limites-departamentales]
+    observaciones: "Escala 1:500.000. Fuente de la ficha: Angueira C., 2007."
+    publicado_en: [specs/modelos/tablero-mapas-ingreso.yaml]
+    publicado_como: enlace
+
+  - id: inta-zonificacion-uso-suelo
+    nombre: "Zonificación del Uso del Suelo"
+    organismo: "INTA"
+    url: https://geo-nodo02.inta.gob.ar/catalogue/#/dataset/59
+    tipo_contenido: capa-descargable
+    alcance: provincial
+    estado: publicada
+    responsable: jc
+    fecha_estado: 2026-11-17
+    modo_acceso: catalogo-con-descarga
+    modo_visualizacion: {resuelto: visor-del-organismo, criterio: "Igual que inta-visor-cuencas-noa."}
+    licencia:
+      nombre: "A confirmar con el INTA"
+      exige_cita: true
+      atribucion: "Fuente: INTA - Zonificación del Uso del Suelo (Ley provincial 6.841)"
+      redistribucion: a-confirmar
+    indicaciones: [evaluar-modo-de-acceso, cruzar-con-limites-departamentales]
+    observaciones: "Elaborada en el marco de la Ley provincial 6.841, de ordenamiento de las áreas forestales."
+    publicado_en: [specs/modelos/tablero-mapas-ingreso.yaml]
+    publicado_como: enlace
+
+  - id: inta-otbn-2015
+    nombre: "Ordenamiento Territorial de Bosques Nativos (actualización 2015)"
+    organismo: "INTA, con dato de la Dirección General de Bosques de Santiago del Estero"
+    url: https://geo-nodo02.inta.gob.ar/catalogue/#/dataset/11
+    tipo_contenido: capa-descargable
+    alcance: provincial
+    estado: publicada
+    responsable: jc
+    fecha_estado: 2026-11-17
+    modo_acceso: catalogo-con-descarga
+    modo_visualizacion: {resuelto: visor-del-organismo, criterio: "Igual que inta-visor-cuencas-noa."}
+    licencia:
+      nombre: "A confirmar con el INTA"
+      exige_cita: true
+      atribucion: "Fuente: Dirección General de Bosques de la Provincia de Santiago del Estero (2015), vía INTA"
+      redistribucion: a-confirmar
+    indicaciones: [evaluar-modo-de-acceso, cruzar-con-limites-departamentales]
+    # Esta es la observación del RF1.3, y es LITERAL de JC (celda D214 de su Excel). El ERS la
+    # pone de ejemplo del requisito. Se publica en la tarjeta: sin ella el semáforo no se entiende.
+    observaciones: >
+      Interpretación de JC, textual: "Zona roja: NO se puede alterar el ecosistema (desmontar,
+      etc.); Amarilla: Explotación bajo determinadas condiciones. Verde: Libre disponibilidad".
+      Ley 6942, decreto de actualización 3133 del 23-12-2015.
+    publicado_en: [specs/modelos/tablero-mapas-ingreso.yaml]
+    publicado_como: enlace
+
+  - id: indec-poblacion-total
+    nombre: "Población total por departamento"
+    organismo: "INDEC"
+    url: https://portalgeoestadistico.indec.gob.ar/?indicator_id=93&members=108,34
+    tipo_contenido: visor-web
+    alcance: departamental
+    estado: publicada
+    responsable: jc
+    fecha_estado: 2026-11-17
+    modo_acceso: catalogo-con-descarga
+    modo_visualizacion:
+      resuelto: visor-del-organismo
+      criterio: >
+        Por ahora enlace. JC anotó "PERMITE DESCARGA DE GEODATOS", así que es candidata a
+        ingesta propia: el dato ya es departamental y no habría que cruzar nada.
+    licencia:
+      nombre: "Términos del INDEC"
+      exige_cita: true
+      atribucion: "Fuente: INDEC - Instituto Nacional de Estadística y Censos"
+      redistribucion: a-confirmar
+    indicaciones: [exportar-capa]
+    indicacion_original: "PERMITE DESCARGA DE GEODATOS"
+    publicado_en: [specs/modelos/tablero-mapas-ingreso.yaml]
+    publicado_como: enlace
+
+  - id: indec-viviendas
+    nombre: "Viviendas particulares por departamento"
+    organismo: "INDEC"
+    url: https://portalgeoestadistico.indec.gob.ar/?indicator_id=166&members=108
+    tipo_contenido: visor-web
+    alcance: departamental
+    estado: publicada
+    responsable: jc
+    fecha_estado: 2026-11-17
+    modo_acceso: catalogo-con-descarga
+    modo_visualizacion: {resuelto: visor-del-organismo, criterio: "Igual que indec-poblacion-total."}
+    licencia:
+      nombre: "Términos del INDEC"
+      exige_cita: true
+      atribucion: "Fuente: INDEC - Instituto Nacional de Estadística y Censos"
+      redistribucion: a-confirmar
+    indicaciones: [exportar-capa]
+    indicacion_original: "PERMITE DESCARGA DE GEODATOS"
+    publicado_en: [specs/modelos/tablero-mapas-ingreso.yaml]
+    publicado_como: enlace
+
+  - id: indec-densidad
+    nombre: "Densidad de población por departamento"
+    organismo: "INDEC"
+    url: https://portalgeoestadistico.indec.gob.ar/?indicator_id=96&members=108
+    tipo_contenido: visor-web
+    alcance: departamental
+    estado: publicada
+    responsable: jc
+    fecha_estado: 2026-11-17
+    modo_acceso: catalogo-con-descarga
+    modo_visualizacion: {resuelto: visor-del-organismo, criterio: "Igual que indec-poblacion-total."}
+    licencia:
+      nombre: "Términos del INDEC"
+      exige_cita: true
+      atribucion: "Fuente: INDEC - Instituto Nacional de Estadística y Censos"
+      redistribucion: a-confirmar
+    indicaciones: [exportar-capa]
+    indicacion_original: "PERMITE DESCARGA DE GEODATOS"
+    publicado_en: [specs/modelos/tablero-mapas-ingreso.yaml]
+    publicado_como: enlace
+
+  - id: indec-parajes
+    nombre: "Parajes por provincia"
+    organismo: "INDEC"
+    url: https://portalgeoestadistico.indec.gob.ar/?indicator_id=92&members=108,34
+    tipo_contenido: visor-web
+    alcance: provincial
+    estado: publicada
+    responsable: jc
+    fecha_estado: 2026-11-17
+    modo_acceso: catalogo-con-descarga
+    modo_visualizacion:
+      resuelto: visor-del-organismo
+      criterio: >
+        Por ahora enlace, pero es la que más trabajo propio tiene por delante: JC quiere cruzarla
+        con la red vial.
+    licencia:
+      nombre: "Términos del INDEC"
+      exige_cita: true
+      atribucion: "Fuente: INDEC - Instituto Nacional de Estadística y Censos"
+      redistribucion: a-confirmar
+    indicaciones: [exportar-capa, cruzar-con-otra-capa]
+    indicacion_original: >
+      CRUZAR CON RED TERCIARIA Y RUTAS... ESTABLECER RADIOS DE DISTANCIA AL PAVIMENTO. VER QUE
+      OTRAS CAPAS SON UTILES.
+    observaciones: >
+      Es el RF18.1 del ERS (análisis de proximidad a la red vial). Falta: ingestar los parajes y
+      calcular la distancia de cada uno a la red pavimentada más próxima, con radios
+      configurables. El pipeline ya sabe medir distancias en km (haversine) y recortar líneas,
+      así que el cálculo es alcanzable; lo que falta es la capa de parajes ingestada y que JC
+      defina los radios.
+    publicado_en: [specs/modelos/tablero-mapas-ingreso.yaml]
+    publicado_como: enlace
+
+  # ============================================================================================
+  # A EVALUAR · las dos filas "POR FAVOR VER QUE ES ESTO" de la hoja "VER" del Excel de JC
+  # ============================================================================================
+
+  - id: geonode-indec-wms
+    nombre: "Servicio WMS de GeoNode INDEC (contenido sin determinar)"
+    organismo: "INDEC"
+    url: https://geonode.indec.gob.ar/geoserver/ows
+    tipo_contenido: servicio-ogc
+    alcance: nacional
+    estado: a-evaluar
+    responsable: equipo-datos
+    fecha_estado: 2026-11-17
+    indicaciones: [evaluar-modo-de-acceso, evaluar-utilidad-analitica]
+    indicacion_original: "POR FAVOR VER QUE ES ESTO"
+    consulta_tecnica:
+      pregunta: >
+        ¿Qué capas expone este WMS, en qué sistemas de referencia, y hay alguna con dato de
+        Santiago del Estero que no esté ya cubierta por el portal geoestadístico?
+      asistencia_especializada: false
+    observaciones: >
+      NO entra al área "Mapas": no es un mapa con título, es un servicio cuyo contenido está sin
+      averiguar. Se resuelve listando sus capacidades (RF13.1 del ERS).
+
+  - id: geonode-indec-wfs
+    nombre: "Servicio WFS de GeoNode INDEC (contenido sin determinar)"
+    organismo: "INDEC"
+    url: https://geonode.indec.gob.ar/geoserver/ows
+    tipo_contenido: servicio-ogc
+    alcance: nacional
+    estado: a-evaluar
+    responsable: equipo-datos
+    fecha_estado: 2026-11-17
+    indicaciones: [evaluar-modo-de-acceso, evaluar-utilidad-analitica]
+    indicacion_original: "POR FAVOR VER QUE ES ESTO"
+    consulta_tecnica:
+      pregunta: "Igual que geonode-indec-wms, pero para la descarga vectorial."
+      asistencia_especializada: false
+
+  - id: inta-geoservicios
+    nombre: "Geoservicios del INTA (condiciones de acceso)"
+    organismo: "INTA"
+    url: https://geo.inta.gob.ar/
+    tipo_contenido: servicio-ogc
+    alcance: nacional
+    estado: en-evaluacion
+    responsable: jc
+    fecha_estado: 2026-10-22
+    indicaciones: [evaluar-modo-de-acceso]
+    consulta_tecnica:
+      pregunta: >
+        ¿Se pueden consumir los geoservicios del INTA desde la plataforma? JC, 22-oct-2026: los
+        datos "son públicos, pero este tipo de acceso no". Mientras no se resuelva, las capas
+        del INTA se publican como enlace al visor del organismo y no se ingestan.
+      asistencia_especializada: true
+    observaciones: >
+      JC ofreció un especialista para la parte SIG (16-oct-2026). De esta consulta dependen nueve
+      de las trece fuentes del área "Mapas": si se resuelve, pasan de enlace a capa propia.

@@ -309,6 +309,36 @@ def main(entrada, salida, codigo_provincia, ruta_departamentos):
     print("[capas-ign] estaciones-ferrocarril.geojson: %d puntos, %d bytes"
           % (len(features), escribir(salida, "estaciones-ferrocarril.geojson", doc)))
 
+    # --- localidades: ciudades y pueblos (JC, 15-nov-2026: "QUE SE VEA LA DIVISION
+    #     DEPARTAMENTAL Y LAS PRINCIPALES CIUDADES/PUEBLOS").
+    #
+    # Es la capa BAHRA del IGN (Base de Asentamientos Humanos de la Republica Argentina, con
+    # dato del INDEC). NO trae poblacion ni ninguna jerarquia, asi que NO SE PUEDE elegir
+    # cuales son las "principales": se publican TODAS las de la provincia y el mapa resuelve
+    # la lectura escondiendo los nombres que se encimarian, que van apareciendo a medida que
+    # se hace zoom. Deducir la importancia de un pueblo por el tipo de asentamiento seria
+    # inventar un criterio que la fuente no da.
+    crudo = leer(entrada, "localidad_bahra.json")
+    features = []
+    for f in crudo["features"]:
+        p = f["properties"]
+        if str(p.get("cod_pcia")) != codigo_provincia:
+            continue
+        punto = f["geometry"]["coordinates"]
+        if f["geometry"]["type"] == "MultiPoint":
+            punto = punto[0]
+        if not limite.adentro(punto):
+            continue
+        features.append({
+            "type": "Feature",
+            "properties": {"nombre": p.get("fna"), "tipo": p.get("tipo_asent")},
+            "geometry": {"type": "Point", "coordinates": redondear(punto)},
+        })
+    features.sort(key=lambda x: (x["properties"]["nombre"] or "", x["geometry"]["coordinates"]))
+    doc = {"type": "FeatureCollection", "features": features}
+    print("[capas-ign] localidades.geojson: %d puntos, %d bytes"
+          % (len(features), escribir(salida, "localidades.geojson", doc)))
+
     # --- DESINVENTAR: registros 1970-2015 por departamento
     crudo = leer(entrada, "desinventar_hidrometeorologico_riesgo.json")
     filas = []

@@ -38,6 +38,10 @@ descargas_crudas:
   vial_terciaria.json: [ign:vial_terciaria, c23cea87d24960d16846060881fadd1f7c29cdb05cdd2122cf3d762360a7732a, 12898556]
   lineas_de_transporte_ferroviario_AN010.json: [ign:lineas_de_transporte_ferroviario_AN010, a4f49e69822e5a9e21da1074da5dee8836a3314b9af75cc74d2acf01db4b6f9f, 195146]
   puntos_de_transporte_ferroviario_AN070.json: [ign:puntos_de_transporte_ferroviario_AN070, 2929f1f1da2393377f35bee4c01f7caa46c1bed4aa55fcfa0a61cecd5de55f12, 73380]
+  # Localidades (BAHRA), bajada el 17-nov-2026 para el pedido de JC del 15-nov ("QUE SE VEA LA
+  # DIVISION DEPARTAMENTAL Y LAS PRINCIPALES CIUDADES/PUEBLOS"). Las otras siete capas se
+  # volvieron a bajar ese dia y a regenerar: salieron identicas byte a byte a las de octubre.
+  localidad_bahra.json: [ign:localidad_bahra, 8d8da02a62ba482f994844432dbee4fc05d6879f5c809f0d239d64c6f487c00a, 179875]
   desinventar_hidrometeorologico_riesgo.json: [ign_riesgo:desinventar_hidrometeorologico_riesgo, 1e665a51098bc7e5451c82e56ea95925c5922b7eee9adaa88a97655a93f06cd0, 6759163]
   sinagir_amenazas_hidrometeorologicas_riesgo.json: [ign_riesgo:sinagir_amenazas_hidrometeorologicas_riesgo, 7653100ec964bb1b43f9f543203e546ae98a6e77e6f48ce33a8ad4c7d35c843b, 13970379]
 
@@ -68,6 +72,12 @@ salidas:
     un feature por calzada (Pavimentado 452 tramos, Consolidado 1.355, Tierra 9.898), ~2 MB.
   ferrocarril.geojson: "Tendidos ferroviarios. 26 tramos: ramal y estado (Activo/Abandonado/Desmantelado)."
   estaciones-ferrocarril.geojson: "89 puntos: nombre, tipo (Estación, Apeadero, Desvío, Embarcadero) y estado."
+  localidades.geojson: >
+    Ciudades y pueblos de la provincia (BAHRA), 165 puntos con nombre y tipo de asentamiento
+    (156 localidades simples y 9 componentes de localidad compuesta). La capa NO trae poblacion
+    ni ninguna jerarquia, asi que no se puede elegir cuales son las "principales" que pide JC:
+    se publican todas y el mapa esconde los nombres que se encimarian, que van apareciendo al
+    hacer zoom. Ver advertencias_para_jc.
   amenazas-desinventar.json: >
     Registros de eventos adversos hidrometeorologicos 1970-2015 de la base DESINVENTAR, por
     departamento (27) y por tipo de evento. 346 registros en total. El script controla que la
@@ -77,6 +87,14 @@ salidas:
     (NOA; PNRRD 2018-2023): una sola fila para toda la provincia, no hay detalle departamental.
 
 advertencias_para_jc:
+  - >
+    CIUDADES Y PUEBLOS: pediste "LAS PRINCIPALES", y la capa del IGN no permite elegirlas. BAHRA
+    trae el nombre, el departamento y el tipo de asentamiento, pero NO la poblacion ni ningun
+    orden de importancia, asi que no hay con que decidir cual es principal y cual no. Se
+    publican las 165 de la provincia y el mapa escribe los nombres que entran sin encimarse:
+    al hacer zoom van apareciendo los demas. Si queres un recorte (por ejemplo solo las
+    cabeceras de departamento, o las de mas de N habitantes) hace falta otra fuente con
+    poblacion y lo definis vos.
   - "DESINVENTAR tiene subregistro (lo dice la propia metadata del IGN: 'nos brinda un contexto aproximado') y termina en 2015."
   - "La categoria que trae el IGN para cada departamento ('Muy baja/Baja cantidad de registros') es un corte de Jenks NACIONAL: compara a Santiago contra todo el pais, no departamentos entre si."
   - "SINAGIR es por region (NOA), no por departamento: no se puede dibujar como mapa de la provincia."
@@ -139,3 +157,12 @@ publicacion:
       geometria: puntos
       tooltip: "{tipo} {nombre} · {estado}"
       fuente: "IGN - Red ferroviaria"
+    localidades:
+      archivo: localidades.geojson
+      etiqueta: "Ciudades y pueblos"
+      geometria: puntos
+      tooltip: "{nombre}"
+      fuente: "IGN - BAHRA (dato del INDEC)"
+      # Los nombres se escriben en el mapa, no solo en el mouseover: JC pide que se VEAN. Los
+      # que se encimarian se esconden y aparecen al acercar.
+      rotulos: true

@@ -1,0 +1,160 @@
+# Procedencia de site/assets/mapas/cultivos/ (el Mapa Nacional de Cultivos del INTA, campaña
+# 2024/2025, que pidió JC el 15-nov-2026).
+#
+# Pedido textual de JC (comentario del 15-nov-2026, punto 4): "MAPA DE CULTIVOS: Lo agregamos
+# como ítem en el desplegable del menú de la izquierda Y QUE SE VEA (incluido el zoom) TAL COMO
+# ESPECTACULARMENTE BIEN HICISTE CON LOS DE AGROCLIMA. Si no se puede agregar la referencia a
+# cada cultivo (debería estar en alguno de los archivos) solo dejémoslo así. Por ahora solo
+# pongamos el último, o sea campaña 2024/2025".
+#
+# LA REFERENCIA A CADA CULTIVO SÍ ESTÁ: el INTA publica al lado de cada ráster su estilo de
+# QGIS (.qml), que trae el nombre y el color oficial de cada clase, y el informe que acompaña a
+# la publicación trae además las dos tablas de clases con su descripción. La leyenda que se
+# dibuja al costado del visor es esa, literal (ver el spec, `georreferencia.leyenda`).
+#
+# "Por ahora solo el último": se publica la campaña 2024/2025 y nada más. La serie del INTA
+# tiene siete campañas (2018/2019 en adelante), cada una en su propio registro de Zenodo.
+
+carpeta: site/assets/mapas/cultivos
+
+fuente:
+  organismo: "INTA - Instituto Nacional de Tecnología Agropecuaria (Instituto de Clima y Agua)"
+  publicacion: "Argentina National Map of Crops 2024/2025"
+  autores: "de Abelleyra D., Iturralde Elortegui M., Zelaya K., Portillo J. y otros (87 autores de unidades del INTA)"
+  programa: "Programa Nacional de Recursos Naturales y Gestión Ambiental · Proyecto MapBiomas · Red JECAM-GEOGLAM"
+  publicado: 2025-11
+  doi: https://doi.org/10.5281/zenodo.17652712
+  zenodo: https://zenodo.org/records/17652712
+  licencia: CC-BY-4.0
+  atribucion: "Fuente: INTA - Mapa Nacional de Cultivos, campaña 2024/2025 (CC BY 4.0)"
+  visor_del_organismo: https://ee-deabelle.projects.earthengine.app/view/mnc24-25
+  descargado: 2026-11-17
+  # Esto NO pasa por raw/: igual que las capas del IGN, se baja de la fuente oficial y se
+  # commitea el resultado ya recortado. El sitio no le pide nada a Zenodo ni al INTA.
+  comando: >
+    curl -L -o <archivo> "https://zenodo.org/api/records/17652712/files/<archivo>/content"
+
+descargas_crudas:
+  # archivo: [sha256, bytes, que es]
+  MNC_ver25.tif: [47c2600a0b3cede9eb51bbfb9626932bf6515fda6b5c5fd603f2a2fb591d56d1, 193285088, "Mapa de la campaña de VERANO 2025. GeoTIFF 43.994 x 70.641 px, una banda de 8 bits, PackBits, WGS84, píxel de 0,000269494585° (~30 m)."]
+  MNC_inv24.tif: [ab687f10e3a773b53324d2a8eedc5dff4a37ef9f61310d8027078464f21f6b9d, 174294196, "Mapa de la campaña de INVIERNO 2024. Mismas dimensiones y georreferencia."]
+  MNC_ver25.qml: [6f75ecf3f804e21e9f53c5b8818d4c2ca385d3bb89ce764a6bea50a3ac372174, 11808, "Estilo de QGIS del mapa de verano: valor, color y nombre de cada clase."]
+  MNC_inv24.qml: [4cc0717e7486f4788a9d3d00e742c5e2f0def8d09c7d72e335d98ab63260ac85, 10682, "Estilo de QGIS del mapa de invierno."]
+  "Informe Mapa Nacional de Cultivos campaña 2024_2025.pdf": [b013269e0f86873c7ec0e1b7a4a9ee4a7ee201426b550496b5757f8b6c2553b3, 18802510, "Informe metodológico (46 páginas). De acá salen las Tablas 1 y 2 de clases y los períodos de cada campaña."]
+
+transformacion:
+  script: pipeline/mapa_cultivos.py
+  uso: >
+    python -m pipeline.mapa_cultivos <carpeta con los .tif y .qml> site/assets/mapas/cultivos
+  determinista: "Corrido dos veces sobre los mismos ráster: PNG idénticos byte a byte."
+  que_hace:
+    - >
+      RECORTA a la caja de la provincia (-65,3 / -30,6 / -61,5 / -25,5, la misma con la que se
+      bajan las capas del IGN) y REMUESTREA tomando un píxel cada 7. De los 3.108 millones de
+      píxeles del ráster nacional quedan 5,45 millones: el 0,18%.
+    - >
+      El remuestreo es POR VECINO MÁS CERCANO, nunca un promedio: los valores son CÓDIGOS de
+      cultivo (10 es maíz, 11 soja) y promediar un maíz con una soja daría un girasol.
+    - >
+      El recorte es un rectángulo de píxeles ENTEROS y la caja en grados se recalcula de esos
+      píxeles, así que el PNG queda georreferenciado exacto y el visor lo ubica sin ajustes
+      (no hace falta ningún `caja_ajustada` como en los mapas del SEPA).
+    - >
+      Escribe PNG de PALETA, que es el formato de una imagen clasificada: son 17 colores y en
+      RGBA pesaría cuatro veces más. "Máscara" y el relleno 255 van TRANSPARENTES, así el visor
+      deja ver el mapa de abajo donde la fuente no clasificó (el 16,3% de la caja: el oeste de
+      la provincia queda fuera del área que el INTA procesa).
+
+salidas:
+  mnc_ver25.png: "Verano 2024/2025. 2015 x 2704 px, 409.040 bytes."
+  mnc_ver25-mini.png: "Su miniatura de 400 px para la grilla. 24.140 bytes."
+  mnc_inv24.png: "Invierno 2024. 2015 x 2704 px, 347.099 bytes."
+  mnc_inv24-mini.png: "Su miniatura de 400 px. 27.185 bytes."
+  # La caja que imprime el script y que el spec copia en `georreferencia.caja`.
+  caja_publicada:
+    oeste: -65.300154970
+    este: -61.500550813
+    sur: -30.599223691
+    norte: -25.499847149
+
+# Lo que mide cada clase, de las Tablas 1 y 2 del informe, LITERAL. El sitio publica el nombre
+# corto (el del .qml) y esta descripción es la que responde "¿qué incluye?" si JC pregunta.
+clases:
+  verano_2025:
+    11: "Soja. Cultivo de soja, sin discriminar si es de primera o segunda."
+    10: "Maíz. Cultivo de maíz."
+    12: "Girasol. Cultivo de girasol."
+    13: "Poroto. Cultivo de poroto."
+    15: "Algodón. Cultivo de algodón."
+    14: "Caña de azúcar. Plantación de caña de azúcar."
+    17: "Arroz. Cultivo de arroz."
+    16: "Maní. Cultivo de maní."
+    19: "Girasol-CV. Cultivo de girasol seguido de otro cultivo de verano (principalmente maíz o soja)."
+    18: "Sorgo GR. Cultivo de sorgo en sistema de producción para grano."
+    26: "Papa. Cultivo de papa."
+    27: "Verdeo de Maíz. Plantación de maíz en configuración para pastoreo."
+    28: "Verdeo de Sorgo. Plantación de sorgo en configuración para pastoreo."
+    21: "Barbecho. Lotes sin cultivo de verano durante el período considerado."
+    22: "No agrícola. Incluye herbáceas perennes nativas y exóticas (pastizales, pasturas) y leñosas nativas e implantadas."
+  invierno_2024:
+    16: "Cereales de invierno. Incluye cultivos de trigo, cebada, avena y centeno, como también verdeos de invierno de gramíneas."
+    19: "Caña de Azúcar. Plantación de caña de azúcar."
+    24: "Arveja. Cultivo de arveja."
+    6: "Garbanzo. Cultivo de garbanzo."
+    17: "Otros cultivos. Incluye cultivos de cobertura y otros cultivos de menor relevancia."
+    18: "Barbecho. Lotes sin cultivo de invierno durante el período considerado."
+    20: "No Agrícola. Incluye herbáceas perennes nativas y exóticas (pastizales, pasturas) y leñosas nativas e implantadas."
+
+# Lo que ocupa cada clase DENTRO de la caja de la provincia, medido sobre los 5.448.560 píxeles
+# publicados. No se publica como dato (es una caja, no la provincia recortada): queda acá como
+# control de que el recorte salió bien y para contestarle a JC si pregunta.
+reparto_medido:
+  verano_2025:
+    Soja: 14.138
+    Maíz: 3.210
+    Caña de azúcar: 0.924
+    Poroto: 0.694
+    Algodón: 0.320
+    Girasol: 0.162
+    Sorgo: 0.028
+    Maní: 0.005
+    Arroz: 0.005
+    Papa: 0.001
+    No agrícola: 64.186
+    Sin clasificar (fuera del área procesada): 16.325
+  invierno_2024:
+    Barbecho: 15.885
+    Cereales de invierno: 2.323
+    Caña de azúcar: 1.365
+    Garbanzo: 0.079
+    No agrícola: 64.127
+    Sin clasificar (fuera del área procesada): 16.220
+
+advertencias_para_jc:
+  - >
+    LAS DOS CAMPAÑAS SON DOS MAPAS DISTINTOS, no dos versiones del mismo: el de verano
+    clasifica soja, maíz, poroto, algodón; el de invierno, cereales de invierno, garbanzo y
+    arveja. Un lote puede ser "Cereales de invierno" en uno y "Soja" en el otro, y las dos
+    cosas son ciertas. No se suman ni se comparan: se miran uno al lado del otro, que es como
+    los publica el INTA.
+  - >
+    EL OESTE DE LA PROVINCIA NO ESTÁ CLASIFICADO. El INTA procesa las zonas del Panorama
+    Agrícola Semanal de la Bolsa de Cereales, y el 16,3% de la caja de Santiago queda afuera.
+    En el visor eso se ve transparente -no en blanco ni en un color- para que no se lea como
+    "ahí no hay nada": no hay dato.
+  - >
+    DOS CLASES QUE EL .qml NO DECLARA, y se publican con la tabla del informe: el ráster de
+    verano trae TRES píxeles con el valor 20 (que es "No Agrícola" en la tabla de invierno) y
+    el de invierno trae UN píxel con el valor 10 ("Maíz" en la de verano). Son costuras del
+    postprocesamiento, que el informe explica: "se aplicaron reglas para mantener estables las
+    clases agrícolas y no agrícolas en los mapas de invierno y verano". Cualquier otro valor
+    sin declarar corta la corrida.
+  - >
+    LA RESOLUCIÓN PUBLICADA ES DE ~210 m, no de 30 m. El ráster del INTA es de 30 m y la
+    provincia entera a esa resolución son 267 millones de píxeles: el navegador no la dibuja.
+    Un lote de 100 ha sigue midiendo cinco píxeles. Si para algún uso hace falta el detalle
+    completo, el visor del INTA y el GeoTIFF están linkeados en la página.
+  - >
+    EL INFORME TRAE LAS EXACTITUDES de clasificación por zona (Tablas 3 a 10), que no se
+    publican todavía: habría que decidir con JC cómo mostrar el error de un mapa sin que se lea
+    como que el mapa está mal.

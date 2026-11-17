@@ -20,7 +20,10 @@ familia: capas-ign
 # salio de site/navegacion.yaml.
 # Queda como registro de sus reglas, sin pagina.
 estado: no-publicada
-seccion: infraestructura-y-riesgo
+# La seccion se llama `infraestructura` desde el 17-nov-2026 (ver
+# tablero-infraestructura-y-riesgo.yaml): si esta pagina se republicara algun dia,
+# tiene que caer ahi. Hoy no se genera.
+seccion: infraestructura
 pagina: amenazas-hidrometeorologicas
 
 titulo: "Infraestructura y riesgo"

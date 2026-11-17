@@ -12,13 +12,17 @@ presentacion:
   tipos_de_variable:
     registros: registros_eventos
 
-# Las citas al pie, una por fuente. Salen de configs/dims/capas-ign.yaml (procedencia).
+# Las citas al pie, una por fuente. Salen de configs/dims/capas-ign.yaml y
+# configs/dims/capas-energia.yaml (procedencia).
 fuentes:
   red_vial: "Fuente: IGN - Dirección Nacional de Vialidad, direcciones provinciales de vialidad y red vial terciaria (Capas SIG)"
   ferrocarril: "Fuente: IGN - Red ferroviaria (Capas SIG)"
   mapa_base: "Fuente: IGN - Límites departamentales"
   desinventar: "Fuente: IGN, base DESINVENTAR 1970-2015"
   sinagir: "Fuente: IGN, SINAGIR - PNRRD 2018-2023"
+  # La licencia del tendido (CC BY 4.0) exige cita de fuente: el texto es el que declara
+  # configs/dims/capas-energia.yaml en `licencia.atribucion`.
+  tendido: "Fuente: Consejo Federal de la Energía Eléctrica - Secretaría de Energía, con datos de EDESE (CC BY 4.0)"
 
 notas_metodologicas:
   km-de-red:
@@ -30,15 +34,29 @@ notas_metodologicas:
       No es la longitud oficial de cada ruta que informa Vialidad: un tramo compartido por dos
       rutas puede estar cargado dos veces, y un camino que sale y vuelve a entrar a la
       provincia cuenta solo lo que corre adentro. La red terciaria (caminos rurales) es la capa
-      completa del IGN.
+      completa del IGN. Los kilómetros de línea eléctrica se calculan con la misma fórmula
+      sobre el trazado del Consejo Federal de la Energía Eléctrica, también recortado al límite
+      de la provincia.
   capas:
     titulo: "Qué muestra el mapa"
     texto: >
       Las rutas, el ferrocarril y las estaciones son capas del catálogo "Capas SIG" del IGN
       (apartado Transporte), descargadas el 14 de octubre de 2026 por sus servicios OGC. Lo
       pavimentado y lo activo va en trazo lleno; lo consolidado o de tierra, y lo abandonado o
-      desmantelado, en trazo punteado. Los caminos rurales están apagados al abrir la página
-      porque son más de once mil tramos: se cargan recién al prenderlos.
+      desmantelado, en trazo punteado. El tendido eléctrico no es del IGN: lo publica el Consejo
+      Federal de la Energía Eléctrica con datos de EDESE. Los caminos rurales y el tendido
+      eléctrico están apagados al abrir la página porque son más de once mil y casi treinta mil
+      trazos: se cargan recién al prenderlos.
+  tendido:
+    titulo: "Qué es el tendido eléctrico que se muestra"
+    texto: >
+      Son las líneas de MEDIA TENSIÓN de la provincia, publicadas por el Consejo Federal de la
+      Energía Eléctrica en el portal de datos abiertos de la Secretaría de Energía, con datos
+      provistos por EDESE. No es un relevamiento del Instituto Geográfico Nacional y la fuente
+      no declara su exactitud posicional: el mapa sirve para ver por dónde corre la red, no para
+      ubicar un poste. Los niveles de tensión se publican con el número que trae la fuente y sin
+      unidad, porque ni el dataset ni su ficha de metadata documentan en qué unidad está ese
+      campo. Los kilómetros se miden igual que los de la red vial.
   desinventar:
     titulo: "Qué son los registros de DESINVENTAR"
     texto: >

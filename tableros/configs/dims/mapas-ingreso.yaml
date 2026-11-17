@@ -1,0 +1,155 @@
+# Procedencia de site/assets/mapas/ingreso/ (las miniaturas del area "Mapas", JC 15-nov-2026).
+#
+# Pedido textual de JC (comentario del 15-nov-2026, punto 3.b MAPAS): "Con el mismo formato de
+# 'Agroclima' hacemos un area de 'ingreso' con los titulos de los mapas que envie el link. Ahi
+# esta la fuente, que salvo el de Poblacion, la mayoria son de INTA".
+#
+# DE DONDE SALEN LOS TITULOS. Los "links que envio" son la hoja "BAJAR y agregar" del Excel
+# "0000000000 Base datos mapas.xlsx" (adjunto de Asana 1220087701095227, subido el 01-11-2026).
+# Esa hoja NO trae los titulos como texto: solo las URL, y debajo de cada una JC pego una
+# CAPTURA del visor con el mapa abierto, donde el titulo se lee. Los titulos de abajo se
+# leyeron de esas capturas, una por una; no se infirio ninguno y no se tradujo ninguno (van
+# como los escribe el organismo, con su ortografia, incluido "Areas" sin tilde del INTA).
+#
+# Las capturas son ademas la MINIATURA de cada tarjeta, que es lo que hace que el area se vea
+# "con el mismo formato de Agroclima": alla la miniatura es el mapa mas reciente de la galeria,
+# aca es la captura del propio JC. Se publican reducidas a 400 px de ancho (las originales
+# pesan 7 MB juntas y la tarjeta las dibuja chicas); el original queda en el adjunto de Asana y
+# su huella, abajo.
+#
+# Igual que las capas del IGN, esto no pasa por raw/: la fuente es un adjunto de Asana. Lo que
+# se commitea es la miniatura ya reducida.
+
+carpeta: site/assets/mapas/ingreso
+
+fuente:
+  archivo: "0000000000 Base datos mapas.xlsx"
+  hoja: "BAJAR y agregar"
+  adjunto_asana: https://app.asana.com/app/asana/-/get_asset?asset_id=1220087701095227
+  comentario: https://app.asana.com/1/1199241515527219/task/1217681319199651/comment/1220087701095230
+  subido_por: "Juan Carlos Antuña"
+  subido: 2026-11-01
+  leido: 2026-11-17
+  como_se_leyo: >
+    Las imagenes salen de xl/media/ del propio xlsx y su posicion de los anclajes del dibujo
+    (xl/drawings/drawing2.xml, que es el de la hoja "BAJAR y agregar"): cada captura esta
+    anclada una o dos filas debajo de la URL a la que corresponde. Es el mismo metodo con que
+    se leyeron las maquetas de JC (ver docs/maqueta-clima.md).
+
+transformacion:
+  herramienta: "Pillow (LANCZOS), 400 px de ancho, PNG optimizado"
+  nota: >
+    Se corre a mano una sola vez, como pipeline/recorte_sepa.py: la fuente no vive en el repo.
+    Si JC manda capturas nuevas, se regeneran y se actualizan las huellas de abajo.
+
+# archivo publicado: [sha256 del ORIGINAL, bytes del original, imagen del xlsx y su tamanio]
+miniaturas:
+  cuencas-hidricas-noa: [7bd3595f6eb2b6afd054b9aa6a35523fa4ce8072ec51fd55a4ee053819513f16, 368066, "image6.png 1190x678"]
+  cursos-de-agua-noa: [b56e567c597ea0eb4cc5da4d02bb4e437c987fa183e07bff46a5fe011ffe6c31, 474027, "image7.png 1131x442"]
+  areas-ganaderas-deforestadas: [fbe37716742ec4f32e1edb14bb513fa07001f294a692d6e9a8977b454dd32010, 577302, "image8.png 1302x686"]
+  cobertura-del-suelo-lccs-fao: [7d2b45968703a2f8a42591ddd54e15a35286478b1e34ab7039ed898bb4947890, 467534, "image9.png 1313x626"]
+  cobertura-bosque-nativo-2020: [6ef0a58315bfeff0896a389c8a123f4f7ce9d3ad4a62f2789fdac040cce5d8b4, 745085, "image10.png 1510x613"]
+  aptitud-de-tierras: [74a1f3cae4586a6e3c05556f25aa9201da69813252ef23c698115dcf746bf2ce, 570768, "image11.png 1400x676"]
+  suelo-santiago-del-estero: [9979e10b786828f5e4569f2b5f2152c0840410c3a452f92652665925efaf0f40, 732829, "image12.png 1482x673"]
+  zonificacion-uso-del-suelo: [9405159a68c4bc9eee3ee24c89bad8210f119b7f8d7812284e7e1c2a248493d7, 606390, "image13.png 1513x718"]
+  ordenamiento-bosques-nativos: [7d8295ea3437c6dfcb0947aae89692796854399afead2a4a89afdbe4495cdc4a, 736808, "image14.png 1510x683"]
+  poblacion-total: [051fa332adff61b036990d617971e8b87721ccaced907b3af8228db9d57b746a, 627458, "image15.png 1348x721"]
+  viviendas-particulares: [9741f090c45b676f8d4ed4f2d073562183b43345eb9b467e4b60739ce561e276, 495486, "image16.png 1312x695"]
+  densidad-de-poblacion: [d3b65f07811af67eb2f120b684b7f8cf1c8d7aeb30725ede685babfd412d4064, 435788, "image17.png 1130x633"]
+  parajes: [9fa684ff7e123974d18a67b1c5187d6570c1a6de8381f739f86b5176f44e063e, 636855, "image18.png 1335x755"]
+
+# El titulo que se leyo en cada captura, con la URL de JC. Es lo que publica la tarjeta.
+titulos_leidos:
+  cuencas-hidricas-noa:
+    titulo: "Cuencas hídricas del noroeste Argentino"
+    organismo: INTA
+    donde: "Visor INTA, capa activa en Agua > Cuencas"
+    url: https://visor.inta.gob.ar/es#5.45/-25.045/-65.584
+  cursos-de-agua-noa:
+    titulo: "Cursos de Agua Noroeste Argentino"
+    organismo: INTA
+    donde: "Visor INTA, capa activa en Agua > Red de drenaje"
+    url: https://visor.inta.gob.ar/es#6.38/-25.739/-66.292
+  areas-ganaderas-deforestadas:
+    titulo: "Areas ganaderas deforestadas durante 2008-2017"
+    organismo: INTA
+    donde: "Visor INTA, capa activa en Ganadería"
+    url: https://visor.inta.gob.ar/es#6.49/-26.617/-65.338
+  cobertura-del-suelo-lccs-fao:
+    titulo: "Cobertura del suelo de la Republica Argentina. Año 2006-2007 (LCCS-FAO)"
+    organismo: INTA
+    donde: "Visor INTA, capa activa en Ordenamiento Territorial > Uso y cobertura"
+    url: https://visor.inta.gob.ar/es#7.68/-26.549/-64.776
+  cobertura-bosque-nativo-2020:
+    titulo: "Cobertura bosque nativo Argentina 2020"
+    organismo: CONAE
+    donde: "GEOVisor general de la CONAE, capa activa en Cobertura de bosques"
+    url: https://geoportal.conae.gov.ar/mapstore/#/viewer/openlayers/geoportal
+    nota_de_jc: "EXPORTAR MAP-STORE"
+  aptitud-de-tierras:
+    titulo: "Aptitud de Tierras"
+    organismo: INTA
+    donde: "Catálogo geo-nodo02 del INTA, dataset 140"
+    url: https://geo-nodo02.inta.gob.ar/catalogue/#/dataset/140
+  suelo-santiago-del-estero:
+    titulo: "Suelo Santiago del Estero"
+    organismo: INTA
+    donde: "Catálogo geo-nodo02 del INTA, dataset 135"
+    url: https://geo-nodo02.inta.gob.ar/catalogue/#/dataset/135
+    detalle_de_la_ficha: "Mapa de suelos de Santiago del Estero, escala 1:500.000. Fuente: Angueira C. 2007."
+  zonificacion-uso-del-suelo:
+    titulo: "Zonificación del Uso del Suelo"
+    organismo: INTA
+    donde: "Catálogo geo-nodo02 del INTA, dataset 59"
+    url: https://geo-nodo02.inta.gob.ar/catalogue/#/dataset/59
+    detalle_de_la_ficha: "Elaborada en el marco de la Ley provincial 6.841, de ordenamiento de las áreas forestales."
+  ordenamiento-bosques-nativos:
+    titulo: "Ordenamiento Territorial de Bosques Nativos (actualización 2015)"
+    organismo: INTA
+    donde: "Catálogo geo-nodo02 del INTA, dataset 11"
+    url: https://geo-nodo02.inta.gob.ar/catalogue/#/dataset/11
+    detalle_de_la_ficha: "Ley 6942, decreto de actualización 3133 del 23-12-2015. Fuente: Dirección General de Bosques de la Provincia de Santiago del Estero, 2015."
+    # La unica interpretacion que JC escribe en todo el Excel (celda D214), y va publicada.
+    nota_de_jc: >
+      Zona roja: NO se puede alterar el ecosistema (desmontar, etc.); Amarilla: Explotación bajo
+      determinadas condiciones. Verde: Libre disponibilidad.
+  poblacion-total:
+    titulo: "Población total por departamento"
+    organismo: INDEC
+    donde: "Portal geoestadístico del INDEC"
+    url: https://portalgeoestadistico.indec.gob.ar/?indicator_id=93&members=108,34
+    nota_de_jc: "PERMITE DESCARGA DE GEODATOS"
+  viviendas-particulares:
+    titulo: "Viviendas particulares por departamento"
+    organismo: INDEC
+    donde: "Portal geoestadístico del INDEC"
+    url: https://portalgeoestadistico.indec.gob.ar/?indicator_id=166&members=108
+    nota_de_jc: "PERMITE DESCARGA DE GEODATOS"
+  densidad-de-poblacion:
+    titulo: "Densidad de población por departamento"
+    organismo: INDEC
+    donde: "Portal geoestadístico del INDEC"
+    url: https://portalgeoestadistico.indec.gob.ar/?indicator_id=96&members=108
+    nota_de_jc: "PERMITE DESCARGA DE GEODATOS"
+  parajes:
+    titulo: "Parajes por provincia"
+    organismo: INDEC
+    donde: "Portal geoestadístico del INDEC"
+    url: https://portalgeoestadistico.indec.gob.ar/?indicator_id=92&members=108,34
+    nota_de_jc: >
+      CRUZAR CON RED TERCIARIA Y RUTAS... ESTABLECER RADIOS DE DISTANCIA AL PAVIMENTO. VER QUE
+      OTRAS CAPAS SON UTILES.
+
+advertencias_para_jc:
+  - >
+    Las tarjetas llevan al VISOR DEL ORGANISMO, en otra pestaña, y no a una pagina nuestra:
+    todavia no hay ninguna capa de estas ingestada. Es la unica forma de que el area de ingreso
+    sirva hoy sin publicar material de terceros.
+  - >
+    Las cuatro primeras son capas DENTRO del visor del INTA. El link abre el visor en el
+    encuadre que vos mandaste, pero el visor arranca con sus capas por defecto: hay que
+    prenderla a mano en el menu de la izquierda (se indica en cada tarjeta donde esta).
+  - >
+    Las dos filas de "POR FAVOR VER QUE ES ESTO" del Excel (los servicios WMS y WFS de GeoNode
+    INDEC) NO entran al area: no son un mapa con titulo, son dos servicios cuyo contenido esta
+    sin averiguar. Quedan en el catalogo de fuentes como "a evaluar".

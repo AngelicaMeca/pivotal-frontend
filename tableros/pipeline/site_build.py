@@ -54,6 +54,7 @@ from pipeline import lecheria as lec
 from pipeline import vegetales as veg
 from pipeline import clima as cl
 from pipeline import sepa_kml
+from pipeline import fuentes_geo
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DIR_MODELOS = os.path.join(RAIZ, "specs", "modelos")
@@ -9645,6 +9646,12 @@ def construir_tablero_apicola(ctx, spec):
 # se commitean ya recortadas). El build las COPIA a public/plataforma/geo/capas/: el sitio no
 # le pide nada al servidor del IGN.
 DIR_CAPAS_IGN = os.path.join(DIR_CONFIGS, "dims", "capas-ign")
+# Los catalogos de capas de contexto, en orden. Cada uno declara su `carpeta` (bajo
+# configs/dims/) y su `publicacion.capas`; los rotulos del control y de las citas salen del
+# PRIMERO, que es el que los define para todos. Son dos porque son dos organismos con dos
+# procedencias distintas: las capas del IGN (red vial, ferrocarril, amenazas) y el tendido
+# electrico del CFEE - Secretaria de Energia, que JC pidio el 15-nov-2026 junto a las viales.
+CATALOGOS_DE_CAPAS = ("capas-ign.yaml", "capas-energia.yaml")
 RADIO_TIERRA_KM = 6371.0088          # radio medio (IUGG), el de la nota metodologica
 FORMAS_CON_CAPAS = ("mapa", "mapa-capas")
 _CATALOGO_CAPAS = None
@@ -9656,50 +9663,68 @@ def catalogo_capas():
     """Las capas que un mapa puede prender: {id: definicion lista para el navegador}.
 
     Junta dos fuentes, y ninguna se escribe aca: QUE es cada capa (archivo, etiqueta, tooltip,
-    fuente) sale de configs/dims/capas-ign.yaml (`publicacion`), y COMO se dibuja (color,
+    fuente) sale de los configs de CATALOGOS_DE_CAPAS (`publicacion`), y COMO se dibuja (color,
     ancho, trazo) de `colores.capas_de_contexto` del protocolo, porque es color de dato.
     """
     global _CATALOGO_CAPAS
     if _CATALOGO_CAPAS is not None:
         return _CATALOGO_CAPAS
-    publicacion = pr.cargar_yaml(os.path.join(DIR_CONFIGS, "dims", "capas-ign.yaml"))[
-        "publicacion"]
     estilos = pr.cargar_protocolo()["colores"]["capas_de_contexto"]
     catalogo = {}
-    for id_capa, decl in publicacion["capas"].items():
-        origen = os.path.join(DIR_CAPAS_IGN, decl["archivo"])
-        if not os.path.exists(origen):
-            raise pr.ErrorDeProtocolo("La capa %s pide %s, que no existe." % (id_capa, origen))
-        if decl["geometria"] not in ("lineas", "puntos"):
-            raise pr.ErrorDeProtocolo("La capa %s declara la geometria %r (lineas o puntos)."
-                                      % (id_capa, decl["geometria"]))
-        if id_capa not in estilos:
-            raise pr.ErrorDeProtocolo(
-                "La capa %s no tiene estilo en _protocolo-presentacion.colores."
-                "capas_de_contexto: su color lo manda el protocolo, no el sitio." % id_capa)
-        estilo = estilos[id_capa]
-        lista = []
-        for e in estilo["estilos"]:
-            item = {"cuando": {k: list(v) for k, v in (e.get("cuando") or {}).items()},
-                    "color": e["color"], "rotulo": e.get("rotulo", "")}
-            for clave in ("ancho", "trazo", "opacidad", "borde", "tamanio"):
-                if clave in e:
-                    item[clave] = e[clave]
-            lista.append(item)
-        if not lista or lista[-1]["cuando"]:
-            raise pr.ErrorDeProtocolo(
-                "El ultimo estilo de la capa %s tiene que ser el general (`cuando: {}`): si no, "
-                "un tramo que no coincida con ninguno quedaria sin dibujar." % id_capa)
-        catalogo[id_capa] = {
-            "origen": origen,
-            "archivo": "%s/%s/%s" % (PREFIJO, publicacion["carpeta_publica"], decl["archivo"]),
-            "etiqueta": decl["etiqueta"], "geometria": decl["geometria"],
-            "tooltip": decl["tooltip"], "fuente": decl["fuente"],
-            "grande": bool(decl.get("grande")), "halo": estilo.get("halo", 0),
-            "estilos": lista,
-        }
-    _CATALOGO_CAPAS = {"rotulo_fuentes": publicacion["rotulo_fuentes"],
-                       "rotulo_control": publicacion["rotulo_control"], "capas": catalogo}
+    rotulos = None
+    for nombre_catalogo in CATALOGOS_DE_CAPAS:
+        config = pr.cargar_yaml(os.path.join(DIR_CONFIGS, "dims", nombre_catalogo))
+        publicacion = config["publicacion"]
+        carpeta = os.path.join(DIR_CONFIGS, "dims", config["carpeta"])
+        if rotulos is None:
+            rotulos = {"rotulo_fuentes": publicacion["rotulo_fuentes"],
+                       "rotulo_control": publicacion["rotulo_control"]}
+        for id_capa, decl in publicacion["capas"].items():
+            if id_capa in catalogo:
+                raise pr.ErrorDeProtocolo(
+                    "La capa %s esta declarada en dos catalogos (%s es el segundo): un id de "
+                    "capa es unico en todo el sitio." % (id_capa, nombre_catalogo))
+            origen = os.path.join(carpeta, decl["archivo"])
+            if not os.path.exists(origen):
+                raise pr.ErrorDeProtocolo("La capa %s pide %s, que no existe."
+                                          % (id_capa, origen))
+            if decl["geometria"] not in ("lineas", "puntos"):
+                raise pr.ErrorDeProtocolo("La capa %s declara la geometria %r (lineas o puntos)."
+                                          % (id_capa, decl["geometria"]))
+            if id_capa not in estilos:
+                raise pr.ErrorDeProtocolo(
+                    "La capa %s no tiene estilo en _protocolo-presentacion.colores."
+                    "capas_de_contexto: su color lo manda el protocolo, no el sitio." % id_capa)
+            estilo = estilos[id_capa]
+            lista = []
+            for e in estilo["estilos"]:
+                item = {"cuando": {k: list(v) for k, v in (e.get("cuando") or {}).items()},
+                        "color": e["color"], "rotulo": e.get("rotulo", "")}
+                for clave in ("ancho", "trazo", "opacidad", "borde", "tamanio"):
+                    if clave in e:
+                        item[clave] = e[clave]
+                lista.append(item)
+            if not lista or lista[-1]["cuando"]:
+                raise pr.ErrorDeProtocolo(
+                    "El ultimo estilo de la capa %s tiene que ser el general (`cuando: {}`): si "
+                    "no, un tramo que no coincida con ninguno quedaria sin dibujar." % id_capa)
+            catalogo[id_capa] = {
+                "origen": origen,
+                "archivo": "%s/%s/%s" % (PREFIJO, publicacion["carpeta_publica"],
+                                         decl["archivo"]),
+                "etiqueta": decl["etiqueta"], "geometria": decl["geometria"],
+                "tooltip": decl["tooltip"], "fuente": decl["fuente"],
+                "grande": bool(decl.get("grande")), "halo": estilo.get("halo", 0),
+                # `rotulos`: el nombre de cada punto se ESCRIBE al lado, no solo en el
+                # mouseover (las ciudades y pueblos, JC 15-nov-2026). Solo para puntos.
+                "rotulos": bool(decl.get("rotulos")),
+                "estilos": lista,
+            }
+            if decl.get("rotulos") and decl["geometria"] != "puntos":
+                raise pr.ErrorDeProtocolo(
+                    "La capa %s pide `rotulos` y es de %s: los rotulos solo se dibujan sobre "
+                    "capas de puntos." % (id_capa, decl["geometria"]))
+    _CATALOGO_CAPAS = dict(rotulos, capas=catalogo)
     return _CATALOGO_CAPAS
 
 
@@ -9726,8 +9751,8 @@ def capas_del_panel(tablero, id_panel, definicion):
         id_capa = item["id"]
         if id_capa not in catalogo:
             raise pr.ErrorDeProtocolo(
-                "El panel %s del tablero %s pide la capa %r, que no esta en "
-                "configs/dims/capas-ign.yaml (publicacion.capas). Disponibles: %s"
+                "El panel %s del tablero %s pide la capa %r, que no esta en los catalogos de "
+                "configs/dims/ (publicacion.capas). Disponibles: %s"
                 % (id_panel, tablero["slug"], id_capa, ", ".join(sorted(catalogo))))
         if id_capa in vistas:
             raise pr.ErrorDeProtocolo("El panel %s del tablero %s repite la capa %s."
@@ -9784,7 +9809,9 @@ class ContextoCapasIgn:
     familia = "capas-ign"
     # La propiedad que abre cada capa de lineas en la tabla de km.
     APERTURA = {"rutas-nacionales": "calzada", "rutas-provinciales": "calzada",
-                "caminos-terciarios": "calzada", "ferrocarril": "estado"}
+                "caminos-terciarios": "calzada", "ferrocarril": "estado",
+                # El tendido electrico abre por NIVEL de tension (15-nov-2026).
+                "tendido-media-tension": "tension"}
 
     def __init__(self, con):
         self.protocolo = pr.cargar_protocolo()
@@ -9885,6 +9912,15 @@ def panel_mapa_capas(ctx, spec):
     return {"titulo": declarado["titulo"], "subtitulo": declarado.get("subtitulo", ""),
             "pie": ctx.fuente("mapa_base"), "geojson": GEOJSON,
             "aspecto": aspecto_mapa(), "relacion": relacion_mapa(),
+            # `zoom`: rueda, pellizco y arrastre sobre la cartografia (JC, 15-nov-2026:
+            # "pudiendo hacer zoom al maximo"). Se declara en `paneles.orden`, que es donde
+            # viven las decisiones de LAYOUT, porque decide dos cosas a la vez: el gesto (lo
+            # lee `pintarMapaCapas` de este payload) y el ALTO de la caja (un mapa que se
+            # recorre ocupa la pagina: `data-con-zoom`, que sale del panel de la PAGINA y no
+            # del dato). Declararlo en dos lados seria dos fuentes de verdad para lo mismo.
+            # Sobre un mapa de calor el encuadre sigue fijo, que es como JC valido esas maquetas.
+            "zoom": any(bool(p.get("zoom")) for p in spec["paneles"]["orden"]
+                        if p["id"] == "mapa-capas"),
             "deptos": [{"id": g, "nombre": ctx.nombre(g)} for g in ctx.geo.deptos]}
 
 
@@ -9934,13 +9970,54 @@ def panel_tabla_ferrocarril(ctx, spec):
             "filas": [total] + filas}
 
 
+def panel_tabla_tendido(ctx, spec):
+    """Km de linea electrica por NIVEL de tension (JC, 15-nov-2026).
+
+    El nivel se escribe tal cual lo trae el CFEE y sin unidad: la fuente no documenta en que
+    unidad esta su campo `tension` (configs/dims/capas-energia.yaml, advertencias_para_jc).
+    """
+    declarado = spec["paneles"]["tabla-tendido"]
+    niveles = [str(n) for n in declarado["niveles"]]
+    presentes = {x for (c, x) in ctx.km if c == "tendido-media-tension"}
+    raros = sorted(presentes - set(niveles))
+    if raros:
+        raise pr.ErrorDeProtocolo(
+            "El tendido electrico trae los niveles de tension %s, que la tabla no lista. Un "
+            "nivel nuevo se agrega en `paneles.tabla-tendido.niveles`." % raros)
+    filas = [{"celdas": [declarado["rotulo_fila"].replace("{nivel}", nivel),
+                         _km(ctx.km_de("tendido-media-tension", nivel))]}
+             for nivel in niveles]
+    total = {"celdas": [declarado["rotulo_total"], _km(ctx.km_de("tendido-media-tension"))],
+             "actual": True}
+    return {"titulo": declarado["titulo"], "subtitulo": declarado["subtitulo"],
+            "pie": ctx.fuente("tendido"),
+            "columnas": [{"etiqueta": declarado["rotulo_columna"], "num": False},
+                         {"etiqueta": "Km de línea", "num": True}],
+            "filas": [total] + filas}
+
+
+#  id del panel -> quien lo arma. La pagina declara en `paneles.orden` cuales quiere: desde el
+#  17-nov-2026 la de Infraestructura es SOLO el mapa (JC, 15-nov: "que el mapa ocupe toda la
+#  pagina"), y los tres cuadros de km quedan listos para cuando los pida.
+PANELES_RED_VIAL = {
+    "mapa-capas": panel_mapa_capas,
+    "tabla-red-vial": panel_tabla_red_vial,
+    "tabla-ferrocarril": panel_tabla_ferrocarril,
+    "tabla-tendido": panel_tabla_tendido,
+}
+
+
 def construir_tablero_red_vial(ctx, spec):
     tablero = tablero_base(ctx, spec, [])
-    tablero["combos"][""] = {
-        "kpis": indicadores_red_vial(ctx, spec),
-        "paneles": {"mapa-capas": panel_mapa_capas(ctx, spec),
-                    "tabla-red-vial": panel_tabla_red_vial(ctx, spec),
-                    "tabla-ferrocarril": panel_tabla_ferrocarril(ctx, spec)}}
+    paneles = {}
+    for declarado in spec["paneles"]["orden"]:
+        id_panel = declarado["id"]
+        if id_panel not in PANELES_RED_VIAL:
+            raise pr.ErrorDeProtocolo(
+                "El tablero %s pide el panel %r, que la familia capas-ign no sabe armar. "
+                "Conocidos: %s" % (spec["id"], id_panel, ", ".join(sorted(PANELES_RED_VIAL))))
+        paneles[id_panel] = PANELES_RED_VIAL[id_panel](ctx, spec)
+    tablero["combos"][""] = {"kpis": indicadores_red_vial(ctx, spec), "paneles": paneles}
     return tablero
 
 
@@ -10611,6 +10688,19 @@ def panel_accesos(ctx, spec, id_panel):
                    "detalle": item.get("detalle", ""), "bajada": item.get("bajada", ""),
                    "destino": item.get("destino"), "miniatura": None,
                    "proximamente": item.get("proximamente", "")}
+        # `externo`: la tarjeta lleva al VISOR DEL ORGANISMO, fuera del sitio (area "Mapas",
+        # JC 15-nov-2026). Se abre en otra pestaña y no pasa por `url_de`, porque no es una
+        # pagina nuestra. Es excluyente con `destino` y con `proximamente`.
+        if item.get("externo"):
+            if tarjeta["destino"] or tarjeta["proximamente"] or item.get("enlaces"):
+                raise pr.ErrorDeProtocolo(
+                    "La tarjeta %r de %s tiene `externo`: no puede tener tambien `destino`, "
+                    "`proximamente` ni `enlaces`." % (item["titulo"], spec["id"]))
+            if not str(item["externo"]).startswith("https://"):
+                raise pr.ErrorDeProtocolo(
+                    "La tarjeta %r de %s declara el externo %r: tiene que ser una URL https."
+                    % (item["titulo"], spec["id"], item["externo"]))
+            tarjeta["externo"] = item["externo"]
         # Una tarjeta con VARIOS links (portada de Ganaderia, "Ganad Ingreso" de JC: cada especie
         # con la lista de sus paginas). La tarjeta no es un link; cada renglon lo es, y el que no
         # tiene pagina todavia va apagado con su "Próximamente".
@@ -10629,10 +10719,10 @@ def panel_accesos(ctx, spec, id_panel):
                 tarjeta["enlaces"].append({"texto": enlace["texto"],
                                            "destino": enlace.get("destino"),
                                            "proximamente": enlace.get("proximamente", "")})
-        elif bool(tarjeta["destino"]) == bool(tarjeta["proximamente"]):
+        elif not tarjeta.get("externo") and bool(tarjeta["destino"]) == bool(tarjeta["proximamente"]):
             raise pr.ErrorDeProtocolo(
-                "La tarjeta %r de %s tiene que tener `destino` o `proximamente` (una de las dos)."
-                % (item["titulo"], spec["id"]))
+                "La tarjeta %r de %s tiene que tener `destino`, `externo` o `proximamente` "
+                "(una de las tres)." % (item["titulo"], spec["id"]))
         if item.get("miniatura") == "icono":
             # El icono de la especie del paquete de JC (site/assets/iconos/color/), el mismo que
             # lleva la tarjeta "Datos" de cada pagina de ganaderia.
@@ -10721,6 +10811,21 @@ def construir_tablero_agroclima(ctx, spec):
                    else panel_accesos(ctx, spec, id_panel))
         for id_panel in (p["id"] for p in spec["paneles"]["orden"])}}
     tablero["archivos_extra"] = {"public/plataforma/" + SVG_ESTACIONES: svg_de_estaciones(ctx)}
+    return tablero
+
+
+def construir_tablero_mapas_ingreso(ctx, spec):
+    """La portada del area "Mapas" (JC, 15-nov-2026: "con el mismo formato de 'Agroclima'").
+
+    Son solo bloques de tarjetas: cuatro `accesos-*`, uno por organismo. A diferencia de la
+    portada de AgroClima no hay "Destacados" ni miniatura calculada -las miniaturas son las
+    capturas del propio JC, fijas en site/assets/mapas/ingreso/- asi que tampoco necesita el
+    SVG de las estaciones.
+    """
+    tablero = tablero_base(ctx, spec, [])
+    tablero["combos"][""] = {"paneles": {
+        id_panel: panel_accesos(ctx, spec, id_panel)
+        for id_panel in (p["id"] for p in spec["paneles"]["orden"])}}
     return tablero
 
 
@@ -11270,6 +11375,21 @@ def periodo_de_mapa_clima(spec, grupo):
         texto = grupo["fecha"]
         fecha = datetime.date(int(texto[:4]), int(texto[4:6]), int(texto[6:]))
         return fecha, fecha, "%d %s %d" % (fecha.day, mes_largo[fecha.month - 1], fecha.year)
+    if regla == "campania":
+        # El Mapa Nacional de Cultivos (JC, 15-nov-2026). No hay nada que CALCULAR del nombre
+        # del archivo: el periodo de cada mitad de la campania lo escribe el informe del INTA y
+        # el spec lo transcribe en `tramos` (`mnc_ver25` -> el tramo "ver"). Deducir un rango de
+        # fechas de "ver25" seria inventarlo.
+        tramo = (spec.get("tramos") or {}).get(grupo["tramo"])
+        if not tramo:
+            raise pr.ErrorDeProtocolo(
+                "%s: el mapa trae el tramo de campania %r y `tramos` del spec no lo declara. "
+                "Cada tramo lleva desde, hasta y rotulo, copiados del informe de la fuente."
+                % (spec["slug_vista"], grupo["tramo"]))
+        if set(tramo) != {"desde", "hasta", "rotulo"}:
+            raise pr.ErrorDeProtocolo("%s: cada tramo de `tramos` lleva desde, hasta y rotulo."
+                                      % spec["slug_vista"])
+        return tramo["desde"], tramo["hasta"], tramo["rotulo"]
     raise pr.ErrorDeProtocolo("%s declara `periodo: %s`, que el build no sabe rotular."
                               % (spec["slug_vista"], regla))
 
@@ -11350,7 +11470,11 @@ def mapas_clima(spec):
         lista = sorted((e for e in entradas.values() if e["desde"] in fechas),
                        key=lambda e: (-e["desde"].toordinal(), orden.index(e["cultivo"])))
 
-    ruta_publica = "%s/mapas/clima/%s" % (PREFIJO, spec["serie"])
+    # Donde se publican las imagenes. Por defecto `mapas/clima/<serie>`, que es de donde
+    # salio el mecanismo; una galeria que no es de AgroClima declara la suya (`assets.publico`,
+    # el mapa de cultivos).
+    bajo = spec["assets"].get("publico") or ("clima/%s" % spec["serie"])
+    ruta_publica = "%s/mapas/%s" % (PREFIJO, bajo)
     recorte = (spec.get("georreferencia") or {}).get("recorte")
     medidas_recorte, medidas_original = set(), set()
     mapas, archivos = [], []
@@ -11358,7 +11482,12 @@ def mapas_clima(spec):
         ancho, alto = _dimensiones_imagen(os.path.join(carpeta, e["mini"]))
         if por_cultivo is None:
             rotulo = e["rotulo"]
-            titulo = "%s %d" % (e["rotulo"], e["hasta"].year)
+            # El año se le pega al rótulo porque los del SEPA son relativos ("1ra década de
+            # septiembre") y sin él dos años se llaman igual. Un rótulo que YA nombra su año no
+            # lo repite: el de una campaña se escribe entero en el spec ("Campaña de verano
+            # 2024/2025") y quedaba "Campaña de verano 2024/2025 2025".
+            anio = str(e["hasta"].year)
+            titulo = rotulo if anio in rotulo else "%s %s" % (rotulo, anio)
         else:
             rotulo = "%s %s" % (por_cultivo[e["cultivo"]], e["cultivo"])
             titulo = "%s · %s" % (rotulo, e["rotulo"])
@@ -11382,7 +11511,7 @@ def mapas_clima(spec):
         mapas.append(mapa)
         for nombre in nombres:
             archivos.append((os.path.join(carpeta, nombre),
-                             "public/plataforma/mapas/clima/%s/%s" % (spec["serie"], nombre)))
+                             "public/plataforma/mapas/%s/%s" % (bajo, nombre)))
     if not mapas:
         raise pr.ErrorDeProtocolo("La galeria %s no tiene ningun mapa." % spec["slug_vista"])
 
@@ -11510,21 +11639,40 @@ def construir_galeria_clima(ctx, spec):
     # galeria; el navegador las dibuja recortadas a la provincia con zoom y transparencia.
     georef = spec.get("georreferencia")
     if georef:
-        ruta = os.path.join(RAIZ, "configs", "dims", "sepa-kml", georef["kml"] + ".kml")
-        if not os.path.exists(ruta):
-            raise pr.ErrorDeProtocolo("%s pide el KML %s, que no esta en configs/dims/sepa-kml/ "
-                                      "(correr python -m pipeline.sepa_kml)."
-                                      % (spec["slug_vista"], georef["kml"]))
-        caja = sepa_kml.caja(ruta)
-        if georef.get("rotacion") == "ignorar":
+        propia = georef.get("caja")
+        if propia:
+            # LA CAJA ESCRITA EN EL SPEC, sin KML (el Mapa Nacional de Cultivos, 17-nov-2026).
+            # Las galerias del SEPA sacan su caja del KML porque es lo unico que el SEPA
+            # publica, y encima corrida (de ahi `caja_ajustada`). Un GeoTIFF trae su
+            # georreferencia ADENTRO: `pipeline.mapa_cultivos` la lee del propio archivo,
+            # recorta en pixeles enteros e imprime la caja exacta del recorte, que es la que se
+            # copia aca. No hay nada que ajustar ni rotacion que decidir.
+            if set(propia) != {"norte", "sur", "este", "oeste"}:
+                raise pr.ErrorDeProtocolo("%s: `georreferencia.caja` lleva norte, sur, este y "
+                                          "oeste." % spec["slug_vista"])
+            if georef.get("kml") or georef.get("caja_ajustada") or georef.get("recorte"):
+                raise pr.ErrorDeProtocolo(
+                    "%s: con `georreferencia.caja` no van `kml`, `caja_ajustada` ni `recorte`: "
+                    "la caja ya es la de la imagen publicada." % spec["slug_vista"])
+            caja = {k: float(v) for k, v in propia.items()}
             caja["rotacion"] = 0.0
-        elif georef.get("rotacion") != "usar":
-            raise pr.ErrorDeProtocolo("%s: `georreferencia.rotacion` tiene que ser usar o "
-                                      "ignorar." % spec["slug_vista"])
+        else:
+            ruta = os.path.join(RAIZ, "configs", "dims", "sepa-kml", georef["kml"] + ".kml")
+            if not os.path.exists(ruta):
+                raise pr.ErrorDeProtocolo("%s pide el KML %s, que no esta en "
+                                          "configs/dims/sepa-kml/ (correr python -m "
+                                          "pipeline.sepa_kml)."
+                                          % (spec["slug_vista"], georef["kml"]))
+            caja = sepa_kml.caja(ruta)
+            if georef.get("rotacion") == "ignorar":
+                caja["rotacion"] = 0.0
+            elif georef.get("rotacion") != "usar":
+                raise pr.ErrorDeProtocolo("%s: `georreferencia.rotacion` tiene que ser usar o "
+                                          "ignorar." % spec["slug_vista"])
         # La caja del KML corrida unos px respecto de los limites que dibuja la imagen: el spec
         # puede traer la caja medida contra esos limites (ver el comentario en cada spec).
         ajustada = georef.get("caja_ajustada")
-        if ajustada:
+        if ajustada and not propia:
             if set(ajustada) != {"norte", "sur", "este", "oeste"}:
                 raise pr.ErrorDeProtocolo("%s: `georreferencia.caja_ajustada` lleva norte, sur, "
                                           "este y oeste." % spec["slug_vista"])
@@ -11536,7 +11684,21 @@ def construir_galeria_clima(ctx, spec):
         # DE AGROCLIMA ... NO CONTIENEN LAS ESCALAS ... ¿Y SI SE DIVIDE LA PANTALLA ... LA
         # ESCALA QUE NO VARIE Y EN EL OTRO 80% PONEMOS EL MAPA AMPLIABLE?"). Sin `leyenda` el
         # visor sale sin ella (la escala queda solo en "Mostrar todo el país").
-        elemento["visor"] = {"caja": caja, "geojson": GEOJSON, "kml": georef["kml"] + ".kml",
+        elemento["visor"] = {"caja": caja, "geojson": GEOJSON,
+                             "kml": (georef["kml"] + ".kml") if georef.get("kml") else None,
+                             # Si la IMAGEN trae los limites departamentales dibujados. Las
+                             # del SEPA si, y el visor se los saca para dibujar los suyos,
+                             # finos; un raster clasificado como el de cultivos no los trae y
+                             # pasarlo por esa limpieza le borra las clases oscuras o escasas.
+                             "limpiar_lineas": georef.get("lineas_en_la_imagen", True),
+                             # Quien publica la imagen: sale en "Escala del X para este
+                             # producto", en la nota y en la pantalla de carga. Por defecto el
+                             # SEPA, que es para quien se escribio el visor.
+                             "organismo": georef.get("organismo") or "SEPA",
+                             # Si la imagen publicada cubre mas que la provincia. Sin eso,
+                             # "Mostrar todo el pais" dibujaria el recorte de la provincia
+                             # estirado sobre las vecinas.
+                             "imagen_del_pais": georef.get("imagen_del_pais", True),
                              "nota": limpiar(georef["nota"]),
                              "leyenda": leyenda_del_sepa(spec["slug_vista"], georef.get("leyenda"))}
         # La caja del RECORTE de la provincia, en grados. Sale de una regla de tres sobre la
@@ -11709,6 +11871,12 @@ def resolver_tarjetas(tablero, url_de):
                                                      tablero["slug"], destino))
                     enlace["href"] = url_de[destino] if destino else None
                 destino = tarjeta.pop("destino", None)
+                # Una tarjeta que lleva al visor del organismo ya trae su URL entera: no se
+                # resuelve contra `url_de` y se marca para abrirla en otra pestaña.
+                if tarjeta.get("externo"):
+                    tarjeta["href"] = tarjeta.pop("externo")
+                    tarjeta["fuera_del_sitio"] = True
+                    continue
                 if not destino:
                     tarjeta["href"] = None
                     continue
@@ -11730,6 +11898,8 @@ TABLEROS = {
     "tablero-infraestructura-amenazas": construir_tablero_amenazas,
     # AgroClima (maqueta "0000000000 Maqueta Clima 1.xlsx", 14-oct-2026)
     "tablero-agroclima": construir_tablero_agroclima,
+    # Mapas · portada del area (JC, 15-nov-2026, punto 3.b)
+    "tablero-mapas-ingreso": construir_tablero_mapas_ingreso,
     "tablero-agroclima-estaciones": construir_tablero_estaciones,
     # Ganaderia: portada de la rama (maqueta "Maqueta INGRESO a GANADERIA.xlsx", 15-oct-2026)
     "tablero-ganaderia-ingreso": construir_tablero_ganaderia_ingreso,
@@ -13294,7 +13464,7 @@ def escribir_sitio(ctx, vistas, tableros):
     escritor.texto("src/tableros/contenido/entrada.json",
                    json_determinista(entrada_a_los_tableros(ctx.navegacion)))
 
-    # Las capas del IGN, tal cual estan en configs/dims/capas-ign/ (como el GeoJSON de los
+    # Las capas de contexto, tal cual estan en configs/dims/<catalogo>/ (como el GeoJSON de los
     # departamentos). Solo las que nombra algun tablero.
     for id_capa in sorted(capas_a_copiar):
         capa = catalogo_capas()["capas"][id_capa]
@@ -13367,6 +13537,15 @@ def main(args=None):
     parser.add_argument("--hashes", action="store_true",
                         help="imprimir el sha256 de cada archivo generado")
     ns = parser.parse_args(args)
+
+    # EL CATALOGO DE FUENTES GEOESPACIALES, antes de armar nada (ERS "Mapas y Contexto IA" v1.1,
+    # seccion 5.1: "los bloqueos de publicacion de los RF6, RF15.1, RF15.2 y RF17.3 se
+    # implementan como validaciones del pipeline que interrumpen la construccion del sitio, no
+    # como controles de interfaz"). Material publicado sin atribucion escrita donde la licencia
+    # la exige, publicado como descarga sin permiso de redistribucion, o una capa cruzada con
+    # los departamentos sin la validacion del analista: cualquiera de esas cosas corta la
+    # corrida aca y no llega al sitio.
+    fuentes_geo.verificar_o_cortar(avisar=lambda t: print("[fuentes-geo] AVISO %s" % t))
 
     con = duckdb.connect()
     hechos = Hechos(con)

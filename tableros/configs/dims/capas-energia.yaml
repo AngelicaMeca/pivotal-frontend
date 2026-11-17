@@ -1,0 +1,106 @@
+# Procedencia de configs/dims/capas-energia/ (el tendido electrico que pidio JC el 15-nov-2026).
+#
+# Pedido textual de JC (comentario del 15-nov-2026, punto 3.a INFRAESTRUCTURA): "Van los mapas
+# de Redes viales (primaria, secundaria y terciaria) y el de tendido electrico. [...] La fuente
+# es IGN, salvo el de tendido electrico que es Secretaria de Energia". Las redes viales son las
+# capas del IGN que ya estan en capas-ign.yaml; esta es la otra.
+#
+# COMO SE LLEGO A LA CAPA. JC subio en su Excel ("0000000000 Base datos mapas.xlsx", hoja
+# "VER") tres filas de la Secretaria de Energia: el visor https://sig.energia.gob.ar/v/
+# ("Visor tendido electrico media tension Sgo Estero") y dos fichas de IDE Energia, una de
+# ellas rotulada "Capa para bajar del tendido". Esa ficha
+# (cfe43937-4d63-454c-8103-e8b14459786a, "Lineas de Media Tension de la provincia de Santiago
+# del Estero") NO sirve capa: es metadata, y su enlace de descarga remite al portal de datos
+# abiertos de Energia, que es de donde se baja. El visor no expone WFS ni servicio OGC
+# (/geoserver y /arcgis/rest dan 404), asi que no habia de donde bajarla por ahi.
+#
+# Esto NO es un dato de JC ni pasa por raw/: igual que las capas del IGN, se baja de la fuente
+# oficial y se commitea el resultado ya recortado. El sitio publica una copia y no le pide nada
+# al servidor de Energia en ningun momento.
+
+carpeta: capas-energia
+
+fuente:
+  organismo: Consejo Federal de la Energia Electrica (CFEE), Secretaria de Energia
+  dato_provisto_por: EDESE (Empresa Distribuidora de Electricidad de Santiago del Estero)
+  # Lo dice la ficha de IDE Energia en su linaje: "Informacion provista por EDESE".
+  dataset: "Redes de distribucion electrica"
+  recurso: "Redes de distribucion electrica del SANTIAGO DEL ESTERO - EDESE - Media Tension Lineas"
+  portal: https://datos.energia.gob.ar/dataset/redes-de-distribucion-electrica-del-consejo-federal
+  ficha_ide: http://ide.energia.gob.ar/geonetwork/srv/spa/catalog.search#/metadata/cfe43937-4d63-454c-8103-e8b14459786a
+  visor_del_organismo: https://sig.energia.gob.ar/v/
+  descargado: 2026-11-17
+  proyeccion_declarada: EPSG:4326
+  comando: >
+    curl -L -o tendido-media-tension.csv
+    "http://datos.energia.gob.ar/dataset/ff99e7be-7bab-4617-9588-9a74ae046a40/resource/2d238baf-fde1-4724-a518-77447c25adfd/download/redes-de-distribucin-elctrica-del-consejo-federal-santiago-del-estero-media-tensin-lneas.csv"
+
+# El CSV y no el shapefile a proposito: el CSV trae la geometria en una columna `geojson` en
+# EPSG:4326, que se lee con la stdlib. El mismo recurso existe como SHP (resource
+# 23e5cbc5-d0ba-4aa2-a026-e3dfba087f01, 7,2 MB) y habria necesitado un lector de shapefile.
+descargas_crudas:
+  # archivo: [sha256, bytes]
+  tendido-media-tension.csv: [dde1641dbdc979486f37d767affe8e36df72fecb11aa8e8953ff01492ce8c8b4, 31452639]
+
+licencia:
+  nombre: Creative Commons Attribution 4.0 (CC-BY-4.0)
+  # Declarada por el portal de datos abiertos en el dataset. La ficha de IDE Energia agrega
+  # "Datos publicos" en sus restricciones de uso.
+  exige_cita: true
+  permite_redistribuir: true
+  atribucion: "Fuente: Consejo Federal de la Energía Eléctrica - Secretaría de Energía, con datos de EDESE (CC BY 4.0)"
+
+transformacion:
+  script: pipeline/capas_energia.py
+  uso: >
+    python -m pipeline.capas_energia <carpeta de descargas> configs/dims/capas-energia
+    configs/dims/sde-departamentos.geojson
+  recorte: >
+    Contra el contorno de la provincia DISUELTO de configs/dims/sde-departamentos.geojson, no
+    contra el poligono del IGN: asi el recorte usa exactamente el mismo borde que dibujan los
+    mapas del sitio y ningun tramo queda colgando afuera. El script verifica que la cobertura
+    de departamentos sea limpia (cada arista interior dos veces, las del borde una) y que el
+    contorno cierre en anillos.
+  union: >
+    Los 127.917 tramos de dos puntos que caen en la provincia se encadenan en 29.456
+    polilineas. Es el mismo conjunto de segmentos: el script compara el conjunto de entrada
+    con el de salida y corta si cambio.
+  determinista: "Corrido dos veces sobre la misma descarga: archivos identicos byte a byte."
+
+salidas:
+  tendido-media-tension.geojson: >
+    Lineas de media tension de la provincia, 3,6 MB. Un feature por nivel de `tension`, con
+    las polilineas de ese nivel: 13 (26.161), 33 (2.845) y 76 (450). 1.246 de las 129.163
+    filas del CSV quedaron enteras afuera de la provincia (el archivo del CFEE se pasa un poco
+    del limite provincial).
+
+advertencias_para_jc:
+  - >
+    LA UNIDAD DEL CAMPO `tension` NO ESTA DOCUMENTADA. Ni el dataset del portal de datos
+    abiertos (que no trae diccionario de campos ni descripcion del recurso) ni la ficha de IDE
+    Energia dicen en que unidad esta: los valores son 13, 33 y 76. Por la regla de unidades del
+    pipeline no se deduce de la magnitud, asi que se publican los tres niveles tal cual y sin
+    unidad, con su nota. Queda preguntado (backlog 115).
+  - >
+    Es media tension, no todo el tendido: el recurso que se baja es "Media Tension Lineas". La
+    otra ficha que subiste (81995e6f / 9b088826, "Lineas alta y media tension") es de otra
+    provincia o de otro alcance y no se uso.
+  - >
+    El dato lo provee EDESE y lo publica el CFEE; no es un relevamiento del IGN. Su exactitud
+    posicional no esta declarada, asi que el mapa sirve para ver el trazado de la red, no para
+    ubicar un poste.
+
+publicacion:
+  carpeta_publica: geo/capas
+  capas:
+    tendido-media-tension:
+      archivo: tendido-media-tension.geojson
+      etiqueta: "Tendido eléctrico (media tensión)"
+      geometria: lineas
+      # Sin unidad a proposito (ver advertencias_para_jc).
+      tooltip: "Línea de media tensión · nivel {tension}"
+      fuente: "CFEE - Secretaría de Energía, datos de EDESE"
+      # 3,6 MB: se baja recien cuando alguien prende la capa, como los caminos rurales.
+      a_demanda: true
+      # ~29.500 polilineas: se dibujan en el modo "large" de ECharts.
+      grande: true
