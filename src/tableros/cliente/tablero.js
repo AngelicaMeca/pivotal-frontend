@@ -1019,6 +1019,16 @@ export default function iniciar(PIVOTAL) {
         prox.textContent = t.proximamente;
         textos.appendChild(prox);
       }
+      /* RF23.1: la fuente no respondia en el ultimo control de vigencia. El link NO se saca
+         -el visitante tiene que poder intentarlo, y a lo mejor el control quedo viejo-, pero
+         la tarjeta lo dice en vez de hacer como que esta todo bien. */
+      if (t.no_disponible) {
+        var aviso = document.createElement("span");
+        aviso.className = "acceso-no-disponible";
+        aviso.textContent = t.no_disponible;
+        textos.appendChild(aviso);
+        tarjeta.className += " acceso-dudoso";
+      }
       if (conEnlaces) {
         var lista = document.createElement("ul");
         lista.className = "acceso-enlaces";

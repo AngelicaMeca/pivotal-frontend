@@ -55,6 +55,7 @@ from pipeline import vegetales as veg
 from pipeline import clima as cl
 from pipeline import sepa_kml
 from pipeline import fuentes_geo
+from pipeline import vigencia_geo
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DIR_MODELOS = os.path.join(RAIZ, "specs", "modelos")
@@ -10677,6 +10678,44 @@ def svg_de_estaciones(ctx):
                c["fondo_cuadro"], "".join(puntos)))
 
 
+_FUENTES_POR_URL = None
+_CAIDAS = None
+
+
+def fuentes_caidas_hoy():
+    """Los ids de fuente que hay que marcar como no disponibles (RF23.1).
+
+    Son dos cosas sumadas: las que el catalogo DECLARA en `estado: caida` (lo escribe una
+    persona) y las que el ultimo chequeo de vigencia OBSERVO caidas (`pipeline/vigencia_geo`).
+    El build no le pide nada a ningun servidor: lee el archivo que dejo el chequeo. Si nunca se
+    corrio, no hay ninguna caida y el sitio sale como siempre.
+    """
+    global _CAIDAS
+    if _CAIDAS is None:
+        declaradas = {f["id"] for f in fuentes_geo.cargar()["fuentes"]
+                      if f.get("estado") == "caida"}
+        _CAIDAS = declaradas | vigencia_geo.fuentes_caidas()
+    return _CAIDAS
+
+
+
+
+def fuente_geo_de(url):
+    """El id de la fuente del catalogo que tiene esa URL, o None.
+
+    Sirve para atar cada tarjeta que lleva al visor de un organismo con su ficha del catalogo
+    de fuentes geoespaciales, sin que el spec tenga que repetir el id: la URL ya esta en los
+    dos lados y tiene que ser la MISMA, que es justamente lo que conviene controlar.
+    """
+    global _FUENTES_POR_URL
+    if _FUENTES_POR_URL is None:
+        _FUENTES_POR_URL = {}
+        for f in fuentes_geo.cargar()["fuentes"]:
+            if f.get("url"):
+                _FUENTES_POR_URL.setdefault(f["url"], f["id"])
+    return _FUENTES_POR_URL.get(url)
+
+
 def panel_accesos(ctx, spec, id_panel):
     """Un bloque de tarjetas de la portada ("Datos e informes" o "Mapas"). El destino de cada
     tarjeta es el id del spec de la pagina; la URL la resuelve `escribir_sitio`, que es quien
@@ -10696,6 +10735,26 @@ def panel_accesos(ctx, spec, id_panel):
                 raise pr.ErrorDeProtocolo(
                     "La tarjeta %r de %s tiene `externo`: no puede tener tambien `destino`, "
                     "`proximamente` ni `enlaces`." % (item["titulo"], spec["id"]))
+            # RF24 / RF1: lo que se publica sale de una fuente del catalogo. Si la URL de la
+            # tarjeta no esta en `configs/fuentes-geoespaciales.yaml`, se esta enlazando algo
+            # que nadie evaluo (licencia, condiciones de uso, vigencia), asi que corta.
+            fuente_id = fuente_geo_de(item["externo"])
+            if fuente_id is None:
+                raise pr.ErrorDeProtocolo(
+                    "La tarjeta %r de %s enlaza %s, que no esta en el catalogo de fuentes "
+                    "geoespaciales. Toda fuente que se publica tiene que tener su ficha (con "
+                    "su licencia y su estado) en configs/fuentes-geoespaciales.yaml."
+                    % (item["titulo"], spec["id"], item["externo"]))
+            tarjeta["fuente_geo"] = fuente_id
+            # RF23.1: si la fuente esta caida -porque el catalogo lo declara o porque el ultimo
+            # chequeo de vigencia no la encontro- la tarjeta lo dice. El enlace NO se saca: el
+            # visitante tiene que poder intentarlo, y a lo mejor es el chequeo el que quedo
+            # viejo. Lo que no se hace es dejarlo como si estuviera todo bien.
+            if fuente_id in fuentes_caidas_hoy():
+                # Texto PUBLICADO: va acentuado y en registro formal (regla de JC del
+                # 16-oct-2026), y dice que es del ultimo control y no que este caido ahora.
+                tarjeta["no_disponible"] = (
+                    "El visor del organismo no respondía en el último control")
             if not str(item["externo"]).startswith("https://"):
                 raise pr.ErrorDeProtocolo(
                     "La tarjeta %r de %s declara el externo %r: tiene que ser una URL https."

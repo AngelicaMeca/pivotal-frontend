@@ -1,0 +1,186 @@
+# Generado por `python -m pipeline.vigencia_geo`. No editar a mano.
+# RF23: ultimo chequeo de que las URL y los servicios OGC siguen en pie.
+# RF23.1: `caidas` es lo que el sitio marca como no disponible.
+#
+# Esto NO lo lee la publicacion horaria para decidir si publica: las capas
+# estan commiteadas y el sitio no depende de ningun servidor de terceros.
+generado_por: python -m pipeline.vigencia_geo
+fecha: '2026-11-17'
+verificadas: 28
+verificadas_en_esta_corrida: 1
+resumen:
+  ok: 28
+  cambio: 0
+  caida: 0
+  sin-verificar: 0
+caidas: []
+con_cambios: []
+fuentes:
+  conae-bosque-nativo-2020:
+    veredicto: ok
+    detalle: HTTP 200
+    probado: https://geoportal.conae.gov.ar/mapstore/#/viewer/openlayers/geoportal
+    estado_en_el_catalogo: publicada
+    verificado: '2026-11-17'
+  energia-media-tension:
+    veredicto: ok
+    detalle: HTTP 200
+    probado: https://datos.energia.gob.ar/dataset/redes-de-distribucion-electrica-del-consejo-federal
+    estado_en_el_catalogo: publicada
+    verificado: '2026-11-17'
+  geonode-indec-wfs:
+    veredicto: ok
+    detalle: HTTP 200
+    probado: https://geonode.indec.gob.ar/geoserver/ows
+    estado_en_el_catalogo: a-evaluar
+    verificado: '2026-11-17'
+  geonode-indec-wms:
+    veredicto: ok
+    detalle: HTTP 200
+    probado: https://geonode.indec.gob.ar/geoserver/ows
+    estado_en_el_catalogo: a-evaluar
+    verificado: '2026-11-17'
+  ign-desinventar:
+    veredicto: ok
+    detalle: GetCapabilities HTTP 200 y la capa sigue anunciada
+    probado: https://wms.ign.gob.ar/geoserver/ign_riesgo/ows (capa ign_riesgo:desinventar_hidrometeorologico_riesgo)
+    estado_en_el_catalogo: aprobada
+    verificado: '2026-11-17'
+  ign-ferrocarril:
+    veredicto: ok
+    detalle: GetCapabilities HTTP 200 y la capa sigue anunciada
+    probado: https://wms.ign.gob.ar/geoserver/ows (capa ign:lineas_de_transporte_ferroviario_AN010)
+    estado_en_el_catalogo: publicada
+    verificado: '2026-11-17'
+  ign-localidades-bahra:
+    veredicto: ok
+    detalle: GetCapabilities HTTP 200 y la capa sigue anunciada
+    probado: https://wms.ign.gob.ar/geoserver/ows (capa ign:localidad_bahra)
+    estado_en_el_catalogo: publicada
+    verificado: '2026-11-17'
+  ign-parajes-bahra:
+    veredicto: ok
+    detalle: GetCapabilities HTTP 200 y la capa sigue anunciada
+    probado: https://wms.ign.gob.ar/geoserver/ows (capa ign:bahra_paraje)
+    estado_en_el_catalogo: en-ingesta
+    verificado: '2026-11-17'
+  ign-sinagir:
+    veredicto: ok
+    detalle: GetCapabilities HTTP 200 y la capa sigue anunciada
+    probado: https://wms.ign.gob.ar/geoserver/ign_riesgo/ows (capa ign_riesgo:sinagir_amenazas_hidrometeorologicas_riesgo)
+    estado_en_el_catalogo: aprobada
+    verificado: '2026-11-17'
+  ign-vial-nacional:
+    veredicto: ok
+    detalle: GetCapabilities HTTP 200 y la capa sigue anunciada
+    probado: https://wms.ign.gob.ar/geoserver/ows (capa ign:vial_nacional)
+    estado_en_el_catalogo: publicada
+    verificado: '2026-11-17'
+  ign-vial-provincial:
+    veredicto: ok
+    detalle: GetCapabilities HTTP 200 y la capa sigue anunciada
+    probado: https://wms.ign.gob.ar/geoserver/ows (capa ign:vial_provincial)
+    estado_en_el_catalogo: publicada
+    verificado: '2026-11-17'
+  ign-vial-terciaria:
+    veredicto: ok
+    detalle: GetCapabilities HTTP 200 y la capa sigue anunciada
+    probado: https://wms.ign.gob.ar/geoserver/ows (capa ign:vial_terciaria)
+    estado_en_el_catalogo: publicada
+    verificado: '2026-11-17'
+  indec-densidad:
+    veredicto: ok
+    detalle: HTTP 200
+    probado: https://portalgeoestadistico.indec.gob.ar/?indicator_id=96&members=108
+    estado_en_el_catalogo: publicada
+    verificado: '2026-11-17'
+  indec-parajes:
+    veredicto: ok
+    detalle: HTTP 200
+    probado: https://portalgeoestadistico.indec.gob.ar/?indicator_id=92&members=108,34
+    estado_en_el_catalogo: publicada
+    verificado: '2026-11-17'
+  indec-poblacion-total:
+    veredicto: ok
+    detalle: HTTP 200
+    probado: https://portalgeoestadistico.indec.gob.ar/?indicator_id=93&members=108,34
+    estado_en_el_catalogo: publicada
+    verificado: '2026-11-17'
+  indec-viviendas:
+    veredicto: ok
+    detalle: HTTP 200
+    probado: https://portalgeoestadistico.indec.gob.ar/?indicator_id=166&members=108
+    estado_en_el_catalogo: publicada
+    verificado: '2026-11-17'
+  inta-aptitud-tierras:
+    veredicto: ok
+    detalle: HTTP 200
+    probado: https://geo-nodo02.inta.gob.ar/catalogue/#/dataset/140
+    estado_en_el_catalogo: publicada
+    verificado: '2026-11-17'
+  inta-geoservicios:
+    veredicto: ok
+    detalle: HTTP 200
+    probado: https://geo.inta.gob.ar/
+    estado_en_el_catalogo: en-evaluacion
+    verificado: '2026-11-17'
+  inta-mnc-cultivos:
+    veredicto: ok
+    detalle: HTTP 200
+    probado: https://doi.org/10.5281/zenodo.17652712
+    estado_en_el_catalogo: publicada
+    verificado: '2026-11-17'
+  inta-otbn-2015:
+    veredicto: ok
+    detalle: HTTP 200
+    probado: https://geo-nodo02.inta.gob.ar/catalogue/#/dataset/11
+    estado_en_el_catalogo: publicada
+    verificado: '2026-11-17'
+  inta-suelo-sde:
+    veredicto: ok
+    detalle: HTTP 200
+    probado: https://geo-nodo02.inta.gob.ar/catalogue/#/dataset/135
+    estado_en_el_catalogo: publicada
+    verificado: '2026-11-17'
+  inta-visor-areas-deforestadas:
+    veredicto: ok
+    detalle: HTTP 200
+    probado: https://visor.inta.gob.ar/es#6.49/-26.617/-65.338
+    estado_en_el_catalogo: publicada
+    verificado: '2026-11-17'
+  inta-visor-cobertura-suelo:
+    veredicto: ok
+    detalle: HTTP 200
+    probado: https://visor.inta.gob.ar/es#7.68/-26.549/-64.776
+    estado_en_el_catalogo: publicada
+    verificado: '2026-11-17'
+  inta-visor-cuencas-noa:
+    veredicto: ok
+    detalle: HTTP 200
+    probado: https://visor.inta.gob.ar/es#5.45/-25.045/-65.584
+    estado_en_el_catalogo: publicada
+    verificado: '2026-11-17'
+  inta-visor-cursos-agua-noa:
+    veredicto: ok
+    detalle: HTTP 200
+    probado: https://visor.inta.gob.ar/es#6.38/-25.739/-66.292
+    estado_en_el_catalogo: publicada
+    verificado: '2026-11-17'
+  inta-zonificacion-uso-suelo:
+    veredicto: ok
+    detalle: HTTP 200
+    probado: https://geo-nodo02.inta.gob.ar/catalogue/#/dataset/59
+    estado_en_el_catalogo: publicada
+    verificado: '2026-11-17'
+  ora-reservas-agua:
+    veredicto: ok
+    detalle: HTTP 200
+    probado: https://www.ora.gob.ar/
+    estado_en_el_catalogo: publicada
+    verificado: '2026-11-17'
+  sepa-inta:
+    veredicto: ok
+    detalle: HTTP 200
+    probado: https://sepa.inta.gob.ar/productos/
+    estado_en_el_catalogo: publicada
+    verificado: '2026-11-17'

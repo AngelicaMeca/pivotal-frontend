@@ -1756,6 +1756,23 @@ a.acceso:focus-visible { outline: 2px solid var(--enlace); outline-offset: 2px; 
 /* Una tarjeta que lleva al visor del organismo sale del sitio (area "Mapas", JC 15-nov-2026):
    se avisa con una flecha despues del titulo, para que el usuario sepa antes de hacer clic que
    abre otra pestaña y se va a otro lado. El `aria-label` del link lo dice en palabras. */
+/* RF23.1: una tarjeta cuya fuente no respondio en el ultimo control de vigencia. Queda
+   apretable a proposito (el control puede haber quedado viejo), pero con el aviso a la vista y
+   un punto de atencion en el borde. */
+.acceso-no-disponible {
+  display: block;
+  margin-top: 0.3rem;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--negativo);
+}
+
+.acceso-dudoso {
+  border-color: var(--negativo);
+}
+
 .acceso-externo .acceso-titulo::after {
   content: " \2197"; font-weight: 400; color: var(--texto-apoyo);
 }

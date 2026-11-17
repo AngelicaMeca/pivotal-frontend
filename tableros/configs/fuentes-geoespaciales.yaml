@@ -83,6 +83,13 @@ fuentes:
     responsable: equipo-datos
     fecha_estado: 2026-10-14
     modo_acceso: ogc-wfs
+    # RF23: que se le pide para saber si sigue en pie. A un servicio OGC no alcanza con
+    # que el host contaste: se le pide el GetCapabilities y se controla que la capa siga
+    # anunciada con este nombre, que es la forma en que de verdad se rompen.
+    verificacion:
+      tipo: ogc
+      endpoint: https://wms.ign.gob.ar/geoserver/ows
+      capa: ign:vial_nacional
     modo_visualizacion:
       resuelto: visor-propio
       criterio: >
@@ -120,6 +127,13 @@ fuentes:
     responsable: equipo-datos
     fecha_estado: 2026-10-14
     modo_acceso: ogc-wfs
+    # RF23: que se le pide para saber si sigue en pie. A un servicio OGC no alcanza con
+    # que el host contaste: se le pide el GetCapabilities y se controla que la capa siga
+    # anunciada con este nombre, que es la forma en que de verdad se rompen.
+    verificacion:
+      tipo: ogc
+      endpoint: https://wms.ign.gob.ar/geoserver/ows
+      capa: ign:vial_provincial
     modo_visualizacion:
       resuelto: visor-propio
       criterio: "Igual que ign-vial-nacional."
@@ -147,6 +161,13 @@ fuentes:
     responsable: equipo-datos
     fecha_estado: 2026-10-14
     modo_acceso: ogc-wfs
+    # RF23: que se le pide para saber si sigue en pie. A un servicio OGC no alcanza con
+    # que el host contaste: se le pide el GetCapabilities y se controla que la capa siga
+    # anunciada con este nombre, que es la forma en que de verdad se rompen.
+    verificacion:
+      tipo: ogc
+      endpoint: https://wms.ign.gob.ar/geoserver/ows
+      capa: ign:vial_terciaria
     modo_visualizacion:
       resuelto: visor-propio
       criterio: >
@@ -182,6 +203,13 @@ fuentes:
     responsable: equipo-datos
     fecha_estado: 2026-10-14
     modo_acceso: ogc-wfs
+    # RF23: que se le pide para saber si sigue en pie. A un servicio OGC no alcanza con
+    # que el host contaste: se le pide el GetCapabilities y se controla que la capa siga
+    # anunciada con este nombre, que es la forma en que de verdad se rompen.
+    verificacion:
+      tipo: ogc
+      endpoint: https://wms.ign.gob.ar/geoserver/ows
+      capa: ign:lineas_de_transporte_ferroviario_AN010
     modo_visualizacion:
       resuelto: visor-propio
       criterio: "Igual que ign-vial-nacional."
@@ -213,6 +241,13 @@ fuentes:
     responsable: equipo-datos
     fecha_estado: 2026-11-17
     modo_acceso: ogc-wfs
+    # RF23: que se le pide para saber si sigue en pie. A un servicio OGC no alcanza con
+    # que el host contaste: se le pide el GetCapabilities y se controla que la capa siga
+    # anunciada con este nombre, que es la forma en que de verdad se rompen.
+    verificacion:
+      tipo: ogc
+      endpoint: https://wms.ign.gob.ar/geoserver/ows
+      capa: ign:localidad_bahra
     modo_visualizacion:
       resuelto: visor-propio
       criterio: "Igual que ign-vial-nacional."
@@ -246,6 +281,13 @@ fuentes:
     responsable: equipo-datos
     fecha_estado: 2026-11-17
     modo_acceso: ogc-wfs
+    # RF23: que se le pide para saber si sigue en pie. A un servicio OGC no alcanza con
+    # que el host contaste: se le pide el GetCapabilities y se controla que la capa siga
+    # anunciada con este nombre, que es la forma en que de verdad se rompen.
+    verificacion:
+      tipo: ogc
+      endpoint: https://wms.ign.gob.ar/geoserver/ows
+      capa: ign:bahra_paraje
     modo_visualizacion:
       resuelto: visor-propio
       criterio: "Igual que ign-vial-nacional."
@@ -287,6 +329,13 @@ fuentes:
     responsable: jc
     fecha_estado: 2026-10-16
     modo_acceso: ogc-wfs
+    # RF23: que se le pide para saber si sigue en pie. A un servicio OGC no alcanza con
+    # que el host contaste: se le pide el GetCapabilities y se controla que la capa siga
+    # anunciada con este nombre, que es la forma en que de verdad se rompen.
+    verificacion:
+      tipo: ogc
+      endpoint: https://wms.ign.gob.ar/geoserver/ign_riesgo/ows
+      capa: ign_riesgo:desinventar_hidrometeorologico_riesgo
     modo_visualizacion:
       resuelto: visor-propio
       criterio: "Igual que ign-vial-nacional."
@@ -327,6 +376,13 @@ fuentes:
     responsable: jc
     fecha_estado: 2026-10-16
     modo_acceso: ogc-wfs
+    # RF23: que se le pide para saber si sigue en pie. A un servicio OGC no alcanza con
+    # que el host contaste: se le pide el GetCapabilities y se controla que la capa siga
+    # anunciada con este nombre, que es la forma en que de verdad se rompen.
+    verificacion:
+      tipo: ogc
+      endpoint: https://wms.ign.gob.ar/geoserver/ign_riesgo/ows
+      capa: ign_riesgo:sinagir_amenazas_hidrometeorologicas_riesgo
     modo_visualizacion:
       resuelto: visor-propio
       criterio: "Igual que ign-vial-nacional."
@@ -352,7 +408,11 @@ fuentes:
   - id: energia-media-tension
     nombre: "Tendido eléctrico de media tensión"
     organismo: "Consejo Federal de la Energía Eléctrica - Secretaría de Energía, con datos de EDESE"
-    url: https://datos.gob.ar/dataset/energia-sistema-electrico-nacional
+    # Corregida el 17-nov-2026: acá decía https://datos.gob.ar/dataset/energia-sistema-electrico-nacional,
+    # que da 404. La buena ya estaba escrita en configs/dims/capas-energia.yaml (`fuente.portal`) y
+    # es la que se usó para bajar la capa; en esta ficha se había copiado otra. Lo encontró el
+    # chequeo de vigencia (RF23) en su primera corrida.
+    url: https://datos.energia.gob.ar/dataset/redes-de-distribucion-electrica-del-consejo-federal
     tipo_contenido: capa-descargable
     alcance: provincial
     estado: publicada

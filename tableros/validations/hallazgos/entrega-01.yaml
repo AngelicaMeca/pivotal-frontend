@@ -712,18 +712,25 @@ hallazgos:
     | destino_provincia_id=22 | destino_departamento=MAYOR LUIS J.FONTANA | alcance=egreso | variable=dte_porcinos
     | especie=porcinos | categoria=Total | categoria_rol=simple | medida=documentos | medida_etiqueta=DTE
     emitidos | unidad=dte | agregable=True | valor=1.0 | fuente=SENASA | veces=4
-  - base_id=144 | hoja=Data ORIGEN SDE | ambito=sde | sentido=salida | es_agregado_fila=False | motivo=Faena
-    | tipo_origen=Establecimiento | tipo_destino=Frigorífico | grano_tiempo=anio_mes | anio=2023 | mes=2
-    | periodo=2023-02 | orden_periodo=24277 | provincia=sde | origen_provincia=SANTIAGO DEL ESTERO | origen_provincia_id=86
-    | origen_departamento=LA BANDA | origen_geo_id=86035 | destino_provincia=SANTIAGO DEL ESTERO | destino_provincia_id=86
-    | destino_departamento=LA BANDA | destino_geo_id=86035 | alcance=interno | variable=dte_porcinos |
-    especie=porcinos | categoria=Total | categoria_rol=simple | medida=documentos | medida_etiqueta=DTE
-    emitidos | unidad=dte | agregable=True | valor=1.0 | fuente=SENASA | veces=3
   - base_id=144 | hoja=Data ORIGEN SDE | ambito=sde | sentido=salida | es_agregado_fila=False | motivo=Invernada
     | tipo_origen=Establecimiento | tipo_destino=Establecimiento | grano_tiempo=anio_mes | anio=2026 |
     mes=2 | periodo=2026-02 | orden_periodo=24313 | provincia=sde | origen_provincia=SANTIAGO DEL ESTERO
     | origen_provincia_id=86 | origen_departamento=AGUIRRE | origen_geo_id=86007 | destino_provincia=CORDOBA
     | destino_provincia_id=14 | destino_departamento=SANTA MARIA | alcance=egreso | variable=dte_porcinos
+    | especie=porcinos | categoria=Total | categoria_rol=simple | medida=documentos | medida_etiqueta=DTE
+    emitidos | unidad=dte | agregable=True | valor=1.0 | fuente=SENASA | veces=3
+  - base_id=144 | hoja=Data ORIGEN SDE | ambito=sde | sentido=salida | es_agregado_fila=False | motivo=Invernada
+    | tipo_origen=Establecimiento | tipo_destino=Establecimiento | grano_tiempo=anio_mes | anio=2024 |
+    mes=1 | periodo=2024-01 | orden_periodo=24288 | provincia=sde | origen_provincia=SANTIAGO DEL ESTERO
+    | origen_provincia_id=86 | origen_departamento=AGUIRRE | origen_geo_id=86007 | destino_provincia=CORDOBA
+    | destino_provincia_id=14 | destino_departamento=SANTA MARIA | alcance=egreso | variable=dte_porcinos
+    | especie=porcinos | categoria=Total | categoria_rol=simple | medida=documentos | medida_etiqueta=DTE
+    emitidos | unidad=dte | agregable=True | valor=1.0 | fuente=SENASA | veces=3
+  - base_id=144 | hoja=Data ORIGEN SDE | ambito=sde | sentido=salida | es_agregado_fila=False | motivo=Invernada
+    | tipo_origen=Establecimiento | tipo_destino=Establecimiento | grano_tiempo=anio_mes | anio=2022 |
+    mes=11 | periodo=2022-11 | orden_periodo=24274 | provincia=sde | origen_provincia=SANTIAGO DEL ESTERO
+    | origen_provincia_id=86 | origen_departamento=JUAN F. IBARRA | origen_geo_id=86098 | destino_provincia=SANTA
+    FE | destino_provincia_id=82 | destino_departamento=GENERAL OBLIGADO | alcance=egreso | variable=dte_porcinos
     | especie=porcinos | categoria=Total | categoria_rol=simple | medida=documentos | medida_etiqueta=DTE
     emitidos | unidad=dte | agregable=True | valor=1.0 | fuente=SENASA | veces=3
   - base_id=144 | hoja=Data ORIGEN SDE | ambito=sde | sentido=salida | es_agregado_fila=False | motivo=Cria
@@ -733,20 +740,6 @@ hallazgos:
     | destino_provincia_id=90 | destino_departamento=LEALES | alcance=egreso | variable=dte_porcinos |
     especie=porcinos | categoria=Total | categoria_rol=simple | medida=documentos | medida_etiqueta=DTE
     emitidos | unidad=dte | agregable=True | valor=1.0 | fuente=SENASA | veces=3
-  - base_id=144 | hoja=Data ORIGEN SDE | ambito=sde | sentido=salida | es_agregado_fila=False | motivo=Cria
-    | tipo_origen=Establecimiento | tipo_destino=Establecimiento | grano_tiempo=anio_mes | anio=2022 |
-    mes=12 | periodo=2022-12 | orden_periodo=24275 | provincia=sde | origen_provincia=SANTIAGO DEL ESTERO
-    | origen_provincia_id=86 | origen_departamento=JIMENEZ | origen_geo_id=86091 | destino_provincia=TUCUMAN
-    | destino_provincia_id=90 | destino_departamento=LEALES | alcance=egreso | variable=dte_porcinos |
-    especie=porcinos | categoria=Total | categoria_rol=simple | medida=documentos | medida_etiqueta=DTE
-    emitidos | unidad=dte | agregable=True | valor=1.0 | fuente=SENASA | veces=3
-  - base_id=144 | hoja=Data ORIGEN SDE | ambito=sde | sentido=salida | es_agregado_fila=False | motivo=Invernada
-    | tipo_origen=Establecimiento | tipo_destino=Establecimiento | grano_tiempo=anio_mes | anio=2024 |
-    mes=1 | periodo=2024-01 | orden_periodo=24288 | provincia=sde | origen_provincia=SANTIAGO DEL ESTERO
-    | origen_provincia_id=86 | origen_departamento=AGUIRRE | origen_geo_id=86007 | destino_provincia=CORDOBA
-    | destino_provincia_id=14 | destino_departamento=SANTA MARIA | alcance=egreso | variable=dte_porcinos
-    | especie=porcinos | categoria=Total | categoria_rol=simple | medida=documentos | medida_etiqueta=DTE
-    emitidos | unidad=dte | agregable=True | valor=1.0 | fuente=SENASA | veces=3
   - base_id=144 | hoja=Data ORIGEN SDE | ambito=sde | sentido=salida | es_agregado_fila=False | motivo=Faena
     | tipo_origen=Establecimiento | tipo_destino=Frigorífico | grano_tiempo=anio_mes | anio=2025 | mes=4
     | periodo=2025-04 | orden_periodo=24303 | provincia=sde | origen_provincia=SANTIAGO DEL ESTERO | origen_provincia_id=86
@@ -754,27 +747,34 @@ hallazgos:
     | destino_departamento=ROSARIO | alcance=egreso | variable=dte_porcinos | especie=porcinos | categoria=Total
     | categoria_rol=simple | medida=documentos | medida_etiqueta=DTE emitidos | unidad=dte | agregable=True
     | valor=1.0 | fuente=SENASA | veces=3
-  - base_id=144 | hoja=Data ORIGEN SDE | ambito=sde | sentido=salida | es_agregado_fila=False | motivo=Invernada
+  - base_id=144 | hoja=Data ORIGEN SDE | ambito=sde | sentido=salida | es_agregado_fila=False | motivo=Cria
     | tipo_origen=Establecimiento | tipo_destino=Establecimiento | grano_tiempo=anio_mes | anio=2022 |
-    mes=11 | periodo=2022-11 | orden_periodo=24274 | provincia=sde | origen_provincia=SANTIAGO DEL ESTERO
-    | origen_provincia_id=86 | origen_departamento=JUAN F. IBARRA | origen_geo_id=86098 | destino_provincia=SANTA
-    FE | destino_provincia_id=82 | destino_departamento=GENERAL OBLIGADO | alcance=egreso | variable=dte_porcinos
-    | especie=porcinos | categoria=Total | categoria_rol=simple | medida=documentos | medida_etiqueta=DTE
+    mes=12 | periodo=2022-12 | orden_periodo=24275 | provincia=sde | origen_provincia=SANTIAGO DEL ESTERO
+    | origen_provincia_id=86 | origen_departamento=JIMENEZ | origen_geo_id=86091 | destino_provincia=TUCUMAN
+    | destino_provincia_id=90 | destino_departamento=LEALES | alcance=egreso | variable=dte_porcinos |
+    especie=porcinos | categoria=Total | categoria_rol=simple | medida=documentos | medida_etiqueta=DTE
     emitidos | unidad=dte | agregable=True | valor=1.0 | fuente=SENASA | veces=3
   - base_id=144 | hoja=Data ORIGEN SDE | ambito=sde | sentido=salida | es_agregado_fila=False | motivo=Faena
-    | tipo_origen=Establecimiento | tipo_destino=Frigorífico | grano_tiempo=anio_mes | anio=2026 | mes=2
-    | periodo=2026-02 | orden_periodo=24313 | provincia=sde | origen_provincia=SANTIAGO DEL ESTERO | origen_provincia_id=86
-    | origen_departamento=JUAN F. IBARRA | origen_geo_id=86098 | destino_provincia=SANTA FE | destino_provincia_id=82
-    | destino_departamento=LA CAPITAL | alcance=egreso | variable=dte_porcinos | especie=porcinos | categoria=Total
-    | categoria_rol=simple | medida=documentos | medida_etiqueta=DTE emitidos | unidad=dte | agregable=True
-    | valor=2.0 | fuente=SENASA | veces=2
+    | tipo_origen=Establecimiento | tipo_destino=Frigorífico | grano_tiempo=anio_mes | anio=2023 | mes=2
+    | periodo=2023-02 | orden_periodo=24277 | provincia=sde | origen_provincia=SANTIAGO DEL ESTERO | origen_provincia_id=86
+    | origen_departamento=LA BANDA | origen_geo_id=86035 | destino_provincia=SANTIAGO DEL ESTERO | destino_provincia_id=86
+    | destino_departamento=LA BANDA | destino_geo_id=86035 | alcance=interno | variable=dte_porcinos |
+    especie=porcinos | categoria=Total | categoria_rol=simple | medida=documentos | medida_etiqueta=DTE
+    emitidos | unidad=dte | agregable=True | valor=1.0 | fuente=SENASA | veces=3
   - base_id=144 | hoja=Data ORIGEN SDE | ambito=sde | sentido=salida | es_agregado_fila=False | motivo=Faena
-    | tipo_origen=Establecimiento | tipo_destino=Frigorífico | grano_tiempo=anio_mes | anio=2025 | mes=12
-    | periodo=2025-12 | orden_periodo=24311 | provincia=sde | origen_provincia=SANTIAGO DEL ESTERO | origen_provincia_id=86
-    | origen_departamento=JUAN F. IBARRA | origen_geo_id=86098 | destino_provincia=SANTA FE | destino_provincia_id=82
-    | destino_departamento=LA CAPITAL | alcance=egreso | variable=dte_porcinos | especie=porcinos | categoria=Total
+    | tipo_origen=Establecimiento | tipo_destino=Frigorífico | grano_tiempo=anio_mes | anio=2025 | mes=1
+    | periodo=2025-01 | orden_periodo=24300 | provincia=sde | origen_provincia=SANTIAGO DEL ESTERO | origen_provincia_id=86
+    | origen_departamento=SAN MARTIN | origen_geo_id=86175 | destino_provincia=SANTA FE | destino_provincia_id=82
+    | destino_departamento=CASTELLANOS | alcance=egreso | variable=dte_porcinos | especie=porcinos | categoria=Total
     | categoria_rol=simple | medida=documentos | medida_etiqueta=DTE emitidos | unidad=dte | agregable=True
-    | valor=2.0 | fuente=SENASA | veces=2
+    | valor=1.0 | fuente=SENASA | veces=2
+  - base_id=144 | hoja=Data ORIGEN SDE | ambito=sde | sentido=salida | es_agregado_fila=False | motivo=Faena
+    | tipo_origen=Establecimiento | tipo_destino=Frigorífico | grano_tiempo=anio_mes | anio=2025 | mes=4
+    | periodo=2025-04 | orden_periodo=24303 | provincia=sde | origen_provincia=SANTIAGO DEL ESTERO | origen_provincia_id=86
+    | origen_departamento=SAN MARTIN | origen_geo_id=86175 | destino_provincia=SALTA | destino_provincia_id=66
+    | destino_departamento=GENERAL GUEMES | alcance=egreso | variable=dte_porcinos | especie=porcinos
+    | categoria=Total | categoria_rol=simple | medida=documentos | medida_etiqueta=DTE emitidos | unidad=dte
+    | agregable=True | valor=1.0 | fuente=SENASA | veces=2
   propuesta: 'Publicar sin ellas seria corregir en silencio: se dejan y se pregunta.'
   pregunta_jc: Hay filas repetidas identicas. Se pueden descartar las copias?
 - check: cobertura-entrega
