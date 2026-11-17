@@ -1,0 +1,480 @@
+# Registro de la serie del Mapa Nacional de Cultivos del INTA (ERS de Mapas, RF19 a RF21).
+#
+# RF19 pide registrar la serie completa con su DOI, su URL, sus archivos y el estado de ingesta
+# de cada campaña. Esto es ese registro, y es declarativo: `pipeline/cultivos_serie.py` lo
+# obedece y no tiene ni un nombre de archivo ni un código de cultivo adentro.
+#
+# JC pidió el 15-nov-2026 publicar SOLO la última campaña ("Por ahora solo pongamos el último,
+# o sea campaña 2024/2025"), y eso sigue igual: la página `4001-mapa-cultivos.yaml` publica esa
+# y nada más. Este registro existe para lo OTRO que pide el ERS: el análisis de evolución
+# interanual (RF21), que necesita la serie entera cruzada con los límites departamentales.
+#
+# ---------------------------------------------------------------------------------------------
+# LO QUE HAY QUE SABER ANTES DE TOCAR ESTO
+#
+# 1. **Cada campaña tiene SU PROPIA tabla de clases y los códigos NO significan lo mismo.** Esto
+#    no es un detalle: en el mapa de invierno, el código 19 es "No agrícola" en 2019/2020 y
+#    "Caña de Azúcar" en 2020/2021; el 17 es "Barbecho" en 2019/2020 y "Otros cultivos" desde
+#    2021/2022; y "Cereales de invierno" es el 0 hasta 2020/2021 y el 16 desde 2021/2022. Usar
+#    una sola tabla para toda la serie habría contado monte nativo como caña de azúcar y habría
+#    perdido todo el trigo de las tres primeras campañas. Por eso la tabla viaja POR MITAD DE
+#    CAMPAÑA y por eso una clase que no esté declarada corta la corrida.
+#
+# 2. **De dónde sale cada tabla** (`clases_de`): `estilo` = del archivo .qml de QGIS que el INTA
+#    publica al lado del ráster; `informe` = de las Tablas 1 y 2 del informe PDF de esa campaña,
+#    transcriptas acá. Las cuatro primeras campañas no publicaron .qml. El método se validó
+#    donde se puede: en 2022/2023 el INTA publica las DOS cosas, y la tabla del informe y el
+#    .qml dicen exactamente lo mismo, los mismos códigos y los mismos nombres.
+#
+# 3. **Los nombres se transcriben COMO LOS ESCRIBE EL INTA**, con sus variantes incluidas
+#    ("Maiz" sin tilde en 2019/2020, "Sorgo" en 2019/2020 y "Sorgo GR" después, "No agrícola" y
+#    "No Agrícola"). No se corrigen acá: la unificación para la serie la hace
+#    `cultivos_canonicos`, que es explícito y auditable. Así se puede ver qué dijo la fuente.
+#
+# 4. **Las dos mitades de una campaña NO SE SUMAN.** Son dos mapas del mismo territorio en dos
+#    momentos: un lote puede tener trigo en invierno y soja en verano, y los dos son ciertos.
+#
+# 5. **2018/2019 es estructuralmente distinta**: el INTA la publicó como UN mapa de la campaña
+#    completa con secuencias de cultivo (simples y dobles), no como dos mapas. Sus clases no son
+#    cultivos sino secuencias, así que no es comparable con las otras seis sin una decisión
+#    sobre cómo leerla. Queda registrada y SIN ingerir (RF20.2 / RF21.2 la cuentan como hueco).
+#
+# 6. Los `bytes` y los `md5` son los que publica Zenodo, leídos de su API, no tipeados a mano.
+#    `pipeline/cultivos_serie.py ingerir` los verifica y saltea la campaña que no cierre.
+#
+# ---------------------------------------------------------------------------------------------
+
+fuente:
+  nombre: Mapa Nacional de Cultivos
+  organismo: "Instituto Nacional de Tecnología Agropecuaria (INTA)"
+  repositorio: Zenodo
+  licencia: CC-BY-4.0
+  atribucion: "Fuente: INTA - Mapa Nacional de Cultivos (CC BY 4.0)"
+  resolucion_original_m: 30
+  proyeccion: EPSG:4326
+  # El área que el INTA clasifica son las zonas agrícolas del Panorama Agrícola Semanal de la
+  # Bolsa de Cereales: el oeste de la provincia queda sin clasificar en todas las campañas.
+  cobertura: "zonas agrícolas del PAS (Bolsa de Cereales de Buenos Aires)"
+  bajado: 2026-11-17
+  carpeta_local: raw/mnc/<id de Zenodo>/
+
+# Los cultivos de TODA la serie: etiqueta del INTA -> nombre con el que se publica.
+#
+# Una etiqueta que no esté acá CORTA la ingesta. Es a propósito: un cultivo nuevo del INTA
+# (el Tabaco entró en 2022/2023) tiene que entrar por decisión y no aparecer solo en un gráfico.
+cultivos_canonicos:
+  # --- verano
+  "Soja": Soja
+  "Maíz": Maíz
+  "Maiz": Maíz
+  "Girasol": Girasol
+  "Girasol-CV": Girasol seguido de otro cultivo de verano
+  "Poroto": Poroto
+  "Algodón": Algodón
+  "Algodon": Algodón
+  "Maní": Maní
+  "Arroz": Arroz
+  "Sorgo": Sorgo para grano
+  "Sorgo GR": Sorgo para grano
+  "Verdeo de Sorgo": Verdeo de sorgo
+  "Tabaco": Tabaco
+  # --- invierno
+  "Cereales de invierno": Cereales de invierno
+  "Garbanzo": Garbanzo
+  "Arveja": Arveja
+  "Otros cultivos de invierno": Otros cultivos de invierno
+  "Otros cultivos": Otros cultivos de invierno
+  # --- en las dos
+  "Caña de azúcar": Caña de azúcar
+  "Caña de Azúcar": Caña de azúcar
+  "Papa": Papa
+  # --- lo que no es cultivo. Entra igual al cruce, porque es la única forma de que las
+  #     superficies cierren contra el territorio y de poder decir qué parte es agrícola.
+  "Barbecho": Barbecho
+  "No agrícola": No agrícola
+  "No Agrícola": No agrícola
+  "Máscara": Sin clasificar
+  "255": Sin clasificar
+  "Sin clasificar": Sin clasificar
+
+campanias:
+
+  - id: "2018-2019"
+    rotulo: "Campaña 2018/2019"
+    doi: https://doi.org/10.5281/zenodo.8286326
+    zenodo: 8286326
+    publicado: 2019-09-01
+    # NO se ingiere, y el motivo no es que falte el archivo: es que mide otra cosa.
+    estado_ingesta: no-comparable
+    motivo_no_ingesta: >
+      El INTA la publicó como UN mapa de la campaña completa con secuencias de cultivo (simples
+      y dobles), no como un mapa de invierno y uno de verano. Sus clases son secuencias
+      ("trigo/soja 2da"), así que ponerla en una serie de superficie por cultivo junto a las
+      otras seis sería comparar cosas distintas. Hace falta una decisión sobre cómo leerla; está
+      preguntado en el backlog.
+    mitades:
+      - mitad: unica
+        raster: "mnc_2018-2019_V1R1.tif"
+        bytes: 131823962
+        md5: ff4bfaaaf54b7bb3eaa264ac189a132e
+        estilo: null
+        clases_de: informe
+        # La tabla esta transcripta para que la decision sobre esta campania se pueda
+        # implementar sin volver a leer el PDF, pero NO se ingiere: se ve en la tabla misma
+        # por que no es comparable. Sus clases son SECUENCIAS de cultivo ("CI-Soja" es un
+        # cultivo de invierno seguido de soja, "CI sin cultivo verano" es invierno y nada
+        # despues) y encima trae usos del suelo que las otras campanias no tienen
+        # (Ganaderia, Lenosa natural, Lenosas cultivadas). No hay forma de sacar de aca
+        # "hectareas de soja en la campania" que signifique lo mismo que en 2019/2020.
+        # A proposito sus etiquetas NO estan en `cultivos_canonicos`: si alguien le cambia
+        # el `estado_ingesta` sin decidir primero como se leen las secuencias, la ingesta
+        # corta en `canonico()` en vez de publicar un numero que no significa nada.
+        clases:
+          0: "Maiz"
+          1: "Soja 1ra"
+          2: "CI-Soja"
+          3: "CI-Maiz"
+          4: "Mani"
+          5: "Girasol"
+          6: "CI sin cultivo verano"
+          7: "Ganaderia"
+          8: "Lenosa natural"
+          9: "Lenosas cultivadas"
+          11: "Algodon"
+          12: "Poroto"
+          13: "Cania"
+          14: "Girasol-CV"
+          15: "Mascara"
+    informe:
+      archivo: "Mapa Nacional de Cultivos campaña 2018_2019.pdf"
+      bytes: 35719709
+      md5: d4c4e0851cbcf7f9ba680b5b61a574c2
+
+  - id: "2019-2020"
+    rotulo: "Campaña 2019/2020"
+    doi: https://doi.org/10.5281/zenodo.8286310
+    zenodo: 8286310
+    publicado: 2020-10-01
+    estado_ingesta: pendiente
+    mitades:
+      - mitad: invierno
+        rotulo: "Invierno 2019"
+        periodo: {desde: 2019-06-01, hasta: 2019-12-31}
+        raster: "mnc-invierno-2019.tif"
+        bytes: 94819476
+        md5: d2e1516e48127631d0696fa73ef236a3
+        estilo: null
+        clases_de: informe
+        # Tabla 1 del informe. OJO: acá el 17 es Barbecho y el 19 No agrícola, al revés que
+        # en las campañas siguientes.
+        clases:
+          0: "Cereales de invierno"
+          6: "Otros cultivos de invierno"
+          18: "Caña de azúcar"
+          17: "Barbecho"
+          19: "No agrícola"
+          # 255 es el area que el INTA no clasifica (fuera de la cobertura del PAS).
+          # No esta en la tabla del informe: se identifico midiendola, y da la MISMA
+          # superficie en las dos mitades de la campania (6,36% de la provincia en
+          # 2020/2021, 859.727 ha en invierno y 859.375 en verano). Es el mismo valor
+          # que el .qml de las campanias nuevas declara como "255".
+          255: "Sin clasificar"
+      - mitad: verano
+        rotulo: "Verano 2020"
+        periodo: {desde: 2019-09-01, hasta: 2020-05-31}
+        raster: "mnc-verano-2020.tif"
+        bytes: 107282284
+        md5: e5a7b99560a9a9aa37712c69250a3541
+        estilo: null
+        clases_de: informe
+        # Tabla 2 del informe. Esta campaña escribe "Maiz", "Algodon" y "Sorgo" (sin "GR").
+        clases:
+          10: "Maiz"
+          11: "Soja"
+          12: "Girasol"
+          13: "Poroto"
+          14: "Caña de azúcar"
+          15: "Algodon"
+          16: "Maní"
+          17: "Arroz"
+          18: "Sorgo"
+          19: "Girasol-CV"
+          21: "Barbecho"
+          22: "No agrícola"
+          # 255 es el area que el INTA no clasifica (fuera de la cobertura del PAS).
+          # No esta en la tabla del informe: se identifico midiendola, y da la MISMA
+          # superficie en las dos mitades de la campania (6,36% de la provincia en
+          # 2020/2021, 859.727 ha en invierno y 859.375 en verano). Es el mismo valor
+          # que el .qml de las campanias nuevas declara como "255".
+          255: "Sin clasificar"
+          # El 0 NO esta en la Tabla 2 de esta campania (en la de invierno el 0 es "Cereales
+          # de invierno", pero este es el mapa de verano). Son 401 pixeles en toda la
+          # provincia -32 ha, el 0,0002%- contra 172 millones, o sea una costura del
+          # posprocesamiento y no una clase: es el mismo fenomeno que ya estaba declarado
+          # con su cuenta en la campania 2024/2025 (3 pixeles con el valor 20 en verano y 1
+          # con el 10 en invierno), y el informe explica el mecanismo ("se aplicaron reglas
+          # para mantener estables las clases agricolas y no agricolas"). Se cuenta como sin
+          # clasificar, que es lo unico que se puede afirmar de el. Medido, no supuesto.
+          0: "Sin clasificar"
+    informe:
+      archivo: "Mapa Nacional de Cultivos campaña 2019_2020.pdf"
+      bytes: 18607918
+      md5: de3cfda20928033ce7b02c88ed76ed24
+
+  - id: "2020-2021"
+    rotulo: "Campaña 2020/2021"
+    doi: https://doi.org/10.5281/zenodo.8286318
+    zenodo: 8286318
+    publicado: 2021-09-01
+    estado_ingesta: pendiente
+    mitades:
+      - mitad: invierno
+        rotulo: "Invierno 2020"
+        periodo: {desde: 2020-06-01, hasta: 2020-12-31}
+        raster: "invierno-2020.tif"
+        bytes: 111998993
+        md5: 50be96fdd567c4338b9b0ebda13beaa6
+        estilo: null
+        clases_de: informe
+        clases:
+          0: "Cereales de invierno"
+          6: "Garbanzo"
+          18: "Barbecho"
+          19: "Caña de Azúcar"
+          20: "No Agrícola"
+          24: "Arveja"
+          # 255 es el area que el INTA no clasifica (fuera de la cobertura del PAS).
+          # No esta en la tabla del informe: se identifico midiendola, y da la MISMA
+          # superficie en las dos mitades de la campania (6,36% de la provincia en
+          # 2020/2021, 859.727 ha en invierno y 859.375 en verano). Es el mismo valor
+          # que el .qml de las campanias nuevas declara como "255".
+          255: "Sin clasificar"
+      - mitad: verano
+        rotulo: "Verano 2021"
+        periodo: {desde: 2020-09-01, hasta: 2021-05-31}
+        raster: "verano-2021.tif"
+        bytes: 130600544
+        md5: 9b650b09b405e89e752fa513b610da25
+        estilo: null
+        clases_de: informe
+        clases:
+          10: "Maíz"
+          11: "Soja"
+          12: "Girasol"
+          13: "Poroto"
+          14: "Caña de azúcar"
+          15: "Algodón"
+          16: "Maní"
+          17: "Arroz"
+          18: "Sorgo GR"
+          19: "Girasol-CV"
+          21: "Barbecho"
+          22: "No agrícola"
+          26: "Papa"
+          28: "Verdeo de Sorgo"
+          # 255 es el area que el INTA no clasifica (fuera de la cobertura del PAS).
+          # No esta en la tabla del informe: se identifico midiendola, y da la MISMA
+          # superficie en las dos mitades de la campania (6,36% de la provincia en
+          # 2020/2021, 859.727 ha en invierno y 859.375 en verano). Es el mismo valor
+          # que el .qml de las campanias nuevas declara como "255".
+          255: "Sin clasificar"
+    informe:
+      archivo: "Informe Mapa Nacional de Cultivos campaña 2020_2021.pdf"
+      bytes: 36207994
+      md5: b95f8338d8236e4d1043634967f07ec0
+
+  - id: "2021-2022"
+    rotulo: "Campaña 2021/2022"
+    doi: https://doi.org/10.5281/zenodo.8284081
+    zenodo: 8284081
+    publicado: 2022-09-01
+    estado_ingesta: pendiente
+    mitades:
+      - mitad: invierno
+        rotulo: "Invierno 2021"
+        periodo: {desde: 2021-06-01, hasta: 2021-12-31}
+        raster: "MNC_invierno2021.tif"
+        bytes: 110632585
+        md5: 571069f9549ca74cc779f55257694d84
+        estilo: null
+        clases_de: informe
+        # Desde esta campaña "Cereales de invierno" pasa a ser el 16 y aparecen Papa y
+        # "Otros cultivos": es la tabla que después repiten 2022/2023 y 2023/2024.
+        clases:
+          6: "Garbanzo"
+          16: "Cereales de invierno"
+          17: "Otros cultivos"
+          18: "Barbecho"
+          19: "Caña de Azúcar"
+          20: "No Agrícola"
+          24: "Arveja"
+          26: "Papa"
+          # 255 es el area que el INTA no clasifica (fuera de la cobertura del PAS).
+          # No esta en la tabla del informe: se identifico midiendola, y da la MISMA
+          # superficie en las dos mitades de la campania (6,36% de la provincia en
+          # 2020/2021, 859.727 ha en invierno y 859.375 en verano). Es el mismo valor
+          # que el .qml de las campanias nuevas declara como "255".
+          255: "Sin clasificar"
+      - mitad: verano
+        rotulo: "Verano 2022"
+        periodo: {desde: 2021-09-01, hasta: 2022-05-31}
+        raster: "MNC_verano2022.tif"
+        bytes: 127476705
+        md5: f88ffac06865b36038916ec22c1ffe28
+        estilo: null
+        clases_de: informe
+        clases:
+          10: "Maíz"
+          11: "Soja"
+          12: "Girasol"
+          13: "Poroto"
+          14: "Caña de azúcar"
+          15: "Algodón"
+          16: "Maní"
+          17: "Arroz"
+          18: "Sorgo GR"
+          19: "Girasol-CV"
+          21: "Barbecho"
+          22: "No agrícola"
+          26: "Papa"
+          28: "Verdeo de Sorgo"
+          # 255 es el area que el INTA no clasifica (fuera de la cobertura del PAS).
+          # No esta en la tabla del informe: se identifico midiendola, y da la MISMA
+          # superficie en las dos mitades de la campania (6,36% de la provincia en
+          # 2020/2021, 859.727 ha en invierno y 859.375 en verano). Es el mismo valor
+          # que el .qml de las campanias nuevas declara como "255".
+          255: "Sin clasificar"
+    informe:
+      archivo: "Informe Mapa Nacional de Cultivos campaña 2021_2022.pdf"
+      bytes: 26154881
+      md5: 9111c2166f1c074430e435aa90cb6c59
+
+  - id: "2022-2023"
+    rotulo: "Campaña 2022/2023"
+    doi: https://doi.org/10.5281/zenodo.10103323
+    zenodo: 10103323
+    publicado: 2023-11-01
+    estado_ingesta: pendiente
+    # Es la campaña donde el INTA empieza a publicar el .qml, y la que permitió validar que la
+    # tabla del informe y el .qml dicen lo mismo. Acá entra la clase Tabaco (30).
+    mitades:
+      - mitad: invierno
+        rotulo: "Invierno 2022"
+        periodo: {desde: 2022-06-01, hasta: 2022-12-31}
+        raster: "MNC_invierno2022.tif"
+        bytes: 167130301
+        md5: 2f0f4b4a99d06c7d785db8dd7246f4c4
+        estilo: "MNC_inv22.qml"
+        estilo_md5: 7efec4aa7f1252b4cb5e50f8bf4e33c2
+        clases_de: estilo
+      - mitad: verano
+        rotulo: "Verano 2023"
+        periodo: {desde: 2022-09-01, hasta: 2023-06-30}
+        raster: "MNC_verano-2023.tif"
+        bytes: 200217115
+        md5: d42887ad60bd95878ad806aa78f69341
+        estilo: "MNC_ver23.qml"
+        estilo_md5: 7fec85d0f68b0835aebbe2391ba3aed6
+        clases_de: estilo
+        # Costuras del posprocesamiento, medidas sobre el raster (no supuestas). Son
+        # codigos de la OTRA mitad de la campania que quedan en unos pocos pixeles: el
+        # informe explica el mecanismo ("se aplicaron reglas para mantener estables las
+        # clases agricolas y no agricolas"). La cuenta se verifica contra el raster en
+        # cada corrida, asi que esto NO es permiso para ignorar lo que sobre.
+        costuras:
+          20: {pixeles: 49, etiqueta: "Sin clasificar"}   # el 20 es "No Agricola" en el mapa de invierno
+    informe:
+      archivo: "Informe Mapa Nacional de Cultivos campaña 2022_2023.pdf"
+      bytes: 42137753
+      md5: 81e2c146e60296a35e95f414f7344972
+
+  - id: "2023-2024"
+    rotulo: "Campaña 2023/2024"
+    doi: https://doi.org/10.5281/zenodo.13984185
+    zenodo: 13984185
+    publicado: 2024-10-01
+    estado_ingesta: pendiente
+    mitades:
+      - mitad: invierno
+        rotulo: "Invierno 2023"
+        periodo: {desde: 2023-06-01, hasta: 2023-12-31}
+        raster: "MNC_invierno2023.tif"
+        bytes: 177957685
+        md5: 89778c7386470b29d1f3d780c025f0a3
+        estilo: "MNC_inv23.qml"
+        estilo_md5: 7efec4aa7f1252b4cb5e50f8bf4e33c2
+        clases_de: estilo
+      - mitad: verano
+        rotulo: "Verano 2024"
+        periodo: {desde: 2023-09-01, hasta: 2024-05-31}
+        raster: "MNC_verano-2024.tif"
+        bytes: 200988984
+        md5: 8290b6023c41832f4b31a44371b36ff4
+        estilo: "MNC_ver24.qml"
+        estilo_md5: 7fec85d0f68b0835aebbe2391ba3aed6
+        clases_de: estilo
+        # Costuras del posprocesamiento, medidas sobre el raster (no supuestas). Son
+        # codigos de la OTRA mitad de la campania que quedan en unos pocos pixeles: el
+        # informe explica el mecanismo ("se aplicaron reglas para mantener estables las
+        # clases agricolas y no agricolas"). La cuenta se verifica contra el raster en
+        # cada corrida, asi que esto NO es permiso para ignorar lo que sobre.
+        costuras:
+          20: {pixeles: 68, etiqueta: "Sin clasificar"}   # el 20 es "No Agricola" en el mapa de invierno
+    informe:
+      archivo: "Informe Mapa Nacional de Cultivos campaña 2023_2024.pdf"
+      bytes: 16373135
+      md5: e0935af6ca416db6dd1eec3a2bebbe1f
+
+  - id: "2024-2025"
+    rotulo: "Campaña 2024/2025"
+    doi: https://doi.org/10.5281/zenodo.17652712
+    zenodo: 17652712
+    publicado: 2025-11-20
+    estado_ingesta: pendiente
+    # Es la que JC pidió publicar y la que ya está en la página 4001-mapa-cultivos.yaml.
+    publicada_en: specs/modelos/4001-mapa-cultivos.yaml
+    mitades:
+      - mitad: invierno
+        rotulo: "Invierno 2024"
+        periodo: {desde: 2024-06-01, hasta: 2024-12-31}
+        raster: "MNC_inv24.tif"
+        bytes: 174294196
+        md5: 55cfac03da3849090e7d3adf6530bd63
+        estilo: "MNC_inv24.qml"
+        estilo_md5: 67dec9078a3856021065313be353a08f
+        clases_de: estilo
+        # Costuras del posprocesamiento, medidas sobre el raster (no supuestas). Son
+        # codigos de la OTRA mitad de la campania que quedan en unos pocos pixeles: el
+        # informe explica el mecanismo ("se aplicaron reglas para mantener estables las
+        # clases agricolas y no agricolas"). La cuenta se verifica contra el raster en
+        # cada corrida, asi que esto NO es permiso para ignorar lo que sobre.
+        costuras:
+          7: {pixeles: 4, etiqueta: "Sin clasificar"}   # codigos de cultivos de VERANO en el mapa de invierno
+          8: {pixeles: 2, etiqueta: "Sin clasificar"}
+          9: {pixeles: 1, etiqueta: "Sin clasificar"}
+          10: {pixeles: 4, etiqueta: "Sin clasificar"}
+          11: {pixeles: 2, etiqueta: "Sin clasificar"}
+          12: {pixeles: 2, etiqueta: "Sin clasificar"}
+          13: {pixeles: 2, etiqueta: "Sin clasificar"}
+          14: {pixeles: 1, etiqueta: "Sin clasificar"}
+          15: {pixeles: 1, etiqueta: "Sin clasificar"}
+      - mitad: verano
+        rotulo: "Verano 2024/2025"
+        periodo: {desde: 2024-09-01, hasta: 2025-06-30}
+        raster: "MNC_ver25.tif"
+        bytes: 193285088
+        md5: c6a82309243f0d53793e4d41f02a72ce
+        estilo: "MNC_ver25.qml"
+        estilo_md5: 57a0eb4f326deed0ce66f6cb02bedf66
+        clases_de: estilo
+        # Costuras del posprocesamiento, medidas sobre el raster (no supuestas). Son
+        # codigos de la OTRA mitad de la campania que quedan en unos pocos pixeles: el
+        # informe explica el mecanismo ("se aplicaron reglas para mantener estables las
+        # clases agricolas y no agricolas"). La cuenta se verifica contra el raster en
+        # cada corrida, asi que esto NO es permiso para ignorar lo que sobre.
+        costuras:
+          20: {pixeles: 82, etiqueta: "Sin clasificar"}   # el 20 es "No Agricola" en el mapa de invierno
+    informe:
+      archivo: "Informe Mapa Nacional de Cultivos campaña 2024_2025.pdf"
+      bytes: 18802510
+      md5: 346468d0ee104ea985804c8533189d4a

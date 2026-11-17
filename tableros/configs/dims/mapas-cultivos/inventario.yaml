@@ -1,0 +1,153 @@
+# Generado por `python -m pipeline.cultivos_serie ingerir`. No editar a mano.
+# RF20.1 (que se bajo y si verifico) y RF20.2 (que campanias faltan).
+generado_por: python -m pipeline.cultivos_serie ingerir
+fecha: '2026-11-17'
+campanias:
+- campania: 2018-2019
+  doi: https://doi.org/10.5281/zenodo.8286326
+  estado: no-comparable
+  motivo: 'El INTA la publicó como UN mapa de la campaña completa con secuencias de
+    cultivo (simples y dobles), no como un mapa de invierno y uno de verano. Sus clases
+    son secuencias ("trigo/soja 2da"), así que ponerla en una serie de superficie
+    por cultivo junto a las otras seis sería comparar cosas distintas. Hace falta
+    una decisión sobre cómo leerla; está preguntado en el backlog.
+
+    '
+  mitades: []
+- campania: 2019-2020
+  doi: https://doi.org/10.5281/zenodo.8286310
+  mitades:
+  - mitad: invierno
+    raster: mnc-invierno-2019.tif
+    bytes: 94819476
+    md5_verificado: true
+    costuras: {}
+    estado: ingerida
+    pixeles_raster: 42029x70631
+    filas_leidas: 17926
+  - mitad: verano
+    raster: mnc-verano-2020.tif
+    bytes: 107282284
+    md5_verificado: true
+    costuras: {}
+    estado: ingerida
+    pixeles_raster: 42029x70631
+    filas_leidas: 17926
+  estado: ingerida
+- campania: 2020-2021
+  doi: https://doi.org/10.5281/zenodo.8286318
+  mitades:
+  - mitad: invierno
+    raster: invierno-2020.tif
+    bytes: 111998993
+    md5_verificado: true
+    costuras: {}
+    estado: ingerida
+    pixeles_raster: 43994x70641
+    filas_leidas: 17926
+  - mitad: verano
+    raster: verano-2021.tif
+    bytes: 130600544
+    md5_verificado: true
+    costuras: {}
+    estado: ingerida
+    pixeles_raster: 43994x70641
+    filas_leidas: 17926
+  estado: ingerida
+- campania: 2021-2022
+  doi: https://doi.org/10.5281/zenodo.8284081
+  mitades:
+  - mitad: invierno
+    raster: MNC_invierno2021.tif
+    bytes: 110632585
+    md5_verificado: true
+    costuras: {}
+    estado: ingerida
+    pixeles_raster: 43994x70641
+    filas_leidas: 17926
+  - mitad: verano
+    raster: MNC_verano2022.tif
+    bytes: 127476705
+    md5_verificado: true
+    costuras: {}
+    estado: ingerida
+    pixeles_raster: 43994x70641
+    filas_leidas: 17926
+  estado: ingerida
+- campania: 2022-2023
+  doi: https://doi.org/10.5281/zenodo.10103323
+  mitades:
+  - mitad: invierno
+    raster: MNC_invierno2022.tif
+    bytes: 167130301
+    md5_verificado: true
+    costuras: {}
+    estado: ingerida
+    pixeles_raster: 43994x70641
+    filas_leidas: 17926
+  - mitad: verano
+    raster: MNC_verano-2023.tif
+    bytes: 200217115
+    md5_verificado: true
+    costuras:
+      20: 49
+    estado: ingerida
+    pixeles_raster: 43994x70641
+    filas_leidas: 17926
+  estado: ingerida
+- campania: 2023-2024
+  doi: https://doi.org/10.5281/zenodo.13984185
+  mitades:
+  - mitad: invierno
+    raster: MNC_invierno2023.tif
+    bytes: 177957685
+    md5_verificado: true
+    costuras: {}
+    estado: ingerida
+    pixeles_raster: 43994x70641
+    filas_leidas: 17926
+  - mitad: verano
+    raster: MNC_verano-2024.tif
+    bytes: 200988984
+    md5_verificado: true
+    costuras:
+      20: 68
+    estado: ingerida
+    pixeles_raster: 43994x70641
+    filas_leidas: 17926
+  estado: ingerida
+- campania: 2024-2025
+  doi: https://doi.org/10.5281/zenodo.17652712
+  mitades:
+  - mitad: invierno
+    raster: MNC_inv24.tif
+    bytes: 174294196
+    md5_verificado: true
+    costuras:
+      7: 4
+      8: 2
+      9: 1
+      10: 4
+      11: 2
+      12: 2
+      13: 2
+      14: 1
+      15: 1
+    estado: ingerida
+    pixeles_raster: 43994x70641
+    filas_leidas: 17926
+  - mitad: verano
+    raster: MNC_ver25.tif
+    bytes: 193285088
+    md5_verificado: true
+    costuras:
+      20: 82
+    estado: ingerida
+    pixeles_raster: 43994x70641
+    filas_leidas: 17926
+  estado: ingerida
+campanias_sin_ingerir:
+- 2018-2019
+campanias_no_comparables:
+- 2018-2019
+filas_superficies: 2295

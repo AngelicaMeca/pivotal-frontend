@@ -175,9 +175,20 @@ def superficie_por_departamento(ruta_tif, valores, departamentos, caja=mc.CAJA, 
         if campos[258][1][0] != 8 or campos[277][1][0] != 1:
             raise ErrorDeSerie("%s: se esperaba una sola banda de 8 bits."
                                % os.path.basename(ruta_tif))
-        if campos[259][1][0] != 32773:
-            raise ErrorDeSerie("%s: se esperaba PackBits (32773), vino %d."
-                               % (os.path.basename(ruta_tif), campos[259][1][0]))
+        compresion = campos[259][1][0]
+        if compresion not in mc.COMPRESIONES:
+            raise ErrorDeSerie(
+                "%s: compresion %s. La serie trae LZW en las campanias hasta 2021/2022 y "
+                "PackBits en las posteriores; cualquier otra hay que escribirla."
+                % (os.path.basename(ruta_tif), compresion))
+        # Predictor 2 = diferenciacion horizontal: el byte guardado es la DIFERENCIA con el
+        # pixel anterior, no el valor. Lo traen cuatro rasters de la serie. Un predictor que no
+        # sea 1 ni 2 corta: leerlo mal no da un error, da valores equivocados que parecen
+        # cultivos (11 sale 245, 12 sale 244).
+        predictor = campos[317][1][0] if 317 in campos else mc.SIN_PREDICTOR
+        if predictor not in (mc.SIN_PREDICTOR, mc.DIFERENCIACION_HORIZONTAL):
+            raise ErrorDeSerie("%s: Predictor %s, que el lector no deshace."
+                               % (os.path.basename(ruta_tif), predictor))
         if campos[278][1][0] != 1:
             raise ErrorDeSerie("%s: se esperaba una fila por tira (RowsPerStrip = 1)."
                                % os.path.basename(ruta_tif))
@@ -207,10 +218,18 @@ def superficie_por_departamento(ruta_tif, valores, departamentos, caja=mc.CAJA, 
         superficies = {}
         for fila in sorted(tramos):
             f.seek(offsets[fila])
-            cruda = bytes(mc.desempacar(f.read(largos[fila]), ancho_tif))
+            cruda = mc.descomprimir(f.read(largos[fila]), ancho_tif, compresion)
             ha = area_de_fila(lat0 - fila * py, lat0 - (fila + 1) * py, px)
+            # Se deshace UNA vez por fila y sobre el tramo de la provincia, no por span: los
+            # spans de una fila son varios y se superponen con el mismo prefijo acumulado.
+            if predictor == mc.DIFERENCIACION_HORIZONTAL:
+                util = mc.deshacer_prediccion(cruda, col_ini, col_fin)
+                corrimiento = col_ini
+            else:
+                util = cruda
+                corrimiento = 0
             for x0, x1, geo_id in tramos[fila]:
-                pedazo = cruda[x0:x1]
+                pedazo = util[x0 - corrimiento:x1 - corrimiento]
                 vistos = 0
                 porDepto = pixeles.setdefault(geo_id, {})
                 superficie = superficies.setdefault(geo_id, {})
@@ -312,11 +331,39 @@ def clases_de_la_mitad(registro, campania, mitad, carpeta_campania):
                     "mirar cual es el bueno antes de contar superficie."
                     % (campania["id"], mitad["mitad"], valor, del_qml[valor], etiqueta))
         del_qml.update(declaradas)
+        del_qml.update(costuras_de_la_mitad(campania, mitad))
         return del_qml
     if not declaradas:
         raise ErrorDeSerie("%s/%s dice `clases_de: informe` y no trae la tabla `clases`."
                            % (campania["id"], mitad["mitad"]))
+    declaradas.update(costuras_de_la_mitad(campania, mitad))
     return declaradas
+
+
+def costuras_de_la_mitad(campania, mitad):
+    """Los valores de posprocesamiento declarados CON SU CUENTA MEDIDA (RF20.1).
+
+    Un raster del INTA trae unos pocos pixeles con el codigo de la OTRA mitad de la campania:
+    49 pixeles con el valor 20 -que en el mapa de invierno es "No Agricola"- en el verano de
+    2022/2023, 19 pixeles con codigos de cultivos de verano en el invierno de 2024/2025. El
+    informe explica el mecanismo ("se aplicaron reglas para mantener estables las clases
+    agricolas y no agricolas") y son del orden de 1 a 82 pixeles sobre 172 MILLONES.
+
+    Se declaran una por una y con la cantidad medida, no con un "ignorar lo que sobre": si
+    manianha una campania trae 400.000 pixeles de un codigo nuevo, eso es una clase que el
+    INTA agrego y tiene que cortar la corrida, no colarse como costura. Por eso la cuenta se
+    verifica contra el raster y una diferencia corta.
+    """
+    costuras = {}
+    for valor, dicho in (mitad.get("costuras") or {}).items():
+        esperados = dicho.get("pixeles") if isinstance(dicho, dict) else None
+        if esperados is None:
+            raise ErrorDeSerie(
+                "%s/%s: la costura del valor %s no dice cuantos `pixeles` son. Sin la cuenta "
+                "no se puede distinguir una costura de una clase nueva."
+                % (campania["id"], mitad["mitad"], valor))
+        costuras[valor] = dicho.get("etiqueta") or "Sin clasificar"
+    return costuras
 
 
 def canonico(registro, etiqueta):
@@ -360,6 +407,17 @@ def ingerir(raiz=".", carpeta_rasters=None, avisar=None):
     inventario_campanias = []
     for campania in registro["campanias"]:
         cid = campania["id"]
+        # `estado_ingesta` del registro es la INTENCION (la escribe una persona); lo que de
+        # verdad paso va al inventario. Una campania marcada `no-comparable` no se ingiere
+        # aunque el raster este bajado: 2018/2019 mide secuencias de cultivo y no superficie
+        # por cultivo, asi que meterla en la serie seria comparar cosas distintas.
+        if campania.get("estado_ingesta") == "no-comparable":
+            inventario_campanias.append({
+                "campania": cid, "doi": campania["doi"], "estado": "no-comparable",
+                "motivo": campania.get("motivo_no_ingesta", ""), "mitades": []})
+            if avisar:
+                avisar("%s: no se ingiere (no-comparable)" % cid)
+            continue
         carpeta = os.path.join(carpeta_rasters, str(campania["zenodo"]))
         estado = {"campania": cid, "doi": campania["doi"], "mitades": []}
         completa = True
@@ -395,6 +453,20 @@ def ingerir(raiz=".", carpeta_rasters=None, avisar=None):
                     filas.append((cid, mitad["mitad"], geo_id, valor, etiqueta,
                                   canonico(registro, etiqueta),
                                   px[geo_id][valor], round(sup[geo_id][valor], 2)))
+            # La cuenta de cada costura se VERIFICA contra el raster. Es lo que hace que
+            # una costura declarada no sea una licencia para ignorar lo que sobre: si el INTA
+            # agrega una clase de verdad, su cuenta no va a coincidir con los 49 pixeles
+            # declarados y la corrida corta.
+            for valor, dicho in sorted((mitad.get("costuras") or {}).items()):
+                contados = sum(px[g].get(valor, 0) for g in px)
+                if contados != dicho["pixeles"]:
+                    raise ErrorDeSerie(
+                        "%s/%s: la costura del valor %d esta declarada con %d pixeles y el "
+                        "raster trae %d. Si la diferencia es grande no es una costura del "
+                        "posprocesamiento: es una clase que hay que mirar."
+                        % (cid, mitad["mitad"], valor, dicho["pixeles"], contados))
+            detalle["costuras"] = {v: d["pixeles"]
+                                   for v, d in (mitad.get("costuras") or {}).items()}
             detalle["estado"] = "ingerida"
             detalle["pixeles_raster"] = "%dx%d" % (geo["ancho_raster"], geo["alto_raster"])
             detalle["filas_leidas"] = geo["filas_leidas"]
@@ -412,6 +484,8 @@ def ingerir(raiz=".", carpeta_rasters=None, avisar=None):
                 for x in fila) + u"\n")
 
     faltan = [c["campania"] for c in inventario_campanias if c["estado"] != "ingerida"]
+    no_comparables = [c["campania"] for c in inventario_campanias
+                      if c["estado"] == "no-comparable"]
     doc = {
         "generado_por": "python -m pipeline.cultivos_serie ingerir",
         "fecha": datetime.date.today().isoformat(),
@@ -419,6 +493,9 @@ def ingerir(raiz=".", carpeta_rasters=None, avisar=None):
         # RF20.2: el aviso de serie incompleta viaja ESCRITO, no solo por consola, porque es lo
         # que despues tiene que explicitar la pagina (RF21.2).
         "campanias_sin_ingerir": faltan,
+        # Separado a proposito: "no la pudimos ingerir" y "no se puede comparar" son dos cosas
+        # distintas y la pagina las tiene que poder decir distinto (RF21.2).
+        "campanias_no_comparables": no_comparables,
         "filas_superficies": len(filas),
     }
     with io.open(os.path.join(salida, INVENTARIO), "w", encoding="utf-8", newline="") as f:

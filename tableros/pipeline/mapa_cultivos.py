@@ -36,6 +36,7 @@ Uso (el raster NO vive en el repo, se baja de Zenodo; ver configs/dims/mapas-cul
     python -m pipeline.mapa_cultivos <carpeta con los .tif y .qml> site/assets/mapas/cultivos
 """
 
+import itertools
 import os
 import struct
 import sys
@@ -112,6 +113,102 @@ def leer_ifd(f):
             f.seek(aqui)
         campos[tag] = (tipo, struct.unpack("<" + fmt * cuenta, cuerpo))
     return campos
+
+
+PACKBITS = 32773
+LZW = 5
+COMPRESIONES = {PACKBITS: "PackBits", LZW: "LZW"}
+
+
+def deslzw(datos, ancho):
+    """LZW de TIFF (compresion 5). Devuelve hasta `ancho` bytes.
+
+    Las campanias 2019/2020 a 2021/2022 del Mapa Nacional de Cultivos vienen en LZW y las
+    posteriores en PackBits, asi que para leer la serie completa hacen falta los dos. Es la
+    variante de TIFF, que tiene dos particularidades contra el LZW de libro:
+
+    - los codigos arrancan en 9 bits y crecen hasta 12, con el "early change": el ancho sube
+      UN codigo antes de lo que haria falta (al llegar a 511, 1023 y 2047 entradas). Sin eso
+      la salida se desarma justo despues de la primera vez que crece el diccionario;
+    - 256 es ClearCode (reinicia el diccionario) y 257 es EndOfInformation.
+
+    Sin dependencias nuevas, que es la regla de la casa.
+    """
+    salida = bytearray()
+    tabla = [bytes((i,)) for i in range(256)] + [b"", b""]
+    bits = 9
+    previo = None
+    acum = 0
+    cuantos = 0
+    i = 0
+    total = len(datos)
+    while len(salida) < ancho:
+        while cuantos < bits:
+            if i >= total:
+                return bytes(salida[:ancho])
+            acum = (acum << 8) | datos[i]
+            i += 1
+            cuantos += 8
+        cuantos -= bits
+        codigo = (acum >> cuantos) & ((1 << bits) - 1)
+        if codigo == 257:
+            break
+        if codigo == 256:
+            del tabla[258:]
+            bits = 9
+            previo = None
+            continue
+        if codigo < len(tabla):
+            entrada = tabla[codigo]
+        elif previo is not None:
+            # El caso KwKwK: el codigo todavia no esta en la tabla y se arma al vuelo.
+            entrada = previo + previo[:1]
+        else:
+            raise ValueError("LZW: codigo %d fuera de la tabla sin codigo previo" % codigo)
+        salida += entrada
+        if previo is not None:
+            tabla.append(previo + entrada[:1])
+            # El "early change": se agranda el codigo cuando faltaria UNO para no poder
+            # escribirlo, no cuando ya no entra.
+            if len(tabla) + 1 == (1 << bits) and bits < 12:
+                bits += 1
+        previo = entrada
+    return bytes(salida[:ancho])
+
+
+SIN_PREDICTOR = 1
+DIFERENCIACION_HORIZONTAL = 2
+
+
+def deshacer_prediccion(fila, desde, hasta):
+    """Deshace la diferenciacion horizontal (Predictor 2) y devuelve solo [desde, hasta).
+
+    Con Predictor 2 cada byte del TIFF no es el valor del pixel sino SU DIFERENCIA con el
+    pixel anterior de la misma fila, asi que el valor real es la suma acumulada modulo 256.
+    Cuatro rasters de la serie vienen asi (las dos mitades de 2020/2021 y las dos de
+    2021/2022) y sin deshacerlo los valores salen espejados -11 aparece como 245, 12 como
+    244- porque un pixel que baja de clase da una diferencia negativa.
+
+    Lo que se devuelve es solo el tramo pedido, y el motivo es el costo: la provincia ocupa
+    14.000 de las 44.000 columnas, y acumular en Python las 44.000 de cada una de las ~19.000
+    filas son 830 millones de operaciones. Para el arranque del tramo NO hace falta el valor
+    de cada pixel de adelante, alcanza con la SUMA de sus diferencias, que `sum` hace a
+    velocidad de C sobre el slice de bytes.
+    """
+    base = sum(fila[:desde]) & 255 if desde else 0
+    return bytes(v & 255 for v in itertools.accumulate(fila[desde:hasta], initial=base))[1:]
+
+
+def descomprimir(datos, ancho, compresion):
+    """Una fila del raster, por el metodo que declare el TIFF. Un metodo no soportado CORTA."""
+    if compresion == PACKBITS:
+        return bytes(desempacar(datos, ancho))
+    if compresion == LZW:
+        return deslzw(datos, ancho)
+    raise ValueError(
+        "Compresion %s no soportada: el lector entiende %s. Agregarla es escribir su "
+        "descompresor con la biblioteca estandar, como los otros dos."
+        % (compresion, " y ".join(COMPRESIONES.values())))
 
 
 def desempacar(datos, ancho):
