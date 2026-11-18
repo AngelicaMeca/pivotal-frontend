@@ -76,7 +76,7 @@ export default function ValueProp() {
                 ))}
               </div>
               <span className="font-mono text-xs uppercase tracking-[0.2em] text-cocoa/70">
-                Arrastrá o usá las flechas
+                Arrastre o utilice las flechas
               </span>
             </div>
 

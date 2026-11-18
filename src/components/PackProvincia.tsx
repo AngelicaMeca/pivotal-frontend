@@ -11,7 +11,7 @@ import { ArrowIcon } from "./icons";
 // que la landing principal (tarjetas que suben al pasar el mouse, como en Mercado, y el
 // carrusel en profundidad con su panel, como en Propuesta de valor).
 
-export type Solucion = {
+export type Herramienta = {
   numero: string;
   titulo: string;
   cuerpo: ReactNode;
@@ -25,8 +25,8 @@ const TONOS = [
   { card: "bg-[#999a7f] text-cocoa", tag: "text-cocoa/90", numeral: "text-cocoa/20", bar: "bg-olive" },
 ];
 
-// Las cuatro soluciones en la portada: cada tarjeta baja al carrusel y lo deja en esa solución.
-export function TarjetasPortada({ soluciones }: { soluciones: Solucion[] }) {
+// Las herramientas en la portada: cada tarjeta baja al carrusel y lo deja en esa herramienta.
+export function TarjetasPortada({ herramientas }: { herramientas: Herramienta[] }) {
   return (
     <motion.ol
       className="grid grid-cols-1 gap-3 sm:grid-cols-2"
@@ -34,16 +34,21 @@ export function TarjetasPortada({ soluciones }: { soluciones: Solucion[] }) {
       initial="hidden"
       animate="show"
     >
-      {soluciones.map((s, i) => (
+      {herramientas.map((s, i) => (
         <motion.li
           key={s.numero}
+          /* Con una cantidad IMPAR la última ocuparía media fila y quedaría un hueco al lado:
+             se estira a las dos columnas. Con cantidad par no cambia nada. */
+          className={
+            i === herramientas.length - 1 && herramientas.length % 2 === 1 ? "sm:col-span-2" : ""
+          }
           variants={staggerItem}
           whileHover={{ y: -6 }}
           transition={{ type: "spring", stiffness: 300, damping: 22 }}
         >
           <a
             href="#soluciones"
-            onClick={() => window.dispatchEvent(new CustomEvent("pack:solucion", { detail: i }))}
+            onClick={() => window.dispatchEvent(new CustomEvent("pack:herramienta", { detail: i }))}
             className={`group flex h-full min-h-[150px] flex-col justify-between rounded-[22px] p-5 ${
               i % 3 === 0 ? "bg-clay text-cocoa" : "bg-cream/[0.07] text-cream ring-1 ring-cream/15"
             }`}
@@ -67,25 +72,25 @@ export function TarjetasPortada({ soluciones }: { soluciones: Solucion[] }) {
   );
 }
 
-export function SolucionesShowcase({
-  soluciones,
+export function HerramientasShowcase({
+  herramientas,
   entrar,
 }: {
-  soluciones: Solucion[];
+  herramientas: Herramienta[];
   entrar: { href: string; texto: string };
 }) {
   const [activa, setActiva] = useState(0);
-  const total = soluciones.length;
-  const s = soluciones[activa];
+  const total = herramientas.length;
+  const s = herramientas[activa];
 
-  // Las tarjetas de la portada eligen la solución antes de bajar hasta acá
+  // Las tarjetas de la portada eligen la herramienta antes de bajar hasta acá
   useEffect(() => {
     const elegir = (e: Event) => setActiva((e as CustomEvent<number>).detail);
-    window.addEventListener("pack:solucion", elegir);
-    return () => window.removeEventListener("pack:solucion", elegir);
+    window.addEventListener("pack:herramienta", elegir);
+    return () => window.removeEventListener("pack:herramienta", elegir);
   }, []);
 
-  const items: DepthCarouselItem[] = soluciones.map((sol, i) => {
+  const items: DepthCarouselItem[] = herramientas.map((sol, i) => {
     const t = TONOS[i % TONOS.length];
     return {
       key: sol.numero,
@@ -95,7 +100,7 @@ export function SolucionesShowcase({
         <div key={sol.numero} className="flex h-full flex-col justify-between p-8">
           <div>
             <span className={`font-mono text-[0.65rem] uppercase tracking-[0.2em] ${t.tag}`}>
-              Solución {pad(sol.numero)}
+              Herramienta {pad(sol.numero)}
             </span>
             <h3 className="mt-8 text-[1.6rem] font-semibold leading-tight">{sol.titulo}</h3>
           </div>
@@ -119,7 +124,7 @@ export function SolucionesShowcase({
         onChange={(i) => setActiva(i)}
         showIndicators={false}
         align="start"
-        label="Las cuatro soluciones de B³ AgriFood Provincia"
+        label="Las herramientas de B³ AgriFood Provincia"
         cardWidth={360}
         cardHeight={440}
         radius={24}
@@ -129,7 +134,7 @@ export function SolucionesShowcase({
         tilt={20}
         tiltDirection="right"
         perspective={1400}
-        visibleCards={4}
+        visibleCards={3}
         falloff={0.18}
         blur={4}
       />
@@ -142,17 +147,17 @@ export function SolucionesShowcase({
           <span className="tnum font-mono text-lg text-cocoa/70">/ {pad(total)}</span>
         </div>
         <p className="sr-only" aria-live="polite">
-          {`Solución ${activa + 1} de ${total}: ${s.titulo}`}
+          {`Herramienta ${activa + 1} de ${total}: ${s.titulo}`}
         </p>
 
-        <div className="flex gap-1.5" role="tablist" aria-label="Soluciones">
-          {soluciones.map((sol, i) => (
+        <div className="flex gap-1.5" role="tablist" aria-label="Herramientas">
+          {herramientas.map((sol, i) => (
             <button
               key={sol.numero}
               type="button"
               role="tab"
               aria-selected={i === activa}
-              aria-label={`Ir a la solución ${i + 1}: ${sol.titulo}`}
+              aria-label={`Ir a la herramienta ${i + 1}: ${sol.titulo}`}
               onClick={() => setActiva(i)}
               className="group flex h-6 flex-1 items-center"
             >

@@ -37,7 +37,7 @@ function ProvinciaCopy() {
           </p>
           <div className="mt-6">
             <Button href="/plataforma" variant="solid-light" withArrow>
-              Ver el tablero de Santiago del Estero
+              Ver el sistema de Santiago del Estero
             </Button>
           </div>
         </div>

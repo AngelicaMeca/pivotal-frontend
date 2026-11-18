@@ -19,8 +19,8 @@ import path from "node:path";
  *
  * Se lee en el build, no al pedir la página: el contenido lo genera `npm run build` antes de
  * compilar el sitio (scripts/tableros.mjs). Sin contenido (por ejemplo, Vercel antes de cargar
- * las credenciales de SharePoint) devuelve null y la página muestra los tableros "en
- * preparación", con "Solicitar una demo" en vez de "Ingresar a los tableros".
+ * las credenciales de SharePoint) devuelve null y la página muestra el sistema "en
+ * preparación", con "Solicitar una demo" en vez de "Acceso al sistema".
  */
 const ENTRADA = path.join(process.cwd(), "src", "tableros", "contenido", "entrada.json");
 

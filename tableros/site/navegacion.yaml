@@ -10,7 +10,7 @@
 # Lo lee pipeline/site_build.py.
 
 # --- La PUERTA DE ENTRADA a los tableros (26-oct-2026, pedido de la usuaria al sacar la home
-# `/plataforma/tableros`): el id de la seccion que abre el boton "Ingresar a los tableros" de la
+# `/plataforma/tableros`): el id de la seccion que abre el boton "Acceso al sistema" de la
 # portada. El build resuelve su URL y la escribe en src/tableros/contenido/entrada.json, que es
 # lo unico que lee la landing (src/lib/dashboard.ts): asi la URL se declara en UN solo lugar.
 # Cultivos extensivos y no el SID porque su menu lateral son los SECTORES: desde ahi se llega a

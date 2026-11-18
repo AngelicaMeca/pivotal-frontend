@@ -357,7 +357,7 @@ export default function Globe({ className = "" }: { className?: string }) {
     <div className={`relative ${className}`.trim()}>
       <div className="relative z-10 mb-6 flex flex-wrap items-center gap-x-6 gap-y-3">
         <span className="font-mono text-xs uppercase tracking-[0.2em] text-cocoa/70">
-          Arrastrá para rotar el globo
+          Arrastre para rotar el globo
         </span>
         <button
           type="button"
@@ -373,7 +373,7 @@ export default function Globe({ className = "" }: { className?: string }) {
         className="globe relative aspect-[2/1] w-full"
         tabIndex={0}
         role="img"
-        aria-label="Globo interactivo centrado en Sudamérica: Argentina resaltada como primera fase, Latinoamérica como segunda y el resto del mundo como tercera. Arrastrá o usá las flechas del teclado para rotarlo."
+        aria-label="Globo interactivo centrado en Sudamérica: Argentina resaltada como primera fase, Latinoamérica como segunda y el resto del mundo como tercera. Arrastre o utilice las flechas del teclado para rotarlo."
       >
         <svg
           viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
