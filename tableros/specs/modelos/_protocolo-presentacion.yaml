@@ -1386,6 +1386,70 @@ colores:
           ancho: 1.0
           trazo: lleno
         - {cuando: {}, rotulo: "", color: "#b9a79c", ancho: 0.8, trazo: punteado}
+    # Cobertura del suelo 2006-2007 (LCCS-FAO), del INTA, con sus colores. Tres avisos:
+    #   - La leyenda lista DIECISEIS clases de las 41 del SLD: las otras no aparecen en la
+    #     provincia (son de montania, de costa o de otras regiones del pais).
+    #   - El campo que clasifica es `NIVEL3` y trae CODIGOS ("22200"). La clase que se publica
+    #     es el nombre que el SLD le da a ese codigo, no el codigo: un tooltip que dijera
+    #     "22200" no le sirve a nadie. La traduccion es del INTA, no nuestra.
+    #   - Los rotulos van tal como los escribe el INTA, incluido "Cuerpos de agua estacionario".
+    inta-cobertura-suelo:
+      estilos:
+        - cuando: {clase: ["Arbustal abierto"]}
+          rotulo: "Arbustal abierto"
+          color: "#a07d61"
+        - cuando: {clase: ["Arbustal cerrado"]}
+          rotulo: "Arbustal cerrado"
+          color: "#924947"
+        - cuando: {clase: ["Arbustal cerrado a abierto en áreas regularmente inundadas/anegadas o acuáticas"]}
+          rotulo: "Arbustal cerrado a abierto en áreas regularmente inundadas/anegadas o acuáticas"
+          color: "#fea4a4"
+        - cuando: {clase: ["Áreas urbanas densamente pobladas"]}
+          rotulo: "Áreas urbanas densamente pobladas"
+          color: "#787878"
+        - cuando: {clase: ["Bosques abiertos"]}
+          rotulo: "Bosques abiertos"
+          color: "#98fea2"
+        - cuando: {clase: ["Bosques cerrados"]}
+          rotulo: "Bosques cerrados"
+          color: "#006500"
+        - cuando: {clase: ["Bosques cerrados en áreas regularmente inundadas/anegadas o acuáticas"]}
+          rotulo: "Bosques cerrados en áreas regularmente inundadas/anegadas o acuáticas"
+          color: "#ca00db"
+        - cuando: {clase: ["Cuerpos de agua en movimiento"]}
+          rotulo: "Cuerpos de agua en movimiento"
+          color: "#00007f"
+        - cuando: {clase: ["Cuerpos de agua estacionario"]}
+          rotulo: "Cuerpos de agua estacionario"
+          color: "#0000ff"
+        - cuando: {clase: ["Cultivos de herbáceas graminoideas"]}
+          rotulo: "Cultivos de herbáceas graminoideas"
+          color: "#d58c00"
+        - cuando: {clase: ["Cultivos de herbáceas no graminoides"]}
+          rotulo: "Cultivos de herbáceas no graminoides"
+          color: "#febe00"
+        - cuando: {clase: ["Herbáceas cerradas en áreas regularmente inundadas/anegadas o acuáticas"]}
+          rotulo: "Herbáceas cerradas en áreas regularmente inundadas/anegadas o acuáticas"
+          color: "#8868c7"
+        - cuando: {clase: ["Pastizal cerrado (herbáceas graminoideas)"]}
+          rotulo: "Pastizal cerrado (herbáceas graminoideas)"
+          color: "#dace08"
+        - cuando: {clase: ["Salares"]}
+          rotulo: "Salares"
+          color: "#ffd700"
+        - cuando: {clase: ["Salinas"]}
+          rotulo: "Salinas"
+          color: "#f7b467"
+        - cuando: {clase: ["Superficies artificiales y áreas asociadas. Superficies construidas (no determinado)"]}
+          rotulo: "Superficies artificiales y áreas asociadas. Superficies construidas (no determinado)"
+          color: "#686868"
+        - {cuando: {}, rotulo: "", color: "#b9a79c"}
+    # Areas ganaderas deforestadas 2008-2017: UNA sola clase, con el verde del INTA. No lleva
+    # lista de clases: una leyenda de un renglon repetiria el nombre de la capa, que ya esta en
+    # su casilla del control con este color al lado.
+    inta-areas-deforestadas:
+      estilos:
+        - {cuando: {}, rotulo: "", color: "#007811"}
     inta-cuencas:
       estilos:
         - cuando: {clase: ["Dulce"]}

@@ -73,6 +73,22 @@ CAPAS = (
     # contienen entera). Se recortan cerrando cada pedazo por el contorno provincial.
     {"id": "inta-cuencas", "crudo": "cuencas_noa_ll.json", "campo": "Nom_Macro_",
      "salida": "cuencas-hidricas.geojson", "geometria": "poligonos", "recorte": True},
+    # Cobertura del suelo 2006-2007 (LCCS-FAO): es NACIONAL y son 4,36 millones de vertices.
+    # Lleva su propia tolerancia, mas gruesa que la de las demas, y esa decision esta medida:
+    # recortada a la provincia quedan 1.331 poligonos, y el archivo pesa 3,51 MB con 56 m de
+    # tolerancia, 2,49 MB con 111 m, 1,61 MB con 222 m y 1,04 MB con 444 m. A 222 m el error
+    # es MENOR QUE UN PIXEL hasta el zoom maximo (la provincia entra en 1.052 px, o sea unos
+    # 400 m por pixel, y el zoom llega a 8x), asi que es detalle que no se ve y pesa un tercio
+    # mas. El archivo se baja recien cuando alguien prende la capa.
+    {"id": "inta-cobertura-suelo", "crudo": "lccs_n3_2007.json", "campo": "NIVEL3",
+     "salida": "cobertura-del-suelo-2006-2007.geojson", "geometria": "poligonos",
+     "recorte": True, "tolerancia": 0.002, "clase_por_nombre": True},
+    # Areas ganaderas deforestadas 2008-2017: UNA sola clase (el SLD del INTA tiene una regla
+    # sin filtro) y 49.467 parches. Se descartan los de menos de 1 ha -el 63% de los parches y
+    # el 0,99% de la superficie, medido- y el resto se publica como UN rasgo.
+    {"id": "inta-areas-deforestadas", "crudo": "tb_layers_ganaderas_transii.json", "campo": None,
+     "salida": "areas-deforestadas-2008-2017.geojson", "geometria": "poligonos",
+     "recorte": True, "minimo_ha": 1, "un_solo_rasgo": True},
 )
 
 # "Suelo Santiago del Estero" (geonode:suel_sgo) se baja y se transforma bien -302 poligonos,
@@ -160,6 +176,14 @@ def clases_del_sld(ruta, geometria):
                        "etiqueta": (texto or "").strip(),
                        "color": color})
     if not clases:
+        # Un SLD SIN FILTROS no esta roto: es una capa de una sola clase, que se pinta toda
+        # igual. Es el caso de las areas deforestadas, que son un unico fenomeno. Se devuelve
+        # su color y nada mas; el rotulo lo pone la etiqueta de la capa, no una leyenda de un
+        # renglon que repetiria el nombre.
+        for regla in raiz.iter(SLD + "Rule"):
+            color = _color_de_la_regla(regla, geometria)
+            if color:
+                return [{"campo": None, "valor": None, "etiqueta": "", "color": color}]
         raise SystemExit("[capas-inta] %s no declara ninguna clase con filtro y color"
                          % os.path.basename(ruta))
     return clases
@@ -174,8 +198,14 @@ def leyenda_de_la_capa(capa, sld):
     se adivina nada: si el nombre de la regla no coincide con un valor real del campo que
     clasifica, los rasgos de esa clase quedan sin leyenda y la corrida se corta mas abajo.
     """
+    crudas = clases_del_sld(sld, capa["geometria"])
+    if capa["campo"] is None:
+        if len(crudas) != 1 or crudas[0]["campo"] is not None:
+            raise SystemExit("[capas-inta] %s se declaro de una sola clase y su SLD clasifica "
+                             "por %r." % (capa["id"], crudas[0]["campo"]))
+        return [("", "", crudas[0]["color"])]
     salida, ajenas = [], []
-    for regla in clases_del_sld(sld, capa["geometria"]):
+    for regla in crudas:
         if regla["campo"] == capa["campo"]:
             salida.append((regla["valor"], regla["etiqueta"], regla["color"]))
         else:
@@ -229,7 +259,7 @@ def simplificar(puntos, tolerancia):
     return [puntos[i] for i in range(len(puntos)) if quedan[i]]
 
 
-def anillo_limpio(anillo):
+def anillo_limpio(anillo, tolerancia=None):
     """Un anillo del GeoJSON -> anillo cerrado, simplificado, redondeado y sin repetidos.
 
     Devuelve None si despues de simplificar no queda un anillo (menos de tres vertices
@@ -241,7 +271,7 @@ def anillo_limpio(anillo):
     if len(puntos) < 3:
         return None
     # Se simplifica la cadena abierta y despues se cierra, asi el cierre nunca se pierde.
-    puntos = simplificar(puntos, TOLERANCIA)
+    puntos = simplificar(puntos, TOLERANCIA if tolerancia is None else tolerancia)
     salida = []
     for x, y in puntos:
         p = (round(x, DECIMALES), round(y, DECIMALES))
@@ -254,7 +284,7 @@ def anillo_limpio(anillo):
     return [[p[0], p[1]] for p in salida] + [[salida[0][0], salida[0][1]]]
 
 
-def partes_del_rasgo(geometria):
+def partes_del_rasgo(geometria, tolerancia=None):
     """Las partes de un Polygon o MultiPolygon: [[anillo exterior, hueco...], ...].
 
     **La estructura se conserva, no se aplana.** El primer anillo de cada parte es el exterior
@@ -278,7 +308,7 @@ def partes_del_rasgo(geometria):
         anillos = []
         for i, anillo in enumerate(poligono):
             antes += len(anillo)
-            limpio = anillo_limpio(anillo)
+            limpio = anillo_limpio(anillo, tolerancia)
             if limpio is None:
                 if i == 0:
                     anillos = []
@@ -522,16 +552,22 @@ def tramos_del_rasgo(geometria):
 
 # ---------------------------------------------------------------- las dos geometrias
 
-def rasgos_de_area(capa, geo, borde):
+def rasgos_de_area(capa, geo, borde, renombre=None):
     """Un rasgo por poligono, con su clase. Devuelve (rasgos, vertices antes, despues)."""
     oeste, sur, este, norte = CAJA_PROVINCIA
-    rasgos, antes, despues = [], 0, 0
+    rasgos, antes, despues, chicos = [], 0, 0, [0]
     for rasgo in geo.get("features") or []:
         geometria = rasgo.get("geometry") or {}
         if not geometria.get("coordinates"):
             continue
-        valor = clase_del_rasgo(capa, rasgo)
-        partes, a, d = partes_del_rasgo(geometria)
+        # Parches por debajo del minimo: se cuentan y se descartan. El motivo y la cuenta estan
+        # medidos en configs/dims/capas-inta.yaml, no se descarta nada a ojo.
+        if capa.get("minimo_ha"):
+            if ((rasgo.get("properties") or {}).get("sup_ha") or 0) < capa["minimo_ha"]:
+                chicos[0] += 1
+                continue
+        valor = clase_del_rasgo(capa, rasgo, renombre)
+        partes, a, d = partes_del_rasgo(geometria, capa.get("tolerancia"))
         antes += a
         if capa["recorte"]:
             # Se simplifica ANTES de recortar, a proposito: los vertices que agrega el recorte
@@ -559,10 +595,22 @@ def rasgos_de_area(capa, geo, borde):
                        "geometry": {"type": "MultiPolygon", "coordinates": partes}})
     rasgos.sort(key=lambda r: (r["properties"]["clase"],
                                r["geometry"]["coordinates"][0][0][0]))
+    if chicos[0]:
+        print("[capas-inta] %s: %d parches de menos de %s ha descartados."
+              % (capa["id"], chicos[0], capa["minimo_ha"]))
+    if capa.get("un_solo_rasgo"):
+        # Una capa de UNA clase se publica como UN rasgo con todas sus partes. No es un ahorro
+        # de bytes nada mas (aunque son 1,4 MB menos de repetir la envoltura de cada rasgo):
+        # el cliente dibuja un rasgo en UN trazo, asi que 18.085 parches pasan de 18.085
+        # llamadas de dibujo a una sola.
+        partes = [p for r in rasgos for p in r["geometry"]["coordinates"]]
+        partes.sort(key=lambda p: p[0][0])
+        rasgos = [{"type": "Feature", "properties": {"clase": ""},
+                   "geometry": {"type": "MultiPolygon", "coordinates": partes}}] if partes else []
     return rasgos, antes, despues
 
 
-def rasgos_de_linea(capa, geo, borde):
+def rasgos_de_linea(capa, geo, borde, renombre=None):
     """UN rasgo por clase, con todos sus tramos recortados a la provincia.
 
     Un rasgo por tramo serian miles de copias de la misma propiedad: es el mismo criterio con
@@ -577,11 +625,11 @@ def rasgos_de_linea(capa, geo, borde):
         geometria = rasgo.get("geometry") or {}
         if not geometria.get("coordinates"):
             continue
-        valor = clase_del_rasgo(capa, rasgo)
+        valor = clase_del_rasgo(capa, rasgo, renombre)
         for tramo in tramos_del_rasgo(geometria):
             antes += len(tramo)
             for pedazo in recortar_linea(borde["limite"], [(p[0], p[1]) for p in tramo]):
-                simple = simplificar(pedazo, TOLERANCIA)
+                simple = simplificar(pedazo, capa.get("tolerancia") or TOLERANCIA)
                 if len(simple) < 2:
                     continue
                 despues += len(simple)
@@ -595,9 +643,18 @@ def rasgos_de_linea(capa, geo, borde):
     return rasgos, antes, despues
 
 
-def clase_del_rasgo(capa, rasgo):
+def clase_del_rasgo(capa, rasgo, renombre=None):
+    """La clase de un rasgo: el valor del campo que clasifica, o su NOMBRE si la capa lo pide.
+
+    `clase_por_nombre` existe por la cobertura del suelo: ahi el campo que clasifica es
+    `NIVEL3`, que trae codigos ("22200"), y el nombre de la clase ("Arbustal abierto") esta en
+    el SLD. Un tooltip que dijera "22200" no le sirve a nadie, asi que la clase que se publica
+    es el nombre y el codigo se traduce aca. La traduccion sale del SLD del INTA, no de una
+    tabla nuestra.
+    """
     valor = (rasgo.get("properties") or {}).get(capa["campo"])
-    return "" if valor is None else str(valor).strip()
+    valor = "" if valor is None else str(valor).strip()
+    return renombre.get(valor, valor) if renombre else valor
 
 
 # ---------------------------------------------------------------- main
@@ -610,6 +667,10 @@ def una_capa(entrada, salida, capa, borde):
             raise SystemExit("[capas-inta] falta %s" % ruta)
 
     clases = leyenda_de_la_capa(capa, sld)
+    renombre = None
+    if capa.get("clase_por_nombre"):
+        renombre = dict((valor, etiqueta) for valor, etiqueta, _ in clases)
+        clases = [(etiqueta, etiqueta, color) for _, etiqueta, color in clases]
     etiqueta_de = dict((valor, etiqueta) for valor, etiqueta, _ in clases)
 
     with open(crudo, encoding="utf-8") as f:
@@ -617,7 +678,7 @@ def una_capa(entrada, salida, capa, borde):
 
     sin_clase = {}
     for rasgo in geo.get("features") or []:
-        valor = clase_del_rasgo(capa, rasgo)
+        valor = clase_del_rasgo(capa, rasgo, renombre)
         if valor not in etiqueta_de:
             sin_clase[valor] = sin_clase.get(valor, 0) + 1
     for valor, cuantos in sorted(sin_clase.items()):
@@ -637,10 +698,10 @@ def una_capa(entrada, salida, capa, borde):
         etiqueta_de[valor] = declarada["etiqueta"]
 
     if capa["geometria"] == "lineas":
-        rasgos, antes, despues = rasgos_de_linea(capa, geo, borde)
+        rasgos, antes, despues = rasgos_de_linea(capa, geo, borde, renombre)
         detalle = "%d tramos" % sum(len(r["geometry"]["coordinates"]) for r in rasgos)
     else:
-        rasgos, antes, despues = rasgos_de_area(capa, geo, borde)
+        rasgos, antes, despues = rasgos_de_area(capa, geo, borde, renombre)
         detalle = "%d huecos" % sum(len(anillos) - 1 for r in rasgos
                                     for anillos in r["geometry"]["coordinates"])
 
@@ -680,6 +741,13 @@ def main(entrada, salida, ruta_departamentos):
     for capa in CAPAS:
         clases, usadas = una_capa(entrada, salida, capa, borde)
         linea = capa["geometria"] == "lineas"
+        if capa["campo"] is None:
+            # Una sola clase: UN estilo general y nada mas. Una leyenda de un renglon repetiria
+            # el nombre de la capa, que ya esta en su casilla del control, con su color al lado.
+            bloques.append('  %s:\n    estilos:\n'
+                           '      - {cuando: {}, rotulo: "", color: "%s"}'
+                           % (capa["id"], clases[0][2]))
+            continue
         renglones = ["  %s:" % capa["id"]]
         if linea:
             renglones.append("    halo: 0.8")

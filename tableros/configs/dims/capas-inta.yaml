@@ -16,7 +16,9 @@
 # "Descargar" autorizo expresamente la via de la descarga, que es la que se usa aca.
 #
 # QUE SE ENCONTRO, MEDIDO EL 18-NOV-2026. Las 8 tarjetas del INTA estan repartidas en DOS
-# nodos distintos, y eso es lo que habia hecho pensar que algunas no existian:
+# nodos distintos, y eso es lo que habia hecho pensar que algunas no existian. SEIS ESTAN
+# PUBLICADAS ACA; las dos que no, no son una limitacion tecnica nuestra: una espera que JC
+# decida su leyenda y la otra el INTA no la publica en su servicio.
 #
 #   | Tarjeta de JC                            | Donde esta                      | Estado          |
 #   |------------------------------------------|---------------------------------|-----------------|
@@ -26,8 +28,8 @@
 #   | Ordenamiento Territorial Bosques Nativos | nodo02: en el catalogo, NO en el WFS | no se puede bajar |
 #   | Cuencas hidricas del NOA                 | geo-backend, geonode:cuencas_noa_ll | PUBLICADA aqui  |
 #   | Cursos de Agua NOA                       | geo-backend, geonode:cursosdeagua | PUBLICADA aqui  |
-#   | Cobertura del suelo 2006-2007 (LCCS-FAO) | geo-backend, geonode:lccs_n3_2007 | 116 MB, pendiente |
-#   | Areas ganaderas deforestadas 2008-2017   | geo-backend, geonode:tb_layers_ganaderas_transii | 29 MB, pendiente |
+#   | Cobertura del suelo 2006-2007 (LCCS-FAO) | geo-backend, geonode:lccs_n3_2007 | PUBLICADA aqui  |
+#   | Areas ganaderas deforestadas 2008-2017   | geo-backend, geonode:tb_layers_ganaderas_transii | PUBLICADA aqui |
 #
 # El nodo que sirve cada una NO es el que esta en el link de JC: `visor.inta.gob.ar` se apoya
 # en `geo-backend.inta.gob.ar` (se descubrio cargando el visor y leyendo sus pedidos de red) y
@@ -57,7 +59,7 @@ fuente:
       base: https://geo-backend.inta.gob.ar
       servicio: WFS 2.0.0 de https://geo-backend.inta.gob.ar/geoserver/wfs
       estilo: GetStyles (SLD 1.0.0) de https://geo-backend.inta.gob.ar/geoserver/geonode/wms
-      sirve: "Cuencas hídricas del NOA, Cursos de agua del NOA (es el nodo del visor del INTA)"
+      sirve: "Cuencas hídricas del NOA, Cursos de agua del NOA, Cobertura del suelo 2006-2007, Áreas ganaderas deforestadas (es el nodo del visor del INTA)"
   comando: >
     curl -o <capa>.json "https://<nodo>.inta.gob.ar/geoserver/wfs?service=WFS&version=2.0.0
     &request=GetFeature&typeNames=geonode:<capa>&outputFormat=application/json&srsName=EPSG:4326"
@@ -80,6 +82,11 @@ descargas_crudas:
   cuencas_noa_ll.sld: [geonode:cuencas_noa_ll, 16842]
   cursosdeagua.json: [geonode:cursosdeagua, 5601152]
   cursosdeagua.sld: [geonode:cursosdeagua, 4898]
+  # La mas pesada de las ocho: 116 MB de GeoJSON para todo el pais.
+  lccs_n3_2007.json: [geonode:lccs_n3_2007, 121706507]
+  lccs_n3_2007.sld: [geonode:lccs_n3_2007, 40548]
+  tb_layers_ganaderas_transii.json: [geonode:tb_layers_ganaderas_transii, 30664234]
+  tb_layers_ganaderas_transii.sld: [geonode:tb_layers_ganaderas_transii, 1157]
 
 licencia:
   # El catalogo del nodo02 no declara una licencia por dataset. El INTA publica su informacion
@@ -104,7 +111,12 @@ transformacion:
     Douglas-Peucker con tolerancia 0,0005 grados (~55 m). Saca el 25% de los vertices de las
     dos capas de suelo, el 75% de cuencas y el 91% de los cursos de agua (en estas dos ultimas
     la mayor parte de lo que se va no es simplificacion sino recorte: son capas de todo el
-    noroeste). El dato del INTA viene de shapefiles digitalizados a escala regional: un vertice
+    noroeste). La cobertura del suelo lleva su PROPIA tolerancia, 0,002 grados (~222 m), y es
+    una decision medida: recortada a la provincia quedan 1.331 poligonos, y el archivo pesa
+    3,51 MB a 56 m, 2,49 MB a 111 m, 1,61 MB a 222 m y 1,04 MB a 444 m. A 222 m el error es
+    menor que un pixel hasta el zoom maximo -la provincia entra en 1.052 px, unos 400 m por
+    pixel, y el zoom llega a 8x- asi que es detalle que no se ve y pesa un tercio mas. Es una
+    capa NACIONAL de 4,36 millones de vertices: no esta dibujada a escala provincial. El dato del INTA viene de shapefiles digitalizados a escala regional: un vertice
     cada 55 m es mas detalle del que la fuente sostiene.
   huecos: >
     La estructura del poligono se conserva (anillo exterior + huecos) y el navegador los dibuja
@@ -139,6 +151,10 @@ salidas:
   cursos-de-agua.geojson: >
     3 rasgos (uno por tipo) con 201 tramos, 16.461 vertices, 359.374 bytes. Un rasgo por tipo y
     no uno por tramo, igual que el tendido electrico publica un rasgo por nivel de tension.
+  cobertura-del-suelo-2006-2007.geojson: >
+    1.274 rasgos, 71.202 vertices de 4.361.800, 16 clases de las 41 del SLD, 1.726.895 bytes.
+  areas-deforestadas-2008-2017.geojson: >
+    UN rasgo con 18.085 parches, 145.912 vertices, una sola clase, 3.253.506 bytes.
 
 advertencias_para_jc:
   - >
@@ -176,6 +192,18 @@ advertencias_para_jc:
     regla, que coincide exactamente con el valor del campo que clasifica. No se adivina: si no
     coincidiera, esos rasgos quedarian sin leyenda y la corrida se cortaria.
   - >
+    LA COBERTURA DEL SUELO ES DE 2006-2007: tiene casi veinte anios. Sirve para leer la
+    estructura del paisaje (bosque, arbustal, pastizal, salinas, cuerpos de agua), no para
+    decir que hay hoy en un lote. Su leyenda lista 16 clases de las 41 que declara el INTA:
+    las otras no aparecen en la provincia.
+  - >
+    DE LAS AREAS DEFORESTADAS NO SE DIBUJAN LOS PARCHES DE MENOS DE 1 HECTAREA. Son 31.112 de
+    los 49.467 que publica el INTA -el 63%- y suman 6.220 de las 628.883 hectareas, o sea el
+    0,99% de la superficie. Una hectarea es la cuatrocientosmilesima parte de un pixel a
+    escala provincial: no se ve, y dibujarla costaba 1,4 MB. El corte esta medido y se puede
+    cambiar en pipeline/capas_inta.py (`minimo_ha`). Si hace falta la superficie exacta por
+    departamento, el dato crudo del INTA trae `sup_ha` por parche y se calcula sin dibujarlo.
+  - >
     El Ordenamiento Territorial de Bosques Nativos 2015 esta en el catalogo del INTA (ficha
     dataset/11) pero su capa NO esta publicada en el WFS del nodo (de las 29 capas que sirve,
     ninguna es esa): no hay de donde bajarla. El OTBN de Santiago del Estero lo publican tambien
@@ -206,6 +234,24 @@ publicacion:
       tooltip: "{clase}"
       clases_al_prender: true
       fuente: "INTA - Cuencas hídricas del NOA"
+    inta-cobertura-suelo:
+      archivo: cobertura-del-suelo-2006-2007.geojson
+      etiqueta: "Cobertura del suelo 2006-2007 (INTA)"
+      geometria: poligonos
+      tooltip: "{clase}"
+      clases_al_prender: true
+      # 1,7 MB: se baja recien cuando alguien prende la capa, nunca al abrir la pagina.
+      grande: true
+      fuente: "INTA - Cobertura del suelo de la República Argentina 2006-2007 (LCCS-FAO)"
+    inta-areas-deforestadas:
+      archivo: areas-deforestadas-2008-2017.geojson
+      etiqueta: "Áreas ganaderas deforestadas 2008-2017 (INTA)"
+      geometria: poligonos
+      # Una sola clase: el tooltip diria siempre lo mismo que la casilla del control.
+      tooltip: ""
+      # 3,3 MB: se baja recien cuando alguien prende la capa, nunca al abrir la pagina.
+      grande: true
+      fuente: "INTA - Áreas ganaderas deforestadas durante 2008-2017"
     inta-cursos-de-agua:
       archivo: cursos-de-agua.geojson
       etiqueta: "Cursos de agua (INTA)"

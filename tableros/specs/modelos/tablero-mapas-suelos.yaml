@@ -18,8 +18,8 @@
 # ESTA PAGINA REEMPLAZA A DOS DE LAS TARJETAS con link externo de la portada de Mapas
 # ("Aptitud de Tierras" y "Zonificacion del Uso del Suelo", que apuntaban a la ficha del
 # catalogo del INTA). Las cuencas y los cursos de agua estan en tablero-mapas-agua.yaml, y las
-# otras cuatro tarjetas del INTA -y por que cada una todavia no esta adentro- estan en la tabla
-# de configs/dims/capas-inta.yaml y en el backlog 129.
+# dos tarjetas del INTA que faltan -una espera una decision de JC y la otra el INTA no la
+# publica en su servicio- estan en la tabla de configs/dims/capas-inta.yaml y en el backlog 129.
 #
 # MISMA MAQUETA QUE INFRAESTRUCTURA, a proposito. JC no mando maqueta de esta pagina, y la
 # unica que dio para un mapa nuestro es la de Infraestructura del 15-nov-2026: "SOLO PONEMOS
@@ -28,11 +28,23 @@
 # toda la pagina con zoom real, y el control de capas. Nada mas. Sin KPIs: no hay una magnitud
 # que totalizar (la aptitud y la zona son categorias, no kilometros), y JC no dibuja ninguno.
 #
-# LAS DOS CAPAS ARRANCAN APAGADAS, como manda el protocolo para toda capa de contexto: la
+# LAS TRES CAPAS ARRANCAN APAGADAS, como manda el protocolo para toda capa de contexto: la
 # pagina abre con la division departamental limpia y el visitante prende la que quiere mirar.
 # Y arrancan apagadas por un segundo motivo propio de estas: son capas de AREA que cubren la
-# provincia entera, asi que prendidas las dos a la vez una tapa a la otra. El control las deja
+# provincia entera, asi que prendidas dos a la vez una tapa a la otra. El control las deja
 # comparar prendiendo y apagando, que es como se compara un mapa de aptitud con uno de zonas.
+#
+# LA TERCERA ES LA COBERTURA DEL SUELO 2006-2007 (LCCS-FAO), que entro despues que las otras
+# dos: es una capa NACIONAL de 4,36 millones de vertices y hubo que recortarla a la provincia y
+# simplificarla con su propia tolerancia. Va aca y no en una pagina propia porque habla de lo
+# mismo que las otras dos -que hay sobre el suelo- y se mira igual: de a una por vez. Lo que
+# hay que saberle -que tiene casi veinte anios- esta en configs/dims/capas-inta.yaml.
+#
+# LA CUARTA ES LA DE AREAS GANADERAS DESFORESTADAS 2008-2017, y es la UNICA que se mira encima
+# de otra: la cobertura es de 2006-2007 y el desmonte de 2008-2017, asi que prendidas las dos
+# se lee que habia antes y que se desmonto despues. Es de una sola clase, asi que no lleva
+# lista de clases: su casilla del control tiene el color del INTA al lado. No se dibujan los
+# parches de menos de 1 ha (el 63% de los parches, el 0,99% de la superficie: medido).
 
 id: tablero-mapas-suelos
 tipo: tablero
@@ -42,7 +54,7 @@ seccion: mapas
 pagina: suelos-y-uso-del-suelo
 
 titulo: "Suelos y uso del suelo"
-subtitulo: "Provincia de Santiago del Estero · aptitud de tierras y zonificación del uso del suelo del INTA"
+subtitulo: "Provincia de Santiago del Estero · aptitud de tierras, zonificación del uso del suelo, cobertura del suelo 2006-2007 y áreas ganaderas deforestadas 2008-2017 del INTA"
 titulo_pagina: "Suelos y uso del suelo"
 breadcrumb: "Mapas - Suelos y uso del suelo"
 
@@ -57,11 +69,16 @@ paneles:
   acciones_de_tablero:
     - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
   mapa-capas:
-    titulo: "Santiago del Estero - Aptitud de tierras y zonificación del uso del suelo"
+    titulo: "Santiago del Estero - Aptitud de tierras, uso del suelo, cobertura y áreas deforestadas"
     subtitulo: "Acerque con la rueda del mouse y arrastre para desplazarse · active una capa por vez; pase el mouse por un área para ver de qué clase es"
     capas:
       - {id: inta-aptitud-tierras, prendida: false}
       - {id: inta-zonificacion-uso-suelo, prendida: false}
+      - {id: inta-cobertura-suelo, prendida: false}
+      # Va ULTIMA a proposito: es la unica que se mira ENCIMA de otra. La cobertura del suelo
+      # es de 2006-2007 y el desmonte de 2008-2017, asi que las dos juntas cuentan que habia y
+      # que se desmonto despues. El orden del panel es el orden de dibujo.
+      - {id: inta-areas-deforestadas, prendida: false}
   orden:
     - {id: mapa-capas, ancho: 12, zoom: true}
 

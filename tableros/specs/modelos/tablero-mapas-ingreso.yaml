@@ -53,14 +53,18 @@ paneles:
   # nada, por ende, no se porque se hizo en este caso. La idea era BAJAR LAS CAPAS Y PONER
   # NUESTRO PROPIO VISOR, SI NO SE PUEDE, ELIMINAMOS TODO."
   #
-  # Dos ya estan adentro: "Aptitud de Tierras" y "Zonificacion del Uso del Suelo" son la
-  # pagina "Suelos y uso del suelo" (tablero-mapas-suelos.yaml), con las capas bajadas por el
-  # WFS del INTA y dibujadas en nuestro mapa, con la leyenda del propio INTA.
+  # SEIS de las ocho ya estan adentro, en dos paginas nuestras, con las capas bajadas por el
+  # WFS del INTA y dibujadas en nuestro mapa con la leyenda del propio INTA:
+  #   - "Suelos y uso del suelo" (tablero-mapas-suelos.yaml): aptitud de tierras, zonificacion
+  #     del uso del suelo, cobertura del suelo 2006-2007 y areas ganaderas deforestadas.
+  #   - "Cuencas y cursos de agua" (tablero-mapas-agua.yaml): cuencas hidricas y cursos de agua.
   #
-  # Las otras cuatro se bajan tambien (es lo que JC decia: "TODOS TIENEN la opcion DESCARGAR") y
-  # entran en cuanto esten transformadas; mientras tanto NO quedan como link externo, que es
-  # justo lo que el pidio sacar. Que falta para cada una esta medido y escrito en
-  # configs/dims/capas-inta.yaml y preguntado en el backlog 129.
+  # De las DOS que faltan, ninguna es un problema tecnico nuestro: "Suelo Santiago del Estero"
+  # se baja y se transforma bien pero espera que JC decida su leyenda (son 81 unidades
+  # cartograficas), y el "Ordenamiento Territorial de Bosques Nativos" el INTA NO lo publica en
+  # su servicio, asi que no hay de donde bajarlo. Ninguna de las dos queda como link externo,
+  # que es justo lo que JC pidio sacar. Todo medido y escrito en configs/dims/capas-inta.yaml y
+  # preguntado en el backlog 129.
   #
   # Las tarjetas del INDEC y de la CONAE se quedan: esas NO son links externos, abren el visor
   # del organismo EMBEBIDO adentro del sitio, que es el propio piso que puso JC en el mismo
@@ -72,15 +76,16 @@ paneles:
   accesos-propios:
     titulo: "Mapas de B³ AgriFood"
     subtitulo: "Dibujados dentro del sitio, sobre la división departamental y con zoom"
-    pie: "Fuente: INTA - Aptitud de Tierras, Zonificación del Uso del Suelo, Cuencas Hídricas del NOA y Cursos de Agua del NOA"
+    pie: "Fuente: INTA - Aptitud de Tierras, Zonificación del Uso del Suelo, Cobertura del Suelo 2006-2007, Áreas Ganaderas Deforestadas 2008-2017, Cuencas Hídricas del NOA y Cursos de Agua del NOA"
     tarjetas:
       - organismo: "B³ AgriFood"
         titulo: "Suelos y uso del suelo"
-        detalle: "Aptitud de tierras y zonificación del uso del suelo (INTA)"
+        detalle: "Aptitud, zonificación, cobertura del suelo y áreas deforestadas (INTA)"
         bajada: >
-          Las dos capas del INTA dibujadas en el mapa de la provincia, con sus clases y sus
-          colores oficiales. Se prenden y se apagan, y el mapa se acerca con la rueda del
-          mouse.
+          Cuatro capas del INTA dibujadas en el mapa de la provincia, con sus clases y sus
+          colores oficiales: para qué sirve cada tierra, cómo está zonificado su uso, qué
+          cubría el suelo en 2006-2007 y qué se desmontó entre 2008 y 2017. Se prenden y se
+          apagan, y el mapa se acerca con la rueda del mouse.
         destino: tablero-mapas-suelos
         miniatura: imagen
         imagen: mapas/ingreso/aptitud-de-tierras.png

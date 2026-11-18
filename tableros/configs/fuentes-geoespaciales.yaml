@@ -625,13 +625,13 @@ fuentes:
     nombre: "Areas ganaderas deforestadas durante 2008-2017"
     organismo: "INTA"
     url: https://visor.inta.gob.ar/es#6.49/-26.617/-65.338
-    tipo_contenido: visor-web
+    tipo_contenido: capa-descargable
     alcance: regional
-    estado: aprobada
+    estado: publicada
     responsable: jc
     fecha_estado: 2026-11-18
-    modo_acceso: visor-embebible
-    modo_visualizacion: {resuelto: visor-del-organismo, criterio: "Igual que inta-visor-cuencas-noa."}
+    modo_acceso: ogc-wfs
+    modo_visualizacion: {resuelto: visor-propio, criterio: "Igual que inta-visor-cuencas-noa."}
     licencia:
       nombre: "A confirmar con el INTA"
       exige_cita: true
@@ -639,26 +639,26 @@ fuentes:
       redistribucion: a-confirmar
     indicaciones: [evaluar-modo-de-acceso, cruzar-con-limites-departamentales]
     observaciones: >
-      Se baja por el WFS de geo-backend.inta.gob.ar (geonode:tb_layers_ganaderas_transii), pero
-      son 49.467 polígonos y 29,24 MB en la caja de la provincia: necesita recorte contra el límite
-      provincial y simplificación antes de publicarse. Backlog 129.
-    publicado_en: []
-    publicado_como: ninguno
-    # Salio de la portada de Mapas el 18-nov-2026: JC no quiere links externos
-    # ("Nunca pusimos links externos a nada"). Vuelve cuando la capa este bajada y
-    # transformada como las otras dos del INTA. Que falta, en configs/dims/capas-inta.yaml.
+      Son 49.467 parches y 29 MB. Recortada a la provincia y sin los parches de menos de 1
+      hectárea -el 63% de los parches y el 0,99% de las 628.883 ha, medido- queda en 18.085
+      parches y 3,3 MB, que el navegador baja recién cuando alguien prende la capa. Es de una
+      sola clase, así que no lleva leyenda: el color del INTA va al lado de su casilla. Si
+      hiciera falta la superficie exacta por departamento, el dato crudo trae `sup_ha` por
+      parche y se calcula sin dibujarlo.
+    publicado_en: [specs/modelos/tablero-mapas-suelos.yaml]
+    publicado_como: capa
 
   - id: inta-visor-cobertura-suelo
     nombre: "Cobertura del suelo de la Republica Argentina. Año 2006-2007 (LCCS-FAO)"
     organismo: "INTA"
     url: https://visor.inta.gob.ar/es#7.68/-26.549/-64.776
-    tipo_contenido: visor-web
+    tipo_contenido: capa-descargable
     alcance: nacional
-    estado: aprobada
+    estado: publicada
     responsable: jc
     fecha_estado: 2026-11-18
-    modo_acceso: visor-embebible
-    modo_visualizacion: {resuelto: visor-del-organismo, criterio: "Igual que inta-visor-cuencas-noa."}
+    modo_acceso: ogc-wfs
+    modo_visualizacion: {resuelto: visor-propio, criterio: "Igual que inta-visor-cuencas-noa."}
     licencia:
       nombre: "A confirmar con el INTA"
       exige_cita: true
@@ -666,14 +666,14 @@ fuentes:
       redistribucion: a-confirmar
     indicaciones: [evaluar-modo-de-acceso, evaluar-utilidad-analitica]
     observaciones: >
-      Se baja por el WFS de geo-backend.inta.gob.ar (geonode:lccs_n3_2007), pero son 116,07 MB y
-      1.962 polígonos en la caja de la provincia: necesita recorte contra el límite provincial y
-      simplificación antes de publicarse. Es la más pesada de las ocho. Backlog 129.
-    publicado_en: []
-    publicado_como: ninguno
-    # Salio de la portada de Mapas el 18-nov-2026: JC no quiere links externos
-    # ("Nunca pusimos links externos a nada"). Vuelve cuando la capa este bajada y
-    # transformada como las otras dos del INTA. Que falta, en configs/dims/capas-inta.yaml.
+      Es la más pesada de las ocho: 116 MB y 4,36 millones de vértices para todo el país.
+      Recortada a la provincia y simplificada con su propia tolerancia (222 m, medida y
+      justificada en configs/dims/capas-inta.yaml) queda en 1.274 polígonos y 1,7 MB, que el
+      navegador baja recién cuando alguien prende la capa. El dato es de 2006-2007: sirve para
+      leer la estructura del paisaje, no para decir qué hay hoy en un lote. La leyenda lista 16
+      clases de las 41 del SLD; las otras no aparecen en la provincia.
+    publicado_en: [specs/modelos/tablero-mapas-suelos.yaml]
+    publicado_como: capa
 
   - id: conae-bosque-nativo-2020
     nombre: "Cobertura bosque nativo Argentina 2020"
