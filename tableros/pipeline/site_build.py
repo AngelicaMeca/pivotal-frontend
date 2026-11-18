@@ -9729,6 +9729,13 @@ def catalogo_capas():
                 # `rotulos`: el nombre de cada punto se ESCRIBE al lado, no solo en el
                 # mouseover (las ciudades y pueblos, JC 15-nov-2026). Solo para puntos.
                 "rotulos": bool(decl.get("rotulos")),
+                # `clases_al_prender`: la lista de clases de la capa se muestra SOLO cuando la
+                # capa esta prendida. Lo piden las capas tematicas del INTA, que traen seis,
+                # diez o doce clases con nombres largos: apagadas, su leyenda ocupaba mas que el
+                # mapa y lo primero que se leia era la lista de clases de un mapa que no estaba
+                # dibujado. Las capas del IGN no lo piden (traen dos variantes de una linea) y
+                # siguen mostrandolas siempre, que es como JC aprobo Infraestructura.
+                "clases_al_prender": bool(decl.get("clases_al_prender")),
                 "estilos": lista,
             }
             if decl.get("rotulos") and decl["geometria"] != "puntos":
@@ -12044,6 +12051,9 @@ TABLEROS = {
     # MISMO constructor que Infraestructura: es la misma maqueta -titulo y mapa a toda la
     # pagina con control de capas- y lo unico que cambia son las capas que declara el spec.
     "tablero-mapas-suelos": construir_tablero_red_vial,
+    # Mapas > Cuencas y cursos de agua: las otras dos capas del INTA, las del nodo del visor.
+    # Misma maqueta y mismo constructor; una es de area y la otra de linea.
+    "tablero-mapas-agua": construir_tablero_red_vial,
     # AgroClima (maqueta "0000000000 Maqueta Clima 1.xlsx", 14-oct-2026)
     "tablero-agroclima": construir_tablero_agroclima,
     # Mapas · portada del area (JC, 15-nov-2026, punto 3.b)

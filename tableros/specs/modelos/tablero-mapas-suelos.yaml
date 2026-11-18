@@ -17,8 +17,9 @@
 #
 # ESTA PAGINA REEMPLAZA A DOS DE LAS TARJETAS con link externo de la portada de Mapas
 # ("Aptitud de Tierras" y "Zonificacion del Uso del Suelo", que apuntaban a la ficha del
-# catalogo del INTA). Las otras seis tarjetas del INTA, y por que cada una todavia no esta
-# adentro, estan en la tabla de configs/dims/capas-inta.yaml y en el backlog 129.
+# catalogo del INTA). Las cuencas y los cursos de agua estan en tablero-mapas-agua.yaml, y las
+# otras cuatro tarjetas del INTA -y por que cada una todavia no esta adentro- estan en la tabla
+# de configs/dims/capas-inta.yaml y en el backlog 129.
 #
 # MISMA MAQUETA QUE INFRAESTRUCTURA, a proposito. JC no mando maqueta de esta pagina, y la
 # unica que dio para un mapa nuestro es la de Infraestructura del 15-nov-2026: "SOLO PONEMOS

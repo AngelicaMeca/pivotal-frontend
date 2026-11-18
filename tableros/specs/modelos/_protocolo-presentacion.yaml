@@ -1318,7 +1318,7 @@ colores:
         - cuando: {clase: ["Sa - Salinas"]}
           rotulo: "Sa - Salinas"
           color: "#c7c3fe"
-        - {rotulo: "Sin clasificar", color: "#b9a79c"}
+        - {cuando: {}, rotulo: "", color: "#b9a79c"}
     inta-zonificacion-uso-suelo:
       estilos:
         - cuando: {clase: ["Zona Agrícola, Ganadera y Forestal"]}
@@ -1357,7 +1357,56 @@ colores:
         - cuando: {clase: ["Zonas con riego"]}
           rotulo: "Zonas con riego"
           color: "#00aa00"
-        - {rotulo: "Sin clasificar", color: "#b9a79c"}
+        - {cuando: {}, rotulo: "", color: "#b9a79c"}
+
+    # Cuencas hidricas y cursos de agua del NOA, tambien del INTA y tambien con SUS colores.
+    # Dos avisos sobre estas dos:
+    #   - La leyenda de cuencas lista SEIS macrocuencas de las dieciseis del SLD: las otras diez
+    #     no llegan a Santiago del Estero. Lo mismo con los cursos: el SLD declara QUEBRADA y en
+    #     la provincia no hay ninguna.
+    #   - "CANADA" no esta en el SLD del INTA (su propio mapa no dibuja ese rasgo). Se declara
+    #     en pipeline/capas_inta.py con su motivo y su cuenta, y el color es un tono mas claro
+    #     de la misma familia azul de los otros tres tipos.
+    inta-cursos-de-agua:
+      halo: 0.8
+      estilos:
+        - cuando: {clase: ["ARROYO"]}
+          rotulo: "ARROYO"
+          color: "#5396cf"
+          ancho: 1.0
+          trazo: lleno
+        - cuando: {clase: ["RIO"]}
+          rotulo: "RIO"
+          color: "#1f579b"
+          ancho: 1.0
+          trazo: lleno
+        - cuando: {clase: ["CAÑADA"]}
+          rotulo: "CAÑADA"
+          color: "#9fcbe6"
+          ancho: 1.0
+          trazo: lleno
+        - {cuando: {}, rotulo: "", color: "#b9a79c", ancho: 0.8, trazo: punteado}
+    inta-cuencas:
+      estilos:
+        - cuando: {clase: ["Dulce"]}
+          rotulo: "Dulce"
+          color: "#d4c94e"
+        - cuando: {clase: ["Dulce Superior"]}
+          rotulo: "Dulce Superior"
+          color: "#23dfe5"
+        - cuando: {clase: ["Juramento - Salado"]}
+          rotulo: "Juramento - Salado"
+          color: "#ec8996"
+        - cuando: {clase: ["Juramento Medio Inferior"]}
+          rotulo: "Juramento Medio Inferior"
+          color: "#69dcb8"
+        - cuando: {clase: ["Rosario Horcones - Urueña"]}
+          rotulo: "Rosario Horcones - Urueña"
+          color: "#6382df"
+        - cuando: {clase: ["Sin Aporte Significativo  - Sureste de Salta"]}
+          rotulo: "Sin Aporte Significativo - Sureste de Salta"
+          color: "#e554cd"
+        - {cuando: {}, rotulo: "", color: "#b9a79c"}
 
   sin_dato:
     hex: "#bdbdbd"

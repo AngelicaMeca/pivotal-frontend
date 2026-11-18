@@ -1,0 +1,57 @@
+# Cuencas hidricas y cursos de agua del INTA, en NUESTRO visor.
+#
+# Es la segunda pagina que sale del comentario de JC del 18-nov-2026 (tarea 1220512131004640):
+# "la idea era BAJAR LAS CAPAS Y PONER NUESTRO PROPIO VISOR... PARA QUE QUEDE DENTRO DE NUESTRA
+# WEB". Reemplaza a otras DOS de las ocho tarjetas con link externo de la portada de Mapas
+# ("Cuencas hidricas del NOA" y "Cursos de Agua NOA", que abrian el visor del INTA).
+#
+# Estas dos capas son de TODO EL NOROESTE y vienen recortadas a la provincia: el borde calca la
+# silueta del mapa porque el recorte camina por el contorno disuelto de los departamentos, el
+# mismo que usan las capas del IGN. Procedencia, comandos, licencia, el recorte y lo que hay
+# que saberle al dato, en configs/dims/capas-inta.yaml.
+#
+# MISMA MAQUETA QUE INFRAESTRUCTURA Y QUE SUELOS, a proposito: titulo, el mapa a toda la pagina
+# con zoom real, control de capas y nada mas. Es la unica maqueta que JC dio para un mapa
+# nuestro (15-nov-2026: "SOLO PONEMOS COMO TITULO 'infraestructura' y que el mapa ocupe toda la
+# pagina pudiendo hacer zoom al maximo. Que el usuario pueda agregar o quitar capas").
+#
+# EL ORDEN DE LAS CAPAS IMPORTA ACA, al contrario que en Suelos: las cuencas son areas y los
+# cursos de agua son lineas, asi que van las dos juntas y se leen bien. Las cuencas primero
+# para que los rios queden DIBUJADOS ENCIMA de ellas y no debajo. Arrancan apagadas, como manda
+# el protocolo para toda capa de contexto.
+#
+# SIN KPIs: no hay una magnitud que totalizar. La superficie de cada cuenca dentro de la
+# provincia se podria calcular, pero seria un numero NUESTRO sobre un dato del INTA que el
+# INTA no publica, y el 4% de la provincia no pertenece a ninguna cuenca en su propio dato.
+
+id: tablero-mapas-agua
+tipo: tablero
+familia: capas-ign
+estado: publicada
+seccion: mapas
+pagina: cuencas-y-cursos-de-agua
+
+titulo: "Cuencas y cursos de agua"
+subtitulo: "Provincia de Santiago del Estero · cuencas hídricas y cursos de agua del NOA, recortados a la provincia (INTA)"
+titulo_pagina: "Cuencas y cursos de agua"
+breadcrumb: "Mapas - Cuencas y cursos de agua"
+
+indicadores: []
+kpis_sin_variacion: true
+
+notas_metodologicas: [capas-inta]
+
+paneles:
+  alto: fluye
+  acciones_de_tablero:
+    - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
+  mapa-capas:
+    titulo: "Santiago del Estero - Cuencas hídricas y cursos de agua"
+    subtitulo: "Acerque con la rueda del mouse y arrastre para desplazarse · active las capas que quiera ver; pase el mouse por un área o un curso para ver de cuál se trata"
+    capas:
+      - {id: inta-cuencas, prendida: false}
+      - {id: inta-cursos-de-agua, prendida: false}
+  orden:
+    - {id: mapa-capas, ancho: 12, zoom: true}
+
+filtros: []

@@ -171,11 +171,13 @@ function pintarControl(nodo, catalogo) {
     var capa = catalogo.capas[id];
     if (!capa) { return; }
     if (!hueco.firstChild) { hueco.appendChild(variantes(capa)); }
-    /* Las clases de una capa de AREA se listan SOLO si la capa esta prendida. Son diez o doce
-       por capa y van en columna: con las dos apagadas, la leyenda medía 661 px debajo de un
-       mapa de 640 y lo que se leía primero era una lista de clases de un mapa que no estaba
-       dibujado. Las capas de linea no cambian: sus variantes son una o dos y van en fila. */
-    if (capa.geometria === "poligonos") {
+    /* Las clases de una capa que lo pide se listan SOLO si la capa esta prendida. Lo piden las
+       capas tematicas del INTA, que traen seis, diez o doce clases de nombre largo: con las dos
+       apagadas la leyenda medía 661 px debajo de un mapa de 640, y lo primero que se leía era
+       la lista de clases de un mapa que no estaba dibujado. Quien lo pide lo declara en
+       configs/dims/capas-*.yaml, no se deduce de la geometria: las capas del IGN traen dos
+       variantes de una linea y las muestran siempre, que es como JC aprobo Infraestructura. */
+    if (capa.clases_al_prender) {
       var casilla = nodo.querySelector('input[data-capa="' + id + '"]');
       hueco.hidden = !(casilla && casilla.checked);
     }

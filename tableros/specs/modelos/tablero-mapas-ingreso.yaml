@@ -57,7 +57,7 @@ paneles:
   # pagina "Suelos y uso del suelo" (tablero-mapas-suelos.yaml), con las capas bajadas por el
   # WFS del INTA y dibujadas en nuestro mapa, con la leyenda del propio INTA.
   #
-  # Las otras seis se bajan tambien (es lo que JC decia: "TODOS TIENEN la opcion DESCARGAR") y
+  # Las otras cuatro se bajan tambien (es lo que JC decia: "TODOS TIENEN la opcion DESCARGAR") y
   # entran en cuanto esten transformadas; mientras tanto NO quedan como link externo, que es
   # justo lo que el pidio sacar. Que falta para cada una esta medido y escrito en
   # configs/dims/capas-inta.yaml y preguntado en el backlog 129.
@@ -72,7 +72,7 @@ paneles:
   accesos-propios:
     titulo: "Mapas de B³ AgriFood"
     subtitulo: "Dibujados dentro del sitio, sobre la división departamental y con zoom"
-    pie: "Fuente: INTA - Aptitud de Tierras y Zonificación del Uso del Suelo"
+    pie: "Fuente: INTA - Aptitud de Tierras, Zonificación del Uso del Suelo, Cuencas Hídricas del NOA y Cursos de Agua del NOA"
     tarjetas:
       - organismo: "B³ AgriFood"
         titulo: "Suelos y uso del suelo"
@@ -84,6 +84,17 @@ paneles:
         destino: tablero-mapas-suelos
         miniatura: imagen
         imagen: mapas/ingreso/aptitud-de-tierras.png
+
+      - organismo: "B³ AgriFood"
+        titulo: "Cuencas y cursos de agua"
+        detalle: "Cuencas hídricas y cursos de agua del NOA (INTA)"
+        bajada: >
+          Las macrocuencas y los cursos de agua del noroeste, recortados a la provincia y
+          dibujados en el mapa. Se prenden y se apagan por separado, y el mapa se acerca con
+          la rueda del mouse.
+        destino: tablero-mapas-agua
+        miniatura: imagenes
+        imagenes: [mapas/ingreso/cuencas-hidricas-noa.png, mapas/ingreso/cursos-de-agua-noa.png]
 
   accesos-conae:
     titulo: "CONAE"

@@ -567,18 +567,19 @@ fuentes:
     nombre: "Cuencas hídricas del noroeste Argentino"
     organismo: "INTA"
     url: https://visor.inta.gob.ar/es#5.45/-25.045/-65.584
-    tipo_contenido: visor-web
+    tipo_contenido: capa-descargable
     alcance: regional
-    estado: aprobada
+    estado: publicada
     responsable: jc
     fecha_estado: 2026-11-18
-    modo_acceso: visor-embebible
+    modo_acceso: ogc-wfs
     modo_visualizacion:
-      resuelto: visor-del-organismo
+      resuelto: visor-propio
       criterio: >
-        La capa no está ingestada y las condiciones de acceso a los geoservicios del INTA están
-        sin resolver (ver inta-geoservicios). Se publica como enlace al visor del organismo, en
-        otra pestaña.
+        Bajada por el WFS de geo-backend (el nodo del visor del INTA) y dibujada en nuestro
+        mapa, con las macrocuencas y los colores de su propio SLD. Es de alcance regional, así
+        que viene recortada al contorno de la provincia (configs/dims/capas-inta.yaml). JC,
+        18-nov-2026: "La idea era BAJAR LAS CAPAS Y PONER NUESTRO PROPIO VISOR".
     licencia:
       nombre: "A confirmar con el INTA"
       exige_cita: true
@@ -586,43 +587,39 @@ fuentes:
       redistribucion: a-confirmar
     indicaciones: [evaluar-modo-de-acceso, cruzar-con-limites-departamentales]
     observaciones: >
-      Se baja por el WFS de geo-backend.inta.gob.ar (geonode:cuencas_noa_ll): 24 rasgos y 3,48 MB
-      en la caja de la provincia. Falta recortarla contra el límite provincial, porque es de
-      alcance regional (todo el NOA) y la rutina de capas del INTA todavía no recorta polígonos.
-      Backlog 129. El enlace al visor del INTA que había en la portada de Mapas salió el
-      18-nov-2026 y no vuelve: entra como capa nuestra o no entra.
-    publicado_en: []
-    publicado_como: ninguno
-    # Salio de la portada de Mapas el 18-nov-2026: JC no quiere links externos
-    # ("Nunca pusimos links externos a nada"). Vuelve cuando la capa este bajada y
-    # transformada como las otras dos del INTA. Que falta, en configs/dims/capas-inta.yaml.
+      Las cuencas del INTA NO cubren toda la provincia: el 4% de su superficie no pertenece a
+      ninguna macrocuenca en el dato del organismo (medido). En el mapa ese 4% se ve sin color.
+      La leyenda lista 6 de las 16 macrocuencas del SLD: las otras diez no llegan a la
+      provincia. El enlace al visor del INTA que había en la portada de Mapas salió el
+      18-nov-2026 y no vuelve: entró como capa nuestra.
+    publicado_en: [specs/modelos/tablero-mapas-agua.yaml]
+    publicado_como: capa
 
   - id: inta-visor-cursos-agua-noa
     nombre: "Cursos de Agua Noroeste Argentino"
     organismo: "INTA"
     url: https://visor.inta.gob.ar/es#6.38/-25.739/-66.292
-    tipo_contenido: visor-web
+    tipo_contenido: capa-descargable
     alcance: regional
-    estado: aprobada
+    estado: publicada
     responsable: jc
     fecha_estado: 2026-11-18
     modo_acceso: visor-embebible
-    modo_visualizacion: {resuelto: visor-del-organismo, criterio: "Igual que inta-visor-cuencas-noa."}
+    modo_visualizacion: {resuelto: visor-propio, criterio: "Igual que inta-visor-cuencas-noa."}
     licencia:
       nombre: "A confirmar con el INTA"
       exige_cita: true
       atribucion: "Fuente: INTA - Instituto Nacional de Tecnología Agropecuaria"
       redistribucion: a-confirmar
     indicaciones: [evaluar-modo-de-acceso]
-    publicado_en: []
-    publicado_como: ninguno
+    publicado_en: [specs/modelos/tablero-mapas-agua.yaml]
+    publicado_como: capa
     observaciones: >
-      Se baja por el WFS de geo-backend.inta.gob.ar (1.666 rasgos en la caja de la provincia,
-      5,34 MB). Son lineas, asi que puede reusar el recorte que ya existe para las capas del
-      IGN; falta hacerlo. Backlog 129.
-    # Salio de la portada de Mapas el 18-nov-2026: JC no quiere links externos
-    # ("Nunca pusimos links externos a nada"). Vuelve cuando la capa este bajada y
-    # transformada como las otras dos del INTA. Que falta, en configs/dims/capas-inta.yaml.
+      Bajada por el WFS de geo-backend y recortada con la misma rutina que las capas del IGN y
+      el tendido eléctrico: de los 1.666 rasgos del NOA quedan 201 tramos dentro de la
+      provincia. El INTA declara cuatro tipos de curso y en la provincia hay tres: no hay
+      ninguna quebrada, que es un rasgo de montaña. "Cañada" (un solo rasgo) no tiene estilo en
+      el SLD del INTA y se declara aparte, con su motivo, en pipeline/capas_inta.py.
 
   - id: inta-visor-areas-deforestadas
     nombre: "Areas ganaderas deforestadas durante 2008-2017"

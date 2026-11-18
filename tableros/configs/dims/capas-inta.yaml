@@ -24,8 +24,8 @@
 #   | Zonificacion del Uso del Suelo           | nodo02, geonode:zonificacion_usosuelo | PUBLICADA aqui |
 #   | Suelo Santiago del Estero                | nodo02, geonode:suel_sgo        | baja bien, leyenda a decidir (backlog 129) |
 #   | Ordenamiento Territorial Bosques Nativos | nodo02: en el catalogo, NO en el WFS | no se puede bajar |
-#   | Cuencas hidricas del NOA                 | geo-backend, geonode:cuencas_noa_ll | pendiente de recorte |
-#   | Cursos de Agua NOA                       | geo-backend, geonode:cursosdeagua | pendiente de recorte |
+#   | Cuencas hidricas del NOA                 | geo-backend, geonode:cuencas_noa_ll | PUBLICADA aqui  |
+#   | Cursos de Agua NOA                       | geo-backend, geonode:cursosdeagua | PUBLICADA aqui  |
 #   | Cobertura del suelo 2006-2007 (LCCS-FAO) | geo-backend, geonode:lccs_n3_2007 | 116 MB, pendiente |
 #   | Areas ganaderas deforestadas 2008-2017   | geo-backend, geonode:tb_layers_ganaderas_transii | 29 MB, pendiente |
 #
@@ -42,20 +42,27 @@ carpeta: capas-inta
 
 fuente:
   organismo: Instituto Nacional de Tecnología Agropecuaria (INTA)
-  nodo: https://geo-nodo02.inta.gob.ar
-  catalogo: https://geo-nodo02.inta.gob.ar/catalogue/
-  servicio: WFS 2.0.0 de https://geo-nodo02.inta.gob.ar/geoserver/wfs
-  estilo: GetStyles (SLD 1.0.0) de https://geo-nodo02.inta.gob.ar/geoserver/geonode/wms
   descargado: 2026-11-18
   proyeccion_declarada: EPSG:4326
-  # Las tres capas del nodo02 son de Santiago del Estero y nada mas, asi que se bajan SIN caja:
-  # no hay nada que recortar. El script lo verifica (todo vertice tiene que caer en la caja
-  # provincial) y corta si alguna se sale.
+  # DOS NODOS, por lo que explica la tabla de arriba. El de cada capa esta anotado en
+  # descargas_crudas. Los dos son GeoServer y los dos comandos son el mismo salvo el host.
+  nodos:
+    geo-nodo02:
+      base: https://geo-nodo02.inta.gob.ar
+      catalogo: https://geo-nodo02.inta.gob.ar/catalogue/
+      servicio: WFS 2.0.0 de https://geo-nodo02.inta.gob.ar/geoserver/wfs
+      estilo: GetStyles (SLD 1.0.0) de https://geo-nodo02.inta.gob.ar/geoserver/geonode/wms
+      sirve: "Aptitud de tierras, Zonificación del uso del suelo (y suel_sgo, sin publicar)"
+    geo-backend:
+      base: https://geo-backend.inta.gob.ar
+      servicio: WFS 2.0.0 de https://geo-backend.inta.gob.ar/geoserver/wfs
+      estilo: GetStyles (SLD 1.0.0) de https://geo-backend.inta.gob.ar/geoserver/geonode/wms
+      sirve: "Cuencas hídricas del NOA, Cursos de agua del NOA (es el nodo del visor del INTA)"
   comando: >
-    curl -o <capa>.json "https://geo-nodo02.inta.gob.ar/geoserver/wfs?service=WFS&version=2.0.0
+    curl -o <capa>.json "https://<nodo>.inta.gob.ar/geoserver/wfs?service=WFS&version=2.0.0
     &request=GetFeature&typeNames=geonode:<capa>&outputFormat=application/json&srsName=EPSG:4326"
   comando_estilo: >
-    curl -o <capa>.sld "https://geo-nodo02.inta.gob.ar/geoserver/geonode/wms?service=WMS
+    curl -o <capa>.sld "https://<nodo>.inta.gob.ar/geoserver/geonode/wms?service=WMS
     &version=1.1.1&request=GetStyles&layers=geonode:<capa>"
 
 descargas_crudas:
@@ -68,6 +75,11 @@ descargas_crudas:
   usoaptitshp.sld: [geonode:usoaptitshp, 9621]
   zonificacion_usosuelo.json: [geonode:zonificacion_usosuelo, 412509]
   zonificacion_usosuelo.sld: [geonode:zonificacion_usosuelo, 11052]
+  # Del otro nodo (geo-backend). Son de TODO el noroeste, asi que se recortan a la provincia.
+  cuencas_noa_ll.json: [geonode:cuencas_noa_ll, 3647450]
+  cuencas_noa_ll.sld: [geonode:cuencas_noa_ll, 16842]
+  cursosdeagua.json: [geonode:cursosdeagua, 5601152]
+  cursosdeagua.sld: [geonode:cursosdeagua, 4898]
 
 licencia:
   # El catalogo del nodo02 no declara una licencia por dataset. El INTA publica su informacion
@@ -83,21 +95,38 @@ transformacion:
   script: pipeline/capas_inta.py
   uso: >
     python -m pipeline.capas_inta <carpeta de descargas> configs/dims/capas-inta
+    configs/dims/sde-departamentos.geojson
   leyenda: >
     Las clases y sus colores salen del SLD que publica el GeoServer del INTA, no de una paleta
     nuestra: es el mismo criterio que las 18 clases del Mapa Nacional de Cultivos, que salieron
     del .qml del INTA. Un poligono con un valor que el SLD no declara CORTA la corrida.
   simplificacion: >
     Douglas-Peucker con tolerancia 0,0005 grados (~55 m). Saca el 25% de los vertices de las
-    dos capas. El dato del INTA viene de shapefiles digitalizados a escala regional: un vertice
+    dos capas de suelo, el 75% de cuencas y el 91% de los cursos de agua (en estas dos ultimas
+    la mayor parte de lo que se va no es simplificacion sino recorte: son capas de todo el
+    noroeste). El dato del INTA viene de shapefiles digitalizados a escala regional: un vertice
     cada 55 m es mas detalle del que la fuente sostiene.
   huecos: >
     La estructura del poligono se conserva (anillo exterior + huecos) y el navegador los dibuja
     en un solo trazo. Aptitud de Tierras tiene 19 huecos y la Zonificacion 20: aplanarlos
     pintaria lleno el hueco de una unidad que rodea a otra y le taparia el color.
   recorte: >
-    NO hay recorte: las dos capas ya son de Santiago del Estero. El script verifica que todo
-    vertice caiga dentro de la caja provincial y corta si no.
+    Las dos capas del nodo02 NO se recortan: ya son de Santiago del Estero, y el script verifica
+    que todo vertice caiga dentro de la caja provincial y corta si no. Las dos de geo-backend
+    son de todo el noroeste y SI se recortan, contra el contorno disuelto de los departamentos
+    (el mismo que usan las capas del IGN y el tendido electrico, asi que el borde de una capa
+    calca exactamente la silueta del mapa). Los cursos de agua se cortan con la misma rutina
+    que el tendido (`recortar_linea`) y quedan abiertos donde cruzan el limite. Las cuencas son
+    AREAS: un area cortada tiene que CERRARSE caminando por el borde de la provincia, o no es
+    un area, asi que se recortan con Weiler-Atherton sobre el anillo del contorno. Hay cuencas
+    mas grandes que la provincia, que la contienen entera: ese caso devuelve el contorno.
+  recorte_verificado: >
+    Las macrocuencas tapizan la region, asi que la suma de las areas recortadas tiene que dar
+    el area de la provincia. Da el 96,019%. Y no es que el recorte se coma un 4%: sorteando
+    3.000 puntos adentro de la provincia, el 4,03% no tiene NINGUNA cuenca encima en el dato
+    original del INTA. Los dos numeros coinciden dentro del error de muestreo. Las unicas
+    aristas cuyo punto medio cae afuera son las 224 que caminan sobre el borde mismo (208 con
+    los dos extremos en el contorno, el resto arrancando en un cruce).
   determinista: "Corrido dos veces sobre la misma descarga: archivos identicos byte a byte."
 
 salidas:
@@ -105,6 +134,11 @@ salidas:
     83 rasgos (19 huecos), 5.756 vertices, 10 clases de aptitud, 137.685 bytes.
   zonificacion-del-uso-del-suelo.geojson: >
     79 rasgos (20 huecos), 10.556 vertices, 12 zonas, 240.504 bytes.
+  cuencas-hidricas.geojson: >
+    12 rasgos, 32.869 vertices, 6 macrocuencas de las 16 del SLD, 718.804 bytes.
+  cursos-de-agua.geojson: >
+    3 rasgos (uno por tipo) con 201 tramos, 16.461 vertices, 359.374 bytes. Un rasgo por tipo y
+    no uno por tramo, igual que el tendido electrico publica un rasgo por nivel de tension.
 
 advertencias_para_jc:
   - >
@@ -122,6 +156,26 @@ advertencias_para_jc:
     La capa trae ademas drenaje, textura, salinidad, sodicidad y capacidad de uso, cualquiera
     de los cuales da una leyenda de 8 a 13 renglones que se lee. Decide JC (backlog 129).
   - >
+    LAS CUENCAS DEL INTA NO CUBREN TODA LA PROVINCIA: el 4% de la superficie provincial no
+    pertenece a ninguna macrocuenca en el dato del organismo (medido, ver
+    transformacion.recorte_verificado). En el mapa ese 4% se ve como el fondo del panel, sin
+    color. No es un error del recorte ni un hueco nuestro: es asi en la fuente.
+  - >
+    LA LEYENDA DE CUENCAS LISTA SEIS MACROCUENCAS de las 16 que declara el INTA: las otras diez
+    no llegan a Santiago del Estero. Lo mismo con los cursos de agua: el INTA declara cuatro
+    tipos y en la provincia hay tres (no hay ninguna QUEBRADA, que es un rasgo de montania).
+  - >
+    "CANADA" NO TIENE ESTILO EN EL SLD DEL INTA: su propio mapa no dibuja ese rasgo, que es uno
+    solo de 1.666. Se publica igual, con un tono mas claro de la misma familia azul de los otros
+    tres tipos y nombrado en la leyenda, porque perder un rasgo en silencio es peor. Esta
+    declarado en pipeline/capas_inta.py con su motivo y su cuenta: si el INTA reexporta la capa
+    y la cuenta cambia, la corrida se corta.
+  - >
+    EL SLD DE CUENCAS CLASIFICA POR DOS CAMPOS: 14 reglas por `Nom_Macro_` y 2 por `Cod_Macro_`
+    (las dos de "Sin Aporte Significativo"). Las dos ultimas se cruzan por el NOMBRE de la
+    regla, que coincide exactamente con el valor del campo que clasifica. No se adivina: si no
+    coincidiera, esos rasgos quedarian sin leyenda y la corrida se cortaria.
+  - >
     El Ordenamiento Territorial de Bosques Nativos 2015 esta en el catalogo del INTA (ficha
     dataset/11) pero su capa NO esta publicada en el WFS del nodo (de las 29 capas que sirve,
     ninguna es esa): no hay de donde bajarla. El OTBN de Santiago del Estero lo publican tambien
@@ -136,10 +190,26 @@ publicacion:
       etiqueta: "Aptitud de tierras (INTA)"
       geometria: poligonos
       tooltip: "{clase}"
+      clases_al_prender: true
       fuente: "INTA - Aptitud de Tierras"
     inta-zonificacion-uso-suelo:
       archivo: zonificacion-del-uso-del-suelo.geojson
       etiqueta: "Zonificación del uso del suelo (INTA)"
       geometria: poligonos
       tooltip: "{clase}"
+      clases_al_prender: true
       fuente: "INTA - Zonificación del Uso del Suelo"
+    inta-cuencas:
+      archivo: cuencas-hidricas.geojson
+      etiqueta: "Cuencas hídricas (INTA)"
+      geometria: poligonos
+      tooltip: "{clase}"
+      clases_al_prender: true
+      fuente: "INTA - Cuencas hídricas del NOA"
+    inta-cursos-de-agua:
+      archivo: cursos-de-agua.geojson
+      etiqueta: "Cursos de agua (INTA)"
+      geometria: lineas
+      tooltip: "{clase}"
+      clases_al_prender: true
+      fuente: "INTA - Cursos de agua del NOA"

@@ -485,16 +485,18 @@ secciones:
     ruta: [Mapas]
     url: mapas
     titulo: "Mapas"
-    bajada_corta: "Aptitud de tierras y uso del suelo en nuestro visor, y los mapas de INDEC y CONAE."
+    bajada_corta: "Suelos, uso del suelo, cuencas y cursos de agua en nuestro visor, y los mapas de INDEC y CONAE."
     bajada: >
-      Los mapas de aptitud de tierras y zonificación del uso del suelo del INTA, dibujados
-      dentro del sitio sobre la división departamental y con zoom, y el acceso a los mapas
-      departamentales del INDEC y a la cobertura de bosque nativo de la CONAE.
+      Los mapas del INTA de aptitud de tierras, zonificación del uso del suelo, cuencas
+      hídricas y cursos de agua, dibujados dentro del sitio sobre la división departamental y
+      con zoom, y el acceso a los mapas departamentales del INDEC y a la cobertura de bosque
+      nativo de la CONAE.
     sin_pestanias: true
     # El Mapa Nacional de Cultivos YA NO esta aca: JC, 18-nov-2026, "El de cultivos VA EN
     # AGRICULTURA". Pasa a colgar de Cultivos extensivos.
     menu_paginas:
       - {titulo: "Suelos y uso del suelo", destino: tablero-mapas-suelos}
+      - {titulo: "Cuencas y cursos de agua", destino: tablero-mapas-agua}
     vistas_sueltas: []
     grupos: []
 
