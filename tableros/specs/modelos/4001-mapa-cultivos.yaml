@@ -1,4 +1,7 @@
-# Mapas > Mapa Nacional de Cultivos (INTA), campaña 2024/2025.
+# Agricultura > Mapa Nacional de Cultivos (INTA), campaña 2024/2025.
+#
+# Vive en AGRICULTURA desde el 18-nov-2026, por pedido de JC: "El de cultivos VA EN
+# AGRICULTURA". Antes estaba en la rama "Mapas".
 #
 # Pedido textual de JC (comentario del 15-nov-2026, punto 4): "MAPA DE CULTIVOS: Lo agregamos
 # como ítem en el desplegable del menú de la izquierda Y QUE SE VEA (incluido el zoom) TAL COMO
@@ -29,7 +32,7 @@
 #
 # De dónde sale la imagen, qué se recortó y qué se midió: configs/dims/mapas-cultivos.yaml.
 familia: agroclima
-seccion: mapas
+seccion: cultivos-extensivos
 slug: 4001-mapa-cultivos
 protocolo: _protocolo-presentacion
 tipo: galeria

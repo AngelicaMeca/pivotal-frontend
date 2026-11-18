@@ -569,9 +569,9 @@ fuentes:
     url: https://visor.inta.gob.ar/es#5.45/-25.045/-65.584
     tipo_contenido: visor-web
     alcance: regional
-    estado: publicada
+    estado: aprobada
     responsable: jc
-    fecha_estado: 2026-11-17
+    fecha_estado: 2026-11-18
     modo_acceso: visor-embebible
     modo_visualizacion:
       resuelto: visor-del-organismo
@@ -586,11 +586,16 @@ fuentes:
       redistribucion: a-confirmar
     indicaciones: [evaluar-modo-de-acceso, cruzar-con-limites-departamentales]
     observaciones: >
-      Es una capa DENTRO del visor del INTA: el enlace abre el visor en el encuadre que mandó JC,
-      pero el visor arranca con sus capas por defecto, así que hay que prenderla en el menú de la
-      izquierda (la tarjeta lo indica).
-    publicado_en: [specs/modelos/tablero-mapas-ingreso.yaml]
-    publicado_como: enlace
+      Se baja por el WFS de geo-backend.inta.gob.ar (geonode:cuencas_noa_ll): 24 rasgos y 3,48 MB
+      en la caja de la provincia. Falta recortarla contra el límite provincial, porque es de
+      alcance regional (todo el NOA) y la rutina de capas del INTA todavía no recorta polígonos.
+      Backlog 129. El enlace al visor del INTA que había en la portada de Mapas salió el
+      18-nov-2026 y no vuelve: entra como capa nuestra o no entra.
+    publicado_en: []
+    publicado_como: ninguno
+    # Salio de la portada de Mapas el 18-nov-2026: JC no quiere links externos
+    # ("Nunca pusimos links externos a nada"). Vuelve cuando la capa este bajada y
+    # transformada como las otras dos del INTA. Que falta, en configs/dims/capas-inta.yaml.
 
   - id: inta-visor-cursos-agua-noa
     nombre: "Cursos de Agua Noroeste Argentino"
@@ -598,9 +603,9 @@ fuentes:
     url: https://visor.inta.gob.ar/es#6.38/-25.739/-66.292
     tipo_contenido: visor-web
     alcance: regional
-    estado: publicada
+    estado: aprobada
     responsable: jc
-    fecha_estado: 2026-11-17
+    fecha_estado: 2026-11-18
     modo_acceso: visor-embebible
     modo_visualizacion: {resuelto: visor-del-organismo, criterio: "Igual que inta-visor-cuencas-noa."}
     licencia:
@@ -609,8 +614,15 @@ fuentes:
       atribucion: "Fuente: INTA - Instituto Nacional de Tecnología Agropecuaria"
       redistribucion: a-confirmar
     indicaciones: [evaluar-modo-de-acceso]
-    publicado_en: [specs/modelos/tablero-mapas-ingreso.yaml]
-    publicado_como: enlace
+    publicado_en: []
+    publicado_como: ninguno
+    observaciones: >
+      Se baja por el WFS de geo-backend.inta.gob.ar (1.666 rasgos en la caja de la provincia,
+      5,34 MB). Son lineas, asi que puede reusar el recorte que ya existe para las capas del
+      IGN; falta hacerlo. Backlog 129.
+    # Salio de la portada de Mapas el 18-nov-2026: JC no quiere links externos
+    # ("Nunca pusimos links externos a nada"). Vuelve cuando la capa este bajada y
+    # transformada como las otras dos del INTA. Que falta, en configs/dims/capas-inta.yaml.
 
   - id: inta-visor-areas-deforestadas
     nombre: "Areas ganaderas deforestadas durante 2008-2017"
@@ -618,9 +630,9 @@ fuentes:
     url: https://visor.inta.gob.ar/es#6.49/-26.617/-65.338
     tipo_contenido: visor-web
     alcance: regional
-    estado: publicada
+    estado: aprobada
     responsable: jc
-    fecha_estado: 2026-11-17
+    fecha_estado: 2026-11-18
     modo_acceso: visor-embebible
     modo_visualizacion: {resuelto: visor-del-organismo, criterio: "Igual que inta-visor-cuencas-noa."}
     licencia:
@@ -630,10 +642,14 @@ fuentes:
       redistribucion: a-confirmar
     indicaciones: [evaluar-modo-de-acceso, cruzar-con-limites-departamentales]
     observaciones: >
-      El título va como lo escribe el INTA, "Areas" sin tilde incluido: es el nombre de la capa
-      en su visor.
-    publicado_en: [specs/modelos/tablero-mapas-ingreso.yaml]
-    publicado_como: enlace
+      Se baja por el WFS de geo-backend.inta.gob.ar (geonode:tb_layers_ganaderas_transii), pero
+      son 49.467 polígonos y 29,24 MB en la caja de la provincia: necesita recorte contra el límite
+      provincial y simplificación antes de publicarse. Backlog 129.
+    publicado_en: []
+    publicado_como: ninguno
+    # Salio de la portada de Mapas el 18-nov-2026: JC no quiere links externos
+    # ("Nunca pusimos links externos a nada"). Vuelve cuando la capa este bajada y
+    # transformada como las otras dos del INTA. Que falta, en configs/dims/capas-inta.yaml.
 
   - id: inta-visor-cobertura-suelo
     nombre: "Cobertura del suelo de la Republica Argentina. Año 2006-2007 (LCCS-FAO)"
@@ -641,9 +657,9 @@ fuentes:
     url: https://visor.inta.gob.ar/es#7.68/-26.549/-64.776
     tipo_contenido: visor-web
     alcance: nacional
-    estado: publicada
+    estado: aprobada
     responsable: jc
-    fecha_estado: 2026-11-17
+    fecha_estado: 2026-11-18
     modo_acceso: visor-embebible
     modo_visualizacion: {resuelto: visor-del-organismo, criterio: "Igual que inta-visor-cuencas-noa."}
     licencia:
@@ -653,10 +669,14 @@ fuentes:
       redistribucion: a-confirmar
     indicaciones: [evaluar-modo-de-acceso, evaluar-utilidad-analitica]
     observaciones: >
-      Es de 2006-2007: veinte años. Para cobertura actual conviene el Mapa Nacional de Cultivos
-      (inta-mnc-cultivos) o la cobertura de bosque nativo 2020 de la CONAE.
-    publicado_en: [specs/modelos/tablero-mapas-ingreso.yaml]
-    publicado_como: enlace
+      Se baja por el WFS de geo-backend.inta.gob.ar (geonode:lccs_n3_2007), pero son 116,07 MB y
+      1.962 polígonos en la caja de la provincia: necesita recorte contra el límite provincial y
+      simplificación antes de publicarse. Es la más pesada de las ocho. Backlog 129.
+    publicado_en: []
+    publicado_como: ninguno
+    # Salio de la portada de Mapas el 18-nov-2026: JC no quiere links externos
+    # ("Nunca pusimos links externos a nada"). Vuelve cuando la capa este bajada y
+    # transformada como las otras dos del INTA. Que falta, en configs/dims/capas-inta.yaml.
 
   - id: conae-bosque-nativo-2020
     nombre: "Cobertura bosque nativo Argentina 2020"
@@ -706,17 +726,22 @@ fuentes:
     alcance: nacional
     estado: publicada
     responsable: jc
-    fecha_estado: 2026-11-17
-    modo_acceso: catalogo-con-descarga
-    modo_visualizacion: {resuelto: visor-del-organismo, criterio: "Igual que inta-visor-cuencas-noa."}
+    fecha_estado: 2026-11-18
+    modo_acceso: ogc-wfs
+    modo_visualizacion:
+      resuelto: visor-propio
+      criterio: >
+        Bajada por el WFS del nodo02 del INTA y dibujada en nuestro mapa, con las clases y
+        los colores de su propio SLD (configs/dims/capas-inta.yaml). JC, 18-nov-2026:
+        "La idea era BAJAR LAS CAPAS Y PONER NUESTRO PROPIO VISOR".
     licencia:
       nombre: "A confirmar con el INTA"
       exige_cita: true
       atribucion: "Fuente: INTA - Instituto Nacional de Tecnología Agropecuaria"
       redistribucion: a-confirmar
     indicaciones: [evaluar-modo-de-acceso, cruzar-con-limites-departamentales]
-    publicado_en: [specs/modelos/tablero-mapas-ingreso.yaml]
-    publicado_como: enlace
+    publicado_en: [specs/modelos/tablero-mapas-suelos.yaml]
+    publicado_como: capa
 
   - id: inta-suelo-sde
     nombre: "Suelo Santiago del Estero"
@@ -724,9 +749,9 @@ fuentes:
     url: https://geo-nodo02.inta.gob.ar/catalogue/#/dataset/135
     tipo_contenido: capa-descargable
     alcance: provincial
-    estado: publicada
+    estado: aprobada
     responsable: jc
-    fecha_estado: 2026-11-17
+    fecha_estado: 2026-11-18
     modo_acceso: catalogo-con-descarga
     modo_visualizacion: {resuelto: visor-del-organismo, criterio: "Igual que inta-visor-cuencas-noa."}
     licencia:
@@ -735,9 +760,17 @@ fuentes:
       atribucion: "Fuente: INTA - Mapa de suelos de Santiago del Estero (Angueira C., 2007)"
       redistribucion: a-confirmar
     indicaciones: [evaluar-modo-de-acceso, cruzar-con-limites-departamentales]
-    observaciones: "Escala 1:500.000. Fuente de la ficha: Angueira C., 2007."
-    publicado_en: [specs/modelos/tablero-mapas-ingreso.yaml]
-    publicado_como: enlace
+    observaciones: >
+      Se baja y se transforma bien (302 polígonos, 955 KB), pero su leyenda oficial son 81 unidades
+      cartográficas de suelo ("MKtc", "AEtc"): al costado del mapa ocuparían más que el mapa. La
+      capa trae además drenaje, textura, salinidad, sodicidad y capacidad de uso, cualquiera de los
+      cuales da una leyenda que se lee, pero clasificar por ahí sería inventarle una leyenda nuestra
+      a un mapa del INTA. Decide JC. Backlog 129.
+    publicado_en: []
+    publicado_como: ninguno
+    # Salio de la portada de Mapas el 18-nov-2026: JC no quiere links externos
+    # ("Nunca pusimos links externos a nada"). Vuelve cuando la capa este bajada y
+    # transformada como las otras dos del INTA. Que falta, en configs/dims/capas-inta.yaml.
 
   - id: inta-zonificacion-uso-suelo
     nombre: "Zonificación del Uso del Suelo"
@@ -747,9 +780,14 @@ fuentes:
     alcance: provincial
     estado: publicada
     responsable: jc
-    fecha_estado: 2026-11-17
-    modo_acceso: catalogo-con-descarga
-    modo_visualizacion: {resuelto: visor-del-organismo, criterio: "Igual que inta-visor-cuencas-noa."}
+    fecha_estado: 2026-11-18
+    modo_acceso: ogc-wfs
+    modo_visualizacion:
+      resuelto: visor-propio
+      criterio: >
+        Bajada por el WFS del nodo02 del INTA y dibujada en nuestro mapa, con las clases y
+        los colores de su propio SLD (configs/dims/capas-inta.yaml). JC, 18-nov-2026:
+        "La idea era BAJAR LAS CAPAS Y PONER NUESTRO PROPIO VISOR".
     licencia:
       nombre: "A confirmar con el INTA"
       exige_cita: true
@@ -757,8 +795,8 @@ fuentes:
       redistribucion: a-confirmar
     indicaciones: [evaluar-modo-de-acceso, cruzar-con-limites-departamentales]
     observaciones: "Elaborada en el marco de la Ley provincial 6.841, de ordenamiento de las áreas forestales."
-    publicado_en: [specs/modelos/tablero-mapas-ingreso.yaml]
-    publicado_como: enlace
+    publicado_en: [specs/modelos/tablero-mapas-suelos.yaml]
+    publicado_como: capa
 
   - id: inta-otbn-2015
     nombre: "Ordenamiento Territorial de Bosques Nativos (actualización 2015)"
@@ -766,9 +804,9 @@ fuentes:
     url: https://geo-nodo02.inta.gob.ar/catalogue/#/dataset/11
     tipo_contenido: capa-descargable
     alcance: provincial
-    estado: publicada
+    estado: aprobada
     responsable: jc
-    fecha_estado: 2026-11-17
+    fecha_estado: 2026-11-18
     modo_acceso: catalogo-con-descarga
     modo_visualizacion: {resuelto: visor-del-organismo, criterio: "Igual que inta-visor-cuencas-noa."}
     licencia:
@@ -780,11 +818,16 @@ fuentes:
     # Esta es la observación del RF1.3, y es LITERAL de JC (celda D214 de su Excel). El ERS la
     # pone de ejemplo del requisito. Se publica en la tarjeta: sin ella el semáforo no se entiende.
     observaciones: >
-      Interpretación de JC, textual: "Zona roja: NO se puede alterar el ecosistema (desmontar,
-      etc.); Amarilla: Explotación bajo determinadas condiciones. Verde: Libre disponibilidad".
-      Ley 6942, decreto de actualización 3133 del 23-12-2015.
-    publicado_en: [specs/modelos/tablero-mapas-ingreso.yaml]
-    publicado_como: enlace
+      Está en el catálogo del INTA (ficha dataset/11) pero su capa NO está publicada en el WFS del
+      nodo: de las 29 que sirve, ninguna es ésta, así que no hay de dónde bajarla. El Ordenamiento
+      Territorial de Bosques Nativos de la provincia lo publican también el gobierno provincial y el
+      Ministerio de Ambiente de la Nación: si JC quiere ese mapa, hay que ir por esa fuente y no por
+      el INTA. Backlog 129.
+    publicado_en: []
+    publicado_como: ninguno
+    # Salio de la portada de Mapas el 18-nov-2026: JC no quiere links externos
+    # ("Nunca pusimos links externos a nada"). Vuelve cuando la capa este bajada y
+    # transformada como las otras dos del INTA. Que falta, en configs/dims/capas-inta.yaml.
 
   - id: indec-poblacion-total
     nombre: "Población total por departamento"

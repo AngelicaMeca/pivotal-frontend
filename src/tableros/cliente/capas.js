@@ -63,6 +63,15 @@ function procesar(capa, geo) {
       grupo.push({ name: nombre, value: geometria.coordinates });
       return;
     }
+    if (capa.geometria === "poligonos") {
+      /* Un dato por RASGO y no por parte: los huecos de un rasgo tienen que dibujarse en el
+         mismo trazo que su anillo exterior (ver `caminoDePoligono`). `value` es un punto
+         cualquiera del rasgo, que es lo que ECharts le pide a un dato de serie `custom`. */
+      var piezas = geometria.type === "MultiPolygon" ? geometria.coordinates : [geometria.coordinates];
+      if (!piezas.length || !piezas[0].length) { return; }
+      grupo.push({ name: nombre, value: piezas[0][0][0], partes: piezas });
+      return;
+    }
     var partes = geometria.type === "MultiLineString" ? geometria.coordinates : [geometria.coordinates];
     partes.forEach(function (parte) { grupo.push({ name: nombre, coords: parte }); });
   });
@@ -108,7 +117,13 @@ function listas(nodo, catalogo, redibujar) {
 /* ------------------------------ muestras, leyenda y pie ------------------------------ */
 function muestra(capa, estilo) {
   var span = document.createElement("span");
-  if (capa.geometria === "puntos") {
+  if (capa.geometria === "poligonos") {
+    /* Una capa de area se muestra con su RELLENO: es lo que dice el mapa. */
+    span.className = "capas-area";
+    span.style.background = estilo.color;
+    span.style.borderColor = estilo.borde || estilo.color;
+    if (estilo.opacidad !== undefined) { span.style.opacity = String(estilo.opacidad); }
+  } else if (capa.geometria === "puntos") {
     span.className = "capas-punto";
     span.style.background = estilo.color;
     span.style.borderColor = estilo.borde || estilo.color;
@@ -126,6 +141,10 @@ function muestra(capa, estilo) {
    un solo estilo sin rotulo no lleva variantes. */
 function variantes(capa) {
   var lista = document.createElement("span");
+  /* Las clases de una capa de AREA se listan en COLUMNA: son diez o doce y sus nombres son
+     frases enteras del INTA ("G3 - Ganadera: Apta para pasturas, receptividad 10-30 ha-UG"),
+     que en una fila envuelven y dejan de leerse como una leyenda. */
+  if (capa.geometria === "poligonos") { lista.className = "capas-variantes-area"; }
   capa.estilos.forEach(function (estilo) {
     if (!estilo.rotulo) { return; }
     var item = document.createElement("span");
@@ -148,9 +167,18 @@ function pintarControl(nodo, catalogo) {
     hueco.appendChild(muestra(capa, capa.estilos[0]));
   });
   Array.prototype.forEach.call(nodo.querySelectorAll("[data-variantes-capa]"), function (hueco) {
-    var capa = catalogo.capas[hueco.dataset.variantesCapa];
-    if (!capa || hueco.firstChild) { return; }
-    hueco.appendChild(variantes(capa));
+    var id = hueco.dataset.variantesCapa;
+    var capa = catalogo.capas[id];
+    if (!capa) { return; }
+    if (!hueco.firstChild) { hueco.appendChild(variantes(capa)); }
+    /* Las clases de una capa de AREA se listan SOLO si la capa esta prendida. Son diez o doce
+       por capa y van en columna: con las dos apagadas, la leyenda medía 661 px debajo de un
+       mapa de 640 y lo que se leía primero era una lista de clases de un mapa que no estaba
+       dibujado. Las capas de linea no cambian: sus variantes son una o dos y van en fila. */
+    if (capa.geometria === "poligonos") {
+      var casilla = nodo.querySelector('input[data-capa="' + id + '"]');
+      hueco.hidden = !(casilla && casilla.checked);
+    }
   });
   Array.prototype.forEach.call(nodo.querySelectorAll("input[data-capa]"), function (input) {
     var renglon = input.closest("[data-capa-item]");
@@ -263,6 +291,27 @@ function tooltipDeCapa() {
   };
 }
 
+/* El camino de un rasgo de area: un sub-camino cerrado por anillo, TODOS en el mismo trazo.
+   Es lo que hace que un hueco quede hueco: el navegador pinta con la regla de no-cero, igual
+   que un `<path>` de SVG, asi que el anillo interior de una unidad que rodea a otra se
+   descuenta del relleno en vez de taparla. Dibujando un poligono por anillo (que es lo
+   primero que uno escribe) el hueco sale lleno y le pisa el color al vecino de adentro: en
+   Aptitud de Tierras hay un rasgo con 13 huecos y en la Zonificacion uno con 6. */
+function caminoDePoligono(partes, api) {
+  var d = "";
+  for (var p = 0; p < partes.length; p++) {
+    for (var a = 0; a < partes[p].length; a++) {
+      var anillo = partes[p][a];
+      for (var k = 0; k < anillo.length; k++) {
+        var xy = api.coord(anillo[k]);
+        d += (k === 0 ? "M" : "L") + xy[0].toFixed(2) + " " + xy[1].toFixed(2);
+      }
+      d += "Z";
+    }
+  }
+  return d;
+}
+
 /* Las series de las capas prendidas y ya bajadas. `interactivas`: con tooltip (portada);
    sin el, `silent` (mapa de calor: el clic y el tooltip siguen siendo del departamento).
    `halo`: el color del fondo del cuadro, que despega las lineas del relleno oscuro. */
@@ -302,6 +351,35 @@ function series(catalogo, ids, opciones) {
           punto.labelLayout = { hideOverlap: true };
         }
         salida.push(punto);
+        return;
+      }
+      if (capa.geometria === "poligonos") {
+        /* ECharts no tiene serie de AREAS sobre un `geo` (la serie `map` dibuja el mapa
+           registrado, no un GeoJSON cualquiera), asi que las areas se dibujan a mano con una
+           serie `custom`: un elemento `path` por rasgo, con los vertices pasados por
+           `api.coord`, que es la MISMA proyeccion con la que el geo dibuja los
+           departamentos. Asi la capa y la cartografia se mueven juntas con el zoom. */
+        salida.push({
+          type: "custom", coordinateSystem: "geo", geoIndex: 0, z: z + 1,
+          silent: !opciones.interactivas,
+          tooltip: opciones.interactivas ? tooltipDeCapa() : { show: false },
+          itemStyle: {
+            color: estilo.color,
+            opacity: estilo.opacidad === undefined ? 0.78 : estilo.opacidad,
+            borderColor: estilo.borde || estilo.color,
+            borderWidth: estilo.ancho === undefined ? 0.4 : estilo.ancho
+          },
+          emphasis: { focus: "none", itemStyle: { opacity: 1 } },
+          renderItem: (function (datosDeLaCapa) {
+            return function (params, api) {
+              var dato = datosDeLaCapa[params.dataIndex];
+              if (!dato || !dato.partes) { return null; }
+              return { type: "path", style: api.style(),
+                       shape: { d: caminoDePoligono(dato.partes, api) } };
+            };
+          }(datos)),
+          data: datos
+        });
         return;
       }
       var tipo = estilo.trazo === "punteado" ? [4, 3] : "solid";

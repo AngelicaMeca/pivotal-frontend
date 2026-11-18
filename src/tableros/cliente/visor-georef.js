@@ -41,6 +41,18 @@
         vuelva a esperar. */
 
 var ZOOM_MAXIMO = 14;     // veces el encuadre inicial
+/* ...pero nunca menos que esto, medido contra los pixeles REALES de la imagen (8 = 800% del
+   tamanio real, el mismo tope que el visor de las galerias).
+
+   Por que hacen falta los dos topes. Un multiplo del ENCUADRE castiga a la imagen grande: el
+   mapa del NDVI son 242x321 pixeles para la provincia y el Mapa Nacional de Cultivos son
+   2015x2704, ocho veces mas detalle lineal. Como los dos arrancan ocupando la misma caja, 14
+   veces el encuadre lleva al NDVI muy por encima de su tamanio real -se agrandan pixeles
+   borrosos, y se siente como mucho zoom- y al mapa de cultivos apenas a cuatro veces el suyo,
+   aunque ahi haya ocho veces mas dato. Era lo que preguntaba JC el 18-nov-2026: "¿por que el
+   mapa de cultivos tiene poco zoom?". Con el segundo tope, una imagen detallada se puede mirar
+   hasta 800% de sus pixeles reales, y las chicas no cambian: su tope por encuadre ya es mayor. */
+var ZOOM_REAL_MAXIMO = 8;
 var ALTO_LIENZO = 640;    // px; en pantallas angostas lo baja el CSS
 var BANDA = 4.5;          // px de la imagen a cada lado de un limite donde se busca su linea
 
@@ -666,7 +678,8 @@ export default function crearVisor(nodo, elemento, opciones) {
 
   // ---------- zoom y arrastre ----------
   function zoomEn(px, py, factor) {
-    var nueva = Math.min(escalaEncuadre * ZOOM_MAXIMO, Math.max(escalaEncuadre * 0.6, estado.s * factor));
+    var tope = Math.max(escalaEncuadre * ZOOM_MAXIMO, ZOOM_REAL_MAXIMO);
+    var nueva = Math.min(tope, Math.max(escalaEncuadre * 0.6, estado.s * factor));
     var f = nueva / estado.s;
     estado.tx = px - (px - estado.tx) * f;
     estado.ty = py - (py - estado.ty) * f;

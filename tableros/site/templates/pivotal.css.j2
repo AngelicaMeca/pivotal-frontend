@@ -2946,7 +2946,18 @@ dialog.zoom.zoom-visible::backdrop { opacity: 1; }
   display: inline-block; flex: 0 0 auto; width: .6rem; height: .6rem;
   border: 1.5px solid; border-radius: 50%; vertical-align: middle;
 }
+/* La muestra de una capa de AREA (los mapas del INTA): un cuadradito con el RELLENO de la
+   clase, que es lo que dice el mapa. Un trazo no serviria: el color de estas capas es el
+   interior del poligono, no su borde. */
+.capas-area {
+  display: inline-block; flex: 0 0 auto; width: .85rem; height: .62rem;
+  border: 1px solid; border-radius: 2px; vertical-align: middle;
+}
 .capas-muestra { display: inline-flex; align-items: center; justify-content: center; width: 1.5rem; }
+/* Una leyenda de diez o doce clases con nombres largos (la aptitud del INTA dice "G3 -
+   Ganadera: Apta para pasturas, receptividad 10-30 ha-UG") no entra en una fila de variantes:
+   va en columna, cada renglon con su muestra al lado del nombre. */
+.capas-variantes > span.capas-variantes-area { flex-direction: column; gap: .15rem; font-size: .68rem; }
 .capas-variante { display: inline-flex; align-items: center; gap: .3rem; }
 .capas-variantes > span { display: flex; flex-wrap: wrap; gap: .1rem .7rem; }
 .capas-variantes { font-size: .64rem; color: var(--texto-apoyo); padding-left: 3.35rem; }

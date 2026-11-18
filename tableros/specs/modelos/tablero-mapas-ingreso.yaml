@@ -34,7 +34,7 @@ familia: agroclima
 seccion: mapas
 
 titulo: "Mapas"
-subtitulo: "Provincia de Santiago del Estero · visores y capas de los organismos"
+subtitulo: "Provincia de Santiago del Estero · mapas propios y visores departamentales de los organismos"
 breadcrumb: "Mapas - Provincia - Acceso a visores y capas"
 
 # Sin banda de KPIs, como la portada de AgroClima: del titulo directo a las tarjetas.
@@ -46,70 +46,44 @@ paneles:
   acciones_de_tablero:
     - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
 
-  accesos-inta-visor:
-    titulo: "INTA · Visor de mapas"
-    subtitulo: "Cada tarjeta abre el visor del INTA en el encuadre de la provincia; la capa se prende en el menú de la izquierda"
-    pie: "Fuente: INTA - Instituto Nacional de Tecnología Agropecuaria"
+  # ---------------------------------------------------------------------------
+  # LOS OCHO ACCESOS DEL INTA SALIERON DE ACA el 18-nov-2026, por pedido de JC (comentario en
+  # la tarea 1220512131004640), textual: "JAMAS DIJE QUE PONGAMOS LINKS EXTERNOS AL RESTO DE
+  # LOS MAPAS... la idea es QUE ESTEN DENTRO DE AGRIFOOD!!!! Nunca pusimos links externos a
+  # nada, por ende, no se porque se hizo en este caso. La idea era BAJAR LAS CAPAS Y PONER
+  # NUESTRO PROPIO VISOR, SI NO SE PUEDE, ELIMINAMOS TODO."
+  #
+  # Dos ya estan adentro: "Aptitud de Tierras" y "Zonificacion del Uso del Suelo" son la
+  # pagina "Suelos y uso del suelo" (tablero-mapas-suelos.yaml), con las capas bajadas por el
+  # WFS del INTA y dibujadas en nuestro mapa, con la leyenda del propio INTA.
+  #
+  # Las otras seis se bajan tambien (es lo que JC decia: "TODOS TIENEN la opcion DESCARGAR") y
+  # entran en cuanto esten transformadas; mientras tanto NO quedan como link externo, que es
+  # justo lo que el pidio sacar. Que falta para cada una esta medido y escrito en
+  # configs/dims/capas-inta.yaml y preguntado en el backlog 129.
+  #
+  # Las tarjetas del INDEC y de la CONAE se quedan: esas NO son links externos, abren el visor
+  # del organismo EMBEBIDO adentro del sitio, que es el propio piso que puso JC en el mismo
+  # comentario ("Si hay algun impedimento en la descarga de las capas, al menos hagamos como
+  # estan los mapas de poblacion del INDEC").
+  #
+  # El panel de ACCESO a lo nuestro es el primero, porque es lo unico de esta portada que no
+  # sale del sitio.
+  accesos-propios:
+    titulo: "Mapas de B³ AgriFood"
+    subtitulo: "Dibujados dentro del sitio, sobre la división departamental y con zoom"
+    pie: "Fuente: INTA - Aptitud de Tierras y Zonificación del Uso del Suelo"
     tarjetas:
-      - organismo: "INTA"
-        titulo: "Cuencas hídricas del noroeste Argentino"
-        detalle: "Visor INTA · Agua > Cuencas"
-        externo: "https://visor.inta.gob.ar/es#5.45/-25.045/-65.584"
-        miniatura: imagen
-        imagen: mapas/ingreso/cuencas-hidricas-noa.png
-      - organismo: "INTA"
-        titulo: "Cursos de Agua Noroeste Argentino"
-        detalle: "Visor INTA · Agua > Red de drenaje"
-        externo: "https://visor.inta.gob.ar/es#6.38/-25.739/-66.292"
-        miniatura: imagen
-        imagen: mapas/ingreso/cursos-de-agua-noa.png
-      - organismo: "INTA"
-        titulo: "Areas ganaderas deforestadas durante 2008-2017"
-        detalle: "Visor INTA · Ganadería"
-        externo: "https://visor.inta.gob.ar/es#6.49/-26.617/-65.338"
-        miniatura: imagen
-        imagen: mapas/ingreso/areas-ganaderas-deforestadas.png
-      - organismo: "INTA"
-        titulo: "Cobertura del suelo de la Republica Argentina. Año 2006-2007 (LCCS-FAO)"
-        detalle: "Visor INTA · Ordenamiento Territorial > Uso y cobertura"
-        externo: "https://visor.inta.gob.ar/es#7.68/-26.549/-64.776"
-        miniatura: imagen
-        imagen: mapas/ingreso/cobertura-del-suelo-lccs-fao.png
-
-  accesos-inta-catalogo:
-    titulo: "INTA · Catálogo de datos"
-    subtitulo: "Fichas del catálogo del INTA, con el mapa y sus metadatos"
-    pie: "Fuente: INTA - Instituto Nacional de Tecnología Agropecuaria"
-    tarjetas:
-      - organismo: "INTA"
-        titulo: "Aptitud de Tierras"
-        externo: "https://geo-nodo02.inta.gob.ar/catalogue/#/dataset/140"
+      - organismo: "B³ AgriFood"
+        titulo: "Suelos y uso del suelo"
+        detalle: "Aptitud de tierras y zonificación del uso del suelo (INTA)"
+        bajada: >
+          Las dos capas del INTA dibujadas en el mapa de la provincia, con sus clases y sus
+          colores oficiales. Se prenden y se apagan, y el mapa se acerca con la rueda del
+          mouse.
+        destino: tablero-mapas-suelos
         miniatura: imagen
         imagen: mapas/ingreso/aptitud-de-tierras.png
-      - organismo: "INTA"
-        titulo: "Suelo Santiago del Estero"
-        detalle: "Escala 1:500.000"
-        bajada: "Mapa de suelos de la provincia. Fuente de la ficha: Angueira C., 2007."
-        externo: "https://geo-nodo02.inta.gob.ar/catalogue/#/dataset/135"
-        miniatura: imagen
-        imagen: mapas/ingreso/suelo-santiago-del-estero.png
-      - organismo: "INTA"
-        titulo: "Zonificación del Uso del Suelo"
-        bajada: "Elaborada en el marco de la Ley provincial 6.841, de ordenamiento de las áreas forestales."
-        externo: "https://geo-nodo02.inta.gob.ar/catalogue/#/dataset/59"
-        miniatura: imagen
-        imagen: mapas/ingreso/zonificacion-uso-del-suelo.png
-      - organismo: "INTA"
-        titulo: "Ordenamiento Territorial de Bosques Nativos (actualización 2015)"
-        # La interpretacion es de JC, literal (celda D214 del Excel). Es la unica que escribio
-        # y la publica el sitio porque sin ella el semaforo no se entiende.
-        bajada: >
-          Zona roja: no se puede alterar el ecosistema (desmontar, etc.). Amarilla: explotación
-          bajo determinadas condiciones. Verde: libre disponibilidad. Ley 6942, actualización
-          2015.
-        externo: "https://geo-nodo02.inta.gob.ar/catalogue/#/dataset/11"
-        miniatura: imagen
-        imagen: mapas/ingreso/ordenamiento-bosques-nativos.png
 
   accesos-conae:
     titulo: "CONAE"
@@ -150,9 +124,8 @@ paneles:
         imagen: mapas/ingreso/parajes.png
 
   orden:
-    - {id: accesos-inta-visor, ancho: 6, columna: izq}
-    - {id: accesos-inta-catalogo, ancho: 6, columna: der}
-    - {id: accesos-conae, ancho: 6, columna: izq}
-    - {id: accesos-indec, ancho: 6, columna: der}
+    - {id: accesos-propios, ancho: 6, columna: izq}
+    - {id: accesos-conae, ancho: 6, columna: der}
+    - {id: accesos-indec, ancho: 12, columna: izq, nueva_banda: true}
 
 filtros: []

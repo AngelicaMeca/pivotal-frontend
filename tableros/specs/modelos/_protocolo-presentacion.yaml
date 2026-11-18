@@ -1270,6 +1270,94 @@ colores:
         - {cuando: {tension: ["33"]}, color: "#6b58a0", ancho: 1.2, trazo: lleno, rotulo: "nivel 33"}
         - {cuando: {tension: ["13"]}, color: "#9185bd", ancho: 0.7, trazo: lleno, opacidad: 0.8, rotulo: "nivel 13"}
         - {cuando: {}, color: "#9185bd", ancho: 0.7, trazo: punteado, opacidad: 0.8, rotulo: ""}
+    # ----------------------------------------------------------------- mapas de AREA del INTA
+    #
+    # Las dos primeras capas de POLIGONOS del sitio (18-nov-2026). Los colores y los rotulos
+    # son LOS DEL INTA, leidos de su propio SLD (el estilo que publica su GeoServer por
+    # GetStyles) por pipeline/capas_inta.py: mismo criterio que las 18 clases del Mapa
+    # Nacional de Cultivos, que salieron del .qml del INTA. No se eligio ni se retocó ni un
+    # tono: es la leyenda oficial de cada mapa, que es lo que JC quiere ver.
+    #
+    # Por eso este bloque es el unico de `capas_de_contexto` que no sigue las familias de
+    # color del sitio: no es cromo nuestro, es la cartografia del organismo. Un valor del dato
+    # que el SLD no declara CORTA la ingesta, asi que la leyenda y el mapa no se pueden
+    # desincronizar; el estilo general ("Sin clasificar") esta por el contrato del build -el
+    # ultimo estilo tiene que ser el general- y hoy no le toca ningun poligono.
+    #
+    # La opacidad la pone el cliente (0,78 por defecto para un area), no esta aca: es lo que
+    # deja ver el limite departamental por debajo del relleno.
+    inta-aptitud-tierras:
+      estilos:
+        - cuando: {clase: ["A - Agricola: Apta para cultivos"]}
+          rotulo: "A - Agricola: Apta para cultivos"
+          color: "#016300"
+        - cuando: {clase: ["AG - Agricola ganadera: Apta para cultivos con alternancia de pastura"]}
+          rotulo: "AG - Agricola ganadera: Apta para cultivos con alternancia de pastura"
+          color: "#fed200"
+        - cuando: {clase: ["G1  -  Ganadera: Apta para pasturas, receptividad 5 ha-UG"]}
+          rotulo: "G1  -  Ganadera: Apta para pasturas, receptividad 5 ha-UG"
+          color: "#fef7a6"
+        - cuando: {clase: ["G2 - Ganadera: Apta para pasturas, receptividad 5-10 ha-UG"]}
+          rotulo: "G2 - Ganadera: Apta para pasturas, receptividad 5-10 ha-UG"
+          color: "#fea700"
+        - cuando: {clase: ["G3 - Ganadera: Apta para pasturas, receptividad 10-30 ha-UG"]}
+          rotulo: "G3 - Ganadera: Apta para pasturas, receptividad 10-30 ha-UG"
+          color: "#cdc294"
+        - cuando: {clase: ["GA - Ganadera agricola: Apta para pasturas con ciclos de cultivos"]}
+          rotulo: "GA - Ganadera agricola: Apta para pasturas con ciclos de cultivos"
+          color: "#cc981e"
+        - cuando: {clase: ["I - Tierras con riego"]}
+          rotulo: "I - Tierras con riego"
+          color: "#01db00"
+        - cuando: {clase: ["L  -  Lagunas y embalses"]}
+          rotulo: "L  -  Lagunas y embalses"
+          color: "#434580"
+        - cuando: {clase: ["RG3 - Afloramientos rocosos. Ganadera: Apta para pasturas, receptividad 10-30 ha-UG"]}
+          rotulo: "RG3 - Afloramientos rocosos. Ganadera: Apta para pasturas, receptividad 10-30 ha-UG"
+          color: "#a5a5a5"
+        - cuando: {clase: ["Sa - Salinas"]}
+          rotulo: "Sa - Salinas"
+          color: "#c7c3fe"
+        - {rotulo: "Sin clasificar", color: "#b9a79c"}
+    inta-zonificacion-uso-suelo:
+      estilos:
+        - cuando: {clase: ["Zona Agrícola, Ganadera y Forestal"]}
+          rotulo: "Zona Agrícola, Ganadera y Forestal"
+          color: "#ec8925"
+        - cuando: {clase: ["Zona con bosques de protección"]}
+          rotulo: "Zona con bosques de protección"
+          color: "#aaff7f"
+        - cuando: {clase: ["Zona de áreas protegidas"]}
+          rotulo: "Zona de áreas protegidas"
+          color: "#8f0000"
+        - cuando: {clase: ["Zona de bañados, áreas inundables y anegables con ganadería"]}
+          rotulo: "Zona de bañados, áreas inundables y anegables con ganadería"
+          color: "#dfc27d"
+        - cuando: {clase: ["Zona de Embalses y Laguna Mar Chiquita"]}
+          rotulo: "Zona de Embalses y Laguna Mar Chiquita"
+          color: "#0055ff"
+        - cuando: {clase: ["Zona de lagunas saladas y saladillos"]}
+          rotulo: "Zona de lagunas saladas y saladillos"
+          color: "#616191"
+        - cuando: {clase: ["Zona de salinas de Ambargasta"]}
+          rotulo: "Zona de salinas de Ambargasta"
+          color: "#aa55ff"
+        - cuando: {clase: ["Zona Forestal y Ganadera"]}
+          rotulo: "Zona Forestal y Ganadera"
+          color: "#aaaa00"
+        - cuando: {clase: ["Zona Forestal y Ganadera con restricciones"]}
+          rotulo: "Zona Forestal y Ganadera con restricciones"
+          color: "#aa5500"
+        - cuando: {clase: ["Zona Ganadera, Forestal y Agrícola"]}
+          rotulo: "Zona Ganadera, Forestal y Agrícola"
+          color: "#ffaa00"
+        - cuando: {clase: ["Zona Urbana"]}
+          rotulo: "Zona Urbana"
+          color: "#aaaa7f"
+        - cuando: {clase: ["Zonas con riego"]}
+          rotulo: "Zonas con riego"
+          color: "#00aa00"
+        - {rotulo: "Sin clasificar", color: "#b9a79c"}
 
   sin_dato:
     hex: "#bdbdbd"

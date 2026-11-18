@@ -158,6 +158,14 @@ secciones:
     rama: agricultura
     ruta: [Agricultura, Cultivos extensivos]
     url: agricultura/cultivos-extensivos
+    # El Mapa Nacional de Cultivos cuelga de aca desde el 18-nov-2026: JC, "El de cultivos VA
+    # EN AGRICULTURA". Antes estaba en la rama "Mapas". No se le hizo una seccion propia
+    # porque cada seccion exige su tablero-<seccion>.yaml, y eso seria una portada de mas
+    # delante del mapa: el no pidio una portada, pidio el mapa.
+    menu_paginas:
+      - {titulo: "Mapa Nacional de Cultivos", destino: 4001-mapa-cultivos}
+    vistas_sueltas:
+      - 4001-mapa-cultivos
     # La frase de una linea que muestra la landing en "Entra directo a la vista que
     # necesitas" (src/lib/dashboard.ts la lee del contenido generado).
     bajada_corta: "Superficie sembrada y cosechada y producción, por campaña."
@@ -205,6 +213,7 @@ secciones:
   # SIN "Analisis completo" (tercera tanda del 10-ago: solo tableros), banderas de idioma en
   # la cabecera y los dos botones de cabecera que pide el Modelo analisis. La unica vista de
   # detalle es la departamental, suelta, alcanzable por esos botones y por el clic del mapa.
+  # ---------------------------------------------------------------------------
   - id: cultivos-intensivos
     familia: dtv-hortalizas
     bases: [56, 57, 75]
@@ -476,17 +485,17 @@ secciones:
     ruta: [Mapas]
     url: mapas
     titulo: "Mapas"
-    bajada_corta: "Visores y capas de INTA, CONAE e INDEC, y el mapa nacional de cultivos."
+    bajada_corta: "Aptitud de tierras y uso del suelo en nuestro visor, y los mapas de INDEC y CONAE."
     bajada: >
-      Acceso a los visores y catálogos geoespaciales de los organismos -INTA, CONAE e INDEC- y
-      al Mapa Nacional de Cultivos de la campaña 2024/2025, con la cobertura de verano e
-      invierno detectada por satélite sobre el territorio provincial.
+      Los mapas de aptitud de tierras y zonificación del uso del suelo del INTA, dibujados
+      dentro del sitio sobre la división departamental y con zoom, y el acceso a los mapas
+      departamentales del INDEC y a la cobertura de bosque nativo de la CONAE.
     sin_pestanias: true
-    # Las paginas de la rama como renglones del menu lateral, igual que AgroClima.
+    # El Mapa Nacional de Cultivos YA NO esta aca: JC, 18-nov-2026, "El de cultivos VA EN
+    # AGRICULTURA". Pasa a colgar de Cultivos extensivos.
     menu_paginas:
-      - {titulo: "Mapa Nacional de Cultivos", destino: 4001-mapa-cultivos}
-    vistas_sueltas:
-      - 4001-mapa-cultivos
+      - {titulo: "Suelos y uso del suelo", destino: tablero-mapas-suelos}
+    vistas_sueltas: []
     grupos: []
 
   # ---------------------------------------------------------------------------

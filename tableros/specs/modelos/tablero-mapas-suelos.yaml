@@ -1,0 +1,67 @@
+# Aptitud de tierras y zonificación del uso del suelo del INTA, en NUESTRO visor.
+#
+# Es la respuesta al comentario de JC del 18-nov-2026 (tarea 1220512131004640), textual:
+#
+#   "JAMAS DIJE QUE PONGAMOS LINKS EXTERNOS AL RESTO DE LOS MAPAS... la idea es QUE ESTEN
+#   DENTRO DE AGRIFOOD!!!! Nunca pusimos links externos a nada, por ende, no se porque se hizo
+#   en este caso. La idea era BAJAR LAS CAPAS Y PONER NUESTRO PROPIO VISOR, SI NO SE PUEDE,
+#   ELIMINAMOS TODO. PARA QUE QUEDE DENTRO DE NUESTRA WEB. Lo que no entiendo es que si se
+#   pudo hacer con el mapa de cultivos, porque no con los otros???? TODOS TIENEN LA OPCION DE
+#   DESCARGAR LA CAPA."
+#
+# Tenia razon: se bajan por el WFS del INTA. Las dos capas de esta pagina estan commiteadas en
+# configs/dims/capas-inta/ y el sitio publica una copia: no le pide nada al INTA al dibujar.
+# Procedencia, comandos, licencia y lo que hay que saberle al dato, en
+# configs/dims/capas-inta.yaml. Las clases y los colores de la leyenda son los del INTA,
+# leidos de su propio SLD, no una paleta nuestra.
+#
+# ESTA PAGINA REEMPLAZA A DOS DE LAS TARJETAS con link externo de la portada de Mapas
+# ("Aptitud de Tierras" y "Zonificacion del Uso del Suelo", que apuntaban a la ficha del
+# catalogo del INTA). Las otras seis tarjetas del INTA, y por que cada una todavia no esta
+# adentro, estan en la tabla de configs/dims/capas-inta.yaml y en el backlog 129.
+#
+# MISMA MAQUETA QUE INFRAESTRUCTURA, a proposito. JC no mando maqueta de esta pagina, y la
+# unica que dio para un mapa nuestro es la de Infraestructura del 15-nov-2026: "SOLO PONEMOS
+# COMO TITULO 'infraestructura' y que el mapa ocupe toda la pagina pudiendo hacer zoom al
+# maximo. Que el usuario pueda agregar o quitar capas". Asi que esto es el titulo, el mapa a
+# toda la pagina con zoom real, y el control de capas. Nada mas. Sin KPIs: no hay una magnitud
+# que totalizar (la aptitud y la zona son categorias, no kilometros), y JC no dibuja ninguno.
+#
+# LAS DOS CAPAS ARRANCAN APAGADAS, como manda el protocolo para toda capa de contexto: la
+# pagina abre con la division departamental limpia y el visitante prende la que quiere mirar.
+# Y arrancan apagadas por un segundo motivo propio de estas: son capas de AREA que cubren la
+# provincia entera, asi que prendidas las dos a la vez una tapa a la otra. El control las deja
+# comparar prendiendo y apagando, que es como se compara un mapa de aptitud con uno de zonas.
+
+id: tablero-mapas-suelos
+tipo: tablero
+familia: capas-ign
+estado: publicada
+seccion: mapas
+pagina: suelos-y-uso-del-suelo
+
+titulo: "Suelos y uso del suelo"
+subtitulo: "Provincia de Santiago del Estero · aptitud de tierras y zonificación del uso del suelo del INTA"
+titulo_pagina: "Suelos y uso del suelo"
+breadcrumb: "Mapas - Suelos y uso del suelo"
+
+# Sin banda de indicadores: la aptitud y la zona son categorias, no una magnitud que se sume.
+indicadores: []
+kpis_sin_variacion: true
+
+notas_metodologicas: [capas-inta]
+
+paneles:
+  alto: fluye
+  acciones_de_tablero:
+    - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
+  mapa-capas:
+    titulo: "Santiago del Estero - Aptitud de tierras y zonificación del uso del suelo"
+    subtitulo: "Acerque con la rueda del mouse y arrastre para desplazarse · active una capa por vez; pase el mouse por un área para ver de qué clase es"
+    capas:
+      - {id: inta-aptitud-tierras, prendida: false}
+      - {id: inta-zonificacion-uso-suelo, prendida: false}
+  orden:
+    - {id: mapa-capas, ancho: 12, zoom: true}
+
+filtros: []

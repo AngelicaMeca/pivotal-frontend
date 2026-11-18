@@ -9654,7 +9654,14 @@ DIR_CAPAS_IGN = os.path.join(DIR_CONFIGS, "dims", "capas-ign")
 # PRIMERO, que es el que los define para todos. Son dos porque son dos organismos con dos
 # procedencias distintas: las capas del IGN (red vial, ferrocarril, amenazas) y el tendido
 # electrico del CFEE - Secretaria de Energia, que JC pidio el 15-nov-2026 junto a las viales.
-CATALOGOS_DE_CAPAS = ("capas-ign.yaml", "capas-energia.yaml")
+CATALOGOS_DE_CAPAS = ("capas-ign.yaml", "capas-energia.yaml", "capas-inta.yaml")
+
+# Las geometrias que `capas.js` sabe dibujar sobre un `geo`. `poligonos` entro el 18-nov-2026
+# con los mapas del INTA, que son de AREA: lo que dicen es el relleno de cada poligono (de que
+# aptitud, de que zona es cada pedazo de la provincia), asi que dibujar solo el contorno seria
+# perder el mapa. Son una serie `custom` y no `map`: la serie `map` dibuja el mapa REGISTRADO
+# del geo (los departamentos), no un GeoJSON cualquiera.
+GEOMETRIAS_DE_CAPA = ("lineas", "puntos", "poligonos")
 RADIO_TIERRA_KM = 6371.0088          # radio medio (IUGG), el de la nota metodologica
 FORMAS_CON_CAPAS = ("mapa", "mapa-capas")
 _CATALOGO_CAPAS = None
@@ -9691,9 +9698,10 @@ def catalogo_capas():
             if not os.path.exists(origen):
                 raise pr.ErrorDeProtocolo("La capa %s pide %s, que no existe."
                                           % (id_capa, origen))
-            if decl["geometria"] not in ("lineas", "puntos"):
-                raise pr.ErrorDeProtocolo("La capa %s declara la geometria %r (lineas o puntos)."
-                                          % (id_capa, decl["geometria"]))
+            if decl["geometria"] not in GEOMETRIAS_DE_CAPA:
+                raise pr.ErrorDeProtocolo(
+                    "La capa %s declara la geometria %r (%s)."
+                    % (id_capa, decl["geometria"], ", ".join(GEOMETRIAS_DE_CAPA)))
             if id_capa not in estilos:
                 raise pr.ErrorDeProtocolo(
                     "La capa %s no tiene estilo en _protocolo-presentacion.colores."
@@ -12031,6 +12039,11 @@ TABLEROS = {
     # General > Infraestructura y riesgo (capas del IGN, 14-oct-2026)
     "tablero-infraestructura-y-riesgo": construir_tablero_red_vial,
     "tablero-infraestructura-amenazas": construir_tablero_amenazas,
+    # Mapas > Suelos y uso del suelo: las dos capas de AREA del INTA en nuestro visor
+    # (JC, 18-nov-2026: "la idea era BAJAR LAS CAPAS Y PONER NUESTRO PROPIO VISOR"). Usa el
+    # MISMO constructor que Infraestructura: es la misma maqueta -titulo y mapa a toda la
+    # pagina con control de capas- y lo unico que cambia son las capas que declara el spec.
+    "tablero-mapas-suelos": construir_tablero_red_vial,
     # AgroClima (maqueta "0000000000 Maqueta Clima 1.xlsx", 14-oct-2026)
     "tablero-agroclima": construir_tablero_agroclima,
     # Mapas · portada del area (JC, 15-nov-2026, punto 3.b)
@@ -12722,6 +12735,17 @@ def menu_del_sitio(ctx, seccion_actual=None):
             secciones.append({"titulo": seccion["titulo"], "url": seccion["url"],
                               "actual": es_actual,
                               "proximamente": bool(seccion.get("proximamente"))})
+            # Una seccion que NO es la portada de su rama tambien puede poner paginas sueltas
+            # en el menu, debajo de su propio renglon. Hace falta desde el 18-nov-2026, cuando
+            # JC mando el Mapa Nacional de Cultivos a Agricultura ("El de cultivos VA EN
+            # AGRICULTURA"): Agricultura tiene tres secciones y ninguna portada, asi que el
+            # mapa no tenia por donde aparecer. La alternativa era inventarle una seccion
+            # propia, y cada seccion exige su tablero-<seccion>.yaml: una portada de mas
+            # delante del mapa, que el no pidio.
+            for item in seccion.get("menu_paginas") or []:
+                secciones.append({"titulo": item["titulo"], "url": None,
+                                  "destino": item["destino"], "actual": False,
+                                  "proximamente": False})
         salida.append({"id": entrada["rama"], "titulo": entrada["titulo"],
                        "href": href_de_rama(ctx.navegacion, entrada["rama"]),
                        "actual": actual, "secciones": secciones})
