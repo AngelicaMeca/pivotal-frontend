@@ -41,6 +41,13 @@ Dónde: `configs/fuentes-geoespaciales.yaml` (`modo_visualizacion.resuelto`, est
 `pipeline/fuentes_geo.py` (corta la corrida), `site_build.py` (`fuera_del_sitio` de cada tarjeta).
 Una tarjeta que saca al visitante del sitio es un defecto, no una variante.
 
+**Y la regla vale también para los enlaces de adentro de una página, no solo para las tarjetas**
+(cómo la aplicamos, desde el QA del 19-nov-2026): la cita de la fuente es obligatoria y puede
+nombrar su URL, pero **se escribe, no se linkea**. Así salieron el enlace "Visor y descarga del
+INTA" del Mapa Nacional de Cultivos, el "Abrir en el sitio del organismo" del visor embebido y
+las cinco citas clickeables al SEPA en AgroClima. El organismo se sigue nombrando en los tres
+lugares; lo que no está es el clic que lleva afuera.
+
 ## 2. Los mapas tienen que servirle después al agente de IA
 
 > "TENGAN EN CUENTA QUE LA IDEA ES QUE DESPUES EL AGENTE DE IA PUEDA TRABAJAR CON ESOS MAPAS..."
@@ -64,6 +71,13 @@ El zoom es parte de la calidad que espera de cualquier mapa, no una opción. Cua
 página que aprobó (AgroClima), esa página es la especificación: hay que ir a verla.
 Dónde: `zoom: true` en `paneles.orden`, `tablero-infraestructura-y-riesgo.yaml`, CLAUDE.md
 "Mapas e Infraestructura: la revisión de JC del 15-nov-2026".
+
+**"SOLO el título y el mapa" se toma literal** (QA del 19-nov-2026): esa página no lleva banda de
+indicadores ni un segundo título arriba del mapa, y lo que quede debajo del mapa es lo que hay
+que saberle al dato y nada más. Todo lo que va ARRIBA del mapa le saca alto a lo único que pidió.
+Dos cosas más, aprendidas ahí: **la página abre con su mapa puesto** -una página de suelos que
+abre sin un solo suelo a la vista no cumple el pedido- y **el encuadre es del visitante**: prender
+o apagar una capa no lo devuelve al inicio.
 
 > "AUMENTA TAMAÑO DE MAPA EN UN POP UP" (6-oct-2026, hoja "Agri 3 - C"): una galería de mapas se
 > amplía en popup, no se abre en otra página.

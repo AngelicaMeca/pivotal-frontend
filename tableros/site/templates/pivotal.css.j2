@@ -1641,6 +1641,9 @@ dialog.info.info-galeria[open] { display: flex; align-items: center; justify-con
 .galeria-definicion p { margin: 0 0 .5rem; }
 .galeria-definicion p:last-child { margin-bottom: 0; }
 .galeria-definicion a { color: var(--enlace); word-break: break-all; }
+/* La cita escrita y no linkeada (galeria.js, 19-nov-2026): misma URL cortable, en el
+   color de apoyo, para que no se lea como un enlace que no anda. */
+.galeria-cita { color: var(--texto-apoyo); word-break: break-all; }
 /* Cuantas miniaturas por fila lo dice el spec (`por_fila`, JC dibuja seis): viaja como una
    variable CSS que pone galeria.js. Le gana al `auto-fill` de la grilla forrajera porque va
    despues y con la misma especificidad. Los mapas de clima son verticales: a seis por fila
@@ -1779,9 +1782,23 @@ a.acceso:focus-visible { outline: 2px solid var(--enlace); outline-offset: 2px; 
 
 /* RF24.2: la tarjeta cuyo visor el organismo deja embeber se abre ADENTRO del sitio, asi que
    no lleva la flecha de "sale del sitio" sino el signo de que se amplia aca. Las dos clases
-   son excluyentes: el build pone una o la otra, nunca las dos. */
+   son excluyentes: el build pone una o la otra, nunca las dos.
+
+   EL MARCADOR SE DIBUJA, no se escribe con un caracter (QA de Francisco del 19-nov-2026,
+   defecto D5). Hasta el 19-nov esto decia `content: " <STX>9C9"`: era el escape CSS del signo
+   de dos cuadrados unidos (U+29C9) al que una herramienta le habia comido la barra, dejando el
+   caracter de control 0x02 pegado a "9C9". Resultado: las cinco tarjetas del INDEC y del CONAE
+   mostraban los caracteres "9C9" al lado del titulo. Escribir bien el escape no alcanzaba: ese
+   signo no esta en la pila de tipografias del sitio (Calibri, Carlito, Arial) y lo dibujaria
+   la que el navegador encuentre, o ninguna. Asi que el marcador es una VENTANITA de CSS -un
+   cuadro con su barra de titulo-, que no depende de ninguna tipografia, escala con el texto y
+   toma el color de apoyo igual que la flecha de la tarjeta externa. */
 .acceso-embebido .acceso-titulo::after {
-  content: " 9C9"; font-weight: 400; color: var(--texto-apoyo);
+  content: ""; display: inline-block; width: .62em; height: .54em;
+  margin-left: .35em; vertical-align: baseline;
+  border: 1px solid var(--texto-apoyo); border-radius: 1px;
+  /* La barra de titulo de la ventanita: una franja llena arriba, por dentro del borde. */
+  box-shadow: inset 0 .16em 0 0 var(--texto-apoyo);
 }
 
 /* El popup del visor del organismo. Hereda TODO de `.info` (el marco de 2vmin que hace que el
@@ -2979,12 +2996,19 @@ dialog.zoom.zoom-visible::backdrop { opacity: 1; }
 /* UN MAPA QUE SE RECORRE OCUPA LA PAGINA (JC, 15-nov-2026: "que el mapa ocupe toda la pagina
    pudiendo hacer zoom al maximo"). Con 640 px fijos el mapa de Infraestructura entraba en la
    mitad de arriba de la pantalla y abajo quedaba crema: para mirar un camino rural hay que
-   tener lugar. Se toma el alto de la ventana menos la cabecera, la banda y los indicadores
-   (~17rem), con un piso de 640 px -el de siempre- para una pantalla baja. Solo lo lleva el
-   panel que declara `zoom` en su spec: los otros mapas de capas siguen igual. */
+   tener lugar. Se toma el alto de la ventana menos la cabecera y la banda de la miga (~12rem),
+   con un piso de 640 px -el de siempre- para una pantalla baja. Eran 17rem hasta el
+   19-nov-2026, cuando salio la banda de indicadores de las tres paginas de mapa (QA de
+   Francisco, defecto D1): esas 5rem que quedaron libres arriba ahora son mapa. Solo lo lleva
+   el panel que declara `zoom` en su spec: los otros mapas de capas siguen igual. */
 .panel[data-panel="mapa-capas"][data-con-zoom] > .panel-cuerpo > .grafico {
-  height: max(640px, calc(100vh - 17rem));
+  height: max(640px, calc(100vh - 12rem));
 }
+/* El mapa que ocupa la pagina NO lleva titulo de panel (QA de Francisco del 19-nov-2026,
+   defecto D1): el titulo de la pagina ya lo nombra, y un segundo titulo repetia la bajada y le
+   comia un renglon al mapa. El build manda `titulo: ""` y el renglon vacio no ocupa nada. Va
+   scopeado a este panel: en el resto del sitio un `h2` vacio lo llena el JS al pintar. */
+.panel[data-panel="mapa-capas"] > .panel-cab h2:empty { display: none; }
 .panel[data-panel="mapa-capas"] > .panel-cuerpo > .capas-a-la-vista { grid-column: 2; grid-row: 1; }
 .panel[data-panel="mapa-capas"] > .panel-cuerpo > .cuadro-nota,
 .panel[data-panel="mapa-capas"] > .panel-cuerpo > .panel-vacio { grid-column: 1 / -1; }

@@ -18,7 +18,6 @@ fuentes:
   red_vial: "Fuente: IGN - Dirección Nacional de Vialidad, direcciones provinciales de vialidad y red vial terciaria (Capas SIG)"
   ferrocarril: "Fuente: IGN - Red ferroviaria (Capas SIG)"
   mapa_base: "Fuente: IGN - Límites departamentales"
-  inta_suelos: "Fuente: INTA - Aptitud de Tierras y Zonificación del Uso del Suelo"
   desinventar: "Fuente: IGN, base DESINVENTAR 1970-2015"
   sinagir: "Fuente: IGN, SINAGIR - PNRRD 2018-2023"
   # La licencia del tendido (CC BY 4.0) exige cita de fuente: el texto es el que declara
@@ -38,22 +37,47 @@ notas_metodologicas:
       completa del IGN. Los kilómetros de línea eléctrica se calculan con la misma fórmula
       sobre el trazado del Consejo Federal de la Energía Eléctrica, también recortado al límite
       de la provincia.
-  capas-inta:
+  # UNA NOTA POR PAGINA, y cada una describe SUS capas (QA de Francisco del 19-nov-2026,
+  # defecto D3). Antes habia una sola nota `capas-inta` compartida por las dos paginas de mapas
+  # del INTA, escrita cuando Suelos tenia dos capas: decia "estos dos mapas" y describia la
+  # aptitud de tierras, asi que la pagina de Cuencas y cursos de agua explicaba el mapa de otra
+  # pagina y Suelos prometia dos capas de las cuatro que tiene.
+  capas-inta-suelos:
+    titulo: "Qué muestran estos cuatro mapas"
+    texto: >
+      Son cuatro capas del INTA, descargadas de sus geoservicios el 18 de noviembre de 2026 y
+      publicadas acá como copia propia: el sitio no le pide nada al servidor del INTA al
+      dibujarlas. "Aptitud de tierras" clasifica cada pedazo de la provincia por para qué
+      sirve -agrícola, ganadera con su receptividad en hectáreas por unidad ganadera, agrícola
+      ganadera, con riego, afloramientos rocosos, salinas, lagunas y embalses-;
+      "Zonificación del uso del suelo" lo hace por zona de uso -forestal y ganadera, agrícola
+      ganadera y forestal, bañados y áreas inundables, bosques de protección, áreas
+      protegidas, urbana, con riego, salinas y lagunas saladas-; "Cobertura del suelo
+      2006-2007" dice qué había sobre el terreno según el sistema de clasificación LCCS de la
+      FAO -bosques, arbustales, pastizales, cultivos, suelo desnudo, agua-; y "Áreas ganaderas
+      deforestadas 2008-2017" marca el desmonte relevado en esos diez años. Los nombres de las
+      clases y sus colores son los que publica el INTA con cada capa, no una escala nuestra.
+      Las tres primeras cubren la provincia entera, así que conviene mirarlas de una por vez:
+      prendidas juntas, la de arriba tapa a la de abajo. La de áreas deforestadas es la única
+      que se mira encima de otra: con la cobertura prendida debajo se lee qué había antes y
+      qué se desmontó después. Dos cosas que el dato no puede: el catálogo del INTA no declara
+      en qué año se relevó la aptitud ni la zonificación, y la cobertura es de 2006-2007, es
+      decir que no describe el suelo de hoy. En el desmonte no se dibujan los parches de menos
+      de una hectárea, que son el 63% de los parches y el 1% de la superficie desmontada.
+  capas-inta-agua:
     titulo: "Qué muestran estos dos mapas"
     texto: >
       Son dos capas del INTA, descargadas de sus geoservicios el 18 de noviembre de 2026 y
       publicadas acá como copia propia: el sitio no le pide nada al servidor del INTA al
-      dibujarlas. "Aptitud de tierras" clasifica cada pedazo de la provincia por para qué
-      sirve -agrícola, ganadera con su receptividad en hectáreas por unidad ganadera,
-      agrícola ganadera, con riego, afloramientos rocosos, salinas, lagunas y embalses- y
-      "Zonificación del uso del suelo" lo hace por zona de uso -forestal y ganadera,
-      agrícola ganadera y forestal, bañados y áreas inundables, bosques de
-      protección, áreas protegidas, urbana, con riego, salinas y lagunas saladas-. Los
-      nombres de las clases y sus colores son los que publica el INTA con cada capa, no una
-      escala nuestra. Las dos cubren la provincia entera, así que conviene mirarlas de una
-      por vez: prendidas juntas, la de arriba tapa a la de abajo. El catálogo del INTA no
-      declara en qué año se relevó ninguna de las dos, por lo que los mapas
-      sirven para ver la aptitud y la zonificación, no para fecharlas.
+      dibujarlas. "Cuencas hídricas" divide el territorio por la cuenca a la que drena cada
+      pedazo -Río Salado, Río Dulce, Salinas de Ambargasta y las demás macrocuencas del
+      Noroeste- y "Cursos de agua" dibuja los ríos, arroyos y cañadas con el tipo que les pone
+      la fuente. Las dos capas son de todo el Noroeste y se publican recortadas al límite de la
+      provincia. Los nombres de las clases y sus colores son los que publica el INTA con cada
+      capa, no una escala nuestra. Se pueden mirar juntas: las cuencas son áreas y los cursos
+      son líneas, así que los ríos quedan dibujados encima de su cuenca. Una cosa que el dato
+      no puede: el 4% de la superficie de la provincia no pertenece a ninguna cuenca en el
+      propio dato del INTA, y ahí el mapa queda sin pintar.
   capas:
     titulo: "Qué muestra el mapa"
     texto: >

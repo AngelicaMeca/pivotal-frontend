@@ -872,6 +872,21 @@ export default function iniciar(PIVOTAL) {
            rueda. Sin esto la pagina quedaria en blanco. */
         opcion.geo = geoDeMapa(proyeccion, opcionesDeCapas);
       }
+      /* EL ENCUADRE ES DEL VISITANTE Y NO SE PIERDE AL PRENDER UNA CAPA (QA de Francisco del
+         19-nov-2026, defecto D6). Prender o apagar una capa vuelve a pasar por aca y redibuja
+         el cuadro entero con `setOption(..., true)` (sin merge, que es lo que hace falta: las
+         series son otras), y eso devolvia el geo a su zoom y su centro de arranque. El que
+         estaba mirando un paraje acercado 20 veces perdia el lugar justo al prender la capa
+         que queria ver encima. Se lee el encuadre del geo que YA esta dibujado -ECharts
+         escribe ahi el zoom y el centro de cada arrastre- y se le pasa al nuevo. La primera
+         vez no hay geo previo y arranca como siempre. */
+      if (conZoom && opcion.geo) {
+        var previo = ((chart.getOption() || {}).geo || [])[0];
+        if (previo && previo.zoom) {
+          opcion.geo.zoom = previo.zoom;
+          if (previo.center) { opcion.geo.center = previo.center; }
+        }
+      }
       chart.setOption(opcion, true);
     });
   }
@@ -2724,17 +2739,19 @@ export default function iniciar(PIVOTAL) {
     marco.setAttribute("loading", "lazy");
     visor.cuerpo.appendChild(marco);
 
+    /* El pie CITA al organismo y nada mas. Hasta el 19-nov-2026 tenia al lado un link "Abrir
+       en el sitio del organismo", que es justo lo que JC mando sacar: "Nunca pusimos links
+       externos a nada" (18-nov-2026), "la idea es QUE ESTEN DENTRO DE AGRIFOOD" (QA de
+       Francisco del 19-nov-2026, defecto D2). El visor del organismo se esta viendo ACA; el
+       link solo servia para irse. La tarjeta conserva su `href` -un Ctrl+clic sigue abriendo
+       el visor del organismo, y sin JS el enlace funciona igual-, pero el sitio no invita a
+       salir. */
     var pie = document.createElement("p");
     pie.className = "visor-pie";
     var cual = document.createElement("span");
-    cual.textContent = "Visor de " + (tarjeta.organismo || "el organismo") + ".";
-    var afuera = document.createElement("a");
-    afuera.href = tarjeta.href;
-    afuera.target = "_blank";
-    afuera.rel = "noopener noreferrer";
-    afuera.textContent = "Abrir en el sitio del organismo";
+    cual.textContent = "Visor de " + (tarjeta.organismo || "el organismo")
+      + ", embebido en esta página.";
     pie.appendChild(cual);
-    pie.appendChild(afuera);
     visor.cuerpo.appendChild(pie);
 
     visor.dialogo.showModal();

@@ -39,7 +39,10 @@ tipo: galeria
 
 titulo: "Mapa Nacional de Cultivos"
 subtitulo: "INTA · campaña 2024/2025 · cobertura de cultivos detectada por satélite, resolución publicada ~210 m"
-breadcrumb: "Mapas - Provincia - Mapa Nacional de Cultivos"
+# La miga sigue el patron de la rama: rama - seccion - Provincia - pagina. Decia "Mapas -
+# Provincia - ..." por arrastre de cuando la pagina colgaba de la rama Mapas, antes de que
+# JC la mandara a Agricultura el 18-nov-2026 (QA de Francisco del 19-nov-2026, defecto D4).
+breadcrumb: "Agricultura - Cultivos Extensivos - Provincia - Mapa Nacional de Cultivos"
 titulo_protocolo: "INTA - Mapa Nacional de Cultivos - Sgo del Estero - Campaña 2024/2025"
 subtitulo_cuadro: "Las dos mitades de la campaña · clic en un mapa para verlo completo"
 
@@ -97,9 +100,13 @@ definicion:
       provincia queda fuera de esa cobertura. Ahí no hay dato, no es que no haya cultivos. El
       ráster original tiene 30 metros de resolución; acá se publica remuestreado a unos 210
       metros para que el mapa se pueda dibujar en el navegador.
-  enlace:
-    texto: "Visor y descarga del INTA"
-    href: "https://ee-deabelle.projects.earthengine.app/view/mnc24-25"
+  # SIN ENLACE AL VISOR DEL INTA (QA de Francisco del 19-nov-2026, defecto D2). Hasta el
+  # 19-nov esta nota cerraba con un link "Visor y descarga del INTA" que abria
+  # ee-deabelle.projects.earthengine.app en otra pestaña, o sea exactamente lo que JC mando
+  # sacar: "Nunca pusimos links externos a nada" (18-nov-2026). El mapa ya esta adentro del
+  # sitio; el visor del INTA no agrega nada que acá no se vea, y la fuente se cita igual en el
+  # pie del cuadro. La URL del visor sigue registrada, para quien tenga que volver al origen,
+  # en configs/dims/mapas-cultivos.yaml (`visor_del_organismo`).
 
 fuente:
   pie: "Fuente: INTA - Mapa Nacional de Cultivos, campaña 2024/2025 (CC BY 4.0)"

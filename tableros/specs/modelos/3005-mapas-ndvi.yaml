@@ -44,7 +44,11 @@ definicion:
     - >
       Se utilizan imágenes del sensor MODIS de los satélites AQUA-TERRA con una resolución
       espacial de 6,25 hectáreas (250 m).
-  enlace: {texto: "https://sepa.inta.gob.ar/productos/", href: "https://sepa.inta.gob.ar/productos/"}
+  # La cita del SEPA se escribe y no se linkea (JC, 18-nov-2026: "Nunca pusimos links
+  # externos a nada"; QA de Francisco del 19-nov-2026, defecto D2). La URL queda a la
+  # vista, que es lo que pide el protocolo de citas; lo que sale es el clic que llevaba
+  # al sitio del INTA. Volver a linkearla es agregarle `href` con la misma URL.
+  enlace: {texto: "https://sepa.inta.gob.ar/productos/"}
 
 fuente:
   pie: "Fuente: SEPA - INTA (Instituto de Clima y Agua)"

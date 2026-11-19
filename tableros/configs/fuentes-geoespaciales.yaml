@@ -535,11 +535,14 @@ fuentes:
     fecha_estado: 2026-10-14
     modo_acceso: descarga-directa
     modo_visualizacion:
-      resuelto: visor-del-organismo
+      resuelto: imagen-en-nuestra-galeria
       criterio: >
-        Se publica la imagen de la ORA en la galería, SIN visor georreferenciado: la ORA publica
-        shapefiles con valores por zona (~120 MB por semana) y ubicarla bien exige un visor
-        vectorial que el pipeline todavía no tiene. Queda pendiente.
+        Se publica la imagen de la ORA en NUESTRA galería, con su cita y sin enlace al sitio de
+        la ORA, pero SIN visor georreferenciado: la ORA publica shapefiles con valores por zona
+        (~120 MB por semana) y ubicarla bien exige un visor vectorial que el pipeline todavía no
+        tiene. Queda pendiente. Decía `visor-del-organismo` hasta el 19-nov-2026, que es el
+        único modo que no se puede publicar (JC: "Nunca pusimos links externos a nada") y además
+        describía mal lo que la página hace: la página nunca tuvo un enlace a la ORA.
     licencia:
       nombre: "Datos abiertos de la ORA"
       exige_cita: true

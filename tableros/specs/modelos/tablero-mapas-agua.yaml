@@ -17,8 +17,14 @@
 #
 # EL ORDEN DE LAS CAPAS IMPORTA ACA, al contrario que en Suelos: las cuencas son areas y los
 # cursos de agua son lineas, asi que van las dos juntas y se leen bien. Las cuencas primero
-# para que los rios queden DIBUJADOS ENCIMA de ellas y no debajo. Arrancan apagadas, como manda
-# el protocolo para toda capa de contexto.
+# para que los rios queden DIBUJADOS ENCIMA de ellas y no debajo.
+#
+# Y POR ESO LAS DOS ARRANCAN PRENDIDAS (QA de Francisco del 19-nov-2026, defecto D6). Hasta el
+# 19-nov arrancaban apagadas y la pagina abria sin una sola cuenca ni un solo rio: el protocolo
+# de las capas apagadas es para las capas de contexto SOBRE UN MAPA DE CALOR, donde la capa es
+# un agregado; aca las capas son la pagina. Se bajan 1,05 MB al abrir (~200 KB por la red, que
+# las sirve comprimidas), del mismo orden que los 616 KB de Infraestructura, que tambien abre
+# con sus capas prendidas. Preguntado en el backlog 132.
 #
 # SIN KPIs: no hay una magnitud que totalizar. La superficie de cada cuenca dentro de la
 # provincia se podria calcular, pero seria un numero NUESTRO sobre un dato del INTA que el
@@ -39,18 +45,19 @@ breadcrumb: "Mapas - Cuencas y cursos de agua"
 indicadores: []
 kpis_sin_variacion: true
 
-notas_metodologicas: [capas-inta]
+notas_metodologicas: [capas-inta-agua]
 
 paneles:
   alto: fluye
   acciones_de_tablero:
     - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
   mapa-capas:
-    titulo: "Santiago del Estero - Cuencas hídricas y cursos de agua"
+    # SIN TITULO, igual que Infraestructura y Suelos (QA del 19-nov-2026, D1).
+    titulo: ""
     subtitulo: "Acerque con la rueda del mouse y arrastre para desplazarse · active las capas que quiera ver; pase el mouse por un área o un curso para ver de cuál se trata"
     capas:
-      - {id: inta-cuencas, prendida: false}
-      - {id: inta-cursos-de-agua, prendida: false}
+      - {id: inta-cuencas, prendida: true}
+      - {id: inta-cursos-de-agua, prendida: true}
   orden:
     - {id: mapa-capas, ancho: 12, zoom: true}
 

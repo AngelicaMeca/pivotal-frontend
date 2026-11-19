@@ -39,6 +39,10 @@ QUE CORTA LA CORRIDA, y por que requisito:
               `fecha_validacion`: sin la validacion explicita del analista no se publica
     - RF17.3  una fuente publicada como dato por departamento (`publicado_como: capa` con
               `normalizacion.aplicada: true`) no se publica sin esa validacion
+    - JC      una fuente publicada NO puede resolverse como `visor-del-organismo`: eso es un
+              enlace que saca al visitante del sitio (JC, 18-nov-2026, doctrina 1). Se publica
+              con nuestro visor, con el del organismo EMBEBIDO o como imagen en nuestra
+              galeria; si ninguna de las tres se puede, no se publica
 
   Coherencia con el repo
     - `publicado_en` solo en estado `publicada` o con `publicado_como: ninguno`
@@ -73,7 +77,14 @@ ALCANCES = ("nacional", "provincial", "regional", "departamental")
 MODOS_ACCESO = ("visor-embebible", "descarga-directa", "catalogo-con-descarga", "ogc-wms",
                 "ogc-wfs", "exportacion-desde-app")
 MODOS_VISUALIZACION = ("visor-del-organismo", "visor-del-organismo-embebido",
-                       "visor-propio")
+                       "visor-propio", "imagen-en-nuestra-galeria")
+# JC, 18-nov-2026: "JAMAS DIJE QUE PONGAMOS LINKS EXTERNOS AL RESTO DE LOS MAPAS... la idea es
+# QUE ESTEN DENTRO DE AGRIFOOD!!!! Nunca pusimos links externos a nada". `visor-del-organismo`
+# -mandar al visitante al sitio del organismo- es el unico modo que NO se puede publicar: queda
+# en el vocabulario porque describe el estado de una fuente mientras se evalua, pero ninguna
+# fuente publicada puede resolverse asi (bloqueo de abajo). Los tres que si: nuestro visor, el
+# del organismo EMBEBIDO adentro del sitio, y la imagen de la fuente en nuestra galeria.
+AFUERA = "visor-del-organismo"
 # RF24.2: el visor del organismo incrustado en el sitio. Es un modo aparte y no un detalle
 # de presentacion, porque no todos los visores se dejan embeber y declararlo mal deja un
 # iframe EN BLANCO en produccion, que es peor que el enlace que habia.
@@ -210,6 +221,20 @@ def verificar(catalogo, raiz=RAIZ):
             if licencia.get("exige_cita") and not licencia.get("atribucion"):
                 fallos.append("%s: la licencia exige cita de fuente y no tiene `atribucion` "
                               "escrita (RF15.1): no se publica." % fid)
+            # La regla de JC del 18-nov-2026 (doctrina 1): nada se publica mandando al
+            # visitante afuera. Si la capa no se puede bajar ni el visor se deja embeber, la
+            # fuente no se publica -se queda en `aprobada` con su motivo- y la decision de que
+            # hacer con ella va al backlog. El ERS no lo pedia; JC si, dos veces y en
+            # mayusculas, y el catalogo es el unico lugar donde eso se puede hacer cumplir
+            # antes de que la pagina exista.
+            if (fuente.get("modo_visualizacion") or {}).get("resuelto") == AFUERA:
+                fallos.append(
+                    "%s: se publica como %s y su `modo_visualizacion.resuelto` es %r, o sea un "
+                    "enlace que saca al visitante del sitio. JC, 18-nov-2026: \"Nunca pusimos "
+                    "links externos a nada... la idea es QUE ESTEN DENTRO DE AGRIFOOD\". Las "
+                    "opciones son visor-propio, visor-del-organismo-embebido o "
+                    "imagen-en-nuestra-galeria; si ninguna se puede, la fuente no se publica."
+                    % (fid, forma, AFUERA))
             # RF15.2
             if forma == "descarga" and licencia.get("redistribucion") != "permitida":
                 fallos.append("%s: se publica como DESCARGA y su licencia dice "

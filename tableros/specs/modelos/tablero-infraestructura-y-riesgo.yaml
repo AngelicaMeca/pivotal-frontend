@@ -65,30 +65,36 @@ subtitulo: "Provincia de Santiago del Estero · red vial, ferrocarril y tendido 
 # el 17-nov-2026 por pedido de JC, y la seccion es ahora un titulo del menu de la izquierda.
 breadcrumb: "Infraestructura"
 
-# CUATRO tarjetas, que son EXACTAMENTE las cuatro cosas que JC enumera el 15-nov-2026: "los
-# mapas de Redes viales (primaria, secundaria y terciaria) y el de tendido electrico". Las
-# variaciones no existen (es una foto).
+# SIN BANDA DE INDICADORES (QA de Francisco del 19-nov-2026, defecto D1). Hasta el 19-nov esta
+# pagina tenia cuatro tarjetas de kilometros (rutas nacionales, provinciales, caminos rurales y
+# linea de media tension) y un segundo titulo arriba del mapa. Las dos cosas van ARRIBA del
+# mapa, o sea que le sacan alto a lo unico que JC pidio: "SOLO PONEMOS COMO TITULO
+# 'infraestructura' y que el mapa ocupe toda la pagina" (15-nov-2026). El "SOLO" es textual, y
+# este archivo ya anticipaba el pedido: "Si JC quiere la pagina con el mapa y nada mas, es
+# `indicadores: []`". Eso es lo que esta hecho.
 #
-# El layout de la grilla admite hasta cuatro (`verificar_tablero`), asi que no entran mas. Lo
-# que quedo afuera y donde esta: los km de VIA FERREA ACTIVA y la cantidad de ESTACIONES
-# (ferrocarril, que JC no nombra el 15-nov) siguen en el mapa como capa, con su tooltip; y los
-# km por tipo de calzada, por estado del ramal y por nivel de tension estaban en tres tablas
-# que salieron con el mapa a pagina completa (ver el punto (d) de arriba).
-indicadores:
-  - {indicador: km, capa: rutas-nacionales, etiqueta: "Rutas nacionales"}
-  - {indicador: km, capa: rutas-provinciales, etiqueta: "Rutas provinciales"}
-  - {indicador: km, capa: caminos-terciarios, etiqueta: "Caminos rurales"}
-  - {indicador: km, capa: tendido-media-tension, etiqueta: "Línea de media tensión"}
+# Los kilometros NO se perdieron: el mapa los sigue diciendo por departamento en el cartel de
+# cada uno (RF25, `valores_por_departamento`), y sus armadores siguen en `PANELES_RED_VIAL`.
+# Volver a poner la banda es volver a declarar las cuatro tarjetas aca.
+indicadores: []
 kpis_sin_variacion: true
 
-notas_metodologicas: [capas, km-de-red, tendido]
+# `km-de-red` salio con la banda de KPIs: explicaba como se miden kilometros que la pagina ya
+# no publica. Las otras dos se quedan porque van DEBAJO del mapa (no le sacan alto) y son lo
+# que hay que saberle al dato: que capa es de quien, y que el tendido no es del IGN y no sirve
+# para ubicar un poste.
+notas_metodologicas: [capas, tendido]
 
 paneles:
   alto: fluye
   acciones_de_tablero:
     - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
   mapa-capas:
-    titulo: "Santiago del Estero - Red vial, ferrocarril y tendido eléctrico"
+    # SIN TITULO a proposito (QA del 19-nov-2026, D1): el titulo de la pagina ya es
+    # "Infraestructura" y su bajada ya dice que es la red vial, el ferrocarril y el tendido.
+    # Un `titulo` aca era un SEGUNDO titulo que repetia la bajada palabra por palabra y le
+    # comia un renglon al mapa. El renglon vacio no queda (CSS: `h2:empty` del mapa-capas).
+    titulo: ""
     subtitulo: "Acerque con la rueda del mouse y arrastre para desplazarse · active o desactive cada capa; pase el mouse por un trazo para ver qué es"
     # Las capas del mapa, en el orden en que se dibujan (la primera abajo). `prendida` es como
     # arranca la pagina. Las dos capas pesadas arrancan apagadas: los caminos rurales son

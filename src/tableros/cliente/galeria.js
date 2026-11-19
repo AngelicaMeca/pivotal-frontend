@@ -412,14 +412,26 @@ export default function iniciar(PIVOTAL) {
         p.textContent = texto;
         cuadro.appendChild(p);
       });
+      /* LA CITA SE ESCRIBE, NO SE LINKEA, cuando el spec no declara `href` (JC, 18-nov-2026:
+         "Nunca pusimos links externos a nada... la idea es QUE ESTEN DENTRO DE AGRIFOOD";
+         QA de Francisco del 19-nov-2026, defecto D2). Las galerias de AgroClima citan al SEPA
+         del INTA con su propia URL: la URL se sigue leyendo -quien quiera ir al origen la
+         copia- y el sitio no manda a nadie afuera. Un spec que SI declara `href` sigue
+         dibujando su enlace, que es lo que hacian todas hasta el 19-nov. */
       if (definicion.enlace) {
         var p = document.createElement("p");
-        var a = document.createElement("a");
-        a.href = definicion.enlace.href;
-        a.textContent = definicion.enlace.texto;
-        a.rel = "noopener";
-        a.target = "_blank";
-        p.appendChild(a);
+        var cita;
+        if (definicion.enlace.href) {
+          cita = document.createElement("a");
+          cita.href = definicion.enlace.href;
+          cita.rel = "noopener";
+          cita.target = "_blank";
+        } else {
+          cita = document.createElement("span");
+          cita.className = "galeria-cita";
+        }
+        cita.textContent = definicion.enlace.texto;
+        p.appendChild(cita);
         cuadro.appendChild(p);
       }
       lateral.appendChild(cuadro);

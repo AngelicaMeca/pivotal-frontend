@@ -28,11 +28,17 @@
 # toda la pagina con zoom real, y el control de capas. Nada mas. Sin KPIs: no hay una magnitud
 # que totalizar (la aptitud y la zona son categorias, no kilometros), y JC no dibuja ninguno.
 #
-# LAS TRES CAPAS ARRANCAN APAGADAS, como manda el protocolo para toda capa de contexto: la
-# pagina abre con la division departamental limpia y el visitante prende la que quiere mirar.
-# Y arrancan apagadas por un segundo motivo propio de estas: son capas de AREA que cubren la
-# provincia entera, asi que prendidas dos a la vez una tapa a la otra. El control las deja
-# comparar prendiendo y apagando, que es como se compara un mapa de aptitud con uno de zonas.
+# LA PRIMERA CAPA ARRANCA PRENDIDA Y LAS OTRAS TRES APAGADAS (QA de Francisco del 19-nov-2026,
+# defecto D6). Hasta el 19-nov arrancaban las cuatro apagadas, por arrastre del protocolo de
+# las capas de contexto, que son opt-in SOBRE UN MAPA DE CALOR: ahi la capa es un agregado al
+# dato del mapa. Aca las capas SON la pagina, asi que con todo apagado "Suelos y uso del suelo"
+# abria mostrando la division departamental y ningun suelo. Abre con "Aptitud de tierras", que
+# es la mas general de las cuatro y la mas liviana (137 KB).
+#
+# Las otras tres siguen apagadas, y no por peso: son capas de AREA que cubren la provincia
+# entera, asi que prendidas dos a la vez una tapa a la otra. El control las deja comparar
+# prendiendo y apagando, que es como se compara un mapa de aptitud con uno de zonas.
+# Cual arranca prendida es decision de JC: preguntado en el backlog 132.
 #
 # LA TERCERA ES LA COBERTURA DEL SUELO 2006-2007 (LCCS-FAO), que entro despues que las otras
 # dos: es una capa NACIONAL de 4,36 millones de vertices y hubo que recortarla a la provincia y
@@ -62,17 +68,19 @@ breadcrumb: "Mapas - Suelos y uso del suelo"
 indicadores: []
 kpis_sin_variacion: true
 
-notas_metodologicas: [capas-inta]
+notas_metodologicas: [capas-inta-suelos]
 
 paneles:
   alto: fluye
   acciones_de_tablero:
     - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
   mapa-capas:
-    titulo: "Santiago del Estero - Aptitud de tierras, uso del suelo, cobertura y áreas deforestadas"
+    # SIN TITULO, igual que Infraestructura (QA del 19-nov-2026, D1): el titulo de la pagina y
+    # su bajada ya dicen esto mismo, y un segundo titulo le come un renglon al mapa.
+    titulo: ""
     subtitulo: "Acerque con la rueda del mouse y arrastre para desplazarse · active una capa por vez; pase el mouse por un área para ver de qué clase es"
     capas:
-      - {id: inta-aptitud-tierras, prendida: false}
+      - {id: inta-aptitud-tierras, prendida: true}
       - {id: inta-zonificacion-uso-suelo, prendida: false}
       - {id: inta-cobertura-suelo, prendida: false}
       # Va ULTIMA a proposito: es la unica que se mira ENCIMA de otra. La cobertura del suelo
