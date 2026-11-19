@@ -14,6 +14,8 @@
 - Cada cambio de código deja el pipeline corriendo de punta a punta: `make build` nunca queda roto en `dev`.
 - Sin notebooks. Sin dependencias nuevas sin justificación escrita en el commit.
 
+Lo que JC ya decidió y no hay que volver a preguntarle está en **`specs/preguntas/doctrina-jc.md`**: una regla por bloque, con su cita textual, su fecha y dónde está implementada. Se lee antes de cambiar cualquier página. Lo que escribió en cada comentario de Asana, partido en pedidos verificados uno por uno, está en `docs/pedidos-jc/`. Los dos los mantiene el agente `interprete-jc`.
+
 ## Los 3 inputs que dispara un humano
 
 1. **Nueva entrega de bases** (Excels de JC): subirlos a una carpeta nueva dentro de `Pivotal Repositorio/Bases de datos` en SharePoint y declararla en `configs/origen-sharepoint.yaml` → invocar agente `ingestor-bases` (las bases sin config no aparecen en los tableros hasta que ese agente las configure). Si solo se actualiza un Excel de una base ya configurada, la tarea automática lo publica sola.
@@ -300,6 +302,7 @@ Eran 8 al auditar la 1ra entrega. La 9 (`stock`) apareció al ingerir la base 48
 | `constructor-reglas` | Nueva regla de negocio, pregunta de JC/Fran, u hoja "Modelo Análisis" nueva. Traduce a specs YAML. |
 | `constructor-dashboards` | Specs nuevos o cambiados. Genera/actualiza las páginas HTML del sitio. |
 | `indexador-contexto` | Llegó un "Bases para Beta - N.xlsx" nuevo. Diff vs anterior, actualiza manifiesto de cobertura. |
+| `interprete-jc` | JC comentó una tarea de Asana (o llegó el link a un comentario). Trae el texto, lo parte en pedidos atómicos, verifica cuáles ya están contra el sitio construido, y escribe la ficha, la doctrina y las preguntas del backlog. **Se invoca ANTES de tocar nada.** |
 
 ## Contexto de negocio mínimo (para decisiones de diseño)
 
