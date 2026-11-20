@@ -82,12 +82,19 @@ function procesar(capa, geo) {
       return;
     }
     if (capa.geometria === "poligonos") {
-      /* Un dato por RASGO y no por parte: los huecos de un rasgo tienen que dibujarse en el
-         mismo trazo que su anillo exterior (ver `caminoDePoligono`). `value` es un punto
-         cualquiera del rasgo, que es lo que ECharts le pide a un dato de serie `custom`. */
+      /* UN DATO POR PARTE del rasgo, no uno por rasgo (cambiado el 21-nov-2026, ver
+         `renderItem`): asi cada parche se puede saltear cuando es mas chico que un pixel o
+         cuando quedo fuera de la vista, que es lo que hace que una capa de 18.085 parches se
+         pueda recorrer. Los HUECOS siguen en el mismo trazo que su anillo exterior, que es lo
+         que importa: los huecos de un poligono viven adentro de su propia parte, nunca en otra.
+         `d` es su camino ya armado en grados (`caminoEnGrados`) y `caja` su rectangulo, con el
+         que se decide si vale la pena dibujarlo. */
       var piezas = geometria.type === "MultiPolygon" ? geometria.coordinates : [geometria.coordinates];
-      if (!piezas.length || !piezas[0].length) { return; }
-      grupo.push({ name: nombre, value: piezas[0][0][0], partes: piezas });
+      piezas.forEach(function (parte) {
+        if (!parte || !parte.length || !parte[0].length) { return; }
+        grupo.push({ name: nombre, value: parte[0][0], partes: [parte],
+                     d: caminoEnGrados([parte]), caja: cajaDeParte(parte[0]) });
+      });
       return;
     }
     var partes = geometria.type === "MultiLineString" ? geometria.coordinates : [geometria.coordinates];
@@ -344,6 +351,125 @@ function caminoDePoligono(partes, api) {
   return d;
 }
 
+/* EL MISMO CAMINO, PERO EN GRADOS Y UNA SOLA VEZ, y la transformacion que lo lleva a la
+   pantalla. Es lo que hace que una capa de area pesada se pueda recorrer.
+
+   El problema que resuelve (medido el 21-nov-2026 en "Suelos y uso del suelo"): las areas
+   ganaderas deforestadas son UN rasgo con 18.085 partes y 145.913 vertices, y `caminoDePoligono`
+   rearmaba el camino entero -145.913 llamadas a `api.coord` y 2,3 MB de texto- EN CADA
+   REPINTADO, o sea en cada paso de zoom y en cada cuadro del arrastre. Resultado: la pagina se
+   congelaba 1,3 segundos por gesto y el mapa era inusable.
+
+   Por que se puede: el `geo` de este mapa no lleva proyeccion cartografica, asi que pasar de
+   (lon, lat) a pixeles es una transformacion AFIN (x = a*lon + b, y = c*lat + d). Entonces el
+   camino se arma una sola vez en grados y lo unico que cambia en cada cuadro son el
+   desplazamiento y la escala del elemento, que es trabajo de la tarjeta de video.
+
+   El factor mil es para no perder precision: los archivos traen 5 decimales (~1 m) y el camino
+   se escribe con 2 decimales sobre grados por mil, o sea los mismos 5. */
+var MIL = 1000;
+
+/* Un parche mas chico que esto, en pixeles, no se dibuja: no se ve y cuesta igual que uno
+   grande. Es menos de un pixel a proposito, para no borrar nada que llegue a verse. */
+var MINIMO_VISIBLE = 0.8;
+
+/* El rectangulo de una parte, en grados: [lon_min, lat_min, lon_max, lat_max]. */
+function cajaDeParte(anillo) {
+  var x0 = anillo[0][0], y0 = anillo[0][1], x1 = x0, y1 = y0;
+  for (var i = 1; i < anillo.length; i++) {
+    var x = anillo[i][0], y = anillo[i][1];
+    if (x < x0) { x0 = x; } else if (x > x1) { x1 = x; }
+    if (y < y0) { y0 = y; } else if (y > y1) { y1 = y; }
+  }
+  return [x0, y0, x1, y1];
+}
+
+function caminoEnGrados(partes) {
+  /* Con `+=` esto son 145.913 concatenaciones de un texto que llega a 2,3 MB; con un arreglo
+     y un `join` al final, una sola. */
+  var trozos = [];
+  for (var p = 0; p < partes.length; p++) {
+    for (var a = 0; a < partes[p].length; a++) {
+      var anillo = partes[p][a];
+      for (var k = 0; k < anillo.length; k++) {
+        trozos.push((k === 0 ? "M" : "L") + (anillo[k][0] * MIL).toFixed(2)
+                    + " " + (anillo[k][1] * MIL).toFixed(2));
+      }
+      trozos.push("Z");
+    }
+  }
+  return trozos.join("");
+}
+
+/* La proyeccion del geo leida como transformacion afin, o `null` si dejo de serlo.
+   Se mide con dos puntos y SE COMPRUEBA con un tercero, lejos de los dos: si algun dia este
+   mapa lleva una proyeccion cartografica de verdad, la comprobacion falla y el dibujo vuelve
+   solo al camino exacto, que es correcto aunque sea lento. Nunca al reves. */
+function transformacionDelGeo(api) {
+  var o = api.coord([-65, -27]);
+  var u = api.coord([-64, -26]);
+  var ax = u[0] - o[0];
+  var ay = u[1] - o[1];
+  if (!ax || !ay) { return null; }
+  var control = api.coord([-62.5, -29]);
+  if (Math.abs(control[0] - (o[0] + ax * 2.5)) > 0.5
+      || Math.abs(control[1] - (o[1] - ay * 2)) > 0.5) { return null; }
+  return { x: o[0] + ax * 65, y: o[1] + ay * 27, scaleX: ax / MIL, scaleY: ay / MIL };
+}
+
+/* LA DIVISION DEPARTAMENTAL, DIBUJADA ENCIMA DE LAS CAPAS (pedido de la usuaria del
+   21-nov-2026: "marca sobre las capas los departamentos").
+
+   Una capa de area cubre la provincia entera, asi que tapaba los limites y dejaba los nombres
+   casi ilegibles: el mapa dejaba de decir en que departamento esta cada cosa, que es lo que JC
+   pide desde el 15-nov ("QUE SE VEA LA DIVISION DEPARTAMENTAL"). Los limites y los nombres los
+   dibuja el componente `geo`, que va DEBAJO de las series, asi que no alcanza con cambiarle un
+   color: hay que volver a dibujarlos arriba.
+
+   Se hace solo cuando hay alguna capa de AREA prendida. Con capas de linea o de punto
+   -Infraestructura- no hace falta y seria dibujar dos veces lo mismo.
+
+   Las dos series se cuelgan del MISMO geo (`geoIndex: 0`), asi que se mueven con el zoom y el
+   arrastre sin que haya que sincronizar nada, y son `silent`: el cartel y el clic siguen
+   siendo los del departamento que esta abajo. */
+var Z_DIVISION = 30;
+
+function divisionDepartamental(opciones) {
+  var limites = opciones.limites;
+  if (!limites || !limites.features) { return []; }
+  var anillos = [];
+  limites.features.forEach(function (f) {
+    var g = f.geometry || {};
+    var piezas = g.type === "MultiPolygon" ? g.coordinates : [g.coordinates];
+    piezas.forEach(function (parte) {
+      (parte || []).forEach(function (anillo) { anillos.push({ coords: anillo }); });
+    });
+  });
+  if (!anillos.length) { return []; }
+  var salida = [{
+    type: "lines", coordinateSystem: "geo", geoIndex: 0, polyline: true, silent: true,
+    z: Z_DIVISION, large: true, largeThreshold: 10, tooltip: { show: false },
+    lineStyle: { color: opciones.borde, width: 0.8, opacity: 1 },
+    data: anillos
+  }];
+  if (opciones.rotulos && opciones.rotulos.length) {
+    /* Los nombres, con el punto que calculo el build. Llevan un halo finito: sin el, un
+       nombre sobre un area oscura no se lee; con mas de un pixel se come la letra, que mide
+       ocho (medido el 21-nov-2026 ampliando la captura: con halo de 2 px las letras quedaban
+       huecas). */
+    salida.push({
+      type: "scatter", coordinateSystem: "geo", geoIndex: 0, z: Z_DIVISION + 1,
+      silent: true, symbolSize: 0, tooltip: { show: false },
+      label: { show: true, fontSize: 8, color: opciones.tintaDepartamento || opciones.tinta,
+               textBorderColor: opciones.halo, textBorderWidth: 1,
+               formatter: function (p) { return (p.data && p.data.name) || ""; } },
+      labelLayout: { hideOverlap: true },
+      data: opciones.rotulos.map(function (r) { return { name: r.nombre, value: r.punto }; })
+    });
+  }
+  return salida;
+}
+
 /* Las series de las capas prendidas y ya bajadas. `interactivas`: con tooltip (portada);
    sin el, `silent` (mapa de calor: el clic y el tooltip siguen siendo del departamento).
    `halo`: el color del fondo del cuadro, que despega las lineas del relleno oscuro. */
@@ -402,12 +528,51 @@ function series(catalogo, ids, opciones) {
             borderWidth: estilo.ancho === undefined ? 0.4 : estilo.ancho
           },
           emphasis: { focus: "none", itemStyle: { opacity: 1 } },
+          /* 18.085 parches no se pueden dibujar enteros en cada cuadro: medido el
+             21-nov-2026, el navegador tardaba 451 ms SOLO en cerrar los trazos y la pagina se
+             congelaba 1,3 s en cada paso de zoom y en cada tiron del arrastre. Asi que cada
+             parte se dibuja unicamente si se la puede ver: si mide menos de un pixel se
+             saltea (a la provincia entera, un parche de una hectarea es la decima parte de un
+             pixel) y si quedo fuera de la pantalla tambien. Al acercar, los que entran en la
+             vista se dibujan todos: no se pierde detalle, se deja de dibujar lo invisible. */
+          progressive: 0,
           renderItem: (function (datosDeLaCapa) {
+            /* La transformacion es la misma para todas las partes de un mismo cuadro, y
+               `renderItem` se llama una vez por parte: se calcula una sola vez y se la
+               revalida con UNA consulta (si el mapa se movio, el punto de referencia cae en
+               otro lado y se recalcula). */
+            var memo = null;
             return function (params, api) {
               var dato = datosDeLaCapa[params.dataIndex];
               if (!dato || !dato.partes) { return null; }
-              return { type: "path", style: api.style(),
-                       shape: { d: caminoDePoligono(dato.partes, api) } };
+              var referencia = api.coord([-65, -27]);
+              if (!memo || memo.o[0] !== referencia[0] || memo.o[1] !== referencia[1]) {
+                /* El estilo se guarda junto con la transformacion: `api.style()` lo resuelve
+                   consultando el modelo de la serie, y hacerlo una vez por parte -18.085
+                   veces por cuadro- costaba mas que dibujar. Es el mismo para toda la capa. */
+                memo = { o: referencia, t: transformacionDelGeo(api), estilo: api.style() };
+              }
+              var t = memo.t;
+              /* El camino ya esta armado (en grados): aca solo se lo ubica y se lo escala.
+                 `strokeNoScale` es obligatorio: sin el, el borde se multiplica por la escala
+                 -que es del orden de 0,08- y desaparece. */
+              if (!t || !dato.d) {
+                return { type: "path", style: api.style(),
+                         shape: { d: caminoDePoligono(dato.partes, api) } };
+              }
+              var estilo = Object.assign({}, memo.estilo, { strokeNoScale: true });
+              if (dato.caja) {
+                var x0 = t.x + t.scaleX * dato.caja[0] * MIL;
+                var x1 = t.x + t.scaleX * dato.caja[2] * MIL;
+                var y1 = t.y + t.scaleY * dato.caja[1] * MIL;
+                var y0 = t.y + t.scaleY * dato.caja[3] * MIL;
+                if (x1 - x0 < MINIMO_VISIBLE && y1 - y0 < MINIMO_VISIBLE) { return null; }
+                if (x1 < 0 || y1 < 0 || x0 > api.getWidth() || y0 > api.getHeight()) {
+                  return null;
+                }
+              }
+              return { type: "path", x: t.x, y: t.y, scaleX: t.scaleX, scaleY: t.scaleY,
+                       style: estilo, shape: { d: dato.d } };
             };
           }(datos)),
           data: datos
@@ -470,5 +635,19 @@ export function capasDelMapa(nodo, catalogo, redibujar, proyeccion, opciones) {
   pintarPie(nodo, catalogo, ids);
   var listasYa = listas(nodo, catalogo, function () { nodo.capasRedibujar(); });
   if (!listasYa.length) { return null; }
-  return { geo: geo(proyeccion, opciones), series: series(catalogo, listasYa, opciones) };
+  /* Con una capa de AREA prendida, los limites y los nombres de los departamentos se vuelven a
+     dibujar ENCIMA (ver `divisionDepartamental`), y se le apagan al geo para no tenerlos dos
+     veces: los de abajo quedarian como un fantasma corrido debajo de los de arriba. */
+  var conArea = listasYa.some(function (id) {
+    return catalogo.capas[id].geometria === "poligonos";
+  });
+  var encima = conArea ? divisionDepartamental(opciones) : [];
+  var opcionesGeo = opciones;
+  if (encima.length > 1 && opciones.departamentos) {
+    opcionesGeo = Object.assign({}, opciones, {
+      departamentos: Object.assign({}, opciones.departamentos, { label: { show: false } })
+    });
+  }
+  return { geo: geo(proyeccion, opcionesGeo),
+           series: series(catalogo, listasYa, opciones).concat(encima) };
 }

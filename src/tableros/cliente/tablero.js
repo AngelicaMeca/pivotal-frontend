@@ -279,11 +279,18 @@ export default function iniciar(PIVOTAL) {
     esperaNivelar = setTimeout(nivelarBandas, 150);
   });
 
+  /* El GeoJSON de los departamentos queda guardado ademas de registrado: lo necesita
+     `capas.js` para volver a dibujar los limites ENCIMA de una capa de area (21-nov-2026).
+     Los que llaman ignoran el valor que devuelve la promesa, asi que devolverlo no cambia
+     nada para ellos. */
+  var geoProvincia = null;
+
   function cargarGeo(ruta) {
     if (!geoListo) {
       geoListo = fetch(ruta).then(function (r) { return r.json(); }).then(function (geo) {
         echarts.registerMap("provincia", geo);
-        return true;
+        geoProvincia = geo;
+        return geo;
       });
     }
     return geoListo;
@@ -888,7 +895,14 @@ export default function iniciar(PIVOTAL) {
       };
       var opcionesDeCapas = { interactivas: true, halo: PIVOTAL.color("--fondo-cuadro"),
                               tinta: PIVOTAL.color("--texto-apoyo"), roam: conZoom,
-                              departamentos: cromoDepartamentos };
+                              departamentos: cromoDepartamentos,
+                              /* Para volver a dibujar la division departamental ENCIMA de una
+                                 capa de area: el mismo borde y la misma tinta que usa el mapa
+                                 debajo, asi arriba se lee igual que sin capas. */
+                              limites: geoProvincia,
+                              rotulos: panel.rotulos_deptos,
+                              borde: PIVOTAL.color("--fondo-cuadro"),
+                              tintaDepartamento: PIVOTAL.color("--texto-apoyo") };
       var capas = capasDelMapa(nodo, (PIVOTAL.datos() || {}).capas,
                                function () { pintarMapaCapas(nodo, panel); }, proyeccion,
                                opcionesDeCapas);

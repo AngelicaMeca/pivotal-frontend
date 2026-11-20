@@ -1281,6 +1281,96 @@ def relacion_mapa():
     return _RELACION_MAPA
 
 
+_ROTULOS_DEPTOS = None
+
+
+def _centroide(anillo):
+    """Centroide (centro de masa) de un anillo cerrado. Formula del area con signo."""
+    a = cx = cy = 0.0
+    for i in range(len(anillo) - 1):
+        x1, y1 = anillo[i][0], anillo[i][1]
+        x2, y2 = anillo[i + 1][0], anillo[i + 1][1]
+        cruz = x1 * y2 - x2 * y1
+        a += cruz
+        cx += (x1 + x2) * cruz
+        cy += (y1 + y2) * cruz
+    if abs(a) < 1e-12:
+        return anillo[0][0], anillo[0][1]
+    return cx / (3.0 * a), cy / (3.0 * a)
+
+
+def _adentro(anillo, punto):
+    """Punto adentro del anillo, por el numero de cruces de un rayo horizontal."""
+    x, y = punto
+    dentro = False
+    for i in range(len(anillo) - 1):
+        x1, y1 = anillo[i][0], anillo[i][1]
+        x2, y2 = anillo[i + 1][0], anillo[i + 1][1]
+        if (y1 > y) != (y2 > y):
+            corte = x1 + (y - y1) * (x2 - x1) / (y2 - y1)
+            if corte > x:
+                dentro = not dentro
+    return dentro
+
+
+def _lejos_del_borde(anillo, punto):
+    """Distancia (en grados, al cuadrado) del punto al vertice mas cercano del anillo. Sirve
+    para elegir el punto mas 'adentro' de los candidatos, no para medir nada."""
+    return min((x - punto[0]) ** 2 + (y - punto[1]) ** 2 for x, y in anillo)
+
+
+def rotulos_departamentos():
+    """Donde va escrito el nombre de cada departamento sobre el mapa: [{id, nombre, punto}].
+
+    Existe desde el 21-nov-2026, cuando la division departamental paso a dibujarse ENCIMA de
+    las capas de area (antes quedaba tapada por ellas). Los nombres los dibujaba el componente
+    `geo` de ECharts, que calcula solo donde ponerlos; al pasarlos a una serie propia hay que
+    decirle el punto, y se calcula aca -una vez, en el build- y no en el navegador, que es la
+    regla de la casa: el pipeline compone, el sitio dibuja.
+
+    El punto es el CENTROIDE del anillo mas grande del departamento. Un departamento con forma
+    de ele puede tener su centroide afuera, asi que se verifica uno por uno y, si cae afuera,
+    se busca en una grilla el punto interior mas alejado del borde. Si aun asi no hubiera
+    ninguno, CORTA: un nombre dibujado sobre el departamento vecino es peor que no publicar.
+    """
+    global _ROTULOS_DEPTOS
+    if _ROTULOS_DEPTOS is not None:
+        return _ROTULOS_DEPTOS
+    ruta = os.path.join(DIR_CONFIGS, "dims", "sde-departamentos.geojson")
+    with open(ruta, encoding="utf-8") as f:
+        geo = json.load(f)
+    salida = []
+    for feature in geo["features"]:
+        props = feature["properties"]
+        geometria = feature["geometry"]
+        piezas = (geometria["coordinates"] if geometria["type"] == "MultiPolygon"
+                  else [geometria["coordinates"]])
+        anillos = [parte[0] for parte in piezas if parte and len(parte[0]) > 3]
+        if not anillos:
+            raise pr.ErrorDeProtocolo(
+                "El departamento %s del GeoJSON no tiene un anillo dibujable." % props["geo_id"])
+        anillo = max(anillos, key=lambda a: abs(sum(
+            a[i][0] * a[i + 1][1] - a[i + 1][0] * a[i][1] for i in range(len(a) - 1))))
+        punto = _centroide(anillo)
+        if not _adentro(anillo, punto):
+            lons = [x for x, _ in anillo]
+            lats = [y for _, y in anillo]
+            paso_x = (max(lons) - min(lons)) / 40.0
+            paso_y = (max(lats) - min(lats)) / 40.0
+            candidatos = [(min(lons) + paso_x * i, min(lats) + paso_y * j)
+                          for i in range(1, 40) for j in range(1, 40)]
+            adentro = [c for c in candidatos if _adentro(anillo, c)]
+            if not adentro:
+                raise pr.ErrorDeProtocolo(
+                    "No se encontro donde escribir el nombre del departamento %s."
+                    % props["geo_id"])
+            punto = max(adentro, key=lambda c: _lejos_del_borde(anillo, c))
+        salida.append({"id": props["geo_id"], "nombre": props["nombre"],
+                       "punto": [round(punto[0], 5), round(punto[1], 5)]})
+    _ROTULOS_DEPTOS = salida
+    return _ROTULOS_DEPTOS
+
+
 def nombres_mapa_solo_deptos(nombres):
     return [g for g in nombres if len(g) == 5 and g.startswith("86")]
 
@@ -9982,6 +10072,15 @@ def panel_mapa_capas(ctx, spec):
             "zoom": any(bool(p.get("zoom")) for p in spec["paneles"]["orden"]
                         if p["id"] == "mapa-capas"),
             "deptos": [{"id": g, "nombre": ctx.nombre(g)} for g in ctx.geo.deptos],
+            # Donde va escrito el nombre de cada departamento. Hace falta desde que la division
+            # departamental se dibuja ENCIMA de las capas (21-nov-2026): arriba los nombres ya
+            # no los pone el componente `geo` de ECharts -que elegia solo el punto- sino una
+            # serie nuestra, y el punto se calcula en el build (`rotulos_departamentos`).
+            # El NOMBRE sale de la dimension, igual que el del cartel y el de los cuadros
+            # (del GeoJSON sale solo el punto): si no, el mapa escribiria "Alberdi" donde el
+            # resto del sitio dice "ALBERDI".
+            "rotulos_deptos": [dict(r, nombre=ctx.nombre(r["id"]))
+                               for r in rotulos_departamentos()],
             # RF25: el valor de cada capa POR DEPARTAMENTO, para que el visitante pueda elegir
             # uno y consultarlos. Viajan los de todas las capas que la pagina declara -son 304
             # numeros, nada- y el navegador muestra los de las capas PRENDIDAS: cuales estan
