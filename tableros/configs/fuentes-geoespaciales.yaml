@@ -277,9 +277,9 @@ fuentes:
     url: https://www.ign.gob.ar/NuestrasActividades/InformacionGeoespacial/CapasSIG
     tipo_contenido: servicio-ogc
     alcance: nacional
-    estado: en-ingesta
+    estado: publicada
     responsable: equipo-datos
-    fecha_estado: 2026-11-17
+    fecha_estado: 2026-11-20
     modo_acceso: ogc-wfs
     # RF23: que se le pide para saber si sigue en pie. A un servicio OGC no alcanza con
     # que el host contaste: se le pide el GetCapabilities y se controla que la capa siga
@@ -297,15 +297,20 @@ fuentes:
       atribucion: "Fuente: IGN - BAHRA (dato del INDEC)"
       redistribucion: permitida
     indicaciones: [exportar-capa]
-    # No se dibuja en ningun mapa: entra para calcular un indicador. Por eso `ninguno`, que es
-    # lo que habilita a declarar `publicado_en` sin estar en estado `publicada`.
-    publicado_como: ninguno
+    publicado_como: capa
     observaciones: >
       Es OTRA capa que ign-localidades-bahra: `ign:bahra_paraje`, y hace falta porque
       `localidad_bahra` no trae ni un paraje. Son 1.022 en la provincia contra 165 localidades.
-      Entra el 17-nov-2026 como sujeto del indicador de proximidad a la red pavimentada
-      (RF18.1), NO como capa del mapa: JC no la pidió y la regla del 16-oct es que lo que no
-      está maquetado no se publica. Cada punto trae su departamento en la fila (`cod_depto`).
+      Entró el 17-nov-2026 como sujeto del indicador de proximidad a la red pavimentada
+      (RF18.1) y SIN dibujarse en ningún mapa, con el criterio de que JC no había pedido la
+      capa. SE PUBLICA EN EL MAPA DE INFRAESTRUCTURA EL 20-nov-2026, y la que corrigió ese
+      criterio fue el QA de Francisco: JC sí había pedido los parajes -puso la tarjeta "Parajes
+      por provincia" en la portada de Mapas que él mismo armó-, y esa tarjeta abría el portal
+      del INDEC en un indicador de población, porque en el catálogo de ese portal no hay
+      ninguno de parajes. O sea que el visor del organismo no puede mostrar lo que él pidió, y
+      entonces manda su regla: "la idea era BAJAR LAS CAPAS Y PONER NUESTRO PROPIO VISOR". Va
+      en Infraestructura porque es lo que él anotó para esta capa: "CRUZAR CON RED TERCIARIA Y
+      RUTAS". Cada punto trae su departamento en la fila (`cod_depto`).
       Cuatro parajes vienen con `cod_pcia` 86 y un `cod_depto` de la provincia vecina (San
       Antonio, Colonia El Bellaco, Pozo Jume y Pozo del Arbolito, todos sobre el límite): no se
       les inventa departamento, quedan fuera de los conteos y registrados en el resumen.
@@ -318,6 +323,7 @@ fuentes:
     publicado_en:
       - configs/dims/capas-ign.yaml
       - configs/dims/indicadores-geo.yaml
+      - specs/modelos/tablero-infraestructura-y-riesgo.yaml
 
   - id: ign-desinventar
     nombre: "DESINVENTAR - eventos adversos hidrometeorológicos 1970-2015"
@@ -684,15 +690,25 @@ fuentes:
     url: https://geoportal.conae.gov.ar/mapstore/#/viewer/openlayers/geoportal
     tipo_contenido: visor-web
     alcance: nacional
-    estado: publicada
+    estado: aprobada
     responsable: jc
-    fecha_estado: 2026-11-17
+    fecha_estado: 2026-11-20
     modo_acceso: exportacion-desde-app
     modo_visualizacion:
       resuelto: visor-del-organismo-embebido
       criterio: >
-        El GEOVisor de la CONAE es un MapStore: JC anotó "EXPORTAR MAP-STORE", o sea que la capa
-        se podría sacar de ahí. Mientras eso no se haga, se publica como enlace.
+        NO SE PUBLICA, y es el único caso en que se aplicó la tercera opción de JC ("SI NO SE
+        PUEDE, ELIMINAMOS TODO"). Salió de la portada de Mapas el 20-nov-2026, por el QA de
+        Francisco: embebido abre el GEOVisor GENERAL, con el país entero, sin la capa de bosque
+        cargada y pidiendo aceptar cookies, que es palabra por palabra lo que JC objetó el
+        18-nov ("LLEVA AL VISOR GENERAL"). Medido ese día, las dos salidas están cerradas: el
+        listado de mapas de su MapStore (`/mapstore/rest/geostore/extjs/search/category/MAP`)
+        vuelve vacío, así que no hay un mapa con id al que linkear para que abra en la capa; y
+        su GeoServer (`geoportal.conae.gov.ar/geoserver/ows`) anuncia 70 capas que son todas
+        mosaicos SAOCOM, así que la cobertura de bosque nativo no está publicada en ningún
+        servicio del que bajarla. Vuelve a la portada el día que la CONAE publique la capa o un
+        mapa con enlace propio; la nota de JC ("EXPORTAR MAP-STORE") sigue siendo el camino, y
+        exportarla a mano es una decisión suya. Backlog 140.
     licencia:
       nombre: "A confirmar con la CONAE"
       exige_cita: true
@@ -700,8 +716,15 @@ fuentes:
       redistribucion: a-confirmar
     indicaciones: [exportar-capa, evaluar-modo-de-acceso]
     indicacion_original: "EXPORTAR MAP-STORE"
-    publicado_en: [specs/modelos/tablero-mapas-ingreso.yaml]
-    publicado_como: enlace
+    observaciones: >
+      Aprobada por JC y SIN PUBLICAR desde el 20-nov-2026: su visor abre el GEOVisor general y
+      no la capa, y la capa no está en ningún servicio de la CONAE del que bajarla (las dos
+      cosas medidas, ver `modo_visualizacion.criterio`). Es el único caso donde se aplicó la
+      tercera opción de JC, "si no se puede, eliminamos todo". Para publicarla hace falta que
+      la CONAE publique la capa o un enlace que abra el visor en ella, o exportarla a mano del
+      MapStore como él anotó, que es una decisión suya. Backlog 140.
+    publicado_en: []
+    publicado_como: ninguno
     # RF24.2: el visor del organismo se incrusta en el sitio, con el encuadre de
     # RF22.4. Se declara embebible SOLO porque se midio; ver `embebible.medicion`.
     visualizacion_embebida:
@@ -857,9 +880,24 @@ fuentes:
     # RF22.4. Se declara embebible SOLO porque se midio; ver `embebible.medicion`.
     visualizacion_embebida:
       encuadre: >
-        El portal abre en el indicador de poblacion total con la provincia
-        y sus departamentos seleccionados: el encuadre viaja en la propia URL de JC.
-      encuadre_en_la_url: true
+        El portal abre en el indicador de poblacion total por departamento. CON EL PAIS
+        ENTERO: su URL no acepta un encuadre, ver `no_se_puede_encuadrar`.
+      encuadre_en_la_url: false
+      # POR QUE NO SE PUEDE ABRIR EN SANTIAGO DEL ESTERO (medido el 20-nov-2026, QA de
+      # Francisco, M4). El portal declara en su propio codigo un parametro para arrancar
+      # filtrado en una provincia (`?filter=86`, leido en portalgeoestadistico.indec.gob.ar/
+      # js/core.js), pero su funcion `build_geoportal` lo aplica SOLO a la dimension
+      # geografica cuyo `desaggregation_level` sea "0", y en la configuracion que publica hoy
+      # (api/v1/map/2) las cinco dimensiones -jurisdicciones, departamentos, gobiernos
+      # locales, localidades y radios- lo traen VACIO. O sea que el parametro no hace nada.
+      # Tampoco sirven `region`, `geounit` ni `geo`: estan en la lista de parametros que lee
+      # pero no los usa ninguna funcion. Y el aviso legal que pide aceptar en cada visita es
+      # del portal, no nuestro. La unica forma de que estos tres mapas abran en la provincia
+      # es dibujarlos nosotros: el dato por departamento esta en su API publica
+      # (api/v1/indicator/<id>/records). Propuesto en el backlog 141.
+      no_se_puede_encuadrar: >
+        El portal no acepta un encuadre por URL: su parametro `filter` depende de un nivel de
+        desagregacion que su propia configuracion no declara. Abre con el pais entero.
       embebible:
         verificado: 2026-11-17
         medicion: >
@@ -871,13 +909,18 @@ fuentes:
 
   - id: indec-viviendas
     nombre: "Viviendas particulares por departamento"
+    # EL INDICADOR CORREGIDO (QA de Francisco del 20-nov-2026, M3). La URL que mandó JC lleva
+    # `indicator_id=166`, que en el portal es "Población EN viviendas particulares por
+    # departamento": población, no cantidad de viviendas. El que corresponde al título es el
+    # 34, "Viviendas particulares, por departamento, partido o comuna", leído del catálogo del
+    # propio INDEC (datosestadisticos.indec.gob.ar/api/v1/indicator/34, `publicado: true`).
     organismo: "INDEC"
-    url: https://portalgeoestadistico.indec.gob.ar/?indicator_id=166&members=108
+    url: https://portalgeoestadistico.indec.gob.ar/?indicator_id=34&members=108
     tipo_contenido: visor-web
     alcance: departamental
     estado: publicada
     responsable: jc
-    fecha_estado: 2026-11-17
+    fecha_estado: 2026-11-20
     modo_acceso: catalogo-con-descarga
     modo_visualizacion: {resuelto: visor-del-organismo-embebido, criterio: "Igual que indec-poblacion-total."}
     licencia:
@@ -893,8 +936,13 @@ fuentes:
     # RF22.4. Se declara embebible SOLO porque se midio; ver `embebible.medicion`.
     visualizacion_embebida:
       encuadre: >
-        El portal abre en el indicador de viviendas con la provincia seleccionada.
-      encuadre_en_la_url: true
+        El portal abre en el indicador de viviendas particulares por departamento. CON EL
+        PAIS ENTERO: su URL no acepta un encuadre, ver `no_se_puede_encuadrar`.
+      encuadre_en_la_url: false
+      # Igual que indec-poblacion-total: el portal no acepta encuadre por URL (ahi esta la
+      # medicion completa).
+      no_se_puede_encuadrar: >
+        El portal no acepta un encuadre por URL: abre con el pais entero.
       embebible:
         verificado: 2026-11-17
         medicion: >
@@ -928,8 +976,13 @@ fuentes:
     # RF22.4. Se declara embebible SOLO porque se midio; ver `embebible.medicion`.
     visualizacion_embebida:
       encuadre: >
-        El portal abre en el indicador de densidad con la provincia seleccionada.
-      encuadre_en_la_url: true
+        El portal abre en el indicador de densidad de poblacion por departamento. CON EL
+        PAIS ENTERO: su URL no acepta un encuadre, ver `no_se_puede_encuadrar`.
+      encuadre_en_la_url: false
+      # Igual que indec-poblacion-total: el portal no acepta encuadre por URL (ahi esta la
+      # medicion completa).
+      no_se_puede_encuadrar: >
+        El portal no acepta un encuadre por URL: abre con el pais entero.
       embebible:
         verificado: 2026-11-17
         medicion: >
@@ -945,15 +998,22 @@ fuentes:
     url: https://portalgeoestadistico.indec.gob.ar/?indicator_id=92&members=108,34
     tipo_contenido: visor-web
     alcance: provincial
-    estado: publicada
+    estado: aprobada
     responsable: jc
-    fecha_estado: 2026-11-17
+    fecha_estado: 2026-11-20
     modo_acceso: catalogo-con-descarga
     modo_visualizacion:
       resuelto: visor-del-organismo-embebido
       criterio: >
-        Por ahora enlace, pero es la que más trabajo propio tiene por delante: JC quiere cruzarla
-        con la red vial.
+        ESTE VISOR NO TIENE LOS PARAJES, y la tarjeta se reemplazó por nuestra propia capa el
+        20-nov-2026 (QA de Francisco, M1; ver ign-parajes-bahra). La URL de JC apunta al
+        `indicator_id=92` del portal, que es "Población total, por sexo, según jurisdicción":
+        no son parajes. Y no es que esté mal el número: en el catálogo de 456 indicadores de
+        ese portal (datosestadisticos.indec.gob.ar/api/v1/indicator/) no hay NINGUNO de
+        parajes, así que no hay otro id al que apuntar. Lo que JC capturó en su Excel debió
+        ser una capa del portal y no un indicador, y hoy ese portal tiene los geolayers
+        apagados (`geonode_url` vacío en su propia configuración). Los parajes se publican
+        ahora desde la capa del IGN, en nuestro visor.
     licencia:
       nombre: "Términos del INDEC"
       exige_cita: true
@@ -967,17 +1027,17 @@ fuentes:
       Es el RF18.1 del ERS (análisis de proximidad a la red vial). Falta: ingestar los parajes y
       calcular la distancia de cada uno a la red pavimentada más próxima, con radios
       configurables. El pipeline ya sabe medir distancias en km (haversine) y recortar líneas,
-      así que el cálculo es alcanzable; lo que falta es la capa de parajes ingestada y que JC
-      defina los radios.
-    publicado_en: [specs/modelos/tablero-mapas-ingreso.yaml]
-    publicado_como: enlace
+      así que el cálculo es alcanzable; la capa YA está ingestada y publicada (ign-parajes-bahra,
+      1.022 parajes en el mapa de Infraestructura desde el 20-nov-2026), así que lo único que
+      falta es que JC defina los radios. Backlog 138.
+    publicado_en: []
+    publicado_como: ninguno
     # RF24.2: el visor del organismo se incrusta en el sitio, con el encuadre de
     # RF22.4. Se declara embebible SOLO porque se midio; ver `embebible.medicion`.
     visualizacion_embebida:
       encuadre: >
-        El portal abre en el indicador de parajes con la provincia y sus
-        departamentos seleccionados.
-      encuadre_en_la_url: true
+        No se usa: esta fuente ya no se publica (el portal no tiene parajes).
+      encuadre_en_la_url: false
       embebible:
         verificado: 2026-11-17
         medicion: >

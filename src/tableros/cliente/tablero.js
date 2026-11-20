@@ -786,6 +786,35 @@ export default function iniciar(PIVOTAL) {
     return "<br>" + renglones.join("<br>");
   }
 
+  /* Los tres botones que flotan sobre la esquina del mapa que se recorre (QA de Francisco del
+     20-nov-2026). Se enganchan UNA vez por nodo; el grafico se busca en cada clic y no se
+     captura, porque la instancia de ECharts puede ser otra despues de un repintado.
+     "Provincia" no se puede hacer con `setOption({geo: {center: null}})` -un merge no borra un
+     valor- asi que deja una marca en el nodo y repinta: `pintarMapaCapas` ve la marca y NO
+     conserva el encuadre, que es justo lo que se le esta pidiendo. */
+  function engancharMandoDeMapa(nodo) {
+    var mando = nodo.querySelector("[data-mapa-mando]");
+    if (!mando || mando.dataset.enganchado) { return; }
+    mando.dataset.enganchado = "1";
+    mando.addEventListener("click", function (evento) {
+      var boton = evento.target.closest ? evento.target.closest("[data-mapa-zoom]") : null;
+      if (!boton) { return; }
+      var que = boton.dataset.mapaZoom;
+      if (que === "encuadrar") {
+        nodo.dataset.mapaReencuadrar = "1";
+        if (nodo.capasRedibujar) { nodo.capasRedibujar(); }
+        return;
+      }
+      var chart = PIVOTAL.grafico(nodo.querySelector("[data-grafico]"));
+      var geo = ((chart.getOption() || {}).geo || [])[0];
+      if (!geo) { return; }
+      var zoom = (geo.zoom || 1) * (que === "acercar" ? 1.6 : 1 / 1.6);
+      /* Los mismos topes que la rueda (`scaleLimit` de `geoDeMapa`): el boton no puede llevar
+         el mapa a donde el gesto no llega. */
+      chart.setOption({ geo: { zoom: Math.max(1, Math.min(40, zoom)) } });
+    });
+  }
+
   function pintarMapaCapas(nodo, panel) {
     var caja = nodo.querySelector("[data-grafico]");
     var porId = {};
@@ -882,12 +911,25 @@ export default function iniciar(PIVOTAL) {
          vez no hay geo previo y arranca como siempre. */
       if (conZoom && opcion.geo) {
         var previo = ((chart.getOption() || {}).geo || [])[0];
-        if (previo && previo.zoom) {
+        if (nodo.dataset.mapaReencuadrar) {
+          /* El visitante apreto "Provincia": lo que pidio es perder el encuadre. */
+          delete nodo.dataset.mapaReencuadrar;
+        } else if (previo && previo.zoom) {
           opcion.geo.zoom = previo.zoom;
           if (previo.center) { opcion.geo.center = previo.center; }
         }
       }
       chart.setOption(opcion, true);
+      if (conZoom) {
+        engancharMandoDeMapa(nodo);
+        /* La caja del mapa se dimensiona con la proporcion REAL de la provincia (0,635: es mas
+           alta que ancha), asi que el dibujo la llena y no quedan costados vacios adentro del
+           cuadro. El numero lo calcula el build del propio GeoJSON (`relacion_mapa`), asi que
+           el CSS no lo tiene escrito: se lo pasamos. */
+        if (panel.relacion) {
+          caja.style.setProperty("--relacion-mapa", String(panel.relacion));
+        }
+      }
     });
   }
 

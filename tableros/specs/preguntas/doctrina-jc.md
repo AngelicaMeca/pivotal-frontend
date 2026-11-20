@@ -41,6 +41,15 @@ Dónde: `configs/fuentes-geoespaciales.yaml` (`modo_visualizacion.resuelto`, est
 `pipeline/fuentes_geo.py` (corta la corrida), `site_build.py` (`fuera_del_sitio` de cada tarjeta).
 Una tarjeta que saca al visitante del sitio es un defecto, no una variante.
 
+**Corolario del QA del 20-nov-2026: si el visor del organismo NO PUEDE mostrar lo que pidió, la
+tarjeta no se queda enlazando otra cosa.** Las dos salidas son las de su orden de preferencia:
+bajarla a nuestro visor o sacarla. Pasó dos veces el mismo día: la tarjeta "Parajes por
+provincia" abría un indicador de POBLACIÓN porque el portal del INDEC no tiene ningún indicador
+de parajes (se publica ahora como capa nuestra, en Infraestructura), y la de la cobertura de
+bosque nativo abría el visor general de la CONAE porque esa capa no está publicada en ningún
+servicio suyo ni hay un mapa con enlace propio (se quitó). Un visor embebido que abre en otra
+cosa es peor que no tener la tarjeta: promete el mapa que JC pidió y muestra otro.
+
 **Y la regla vale también para los enlaces de adentro de una página, no solo para las tarjetas**
 (cómo la aplicamos, desde el QA del 19-nov-2026): la cita de la fuente es obligatoria y puede
 nombrar su URL, pero **se escribe, no se linkea**. Así salieron el enlace "Visor y descarga del
@@ -81,6 +90,15 @@ o apagar una capa no lo devuelve al inicio.
 
 > "AUMENTA TAMAÑO DE MAPA EN UN POP UP" (6-oct-2026, hoja "Agri 3 - C"): una galería de mapas se
 > amplía en popup, no se abre en otra página.
+
+**Cómo lo aplicamos, después del QA del 20-nov-2026: el que ocupa la página es el MAPA, no la
+caja.** La provincia es más alta que ancha (relación 0,635) y se encuadra por el alto, así que una
+caja a todo el ancho queda con el dibujo en el medio y crema a los costados -"el mapa ocupa cerca
+de un tercio del ancho"-. Deformarla para que llene el ancho es lo que él mandó corregir en la
+tercera tanda, así que lo que se ajusta es la caja: mide lo que mide el mapa y la leyenda queda
+pegada al costado. Y **se recorre con botones, no solo con la rueda**: los tres mapas propios
+llevan + / − / "Provincia" flotando sobre la esquina, como el visor georreferenciado que él puso
+como referencia ("TAL COMO ESPECTACULARMENTE BIEN HICISTE CON LOS DE AGROCLIMA").
 
 ## 4. Su maqueta es literal
 

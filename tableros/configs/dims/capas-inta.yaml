@@ -247,8 +247,15 @@ publicacion:
       archivo: areas-deforestadas-2008-2017.geojson
       etiqueta: "Áreas ganaderas deforestadas 2008-2017 (INTA)"
       geometria: poligonos
-      # Una sola clase: el tooltip diria siempre lo mismo que la casilla del control.
-      tooltip: ""
+      # EL CARTEL DICE QUE ES ESA MANCHA (QA de Francisco del 20-nov-2026). Estaba en blanco
+      # con el criterio de que "una sola clase diria siempre lo mismo que la casilla del
+      # control", y el efecto era el contrario del buscado: el poligono esta ARRIBA del
+      # departamento, asi que con el tooltip vacio el mouseover sobre una mancha de desmonte
+      # mostraba solo el nombre del departamento, como si la capa no estuviera. La capa viene
+      # disuelta en un solo rasgo (el INTA no publica la superficie de cada parche en el
+      # servicio), asi que el texto es fijo y no puede decir las hectareas de la mancha; las
+      # hectareas por departamento quedan pendientes (backlog 139).
+      tooltip: "Área ganadera deforestada entre 2008 y 2017"
       # 3,3 MB: se baja recien cuando alguien prende la capa, nunca al abrir la pagina.
       grande: true
       fuente: "INTA - Áreas ganaderas deforestadas durante 2008-2017"
@@ -256,6 +263,10 @@ publicacion:
       archivo: cursos-de-agua.geojson
       etiqueta: "Cursos de agua (INTA)"
       geometria: lineas
-      tooltip: "{clase}"
+      # El cartel decia solo "RIO", que es como el INTA escribe la clase: pasando el mouse por
+      # una linea azul fina, una palabra sola en mayusculas no se lee como el nombre de lo que
+      # se esta señalando (QA de Francisco del 20-nov-2026). La clase se sigue publicando
+      # LITERAL; lo que se agrega es de que se esta hablando.
+      tooltip: "Curso de agua: {clase}"
       clases_al_prender: true
       fuente: "INTA - Cursos de agua del NOA"

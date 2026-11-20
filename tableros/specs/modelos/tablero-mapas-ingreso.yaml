@@ -28,6 +28,33 @@
 #      por defecto: sin esa indicacion el usuario no encuentra el mapa de la captura.
 #  (d) Los dos servicios WMS/WFS de GeoNode INDEC ("POR FAVOR VER QUE ES ESTO") NO estan: no son
 #      un mapa con titulo. Quedan en el catalogo de fuentes como "a evaluar".
+#
+# QUE LE PASO A ESTA PORTADA EN EL QA DE FRANCISCO DEL 20-nov-2026 (backlog 137 a 140). Probo
+# las seis tarjetas que abren un visor de un organismo y tres mentian. No era un problema de
+# como estan hechas las tarjetas: era que el visor del organismo no muestra lo que la tarjeta
+# promete. Lo que quedo:
+#  (e) SALIO LA TARJETA DE LA CONAE ("Cobertura bosque nativo Argentina 2020"). El GEOVisor
+#      abre el visor general, con el pais entero, sin la capa de bosque cargada y pidiendo
+#      aceptar cookies: es exactamente lo que JC objeto el 18-nov ("LLEVA AL VISOR GENERAL").
+#      Se busco como abrirlo en la capa y no se puede: el listado de mapas de su MapStore
+#      (`/mapstore/rest/geostore/extjs/search/category/MAP`) vuelve VACIO, asi que no hay un
+#      mapa con id al que linkear, y su GeoServer
+#      (`geoportal.conae.gov.ar/geoserver/ows`) publica 70 capas que son todas mosaicos
+#      SAOCOM: no esta el bosque nativo, asi que tampoco hay de donde bajarla. Con las tres
+#      opciones de JC agotadas -visor propio, visor embebido, sacarlo- queda la tercera: "SI NO
+#      SE PUEDE, ELIMINAMOS TODO". La fuente sigue en el catalogo, no publicada, con la
+#      medicion escrita, y la decision vuelve a el (backlog 140).
+#  (f) PARAJES pasa a nuestro visor y la tarjeta se muda al bloque de lo propio (ver su
+#      comentario, mas abajo).
+#  (g) VIVIENDAS abria el indicador equivocado y se corrigio el numero.
+#  (h) LO QUE NO SE PUDO ARREGLAR: los tres visores del INDEC abren con el PAIS entero y con un
+#      aviso legal que hay que aceptar cada vez. No es algo que podamos pasarle por la URL: su
+#      portal acepta un parametro `filter` para arrancar en una provincia, pero el codigo del
+#      propio portal solo lo aplica si su configuracion declara un nivel de desagregacion "0" y
+#      hoy los cinco niveles lo traen VACIO, asi que el parametro no hace nada (leido en
+#      `portalgeoestadistico.indec.gob.ar/js/core.js`, funcion `build_geoportal`). La unica
+#      forma de que estos tres mapas abran en Santiago del Estero es dibujarlos nosotros: el
+#      dato por departamento esta en la API publica del INDEC. Propuesto en el backlog 141.
 id: tablero-mapas-ingreso
 tipo: tablero
 familia: agroclima
@@ -76,7 +103,7 @@ paneles:
   accesos-propios:
     titulo: "Mapas de B³ AgriFood"
     subtitulo: "Dibujados dentro del sitio, sobre la división departamental y con zoom"
-    pie: "Fuente: INTA - Aptitud de Tierras, Zonificación del Uso del Suelo, Cobertura del Suelo 2006-2007, Áreas Ganaderas Deforestadas 2008-2017, Cuencas Hídricas del NOA y Cursos de Agua del NOA"
+    pie: "Fuente: INTA - Aptitud de Tierras, Zonificación del Uso del Suelo, Cobertura del Suelo 2006-2007, Áreas Ganaderas Deforestadas 2008-2017, Cuencas Hídricas del NOA y Cursos de Agua del NOA · IGN - BAHRA (dato del INDEC)"
     tarjetas:
       - organismo: "B³ AgriFood"
         titulo: "Suelos y uso del suelo"
@@ -101,21 +128,33 @@ paneles:
         miniatura: imagenes
         imagenes: [mapas/ingreso/cuencas-hidricas-noa.png, mapas/ingreso/cursos-de-agua-noa.png]
 
-  accesos-conae:
-    titulo: "CONAE"
-    pie: "Fuente: CONAE - Comisión Nacional de Actividades Espaciales"
-    tarjetas:
-      - organismo: "CONAE"
-        titulo: "Cobertura bosque nativo Argentina 2020"
-        detalle: "GEOVisor general · Cobertura de bosques"
-        externo: "https://geoportal.conae.gov.ar/mapstore/#/viewer/openlayers/geoportal"
+      # PARAJES: la tarjeta pasa de "visor del INDEC" a NUESTRO visor (QA de Francisco del
+      # 20-nov-2026, M1). Abria el portal del INDEC en "Poblacion total, por sexo, segun
+      # jurisdiccion" -el indicador 92 es ese- y en el catalogo de 456 indicadores de ese
+      # portal no hay ninguno de parajes, asi que la tarjeta prometia algo que el visor del
+      # organismo no puede mostrar. La capa del IGN ya estaba bajada (1.022 parajes), asi que
+      # se publica en el mapa de Infraestructura, que es donde JC quiere usarla: "CRUZAR CON
+      # RED TERCIARIA Y RUTAS". El titulo sigue siendo el de su Excel.
+      - organismo: "B³ AgriFood"
+        titulo: "Parajes por provincia"
+        detalle: "Capa del IGN en nuestro visor, sobre la red vial (Infraestructura)"
+        bajada: >
+          Los 1.022 parajes de la provincia que releva el IGN, dibujados en el mapa de
+          Infraestructura y por lo tanto sobre las rutas, los caminos rurales y el tendido
+          eléctrico: se prende la capa "Parajes" y cada punto dice su nombre al pasar el
+          mouse. Es el paso previo a medir a qué distancia del pavimento queda cada paraje.
+        destino: tablero-infraestructura-y-riesgo
         miniatura: imagen
-        imagen: mapas/ingreso/cobertura-bosque-nativo-2020.png
+        imagen: mapas/ingreso/parajes.png
 
   accesos-indec:
     # El titulo es el que JC escribe sobre ese grupo en el Excel (celda G217).
     titulo: "INDEC · Mapas nacionales con apertura departamental"
-    subtitulo: "Portal geoestadístico del INDEC · todos permiten descargar los geodatos"
+    # La segunda mitad del subtitulo es del QA del 20-nov-2026 (M4): el portal del INDEC abre
+    # con el pais entero y con su aviso legal, y no acepta que le pasemos la provincia por la
+    # URL. Mientras los tres mapas sean del visor del organismo, se avisa antes de abrirlo en
+    # vez de dejar que el visitante crea que el mapa salio mal.
+    subtitulo: "Portal geoestadístico del INDEC · abre con el país entero: acerque el mapa a Santiago del Estero · todos permiten descargar los geodatos"
     pie: "Fuente: INDEC - Instituto Nacional de Estadística y Censos"
     tarjetas:
       - organismo: "INDEC"
@@ -123,9 +162,14 @@ paneles:
         externo: "https://portalgeoestadistico.indec.gob.ar/?indicator_id=93&members=108,34"
         miniatura: imagen
         imagen: mapas/ingreso/poblacion-total.png
+      # EL INDICADOR CORREGIDO (QA de Francisco del 20-nov-2026, M3). Con el 166 el visor abria
+      # "Poblacion en viviendas particulares por departamento", que es POBLACION y no cantidad
+      # de viviendas. El que corresponde al titulo de la tarjeta es el 34, "Viviendas
+      # particulares, por departamento, partido o comuna", verificado contra el catalogo del
+      # propio INDEC (datosestadisticos.indec.gob.ar/api/v1/indicator/34, publicado: true).
       - organismo: "INDEC"
         titulo: "Viviendas particulares por departamento"
-        externo: "https://portalgeoestadistico.indec.gob.ar/?indicator_id=166&members=108"
+        externo: "https://portalgeoestadistico.indec.gob.ar/?indicator_id=34&members=108"
         miniatura: imagen
         imagen: mapas/ingreso/viviendas-particulares.png
       - organismo: "INDEC"
@@ -133,15 +177,10 @@ paneles:
         externo: "https://portalgeoestadistico.indec.gob.ar/?indicator_id=96&members=108"
         miniatura: imagen
         imagen: mapas/ingreso/densidad-de-poblacion.png
-      - organismo: "INDEC"
-        titulo: "Parajes por provincia"
-        externo: "https://portalgeoestadistico.indec.gob.ar/?indicator_id=92&members=108,34"
-        miniatura: imagen
-        imagen: mapas/ingreso/parajes.png
-
+  # Las tres tarjetas de lo nuestro arriba y las tres del INDEC abajo. Eran dos bandas con la
+  # de la CONAE al costado, que salio el 20-nov-2026.
   orden:
-    - {id: accesos-propios, ancho: 6, columna: izq}
-    - {id: accesos-conae, ancho: 6, columna: der}
+    - {id: accesos-propios, ancho: 12, columna: izq}
     - {id: accesos-indec, ancho: 12, columna: izq, nueva_banda: true}
 
 filtros: []

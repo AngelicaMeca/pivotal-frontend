@@ -82,6 +82,11 @@ titulos_leidos:
     url: https://visor.inta.gob.ar/es#7.68/-26.549/-64.776
   cobertura-bosque-nativo-2020:
     titulo: "Cobertura bosque nativo Argentina 2020"
+    # SALIO DE LA PORTADA el 20-nov-2026 (QA de Francisco, M2): embebido abre el GEOVisor
+    # general, con el país entero y sin la capa de bosque cargada, que es lo que JC objetó el
+    # 18-nov. No hay forma de abrirlo en la capa (su MapStore no publica ningún mapa con id) ni
+    # de bajarla (su GeoServer solo tiene mosaicos SAOCOM). Medición en
+    # configs/fuentes-geoespaciales.yaml -> conae-bosque-nativo-2020. Backlog 140.
     organismo: CONAE
     donde: "GEOVisor general de la CONAE, capa activa en Cobertura de bosques"
     url: https://geoportal.conae.gov.ar/mapstore/#/viewer/openlayers/geoportal
@@ -123,7 +128,11 @@ titulos_leidos:
     titulo: "Viviendas particulares por departamento"
     organismo: INDEC
     donde: "Portal geoestadístico del INDEC"
-    url: https://portalgeoestadistico.indec.gob.ar/?indicator_id=166&members=108
+    # La URL del Excel de JC llevaba `indicator_id=166`, que en ese portal es "Población EN
+    # viviendas particulares por departamento": población, no viviendas. El indicador que
+    # corresponde al título de su tarjeta es el 34 (QA de Francisco del 20-nov-2026, M3).
+    url_de_jc: https://portalgeoestadistico.indec.gob.ar/?indicator_id=166&members=108
+    url: https://portalgeoestadistico.indec.gob.ar/?indicator_id=34&members=108
     nota_de_jc: "PERMITE DESCARGA DE GEODATOS"
   densidad-de-poblacion:
     titulo: "Densidad de población por departamento"
@@ -133,18 +142,33 @@ titulos_leidos:
     nota_de_jc: "PERMITE DESCARGA DE GEODATOS"
   parajes:
     titulo: "Parajes por provincia"
-    organismo: INDEC
-    donde: "Portal geoestadístico del INDEC"
-    url: https://portalgeoestadistico.indec.gob.ar/?indicator_id=92&members=108,34
+    # DEJO DE SER UNA TARJETA DEL INDEC (QA de Francisco del 20-nov-2026, M1): su URL abre el
+    # indicador 92 de ese portal, que es "Población total, por sexo, según jurisdicción", y en
+    # el catálogo de 456 indicadores no hay ninguno de parajes. Los 1.022 parajes se publican
+    # desde la capa del IGN (BAHRA) en el mapa de Infraestructura, que es donde JC quiere
+    # cruzarlos con las rutas. La miniatura sigue siendo su captura.
+    organismo: "B³ AgriFood"
+    donde: "Mapa de Infraestructura, capa \"Parajes\""
+    url_de_jc: https://portalgeoestadistico.indec.gob.ar/?indicator_id=92&members=108,34
     nota_de_jc: >
       CRUZAR CON RED TERCIARIA Y RUTAS... ESTABLECER RADIOS DE DISTANCIA AL PAVIMENTO. VER QUE
       OTRAS CAPAS SON UTILES.
 
 advertencias_para_jc:
   - >
-    Las tarjetas llevan al VISOR DEL ORGANISMO, en otra pestaña, y no a una pagina nuestra:
-    todavia no hay ninguna capa de estas ingestada. Es la unica forma de que el area de ingreso
-    sirva hoy sin publicar material de terceros.
+    DE LAS TRECE TARJETAS QUE MANDASTE, HOY SEIS SON MAPA PROPIO Y TRES ABREN EL VISOR DEL
+    INDEC EMBEBIDO EN EL SITIO. Las seis del INTA se bajaron y se dibujan en nuestro visor
+    (cuatro en "Suelos y uso del suelo" y dos en "Cuencas y cursos de agua"), y los parajes
+    del IGN se dibujan en el mapa de Infraestructura, sobre las rutas. Lo que falta: "Suelo
+    Santiago del Estero" espera que definas su leyenda (81 unidades cartograficas), el
+    Ordenamiento Territorial de Bosques Nativos el INTA no lo publica en su servicio, y la
+    cobertura de bosque nativo de la CONAE salio de la portada porque su visor abre en el visor
+    general, que es lo que objetaste.
+  - >
+    LOS TRES MAPAS DEL INDEC ABREN CON EL PAIS ENTERO y con su aviso legal, y no es algo que
+    podamos corregir desde aca: su portal no acepta que le pasemos la provincia en el link
+    (medido el 20-nov-2026). Para que abran en Santiago del Estero habria que dibujar nosotros
+    los tres indicadores, con el dato por departamento que el INDEC publica en su API.
   - >
     Las cuatro primeras son capas DENTRO del visor del INTA. El link abre el visor en el
     encuadre que vos mandaste, pero el visor arranca con sus capas por defecto: hay que

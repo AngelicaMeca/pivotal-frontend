@@ -80,10 +80,16 @@ indicadores: []
 kpis_sin_variacion: true
 
 # `km-de-red` salio con la banda de KPIs: explicaba como se miden kilometros que la pagina ya
-# no publica. Las otras dos se quedan porque van DEBAJO del mapa (no le sacan alto) y son lo
-# que hay que saberle al dato: que capa es de quien, y que el tendido no es del IGN y no sirve
-# para ubicar un poste.
-notas_metodologicas: [capas, tendido]
+# no publica. Y `tendido` se FUSIONO con `capas` el 20-nov-2026 (QA de Francisco): eran dos
+# bloques de texto debajo del mapa y el segundo cerraba con "Los kilometros se miden igual que
+# los de la red vial", una frase que remitia a `km-de-red`, o sea a un bloque que ya no esta.
+# Ahora es una nota sola, que va DEBAJO del mapa (no le saca alto) y dice lo que hay que
+# saberle al dato: de quien es cada capa, que el tendido no es del IGN y no sirve para ubicar
+# un poste, y por que tres capas arrancan apagadas.
+#
+# NINGUNO de estos textos los escribio JC. Si los quiere afuera, se saca esta linea de las tres
+# paginas de mapa propio. Preguntado en el backlog 137.
+notas_metodologicas: [capas]
 
 paneles:
   alto: fluye
@@ -106,6 +112,11 @@ paneles:
       - {id: rutas-nacionales, prendida: true}
       - {id: ferrocarril, prendida: true}
       - {id: estaciones-ferrocarril, prendida: true}
+      # Los PARAJES (1.022 puntos, QA del 20-nov-2026, M1): entran aca porque es lo que JC
+      # quiere hacer con ellos -"CRUZAR CON RED TERCIARIA Y RUTAS"-, y el portal del INDEC no
+      # tiene el indicador que la tarjeta de la portada prometia. Apagados al abrir: son mil
+      # puntos y la pagina tiene que abrir mostrando las redes, que es lo que pidio.
+      - {id: parajes, prendida: false}
       # Las ciudades y pueblos van ULTIMAS para que sus puntos y sus nombres queden sobre las
       # lineas, y PRENDIDAS: son la referencia que permite ubicarse al acercar.
       - {id: localidades, prendida: true}

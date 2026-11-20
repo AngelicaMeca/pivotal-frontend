@@ -211,6 +211,28 @@ const FORMA_DEL_PANEL: Record<string, string> = {
    Las muestras de color y los trazos de cada capa los pinta src/tableros/cliente/capas.js con
    el estilo del protocolo: aca no hay ningun color. Los checkbox NO llevan `data-control`:
    prender una capa no cambia la combinacion de filtros, solo el dibujo de ESTE mapa. */
+/* Los botones de zoom de un mapa que se recorre (QA de Francisco del 20-nov-2026: "Suelos y
+   Cuencas no tienen botones de zoom como el mapa de cultivos"). Son los mismos tres gestos y la
+   misma pildora que el visor georreferenciado de AgroClima -el mapa de cultivos, que es el que
+   JC puso como referencia-, y existen porque la rueda del mouse no es el unico modo de acercar:
+   en una notebook con trackpad, y para quien llega con el teclado, sin boton no hay zoom. Van
+   FLOTANDO sobre la esquina del mapa, no arriba: arriba del mapa no va nada (regla de JC,
+   "SOLO PONEMOS COMO TITULO 'infraestructura'").
+   Los engancha tablero.js (`engancharMandoDeMapa`); sin JS no se dibujan porque el mapa
+   tampoco. */
+function MandoDeMapa() {
+  return (
+    <div className="mapa-mando" data-mapa-mando="">
+      <button type="button" className="visor-boton" data-mapa-zoom="acercar"
+              title="Acercar" aria-label="Acercar el mapa">+</button>
+      <button type="button" className="visor-boton" data-mapa-zoom="alejar"
+              title="Alejar" aria-label="Alejar el mapa">−</button>
+      <button type="button" className="visor-boton visor-texto" data-mapa-zoom="encuadrar"
+              title="Ver toda la provincia" aria-label="Ver toda la provincia">Provincia</button>
+    </div>
+  );
+}
+
 function ControlCapas({ capas, modo, rotulo }: { capas?: CapaDeMapa[]; modo?: string; rotulo?: string }) {
   if (!capas || capas.length === 0) return null;
   const lista = (
@@ -316,6 +338,9 @@ function CuerpoPanel({ id: idPanelCompleto, mockup = false, panel }: { id: strin
       <>
         <ControlCapas capas={panel?.capas} modo={panel?.capas_modo} rotulo={panel?.capas_rotulo} />
         <div className="grafico" data-grafico=""></div>
+        {/* Los botones de zoom van DESPUES del mapa en el markup a proposito: se dibujan
+            encima de su esquina y el que esta despues queda arriba. */}
+        {panel?.zoom ? <MandoDeMapa /> : null}
       </>
     );
   } else if (id === "mapa") {

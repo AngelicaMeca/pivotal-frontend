@@ -43,6 +43,12 @@ capas:
   rasgos: 165
   total_provincial: 165
   fuera_de_la_provincia: 0
+- capa: parajes
+  etiqueta: Parajes
+  medida: cuantos
+  rasgos: 1022
+  total_provincial: 1022
+  fuera_de_la_provincia: 0
 - capa: rutas-nacionales
   etiqueta: Rutas nacionales
   medida: km

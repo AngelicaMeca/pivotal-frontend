@@ -2965,10 +2965,14 @@ dialog.zoom.zoom-visible::backdrop { opacity: 1; }
 }
 /* La muestra de una capa de AREA (los mapas del INTA): un cuadradito con el RELLENO de la
    clase, que es lo que dice el mapa. Un trazo no serviria: el color de estas capas es el
-   interior del poligono, no su borde. */
+   interior del poligono, no su borde.
+   El `background-color` es el fondo de los DEPARTAMENTOS, el mismo token con el que los pinta
+   el mapa: encima, capas.js pone el color de la clase como imagen y con la misma opacidad que
+   usa el dibujo, asi la muestra y el mapa dan el mismo tono (QA del 20-nov-2026). */
 .capas-area {
   display: inline-block; flex: 0 0 auto; width: .85rem; height: .62rem;
   border: 1px solid; border-radius: 2px; vertical-align: middle;
+  background-color: var(--fondo-apoyo);
 }
 .capas-muestra { display: inline-flex; align-items: center; justify-content: center; width: 1.5rem; }
 /* Una leyenda de diez o doce clases con nombres largos (la aptitud del INTA dice "G3 -
@@ -3001,9 +3005,34 @@ dialog.zoom.zoom-visible::backdrop { opacity: 1; }
    19-nov-2026, cuando salio la banda de indicadores de las tres paginas de mapa (QA de
    Francisco, defecto D1): esas 5rem que quedaron libres arriba ahora son mapa. Solo lo lleva
    el panel que declara `zoom` en su spec: los otros mapas de capas siguen igual. */
-.panel[data-panel="mapa-capas"][data-con-zoom] > .panel-cuerpo > .grafico {
-  height: max(640px, calc(100vh - 12rem));
+/* Y OCUPA LA PAGINA SIN DEJAR CREMA ADENTRO DEL CUADRO (QA de Francisco del 20-nov-2026: "el
+   mapa ocupa cerca de un tercio del ancho"). La provincia es mas alta que ancha -su relacion
+   real es 0,635, que el build calcula del GeoJSON y el JS escribe en `--relacion-mapa`- y el
+   mapa se encuadra por el ALTO, asi que en una caja de 950 px de ancho el dibujo medía 455 y
+   los otros 495 eran fondo vacio. Deformarlo para que llene el ancho es lo que JC mando
+   corregir en la tercera tanda ("el mapa es una miniatura y esta deformado"), asi que lo que
+   se corrige es la CAJA: mide exactamente lo que mide el mapa, la leyenda queda pegada al
+   costado y el par va centrado en la pagina. El tope de 92vw es para una pantalla angosta,
+   donde el alto manda y el ancho no alcanza. */
+.panel[data-panel="mapa-capas"][data-con-zoom] > .panel-cuerpo {
+  grid-template-columns: auto minmax(12rem, 22rem); justify-content: center;
 }
+.panel[data-panel="mapa-capas"][data-con-zoom] > .panel-cuerpo > .grafico {
+  --alto-mapa: max(640px, calc(100vh - 12rem));
+  height: var(--alto-mapa);
+  width: min(calc(var(--alto-mapa) * var(--relacion-mapa, 0.635)), 92vw);
+}
+/* Los botones de zoom, flotando sobre la esquina del mapa: comparten celda de la grilla con el
+   dibujo y van en su esquina de arriba a la izquierda, que es donde los espera cualquiera que
+   haya usado un mapa. No le quitan ni un pixel de alto al mapa, que es la regla de esta
+   pagina. */
+.panel[data-panel="mapa-capas"] > .panel-cuerpo > .mapa-mando {
+  grid-column: 1; grid-row: 1; align-self: start; justify-self: start;
+  margin: .5rem; z-index: 2; display: flex; flex-direction: column; gap: .25rem;
+}
+.mapa-mando .visor-boton { box-shadow: 0 1px 3px rgba(0, 0, 0, .18); }
+/* En el PDF no van: son controles. */
+.imprimiendo .mapa-mando { display: none; }
 /* El mapa que ocupa la pagina NO lleva titulo de panel (QA de Francisco del 19-nov-2026,
    defecto D1): el titulo de la pagina ya lo nombra, y un segundo titulo repetia la bajada y le
    comia un renglon al mapa. El build manda `titulo: ""` y el renglon vacio no ocupa nada. Va
@@ -3019,7 +3048,12 @@ dialog.zoom.zoom-visible::backdrop { opacity: 1; }
 .capas-a-la-vista li { display: flex; flex-direction: column; gap: .2rem; }
 .capas-a-la-vista .capas-variantes > span { flex-direction: column; gap: .15rem; }
 @media (max-width: 1100px) {
-  .panel[data-panel="mapa-capas"] > .panel-cuerpo { grid-template-columns: minmax(0, 1fr); }
+  .panel[data-panel="mapa-capas"] > .panel-cuerpo,
+  /* El `[data-con-zoom]` hay que repetirlo: la regla de arriba le pone dos columnas con mas
+     especificidad que esta, y una media query no agrega especificidad ninguna. */
+  .panel[data-panel="mapa-capas"][data-con-zoom] > .panel-cuerpo {
+    grid-template-columns: minmax(0, 1fr);
+  }
   .panel[data-panel="mapa-capas"] > .panel-cuerpo > .capas-a-la-vista { grid-column: 1; grid-row: 2; }
 }
 

@@ -37,6 +37,24 @@ function escapar(texto) {
   return String(texto).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+/* La opacidad con la que se pinta una capa de AREA, si su estilo no declara otra. Existe para
+   que la MUESTRA de la leyenda y el RELLENO del mapa usen el mismo numero: ese es todo el
+   motivo de que sea una constante y no un literal suelto. */
+var OPACIDAD_AREA = 0.78;
+
+/* Un color del protocolo (#rgb o #rrggbb) con su alfa. Si no es hexadecimal, se devuelve tal
+   cual: el color opaco es un error menos grave que ninguno. */
+function conAlfa(color, alfa) {
+  var hex = String(color || "").trim();
+  if (hex.charAt(0) !== "#" || (hex.length !== 4 && hex.length !== 7)) { return hex; }
+  var pasos = hex.length === 4
+    ? [hex.charAt(1) + hex.charAt(1), hex.charAt(2) + hex.charAt(2), hex.charAt(3) + hex.charAt(3)]
+    : [hex.slice(1, 3), hex.slice(3, 5), hex.slice(5, 7)];
+  var n = pasos.map(function (p) { return parseInt(p, 16); });
+  if (n.some(isNaN)) { return hex; }
+  return "rgba(" + n[0] + "," + n[1] + "," + n[2] + "," + alfa + ")";
+}
+
 /* El primer estilo cuyo `cuando` coincide con las propiedades del tramo. El ultimo estilo de
    cada capa es siempre el general (`cuando` vacio): el build lo exige. */
 function estiloDe(capa, propiedades) {
@@ -118,11 +136,23 @@ function listas(nodo, catalogo, redibujar) {
 function muestra(capa, estilo) {
   var span = document.createElement("span");
   if (capa.geometria === "poligonos") {
-    /* Una capa de area se muestra con su RELLENO: es lo que dice el mapa. */
+    /* Una capa de area se muestra con su RELLENO: es lo que dice el mapa.
+       Y SE PINTA COMO LO PINTA EL MAPA (QA de Francisco del 20-nov-2026): el relleno va al 78%
+       sobre el color de los departamentos, no opaco. Sin esto los dos tonos no eran el mismo y
+       la leyenda desmentia al mapa: la cuenca "Dulce" se dibuja #d8cc68 -su #d4c94e al 78%
+       sobre el #e8d6c6 de los departamentos- y su muestra salia #d4c94e, o sea un amarillo
+       limpio al lado de un oliva. Asi aparecieron Choya, Loreto y Ojo de Agua "en un tono que
+       no esta en la leyenda", y son de la cuenca Dulce, que si esta.
+       La composicion la hace el navegador, no este archivo: el color del fondo lo pone el CSS
+       (`.capas-area { background-color: var(--fondo-apoyo) }`, el mismo token con el que
+       tablero.js pinta los departamentos) y aca va SOLO la capa de arriba, como imagen. Con
+       `opacity` sobre el elemento no alcanzaria: eso lo dejaria ver la crema del panel, que no
+       es el fondo que tiene debajo en el mapa. */
     span.className = "capas-area";
-    span.style.background = estilo.color;
-    span.style.borderColor = estilo.borde || estilo.color;
-    if (estilo.opacidad !== undefined) { span.style.opacity = String(estilo.opacidad); }
+    var alfa = estilo.opacidad === undefined ? OPACIDAD_AREA : estilo.opacidad;
+    var pintado = conAlfa(estilo.color, alfa);
+    span.style.backgroundImage = "linear-gradient(" + pintado + "," + pintado + ")";
+    span.style.borderColor = conAlfa(estilo.borde || estilo.color, alfa);
   } else if (capa.geometria === "puntos") {
     span.className = "capas-punto";
     span.style.background = estilo.color;
@@ -367,7 +397,7 @@ function series(catalogo, ids, opciones) {
           tooltip: opciones.interactivas ? tooltipDeCapa() : { show: false },
           itemStyle: {
             color: estilo.color,
-            opacity: estilo.opacidad === undefined ? 0.78 : estilo.opacidad,
+            opacity: estilo.opacidad === undefined ? OPACIDAD_AREA : estilo.opacidad,
             borderColor: estilo.borde || estilo.color,
             borderWidth: estilo.ancho === undefined ? 0.4 : estilo.ancho
           },

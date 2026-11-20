@@ -1251,6 +1251,17 @@ colores:
     localidades:
       estilos:
         - {cuando: {}, color: "#4a4a4a", borde: "#fbf4ec", tamanio: 4, rotulo: ""}
+    # Los PARAJES (BAHRA del IGN), publicados el 20-nov-2026 porque el visor del INDEC no los
+    # tiene (QA de Francisco, M1). Es el MISMO par de colores que las ciudades y pueblos, al
+    # revés: relleno crema con borde gris oscuro, y más chico. Es cromo de REFERENCIA, no un
+    # dato, y la relacion entre los dos simbolos tiene que leerse sola -un paraje es un
+    # asentamiento mas chico que un pueblo-, asi que no entra una familia de color nueva. Al
+    # lado de las estaciones de ferrocarril "sin servicio", que llevan el mismo par, se
+    # distingue por tamanio (3 contra 5) y porque cada capa se prende por separado. Queda para
+    # que JC lo valide (backlog 138).
+    parajes:
+      estilos:
+        - {cuando: {}, color: "#fbf4ec", borde: "#4a4a4a", tamanio: 3, rotulo: ""}
     # El tendido electrico de media tension (CFEE - Secretaria de Energia, datos de EDESE), que
     # JC pidio el 15-nov-2026 junto a las redes viales. Color NUEVO, para que JC lo valide
     # (backlog 115): violeta frio, una familia que no usa ninguna otra capa de contexto -las

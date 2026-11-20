@@ -184,3 +184,25 @@ publicacion:
       # Los nombres se escriben en el mapa, no solo en el mouseover: JC pide que se VEAN. Los
       # que se encimarian se esconden y aparecen al acercar.
       rotulos: true
+    # PARAJES (BAHRA del IGN), publicados el 20-nov-2026. El archivo estaba bajado desde el
+    # 17-nov y sin publicar; lo que lo trajo a la pagina es el QA de Francisco (M1): la tarjeta
+    # "Parajes por provincia" de la portada abria el portal del INDEC en "Poblacion total, por
+    # sexo, segun jurisdiccion", que no son parajes -el indicador 92 de ese portal es ese, y en
+    # su catalogo de 456 indicadores NO hay ninguno de parajes-. O sea que el visor del
+    # organismo no puede mostrar esto, y la regla de JC dice que entonces va en el nuestro
+    # ("LA IDEA ERA BAJAR LAS CAPAS Y PONER NUESTRO PROPIO VISOR").
+    #
+    # Va en Infraestructura y no en una pagina nueva porque es lo que JC pide hacer con ella:
+    # "CRUZAR CON RED TERCIARIA Y RUTAS... ESTABLECER RADIOS DE DISTANCIA AL PAVIMENTO" (nota
+    # de su Excel). Prendida sobre las rutas y los caminos rurales, el cruce se ve; el calculo
+    # de la distancia al pavimento sigue pendiente (RF18.1, backlog 138).
+    parajes:
+      archivo: parajes.geojson
+      etiqueta: "Parajes"
+      geometria: puntos
+      tooltip: "Paraje {nombre}"
+      fuente: "IGN - BAHRA (dato del INDEC)"
+      # 1.022 puntos y 960 KB: se baja recien al prenderla, como los caminos rurales.
+      a_demanda: true
+      # SIN rotulos, al contrario de las ciudades: mil nombres encimados tapan el mapa. El
+      # nombre de cada paraje esta en el cartel del mouseover.

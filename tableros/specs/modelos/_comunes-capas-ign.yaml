@@ -70,34 +70,42 @@ notas_metodologicas:
       Son dos capas del INTA, descargadas de sus geoservicios el 18 de noviembre de 2026 y
       publicadas acá como copia propia: el sitio no le pide nada al servidor del INTA al
       dibujarlas. "Cuencas hídricas" divide el territorio por la cuenca a la que drena cada
-      pedazo -Río Salado, Río Dulce, Salinas de Ambargasta y las demás macrocuencas del
-      Noroeste- y "Cursos de agua" dibuja los ríos, arroyos y cañadas con el tipo que les pone
-      la fuente. Las dos capas son de todo el Noroeste y se publican recortadas al límite de la
+      pedazo: en la provincia son las SEIS que lista la leyenda -Dulce, Dulce Superior,
+      Juramento - Salado, Juramento Medio Inferior, Rosario Horcones - Urueña y Sin Aporte
+      Significativo - Sureste de Salta-, con el nombre que les pone el INTA. Y "Cursos de
+      agua" dibuja los ríos, arroyos y cañadas con el tipo que les pone la fuente.
+      Las dos capas son de todo el Noroeste y se publican recortadas al límite de la
       provincia. Los nombres de las clases y sus colores son los que publica el INTA con cada
       capa, no una escala nuestra. Se pueden mirar juntas: las cuencas son áreas y los cursos
       son líneas, así que los ríos quedan dibujados encima de su cuenca. Una cosa que el dato
       no puede: el 4% de la superficie de la provincia no pertenece a ninguna cuenca en el
       propio dato del INTA, y ahí el mapa queda sin pintar.
+  # UNA SOLA NOTA PARA INFRAESTRUCTURA (QA de Francisco del 20-nov-2026). Eran dos bloques de
+  # texto debajo del mapa (`capas` y `tendido`) y el segundo cerraba con "Los kilómetros se
+  # miden igual que los de la red vial", que remitía a la nota `km-de-red` que salió de esta
+  # página el 19-nov con la banda de KPIs: una frase colgada que mandaba a un bloque que ya no
+  # está. Las dos notas hablan de las capas del mismo mapa, así que son una, con el mismo
+  # criterio que las dos páginas del INTA (una nota por página, y describe SUS capas).
+  #
+  # Ninguno de estos textos los escribió JC. Están porque es lo que hay que saberle al dato
+  # (de quién es cada capa, qué exactitud tiene, por qué dos arrancan apagadas), y van DEBAJO
+  # del mapa, así que no le sacan alto. Si él los quiere afuera, es sacar `notas_metodologicas`
+  # del spec de cada una de las tres páginas. Preguntado en el backlog 137.
   capas:
     titulo: "Qué muestra el mapa"
     texto: >
-      Las rutas, el ferrocarril y las estaciones son capas del catálogo "Capas SIG" del IGN
-      (apartado Transporte), descargadas el 14 de octubre de 2026 por sus servicios OGC. Lo
-      pavimentado y lo activo va en trazo lleno; lo consolidado o de tierra, y lo abandonado o
-      desmantelado, en trazo punteado. El tendido eléctrico no es del IGN: lo publica el Consejo
-      Federal de la Energía Eléctrica con datos de EDESE. Los caminos rurales y el tendido
-      eléctrico están apagados al abrir la página porque son más de once mil y casi treinta mil
-      trazos: se cargan recién al prenderlos.
-  tendido:
-    titulo: "Qué es el tendido eléctrico que se muestra"
-    texto: >
-      Son las líneas de MEDIA TENSIÓN de la provincia, publicadas por el Consejo Federal de la
-      Energía Eléctrica en el portal de datos abiertos de la Secretaría de Energía, con datos
-      provistos por EDESE. No es un relevamiento del Instituto Geográfico Nacional y la fuente
-      no declara su exactitud posicional: el mapa sirve para ver por dónde corre la red, no para
-      ubicar un poste. Los niveles de tensión se publican con el número que trae la fuente y sin
-      unidad, porque ni el dataset ni su ficha de metadata documentan en qué unidad está ese
-      campo. Los kilómetros se miden igual que los de la red vial.
+      Las rutas, el ferrocarril, las estaciones, las ciudades y los parajes son capas del
+      catálogo "Capas SIG" del IGN (apartados Transporte y Asentamientos), descargadas por sus
+      servicios OGC. Lo pavimentado y lo activo va en trazo lleno; lo consolidado o de tierra,
+      y lo abandonado o desmantelado, en trazo punteado. El tendido eléctrico no es del IGN:
+      son las líneas de MEDIA TENSIÓN que publica el Consejo Federal de la Energía Eléctrica
+      en el portal de datos abiertos de la Secretaría de Energía, con datos provistos por
+      EDESE; esa fuente no declara su exactitud posicional, así que el mapa sirve para ver por
+      dónde corre la red y no para ubicar un poste, y sus niveles de tensión se publican con
+      el número que trae la fuente y sin unidad, porque ni el dataset ni su ficha de metadata
+      documentan en qué unidad está ese campo. Los caminos rurales, el tendido eléctrico y los
+      parajes están apagados al abrir la página porque son más de once mil, casi treinta mil y
+      mil trazos o puntos: se cargan recién al prenderlos.
   desinventar:
     titulo: "Qué son los registros de DESINVENTAR"
     texto: >
