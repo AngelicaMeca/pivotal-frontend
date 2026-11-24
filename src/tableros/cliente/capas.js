@@ -22,6 +22,10 @@
    son `silent`: no tienen tooltip y el clic pasa de largo hasta el departamento de abajo, que
    sigue eligiendose igual. */
 
+/* La holgura para alejar es la del gesto compartido (`gesto-zoom.js`): el zoom de este mapa
+   es el de los mapas de AgroClima. */
+import { HOLGURA_PARA_ALEJAR } from "./gesto-zoom";
+
 /* Un archivo se baja UNA vez por pagina: {archivo: {promesa, grupos}}. Un fallo NO se guarda
    (misma regla que comun.bajar): el proximo clic en la capa vuelve a intentar. */
 var bajadas = {};
@@ -305,9 +309,12 @@ export function geoDeMapa(proyeccion, opciones) {
     layoutCenter: proyeccion.layoutCenter,
     layoutSize: proyeccion.layoutSize,
     roam: conZoom,
-    // Hasta 40x: a ese acercamiento se lee un camino rural suelto, que es "el maximo" que pide
-    // JC. El minimo es 1 para que no se pueda alejar mas alla de la provincia entera.
-    scaleLimit: conZoom ? { min: 1, max: 40 } : undefined,
+    /* Hasta 40x: a ese acercamiento se lee un camino rural suelto, que es "el maximo" que pide
+       JC (los mapas de AgroClima topan antes porque ahi se agrandan los pixeles de una imagen;
+       una cartografia vectorial no se despeina). Para ALEJAR, la misma holgura que el visor:
+       un poco por debajo del encuadre inicial, asi el gesto no se topa con una pared justo
+       donde arranco, y el boton del encuadre vuelve al exacto. */
+    scaleLimit: conZoom ? { min: HOLGURA_PARA_ALEJAR, max: 40 } : undefined,
     silent: !conZoom,
     selectedMode: false,
     tooltip: { show: false },

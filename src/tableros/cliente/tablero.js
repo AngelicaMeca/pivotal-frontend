@@ -12,6 +12,8 @@
 
 import * as echarts from "echarts";
 import { capasDelMapa, capasPrendidas, geoDeMapa } from "./capas";
+/* El gesto del zoom es el MISMO que el de los mapas de AgroClima (ver `gesto-zoom.js`). */
+import { PASO_DE_BOTON, PASO_DE_DOBLE_CLIC, factorDeRueda } from "./gesto-zoom";
 
 export default function iniciar(PIVOTAL) {
 
@@ -824,13 +826,106 @@ export default function iniciar(PIVOTAL) {
         if (nodo.capasRedibujar) { nodo.capasRedibujar(); }
         return;
       }
-      var chart = PIVOTAL.grafico(nodo.querySelector("[data-grafico]"));
-      var geo = ((chart.getOption() || {}).geo || [])[0];
-      if (!geo) { return; }
-      var zoom = (geo.zoom || 1) * (que === "acercar" ? 1.6 : 1 / 1.6);
-      /* Los mismos topes que la rueda (`scaleLimit` de `geoDeMapa`): el boton no puede llevar
-         el mapa a donde el gesto no llega. */
-      chart.setOption({ geo: { zoom: Math.max(1, Math.min(40, zoom)) } });
+      /* El boton acerca y aleja en el CENTRO del mapa, igual que el del visor
+         (`zoomAlCentro`), y con su mismo paso. Los topes no se escriben aca: los pone el
+         `scaleLimit` del geo y los hace cumplir ECharts, asi que el boton no puede llevar el
+         mapa a donde el gesto no llega. */
+      acercarMapa(nodo, que === "acercar" ? PASO_DE_BOTON : 1 / PASO_DE_BOTON);
+    });
+  }
+
+  /* ---- EL ZOOM DEL MAPA ES EL DE LOS MAPAS DE AGROCLIMA (pedido de la usuaria del
+     24-nov-2026: "quiero que el zoom sea como el de los mapas de agroclima") ----
+
+     El mapa de capas se acerca con el `roam` de ECharts y el visor de AgroClima con su propio
+     canvas, y los dos gestos no se parecian: la rueda de ECharts salta de a 1,4x por muesca
+     -el mapa pega un tiron y se pasa de largo- y no tiene doble clic. Ahora el gesto es el del
+     visor (`gesto-zoom.js`): la rueda da un factor continuo, el doble clic acerca al doble en
+     el punto donde se hizo, y los dos acercan DONDE ESTA EL PUNTERO, no en el centro.
+
+     Como. La rueda se atiende en CAPTURA y se le corta la propagacion: asi no llega al
+     `zrender`, que es quien le aplicaria su propio paso (si llegara, un mismo gesto acercaria
+     dos veces). El arrastre y el pellizco siguen siendo los de ECharts, que ya son continuos.
+     El movimiento se manda con la accion `geoRoam`, la misma que usa ECharts para su propio
+     gesto: respeta el `scaleLimit` del geo y deja el componente con el zoom y el centro
+     escritos, que es de donde los lee `pintarMapaCapas` para no perder el encuadre. */
+  /* Acerca o aleja `factor` veces alrededor de un punto del lienzo (el del puntero; sin punto,
+     el centro, que es lo que hacen los botones).
+
+     Se escribe con `setOption`, no con la accion `geoRoam` que usa ECharts para su propio
+     gesto: medido el 24-nov-2026, `geoRoam` mueve el sistema de coordenadas -las capas se
+     acomodan- pero NO vuelve a dibujar el `geo`, asi que los departamentos se quedaban
+     quietos y la capa se despegaba de la cartografia. Es a proposito de ECharts ("Currently,
+     not call render of components. Geo render cost a lot." en `updateTransform`): su gesto
+     mueve a mano el grupo ya dibujado, que desde afuera no se toca.
+
+     La cuenta del centro nuevo es la del visor (`zoomEn`), escrita en coordenadas en vez de en
+     pixeles: el punto que esta bajo el puntero tiene que quedar bajo el puntero. Se puede
+     porque este `geo` no lleva proyeccion cartografica y pasar de (lon, lat) a pixeles es
+     afin, lo mismo en lo que se apoya el dibujo de las capas de area.
+
+     Los topes no se escriben aca: salen del `scaleLimit` del geo (`geoDeMapa`, en capas.js),
+     asi la rueda, el doble clic y los botones no pueden llevar el mapa a lugares distintos. */
+  function acercarMapa(nodo, factor, px, py) {
+    var caja = nodo.querySelector("[data-grafico]");
+    if (!caja) { return; }
+    var chart = PIVOTAL.grafico(caja);
+    var geo = ((chart.getOption() || {}).geo || [])[0];
+    if (!geo) { return; }
+    var ancho = caja.clientWidth, alto = caja.clientHeight;
+    if (px === undefined) { px = ancho / 2; py = alto / 2; }
+    var topes = geo.scaleLimit || {};
+    var viejo = geo.zoom || 1;
+    var nuevo = Math.max(topes.min === undefined ? 1 : topes.min,
+                         Math.min(topes.max === undefined ? 40 : topes.max, viejo * factor));
+    if (nuevo === viejo) { return; }
+    var puntero = chart.convertFromPixel({ geoIndex: 0 }, [px, py]);
+    /* El centro arranca sin declarar (el encuadre de la provincia): se lo pregunta al mapa
+       dibujado, que es el unico que sabe donde esta parado. */
+    var centro = geo.center || chart.convertFromPixel({ geoIndex: 0 }, [ancho / 2, alto / 2]);
+    if (!puntero || !centro) { return; }
+    var f = nuevo / viejo;
+    chart.setOption({ geo: { zoom: nuevo, center: [
+      puntero[0] + (centro[0] - puntero[0]) / f,
+      puntero[1] + (centro[1] - puntero[1]) / f
+    ] } });
+  }
+
+  function engancharGestoDeZoom(nodo) {
+    var caja = nodo.querySelector("[data-grafico]");
+    if (!caja || caja.dataset.gestoZoom) { return; }
+    caja.dataset.gestoZoom = "1";
+    function local(evento) {
+      var r = caja.getBoundingClientRect();
+      return [evento.clientX - r.left, evento.clientY - r.top];
+    }
+    /* La rueda llega de a muchos eventos por segundo (sobre todo en un trackpad) y cada
+       redibujado de la capa pesada cuesta, asi que los pasos se acumulan y se aplican UNO por
+       cuadro: no se pierde ningun movimiento y no se dibuja de mas. */
+    var pendiente = null;
+    caja.addEventListener("wheel", function (evento) {
+      /* `preventDefault` para que la rueda acerque y no arrastre la pagina (es lo que hacia
+         ECharts con el puntero sobre el mapa) y `stopPropagation` para que el gesto no llegue
+         tambien al `zrender`, que le aplicaria encima su propio paso de 1,4x. */
+      evento.preventDefault();
+      evento.stopPropagation();
+      var p = local(evento);
+      var factor = factorDeRueda(evento);
+      if (pendiente) {
+        pendiente.factor = pendiente.factor * factor;
+        pendiente.p = p;
+        return;
+      }
+      pendiente = { factor: factor, p: p };
+      window.requestAnimationFrame(function () {
+        var paso = pendiente;
+        pendiente = null;
+        acercarMapa(nodo, paso.factor, paso.p[0], paso.p[1]);
+      });
+    }, { passive: false, capture: true });
+    caja.addEventListener("dblclick", function (evento) {
+      var p = local(evento);
+      acercarMapa(nodo, PASO_DE_DOBLE_CLIC, p[0], p[1]);
     });
   }
 
@@ -952,6 +1047,7 @@ export default function iniciar(PIVOTAL) {
       chart.setOption(opcion, true);
       if (conZoom) {
         engancharMandoDeMapa(nodo);
+        engancharGestoDeZoom(nodo);
         /* La caja del mapa se dimensiona con la proporcion REAL de la provincia (0,635: es mas
            alta que ancha), asi que el dibujo la llena y no quedan costados vacios adentro del
            cuadro. El numero lo calcula el build del propio GeoJSON (`relacion_mapa`), asi que

@@ -59,6 +59,11 @@ paneles:
     # sobre el mapa, el mapa en una caja con marco y la leyenda al costado en una tarjeta
     # "Referencias" con su pie de fuente. Lo declara `visor: true` en `paneles.orden`.
     #
+    # Y CON EL MISMO ZOOM (pedido de la usuaria del 24-nov-2026: "quiero que el zoom sea como
+    # el de los mapas de agroclima"): rueda continua, doble clic, pellizco y arrastre, con
+    # los mismos pasos que el visor. El gesto vive en `cliente/gesto-zoom.js` y lo usan los
+    # dos dibujos, asi que no hay dos fuentes de verdad para el mismo numero.
+    #
     # El titulo vuelve (lo habia sacado el D1 del QA del 19-nov-2026 por repetir la bajada):
     # en este formato es el UNICO titulo de la pagina -no hay otro arriba, igual que en NDVI o
     # en el Mapa Nacional de Cultivos- y sigue el patron de esas paginas, organismo primero.

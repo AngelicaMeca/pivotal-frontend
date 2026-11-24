@@ -40,6 +40,13 @@
      5. con el visor quieto se adelanta el periodo de al lado, uno solo, para que la flecha no
         vuelva a esperar. */
 
+/* El GESTO del zoom (la rueda, el boton, el doble clic y la holgura para alejar) sale de
+   `gesto-zoom.js`: desde el 24-nov-2026 el mapa de capas del tablero usa el mismo, asi que los
+   numeros viven en un solo lado. Aca quedan los dos TOPES para acercar, que son de este visor
+   porque miran la imagen. */
+import { PASO_DE_BOTON, PASO_DE_DOBLE_CLIC, HOLGURA_PARA_ALEJAR, factorDeRueda }
+  from "./gesto-zoom";
+
 var ZOOM_MAXIMO = 14;     // veces el encuadre inicial
 /* ...pero nunca menos que esto, medido contra los pixeles REALES de la imagen (8 = 800% del
    tamanio real, el mismo tope que el visor de las galerias).
@@ -130,9 +137,10 @@ export default function crearVisor(nodo, elemento, opciones) {
 
 
   var grupoZoom = el("div", "visor-grupo");
-  grupoZoom.appendChild(boton("−", "Alejar", function () { zoomAlCentro(1 / 1.5); }));
+  grupoZoom.appendChild(boton("−", "Alejar",
+                              function () { zoomAlCentro(1 / PASO_DE_BOTON); }));
   grupoZoom.appendChild(boton("⟲", "Volver al encuadre de la provincia", encuadrar));
-  grupoZoom.appendChild(boton("+", "Acercar", function () { zoomAlCentro(1.5); }));
+  grupoZoom.appendChild(boton("+", "Acercar", function () { zoomAlCentro(PASO_DE_BOTON); }));
 
   var original = boton("Imagen original", "Ver la imagen del " + organismo + " tal cual se publica",
                        function () { if (opciones.original) { opciones.original(estado.i, original); } });
@@ -679,7 +687,8 @@ export default function crearVisor(nodo, elemento, opciones) {
   // ---------- zoom y arrastre ----------
   function zoomEn(px, py, factor) {
     var tope = Math.max(escalaEncuadre * ZOOM_MAXIMO, ZOOM_REAL_MAXIMO);
-    var nueva = Math.min(tope, Math.max(escalaEncuadre * 0.6, estado.s * factor));
+    var nueva = Math.min(tope, Math.max(escalaEncuadre * HOLGURA_PARA_ALEJAR,
+                                       estado.s * factor));
     var f = nueva / estado.s;
     estado.tx = px - (px - estado.tx) * f;
     estado.ty = py - (py - estado.ty) * f;
@@ -699,11 +708,11 @@ export default function crearVisor(nodo, elemento, opciones) {
   canvas.addEventListener("wheel", function (evento) {
     evento.preventDefault();
     var p = local(evento);
-    zoomEn(p[0], p[1], Math.exp(-evento.deltaY * 0.0015));
+    zoomEn(p[0], p[1], factorDeRueda(evento));
   }, { passive: false });
   canvas.addEventListener("dblclick", function (evento) {
     var p = local(evento);
-    zoomEn(p[0], p[1], 2);
+    zoomEn(p[0], p[1], PASO_DE_DOBLE_CLIC);
   });
   canvas.addEventListener("pointerdown", function (evento) {
     estado.punteros[evento.pointerId] = local(evento);
