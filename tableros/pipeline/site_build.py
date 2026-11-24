@@ -84,6 +84,10 @@ PREFIJO = "/plataforma"
 # fuera de la version publica, y la portada ya es la puerta de entrada).
 INICIO = PREFIJO
 GEOJSON = PREFIJO + "/geo/sde-departamentos.geojson"
+# El mapa base de "Mostrar todo el pais": las 24 provincias continentales del IGN
+# (pipeline/geojson_pais.py). Es CONTEXTO, no dato: con el boton prendido la provincia
+# que se esta mirando la siguen dibujando sus propios departamentos, encima de este.
+GEOJSON_PAIS = PREFIJO + "/geo/pais-provincias.geojson"
 DIR_CONFIGS = os.path.join(RAIZ, "configs")
 
 MEDIDAS = ["sup_sembrada_ha", "sup_cosechada_ha", "produccion_tn", "rendimiento_kg_ha"]
@@ -1279,6 +1283,39 @@ def relacion_mapa():
         alto = lats[1] - lats[0]
         _RELACION_MAPA = round(ancho / alto, 3)
     return _RELACION_MAPA
+
+
+_PAIS = None
+
+
+def _pais():
+    """El mapa base del pais leido una vez: sus extremos y el nombre de cada provincia.
+
+    Es el mismo calculo que `_extremos_geojson` / `aspecto_mapa` / `relacion_mapa` hacen para
+    la provincia, sobre el otro archivo. No se reusan aquellas porque guardan su resultado en
+    un global: son el encuadre de la provincia, que no cambia.
+    """
+    global _PAIS
+    if _PAIS is None:
+        import math
+        with open(os.path.join(DIR_CONFIGS, "dims", "pais-provincias.geojson"),
+                  encoding="utf-8") as f:
+            geo = json.load(f)
+        lons, lats, provincias = [], [], []
+        for feature in geo["features"]:
+            provincias.append({"id": feature["properties"]["geo_id"],
+                               "nombre": feature["properties"]["nombre"]})
+            for parte in feature["geometry"]["coordinates"]:
+                for anillo in parte:
+                    for x, y in anillo:
+                        lons.append(x)
+                        lats.append(y)
+        aspecto = round(math.cos(math.radians((min(lats) + max(lats)) / 2.0)), 3)
+        _PAIS = {"aspecto": aspecto,
+                 "relacion": round((max(lons) - min(lons)) * aspecto
+                                   / (max(lats) - min(lats)), 3),
+                 "provincias": provincias}
+    return _PAIS
 
 
 _ROTULOS_DEPTOS = None
@@ -9759,6 +9796,29 @@ _CATALOGO_CAPAS = None
 TOTAL_EVENTOS = "total"
 
 
+def estilos_de_capa(id_capa, reglas, clave):
+    """Las reglas de dibujo de una capa, listas para el navegador, validadas.
+
+    El ultimo estilo tiene que ser el general (`cuando: {}`): si no, un rasgo que no coincida
+    con ninguna regla quedaria sin dibujar. Vale igual para la leyenda de la provincia
+    (`estilos`) y para la de "Mostrar todo el pais" (`estilos_pais`), que tiene mas clases
+    porque fuera del limite aparecen clases que adentro no estan.
+    """
+    lista = []
+    for e in reglas:
+        item = {"cuando": {k: list(v) for k, v in (e.get("cuando") or {}).items()},
+                "color": e["color"], "rotulo": e.get("rotulo", "")}
+        for nombre in ("ancho", "trazo", "opacidad", "borde", "tamanio"):
+            if nombre in e:
+                item[nombre] = e[nombre]
+        lista.append(item)
+    if not lista or lista[-1]["cuando"]:
+        raise pr.ErrorDeProtocolo(
+            "El ultimo estilo de %s de la capa %s tiene que ser el general (`cuando: {}`): si "
+            "no, un rasgo que no coincida con ninguno quedaria sin dibujar." % (clave, id_capa))
+    return lista
+
+
 def catalogo_capas():
     """Las capas que un mapa puede prender: {id: definicion lista para el navegador}.
 
@@ -9797,18 +9857,7 @@ def catalogo_capas():
                     "La capa %s no tiene estilo en _protocolo-presentacion.colores."
                     "capas_de_contexto: su color lo manda el protocolo, no el sitio." % id_capa)
             estilo = estilos[id_capa]
-            lista = []
-            for e in estilo["estilos"]:
-                item = {"cuando": {k: list(v) for k, v in (e.get("cuando") or {}).items()},
-                        "color": e["color"], "rotulo": e.get("rotulo", "")}
-                for clave in ("ancho", "trazo", "opacidad", "borde", "tamanio"):
-                    if clave in e:
-                        item[clave] = e[clave]
-                lista.append(item)
-            if not lista or lista[-1]["cuando"]:
-                raise pr.ErrorDeProtocolo(
-                    "El ultimo estilo de la capa %s tiene que ser el general (`cuando: {}`): si "
-                    "no, un tramo que no coincida con ninguno quedaria sin dibujar." % id_capa)
+            lista = estilos_de_capa(id_capa, estilo["estilos"], "estilos")
             catalogo[id_capa] = {
                 "origen": origen,
                 "archivo": "%s/%s/%s" % (PREFIJO, publicacion["carpeta_publica"],
@@ -9828,6 +9877,31 @@ def catalogo_capas():
                 "clases_al_prender": bool(decl.get("clases_al_prender")),
                 "estilos": lista,
             }
+            # "Mostrar todo el pais": la version de la capa que el INTA sirve ENTERA, sin el
+            # recorte contra el contorno de la provincia (pipeline/capas_pais.py). La declara
+            # el catalogo con `archivo_pais`, y el navegador la baja solo cuando el visitante
+            # aprieta el boton: son archivos que no hacen falta para la vista de siempre.
+            #
+            # Y VIENE CON SU PROPIA LEYENDA, que no es un adorno: fuera de la provincia
+            # aparecen clases que adentro no existen (las cuencas pasan de 6 a 16 macrocuencas),
+            # y una leyenda que no las nombrara dejaria colores en el mapa sin renglon que los
+            # explique. Las dos listas salen del SLD del INTA, no de aca.
+            if decl.get("archivo_pais"):
+                origen_pais = os.path.join(carpeta, decl["archivo_pais"])
+                if not os.path.exists(origen_pais):
+                    raise pr.ErrorDeProtocolo("La capa %s pide %s, que no existe."
+                                              % (id_capa, origen_pais))
+                if "estilos_pais" not in estilo:
+                    raise pr.ErrorDeProtocolo(
+                        "La capa %s declara `archivo_pais` y no tiene `estilos_pais` en "
+                        "_protocolo-presentacion.colores.capas_de_contexto: fuera de la "
+                        "provincia hay clases que adentro no estan y sin su leyenda el mapa "
+                        "mostraria colores sin explicar." % id_capa)
+                catalogo[id_capa]["origen_pais"] = origen_pais
+                catalogo[id_capa]["archivo_pais"] = "%s/%s/%s" % (
+                    PREFIJO, publicacion["carpeta_publica"], decl["archivo_pais"])
+                catalogo[id_capa]["estilos_pais"] = estilos_de_capa(
+                    id_capa, estilo["estilos_pais"], "estilos_pais")
             if decl.get("rotulos") and decl["geometria"] != "puntos":
                 raise pr.ErrorDeProtocolo(
                     "La capa %s pide `rotulos` y es de %s: los rotulos solo se dibujan sobre "
@@ -9890,7 +9964,8 @@ def catalogo_del_tablero(tablero):
         return None
     catalogo = catalogo_capas()
     return {"rotulo_fuentes": catalogo["rotulo_fuentes"],
-            "capas": {i: {k: v for k, v in catalogo["capas"][i].items() if k != "origen"}
+            "capas": {i: {k: v for k, v in catalogo["capas"][i].items()
+                          if k not in ("origen", "origen_pais")}
                       for i in ids}}
 
 
@@ -10071,6 +10146,19 @@ def panel_mapa_capas(ctx, spec):
             # Sobre un mapa de calor el encuadre sigue fijo, que es como JC valido esas maquetas.
             "zoom": any(bool(p.get("zoom")) for p in spec["paneles"]["orden"]
                         if p["id"] == "mapa-capas"),
+            # "Mostrar todo el pais" (pedido de la usuaria del 25-nov-2026, el boton que tienen
+            # los mapas de AgroClima). Se declara en `paneles.orden`, igual que `zoom` y
+            # `visor`, porque decide dos cosas a la vez: la casilla de la barra -que la dibuja
+            # el servidor desde el panel de la PAGINA- y el mapa base que el navegador registra
+            # cuando la prenden, que es esto. Sin declararlo, el payload no cambia.
+            "mapa_pais": ({"geojson": GEOJSON_PAIS, "aspecto": _pais()["aspecto"],
+                           "relacion": _pais()["relacion"],
+                           # El nombre de cada provincia, para el rotulo y el cartel del mapa
+                           # base: con el boton prendido las regiones del mapa son las
+                           # provincias y no los departamentos.
+                           "provincias": _pais()["provincias"]}
+                          if any(bool(p.get("pais")) for p in spec["paneles"]["orden"]
+                                 if p["id"] == "mapa-capas") else None),
             "deptos": [{"id": g, "nombre": ctx.nombre(g)} for g in ctx.geo.deptos],
             # Donde va escrito el nombre de cada departamento. Hace falta desde que la division
             # departamental se dibuja ENCIMA de las capas (21-nov-2026): arriba los nombres ya
@@ -13071,6 +13159,8 @@ def escribir_sitio(ctx, vistas, tableros):
     # Geometria (el JS de las paginas vive en src/tableros/cliente/, es codigo del sitio)
     escritor.copia(os.path.join(DIR_CONFIGS, "dims", "sde-departamentos.geojson"),
                    "public/plataforma/geo/sde-departamentos.geojson")
+    escritor.copia(os.path.join(DIR_CONFIGS, "dims", "pais-provincias.geojson"),
+                   "public/plataforma/geo/pais-provincias.geojson")
 
     # Logo provincial: si el theme referencia un asset (site/theme.yaml, logo_provincia.archivo,
     # ruta publica), se copia de site/assets/ al artefacto. Sin asset se dibuja el wordmark.
@@ -13743,6 +13833,10 @@ def escribir_sitio(ctx, vistas, tableros):
     for id_capa in sorted(capas_a_copiar):
         capa = catalogo_capas()["capas"][id_capa]
         escritor.copia(capa["origen"], "public" + capa["archivo"])
+        # La version sin recortar, para "Mostrar todo el pais". Se copia aunque el visitante
+        # no apriete el boton: el artefacto lleva los archivos, el navegador los pide o no.
+        if capa.get("origen_pais"):
+            escritor.copia(capa["origen_pais"], "public" + capa["archivo_pais"])
 
     # Iconos: al deploy van SOLO los que el sitio usa (los referencio algun filtro, la tarjeta
     # de contexto o una accion del pie). El catalogo completo queda en site/assets/iconos/.

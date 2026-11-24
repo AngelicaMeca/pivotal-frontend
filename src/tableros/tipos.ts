@@ -232,6 +232,12 @@ export type Panel = {
   // "Referencias" con su pie de fuente. Pedido de la usuaria del 24-nov-2026, declarado en
   // `paneles.orden` junto con `zoom`.
   visor?: boolean;
+  // El mapa ofrece "Mostrar todo el país", la misma casilla que la barra del visor de
+  // AgroClima (pedido de la usuaria del 25-nov-2026). Prendida, el mapa base pasa a ser el
+  // pais y las capas que el INTA publica fuera de la provincia se dibujan enteras. Lo declara
+  // el spec en `paneles.orden`, junto con `zoom` y `visor`; aca solo dibuja la casilla, el
+  // dibujo lo arma `pintarMapaCapas`.
+  pais?: boolean;
   // Disposicion "columnas": en que columna de su banda va el cuadro ("izq" o "der"). Si el
   // spec no lo dice, lo decide el ancho (ver bandasEnColumnas en Tablero.tsx).
   columna?: "izq" | "centro" | "der" | "fila";

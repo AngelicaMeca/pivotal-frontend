@@ -142,8 +142,22 @@ def _color_de_la_regla(regla, geometria):
     else:
         camino, cual = "%sPolygonSymbolizer/%sFill/%sCssParameter" % (SLD, SLD, SLD), "fill"
     for parametro in regla.findall("./" + camino):
-        if parametro.get("name") == cual and (parametro.text or "").strip():
+        if parametro.get("name") != cual:
+            continue
+        if (parametro.text or "").strip():
             return parametro.text.strip().lower()
+        # El color puede venir ARMADO con una funcion del SLD en vez de escrito: la clase
+        # "Hielo" de la cobertura del suelo lo declara como strConcat("#55f", "fff"), o sea
+        # #55ffff. Es el color del INTA igual, solo que partido en dos literales; leerlo es
+        # leer su estilo, no inventarlo. Si algun dia la funcion fuera otra -una que dependa
+        # del dato- los literales no alcanzarian y la regla queda sin color, que es lo que ya
+        # pasaba: la clase se saltea y la corrida corta cuando ese valor aparece en el dato.
+        funcion = parametro.find("%sFunction" % OGC)
+        if funcion is not None and funcion.get("name") == "strConcat":
+            pedazos = [(l.text or "") for l in funcion.findall("%sLiteral" % OGC)]
+            armado = "".join(pedazos).strip().lower()
+            if armado.startswith("#") and len(armado) in (4, 7):
+                return armado
     return None
 
 

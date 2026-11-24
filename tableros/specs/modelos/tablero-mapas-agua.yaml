@@ -70,11 +70,23 @@ paneles:
     titulo: "INTA - Cuencas y cursos de agua - Sgo del Estero"
     # La tarjeta de la leyenda, con el mismo encabezado que la del visor de AgroClima.
     leyenda_titulo: "Referencias"
-    subtitulo: "Acerque con la rueda del mouse y arrastre para desplazarse · active las capas que quiera ver; pase el mouse por un área o un curso para ver de cuál se trata"
+    subtitulo: "Acerque con la rueda del mouse y arrastre para desplazarse · active las capas que quiera ver; pase el mouse por un área o un curso para ver de cuál se trata · con «Mostrar todo el país» las dos capas se ven enteras, tal como el INTA las publica para todo el noroeste"
     capas:
       - {id: inta-cuencas, prendida: true}
       - {id: inta-cursos-de-agua, prendida: true}
   orden:
-    - {id: mapa-capas, ancho: 12, zoom: true, visor: true}
+    # "MOSTRAR TODO EL PAIS" (`pais: true`, pedido de la usuaria del 25-nov-2026: "no hay forma
+    # de que haya un botoncito que diga 'mostrar todo el pais' asi como en los mapas de
+    # agroclima?"). Es la misma casilla, con el mismo texto y en el mismo lugar de la barra que
+    # la del visor de AgroClima. Prendida, el mapa base pasa a ser el pais (las 24 provincias
+    # del IGN, configs/dims/pais-provincias.yaml) y cada capa que el INTA publique fuera de la
+    # provincia se dibuja entera, con su propia leyenda (hay clases que adentro no existen).
+    # Las capas que el INTA publica SOLO para Santiago del Estero se siguen viendo tal cual:
+    # dibujadas sobre la provincia y nada alrededor, porque eso es todo lo que hay publicado.
+    # Va en `orden` y no en el panel, igual que `zoom` y `visor`: decide la casilla de la barra
+    # (cascara) y el mapa base que el navegador registra.
+    # Las dos capas de esta pagina son de todo el NOROESTE: con el boton prendido se
+    # ven enteras, y la leyenda de cuencas pasa de 6 a 16 macrocuencas.
+    - {id: mapa-capas, ancho: 12, zoom: true, visor: true, pais: true}
 
 filtros: []

@@ -242,7 +242,7 @@ function MandoDeMapa() {
    Quedan los dos controles que sí aplican, con las mismas clases y el mismo orden: la opacidad
    -que en un mapa de capas es lo que deja ver lo que hay DEBAJO del area, que es justo para lo
    que existe en el visor- y los tres botones de zoom. Los engancha tablero.js. */
-function BarraDeMapa() {
+function BarraDeMapa({ conPais }: { conPais?: boolean }) {
   return (
     <div className="visor-barra" data-mapa-mando="">
       <label className="visor-control">
@@ -250,6 +250,18 @@ function BarraDeMapa() {
         <input type="range" min="10" max="100" defaultValue="100" data-mapa-opacidad=""
                aria-label="Opacidad de las capas" />
       </label>
+      {/* "Mostrar todo el país": la misma casilla, con el mismo texto y en el mismo lugar de la
+          barra que la del visor de AgroClima (pedido de la usuaria del 25-nov-2026). Prendida,
+          el mapa base pasa a ser el pais y cada capa que tenga version sin recortar se dibuja
+          entera; las que el INTA publica solo para la provincia siguen como estan, que es todo
+          lo que hay publicado. Lo declara el spec en `paneles.orden` y lo engancha tablero.js. */}
+      {conPais ? (
+        <label className="visor-control">
+          <input type="checkbox" data-mapa-pais=""
+                 aria-label="Mostrar todo el país" />{" "}
+          Mostrar todo el país
+        </label>
+      ) : null}
       <div className="visor-grupo">
         <button type="button" className="visor-boton" data-mapa-zoom="alejar"
                 title="Alejar" aria-label="Alejar el mapa">−</button>
@@ -383,7 +395,7 @@ function CuerpoPanel({ id: idPanelCompleto, mockup = false, panel }: { id: strin
       /* Con el formato del visor de AgroClima: la barra ARRIBA del mapa (no flotando sobre su
          esquina), el mapa en su caja con marco y las referencias al costado. */
       <>
-        <BarraDeMapa />
+        <BarraDeMapa conPais={!!panel?.pais} />
         <div className="grafico visor-lienzo" data-grafico=""></div>
         <ControlCapas capas={panel?.capas} modo={panel?.capas_modo} rotulo={panel?.capas_rotulo}
                       titulo={panel?.leyenda_titulo} conPie />

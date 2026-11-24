@@ -1397,6 +1397,43 @@ colores:
           ancho: 1.0
           trazo: lleno
         - {cuando: {}, rotulo: "", color: "#b9a79c", ancho: 0.8, trazo: punteado}
+      # LA LEYENDA CON "MOSTRAR TODO EL PAIS" PRENDIDO. No es una copia de la de arriba:
+      # fuera de la provincia aparecen clases que adentro no existen, y una leyenda que no las
+      # nombrara dejaria colores en el mapa sin un renglon que los explique. Sale del MISMO SLD
+      # del INTA (lo imprime pipeline/capas_pais.py), asi que una clase que esta en las dos
+      # listas lleva el mismo color en las dos.
+      estilos_pais:
+        - cuando: {clase: ["ARROYO"]}
+          rotulo: "ARROYO"
+          color: "#5396cf"
+          ancho: 1.0
+          trazo: lleno
+        - cuando: {clase: ["QUEBRADA"]}
+          rotulo: "QUEBRADA"
+          color: "#73b3d8"
+          ancho: 1.0
+          trazo: lleno
+        - cuando: {clase: ["RIO"]}
+          rotulo: "RIO"
+          color: "#1f579b"
+          ancho: 1.0
+          trazo: lleno
+        - cuando: {clase: ["AGUADA"]}
+          rotulo: "AGUADA"
+          color: "#a9c0d1"
+          ancho: 1.0
+          trazo: lleno
+        - cuando: {clase: ["CAÑADA"]}
+          rotulo: "CAÑADA"
+          color: "#9fcbe6"
+          ancho: 1.0
+          trazo: lleno
+        - cuando: {clase: ["ZANJON"]}
+          rotulo: "ZANJON"
+          color: "#8aa9c2"
+          ancho: 1.0
+          trazo: lleno
+        - {cuando: {}, rotulo: "", color: "#b9a79c", ancho: 0.8, trazo: punteado}
     # Cobertura del suelo 2006-2007 (LCCS-FAO), del INTA, con sus colores. Tres avisos:
     #   - La leyenda lista DIECISEIS clases de las 41 del SLD: las otras no aparecen en la
     #     provincia (son de montania, de costa o de otras regiones del pais).
@@ -1455,11 +1492,148 @@ colores:
           rotulo: "Superficies artificiales y áreas asociadas. Superficies construidas (no determinado)"
           color: "#686868"
         - {cuando: {}, rotulo: "", color: "#b9a79c"}
+      # LA LEYENDA CON "MOSTRAR TODO EL PAIS" PRENDIDO: 42 clases contra las 16 que se ven
+      # dentro de la provincia. Son las 42 del SLD del INTA, con sus colores; la clase "Hielo"
+      # trae el color armado por una funcion del SLD (strConcat "#55f" + "fff"), que
+      # pipeline/capas_inta.py sabe leer desde el 25-nov-2026.
+      estilos_pais:
+        - cuando: {clase: ["Árboles dispersos en áreas regularmente inundadas/anegadas o acuáticas"]}
+          rotulo: "Árboles dispersos en áreas regularmente inundadas/anegadas o acuáticas"
+          color: "#ff55ff"
+        - cuando: {clase: ["Arbustal abierto"]}
+          rotulo: "Arbustal abierto"
+          color: "#a07d61"
+        - cuando: {clase: ["Arbustal cerrado"]}
+          rotulo: "Arbustal cerrado"
+          color: "#924947"
+        - cuando: {clase: ["Arbustal cerrado a abierto en áreas regularmente inundadas/anegadas o acuáticas"]}
+          rotulo: "Arbustal cerrado a abierto en áreas regularmente inundadas/anegadas o acuáticas"
+          color: "#fea4a4"
+        - cuando: {clase: ["Arbustal disperso"]}
+          rotulo: "Arbustal disperso"
+          color: "#e2b28c"
+        - cuando: {clase: ["Áreas naturales desnudas consolidadas (no determinado)"]}
+          rotulo: "Áreas naturales desnudas consolidadas (no determinado)"
+          color: "#d7cf8f"
+        - cuando: {clase: ["Áreas terrestres cultivadas y/o manejadas"]}
+          rotulo: "Áreas terrestres cultivadas y/o manejadas"
+          color: "#ab0000"
+        - cuando: {clase: ["Areas urbanas de baja densidad"]}
+          rotulo: "Areas urbanas de baja densidad"
+          color: "#7ca698"
+        - cuando: {clase: ["Áreas urbanas de densidad media"]}
+          rotulo: "Áreas urbanas de densidad media"
+          color: "#d2d2d2"
+        - cuando: {clase: ["Áreas urbanas densamente pobladas"]}
+          rotulo: "Áreas urbanas densamente pobladas"
+          color: "#787878"
+        - cuando: {clase: ["Areas urbanas dispersas"]}
+          rotulo: "Areas urbanas dispersas"
+          color: "#b0b983"
+        - cuando: {clase: ["Áreas urbanas vegetadas"]}
+          rotulo: "Áreas urbanas vegetadas"
+          color: "#ffc7ae"
+        - cuando: {clase: ["Bosques abiertos"]}
+          rotulo: "Bosques abiertos"
+          color: "#98fea2"
+        - cuando: {clase: ["Bosques abiertos en áreas regularmente inundadas/anegadas o acuáticas"]}
+          rotulo: "Bosques abiertos en áreas regularmente inundadas/anegadas o acuáticas"
+          color: "#f6a4fe"
+        - cuando: {clase: ["Bosques abiertos, con arbustos"]}
+          rotulo: "Bosques abiertos, con arbustos"
+          color: "#98fea2"
+        - cuando: {clase: ["Bosques cerrados"]}
+          rotulo: "Bosques cerrados"
+          color: "#006500"
+        - cuando: {clase: ["Bosques cerrados en áreas regularmente inundadas/anegadas o acuáticas"]}
+          rotulo: "Bosques cerrados en áreas regularmente inundadas/anegadas o acuáticas"
+          color: "#ca00db"
+        - cuando: {clase: ["Cuerpos de agua en movimiento"]}
+          rotulo: "Cuerpos de agua en movimiento"
+          color: "#00007f"
+        - cuando: {clase: ["Cuerpos de agua estacionario"]}
+          rotulo: "Cuerpos de agua estacionario"
+          color: "#0000ff"
+        - cuando: {clase: ["Cuerpos de agua, nieve o hielo artificial"]}
+          rotulo: "Cuerpos de agua, nieve o hielo artificial"
+          color: "#0170fb"
+        - cuando: {clase: ["Cuerpos de agua, nieve o hielo natural. Agua (no determinado)"]}
+          rotulo: "Cuerpos de agua, nieve o hielo natural. Agua (no determinado)"
+          color: "#48c0eb"
+        - cuando: {clase: ["Cultivo de especies arbóreas (no determinado)"]}
+          rotulo: "Cultivo de especies arbóreas (no determinado)"
+          color: "#ff3326"
+        - cuando: {clase: ["Cultivos de arbustos bajo riego"]}
+          rotulo: "Cultivos de arbustos bajo riego"
+          color: "#e45151"
+        - cuando: {clase: ["Cultivos de arbustos en secano"]}
+          rotulo: "Cultivos de arbustos en secano"
+          color: "#d06443"
+        - cuando: {clase: ["Cultivos de especies arbóreas bajo riego"]}
+          rotulo: "Cultivos de especies arbóreas bajo riego"
+          color: "#db0000"
+        - cuando: {clase: ["Cultivos de especies arbóreas en secano"]}
+          rotulo: "Cultivos de especies arbóreas en secano"
+          color: "#950000"
+        - cuando: {clase: ["Cultivos de herbáceas (no determinado)"]}
+          rotulo: "Cultivos de herbáceas (no determinado)"
+          color: "#b34c00"
+        - cuando: {clase: ["Cultivos de herbáceas graminoideas"]}
+          rotulo: "Cultivos de herbáceas graminoideas"
+          color: "#d58c00"
+        - cuando: {clase: ["Cultivos de herbáceas no graminoides"]}
+          rotulo: "Cultivos de herbáceas no graminoides"
+          color: "#febe00"
+        - cuando: {clase: ["Dunas"]}
+          rotulo: "Dunas"
+          color: "#918c52"
+        - cuando: {clase: ["Herbáceas cerradas en áreas regularmente inundadas/anegadas o acuáticas"]}
+          rotulo: "Herbáceas cerradas en áreas regularmente inundadas/anegadas o acuáticas"
+          color: "#8868c7"
+        - cuando: {clase: ["Hielo"]}
+          rotulo: "Hielo"
+          color: "#55ffff"
+        - cuando: {clase: ["Nieve"]}
+          rotulo: "Nieve"
+          color: "#d0ffe6"
+        - cuando: {clase: ["Pastizal abierto (herbáceas graminoideas)"]}
+          rotulo: "Pastizal abierto (herbáceas graminoideas)"
+          color: "#fef17a"
+        - cuando: {clase: ["Pastizal cerrado (herbáceas graminoideas)"]}
+          rotulo: "Pastizal cerrado (herbáceas graminoideas)"
+          color: "#dace08"
+        - cuando: {clase: ["Pastizal disperso"]}
+          rotulo: "Pastizal disperso"
+          color: "#fefac4"
+        - cuando: {clase: ["Rocas, fragmentos"]}
+          rotulo: "Rocas, fragmentos"
+          color: "#c06448"
+        - cuando: {clase: ["Salares"]}
+          rotulo: "Salares"
+          color: "#ffd700"
+        - cuando: {clase: ["Salinas"]}
+          rotulo: "Salinas"
+          color: "#f7b467"
+        - cuando: {clase: ["Suelos pedregosos"]}
+          rotulo: "Suelos pedregosos"
+          color: "#cec295"
+        - cuando: {clase: ["Superficies artificiales y áreas asociadas. Superficies construidas (no determinado)"]}
+          rotulo: "Superficies artificiales y áreas asociadas. Superficies construidas (no determinado)"
+          color: "#686868"
+        - cuando: {clase: ["Superficies no construidas"]}
+          rotulo: "Superficies no construidas"
+          color: "#9c9c9c"
+        - {cuando: {}, rotulo: "", color: "#b9a79c"}
     # Areas ganaderas deforestadas 2008-2017: UNA sola clase, con el verde del INTA. No lleva
     # lista de clases: una leyenda de un renglon repetiria el nombre de la capa, que ya esta en
     # su casilla del control con este color al lado.
     inta-areas-deforestadas:
       estilos:
+        - {cuando: {}, rotulo: "", color: "#007811"}
+      # Con "Mostrar todo el país" la leyenda es la MISMA: la capa tiene una sola clase, asi
+      # que afuera de la provincia no aparece ninguna nueva. Se declara igual, porque el build
+      # exige que toda capa con version nacional diga con que leyenda se dibuja.
+      estilos_pais:
         - {cuando: {}, rotulo: "", color: "#007811"}
     inta-cuencas:
       estilos:
@@ -1483,6 +1657,61 @@ colores:
           color: "#e554cd"
         - {cuando: {}, rotulo: "", color: "#b9a79c"}
 
+      # LA LEYENDA CON "MOSTRAR TODO EL PAIS" PRENDIDO. No es una copia de la de arriba:
+      # fuera de la provincia aparecen clases que adentro no existen, y una leyenda que no las
+      # nombrara dejaria colores en el mapa sin un renglon que los explique. Sale del MISMO SLD
+      # del INTA (lo imprime pipeline/capas_pais.py), asi que una clase que esta en las dos
+      # listas lleva el mismo color en las dos.
+      estilos_pais:
+        - cuando: {clase: ["Abaucan"]}
+          rotulo: "Abaucan"
+          color: "#47df7a"
+        - cuando: {clase: ["Alta Cuenca del Río Juramento"]}
+          rotulo: "Alta Cuenca del Río Juramento"
+          color: "#ffd503"
+        - cuando: {clase: ["Alta Rio Bermejo"]}
+          rotulo: "Alta Rio Bermejo"
+          color: "#d467ec"
+        - cuando: {clase: ["Bermejo Inferior"]}
+          rotulo: "Bermejo Inferior"
+          color: "#7817ee"
+        - cuando: {clase: ["Cerradas de la Puna"]}
+          rotulo: "Cerradas de la Puna"
+          color: "#adec89"
+        - cuando: {clase: ["Dulce"]}
+          rotulo: "Dulce"
+          color: "#d4c94e"
+        - cuando: {clase: ["Dulce Superior"]}
+          rotulo: "Dulce Superior"
+          color: "#23dfe5"
+        - cuando: {clase: ["Juramento - Salado"]}
+          rotulo: "Juramento - Salado"
+          color: "#ec8996"
+        - cuando: {clase: ["Juramento Medio Inferior"]}
+          rotulo: "Juramento Medio Inferior"
+          color: "#69dcb8"
+        - cuando: {clase: ["Mojotoro - Lavayen - San Francisco"]}
+          rotulo: "Mojotoro - Lavayen - San Francisco"
+          color: "#ca8222"
+        - cuando: {clase: ["Pilcomayo"]}
+          rotulo: "Pilcomayo"
+          color: "#a6d621"
+        - cuando: {clase: ["Rosario Horcones - Urueña"]}
+          rotulo: "Rosario Horcones - Urueña"
+          color: "#6382df"
+        - cuando: {clase: ["Salar del Pipanaco"]}
+          rotulo: "Salar del Pipanaco"
+          color: "#ed7c00"
+        - cuando: {clase: ["Salinas Grandes"]}
+          rotulo: "Salinas Grandes"
+          color: "#24f021"
+        - cuando: {clase: ["Sin Aporte Significativo  - Noreste de Salta"]}
+          rotulo: "Sin Aporte Significativo - Noreste de Salta"
+          color: "#cf7ba4"
+        - cuando: {clase: ["Sin Aporte Significativo  - Sureste de Salta"]}
+          rotulo: "Sin Aporte Significativo - Sureste de Salta"
+          color: "#e554cd"
+        - {cuando: {}, rotulo: "", color: "#b9a79c"}
   sin_dato:
     hex: "#bdbdbd"
     regla: "No pertenece a ninguna rampa y no se usa nunca para representar un valor."

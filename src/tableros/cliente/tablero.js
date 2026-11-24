@@ -298,6 +298,23 @@ export default function iniciar(PIVOTAL) {
     return geoListo;
   }
 
+  /* EL MAPA BASE DE "MOSTRAR TODO EL PAIS" (las 24 provincias continentales del IGN).
+
+     Va aparte del de la provincia y se baja la primera vez que alguien aprieta el boton: son
+     360 kB que la vista de siempre no necesita. Se registra con otro nombre ("pais"), asi que
+     los dos quedan disponibles y apagar el boton no vuelve a pedir nada. */
+  var geoListoPais = null;
+
+  function cargarGeoPais(ruta) {
+    if (!geoListoPais) {
+      geoListoPais = fetch(ruta).then(function (r) { return r.json(); }).then(function (geo) {
+        echarts.registerMap("pais", geo);
+        return geo;
+      });
+    }
+    return geoListoPais;
+  }
+
   /* -------- tarjeta de contexto (que se esta viendo: icono + cultivo + campaña) -------- */
   function pintarContexto(contexto) {
     var nombre = document.querySelector("[data-contexto-nombre]");
@@ -817,6 +834,21 @@ export default function iniciar(PIVOTAL) {
       nodo.dataset.mapaOpacidad = String(Number(deslizador.value) / 100);
       if (nodo.capasRedibujar) { nodo.capasRedibujar(); }
     });
+    /* "Mostrar todo el pais": igual que la opacidad, la eleccion se guarda EN EL NODO y no en
+       una variable, para que prender una capa -que vuelve a dibujar el cuadro desde cero- no la
+       pierda. Cambiar de mapa base cambia el encuadre, asi que se pide reencuadrar: el zoom y
+       el centro que tenia la provincia no significan nada sobre el pais. */
+    mando.addEventListener("change", function (evento) {
+      var casilla = evento.target;
+      if (!casilla || !casilla.matches || !casilla.matches("[data-mapa-pais]")) { return; }
+      /* La marca en el nodo se llama distinto que el atributo de la casilla a proposito:
+         `dataset.mapaTodoElPais` escribe `data-mapa-todo-el-pais` en el <section> del panel, y
+         si se llamara igual que el control, `querySelector("[data-mapa-pais]")` encontraria
+         primero el panel entero en vez de la casilla. */
+      nodo.dataset.mapaTodoElPais = casilla.checked ? "1" : "0";
+      nodo.dataset.mapaReencuadrar = "1";
+      if (nodo.capasRedibujar) { nodo.capasRedibujar(); }
+    });
     mando.addEventListener("click", function (evento) {
       var boton = evento.target.closest ? evento.target.closest("[data-mapa-zoom]") : null;
       if (!boton) { return; }
@@ -931,14 +963,29 @@ export default function iniciar(PIVOTAL) {
 
   function pintarMapaCapas(nodo, panel) {
     var caja = nodo.querySelector("[data-grafico]");
+    /* "MOSTRAR TODO EL PAIS" (pedido de la usuaria del 25-nov-2026: el botoncito que tienen los
+       mapas de AgroClima). Prendido, cambian tres cosas y nada mas:
+         - el MAPA BASE y su encuadre: las provincias del pais en vez de los departamentos;
+         - cada CAPA que tenga version sin recortar se baja y se dibuja entera (lo resuelve
+           `capasDelMapa`, que recibe `pais` y cambia el catalogo en la puerta);
+         - los NOMBRES que escribe el mapa: las provincias, no los departamentos.
+       Los limites departamentales se siguen dibujando encima (`limites`), asi que la provincia
+       que se esta mirando no pierde su detalle. */
+    var pais = (panel.mapa_pais && nodo.dataset.mapaTodoElPais === "1") ? panel.mapa_pais : null;
     var porId = {};
-    panel.deptos.forEach(function (d) { porId[d.id] = d; });
-    cargarGeo(panel.geojson).then(function () {
+    (pais ? pais.provincias : panel.deptos).forEach(function (d) { porId[d.id] = d; });
+    /* El GeoJSON de la provincia se baja SIEMPRE, tambien con el boton prendido: es el que
+       dibuja la division departamental encima de las capas. */
+    var listo = pais
+      ? Promise.all([cargarGeo(panel.geojson), cargarGeoPais(pais.geojson)])
+      : cargarGeo(panel.geojson);
+    listo.then(function () {
       var chart = PIVOTAL.grafico(caja);
+      var relacion = pais ? pais.relacion : panel.relacion;
       var proyeccion = {
-        aspectScale: panel.aspecto || 0.75,
+        aspectScale: (pais ? pais.aspecto : panel.aspecto) || 0.75,
         layoutCenter: ["50%", "50%"],
-        layoutSize: PIVOTAL.tamanioMapa(caja, panel.relacion)
+        layoutSize: PIVOTAL.tamanioMapa(caja, relacion)
       };
       var nombre = function (p) { var d = porId[p.name]; return d ? d.nombre : ""; };
       /* Zoom real sobre la cartografia (`panel.zoom`, pagina de Infraestructura, JC
@@ -949,7 +996,7 @@ export default function iniciar(PIVOTAL) {
       var conZoom = !!panel.zoom;
       var serieMapa = {
         type: "map",
-        map: "provincia",
+        map: pais ? "pais" : "provincia",
         nameProperty: "geo_id",
         selectedMode: false,
         z: 2,
@@ -962,7 +1009,9 @@ export default function iniciar(PIVOTAL) {
         },
         itemStyle: { areaColor: PIVOTAL.color("--fondo-apoyo"),
                      borderColor: PIVOTAL.color("--fondo-cuadro"), borderWidth: 0.8 },
-        data: panel.deptos.map(function (d) { return { name: d.id, value: 0 }; })
+        data: (pais ? pais.provincias : panel.deptos).map(function (d) {
+          return { name: d.id, value: 0 };
+        })
       };
       /* Con zoom los departamentos los dibuja el GEO (ver `geoDeMapa`), asi que su cromo
          viaja ahi y la serie `map` no se usa: seria una segunda copia invisible del mismo
@@ -1007,7 +1056,15 @@ export default function iniciar(PIVOTAL) {
                                  capa de area: el mismo borde y la misma tinta que usa el mapa
                                  debajo, asi arriba se lee igual que sin capas. */
                               limites: geoProvincia,
-                              rotulos: panel.rotulos_deptos,
+                              /* Con el boton prendido el mapa base es otro y las capas que
+                                 tengan version nacional se dibujan enteras. */
+                              mapa: pais ? "pais" : undefined,
+                              pais: !!pais,
+                              /* Los nombres de los departamentos NO se escriben con el pais a
+                                 la vista: son 27 rotulos de 8 px sobre una provincia que mide
+                                 un sexto de la caja, o sea tinta ilegible encima del dato. Los
+                                 nombres los pone el mapa base, que ahi son las provincias. */
+                              rotulos: pais ? [] : panel.rotulos_deptos,
                               /* El factor de opacidad del control del visor; sin visor no hay
                                  control y cada capa se dibuja con la suya. */
                               opacidad: nodo.dataset.mapaOpacidad === undefined
@@ -1052,8 +1109,8 @@ export default function iniciar(PIVOTAL) {
            alta que ancha), asi que el dibujo la llena y no quedan costados vacios adentro del
            cuadro. El numero lo calcula el build del propio GeoJSON (`relacion_mapa`), asi que
            el CSS no lo tiene escrito: se lo pasamos. */
-        if (panel.relacion) {
-          caja.style.setProperty("--relacion-mapa", String(panel.relacion));
+        if (relacion) {
+          caja.style.setProperty("--relacion-mapa", String(relacion));
         }
       }
     });

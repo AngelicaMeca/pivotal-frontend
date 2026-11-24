@@ -3065,19 +3065,26 @@ dialog.zoom.zoom-visible::backdrop { opacity: 1; }
   grid-column: 1 / -1; grid-row: 1; margin-bottom: 0;
 }
 .panel[data-panel="mapa-capas"][data-visor] > .panel-cuerpo > .grafico { grid-row: 2; }
+/* La tarjeta de referencias NO estira el cuadro: mide lo que mide el mapa y, si la leyenda no
+   entra, scrollea adentro. Hace falta desde "Mostrar todo el país" (25-nov-2026): con el boton
+   prendido la cobertura del suelo lista 42 clases de nombre largo -son las del SLD del INTA, y
+   afuera de la provincia aparecen todas- y la tarjeta medía el triple que el mapa, que quedaba
+   arriba de todo con media pagina de leyenda debajo. */
 .panel[data-panel="mapa-capas"][data-visor] > .panel-cuerpo > .capas-a-la-vista {
   grid-column: 2; grid-row: 2;
+  max-height: var(--alto-visor); overflow-y: auto;
 }
 /* Las medidas de `.visor-lienzo`, repuestas aca porque la regla de `[data-con-zoom]` las pisa
    (misma especificidad y va antes). El mapa de adentro se encuadra solo: `tamanioMapa` lo
    ajusta por el alto y `layoutCenter` lo centra, que es como queda en AgroClima. */
+.panel[data-panel="mapa-capas"][data-visor] > .panel-cuerpo {
+  --alto-visor: 640px;
+}
 .panel[data-panel="mapa-capas"][data-visor] > .panel-cuerpo > .grafico.visor-lienzo {
-  height: 640px; width: auto; min-width: 0;
+  height: var(--alto-visor); width: auto; min-width: 0;
 }
 @media (max-width: 760px) {
-  .panel[data-panel="mapa-capas"][data-visor] > .panel-cuerpo > .grafico.visor-lienzo {
-    height: 460px;
-  }
+  .panel[data-panel="mapa-capas"][data-visor] > .panel-cuerpo { --alto-visor: 460px; }
 }
 /* La tarjeta de referencias con las casillas adentro: el marco y el encabezado los pone
    `.visor-escala`, asi que la lista va sin el suyo. */
@@ -3089,6 +3096,8 @@ dialog.zoom.zoom-visible::backdrop { opacity: 1; }
 @media (max-width: 1100px) {
   .panel[data-panel="mapa-capas"][data-visor] > .panel-cuerpo > .capas-a-la-vista {
     grid-column: 1; grid-row: 3;
+    /* Debajo del mapa la leyenda ya no le roba alto a nadie: se muestra entera. */
+    max-height: none; overflow-y: visible;
   }
 }
 

@@ -156,6 +156,77 @@ salidas:
   areas-deforestadas-2008-2017.geojson: >
     UN rasgo con 18.085 parches, 145.912 vertices, una sola clase, 3.253.506 bytes.
 
+# ----------------------------------------------------------------- "Mostrar todo el país"
+todo_el_pais:
+  por_que: >
+    Pedido de la usuaria del 25-nov-2026: un botoncito que diga "mostrar todo el pais", como el
+    de los mapas de AgroClima. Alla es gratis -la imagen del SEPA ya es nacional y el visor deja
+    de recortarla- y aca hizo falta publicar la OTRA version de cada capa: la que el INTA sirve
+    entera, sin el recorte contra el contorno de la provincia.
+  hasta_donde_llega_cada_una: >
+    No lo decidimos nosotros, lo decide la fuente. Aptitud de tierras y Zonificacion del uso del
+    suelo NO tienen version nacional: el INTA las publica solo para Santiago del Estero, y con
+    el boton prendido se siguen viendo dibujadas sobre la provincia y nada alrededor. Cuencas
+    hidricas y Cursos de agua son de todo el NOROESTE. Cobertura del suelo y Areas ganaderas
+    deforestadas son NACIONALES.
+  descarga: >
+    Las cuatro capas se volvieron a bajar el 25-nov-2026, con el mismo comando de arriba. OJO:
+    el GeoServer del INTA sirve hoy MUCHOS MAS BYTES que el 18-nov por los mismos rasgos (son
+    las coordenadas con todos sus decimales): cuencas 8.639.484 contra 3.647.450, cursos
+    21.595.647 contra 5.601.152, cobertura 395.644.717 contra 121.706.507 y deforestadas
+    54.518.299 contra 30.664.234. Los SLD bajan identicos (mismos bytes), asi que las clases y
+    los colores no cambiaron. POR ESO las capas recortadas NO se regeneraron: lo que JC ya vio
+    sale de la descarga del 18-nov y no se toca de rebote. El script de las versiones
+    nacionales es otro y solo escribe archivos nuevos.
+  script: pipeline/capas_pais.py
+  uso: ".venv/Scripts/python -m pipeline.capas_pais <carpeta de descargas> configs/dims/capas-inta"
+  memoria: >
+    El archivo de la cobertura del suelo (395 MB) no se puede abrir con `json.load`: el arbol
+    de objetos pide varios gigabytes. El script lo recorre rasgo por rasgo contando llaves
+    (`rasgos_del_archivo`), asi que la memoria se queda en lo que mida el rasgo mas grande. La
+    corrida entera son 90 segundos.
+  simplificacion: >
+    Mas gruesa que la de la provincia, y medida capa por capa. El encuadre del boton es el pais
+    en una caja de 640 px de alto, o sea 5,8 km por pixel.
+      - Cuencas, 222 m: 0,69 MB. A 55 m -la tolerancia de la version provincial- serian 3,66 MB.
+      - Cursos de agua, 222 m: 1,65 MB. A 555 m serian 0,88, pero un rio es una linea fina y
+        angulosa y el ahorro no justifica despeinarla.
+      - Cobertura del suelo, 2,2 km y UN RASGO POR CLASE: 3,58 MB. Es un tapiz que cubre el
+        pais entero con 14,1 millones de vertices. Medido: 13,09 MB a 555 m, 7,94 MB a 1,1 km y
+        3,58 MB a 2,2 km. A 2,2 km el error es 0,4 px en el encuadre del boton. Agrupar por
+        clase saca 12.723 envoltorios de rasgo (casi 2 MB) y deja 42 llamadas de dibujo en vez
+        de 12.765; el cartel no pierde nada, porque dice la clase.
+      - Areas deforestadas, 555 m y el mismo corte de 1 hectarea que la version provincial:
+        2,77 MB con 33.222 parches de los 88.651. El corte de 1 ha deja el 98,8% de las
+        hectareas desmontadas; con 100 ha quedarian 1.958 parches y el 40% de la superficie, o
+        sea un mapa que diria que se desmonto la mitad de lo que se desmonto.
+  dibujo: >
+    A escala de pais el navegador NO saltea las partes chicas, y esto esta medido. El mapa de
+    capas se saltea las partes que miden menos de un pixel porque no se ven y cuestan igual que
+    una grande (es lo que hizo que la provincia se pudiera recorrer con 18.085 parches
+    prendidos). Con el pais en 640 px, un parche de 1 a 100 hectareas mide entre 0,02 y 0,2
+    pixeles: TODOS caen debajo del minimo y la capa de areas deforestadas desaparecia (54
+    pixeles verdes contra 1.671 dibujandolos). Asi que con el boton prendido se dibujan todas
+    las partes que estan en pantalla -lo que quedo fuera de la vista se sigue salteando- y el
+    desmonte se lee como lo que es: un salpicado sobre el Chaco. Cuesta: un paso de rueda con
+    las deforestadas prendidas y el pais a la vista tarda 0,45 s (medido el 25-nov-2026 en Edge
+    headless, 1.400 x 1.100). Es la capa mas pesada del sitio y es el peor caso; si molesta, el
+    corte de 1 hectarea se puede subir en pipeline/capas_pais.py (a 10 ha quedan 15.241 parches
+    y el 91,5% de las hectareas; a 25 ha, 9.439 y el 81,5%).
+  mapa_base: >
+    Fuera de la provincia no habia nada dibujado: el mapa base del pais son las 24 provincias
+    del IGN y esta documentado aparte, en configs/dims/pais-provincias.yaml.
+  salidas:
+    cuencas-hidricas-pais.geojson: >
+      85 rasgos, 32.866 vertices de 308.996, las 16 macrocuencas del SLD, 726.017 bytes.
+    cursos-de-agua-pais.geojson: >
+      6 rasgos (uno por tipo) con 10.472 tramos, 78.610 vertices de 643.646, 1.733.866 bytes.
+    cobertura-del-suelo-2006-2007-pais.geojson: >
+      42 rasgos (uno por clase) con 12.765 partes, 169.257 vertices de 14.115.655, las 42
+      clases del SLD, 3.750.865 bytes.
+    areas-deforestadas-2008-2017-pais.geojson: >
+      UN rasgo con 33.222 parches, 128.513 vertices, una sola clase, 2.906.069 bytes.
+
 advertencias_para_jc:
   - >
     NO HAY FECHA DE RELEVAMIENTO EN EL CATALOGO del nodo02 para ninguna de las dos capas. El
@@ -204,6 +275,30 @@ advertencias_para_jc:
     cambiar en pipeline/capas_inta.py (`minimo_ha`). Si hace falta la superficie exacta por
     departamento, el dato crudo del INTA trae `sup_ha` por parche y se calcula sin dibujarlo.
   - >
+    CON "MOSTRAR TODO EL PAIS" PRENDIDO, DOS DE LAS SEIS CAPAS NO CRECEN: Aptitud de tierras y
+    Zonificacion del uso del suelo se siguen viendo solo sobre la provincia, porque el INTA las
+    publica solo para Santiago del Estero. No es un recorte nuestro: es todo lo que hay
+    publicado. Las otras cuatro se dibujan enteras (dos del noroeste y dos nacionales).
+  - >
+    Y LA LEYENDA CAMBIA CUANDO SE PRENDE EL BOTON, porque afuera de la provincia aparecen
+    clases que adentro no estan: cuencas pasa de 6 macrocuencas a 16, cursos de agua de 3 tipos
+    a 6 y la cobertura del suelo de 16 clases a 42. Todas salen del mismo SLD del INTA.
+  - >
+    EL DIBUJO NACIONAL ES MAS GRUESO QUE EL PROVINCIAL, y se nota si se acerca mucho con el
+    boton prendido: la cobertura del suelo esta simplificada a 2,2 km (contra 222 m la version
+    de la provincia) porque entera pesa cuatro veces mas. El detalle fino vuelve apagando el
+    boton. El motivo y las mediciones estan en `todo_el_pais.simplificacion`.
+  - >
+    FUERA DE LA PROVINCIA, LOS CURSOS DE AGUA TRAEN TRES CLASES QUE EL SLD DEL INTA NO DIBUJA:
+    "CAÑADA" (16 tramos), "AGUADA" (1) y "ZANJON" (1). Es el mismo caso que la "CAÑADA" de
+    adentro de la provincia y se resolvio igual: se publican nombradas en la leyenda, con tonos
+    de la misma familia azul, declaradas en pipeline/capas_pais.py con su motivo y su cuenta.
+  - >
+    LA COBERTURA NACIONAL TRAE UNA CLASE MAS QUE LA PROVINCIAL EN EL SLD: "Hielo" (los campos
+    de hielo patagonicos, 3 poligonos). El INTA le da color, pero lo escribe partido en dos
+    pedazos con una funcion del SLD, y por eso antes quedaba sin leer. Ahora se lee: el color
+    es el suyo (#55ffff), no uno nuestro.
+  - >
     El Ordenamiento Territorial de Bosques Nativos 2015 esta en el catalogo del INTA (ficha
     dataset/11) pero su capa NO esta publicada en el WFS del nodo (de las 29 capas que sirve,
     ninguna es esa): no hay de donde bajarla. El OTBN de Santiago del Estero lo publican tambien
@@ -229,6 +324,9 @@ publicacion:
       fuente: "INTA - Zonificación del Uso del Suelo"
     inta-cuencas:
       archivo: cuencas-hidricas.geojson
+      # "Mostrar todo el país": la capa entera, sin el recorte provincial (ver el bloque
+      # `todo_el_pais` de arriba). El navegador la baja recien cuando prenden el boton.
+      archivo_pais: cuencas-hidricas-pais.geojson
       etiqueta: "Cuencas hídricas (INTA)"
       geometria: poligonos
       tooltip: "{clase}"
@@ -236,6 +334,9 @@ publicacion:
       fuente: "INTA - Cuencas hídricas del NOA"
     inta-cobertura-suelo:
       archivo: cobertura-del-suelo-2006-2007.geojson
+      # "Mostrar todo el país": la capa nacional entera (ver `todo_el_pais`). 3,58 MB, que se
+      # bajan solo si prenden la capa Y el boton.
+      archivo_pais: cobertura-del-suelo-2006-2007-pais.geojson
       etiqueta: "Cobertura del suelo 2006-2007 (INTA)"
       geometria: poligonos
       tooltip: "{clase}"
@@ -245,6 +346,8 @@ publicacion:
       fuente: "INTA - Cobertura del suelo de la República Argentina 2006-2007 (LCCS-FAO)"
     inta-areas-deforestadas:
       archivo: areas-deforestadas-2008-2017.geojson
+      # "Mostrar todo el país": los desmontes de todo el pais (ver `todo_el_pais`). 2,77 MB.
+      archivo_pais: areas-deforestadas-2008-2017-pais.geojson
       etiqueta: "Áreas ganaderas deforestadas 2008-2017 (INTA)"
       geometria: poligonos
       # EL CARTEL DICE QUE ES ESA MANCHA (QA de Francisco del 20-nov-2026). Estaba en blanco
@@ -261,6 +364,8 @@ publicacion:
       fuente: "INTA - Áreas ganaderas deforestadas durante 2008-2017"
     inta-cursos-de-agua:
       archivo: cursos-de-agua.geojson
+      # "Mostrar todo el país": los cursos de todo el noroeste (ver `todo_el_pais`).
+      archivo_pais: cursos-de-agua-pais.geojson
       etiqueta: "Cursos de agua (INTA)"
       geometria: lineas
       # El cartel decia solo "RIO", que es como el INTA escribe la clase: pasando el mouse por

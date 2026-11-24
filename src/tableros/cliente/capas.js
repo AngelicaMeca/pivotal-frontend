@@ -94,8 +94,11 @@ function procesar(capa, geo) {
          `d` es su camino ya armado en grados (`caminoEnGrados`) y `caja` su rectangulo, con el
          que se decide si vale la pena dibujarlo. */
       var piezas = geometria.type === "MultiPolygon" ? geometria.coordinates : [geometria.coordinates];
+      piezas = piezas.filter(function (parte) {
+        return parte && parte.length && parte[0].length;
+      });
+      if (!piezas.length) { return; }
       piezas.forEach(function (parte) {
-        if (!parte || !parte.length || !parte[0].length) { return; }
         grupo.push({ name: nombre, value: parte[0][0], partes: [parte],
                      d: caminoEnGrados([parte]), caja: cajaDeParte(parte[0]) });
       });
@@ -123,6 +126,38 @@ function bajar(capa, alTerminar) {
   });
   bajadas[capa.archivo] = entrada;
   return entrada;
+}
+
+/* ------------------------------ "MOSTRAR TODO EL PAIS" ------------------------------
+   El catalogo, visto con el boton prendido: la capa que tiene version SIN RECORTAR pasa a
+   apuntar a ese archivo y a su propia leyenda, y la que no la tiene queda igual.
+
+   Es asi, y no con un `if` en cada lugar donde se usa una capa, porque la capa la miran seis
+   funciones de este archivo (el control, las muestras, la leyenda, el pie, la bajada y las
+   series) y todas reciben el catalogo: cambiandolo UNA vez en la puerta, las seis dibujan la
+   version que corresponde sin saber que existe un boton.
+
+   Las dos versiones se bajan y se guardan por separado (`bajadas` va por archivo), asi que
+   apagar y prender el boton no vuelve a pedir nada a la red.
+
+   Que capa tiene version nacional no se decide aca: lo dice el catalogo, que lo saca de los
+   configs, y hay capas que el INTA publica SOLO para la provincia (Aptitud de tierras y la
+   Zonificacion del uso del suelo). Esas se siguen dibujando sobre la provincia y nada
+   alrededor: es lo que hay publicado, no un recorte nuestro. */
+function vistaDelCatalogo(catalogo, pais) {
+  if (!pais || !catalogo || !catalogo.capas) { return catalogo; }
+  var capas = {};
+  Object.keys(catalogo.capas).forEach(function (id) {
+    var capa = catalogo.capas[id];
+    capas[id] = capa.archivo_pais
+      ? Object.assign({}, capa, { archivo: capa.archivo_pais,
+                                  estilos: capa.estilos_pais || capa.estilos,
+                                  /* A escala de pais no se saltea ninguna parte: ver
+                                     `MINIMO_VISIBLE`. */
+                                  dibujar_todo: capa.geometria === "poligonos" })
+      : capa;
+  });
+  return Object.assign({}, catalogo, { capas: capas });
 }
 
 /* Las capas PRENDIDAS en el control de este cuadro, en el orden del control (que es el orden
@@ -217,7 +252,13 @@ function pintarControl(nodo, catalogo, opciones) {
   /* La muestra se vuelve a pintar cuando cambia la opacidad del visor: la leyenda tiene que
      decir lo que dice el mapa (QA de Francisco del 20-nov-2026, m1), y si la muestra se
      pintara una sola vez, al bajar la opacidad el mapa se aclararia y la leyenda no. */
-  var alfa = String((opciones && opciones.opacidad) === undefined ? 1 : opciones.opacidad);
+  /* La clave con la que se decide si una muestra ya esta pintada. Lleva la opacidad Y el modo
+     ("todo el pais"), porque las dos cambian lo que la leyenda tiene que decir: la opacidad, el
+     tono de cada muestra; el modo, la LISTA de clases (las cuencas pasan de 6 a 16). Con la
+     clave sola de la opacidad, prender el boton dejaba el mapa con dieciseis colores y la
+     leyenda con seis renglones, que es exactamente lo que la leyenda no puede hacer. */
+  var alfa = String((opciones && opciones.opacidad) === undefined ? 1 : opciones.opacidad)
+             + ((opciones && opciones.pais) ? "|pais" : "");
   Array.prototype.forEach.call(nodo.querySelectorAll("[data-muestra-capa]"), function (hueco) {
     var capa = catalogo.capas[hueco.dataset.muestraCapa];
     if (!capa || (hueco.firstChild && hueco.dataset.alfa === alfa)) { return; }
@@ -303,7 +344,10 @@ function pintarPie(nodo, catalogo, ids) {
 export function geoDeMapa(proyeccion, opciones) {
   var conZoom = !!(opciones && opciones.roam);
   var geo = {
-    map: "provincia",
+    /* El mapa base: los departamentos de la provincia o, con "Mostrar todo el pais" prendido,
+       las provincias del pais (`cargarGeoPais` en tablero.js registra los dos). Las capas van
+       en grados sobre este geo, asi que cambiar de mapa base no las mueve. */
+    map: (opciones && opciones.mapa) || "provincia",
     nameProperty: "geo_id",
     aspectScale: proyeccion.aspectScale,
     layoutCenter: proyeccion.layoutCenter,
@@ -399,7 +443,14 @@ function caminoDePoligono(partes, api) {
 var MIL = 1000;
 
 /* Un parche mas chico que esto, en pixeles, no se dibuja: no se ve y cuesta igual que uno
-   grande. Es menos de un pixel a proposito, para no borrar nada que llegue a verse. */
+   grande. Es menos de un pixel a proposito, para no borrar nada que llegue a verse.
+
+   CON "MOSTRAR TODO EL PAIS" NO SE APLICA (capa.dibujar_todo), y es por el dato, no por el
+   gusto: las areas deforestadas son parches de 1 a 100 hectareas, o sea entre 0,02 y 0,2
+   pixeles con el pais en 640 px, asi que TODOS caen debajo del minimo y la capa desaparecia
+   (medido el 25-nov-2026: 54 pixeles verdes con el corte, 1.671 sin el). Dibujados, el
+   desmonte se lee como lo que es: un salpicado sobre el Chaco. Lo que cuesta esta medido y
+   anotado en configs/dims/capas-inta.yaml (`todo_el_pais.dibujo`). */
 var MINIMO_VISIBLE = 0.8;
 
 /* El rectangulo de una parte, en grados: [lon_min, lat_min, lon_max, lat_max]. */
@@ -566,7 +617,7 @@ function series(catalogo, ids, opciones) {
              pixel) y si quedo fuera de la pantalla tambien. Al acercar, los que entran en la
              vista se dibujan todos: no se pierde detalle, se deja de dibujar lo invisible. */
           progressive: 0,
-          renderItem: (function (datosDeLaCapa) {
+          renderItem: (function (datosDeLaCapa, capaDeEsteDibujo) {
             /* La transformacion es la misma para todas las partes de un mismo cuadro, y
                `renderItem` se llama una vez por parte: se calcula una sola vez y se la
                revalida con UNA consulta (si el mapa se movio, el punto de referencia cae en
@@ -596,7 +647,12 @@ function series(catalogo, ids, opciones) {
                 var x1 = t.x + t.scaleX * dato.caja[2] * MIL;
                 var y1 = t.y + t.scaleY * dato.caja[1] * MIL;
                 var y0 = t.y + t.scaleY * dato.caja[3] * MIL;
-                if (x1 - x0 < MINIMO_VISIBLE && y1 - y0 < MINIMO_VISIBLE) { return null; }
+                /* Lo que esta FUERA DE LA PANTALLA no se dibuja nunca, tambien con el pais a
+                   la vista: ahi el ahorro no borra nada, es lo que no se esta mirando. Lo que
+                   mide menos de un pixel se saltea solo en el mapa de la provincia: a escala
+                   de pais eso borraba la capa entera (ver `MINIMO_VISIBLE`). */
+                if (!capaDeEsteDibujo.dibujar_todo
+                    && x1 - x0 < MINIMO_VISIBLE && y1 - y0 < MINIMO_VISIBLE) { return null; }
                 if (x1 < 0 || y1 < 0 || x0 > api.getWidth() || y0 > api.getHeight()) {
                   return null;
                 }
@@ -604,7 +660,7 @@ function series(catalogo, ids, opciones) {
               return { type: "path", x: t.x, y: t.y, scaleX: t.scaleX, scaleY: t.scaleY,
                        style: estilo, shape: { d: dato.d } };
             };
-          }(datos)),
+          }(datos, capa)),
           data: datos
         });
         return;
@@ -649,7 +705,8 @@ export function capasPrendidas(nodo, catalogo) {
   return prendidas(nodo, catalogo);
 }
 
-export function capasDelMapa(nodo, catalogo, redibujar, proyeccion, opciones) {
+export function capasDelMapa(nodo, catalogoCompleto, redibujar, proyeccion, opciones) {
+  var catalogo = vistaDelCatalogo(catalogoCompleto, opciones && opciones.pais);
   if (!catalogo || !catalogo.capas || !nodo.querySelector("input[data-capa]")) { return null; }
   nodo.capasRedibujar = redibujar;
   if (!nodo.dataset.capasEnganchadas) {

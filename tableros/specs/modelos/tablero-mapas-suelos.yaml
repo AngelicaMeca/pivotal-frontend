@@ -93,7 +93,7 @@ paneles:
     titulo: "INTA - Suelos y uso del suelo - Sgo del Estero"
     # La tarjeta de la leyenda, con el mismo encabezado que la del visor de AgroClima.
     leyenda_titulo: "Referencias"
-    subtitulo: "Acerque con la rueda del mouse y arrastre para desplazarse · active una capa por vez; pase el mouse por un área para ver de qué clase es"
+    subtitulo: "Acerque con la rueda del mouse y arrastre para desplazarse · active una capa por vez; pase el mouse por un área para ver de qué clase es · con «Mostrar todo el país» la cobertura del suelo y las áreas deforestadas se ven en todo el país; la aptitud y la zonificación las publica el INTA solo para la provincia"
     capas:
       - {id: inta-aptitud-tierras, prendida: true}
       - {id: inta-zonificacion-uso-suelo, prendida: false}
@@ -103,6 +103,19 @@ paneles:
       # que se desmonto despues. El orden del panel es el orden de dibujo.
       - {id: inta-areas-deforestadas, prendida: false}
   orden:
-    - {id: mapa-capas, ancho: 12, zoom: true, visor: true}
+    # "MOSTRAR TODO EL PAIS" (`pais: true`, pedido de la usuaria del 25-nov-2026: "no hay forma
+    # de que haya un botoncito que diga 'mostrar todo el pais' asi como en los mapas de
+    # agroclima?"). Es la misma casilla, con el mismo texto y en el mismo lugar de la barra que
+    # la del visor de AgroClima. Prendida, el mapa base pasa a ser el pais (las 24 provincias
+    # del IGN, configs/dims/pais-provincias.yaml) y cada capa que el INTA publique fuera de la
+    # provincia se dibuja entera, con su propia leyenda (hay clases que adentro no existen).
+    # Las capas que el INTA publica SOLO para Santiago del Estero se siguen viendo tal cual:
+    # dibujadas sobre la provincia y nada alrededor, porque eso es todo lo que hay publicado.
+    # Va en `orden` y no en el panel, igual que `zoom` y `visor`: decide la casilla de la barra
+    # (cascara) y el mapa base que el navegador registra.
+    # De las cuatro capas de esta pagina, Cobertura del suelo y Areas
+    # deforestadas son NACIONALES; Aptitud de tierras y Zonificacion del uso del
+    # suelo las publica el INTA solo para la provincia.
+    - {id: mapa-capas, ancho: 12, zoom: true, visor: true, pais: true}
 
 filtros: []

@@ -1,0 +1,67 @@
+# Procedencia del archivo pais-provincias.geojson (las 24 provincias continentales de la
+# Argentina). Es el MAPA BASE de "Mostrar todo el país", el botoncito que los mapas de Suelos y
+# de Cuencas copian del visor de AgroClima (pedido de la usuaria del 25-nov-2026).
+#
+# Por que hizo falta: en AgroClima ese boton es gratis, porque la imagen del SEPA ya es nacional
+# y el visor deja de recortarla. En los mapas de capas no habia NADA dibujado fuera de la
+# provincia: el unico mapa base del sitio eran los 27 departamentos de Santiago del Estero.
+#
+# Esto NO es un dato de JC: lo bajamos nosotros de la fuente oficial de cartografia, igual que
+# sde-departamentos.geojson. El sitio publica una copia y no le pide nada al IGN en tiempo de
+# ejecucion.
+
+archivo: pais-provincias.geojson
+
+fuente:
+  organismo: Instituto Geográfico Nacional (IGN), República Argentina
+  capa: "ign:provincia"
+  servicio: WFS de https://wms.ign.gob.ar/geoserver/ows
+  descargado: 2026-11-25
+  filtro: "ninguno (las 24 jurisdicciones)"
+  bytes_descarga_cruda: 111718447
+  # Sin sha256 por el mismo motivo que las otras capas del IGN: GeoServer le estampa a cada
+  # respuesta su propio "timeStamp", asi que el mismo archivo da el mismo tamanio y otro hash.
+  comando: >
+    curl --get "https://wms.ign.gob.ar/geoserver/ows"
+    --data-urlencode "service=wfs" --data-urlencode "version=1.0.0"
+    --data-urlencode "request=GetFeature" --data-urlencode "typeName=ign:provincia"
+    --data-urlencode "outputFormat=application/json" -o provincias-crudo.json
+
+transformacion:
+  script: pipeline/geojson_pais.py
+  uso: ".venv/Scripts/python -m pipeline.geojson_pais provincias-crudo.json configs/dims/pais-provincias.geojson"
+  que_hace:
+    - "Renombra las propiedades del IGN a las nuestras: in1 -> geo_id, nam -> nombre."
+    - >
+      Se queda con la Argentina CONTINENTAL: se descarta toda PARTE que caiga fuera de la caja
+      (oeste -74, sur -56, este -53, norte -21). La capa del IGN trae Tierra del Fuego con el
+      sector antartico y las islas del Atlantico Sur, que son 924 partes y 3,27 de los 4,1
+      millones de vertices del archivo, y lo que importa no es el peso sino el ENCUADRE: con
+      ellas adentro la caja del dibujo mide 47 grados de ancho por 68 de alto -el sector
+      antartico baja hasta el polo y las Georgias estan a 36 grados oeste- y el pais entra como
+      una franja de 1 px. Las 24 provincias siguen estando, Tierra del Fuego con su isla (que
+      llega a -55,06) y las Malvinas (lon -61,5 a -57,7). No es una afirmacion sobre limites:
+      el mapa base de un tablero provincial no los decide, y el encuadre tiene que mostrar el
+      pais donde estan las provincias.
+    - "Simplifica con Douglas-Peucker, la misma rutina de las capas (ver simplificacion)."
+    - "Redondea las coordenadas a 5 decimales (~1 m) y ordena los rasgos por geo_id."
+  simplificacion: >
+    Tolerancia 0,005 grados (~555 m), y es una decision MEDIDA: el pais entra en una caja de
+    640 px de alto, o sea unos 5,8 km por pixel, asi que 555 m es la decima parte de un pixel
+    en el encuadre del boton. El archivo pesa 0,74 MB con 222 m, 0,34 con 555 m, 0,18 con 1,1
+    km y 0,09 con 2,2 km. Se eligio 555 m porque este mapa es CONTEXTO: la provincia que se
+    esta mirando la dibuja su propio archivo de departamentos, con todo el detalle, y encima
+    de este.
+  determinista: "Mismo archivo de entrada -> mismo archivo de salida byte a byte."
+
+salida: >
+  24 provincias, 527 partes (924 descartadas fuera de la caja continental), 15.589 puntos,
+  344.238 bytes. El encuadre que da: lon -73,57 a -53,64 y lat -55,06 a -21,78, o sea aspecto
+  0,783 (el coseno de la latitud media) y relacion ancho/alto 0,469. La provincia, para
+  comparar, tiene relacion 0,635.
+
+uso_en_el_sitio: >
+  Lo registra el navegador como el mapa "pais" (cliente/tablero.js, `cargarGeoPais`) la primera
+  vez que alguien aprieta "Mostrar todo el país", y no se baja antes: son 360 kB que la vista de
+  siempre no necesita. Los limites departamentales de Santiago se siguen dibujando ENCIMA, asi
+  que la provincia que se esta mirando no pierde su detalle.
