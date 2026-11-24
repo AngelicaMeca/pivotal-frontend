@@ -811,7 +811,13 @@ function series(catalogo, ids, opciones) {
                          ? nivelDe(dato.niveles, t, capaDeEsteDibujo.dibujar_todo) : dato.d } };
             };
           }(datos, capa)),
-          data: datos
+          /* A ECharts se le pasan datos LIVIANOS: nombre y un punto. `renderItem` lee las
+             coordenadas y los caminos de `datos` (por cierre), no de aca. Importa porque
+             ECharts hace una copia profunda de toda la opcion en cada `setOption` y en cada
+             `getOption`, y con las partes adentro eso eran 145.913 vertices copiados en cada
+             clic y en cada gesto de zoom (medido el 24-nov-2026 en la pagina real: 30-60 ms
+             de `clone` por gesto, dentro de tareas de mas de 100 ms). */
+          data: datos.map(function (d) { return { name: d.name, value: d.value }; })
         });
         return;
       }
