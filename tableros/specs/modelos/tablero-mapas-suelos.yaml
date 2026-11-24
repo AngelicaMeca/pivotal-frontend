@@ -75,9 +75,19 @@ paneles:
   acciones_de_tablero:
     - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
   mapa-capas:
-    # SIN TITULO, igual que Infraestructura (QA del 19-nov-2026, D1): el titulo de la pagina y
-    # su bajada ya dicen esto mismo, y un segundo titulo le come un renglon al mapa.
-    titulo: ""
+    # CON EL MISMO FORMATO QUE LOS MAPAS DE AGROCLIMA (pedido de la usuaria del 24-nov-2026:
+    # "no me gusta como estan los mapas de suelos y cuencas; tienen que tener el mismo formato
+    # que los mapas de agroclima, los que tienen visor propio de codigo"). Ese formato es el
+    # del visor georreferenciado del SEPA: titulo del organismo arriba, barra de controles
+    # sobre el mapa, el mapa en una caja con marco y la leyenda al costado en una tarjeta
+    # "Referencias" con su pie de fuente. Lo declara `visor: true` en `paneles.orden`.
+    #
+    # El titulo vuelve (lo habia sacado el D1 del QA del 19-nov-2026 por repetir la bajada):
+    # en este formato es el UNICO titulo de la pagina -no hay otro arriba, igual que en NDVI o
+    # en el Mapa Nacional de Cultivos- y sigue el patron de esas paginas, organismo primero.
+    titulo: "INTA - Suelos y uso del suelo - Sgo del Estero"
+    # La tarjeta de la leyenda, con el mismo encabezado que la del visor de AgroClima.
+    leyenda_titulo: "Referencias"
     subtitulo: "Acerque con la rueda del mouse y arrastre para desplazarse · active una capa por vez; pase el mouse por un área para ver de qué clase es"
     capas:
       - {id: inta-aptitud-tierras, prendida: true}
@@ -88,6 +98,6 @@ paneles:
       # que se desmonto despues. El orden del panel es el orden de dibujo.
       - {id: inta-areas-deforestadas, prendida: false}
   orden:
-    - {id: mapa-capas, ancho: 12, zoom: true}
+    - {id: mapa-capas, ancho: 12, zoom: true, visor: true}
 
 filtros: []

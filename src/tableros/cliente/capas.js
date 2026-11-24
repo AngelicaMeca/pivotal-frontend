@@ -140,7 +140,18 @@ function listas(nodo, catalogo, redibujar) {
 }
 
 /* ------------------------------ muestras, leyenda y pie ------------------------------ */
-function muestra(capa, estilo) {
+/* LA OPACIDAD DEL CONTROL DEL VISOR es un FACTOR, no un valor absoluto (24-nov-2026). Al
+   100% cada capa se dibuja con la opacidad que ya tenia declarada -0,78 un area, 1 una linea-,
+   o sea que el mapa en reposo es exactamente el de siempre; bajando el control se ve lo que
+   hay debajo, que es para lo que existe el mismo control en el visor de AgroClima. Si fuera un
+   valor absoluto, moverlo al 100% dejaria las areas opacas y taparia la cartografia. */
+function opacidadDe(estilo, propia, opciones) {
+  var declarada = estilo.opacidad === undefined ? propia : estilo.opacidad;
+  var factor = opciones && opciones.opacidad === undefined ? 1 : opciones.opacidad;
+  return declarada * factor;
+}
+
+function muestra(capa, estilo, opciones) {
   var span = document.createElement("span");
   if (capa.geometria === "poligonos") {
     /* Una capa de area se muestra con su RELLENO: es lo que dice el mapa.
@@ -156,7 +167,7 @@ function muestra(capa, estilo) {
        `opacity` sobre el elemento no alcanzaria: eso lo dejaria ver la crema del panel, que no
        es el fondo que tiene debajo en el mapa. */
     span.className = "capas-area";
-    var alfa = estilo.opacidad === undefined ? OPACIDAD_AREA : estilo.opacidad;
+    var alfa = opacidadDe(estilo, OPACIDAD_AREA, opciones);
     var pintado = conAlfa(estilo.color, alfa);
     span.style.backgroundImage = "linear-gradient(" + pintado + "," + pintado + ")";
     span.style.borderColor = conAlfa(estilo.borde || estilo.color, alfa);
@@ -169,14 +180,15 @@ function muestra(capa, estilo) {
     span.style.borderTopColor = estilo.color;
     span.style.borderTopStyle = estilo.trazo === "punteado" ? "dashed" : "solid";
     span.style.borderTopWidth = Math.max(1, Math.round(estilo.ancho || 1)) + "px";
-    if (estilo.opacidad !== undefined) { span.style.opacity = String(estilo.opacidad); }
+    var alfaTrazo = opacidadDe(estilo, 1, opciones);
+    if (alfaTrazo !== 1) { span.style.opacity = String(alfaTrazo); }
   }
   return span;
 }
 
 /* Que significa cada trazo de una capa: "pavimentada", "consolidado o tierra"... Una capa con
    un solo estilo sin rotulo no lleva variantes. */
-function variantes(capa) {
+function variantes(capa, opciones) {
   var lista = document.createElement("span");
   /* Las clases de una capa de AREA se listan en COLUMNA: son diez o doce y sus nombres son
      frases enteras del INTA ("G3 - Ganadera: Apta para pasturas, receptividad 10-30 ha-UG"),
@@ -186,7 +198,7 @@ function variantes(capa) {
     if (!estilo.rotulo) { return; }
     var item = document.createElement("span");
     item.className = "capas-variante";
-    item.appendChild(muestra(capa, estilo));
+    item.appendChild(muestra(capa, estilo, opciones));
     item.appendChild(document.createTextNode(estilo.rotulo));
     lista.appendChild(item);
   });
@@ -197,17 +209,27 @@ function vaciar(nodo) { while (nodo.firstChild) { nodo.removeChild(nodo.firstChi
 
 /* Las muestras del control (una sola vez: el control no cambia) y la marca de prendida de
    cada renglon, que es lo que usa el PDF para no imprimir las apagadas. */
-function pintarControl(nodo, catalogo) {
+function pintarControl(nodo, catalogo, opciones) {
+  /* La muestra se vuelve a pintar cuando cambia la opacidad del visor: la leyenda tiene que
+     decir lo que dice el mapa (QA de Francisco del 20-nov-2026, m1), y si la muestra se
+     pintara una sola vez, al bajar la opacidad el mapa se aclararia y la leyenda no. */
+  var alfa = String((opciones && opciones.opacidad) === undefined ? 1 : opciones.opacidad);
   Array.prototype.forEach.call(nodo.querySelectorAll("[data-muestra-capa]"), function (hueco) {
     var capa = catalogo.capas[hueco.dataset.muestraCapa];
-    if (!capa || hueco.firstChild) { return; }
-    hueco.appendChild(muestra(capa, capa.estilos[0]));
+    if (!capa || (hueco.firstChild && hueco.dataset.alfa === alfa)) { return; }
+    vaciar(hueco);
+    hueco.dataset.alfa = alfa;
+    hueco.appendChild(muestra(capa, capa.estilos[0], opciones));
   });
   Array.prototype.forEach.call(nodo.querySelectorAll("[data-variantes-capa]"), function (hueco) {
     var id = hueco.dataset.variantesCapa;
     var capa = catalogo.capas[id];
     if (!capa) { return; }
-    if (!hueco.firstChild) { hueco.appendChild(variantes(capa)); }
+    if (!hueco.firstChild || hueco.dataset.alfa !== alfa) {
+      vaciar(hueco);
+      hueco.dataset.alfa = alfa;
+      hueco.appendChild(variantes(capa, opciones));
+    }
     /* Las clases de una capa que lo pide se listan SOLO si la capa esta prendida. Lo piden las
        capas tematicas del INTA, que traen seis, diez o doce clases de nombre largo: con las dos
        apagadas la leyenda medía 661 px debajo de un mapa de 640, y lo primero que se leía era
@@ -488,7 +510,8 @@ function series(catalogo, ids, opciones) {
           type: "scatter", coordinateSystem: "geo", geoIndex: 0, z: z + 2,
           silent: !opciones.interactivas,
           symbol: "circle", symbolSize: estilo.tamanio || 5,
-          itemStyle: { color: estilo.color, borderColor: estilo.borde || estilo.color, borderWidth: 1 },
+          itemStyle: { color: estilo.color, borderColor: estilo.borde || estilo.color,
+                       borderWidth: 1, opacity: opacidadDe(estilo, 1, opciones) },
           emphasis: { scale: 1.6 },
           tooltip: opciones.interactivas ? tooltipDeCapa() : { show: false },
           data: datos
@@ -523,7 +546,7 @@ function series(catalogo, ids, opciones) {
           tooltip: opciones.interactivas ? tooltipDeCapa() : { show: false },
           itemStyle: {
             color: estilo.color,
-            opacity: estilo.opacidad === undefined ? OPACIDAD_AREA : estilo.opacidad,
+            opacity: opacidadDe(estilo, OPACIDAD_AREA, opciones),
             borderColor: estilo.borde || estilo.color,
             borderWidth: estilo.ancho === undefined ? 0.4 : estilo.ancho
           },
@@ -588,14 +611,15 @@ function series(catalogo, ids, opciones) {
         salida.push(Object.assign({}, comun, {
           z: z, silent: true, tooltip: { show: false },
           lineStyle: { color: opciones.halo, width: (estilo.ancho || 1) + 2 * capa.halo,
-                       opacity: 0.85, cap: "round", join: "round" }
+                       opacity: opacidadDe({}, 0.85, opciones),
+                       cap: "round", join: "round" }
         }));
       }
       salida.push(Object.assign({}, comun, {
         z: z + 1, silent: !opciones.interactivas,
         tooltip: opciones.interactivas ? tooltipDeCapa() : { show: false },
         lineStyle: { color: estilo.color, width: estilo.ancho || 1, type: tipo,
-                     opacity: estilo.opacidad === undefined ? 1 : estilo.opacidad,
+                     opacity: opacidadDe(estilo, 1, opciones),
                      cap: "round", join: "round" },
         emphasis: { focus: "none", lineStyle: { width: (estilo.ancho || 1) + 1.5 } }
       }));
@@ -629,7 +653,7 @@ export function capasDelMapa(nodo, catalogo, redibujar, proyeccion, opciones) {
       }
     });
   }
-  pintarControl(nodo, catalogo);
+  pintarControl(nodo, catalogo, opciones);
   var ids = prendidas(nodo, catalogo);
   pintarLeyenda(nodo, catalogo, ids);
   pintarPie(nodo, catalogo, ids);

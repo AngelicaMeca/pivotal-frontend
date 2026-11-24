@@ -13513,6 +13513,12 @@ def escribir_sitio(ctx, vistas, tableros):
                 # mapa de calor es un desplegable chico que no le quita lugar al mapa.
                 panel["capas_modo"] = "lista" if declarado["id"] == "mapa-capas" else "desplegable"
                 panel["capas_rotulo"] = catalogo_capas()["rotulo_control"]
+                # El encabezado de la tarjeta de la leyenda ("Referencias"), cuando el panel
+                # va con el cromo del visor de AgroClima (24-nov-2026). Lo escribe el spec: el
+                # codigo no inventa texto de pantalla. Sin declarar, la tarjeta va sin
+                # encabezado, que es como estaba.
+                if definicion.get("leyenda_titulo"):
+                    panel["leyenda_titulo"] = definicion["leyenda_titulo"]
             comunes = tablero["paneles"].get("acciones_de_cuadro") or []
             propias = definicion.get("acciones") or []
             if comunes or propias:

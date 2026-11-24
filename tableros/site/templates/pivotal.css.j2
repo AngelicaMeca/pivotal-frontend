@@ -3033,6 +3033,43 @@ dialog.zoom.zoom-visible::backdrop { opacity: 1; }
 .mapa-mando .visor-boton { box-shadow: 0 1px 3px rgba(0, 0, 0, .18); }
 /* En el PDF no van: son controles. */
 .imprimiendo .mapa-mando { display: none; }
+/* ---------- EL MAPA DE CAPAS CON EL FORMATO DEL VISOR DE AGROCLIMA (24-nov-2026) ----------
+   Pedido de la usuaria: "los mapas de suelos y cuencas tienen que tener el mismo formato que
+   los mapas de agroclima, los que tienen visor propio de codigo". Ese formato -el del visor
+   georreferenciado del SEPA, `.visor-*`- es: barra de controles ARRIBA del mapa, el mapa en
+   una caja con marco, y la leyenda al costado en una tarjeta con encabezado y pie. Asi que no
+   se copia nada: se usan las MISMAS clases (`.visor-barra`, `.visor-lienzo`, `.visor-escala`)
+   y aca solo va lo que cambia, que es la grilla: la barra arriba a la izquierda, el mapa
+   debajo y las referencias al costado, a la altura del mapa. */
+.panel[data-panel="mapa-capas"][data-visor] > .panel-cuerpo {
+  grid-template-rows: auto auto;
+}
+.panel[data-panel="mapa-capas"][data-visor] > .panel-cuerpo > .visor-barra {
+  grid-column: 1; grid-row: 1; margin-bottom: 0;
+}
+.panel[data-panel="mapa-capas"][data-visor] > .panel-cuerpo > .grafico { grid-row: 2; }
+.panel[data-panel="mapa-capas"][data-visor] > .panel-cuerpo > .capas-a-la-vista {
+  grid-column: 2; grid-row: 2;
+}
+/* La caja del mapa es la del visor (marco, radio y fondo), pero el ALTO y el ANCHO los sigue
+   mandando la regla de `[data-con-zoom]`: la caja mide lo que mide el dibujo (QA del
+   20-nov-2026). Por eso se reponen aca, despues de `.visor-lienzo`, que fija 640 px. */
+.panel[data-panel="mapa-capas"][data-visor] > .panel-cuerpo > .grafico.visor-lienzo {
+  height: var(--alto-mapa); width: min(calc(var(--alto-mapa) * var(--relacion-mapa, 0.635)), 92vw);
+}
+/* La tarjeta de referencias con las casillas adentro: el marco y el encabezado los pone
+   `.visor-escala`, asi que la lista va sin el suyo. */
+.panel[data-panel="mapa-capas"][data-visor] > .panel-cuerpo > .capas-a-la-vista > .capas-lista {
+  border: 0; padding: 0;
+}
+/* En el PDF los controles no van (son controles), igual que la pildora de los otros mapas. */
+.imprimiendo .visor-barra { display: none; }
+@media (max-width: 1100px) {
+  .panel[data-panel="mapa-capas"][data-visor] > .panel-cuerpo > .capas-a-la-vista {
+    grid-column: 1; grid-row: 3;
+  }
+}
+
 /* El mapa que ocupa la pagina NO lleva titulo de panel (QA de Francisco del 19-nov-2026,
    defecto D1): el titulo de la pagina ya lo nombra, y un segundo titulo repetia la bajada y le
    comia un renglon al mapa. El build manda `titulo: ""` y el renglon vacio no ocupa nada. Va

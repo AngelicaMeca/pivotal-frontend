@@ -233,7 +233,39 @@ function MandoDeMapa() {
   );
 }
 
-function ControlCapas({ capas, modo, rotulo }: { capas?: CapaDeMapa[]; modo?: string; rotulo?: string }) {
+/* LA BARRA DEL VISOR, la misma que la de los mapas de AgroClima (pedido de la usuaria del
+   24-nov-2026: "tienen que tener el mismo formato que los mapas de agroclima, los que tienen
+   visor propio de codigo"). Alli la barra lleva el selector de periodo, la opacidad, el zoom y
+   "Imagen original"; aca el periodo no existe -el mapa no es una serie de imagenes, lo que se
+   elige son las capas, y eso es la tarjeta de la derecha- y "Imagen original" tampoco, porque
+   no hay imagen de origen: lo que se dibuja ES el dato.
+   Quedan los dos controles que sí aplican, con las mismas clases y el mismo orden: la opacidad
+   -que en un mapa de capas es lo que deja ver lo que hay DEBAJO del area, que es justo para lo
+   que existe en el visor- y los tres botones de zoom. Los engancha tablero.js. */
+function BarraDeMapa() {
+  return (
+    <div className="visor-barra" data-mapa-mando="">
+      <label className="visor-control">
+        Opacidad{" "}
+        <input type="range" min="10" max="100" defaultValue="100" data-mapa-opacidad=""
+               aria-label="Opacidad de las capas" />
+      </label>
+      <div className="visor-grupo">
+        <button type="button" className="visor-boton" data-mapa-zoom="alejar"
+                title="Alejar" aria-label="Alejar el mapa">−</button>
+        <button type="button" className="visor-boton" data-mapa-zoom="encuadrar"
+                title="Volver al encuadre de la provincia"
+                aria-label="Volver al encuadre de la provincia">⟲</button>
+        <button type="button" className="visor-boton" data-mapa-zoom="acercar"
+                title="Acercar" aria-label="Acercar el mapa">+</button>
+      </div>
+    </div>
+  );
+}
+
+function ControlCapas({ capas, modo, rotulo, titulo, conPie }:
+                      { capas?: CapaDeMapa[]; modo?: string; rotulo?: string;
+                        titulo?: string; conPie?: boolean }) {
   if (!capas || capas.length === 0) return null;
   const lista = (
     <ul className="capas-lista">
@@ -250,6 +282,19 @@ function ControlCapas({ capas, modo, rotulo }: { capas?: CapaDeMapa[]; modo?: st
     </ul>
   );
   if (modo === "lista") {
+    /* Con el cromo del visor la lista va adentro de la tarjeta de referencias, con el mismo
+       encabezado y el mismo pie de fuente que la escala de los mapas de AgroClima. El pie lo
+       escribe capas.js con las fuentes de las capas PRENDIDAS. */
+    if (titulo || conPie) {
+      return (
+        <aside className="capas capas-a-la-vista visor-escala" data-capas=""
+               aria-label="Referencias del mapa">
+          {titulo ? <p className="visor-escala-titulo">{titulo}</p> : null}
+          {lista}
+          {conPie ? <p className="visor-escala-pie" data-pie-capas=""></p> : null}
+        </aside>
+      );
+    }
     return <div className="capas capas-a-la-vista" data-capas="">{lista}</div>;
   }
   return (
@@ -334,7 +379,16 @@ function CuerpoPanel({ id: idPanelCompleto, mockup = false, panel }: { id: strin
   } else if (id === "mapa-capas") {
     /* El mapa de la portada de Infraestructura y riesgo: los departamentos de fondo neutro y
        las capas del IGN encima, con la lista de capas a la vista (es su leyenda). */
-    cuerpo = (
+    cuerpo = panel?.visor ? (
+      /* Con el formato del visor de AgroClima: la barra ARRIBA del mapa (no flotando sobre su
+         esquina), el mapa en su caja con marco y las referencias al costado. */
+      <>
+        <BarraDeMapa />
+        <div className="grafico visor-lienzo" data-grafico=""></div>
+        <ControlCapas capas={panel?.capas} modo={panel?.capas_modo} rotulo={panel?.capas_rotulo}
+                      titulo={panel?.leyenda_titulo} conPie />
+      </>
+    ) : (
       <>
         <ControlCapas capas={panel?.capas} modo={panel?.capas_modo} rotulo={panel?.capas_rotulo} />
         <div className="grafico" data-grafico=""></div>
@@ -658,6 +712,7 @@ function PanelComun({ panel, filtro }: { panel: Panel; filtro?: Filtro }) {
       data-alto={panel.alto}
       data-scroll-interno={panel.scroll_interno ? "" : undefined}
       data-con-zoom={panel.zoom ? "" : undefined}
+      data-visor={panel.visor ? "" : undefined}
       data-compacta={panel.compacta ? "" : undefined}
       data-solo-provincia={panel.solo_provincia ? "" : undefined}
       data-nota-al-lado={panel.nota_al_lado || undefined}

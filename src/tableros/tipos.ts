@@ -227,6 +227,11 @@ export type Panel = {
   // maximo"). Lo declara el spec en el panel; aca solo decide el ALTO de la caja, el gesto lo
   // arma `pintarMapaCapas`.
   zoom?: boolean;
+  // El mapa se dibuja con el MISMO cromo que el visor georreferenciado de AgroClima: barra de
+  // controles arriba (zoom y opacidad), caja con marco y la leyenda al costado en una tarjeta
+  // "Referencias" con su pie de fuente. Pedido de la usuaria del 24-nov-2026, declarado en
+  // `paneles.orden` junto con `zoom`.
+  visor?: boolean;
   // Disposicion "columnas": en que columna de su banda va el cuadro ("izq" o "der"). Si el
   // spec no lo dice, lo decide el ancho (ver bandasEnColumnas en Tablero.tsx).
   columna?: "izq" | "centro" | "der" | "fila";
@@ -259,6 +264,9 @@ export type Panel = {
   // Infraestructura y riesgo el control es la leyenda, a la vista. Sin capas, no viene.
   capas?: CapaDeMapa[];
   capas_modo?: "lista" | "desplegable";
+  // El encabezado de la tarjeta de la leyenda ("Referencias"), cuando el panel va con el cromo
+  // del visor. Lo escribe el spec.
+  leyenda_titulo?: string;
   // El rotulo del boton del desplegable ("Capas"), de configs/dims/capas-ign.yaml.
   capas_rotulo?: string;
   // `accion` solo la traen los items del panel UTILIDADES: con accion se dibujan como boton

@@ -803,6 +803,18 @@ export default function iniciar(PIVOTAL) {
     var mando = nodo.querySelector("[data-mapa-mando]");
     if (!mando || mando.dataset.enganchado) { return; }
     mando.dataset.enganchado = "1";
+    /* La opacidad del visor: se guarda en el nodo -no en una variable- porque prender una
+       capa vuelve a pintar el mapa entero desde cero y la elección del visitante no se pierde
+       por eso. El control manda un `input` por cada paso del deslizador, asi que el redibujado
+       tiene que ser barato: lo es desde el 21-nov (ver `capas.js`). */
+    mando.addEventListener("input", function (evento) {
+      var deslizador = evento.target;
+      if (!deslizador || !deslizador.matches || !deslizador.matches("[data-mapa-opacidad]")) {
+        return;
+      }
+      nodo.dataset.mapaOpacidad = String(Number(deslizador.value) / 100);
+      if (nodo.capasRedibujar) { nodo.capasRedibujar(); }
+    });
     mando.addEventListener("click", function (evento) {
       var boton = evento.target.closest ? evento.target.closest("[data-mapa-zoom]") : null;
       if (!boton) { return; }
@@ -901,6 +913,10 @@ export default function iniciar(PIVOTAL) {
                                  debajo, asi arriba se lee igual que sin capas. */
                               limites: geoProvincia,
                               rotulos: panel.rotulos_deptos,
+                              /* El factor de opacidad del control del visor; sin visor no hay
+                                 control y cada capa se dibuja con la suya. */
+                              opacidad: nodo.dataset.mapaOpacidad === undefined
+                                ? 1 : Number(nodo.dataset.mapaOpacidad),
                               borde: PIVOTAL.color("--fondo-cuadro"),
                               tintaDepartamento: PIVOTAL.color("--texto-apoyo") };
       var capas = capasDelMapa(nodo, (PIVOTAL.datos() || {}).capas,
