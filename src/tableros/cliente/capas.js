@@ -122,20 +122,62 @@ function procesar(capa, geo) {
 
 function bajar(capa, alTerminar) {
   var entrada = bajadas[capa.archivo];
-  if (entrada) { return entrada; }
-  entrada = { grupos: null };
+  if (entrada) {
+    /* Si todavia se esta bajando (la precarga la pidio antes, o es el segundo pedido), quien
+       llama tiene que enterarse igual cuando llegue: sin esto la capa tildada mientras se
+       precargaba no se dibujaba nunca. */
+    if (!entrada.grupos && entrada.avisos && alTerminar) { entrada.avisos.push(alTerminar); }
+    return entrada;
+  }
+  entrada = { grupos: null, avisos: alTerminar ? [alTerminar] : [] };
   entrada.promesa = fetch(capa.archivo).then(function (r) {
     if (!r.ok) { throw new Error("No se pudo bajar " + capa.archivo + " (" + r.status + ")"); }
     return r.json();
   }).then(function (geo) {
     entrada.grupos = procesar(capa, geo);
-    alTerminar();
+    var avisos = entrada.avisos;
+    entrada.avisos = [];
+    avisos.forEach(function (aviso) { aviso(); });
   }).catch(function (error) {
     delete bajadas[capa.archivo];
     if (window.console && window.console.warn) { window.console.warn(error); }
   });
   bajadas[capa.archivo] = entrada;
   return entrada;
+}
+
+/* LA PRECARGA (24-nov-2026: "se pone lento cuando tildo la capa"). Tildar una capa pesada
+   bajaba 3 MB y los procesaba (~130 ms con la pagina bloqueada) JUSTO en el clic. Ahora las capas
+   del catalogo se bajan y se procesan de a una, en los ratos libres del navegador, apenas el
+   mapa esta dibujado: cuando el visitante tilda, ya estan y el clic solo dibuja. Si tilda antes
+   de que termine, `bajar` lo avisa cuando llegue. No se pierde nada: una capa que nunca se
+   tilda cuesta lo mismo que antes en memoria y el ancho de banda de una descarga que el sitio
+   ya sirve desde su propio dominio. */
+var cola = [];
+var precargando = false;
+
+function precargar(catalogo) {
+  Object.keys(catalogo.capas).forEach(function (id) {
+    var capa = catalogo.capas[id];
+    if (!bajadas[capa.archivo] && cola.indexOf(capa) === -1) { cola.push(capa); }
+  });
+  siguienteDeLaCola();
+}
+
+function siguienteDeLaCola() {
+  if (precargando || !cola.length) { return; }
+  precargando = true;
+  var esperar = window.requestIdleCallback
+    ? function (f) { window.requestIdleCallback(f, { timeout: 4000 }); }
+    : function (f) { window.setTimeout(f, 1200); };
+  esperar(function () {
+    var capa = cola.shift();
+    var entrada = bajadas[capa.archivo] || bajar(capa, null);
+    Promise.resolve(entrada.promesa).then(function () {
+      precargando = false;
+      siguienteDeLaCola();
+    });
+  });
 }
 
 /* ------------------------------ "MOSTRAR TODO EL PAIS" ------------------------------
@@ -482,8 +524,10 @@ function caminoEnGrados(partes) {
     for (var a = 0; a < partes[p].length; a++) {
       var anillo = partes[p][a];
       for (var k = 0; k < anillo.length; k++) {
-        trozos.push((k === 0 ? "M" : "L") + (anillo[k][0] * MIL).toFixed(2)
-                    + " " + (anillo[k][1] * MIL).toFixed(2));
+        /* Redondeo a 2 decimales con `Math.round`, que es mucho mas barato que `toFixed`
+           (145.913 vertices x 2 al bajar la capa) y escribe el mismo numero. */
+        trozos.push((k === 0 ? "M" : "L") + Math.round(anillo[k][0] * MIL * 100) / 100
+                    + " " + Math.round(anillo[k][1] * MIL * 100) / 100);
       }
       trozos.push("Z");
     }
@@ -828,6 +872,7 @@ export function capasDelMapa(nodo, catalogoCompleto, redibujar, proyeccion, opci
   pintarLeyenda(nodo, catalogo, ids);
   pintarPie(nodo, catalogo, ids);
   var listasYa = listas(nodo, catalogo, function () { nodo.capasRedibujar(); });
+  precargar(catalogo);
   if (!listasYa.length) { return null; }
   /* Con una capa de AREA prendida, los limites y los nombres de los departamentos se vuelven a
      dibujar ENCIMA (ver `divisionDepartamental`), y se le apagan al geo para no tenerlos dos
