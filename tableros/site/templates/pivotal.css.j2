@@ -3041,21 +3041,43 @@ dialog.zoom.zoom-visible::backdrop { opacity: 1; }
    se copia nada: se usan las MISMAS clases (`.visor-barra`, `.visor-lienzo`, `.visor-escala`)
    y aca solo va lo que cambia, que es la grilla: la barra arriba a la izquierda, el mapa
    debajo y las referencias al costado, a la altura del mapa. */
+/* LA CAJA ES LA DEL VISOR, O SEA ANCHA Y DE 640 px, CON EL MAPA CENTRADO ADENTRO (pedido de
+   la usuaria del 24-nov-2026: "el mapa en suelos y cuencas esta dentro de un recuadro, en
+   agroclima no estan asi, los de evapotranspiracion por ejemplo"). La caja medía lo que mide
+   el dibujo -alto de la pantalla por la relacion de la provincia, 582x916- y eso es un marco
+   pegado al contorno del mapa; en AgroClima el marco es la VENTANA del visor: ocupa el ancho
+   que queda al lado de la escala, mide 640 px de alto y el mapa flota adentro con aire a los
+   costados. Esa es la diferencia que se veia, y es la que se iguala: mismas medidas que
+   `.visor-lienzo`, que es la caja de aquellas paginas.
+   Infraestructura NO entra aca (no declara `visor`): ahi vale la regla de JC del 15-nov, que
+   el mapa ocupe toda la pagina, y su caja sigue midiendo lo que mide el dibujo. */
 .panel[data-panel="mapa-capas"][data-visor] > .panel-cuerpo {
   grid-template-rows: auto auto;
+  /* La misma reparticion que `.visor-cuerpo` en AgroClima: el mapa se lleva lo que hay y la
+     tarjeta de referencias es una columna angosta al costado. Sin `justify-content: center`,
+     que lo pone la regla de `[data-con-zoom]` para centrar una caja a la medida del mapa. */
+  grid-template-columns: minmax(0, 1fr) clamp(10rem, 20%, 15rem);
+  justify-content: normal;
 }
+/* La barra va arriba de TODO el cuerpo, como en el visor, donde cuelga del mismo bloque que
+   el lienzo y la escala. */
 .panel[data-panel="mapa-capas"][data-visor] > .panel-cuerpo > .visor-barra {
-  grid-column: 1; grid-row: 1; margin-bottom: 0;
+  grid-column: 1 / -1; grid-row: 1; margin-bottom: 0;
 }
 .panel[data-panel="mapa-capas"][data-visor] > .panel-cuerpo > .grafico { grid-row: 2; }
 .panel[data-panel="mapa-capas"][data-visor] > .panel-cuerpo > .capas-a-la-vista {
   grid-column: 2; grid-row: 2;
 }
-/* La caja del mapa es la del visor (marco, radio y fondo), pero el ALTO y el ANCHO los sigue
-   mandando la regla de `[data-con-zoom]`: la caja mide lo que mide el dibujo (QA del
-   20-nov-2026). Por eso se reponen aca, despues de `.visor-lienzo`, que fija 640 px. */
+/* Las medidas de `.visor-lienzo`, repuestas aca porque la regla de `[data-con-zoom]` las pisa
+   (misma especificidad y va antes). El mapa de adentro se encuadra solo: `tamanioMapa` lo
+   ajusta por el alto y `layoutCenter` lo centra, que es como queda en AgroClima. */
 .panel[data-panel="mapa-capas"][data-visor] > .panel-cuerpo > .grafico.visor-lienzo {
-  height: var(--alto-mapa); width: min(calc(var(--alto-mapa) * var(--relacion-mapa, 0.635)), 92vw);
+  height: 640px; width: auto; min-width: 0;
+}
+@media (max-width: 760px) {
+  .panel[data-panel="mapa-capas"][data-visor] > .panel-cuerpo > .grafico.visor-lienzo {
+    height: 460px;
+  }
 }
 /* La tarjeta de referencias con las casillas adentro: el marco y el encabezado los pone
    `.visor-escala`, asi que la lista va sin el suyo. */
