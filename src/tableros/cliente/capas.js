@@ -76,47 +76,60 @@ function estiloDe(capa, propiedades) {
    de ECharts; cada punto, un dato de scatter. El nombre es el texto del tooltip. */
 function procesar(capa, geo) {
   var grupos = capa.estilos.map(function () { return []; });
+  /* Las areas se juntan POR CLASE (mismo estilo y mismo cartel) a traves de todos los rasgos y
+     recien al final se arman los datos: ver abajo. */
+  var clases = capa.estilos.map(function () { return { orden: [], partes: {} }; });
   (geo.features || []).forEach(function (feature) {
     var propiedades = feature.properties || {};
     var nombre = sustituir(capa.tooltip, propiedades);
     var geometria = feature.geometry || {};
-    var grupo = grupos[estiloDe(capa, propiedades)];
+    var indice = estiloDe(capa, propiedades);
+    var grupo = grupos[indice];
     if (capa.geometria === "puntos") {
       grupo.push({ name: nombre, value: geometria.coordinates });
       return;
     }
     if (capa.geometria === "poligonos") {
-      /* UN DATO POR PARTE del rasgo, no uno por rasgo (cambiado el 21-nov-2026, ver
-         `renderItem`): asi cada parche se puede saltear cuando es mas chico que un pixel o
-         cuando quedo fuera de la vista, que es lo que hace que una capa de 18.085 parches se
-         pueda recorrer. Los HUECOS siguen en el mismo trazo que su anillo exterior, que es lo
-         que importa: los huecos de un poligono viven adentro de su propia parte, nunca en otra.
-         `d` es su camino ya armado en grados (`caminoEnGrados`) y `caja` su rectangulo, con el
-         que se decide si vale la pena dibujarlo. */
       var piezas = geometria.type === "MultiPolygon" ? geometria.coordinates : [geometria.coordinates];
       piezas = piezas.filter(function (parte) {
         return parte && parte.length && parte[0].length;
       });
       if (!piezas.length) { return; }
-      if (piezas.length > MAXIMO_DE_PARTES_SUELTAS) {
-        /* Un rasgo con miles de partes (las areas deforestadas: 18.085) no puede ser un dato por
-           parte: aun salteando los invisibles, ECharts paga por CADA dato en CADA cuadro. Se
-           agrupan en celdas (ver `agruparEnCeldas`). */
-        agruparEnCeldas(piezas).forEach(function (celda) {
-          grupo.push({ name: nombre, value: celda.partes[0][0][0], partes: celda.partes,
-                       niveles: celda.niveles, caja: celda.caja });
-        });
-        return;
-      }
-      piezas.forEach(function (parte) {
-        grupo.push({ name: nombre, value: parte[0][0], partes: [parte],
-                     d: caminoEnGrados([parte]), caja: cajaDeParte(parte[0]) });
-      });
+      var clase = clases[indice];
+      if (!clase.partes[nombre]) { clase.partes[nombre] = []; clase.orden.push(nombre); }
+      piezas.forEach(function (parte) { clase.partes[nombre].push(parte); });
       return;
     }
     var partes = geometria.type === "MultiLineString" ? geometria.coordinates : [geometria.coordinates];
     partes.forEach(function (parte) { grupo.push({ name: nombre, coords: parte }); });
   });
+  if (capa.geometria === "poligonos") {
+    /* LOS DATOS DE UNA CAPA DE AREA SON POCOS, NO UNO POR PARTE NI UNO POR RASGO (24-nov-2026).
+       ECharts paga por cada dato en cada cuadro, se dibuje o no: con las cuatro capas de Suelos
+       prendidas eran miles de datos y el arrastre y el zoom se trababan (tareas de 50-350 ms
+       medidas en la pagina real). Las partes de una misma clase -mismo estilo, mismo cartel- se
+       agrupan en celdas con niveles de detalle (ver `agruparEnCeldas`), a traves de todos los
+       rasgos. Los HUECOS siguen en el mismo trazo que su anillo exterior, porque viven adentro
+       de su propia parte, nunca en otra. Un grupo chico (hasta MAXIMO_DE_PARTES_SUELTAS) se
+       deja parte por parte: no vale la pena agrupar. `d` es su camino en grados y `caja` su
+       rectangulo, con el que se decide si vale la pena dibujarlo. */
+    clases.forEach(function (clase, indice) {
+      clase.orden.forEach(function (nombre) {
+        var piezas = clase.partes[nombre];
+        if (piezas.length > MAXIMO_DE_PARTES_SUELTAS) {
+          agruparEnCeldas(piezas).forEach(function (celda) {
+            grupos[indice].push({ name: nombre, value: celda.partes[0][0][0], partes: celda.partes,
+                                  niveles: celda.niveles, caja: celda.caja });
+          });
+          return;
+        }
+        piezas.forEach(function (parte) {
+          grupos[indice].push({ name: nombre, value: parte[0][0], partes: [parte],
+                               d: caminoEnGrados([parte]), caja: cajaDeParte(parte[0]) });
+        });
+      });
+    });
+  }
   return grupos;
 }
 
@@ -549,10 +562,37 @@ function caminoEnGrados(partes) {
    elige el nivel mas detallado que alcanza para todo lo que se llega a ver (ver `nivelDe`), asi
    que no se pierde nada visible y con la provincia entera se dibujan unos miles de vertices en
    vez de 145.913. Los niveles son cumulativos y se arman una sola vez, al bajar la capa. */
-var MAXIMO_DE_PARTES_SUELTAS = 64;
+var MAXIMO_DE_PARTES_SUELTAS = 16;
 var CELDAS_POR_LADO = 20;
 var UMBRAL_MINIMO = 0.002;      // grados (~200 m): el primer corte entre niveles
+var TOLERANCIA = 0.4;           // de cada corte: el error maximo, en grados
 var NIVELES = 9;                // cada corte es el doble del anterior: 0,002 ... 0,512 grados
+
+/* El camino de una parte sin los vertices que estan a menos de `tolerancia` grados (en los dos
+   ejes) del ultimo que se dejo. Un anillo que se queda sin area se saca: si es el exterior, se saca
+   la parte entera (mide menos que la tolerancia, o sea menos de un pixel donde se usa). */
+function caminoSimplificado(parte, tolerancia) {
+  var anillos = [];
+  for (var a = 0; a < parte.length; a++) {
+    var anillo = parte[a];
+    var dejados = [anillo[0]];
+    var ultimo = anillo[0];
+    for (var k = 1; k < anillo.length - 1; k++) {
+      var p = anillo[k];
+      if (Math.abs(p[0] - ultimo[0]) >= tolerancia || Math.abs(p[1] - ultimo[1]) >= tolerancia) {
+        dejados.push(p);
+        ultimo = p;
+      }
+    }
+    dejados.push(anillo[anillo.length - 1]);
+    if (dejados.length < 4) {
+      if (a === 0) { return ""; }
+      continue;
+    }
+    anillos.push(dejados);
+  }
+  return anillos.length ? caminoEnGrados([anillos]) : "";
+}
 
 function agruparEnCeldas(piezas) {
   var cajas = piezas.map(function (parte) { return cajaDeParte(parte[0]); });
@@ -590,8 +630,13 @@ function agruparEnCeldas(piezas) {
       var desde = UMBRAL_MINIMO * Math.pow(2, k);
       var d = "";
       var n = 0;
+      /* Ademas de sacar las partes que ya no se ven, en los niveles alejados se sacan los
+         vertices que quedan a menos de `desde x TOLERANCIA` del anterior. Con la escala a la que
+         se elige este nivel eso es entre 0,16 y 0,32 px, o sea que no cambia lo que se ve y baja
+         mucho lo que hay que recorrer en cada cuadro. */
+      var tolerancia = desde * TOLERANCIA;
       for (var i = 0; i < celda.partes.length; i++) {
-        if (celda.tamanios[i] >= desde) { d += celda.trozos[i]; n++; }
+        if (celda.tamanios[i] >= desde) { d += caminoSimplificado(celda.partes[i], tolerancia); n++; }
       }
       /* Un nivel que no saca ninguna parte mas que el anterior no aporta: se omite. */
       if (n < cuantas) {
@@ -652,6 +697,18 @@ function transformacionDelGeo(api) {
    siendo los del departamento que esta abajo. */
 var Z_DIVISION = 30;
 
+/* El camino de todos los limites, armado UNA vez por GeoJSON (son 27 departamentos y decenas de
+   miles de vertices): quien dibuja solo lo mueve con la transformacion del geo. */
+var caminosDeLimites = typeof WeakMap === "function" ? new WeakMap() : null;
+
+function caminoDeLimites(limites, anillos) {
+  var hecho = caminosDeLimites && caminosDeLimites.get(limites);
+  if (hecho) { return hecho; }
+  hecho = caminoEnGrados([anillos.map(function (a) { return a.coords; })]);
+  if (caminosDeLimites) { caminosDeLimites.set(limites, hecho); }
+  return hecho;
+}
+
 function divisionDepartamental(opciones) {
   var limites = opciones.limites;
   if (!limites || !limites.features) { return []; }
@@ -667,18 +724,43 @@ function divisionDepartamental(opciones) {
   /* El limite es una linea OSCURA sobre un filete claro (24-nov-2026: "que se vean mejor los
      limites"). Una sola linea clara de 0,8 px, que es lo que habia, desaparece sobre el relleno
      de una capa; una sola oscura se pierde sobre las capas oscuras. Las dos juntas se leen
-     sobre cualquier color, que es lo que hace un mapa impreso. */
+     sobre cualquier color, que es lo que hace un mapa impreso.
+
+     Se dibuja con una serie `custom` de DOS datos (el filete y la linea) que comparten UN solo
+     camino armado una vez, en grados, y se mueve con la transformacion del geo, igual que las
+     capas de area. Antes eran dos series `lines`: ECharts reconvertia las decenas de miles de
+     coordenadas en CADA cuadro del arrastre y del zoom, y con cualquier capa de area prendida
+     el mapa se trababa (medido en la pagina real: tareas de 50-90 ms por cuadro, y eso con la
+     capa mas liviana). */
   var trazo = opciones.trazoDepartamento || opciones.tintaDepartamento || opciones.tinta;
+  var caminoBase = caminoDeLimites(limites, anillos);
+  var capasDeTrazo = [
+    { value: [-65, -27], color: opciones.borde, ancho: 2.6, opacidad: 0.85 },
+    { value: [-65, -27], color: trazo, ancho: 1.1, opacidad: 0.8 }
+  ];
+  var memo = null;
   var salida = [{
-    type: "lines", coordinateSystem: "geo", geoIndex: 0, polyline: true, silent: true,
-    z: Z_DIVISION, large: true, largeThreshold: 10, tooltip: { show: false },
-    lineStyle: { color: opciones.borde, width: 2.6, opacity: 0.85, cap: "round", join: "round" },
-    data: anillos
-  }, {
-    type: "lines", coordinateSystem: "geo", geoIndex: 0, polyline: true, silent: true,
-    z: Z_DIVISION + 1, large: true, largeThreshold: 10, tooltip: { show: false },
-    lineStyle: { color: trazo, width: 1.1, opacity: 0.8, cap: "round", join: "round" },
-    data: anillos
+    type: "custom", coordinateSystem: "geo", geoIndex: 0, silent: true, z: Z_DIVISION,
+    tooltip: { show: false },
+    renderItem: function (params, api) {
+      var dato = capasDeTrazo[params.dataIndex];
+      var referencia = api.coord([-65, -27]);
+      if (!memo || memo.o[0] !== referencia[0] || memo.o[1] !== referencia[1]) {
+        memo = { o: referencia, t: transformacionDelGeo(api) };
+      }
+      var t = memo.t;
+      var estilo = { fill: "none", stroke: dato.color, lineWidth: dato.ancho,
+                     lineCap: "round", lineJoin: "round", opacity: dato.opacidad };
+      if (!t) {
+        /* Si el geo dejara de ser afin, el camino exacto: correcto aunque lento. */
+        return { type: "path", style: estilo,
+                 shape: { d: caminoDePoligono([anillos.map(function (a) { return a.coords; })], api) } };
+      }
+      estilo.strokeNoScale = true;
+      return { type: "path", x: t.x, y: t.y, scaleX: t.scaleX, scaleY: t.scaleY,
+               style: estilo, shape: { d: caminoBase } };
+    },
+    data: capasDeTrazo
   }];
   if (opciones.rotulos && opciones.rotulos.length) {
     /* Los nombres, con el punto que calculo el build. A 8 px con halo de 2 las letras quedaban
@@ -888,7 +970,7 @@ export function capasDelMapa(nodo, catalogoCompleto, redibujar, proyeccion, opci
   });
   var encima = conArea ? divisionDepartamental(opciones) : [];
   var opcionesGeo = opciones;
-  if (encima.length > 2 && opciones.departamentos) {
+  if (encima.length > 1 && opciones.departamentos) {
     opcionesGeo = Object.assign({}, opciones, {
       departamentos: Object.assign({}, opciones.departamentos, { label: { show: false } })
     });
