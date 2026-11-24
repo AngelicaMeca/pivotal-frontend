@@ -98,6 +98,16 @@ function procesar(capa, geo) {
         return parte && parte.length && parte[0].length;
       });
       if (!piezas.length) { return; }
+      if (piezas.length > MAXIMO_DE_PARTES_SUELTAS) {
+        /* Un rasgo con miles de partes (las areas deforestadas: 18.085) no puede ser un dato por
+           parte: aun salteando los invisibles, ECharts paga por CADA dato en CADA cuadro. Se
+           agrupan en celdas (ver `agruparEnCeldas`). */
+        agruparEnCeldas(piezas).forEach(function (celda) {
+          grupo.push({ name: nombre, value: celda.partes[0][0][0], partes: celda.partes,
+                       niveles: celda.niveles, caja: celda.caja });
+        });
+        return;
+      }
       piezas.forEach(function (parte) {
         grupo.push({ name: nombre, value: parte[0][0], partes: [parte],
                      d: caminoEnGrados([parte]), caja: cajaDeParte(parte[0]) });
@@ -481,6 +491,90 @@ function caminoEnGrados(partes) {
   return trozos.join("");
 }
 
+/* LAS PARTES DE UN RASGO PESADO, AGRUPADAS EN CELDAS CON NIVELES DE DETALLE (24-nov-2026).
+
+   Medido con un banco de pruebas en Edge sin ventana y el GeoJSON real: aun salteando los
+   parches invisibles, las 18.085 partes de las areas deforestadas costaban 500-900 ms por paso
+   de zoom con la provincia entera a la vista y 1,3 s al prender la capa, porque ECharts paga por
+   cada DATO en cada cuadro (llama a `renderItem`, resuelve el estilo, compara el elemento), se
+   dibuje o no.
+
+   Ahora el rasgo se parte en una grilla de hasta CELDAS_POR_LADO x CELDAS_POR_LADO celdas, o
+   sea unos pocos cientos de datos. Cada celda trae su camino en varios NIVELES: el nivel `desde`
+   incluye solo las partes cuyo lado mayor mide al menos `desde` grados. En cada cuadro se
+   elige el nivel mas detallado que alcanza para todo lo que se llega a ver (ver `nivelDe`), asi
+   que no se pierde nada visible y con la provincia entera se dibujan unos miles de vertices en
+   vez de 145.913. Los niveles son cumulativos y se arman una sola vez, al bajar la capa. */
+var MAXIMO_DE_PARTES_SUELTAS = 64;
+var CELDAS_POR_LADO = 20;
+var UMBRAL_MINIMO = 0.002;      // grados (~200 m): el primer corte entre niveles
+var NIVELES = 9;                // cada corte es el doble del anterior: 0,002 ... 0,512 grados
+
+function agruparEnCeldas(piezas) {
+  var cajas = piezas.map(function (parte) { return cajaDeParte(parte[0]); });
+  var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  cajas.forEach(function (c) {
+    if (c[0] < x0) { x0 = c[0]; }
+    if (c[1] < y0) { y0 = c[1]; }
+    if (c[2] > x1) { x1 = c[2]; }
+    if (c[3] > y1) { y1 = c[3]; }
+  });
+  var ancho = (x1 - x0) || 1;
+  var alto = (y1 - y0) || 1;
+  var celdas = {};
+  piezas.forEach(function (parte, i) {
+    /* La celda es la del centro de la parte: cada parte vive en UNA sola celda. */
+    var c = cajas[i];
+    var cx = Math.min(CELDAS_POR_LADO - 1, Math.floor(((c[0] + c[2]) / 2 - x0) / ancho * CELDAS_POR_LADO));
+    var cy = Math.min(CELDAS_POR_LADO - 1, Math.floor(((c[1] + c[3]) / 2 - y0) / alto * CELDAS_POR_LADO));
+    var clave = cx + "," + cy;
+    if (!celdas[clave]) { celdas[clave] = { partes: [], tamanios: [], trozos: [], caja: null }; }
+    var celda = celdas[clave];
+    celda.partes.push(parte);
+    celda.tamanios.push(Math.max(c[2] - c[0], c[3] - c[1]));
+    celda.trozos.push(caminoEnGrados([parte]));
+    celda.caja = celda.caja
+      ? [Math.min(celda.caja[0], c[0]), Math.min(celda.caja[1], c[1]),
+         Math.max(celda.caja[2], c[2]), Math.max(celda.caja[3], c[3])]
+      : c.slice();
+  });
+  return Object.keys(celdas).sort().map(function (clave) {
+    var celda = celdas[clave];
+    var niveles = [{ desde: 0, d: celda.trozos.join("") }];
+    var cuantas = celda.partes.length;
+    for (var k = 0; k < NIVELES; k++) {
+      var desde = UMBRAL_MINIMO * Math.pow(2, k);
+      var d = "";
+      var n = 0;
+      for (var i = 0; i < celda.partes.length; i++) {
+        if (celda.tamanios[i] >= desde) { d += celda.trozos[i]; n++; }
+      }
+      /* Un nivel que no saca ninguna parte mas que el anterior no aporta: se omite. */
+      if (n < cuantas) {
+        niveles.push({ desde: desde, d: d });
+        cuantas = n;
+      }
+      if (!n) { break; }
+    }
+    return { partes: celda.partes, niveles: niveles, caja: celda.caja };
+  });
+}
+
+/* El nivel de detalle que corresponde al cuadro: el mas liviano que igual incluye TODA parte que
+   se llega a ver. Una parte se ve si alguno de sus lados mide al menos MINIMO_VISIBLE pixeles; con
+   la escala mas grande de los dos ejes, eso es `MINIMO_VISIBLE / escala` grados. Cualquier nivel
+   cuyo corte sea menor o igual incluye todo eso (puede incluir de mas, nunca de menos). */
+function nivelDe(niveles, t, dibujarTodo) {
+  if (dibujarTodo) { return niveles[0].d; }
+  var escala = Math.max(Math.abs(t.scaleX), Math.abs(t.scaleY)) * MIL;
+  var minimo = MINIMO_VISIBLE / escala;
+  var elegido = niveles[0];
+  for (var i = 1; i < niveles.length; i++) {
+    if (niveles[i].desde <= minimo) { elegido = niveles[i]; } else { break; }
+  }
+  return elegido.d;
+}
+
 /* La proyeccion del geo leida como transformacion afin, o `null` si dejo de serlo.
    Se mide con dos puntos y SE COMPRUEBA con un tercero, lejos de los dos: si algun dia este
    mapa lleva una proyeccion cartografica de verdad, la comprobacion falla y el dibujo vuelve
@@ -526,22 +620,32 @@ function divisionDepartamental(opciones) {
     });
   });
   if (!anillos.length) { return []; }
+  /* El limite es una linea OSCURA sobre un filete claro (24-nov-2026: "que se vean mejor los
+     limites"). Una sola linea clara de 0,8 px, que es lo que habia, desaparece sobre el relleno
+     de una capa; una sola oscura se pierde sobre las capas oscuras. Las dos juntas se leen
+     sobre cualquier color, que es lo que hace un mapa impreso. */
+  var trazo = opciones.trazoDepartamento || opciones.tintaDepartamento || opciones.tinta;
   var salida = [{
     type: "lines", coordinateSystem: "geo", geoIndex: 0, polyline: true, silent: true,
     z: Z_DIVISION, large: true, largeThreshold: 10, tooltip: { show: false },
-    lineStyle: { color: opciones.borde, width: 0.8, opacity: 1 },
+    lineStyle: { color: opciones.borde, width: 2.6, opacity: 0.85, cap: "round", join: "round" },
+    data: anillos
+  }, {
+    type: "lines", coordinateSystem: "geo", geoIndex: 0, polyline: true, silent: true,
+    z: Z_DIVISION + 1, large: true, largeThreshold: 10, tooltip: { show: false },
+    lineStyle: { color: trazo, width: 1.1, opacity: 0.8, cap: "round", join: "round" },
     data: anillos
   }];
   if (opciones.rotulos && opciones.rotulos.length) {
-    /* Los nombres, con el punto que calculo el build. Llevan un halo finito: sin el, un
-       nombre sobre un area oscura no se lee; con mas de un pixel se come la letra, que mide
-       ocho (medido el 21-nov-2026 ampliando la captura: con halo de 2 px las letras quedaban
-       huecas). */
+    /* Los nombres, con el punto que calculo el build. A 8 px con halo de 2 las letras quedaban
+       huecas (medido el 21-nov-2026); a 8 px con halo de 1 casi no se leian. A 11 px en negrita
+       el halo de 2 px ya no se come la letra y el nombre se lee sobre cualquier capa. */
     salida.push({
-      type: "scatter", coordinateSystem: "geo", geoIndex: 0, z: Z_DIVISION + 1,
+      type: "scatter", coordinateSystem: "geo", geoIndex: 0, z: Z_DIVISION + 2,
       silent: true, symbolSize: 0, tooltip: { show: false },
-      label: { show: true, fontSize: 8, color: opciones.tintaDepartamento || opciones.tinta,
-               textBorderColor: opciones.halo, textBorderWidth: 1,
+      label: { show: true, fontSize: 11, fontWeight: 600,
+               color: opciones.tintaDepartamento || opciones.tinta,
+               textBorderColor: opciones.halo, textBorderWidth: 2.5,
                formatter: function (p) { return (p.data && p.data.name) || ""; } },
       labelLayout: { hideOverlap: true },
       data: opciones.rotulos.map(function (r) { return { name: r.nombre, value: r.punto }; })
@@ -637,7 +741,7 @@ function series(catalogo, ids, opciones) {
               /* El camino ya esta armado (en grados): aca solo se lo ubica y se lo escala.
                  `strokeNoScale` es obligatorio: sin el, el borde se multiplica por la escala
                  -que es del orden de 0,08- y desaparece. */
-              if (!t || !dato.d) {
+              if (!t || !(dato.d || dato.niveles)) {
                 return { type: "path", style: api.style(),
                          shape: { d: caminoDePoligono(dato.partes, api) } };
               }
@@ -658,7 +762,9 @@ function series(catalogo, ids, opciones) {
                 }
               }
               return { type: "path", x: t.x, y: t.y, scaleX: t.scaleX, scaleY: t.scaleY,
-                       style: estilo, shape: { d: dato.d } };
+                       style: estilo,
+                       shape: { d: dato.niveles
+                         ? nivelDe(dato.niveles, t, capaDeEsteDibujo.dibujar_todo) : dato.d } };
             };
           }(datos, capa)),
           data: datos
@@ -731,7 +837,7 @@ export function capasDelMapa(nodo, catalogoCompleto, redibujar, proyeccion, opci
   });
   var encima = conArea ? divisionDepartamental(opciones) : [];
   var opcionesGeo = opciones;
-  if (encima.length > 1 && opciones.departamentos) {
+  if (encima.length > 2 && opciones.departamentos) {
     opcionesGeo = Object.assign({}, opciones, {
       departamentos: Object.assign({}, opciones.departamentos, { label: { show: false } })
     });

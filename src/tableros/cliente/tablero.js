@@ -994,21 +994,36 @@ export default function iniciar(PIVOTAL) {
          proyeccion propia, al primer arrastre las rutas quedarian corridas respecto de los
          departamentos. Sin zoom no cambia nada: la serie se dibuja como siempre. */
       var conZoom = !!panel.zoom;
+      /* Las paginas con capas de AREA (suelos y cuencas) llevan los limites y los nombres de los
+         departamentos mas marcados que el resto: el relleno de una capa los tapa. */
+      var catalogoDeAreas = ((PIVOTAL.datos() || {}).capas || {}).capas || {};
+      var conAreas = conZoom && Object.keys(catalogoDeAreas).some(function (id) {
+        return catalogoDeAreas[id].geometria === "poligonos";
+      });
       var serieMapa = {
         type: "map",
         map: pais ? "pais" : "provincia",
         nameProperty: "geo_id",
         selectedMode: false,
         z: 2,
-        label: { show: caja.clientWidth >= 300, formatter: nombre, fontSize: 8,
-                 color: PIVOTAL.color("--texto-apoyo") },
+        /* Los mapas con zoom (suelos, cuencas, infraestructura) tienen el nombre del
+           departamento mas grande y con halo: a 8 px no se leia (24-nov-2026). Los mapas
+           chicos de los tableros siguen igual. */
+        label: conAreas
+          ? { show: caja.clientWidth >= 300, formatter: nombre, fontSize: 11, fontWeight: 600,
+              color: PIVOTAL.color("--texto-apoyo"),
+              textBorderColor: PIVOTAL.color("--fondo-cuadro"), textBorderWidth: 2.5 }
+          : { show: caja.clientWidth >= 300, formatter: nombre, fontSize: 8,
+              color: PIVOTAL.color("--texto-apoyo") },
         labelLayout: { hideOverlap: true },
         emphasis: {
           label: { show: caja.clientWidth >= 300, formatter: nombre },
           itemStyle: { areaColor: PIVOTAL.color("--fondo-apoyo") }
         },
         itemStyle: { areaColor: PIVOTAL.color("--fondo-apoyo"),
-                     borderColor: PIVOTAL.color("--fondo-cuadro"), borderWidth: 0.8 },
+                     borderColor: conAreas ? PIVOTAL.color("--texto-apoyo")
+                                           : PIVOTAL.color("--fondo-cuadro"),
+                     borderWidth: conAreas ? 0.7 : 0.8 },
         data: (pais ? pais.provincias : panel.deptos).map(function (d) {
           return { name: d.id, value: 0 };
         })
@@ -1070,6 +1085,7 @@ export default function iniciar(PIVOTAL) {
                               opacidad: nodo.dataset.mapaOpacidad === undefined
                                 ? 1 : Number(nodo.dataset.mapaOpacidad),
                               borde: PIVOTAL.color("--fondo-cuadro"),
+                              trazoDepartamento: PIVOTAL.color("--texto-apoyo"),
                               tintaDepartamento: PIVOTAL.color("--texto-apoyo") };
       var capas = capasDelMapa(nodo, (PIVOTAL.datos() || {}).capas,
                                function () { pintarMapaCapas(nodo, panel); }, proyeccion,
