@@ -9902,6 +9902,17 @@ def catalogo_capas():
                     PREFIJO, publicacion["carpeta_publica"], decl["archivo_pais"])
                 catalogo[id_capa]["estilos_pais"] = estilos_de_capa(
                     id_capa, estilo["estilos_pais"], "estilos_pais")
+                # `parches_sueltos`: la capa son parches chicos y sueltos, no un tapiz. Decide
+                # como se la dibuja con el pais a la vista, y es un dato de la capa, no un
+                # gusto. El mapa saltea lo que mide menos de un pixel, porque no se ve y cuesta
+                # igual que lo grande. En un tapiz (la cobertura del suelo) eso no se nota: lo
+                # que se saca lo tapa el vecino. En una capa de parches sueltos se nota todo,
+                # porque no hay vecino: las areas ganaderas deforestadas son 33.222 parches de
+                # 1 a 100 ha, o sea 0,02 a 0,2 pixeles con el pais en 640, asi que al saltearlos
+                # la capa desaparecia (medido el 25-nov-2026: 54 pixeles verdes contra 1.671).
+                # Declarandola, esos parches se dibujan juntos como una marca de presencia del
+                # tamanio del pixel. Ver `agruparEnCeldas` en cliente/capas.js.
+                catalogo[id_capa]["parches_sueltos"] = bool(decl.get("parches_sueltos"))
             if decl.get("rotulos") and decl["geometria"] != "puntos":
                 raise pr.ErrorDeProtocolo(
                     "La capa %s pide `rotulos` y es de %s: los rotulos solo se dibujan sobre "

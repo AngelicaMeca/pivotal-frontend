@@ -201,18 +201,22 @@ todo_el_pais:
         hectareas desmontadas; con 100 ha quedarian 1.958 parches y el 40% de la superficie, o
         sea un mapa que diria que se desmonto la mitad de lo que se desmonto.
   dibujo: >
-    A escala de pais el navegador NO saltea las partes chicas, y esto esta medido. El mapa de
-    capas se saltea las partes que miden menos de un pixel porque no se ven y cuestan igual que
-    una grande (es lo que hizo que la provincia se pudiera recorrer con 18.085 parches
-    prendidos). Con el pais en 640 px, un parche de 1 a 100 hectareas mide entre 0,02 y 0,2
-    pixeles: TODOS caen debajo del minimo y la capa de areas deforestadas desaparecia (54
-    pixeles verdes contra 1.671 dibujandolos). Asi que con el boton prendido se dibujan todas
-    las partes que estan en pantalla -lo que quedo fuera de la vista se sigue salteando- y el
-    desmonte se lee como lo que es: un salpicado sobre el Chaco. Cuesta: un paso de rueda con
-    las deforestadas prendidas y el pais a la vista tarda 0,45 s (medido el 25-nov-2026 en Edge
-    headless, 1.400 x 1.100). Es la capa mas pesada del sitio y es el peor caso; si molesta, el
-    corte de 1 hectarea se puede subir en pipeline/capas_pais.py (a 10 ha quedan 15.241 parches
-    y el 91,5% de las hectareas; a 25 ha, 9.439 y el 81,5%).
+    A escala de pais, una capa de PARCHES SUELTOS se dibuja distinto, y esto esta medido. El
+    mapa de capas saltea las partes que miden menos de un pixel porque no se ven y cuestan
+    igual que una grande (es lo que hizo que la provincia se pudiera recorrer con 18.085
+    parches prendidos). En un tapiz como la cobertura del suelo eso no se nota: lo que se saca
+    lo tapa el vecino. En las areas deforestadas no hay vecino que tape nada, y con el pais en
+    640 px sus 33.222 parches miden entre 0,02 y 0,2 pixeles, asi que la capa desaparecia
+    entera: 54 pixeles verdes contra 1.671. Por eso la capa se declara `parches_sueltos: true`
+    y, con el boton prendido, los parches que no llegan a un pixel se juntan en una grilla del
+    tamanio del pixel y cada casillero ocupado se dibuja como un cuadradito de 0,3 px. El
+    salpicado sobre el Chaco queda igual que dibujandolos uno por uno -medido con la masa de
+    verde en pantalla: 133 contra 138 con el pais entero, 268 contra 290 acercando cuatro
+    muescas sobre el Chaco y 497 contra 497 con ocho- y cuesta una fraccion: el paso de zoom
+    pasó de 67 a 33 milisegundos, que es lo mismo que cuesta la pagina sin ninguna capa
+    prendida (medido el 25-nov-2026 en Edge, 1.400 x 1.100, con la tarjeta de video del
+    equipo). Los cuadraditos existen SOLO en la escala donde el parche es mas chico que ellos:
+    apenas se acerca, el nivel siguiente vuelve a dibujar las partes de verdad.
   mapa_base: >
     Fuera de la provincia no habia nada dibujado: el mapa base del pais son las 24 provincias
     del IGN y esta documentado aparte, en configs/dims/pais-provincias.yaml.
@@ -348,6 +352,14 @@ publicacion:
       archivo: areas-deforestadas-2008-2017.geojson
       # "Mostrar todo el país": los desmontes de todo el pais (ver `todo_el_pais`). 2,77 MB.
       archivo_pais: areas-deforestadas-2008-2017-pais.geojson
+      # ESTA CAPA SON PARCHES SUELTOS, NO UN TAPIZ, y eso cambia como se la dibuja con el pais
+      # a la vista. El mapa saltea lo que mide menos de un pixel; en la cobertura del suelo,
+      # que cubre todo, no se nota porque el vecino tapa el hueco, pero acá no hay vecino: los
+      # 33.222 parches miden entre 0,02 y 0,2 pixeles con el pais en 640 px y la capa
+      # desaparecia entera (medido el 25-nov-2026: 54 pixeles verdes contra 1.671). Declarada
+      # asi, los parches que no llegan a un pixel se juntan en una marca de presencia del
+      # tamanio del pixel y el desmonte se lee como lo que es: un salpicado sobre el Chaco.
+      parches_sueltos: true
       etiqueta: "Áreas ganaderas deforestadas 2008-2017 (INTA)"
       geometria: poligonos
       # EL CARTEL DICE QUE ES ESA MANCHA (QA de Francisco del 20-nov-2026). Estaba en blanco

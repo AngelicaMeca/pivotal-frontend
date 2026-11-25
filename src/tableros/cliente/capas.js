@@ -89,21 +89,21 @@ function procesar(capa, geo) {
       grupo.push({ name: nombre, value: geometria.coordinates });
       return;
     }
-    if (capa.geometria === "poligonos") {
-      var piezas = geometria.type === "MultiPolygon" ? geometria.coordinates : [geometria.coordinates];
-      piezas = piezas.filter(function (parte) {
-        return parte && parte.length && parte[0].length;
+    /* Las AREAS y las LINEAS se juntan igual: por clase y por cartel, a traves de todos los
+       rasgos. Una parte de area es una lista de anillos; una de linea, una lista de puntos. */
+    var esArea = capa.geometria === "poligonos";
+    var piezas = (esArea
+      ? (geometria.type === "MultiPolygon" ? geometria.coordinates : [geometria.coordinates])
+      : (geometria.type === "MultiLineString" ? geometria.coordinates : [geometria.coordinates]))
+      .filter(function (parte) {
+        return esArea ? (parte && parte.length && parte[0].length > 2) : (parte && parte.length > 1);
       });
-      if (!piezas.length) { return; }
-      var clase = clases[indice];
-      if (!clase.partes[nombre]) { clase.partes[nombre] = []; clase.orden.push(nombre); }
-      piezas.forEach(function (parte) { clase.partes[nombre].push(parte); });
-      return;
-    }
-    var partes = geometria.type === "MultiLineString" ? geometria.coordinates : [geometria.coordinates];
-    partes.forEach(function (parte) { grupo.push({ name: nombre, coords: parte }); });
+    if (!piezas.length) { return; }
+    var clase = clases[indice];
+    if (!clase.partes[nombre]) { clase.partes[nombre] = []; clase.orden.push(nombre); }
+    piezas.forEach(function (parte) { clase.partes[nombre].push(parte); });
   });
-  if (capa.geometria === "poligonos") {
+  if (capa.geometria !== "puntos") {
     /* LOS DATOS DE UNA CAPA DE AREA SON POCOS, NO UNO POR PARTE NI UNO POR RASGO (24-nov-2026).
        ECharts paga por cada dato en cada cuadro, se dibuje o no: con las cuatro capas de Suelos
        prendidas eran miles de datos y el arrastre y el zoom se trababan (tareas de 50-350 ms
@@ -113,19 +113,24 @@ function procesar(capa, geo) {
        de su propia parte, nunca en otra. Un grupo chico (hasta MAXIMO_DE_PARTES_SUELTAS) se
        deja parte por parte: no vale la pena agrupar. `d` es su camino en grados y `caja` su
        rectangulo, con el que se decide si vale la pena dibujarlo. */
+    var forma = capa.geometria === "poligonos" ? FORMA_DE_AREA : FORMA_DE_LINEA;
+    /* El cuadradito de presencia es para las AREAS (ver `agruparEnCeldas`). Una linea mas
+       chica que un pixel es un arroyito suelto entre rios que cruzan provincias enteras: no
+       es la capa, y marcarlo con un punto diria algo que el dato no dice. */
+    var presencia = capa.geometria === "poligonos" && !!capa.dibujar_todo;
     clases.forEach(function (clase, indice) {
       clase.orden.forEach(function (nombre) {
         var piezas = clase.partes[nombre];
         if (piezas.length > MAXIMO_DE_PARTES_SUELTAS) {
-          agruparEnCeldas(piezas).forEach(function (celda) {
-            grupos[indice].push({ name: nombre, value: celda.partes[0][0][0], partes: celda.partes,
-                                  niveles: celda.niveles, caja: celda.caja });
+          agruparEnCeldas(piezas, forma, presencia).forEach(function (celda) {
+            grupos[indice].push({ name: nombre, value: forma.caja(celda.partes[0]).slice(0, 2),
+                                  partes: celda.partes, niveles: celda.niveles, caja: celda.caja });
           });
           return;
         }
         piezas.forEach(function (parte) {
-          grupos[indice].push({ name: nombre, value: parte[0][0], partes: [parte],
-                               d: caminoEnGrados([parte]), caja: cajaDeParte(parte[0]) });
+          grupos[indice].push({ name: nombre, value: forma.caja(parte).slice(0, 2),
+                                partes: [parte], d: forma.camino(parte), caja: forma.caja(parte) });
         });
       });
     });
@@ -217,9 +222,11 @@ function vistaDelCatalogo(catalogo, pais) {
     capas[id] = capa.archivo_pais
       ? Object.assign({}, capa, { archivo: capa.archivo_pais,
                                   estilos: capa.estilos_pais || capa.estilos,
-                                  /* A escala de pais no se saltea ninguna parte: ver
-                                     `MINIMO_VISIBLE`. */
-                                  dibujar_todo: capa.geometria === "poligonos" })
+                                  /* Las capas de PARCHES SUELTOS se dibujan enteras: ver
+                                     `MINIMO_VISIBLE` y `agruparEnCeldas`. Las demas se
+                                     dibujan como siempre, porque no desaparecen. */
+                                  dibujar_todo: capa.geometria === "poligonos"
+                                                && !!capa.parches_sueltos })
       : capa;
   });
   return Object.assign({}, catalogo, { capas: capas });
@@ -474,16 +481,17 @@ function tooltipDeCapa() {
    descuenta del relleno en vez de taparla. Dibujando un poligono por anillo (que es lo
    primero que uno escribe) el hueco sale lleno y le pisa el color al vecino de adentro: en
    Aptitud de Tierras hay un rasgo con 13 huecos y en la Zonificacion uno con 6. */
-function caminoDePoligono(partes, api) {
+function caminoAlVuelo(partes, api, esArea) {
   var d = "";
   for (var p = 0; p < partes.length; p++) {
-    for (var a = 0; a < partes[p].length; a++) {
-      var anillo = partes[p][a];
-      for (var k = 0; k < anillo.length; k++) {
-        var xy = api.coord(anillo[k]);
+    var tramos = esArea ? partes[p] : [partes[p]];
+    for (var a = 0; a < tramos.length; a++) {
+      var puntos = tramos[a];
+      for (var k = 0; k < puntos.length; k++) {
+        var xy = api.coord(puntos[k]);
         d += (k === 0 ? "M" : "L") + xy[0].toFixed(2) + " " + xy[1].toFixed(2);
       }
-      d += "Z";
+      if (esArea) { d += "Z"; }
     }
   }
   return d;
@@ -493,7 +501,7 @@ function caminoDePoligono(partes, api) {
    pantalla. Es lo que hace que una capa de area pesada se pueda recorrer.
 
    El problema que resuelve (medido el 21-nov-2026 en "Suelos y uso del suelo"): las areas
-   ganaderas deforestadas son UN rasgo con 18.085 partes y 145.913 vertices, y `caminoDePoligono`
+   ganaderas deforestadas son UN rasgo con 18.085 partes y 145.913 vertices, y `caminoAlVuelo`
    rearmaba el camino entero -145.913 llamadas a `api.coord` y 2,3 MB de texto- EN CADA
    REPINTADO, o sea en cada paso de zoom y en cada cuadro del arrastre. Resultado: la pagina se
    congelaba 1,3 segundos por gesto y el mapa era inusable.
@@ -548,6 +556,50 @@ function caminoEnGrados(partes) {
   return trozos.join("");
 }
 
+/* LO MISMO PARA UNA LINEA: un sub-camino por tramo y SIN cerrar (sin "Z"), que es toda la
+   diferencia entre un rio y un poligono con forma de rio. */
+function caminoDeLineasEnGrados(partes) {
+  var trozos = [];
+  for (var p = 0; p < partes.length; p++) {
+    var linea = partes[p];
+    for (var k = 0; k < linea.length; k++) {
+      trozos.push((k === 0 ? "M" : "L") + Math.round(linea[k][0] * MIL * 100) / 100
+                  + " " + Math.round(linea[k][1] * MIL * 100) / 100);
+    }
+  }
+  return trozos.join("");
+}
+
+/* El tramo sin los vertices que estan a menos de `tolerancia` del ultimo que se dejo. Las dos
+   puntas no se tocan nunca: son las que lo empalman con el tramo siguiente. */
+function caminoSimplificadoDeLinea(linea, tolerancia) {
+  var dejados = [linea[0]];
+  var ultimo = linea[0];
+  for (var k = 1; k < linea.length - 1; k++) {
+    var punto = linea[k];
+    if (Math.abs(punto[0] - ultimo[0]) >= tolerancia || Math.abs(punto[1] - ultimo[1]) >= tolerancia) {
+      dejados.push(punto);
+      ultimo = punto;
+    }
+  }
+  dejados.push(linea[linea.length - 1]);
+  return caminoDeLineasEnGrados([dejados]);
+}
+
+/* Las dos formas que sabe agrupar `agruparEnCeldas`. Una PARTE de area es una lista de anillos
+   (el primero es el contorno y los demas son huecos); una parte de linea es una lista de
+   puntos. Lo unico que cambia es como se mide y como se escribe. */
+var FORMA_DE_AREA = {
+  caja: function (parte) { return cajaDeParte(parte[0]); },
+  camino: function (parte) { return caminoEnGrados([parte]); },
+  simplificado: caminoSimplificado
+};
+var FORMA_DE_LINEA = {
+  caja: cajaDeParte,
+  camino: function (parte) { return caminoDeLineasEnGrados([parte]); },
+  simplificado: caminoSimplificadoDeLinea
+};
+
 /* LAS PARTES DE UN RASGO PESADO, AGRUPADAS EN CELDAS CON NIVELES DE DETALLE (24-nov-2026).
 
    Medido con un banco de pruebas en Edge sin ventana y el GeoJSON real: aun salteando los
@@ -563,10 +615,12 @@ function caminoEnGrados(partes) {
    que no se pierde nada visible y con la provincia entera se dibujan unos miles de vertices en
    vez de 145.913. Los niveles son cumulativos y se arman una sola vez, al bajar la capa. */
 var MAXIMO_DE_PARTES_SUELTAS = 16;
-var CELDAS_POR_LADO = 20;
+var CELDAS_POR_LADO = 20;       // el tope de la grilla de celdas
+var PARTES_POR_CELDA = 40;      // el objetivo: cuantas partes conviene juntar en cada celda
 var UMBRAL_MINIMO = 0.002;      // grados (~200 m): el primer corte entre niveles
 var TOLERANCIA = 0.4;           // de cada corte: el error maximo, en grados
 var NIVELES = 9;                // cada corte es el doble del anterior: 0,002 ... 0,512 grados
+var LADO_DE_PRESENCIA = 0.3;    // del corte: el cuadradito mide un tercio de pixel (ver `agruparEnCeldas`)
 
 /* El camino de una parte sin los vertices que estan a menos de `tolerancia` grados (en los dos
    ejes) del ultimo que se dejo. Un anillo que se queda sin area se saca: si es el exterior, se saca
@@ -594,8 +648,24 @@ function caminoSimplificado(parte, tolerancia) {
   return anillos.length ? caminoEnGrados([anillos]) : "";
 }
 
-function agruparEnCeldas(piezas) {
-  var cajas = piezas.map(function (parte) { return cajaDeParte(parte[0]); });
+/* El cuadradito con el que se dibuja una parte que, a esta escala, es mas chica que un pixel:
+   `lado` esta en grados y es el corte del nivel, o sea 0,8 px (ver `agruparEnCeldas`). */
+function cuadroEnGrados(x, y, lado) {
+  var a = Math.round(x * MIL * 100) / 100;
+  var b = Math.round(y * MIL * 100) / 100;
+  var c = Math.round((x + lado) * MIL * 100) / 100;
+  var d = Math.round((y + lado) * MIL * 100) / 100;
+  return "M" + a + " " + b + "L" + c + " " + b + "L" + c + " " + d + "L" + a + " " + d + "Z";
+}
+
+function agruparEnCeldas(piezas, forma, conPresencia) {
+  /* El tamanio de la grilla sale de CUANTAS partes hay, no es fijo: una grilla de 20 x 20
+     sobre una clase de 300 partes deja 300 celdas de una parte cada una, o sea 300 elementos
+     para ECharts donde alcanzaban diez. La cobertura del suelo nacional son 42 clases y asi
+     pasaba de unos cientos de elementos a varios miles. */
+  var porLado = Math.max(1, Math.min(CELDAS_POR_LADO,
+                                     Math.round(Math.sqrt(piezas.length / PARTES_POR_CELDA))));
+  var cajas = piezas.map(forma.caja);
   var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
   cajas.forEach(function (c) {
     if (c[0] < x0) { x0 = c[0]; }
@@ -609,14 +679,17 @@ function agruparEnCeldas(piezas) {
   piezas.forEach(function (parte, i) {
     /* La celda es la del centro de la parte: cada parte vive en UNA sola celda. */
     var c = cajas[i];
-    var cx = Math.min(CELDAS_POR_LADO - 1, Math.floor(((c[0] + c[2]) / 2 - x0) / ancho * CELDAS_POR_LADO));
-    var cy = Math.min(CELDAS_POR_LADO - 1, Math.floor(((c[1] + c[3]) / 2 - y0) / alto * CELDAS_POR_LADO));
+    var cx = Math.min(porLado - 1, Math.floor(((c[0] + c[2]) / 2 - x0) / ancho * porLado));
+    var cy = Math.min(porLado - 1, Math.floor(((c[1] + c[3]) / 2 - y0) / alto * porLado));
     var clave = cx + "," + cy;
-    if (!celdas[clave]) { celdas[clave] = { partes: [], tamanios: [], trozos: [], caja: null }; }
+    if (!celdas[clave]) {
+      celdas[clave] = { partes: [], tamanios: [], cajas: [], trozos: [], caja: null };
+    }
     var celda = celdas[clave];
     celda.partes.push(parte);
     celda.tamanios.push(Math.max(c[2] - c[0], c[3] - c[1]));
-    celda.trozos.push(caminoEnGrados([parte]));
+    celda.cajas.push(c);
+    celda.trozos.push(forma.camino(parte));
     celda.caja = celda.caja
       ? [Math.min(celda.caja[0], c[0]), Math.min(celda.caja[1], c[1]),
          Math.max(celda.caja[2], c[2]), Math.max(celda.caja[3], c[3])]
@@ -626,35 +699,72 @@ function agruparEnCeldas(piezas) {
     var celda = celdas[clave];
     var niveles = [{ desde: 0, d: celda.trozos.join("") }];
     var cuantas = celda.partes.length;
+    var marcasAnteriores = conPresencia ? Infinity : 0;
     for (var k = 0; k < NIVELES; k++) {
       var desde = UMBRAL_MINIMO * Math.pow(2, k);
-      var d = "";
+      var trozos = [];
       var n = 0;
       /* Ademas de sacar las partes que ya no se ven, en los niveles alejados se sacan los
          vertices que quedan a menos de `desde x TOLERANCIA` del anterior. Con la escala a la que
          se elige este nivel eso es entre 0,16 y 0,32 px, o sea que no cambia lo que se ve y baja
          mucho lo que hay que recorrer en cada cuadro. */
       var tolerancia = desde * TOLERANCIA;
+      /* LA PARTE QUE YA NO SE VE: se saca, o se marca. Sacarla es lo correcto cuando es una
+         entre muchas que si se ven (el mapa de la provincia). Pero si TODAS las partes de la
+         capa son mas chicas que un pixel -las areas deforestadas con el pais a la vista son
+         33.222 parches de 1 a 100 ha, o sea 0,02 a 0,2 px- sacarlas borra la capa entera. Por
+         eso la version nacional pide `conPresencia`: las partes que no se ven se juntan en una
+         grilla del tamanio del corte (0,8 px) y cada casillero ocupado se dibuja como UN
+         cuadradito. Es el mismo salpicado que se veria dibujando los 33.222 parches -medido:
+         1.671 pixeles verdes contra 1.692- con 2.049 cuadraditos en vez de 33.222 trazos, y
+         solo a la escala donde cada parche es mas chico que el cuadradito: apenas se acerca,
+         el nivel siguiente vuelve a dibujar las partes de verdad. */
+      var presencia = conPresencia ? {} : null;
       for (var i = 0; i < celda.partes.length; i++) {
-        if (celda.tamanios[i] >= desde) { d += caminoSimplificado(celda.partes[i], tolerancia); n++; }
+        var camino = celda.tamanios[i] >= desde
+          ? forma.simplificado(celda.partes[i], tolerancia) : "";
+        if (camino) {
+          trozos.push(camino);
+          n++;
+        } else if (presencia) {
+          var caja = celda.cajas[i];
+          presencia[Math.floor((caja[0] + caja[2]) / 2 / desde) + ","
+                    + Math.floor((caja[1] + caja[3]) / 2 / desde)] = true;
+        }
       }
-      /* Un nivel que no saca ninguna parte mas que el anterior no aporta: se omite. */
-      if (n < cuantas) {
+      var marcas = presencia ? Object.keys(presencia) : [];
+      marcas.forEach(function (casillero) {
+        var ij = casillero.split(",");
+        var lado = desde * LADO_DE_PRESENCIA;
+        trozos.push(cuadroEnGrados(Number(ij[0]) * desde + lado / 2,
+                                   Number(ij[1]) * desde + lado / 2, lado));
+      });
+      /* UN NIVEL SE GUARDA SOLO SI AHORRA DE VERDAD (al menos un 30% del camino anterior).
+         Cambiar de nivel no es gratis: el navegador vuelve a leer el camino entero, y si el
+         nivel nuevo pesa casi lo mismo que el viejo se paga esa lectura en cada paso de zoom
+         sin dibujar menos. Pasaba con la cobertura del suelo nacional, que YA viene
+         simplificada a 2,2 km -la medida de un pixel a escala de pais- asi que no hay nada
+         que sacarle: medido el 25-nov-2026, 100 ms por cuadro con niveles contra 84 sin
+         ellos. Saltear un nivel es siempre seguro: se usa el anterior, que tiene MAS
+         detalle. */
+      var d = trozos.join("");
+      if ((n < cuantas || marcas.length < marcasAnteriores)
+          && d.length < niveles[niveles.length - 1].d.length * 0.7) {
         niveles.push({ desde: desde, d: d });
         cuantas = n;
+        marcasAnteriores = marcas.length;
       }
-      if (!n) { break; }
+      if (!n && marcas.length <= 1) { break; }
     }
     return { partes: celda.partes, niveles: niveles, caja: celda.caja };
   });
 }
 
 /* El nivel de detalle que corresponde al cuadro: el mas liviano que igual incluye TODA parte que
-   se llega a ver. Una parte se ve si alguno de sus lados mide al menos MINIMO_VISIBLE pixeles; con
+   se llega a ver (y, en las capas nacionales, el cuadradito de presencia de las que no). Una parte se ve si alguno de sus lados mide al menos MINIMO_VISIBLE pixeles; con
    la escala mas grande de los dos ejes, eso es `MINIMO_VISIBLE / escala` grados. Cualquier nivel
    cuyo corte sea menor o igual incluye todo eso (puede incluir de mas, nunca de menos). */
-function nivelDe(niveles, t, dibujarTodo) {
-  if (dibujarTodo) { return niveles[0].d; }
+function nivelDe(niveles, t) {
   var escala = Math.max(Math.abs(t.scaleX), Math.abs(t.scaleY)) * MIL;
   var minimo = MINIMO_VISIBLE / escala;
   var elegido = niveles[0];
@@ -662,6 +772,17 @@ function nivelDe(niveles, t, dibujarTodo) {
     if (niveles[i].desde <= minimo) { elegido = niveles[i]; } else { break; }
   }
   return elegido.d;
+}
+
+/* LO QUE DEVUELVE `renderItem` CUANDO ESA PARTE NO SE DIBUJA. Es un camino vacio y no `null`,
+   que seria lo natural: con `null` ECharts no le guarda ningun elemento al dato, y cuando mas
+   tarde la serie tiene MENOS datos -pasa al prender el boton del pais o al cambiar de capa-
+   su rutina de borrado lo busca igual y revienta ("Cannot read properties of null (reading
+   'remove')" en `applyLeaveTransition`, que lee `el.parent` sin comprobarlo). La excepcion
+   cortaba el dibujo de las series que venian despues. Un camino vacio e invisible no dibuja
+   nada, no se puede tocar y le da a ECharts el elemento que espera. */
+function nadaQueDibujar() {
+  return { type: "path", invisible: true, silent: true, shape: { d: "" } };
 }
 
 /* La proyeccion del geo leida como transformacion afin, o `null` si dejo de serlo.
@@ -754,7 +875,7 @@ function divisionDepartamental(opciones) {
       if (!t) {
         /* Si el geo dejara de ser afin, el camino exacto: correcto aunque lento. */
         return { type: "path", style: estilo,
-                 shape: { d: caminoDePoligono([anillos.map(function (a) { return a.coords; })], api) } };
+                 shape: { d: caminoAlVuelo([anillos.map(function (a) { return a.coords; })], api, true) } };
       }
       estilo.strokeNoScale = true;
       return { type: "path", x: t.x, y: t.y, scaleX: t.scaleX, scaleY: t.scaleY,
@@ -822,23 +943,43 @@ function series(catalogo, ids, opciones) {
         salida.push(punto);
         return;
       }
-      if (capa.geometria === "poligonos") {
-        /* ECharts no tiene serie de AREAS sobre un `geo` (la serie `map` dibuja el mapa
-           registrado, no un GeoJSON cualquiera), asi que las areas se dibujan a mano con una
-           serie `custom`: un elemento `path` por rasgo, con los vertices pasados por
-           `api.coord`, que es la MISMA proyeccion con la que el geo dibuja los
-           departamentos. Asi la capa y la cartografia se mueven juntas con el zoom. */
-        salida.push({
-          type: "custom", coordinateSystem: "geo", geoIndex: 0, z: z + 1,
-          silent: !opciones.interactivas,
-          tooltip: opciones.interactivas ? tooltipDeCapa() : { show: false },
-          itemStyle: {
-            color: estilo.color,
-            opacity: opacidadDe(estilo, OPACIDAD_AREA, opciones),
+      /* AREAS Y LINEAS SE DIBUJAN IGUAL: una serie `custom` con el camino ya armado en
+         grados y, en cada cuadro, solo la transformacion que lo lleva a la pantalla.
+
+         ECharts no tiene serie de areas sobre un `geo` (la serie `map` dibuja el mapa
+         registrado, no un GeoJSON cualquiera). Y la serie `lines`, que si existe, resultaba
+         carisima con el pais a la vista: un ELEMENTO por tramo (los cursos de agua del NOA
+         son miles), los puntos proyectados de nuevo en cada cuadro y la lista entera de
+         coordenadas copiada por ECharts en cada `setOption`. Medido el 25-nov-2026 con los
+         cursos de agua nacionales: 208 ms por cuadro, de los cuales 128 de dibujo nativo,
+         15 de `clone` y 32 de recoleccion de basura. Con el camino prearmado son los mismos
+         tramos en un punado de elementos y lo unico que cambia por cuadro es el `transform`. */
+      var esArea = capa.geometria === "poligonos";
+      var anchoDeLinea = estilo.ancho || 1;
+      /* El estilo viaja como `itemStyle` -aunque sea una linea- porque es lo que resuelve
+         `api.style()` dentro de `renderItem`, con los estados (resaltado) que arma ECharts. */
+      var relleno = esArea
+        ? { color: estilo.color, opacity: opacidadDe(estilo, OPACIDAD_AREA, opciones),
             borderColor: estilo.borde || estilo.color,
-            borderWidth: estilo.ancho === undefined ? 0.4 : estilo.ancho
-          },
-          emphasis: { focus: "none", itemStyle: { opacity: 1 } },
+            borderWidth: estilo.ancho === undefined ? 0.4 : estilo.ancho }
+        : { color: "none", opacity: opacidadDe(estilo, 1, opciones),
+            borderColor: estilo.color, borderWidth: anchoDeLinea };
+      /* Lo que el itemStyle no sabe decir: el punteado y las puntas redondeadas de una linea.
+         `strokeNoScale` es obligatorio en los dos: sin el, el trazo se multiplica por la
+         escala -que es del orden de 0,08- y desaparece. */
+      var pincel = esArea
+        ? { strokeNoScale: true }
+        : { strokeNoScale: true, fill: "none", lineCap: "round", lineJoin: "round",
+            lineDash: estilo.trazo === "punteado" ? [4, 3] : null };
+      var serieDeCamino = function (cfg) {
+        return {
+          type: "custom", coordinateSystem: "geo", geoIndex: 0, z: cfg.z,
+          silent: cfg.silent || !opciones.interactivas,
+          tooltip: (opciones.interactivas && !cfg.silent) ? tooltipDeCapa() : { show: false },
+          itemStyle: cfg.itemStyle,
+          emphasis: esArea
+            ? { focus: "none", itemStyle: { opacity: 1 } }
+            : { focus: "none", itemStyle: { borderWidth: cfg.itemStyle.borderWidth + 1.5 } },
           /* 18.085 parches no se pueden dibujar enteros en cada cuadro: medido el
              21-nov-2026, el navegador tardaba 451 ms SOLO en cerrar los trazos y la pagina se
              congelaba 1,3 s en cada paso de zoom y en cada tiron del arrastre. Asi que cada
@@ -855,23 +996,20 @@ function series(catalogo, ids, opciones) {
             var memo = null;
             return function (params, api) {
               var dato = datosDeLaCapa[params.dataIndex];
-              if (!dato || !dato.partes) { return null; }
+              if (!dato || !dato.partes) { return nadaQueDibujar(); }
               var referencia = api.coord([-65, -27]);
               if (!memo || memo.o[0] !== referencia[0] || memo.o[1] !== referencia[1]) {
                 /* El estilo se guarda junto con la transformacion: `api.style()` lo resuelve
                    consultando el modelo de la serie, y hacerlo una vez por parte -18.085
                    veces por cuadro- costaba mas que dibujar. Es el mismo para toda la capa. */
-                memo = { o: referencia, t: transformacionDelGeo(api), estilo: api.style() };
+                memo = { o: referencia, t: transformacionDelGeo(api),
+                         estilo: Object.assign({}, api.style(), pincel) };
               }
               var t = memo.t;
-              /* El camino ya esta armado (en grados): aca solo se lo ubica y se lo escala.
-                 `strokeNoScale` es obligatorio: sin el, el borde se multiplica por la escala
-                 -que es del orden de 0,08- y desaparece. */
               if (!t || !(dato.d || dato.niveles)) {
-                return { type: "path", style: api.style(),
-                         shape: { d: caminoDePoligono(dato.partes, api) } };
+                return { type: "path", style: Object.assign({}, api.style(), pincel),
+                         shape: { d: caminoAlVuelo(dato.partes, api, esArea) } };
               }
-              var estilo = Object.assign({}, memo.estilo, { strokeNoScale: true });
               if (dato.caja) {
                 var x0 = t.x + t.scaleX * dato.caja[0] * MIL;
                 var x1 = t.x + t.scaleX * dato.caja[2] * MIL;
@@ -882,15 +1020,16 @@ function series(catalogo, ids, opciones) {
                    mide menos de un pixel se saltea solo en el mapa de la provincia: a escala
                    de pais eso borraba la capa entera (ver `MINIMO_VISIBLE`). */
                 if (!capaDeEsteDibujo.dibujar_todo
-                    && x1 - x0 < MINIMO_VISIBLE && y1 - y0 < MINIMO_VISIBLE) { return null; }
+                    && x1 - x0 < MINIMO_VISIBLE && y1 - y0 < MINIMO_VISIBLE) {
+                  return nadaQueDibujar();
+                }
                 if (x1 < 0 || y1 < 0 || x0 > api.getWidth() || y0 > api.getHeight()) {
-                  return null;
+                  return nadaQueDibujar();
                 }
               }
               return { type: "path", x: t.x, y: t.y, scaleX: t.scaleX, scaleY: t.scaleY,
-                       style: estilo,
-                       shape: { d: dato.niveles
-                         ? nivelDe(dato.niveles, t, capaDeEsteDibujo.dibujar_todo) : dato.d } };
+                       style: memo.estilo,
+                       shape: { d: dato.niveles ? nivelDe(dato.niveles, t) : dato.d } };
             };
           }(datos, capa)),
           /* A ECharts se le pasan datos LIVIANOS: nombre y un punto. `renderItem` lee las
@@ -900,30 +1039,18 @@ function series(catalogo, ids, opciones) {
              clic y en cada gesto de zoom (medido el 24-nov-2026 en la pagina real: 30-60 ms
              de `clone` por gesto, dentro de tareas de mas de 100 ms). */
           data: datos.map(function (d) { return { name: d.name, value: d.value }; })
-        });
-        return;
-      }
-      var tipo = estilo.trazo === "punteado" ? [4, 3] : "solid";
-      var comun = {
-        type: "lines", coordinateSystem: "geo", geoIndex: 0, polyline: true,
-        large: !!capa.grande, largeThreshold: 2000, data: datos
+        };
       };
-      if (capa.halo && opciones.halo) {
-        salida.push(Object.assign({}, comun, {
-          z: z, silent: true, tooltip: { show: false },
-          lineStyle: { color: opciones.halo, width: (estilo.ancho || 1) + 2 * capa.halo,
-                       opacity: opacidadDe({}, 0.85, opciones),
-                       cap: "round", join: "round" }
+      /* El halo de las lineas de Infraestructura: el mismo camino, mas grueso y por debajo. */
+      if (!esArea && capa.halo && opciones.halo) {
+        salida.push(serieDeCamino({
+          z: z, silent: true,
+          itemStyle: { color: "none", opacity: opacidadDe({}, 0.85, opciones),
+                       borderColor: opciones.halo, borderWidth: anchoDeLinea + 2 * capa.halo }
         }));
       }
-      salida.push(Object.assign({}, comun, {
-        z: z + 1, silent: !opciones.interactivas,
-        tooltip: opciones.interactivas ? tooltipDeCapa() : { show: false },
-        lineStyle: { color: estilo.color, width: estilo.ancho || 1, type: tipo,
-                     opacity: opacidadDe(estilo, 1, opciones),
-                     cap: "round", join: "round" },
-        emphasis: { focus: "none", lineStyle: { width: (estilo.ancho || 1) + 1.5 } }
-      }));
+      salida.push(serieDeCamino({ z: z + 1, itemStyle: relleno }));
+      return;
     });
     z += 2;
   });

@@ -62,6 +62,7 @@ var ZOOM_MAXIMO = 14;     // veces el encuadre inicial
 var ZOOM_REAL_MAXIMO = 8;
 var ALTO_LIENZO = 640;    // px; en pantallas angostas lo baja el CSS
 var BANDA = 4.5;          // px de la imagen a cada lado de un limite donde se busca su linea
+var MS_POR_TAJADA = 10;   // lo que se agranda por cuadro, para que el navegador siga atendiendo
 
 export default function crearVisor(nodo, elemento, opciones) {
   /* DOS cajas (27-oct-2026). `caja` es la de la imagen del SEPA entera, que es la de su KML.
@@ -465,7 +466,7 @@ export default function crearVisor(nodo, elemento, opciones) {
      lineas de limites que trae la imagen (sinLineas), para que se vean solo las del sitio, finas.
      Despues el navegador lo dibuja con suavizado.
      La imagen original sigue disponible tal cual en "Imagen original" y en las miniaturas. */
-  function agrandar(img, suCaja) {
+  function agrandar(img, suCaja, cuandoEste) {
     var W = img.naturalWidth, H = img.naturalHeight;
     var A = mundo(suCaja.oeste, suCaja.norte), B = mundo(suCaja.este, suCaja.sur);
     var C = [(A[0] + B[0]) / 2, (A[1] + B[1]) / 2];
@@ -531,14 +532,20 @@ export default function crearVisor(nodo, elemento, opciones) {
       px = sinLineas(px, { banda: mascara(2 * BANDA), ancha: mascara(6 * BANDA),
                            provincia: mascara(0) }, w, h);
     }
-    var grande = agrandarPixeles(px, w, h);
-    var lienzo = document.createElement("canvas");
-    lienzo.width = grande.ancho; lienzo.height = grande.alto;
-    var gl = lienzo.getContext("2d");
-    var salida = gl.createImageData(grande.ancho, grande.alto);
-    new Uint32Array(salida.data.buffer).set(grande.pixeles);
-    gl.putImageData(salida, 0, 0);
-    return { lienzo: lienzo, recorte: { x: x0, y: y0, w: w, h: h } };
+    /* EL AGRANDADO VA EN TAJADAS DE 10 ms, una por cuadro: son millones de pixeles y de una
+       sola vez la pagina se queda dura (ver `prepararAgrandado`). Mientras tanto el visor
+       muestra la imagen tal cual la publica el organismo, que ya esta en pantalla. */
+    var trabajo = prepararAgrandado(px, w, h);
+    (function tajada() {
+      if (!trabajo.hacer(MS_POR_TAJADA)) { requestAnimationFrame(tajada); return; }
+      var lienzo = document.createElement("canvas");
+      lienzo.width = trabajo.ancho; lienzo.height = trabajo.alto;
+      var gl = lienzo.getContext("2d");
+      var salida = gl.createImageData(trabajo.ancho, trabajo.alto);
+      new Uint32Array(salida.data.buffer).set(trabajo.pixeles);
+      gl.putImageData(salida, 0, 0);
+      cuandoEste({ lienzo: lienzo, recorte: { x: x0, y: y0, w: w, h: h } });
+    }());
   }
 
   // ---------- carga del periodo ----------
@@ -641,9 +648,16 @@ export default function crearVisor(nodo, elemento, opciones) {
     estado.preparando = i;
     requestAnimationFrame(function () {
       requestAnimationFrame(function () {
-        estado.preparando = null;
-        if (!capaLista(i)) { estado.limpias[i] = agrandar(img, cajaDelPeriodo(i)); }
-        if (estado.i === i) { mostrarCargando(""); dibujar(); precargarVecino(i); }
+        if (capaLista(i)) {
+          estado.preparando = null;
+          if (estado.i === i) { mostrarCargando(""); dibujar(); precargarVecino(i); }
+          return;
+        }
+        agrandar(img, cajaDelPeriodo(i), function (limpia) {
+          estado.preparando = null;
+          estado.limpias[i] = limpia;
+          if (estado.i === i) { mostrarCargando(""); dibujar(); precargarVecino(i); }
+        });
       });
     });
   }
@@ -867,35 +881,79 @@ export default function crearVisor(nodo, elemento, opciones) {
    pasa a ser una curva en vez de un escalon, y no se mezclan colores (no aparecen tonos que no
    esten en la imagen). Reemplaza a Scale2x, que en los mapas con mucho moteado (ET, NDVI)
    inventaba formas de gusano. */
-export function agrandarPixeles(px, w, h) {
+/* EL AGRANDADO, EN TAJADAS. Devuelve el trabajo empezado: `pixeles` ya tiene su tamanio final
+   y `hacer(ms)` llena filas hasta gastar ese presupuesto de milisegundos. Se hace asi porque
+   son millones de pixeles y de una sola vez la pagina se queda dura: medido el 25-nov-2026 en
+   el Mapa Nacional de Cultivos, 3,1 segundos de navegador bloqueado al abrir (la imagen del
+   INTA es de 2.015 x 2.704 y el recorte agrandado, de 7,7 millones de pixeles). Mientras esto
+   avanza, el visor ya esta mostrando la imagen tal cual la publica el organismo, asi que lo
+   unico que cambia es cuando aparece la version suavizada. */
+export function prepararAgrandado(px, w, h) {
   var F = Math.max(4, Math.min(8, Math.round(1600 / w)));
   var ow = w * F, oh = h * F, out = new Uint32Array(ow * oh);
   var claves = [0, 0, 0, 0], pesos = [0, 0, 0, 0], colores = [0, 0, 0, 0], mejor = [0, 0, 0, 0];
-  for (var oy = 0; oy < oh; oy++) {
-    var v = (oy + 0.5) / F - 0.5, y0 = Math.floor(v), fy = v - y0;
-    for (var ox = 0; ox < ow; ox++) {
-      var u = (ox + 0.5) / F - 0.5, x0 = Math.floor(u), fx = u - x0, n = 0;
-      for (var q = 0; q < 4; q++) {
-        var sx = Math.min(w - 1, Math.max(0, x0 + (q & 1)));
-        var sy = Math.min(h - 1, Math.max(0, y0 + (q >> 1)));
-        var peso = ((q & 1) ? fx : 1 - fx) * ((q >> 1) ? fy : 1 - fy);
-        var c = px[sy * w + sx], k = grupo(c), t = 0;
-        while (t < n && claves[t] !== k) { t++; }
-        if (t === n) { claves[t] = k; pesos[t] = 0; mejor[t] = -1; n++; }
-        pesos[t] += peso;
-        if (peso > mejor[t]) { mejor[t] = peso; colores[t] = c; }
-      }
-      var gana = 0;
-      for (var z = 1; z < n; z++) { if (pesos[z] > pesos[gana]) { gana = z; } }
-      /* Se queda con el color del ganador TAL CUAL, alfa incluido. Antes forzaba el alfa a
-         255 (`| 0xff000000`), que sobre las imagenes del SEPA no hacia nada -son opacas- pero
-         sobre un raster clasificado pinta de NEGRO lo que la fuente dejo sin clasificar: un
-         pixel transparente es (0,0,0,0), o sea negro con alfa cero, y al taparle el alfa queda
-         negro a secas. El mapa de cultivos salia con todo el oeste de la provincia en negro. */
-      out[oy * ow + ox] = colores[gana] >>> 0;
-    }
+  var muestras = [0, 0, 0, 0], pesosDe = [0, 0, 0, 0];
+  /* LA COLUMNA NO DEPENDE DE LA FILA: las dos columnas de origen y la fraccion de cada columna
+     de salida se calculan UNA vez, no siete millones de veces. */
+  var colA = new Int32Array(ow), colB = new Int32Array(ow), fracX = new Float64Array(ow);
+  var ox, u, x0;
+  for (ox = 0; ox < ow; ox++) {
+    u = (ox + 0.5) / F - 0.5;
+    x0 = Math.floor(u);
+    colA[ox] = Math.min(w - 1, Math.max(0, x0));
+    colB[ox] = Math.min(w - 1, Math.max(0, x0 + 1));
+    fracX[ox] = u - x0;
   }
-  return { pixeles: out, ancho: ow, alto: oh };
+  var trabajo = { pixeles: out, ancho: ow, alto: oh, hechas: 0 };
+  trabajo.hacer = function (presupuesto) {
+    var hasta = presupuesto ? performance.now() + presupuesto : Infinity;
+    while (trabajo.hechas < oh) {
+      var oy = trabajo.hechas;
+      var v = (oy + 0.5) / F - 0.5, y0 = Math.floor(v), fy = v - y0;
+      var filaA = Math.min(h - 1, Math.max(0, y0)) * w;
+      var filaB = Math.min(h - 1, Math.max(0, y0 + 1)) * w;
+      var base = oy * ow;
+      for (ox = 0; ox < ow; ox++) {
+        var a = colA[ox], b = colB[ox];
+        var c00 = px[filaA + a], c10 = px[filaA + b], c01 = px[filaB + a], c11 = px[filaB + b];
+        /* EL ATAJO: las cuatro muestras son el MISMO color, que es lo normal adentro de una
+           clase. No hay nada que votar y el resultado es ese color, identico al que daba la
+           votacion. */
+        if (c00 === c10 && c00 === c01 && c00 === c11) { out[base + ox] = c00 >>> 0; continue; }
+        var fx = fracX[ox], n = 0;
+        muestras[0] = c00; muestras[1] = c10; muestras[2] = c01; muestras[3] = c11;
+        pesosDe[0] = (1 - fx) * (1 - fy); pesosDe[1] = fx * (1 - fy);
+        pesosDe[2] = (1 - fx) * fy; pesosDe[3] = fx * fy;
+        for (var q = 0; q < 4; q++) {
+          var peso = pesosDe[q], c = muestras[q], k = grupo(c), t = 0;
+          while (t < n && claves[t] !== k) { t++; }
+          if (t === n) { claves[t] = k; pesos[t] = 0; mejor[t] = -1; n++; }
+          pesos[t] += peso;
+          if (peso > mejor[t]) { mejor[t] = peso; colores[t] = c; }
+        }
+        var gana = 0;
+        for (var z = 1; z < n; z++) { if (pesos[z] > pesos[gana]) { gana = z; } }
+        /* Se queda con el color del ganador TAL CUAL, alfa incluido. Antes forzaba el alfa a
+           255 (`| 0xff000000`), que sobre las imagenes del SEPA no hacia nada -son opacas- pero
+           sobre un raster clasificado pinta de NEGRO lo que la fuente dejo sin clasificar: un
+           pixel transparente es (0,0,0,0), o sea negro con alfa cero, y al taparle el alfa queda
+           negro a secas. El mapa de cultivos salia con todo el oeste de la provincia en negro. */
+        out[base + ox] = colores[gana] >>> 0;
+      }
+      trabajo.hechas++;
+      /* El reloj se mira cada 16 filas: mirarlo en cada una cuesta mas que una fila. */
+      if ((trabajo.hechas & 15) === 0 && performance.now() >= hasta) { break; }
+    }
+    return trabajo.hechas >= oh;
+  };
+  return trabajo;
+}
+
+/* El agrandado entero, de una. Es `prepararAgrandado` sin tajadas. */
+export function agrandarPixeles(px, w, h) {
+  var trabajo = prepararAgrandado(px, w, h);
+  trabajo.hacer(0);
+  return { pixeles: trabajo.pixeles, ancho: trabajo.ancho, alto: trabajo.alto };
 }
 
 /* Saca las lineas de limites que trae dibujadas la imagen del SEPA, sin manchar (21-oct-2026).
