@@ -130,6 +130,13 @@ paneles:
   # de los mapas de AgroClima (`cliente/gesto-zoom.js`). Ademas le da al mapa el alto de la
   # pagina.
   orden:
-    - {id: mapa-capas, ancho: 12, zoom: true}
+    # `pais`: la casilla "Mostrar todo el pais", la misma que tienen Suelos y Cuencas
+    # (pedido de la usuaria del 25-nov-2026, "quiero que en los 3 mapas se delimiten bien las
+    # provincias y los departamentos de Santiago"). Aca la casilla va en la pildorita que
+    # flota sobre el mapa, porque esta pagina es el titulo y el mapa y no lleva barra arriba.
+    # Las capas del IGN que publica esta pagina son SOLO de la provincia: con el pais a la
+    # vista se ven las 24 provincias con su nombre y las rutas siguen estando donde estan, que
+    # es todo lo que hay publicado.
+    - {id: mapa-capas, ancho: 12, zoom: true, pais: true}
 
 filtros: []

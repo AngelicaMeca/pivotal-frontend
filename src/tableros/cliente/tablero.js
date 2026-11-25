@@ -11,7 +11,7 @@
    propio JSON, partido por especie y por modo. */
 
 import * as echarts from "echarts";
-import { capasDelMapa, capasPrendidas, geoDeMapa } from "./capas";
+import { capasDelMapa, capasPrendidas, mapaDeFondo } from "./capas";
 /* El gesto del zoom es el MISMO que el de los mapas de AgroClima (ver `gesto-zoom.js`). */
 import { PASO_DE_BOTON, PASO_DE_DOBLE_CLIC, factorDeRueda } from "./gesto-zoom";
 
@@ -304,11 +304,15 @@ export default function iniciar(PIVOTAL) {
      360 kB que la vista de siempre no necesita. Se registra con otro nombre ("pais"), asi que
      los dos quedan disponibles y apagar el boton no vuelve a pedir nada. */
   var geoListoPais = null;
+  /* El GeoJSON del pais, ya bajado: lo necesita `divisionDepartamental` para volver a dibujar
+     el limite de las provincias ENCIMA de las capas, igual que el de la provincia. */
+  var geoPais = null;
 
   function cargarGeoPais(ruta) {
     if (!geoListoPais) {
       geoListoPais = fetch(ruta).then(function (r) { return r.json(); }).then(function (geo) {
         echarts.registerMap("pais", geo);
+        geoPais = geo;
         return geo;
       });
     }
@@ -994,12 +998,14 @@ export default function iniciar(PIVOTAL) {
          proyeccion propia, al primer arrastre las rutas quedarian corridas respecto de los
          departamentos. Sin zoom no cambia nada: la serie se dibuja como siempre. */
       var conZoom = !!panel.zoom;
-      /* Las paginas con capas de AREA (suelos y cuencas) llevan los limites y los nombres de los
-         departamentos mas marcados que el resto: el relleno de una capa los tapa. */
-      var catalogoDeAreas = ((PIVOTAL.datos() || {}).capas || {}).capas || {};
-      var conAreas = conZoom && Object.keys(catalogoDeAreas).some(function (id) {
-        return catalogoDeAreas[id].geometria === "poligonos";
-      });
+      /* LOS TRES MAPAS QUE SE RECORREN -suelos, cuencas e infraestructura- llevan los limites
+         y los nombres MARCADOS (pedido de la usuaria del 25-nov-2026: "quiero que en los 3
+         mapas se delimiten bien las provincias y los departamentos de Santiago"). Antes el
+         trazo marcado lo llevaban solo las paginas con capas de AREA, porque el relleno de una
+         capa tapa el limite; en Infraestructura, que son todas lineas, el limite quedaba del
+         color del fondo y el nombre en 8 px sin halo, o sea casi invisible sobre la maranha de
+         rutas. Los mapas CHICOS de los tableros -los que no se recorren- siguen igual. */
+      var marcado = conZoom;
       var serieMapa = {
         type: "map",
         map: pais ? "pais" : "provincia",
@@ -1009,7 +1015,7 @@ export default function iniciar(PIVOTAL) {
         /* Los mapas con zoom (suelos, cuencas, infraestructura) tienen el nombre del
            departamento mas grande y con halo: a 8 px no se leia (24-nov-2026). Los mapas
            chicos de los tableros siguen igual. */
-        label: conAreas
+        label: marcado
           ? { show: caja.clientWidth >= 300, formatter: nombre, fontSize: 11, fontWeight: 600,
               color: PIVOTAL.color("--texto-apoyo"),
               textBorderColor: PIVOTAL.color("--fondo-cuadro"), textBorderWidth: 2.5 }
@@ -1020,10 +1026,13 @@ export default function iniciar(PIVOTAL) {
           label: { show: caja.clientWidth >= 300, formatter: nombre },
           itemStyle: { areaColor: PIVOTAL.color("--fondo-apoyo") }
         },
+        /* Con el pais a la vista las regiones del mapa base son las PROVINCIAS: su limite es
+           el marco de todo lo demas y va mas grueso que la division de adentro (que queda en
+           0,8 px, ver `divisionDepartamental`). */
         itemStyle: { areaColor: PIVOTAL.color("--fondo-apoyo"),
-                     borderColor: conAreas ? PIVOTAL.color("--texto-apoyo")
-                                           : PIVOTAL.color("--fondo-cuadro"),
-                     borderWidth: conAreas ? 0.7 : 0.8 },
+                     borderColor: marcado ? PIVOTAL.color("--texto-apoyo")
+                                          : PIVOTAL.color("--fondo-cuadro"),
+                     borderWidth: pais ? 1.2 : (marcado ? 0.7 : 0.8) },
         data: (pais ? pais.provincias : panel.deptos).map(function (d) {
           return { name: d.id, value: 0 };
         })
@@ -1071,15 +1080,23 @@ export default function iniciar(PIVOTAL) {
                                  capa de area: el mismo borde y la misma tinta que usa el mapa
                                  debajo, asi arriba se lee igual que sin capas. */
                               limites: geoProvincia,
+                              /* Y el del pais, para el limite de las provincias. */
+                              limitesPais: geoPais,
+                              /* Y como se llama cada provincia: el nombre sale de la dimension
+                                 -lo trae el payload-, nunca del GeoJSON. */
+                              rotulosProvincias: pais ? pais.provincias : null,
                               /* Con el boton prendido el mapa base es otro y las capas que
                                  tengan version nacional se dibujan enteras. */
                               mapa: pais ? "pais" : undefined,
                               pais: !!pais,
-                              /* Los nombres de los departamentos NO se escriben con el pais a
-                                 la vista: son 27 rotulos de 8 px sobre una provincia que mide
-                                 un sexto de la caja, o sea tinta ilegible encima del dato. Los
-                                 nombres los pone el mapa base, que ahi son las provincias. */
-                              rotulos: pais ? [] : panel.rotulos_deptos,
+                              /* Los nombres de los departamentos se escriben SIEMPRE, tambien
+                                 con el pais a la vista (pedido de la usuaria del 25-nov-2026).
+                                 Alli Santiago mide un sexto de la caja y los 27 no entran: los
+                                 escribe cada uno cuando el departamento mide, en pantalla,
+                                 lo que mide su nombre (ver `nombresQueEntran`): al acercarse
+                                 aparecen solos. Lo que no se hace es amontonar 27 nombres
+                                 ilegibles encima de una provincia de 100 px. */
+                              rotulos: panel.rotulos_deptos,
                               /* El factor de opacidad del control del visor; sin visor no hay
                                  control y cada capa se dibuja con la suya. */
                               opacidad: nodo.dataset.mapaOpacidad === undefined
@@ -1097,7 +1114,9 @@ export default function iniciar(PIVOTAL) {
         /* Con TODAS las capas apagadas `capasDelMapa` devuelve null, pero el geo tiene que
            existir igual: con zoom ES el mapa (dibuja los departamentos) y es el que recibe la
            rueda. Sin esto la pagina quedaria en blanco. */
-        opcion.geo = geoDeMapa(proyeccion, opcionesDeCapas);
+        var fondo = mapaDeFondo(proyeccion, opcionesDeCapas);
+        opcion.geo = fondo.geo;
+        opcion.series = opcion.series.concat(fondo.series);
       }
       /* EL ENCUADRE ES DEL VISITANTE Y NO SE PIERDE AL PRENDER UNA CAPA (QA de Francisco del
          19-nov-2026, defecto D6). Prender o apagar una capa vuelve a pasar por aca y redibuja

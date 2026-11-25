@@ -413,6 +413,24 @@ function pintarPie(nodo, catalogo, ids) {
    eso cada uno tendria su propio zoom y al primer movimiento las rutas quedarian corridas
    respecto de los departamentos. `emphasis` sigue deshabilitado: el geo no se pinta ni se
    resalta, solo capta el gesto. */
+/* Cuando la division se dibuja ENCIMA, el geo deja de escribir los nombres: si no, los de
+   abajo quedarian como un fantasma corrido debajo de los de arriba (se vio: con el pais a la
+   vista y ninguna capa prendida, cada provincia aparecia con su nombre escrito dos veces). */
+function sinRotulosRepetidos(opciones, encima) {
+  if (encima.length <= 1 || !opciones.departamentos) { return opciones; }
+  return Object.assign({}, opciones, {
+    departamentos: Object.assign({}, opciones.departamentos, { label: { show: false } })
+  });
+}
+
+/* EL MAPA DE FONDO SOLO, para cuando no hay NINGUNA capa prendida: el geo -que con zoom es el
+   que dibuja el mapa y el que recibe la rueda- y, con el pais a la vista, la division y los
+   nombres, que ahi no los pone nadie mas. */
+export function mapaDeFondo(proyeccion, opciones) {
+  var encima = opciones.pais ? divisionDepartamental(opciones) : [];
+  return { geo: geoDeMapa(proyeccion, sinRotulosRepetidos(opciones, encima)), series: encima };
+}
+
 export function geoDeMapa(proyeccion, opciones) {
   var conZoom = !!(opciones && opciones.roam);
   var geo = {
@@ -715,10 +733,10 @@ function agruparEnCeldas(piezas, forma, conPresencia) {
          33.222 parches de 1 a 100 ha, o sea 0,02 a 0,2 px- sacarlas borra la capa entera. Por
          eso la version nacional pide `conPresencia`: las partes que no se ven se juntan en una
          grilla del tamanio del corte (0,8 px) y cada casillero ocupado se dibuja como UN
-         cuadradito. Es el mismo salpicado que se veria dibujando los 33.222 parches -medido:
-         1.671 pixeles verdes contra 1.692- con 2.049 cuadraditos en vez de 33.222 trazos, y
-         solo a la escala donde cada parche es mas chico que el cuadradito: apenas se acerca,
-         el nivel siguiente vuelve a dibujar las partes de verdad. */
+         cuadradito. Es el mismo salpicado que se veria dibujando los 33.222 parches -medido
+         el 25-nov-2026 con el pais entero en la caja: 1.670 pixeles verdes en pantalla contra
+         los 1.671 del dibujo completo- y solo a la escala donde cada parche es mas chico que
+         el cuadradito: apenas se acerca, el nivel siguiente dibuja las partes de verdad. */
       var presencia = conPresencia ? {} : null;
       for (var i = 0; i < celda.partes.length; i++) {
         var camino = celda.tamanios[i] >= desde
@@ -780,7 +798,12 @@ function nivelDe(niveles, t) {
    su rutina de borrado lo busca igual y revienta ("Cannot read properties of null (reading
    'remove')" en `applyLeaveTransition`, que lee `el.parent` sin comprobarlo). La excepcion
    cortaba el dibujo de las series que venian despues. Un camino vacio e invisible no dibuja
-   nada, no se puede tocar y le da a ECharts el elemento que espera. */
+   nada, no se puede tocar y le da a ECharts el elemento que espera.
+
+   OJO: ECharts no vuelve a cero lo que `renderItem` no nombra, sino que lo MEZCLA sobre el
+   elemento que ya existia, asi que todo el que pueda esconder algo tiene que decir tambien
+   cuando deja de estar escondido (`invisible: false`). Sin eso, una parte que se saltea una
+   vez no vuelve nunca: se la ve desaparecer al alejarse y no reaparece al acercarse. */
 function nadaQueDibujar() {
   return { type: "path", invisible: true, silent: true, shape: { d: "" } };
 }
@@ -830,37 +853,79 @@ function caminoDeLimites(limites, anillos) {
   return hecho;
 }
 
-function divisionDepartamental(opciones) {
-  var limites = opciones.limites;
-  if (!limites || !limites.features) { return []; }
+/* Los limites NO llevan niveles de detalle, y esta probado que no hacen falta: se les armo la
+   misma escalera que a las capas -sacando vertices y anillos chicos- y el cuadro midio
+   exactamente lo mismo (25-nov-2026: cursos de agua 50 ms, cobertura 67, deforestadas 33, con
+   niveles y sin ellos). Lo que cuesta de un contorno no son los vertices sino pintar la linea,
+   que mide lo que mide el perimetro. Por eso el contorno de las provincias se dibuja con UN
+   solo trazo y no con dos: el filete claro de abajo, que si llevan los departamentos, costaba
+   un cuadro entero de mas por paso de zoom (cursos de agua 50 -> 67 ms, deforestadas 33 -> 50)
+   y encima invertia la jerarquia, porque dejaba la division de adentro mas marcada que el
+   limite de provincia. */
+
+export function divisionDepartamental(opciones) {
+  var salida = [];
+  /* CON EL PAIS A LA VISTA SE DIBUJAN DOS NIVELES, y el de arriba es el de PROVINCIA (pedido
+     de la usuaria del 25-nov-2026: "quiero que en los 3 mapas se delimiten bien las provincias
+     y los departamentos de Santiago"). El limite de provincia lo pinta el mapa base, o sea el
+     geo, que va DEBAJO de las series: con la cobertura del suelo prendida -que es un tapiz que
+     cubre el pais entero- desaparecia. Asi que arriba va el perimetro de las 24 provincias,
+     grueso, y adentro la division de Santiago, mas fina: la jerarquia de cualquier atlas. */
+  if (opciones.pais) {
+    var provincias = serieDeLimites(opciones.limitesPais, opciones,
+                                   { filete: 0, linea: 1.5, opacidad: 1 });
+    if (provincias) { salida.push(provincias); }
+  }
+  var deptos = serieDeLimites(opciones.limites, opciones,
+                              opciones.pais ? { filete: 1.8, linea: 0.8 }
+                                            : { filete: 2.6, linea: 1.1 });
+  if (!deptos) { return salida; }
+  salida.push(deptos);
+  if (opciones.rotulos && opciones.rotulos.length) {
+    var nombres = opciones.pais ? nombresDeDepartamentoPais(opciones)
+                                : nombresDeDepartamento(opciones);
+    if (nombres) { salida.push(nombres); }
+  }
+  if (opciones.pais) {
+    /* Los nombres de las provincias van ULTIMOS, o sea arriba de todo: a la escala en que se
+       escriben son la referencia que ordena el mapa. */
+    var provinciales = nombresDeProvincia(opciones);
+    if (provinciales) { salida.push(provinciales); }
+  }
+  return salida;
+}
+
+/* El perimetro de un GeoJSON: una linea OSCURA sobre un filete claro (24-nov-2026: "que se vean
+   mejor los limites"). Una sola linea clara de 0,8 px, que es lo que habia, desaparece sobre el
+   relleno de una capa; una sola oscura se pierde sobre las capas oscuras. Las dos juntas se leen
+   sobre cualquier color, que es lo que hace un mapa impreso.
+
+   Se dibuja con una serie `custom` de DOS datos (el filete y la linea) que comparten UN solo
+   camino armado una vez, en grados, y se mueve con la transformacion del geo, igual que las
+   capas de area. Antes eran dos series `lines`: ECharts reconvertia las decenas de miles de
+   coordenadas en CADA cuadro del arrastre y del zoom, y con cualquier capa de area prendida el
+   mapa se trababa (medido en la pagina real: tareas de 50-90 ms por cuadro, y eso con la capa
+   mas liviana). */
+function serieDeLimites(geojson, opciones, grosor) {
+  if (!geojson || !geojson.features) { return null; }
   var anillos = [];
-  limites.features.forEach(function (f) {
+  geojson.features.forEach(function (f) {
     var g = f.geometry || {};
     var piezas = g.type === "MultiPolygon" ? g.coordinates : [g.coordinates];
     piezas.forEach(function (parte) {
       (parte || []).forEach(function (anillo) { anillos.push({ coords: anillo }); });
     });
   });
-  if (!anillos.length) { return []; }
-  /* El limite es una linea OSCURA sobre un filete claro (24-nov-2026: "que se vean mejor los
-     limites"). Una sola linea clara de 0,8 px, que es lo que habia, desaparece sobre el relleno
-     de una capa; una sola oscura se pierde sobre las capas oscuras. Las dos juntas se leen
-     sobre cualquier color, que es lo que hace un mapa impreso.
-
-     Se dibuja con una serie `custom` de DOS datos (el filete y la linea) que comparten UN solo
-     camino armado una vez, en grados, y se mueve con la transformacion del geo, igual que las
-     capas de area. Antes eran dos series `lines`: ECharts reconvertia las decenas de miles de
-     coordenadas en CADA cuadro del arrastre y del zoom, y con cualquier capa de area prendida
-     el mapa se trababa (medido en la pagina real: tareas de 50-90 ms por cuadro, y eso con la
-     capa mas liviana). */
+  if (!anillos.length) { return null; }
   var trazo = opciones.trazoDepartamento || opciones.tintaDepartamento || opciones.tinta;
-  var caminoBase = caminoDeLimites(limites, anillos);
+  var caminoBase = caminoDeLimites(geojson, anillos);
   var capasDeTrazo = [
-    { value: [-65, -27], color: opciones.borde, ancho: 2.6, opacidad: 0.85 },
-    { value: [-65, -27], color: trazo, ancho: 1.1, opacidad: 0.8 }
-  ];
+    { value: [-65, -27], color: opciones.borde, ancho: grosor.filete, opacidad: 0.85 },
+    { value: [-65, -27], color: trazo, ancho: grosor.linea,
+      opacidad: grosor.opacidad || 0.8 }
+  ].filter(function (c) { return c.ancho > 0; });
   var memo = null;
-  var salida = [{
+  return {
     type: "custom", coordinateSystem: "geo", geoIndex: 0, silent: true, z: Z_DIVISION,
     tooltip: { show: false },
     renderItem: function (params, api) {
@@ -875,30 +940,157 @@ function divisionDepartamental(opciones) {
       if (!t) {
         /* Si el geo dejara de ser afin, el camino exacto: correcto aunque lento. */
         return { type: "path", style: estilo,
-                 shape: { d: caminoAlVuelo([anillos.map(function (a) { return a.coords; })], api, true) } };
+                 shape: { d: caminoAlVuelo([anillos.map(function (a) { return a.coords; })],
+                                           api, true) } };
       }
       estilo.strokeNoScale = true;
       return { type: "path", x: t.x, y: t.y, scaleX: t.scaleX, scaleY: t.scaleY,
                style: estilo, shape: { d: caminoBase } };
     },
     data: capasDeTrazo
-  }];
-  if (opciones.rotulos && opciones.rotulos.length) {
-    /* Los nombres, con el punto que calculo el build. A 8 px con halo de 2 las letras quedaban
-       huecas (medido el 21-nov-2026); a 8 px con halo de 1 casi no se leian. A 11 px en negrita
-       el halo de 2 px ya no se come la letra y el nombre se lee sobre cualquier capa. */
-    salida.push({
-      type: "scatter", coordinateSystem: "geo", geoIndex: 0, z: Z_DIVISION + 2,
-      silent: true, symbolSize: 0, tooltip: { show: false },
-      label: { show: true, fontSize: 11, fontWeight: 600,
-               color: opciones.tintaDepartamento || opciones.tinta,
-               textBorderColor: opciones.halo, textBorderWidth: 2.5,
-               formatter: function (p) { return (p.data && p.data.name) || ""; } },
-      labelLayout: { hideOverlap: true },
-      data: opciones.rotulos.map(function (r) { return { name: r.nombre, value: r.punto }; })
+  };
+}
+
+/* Los nombres de los departamentos con la PROVINCIA a la vista, con el punto que calculo el
+   build. A 8 px con halo de 2 las letras quedaban huecas (medido el 21-nov-2026); a 8 px con
+   halo de 1 casi no se leian. A 11 px en negrita el halo de 2 px ya no se come la letra y el
+   nombre se lee sobre cualquier capa. Los que no entran los saca ECharts (`hideOverlap`). */
+function nombresDeDepartamento(opciones) {
+  return {
+    type: "scatter", coordinateSystem: "geo", geoIndex: 0, z: Z_DIVISION + 2,
+    silent: true, symbolSize: 0, tooltip: { show: false },
+    label: { show: true, fontSize: 11, fontWeight: 600,
+             color: opciones.tintaDepartamento || opciones.tinta,
+             textBorderColor: opciones.halo, textBorderWidth: 2.5,
+             formatter: function (p) { return (p.data && p.data.name) || ""; } },
+    labelLayout: { hideOverlap: true },
+    data: opciones.rotulos.map(function (r) { return { name: r.nombre, value: r.punto }; })
+  };
+}
+
+/* LA CAJA DE CADA REGION, en grados: el ancho -para saber si su nombre entra adentro- y el
+   centro de su anillo mas grande, que es donde ECharts escribe el nombre cuando el GeoJSON no
+   trae un punto propio (los departamentos si lo traen: lo calcula el build, `rotulos_deptos`). */
+var cajasDeGeojson = typeof WeakMap === "function" ? new WeakMap() : null;
+
+function cajasDeRegion(geojson) {
+  var hecho = cajasDeGeojson && cajasDeGeojson.get(geojson);
+  if (hecho) { return hecho; }
+  hecho = {};
+  ((geojson && geojson.features) || []).forEach(function (f) {
+    var id = (f.properties || {}).geo_id;
+    if (!id) { return; }
+    var g = f.geometry || {};
+    var piezas = g.type === "MultiPolygon" ? g.coordinates : [g.coordinates];
+    var caja = [Infinity, Infinity, -Infinity, -Infinity];
+    var mayor = null;
+    var masVertices = 0;
+    piezas.forEach(function (parte) {
+      var anillo = parte && parte[0];
+      if (!anillo) { return; }
+      if (anillo.length > masVertices) { masVertices = anillo.length; mayor = anillo; }
+      anillo.forEach(function (p) {
+        if (p[0] < caja[0]) { caja[0] = p[0]; }
+        if (p[1] < caja[1]) { caja[1] = p[1]; }
+        if (p[0] > caja[2]) { caja[2] = p[0]; }
+        if (p[1] > caja[3]) { caja[3] = p[1]; }
+      });
     });
-  }
-  return salida;
+    if (!mayor) { return; }
+    var suya = [Infinity, Infinity, -Infinity, -Infinity];
+    mayor.forEach(function (p) {
+      if (p[0] < suya[0]) { suya[0] = p[0]; }
+      if (p[1] < suya[1]) { suya[1] = p[1]; }
+      if (p[0] > suya[2]) { suya[2] = p[0]; }
+      if (p[1] > suya[3]) { suya[3] = p[1]; }
+    });
+    hecho[id] = { ancho: caja[2] - caja[0],
+                  punto: [(suya[0] + suya[2]) / 2, (suya[1] + suya[3]) / 2] };
+  });
+  if (cajasDeGeojson) { cajasDeGeojson.set(geojson, hecho); }
+  return hecho;
+}
+
+/* LOS NOMBRES, CON EL PAIS A LA VISTA, SE DIBUJAN ENCIMA DE LAS CAPAS Y CADA UNO SABE CUANDO
+   LE TOCA (pedido de la usuaria del 25-nov-2026: "mostrando bien los nombres de las provincias
+   y los de departamentos de Santiago").
+
+   Encima, porque los nombres del mapa base los escribe el componente `geo`, que va DEBAJO de
+   las series: con la cobertura del suelo prendida -un tapiz que cubre el pais- quedaban
+   tapados y de "Santiago del Estero" se leia "...stero" donde el tapiz tenia un agujero.
+
+   Y cada uno sabe cuando le toca porque a cada escala corresponde un nivel:
+
+   - El DEPARTAMENTO se escribe cuando mide, en pantalla, lo que mide su nombre. Con el pais
+     entero en la caja Santiago mide unos 100 px y sus 27 departamentos unos 7 cada uno, y
+     "AGUIRRE" necesita 40: escribirlos igual no es mostrarlos, es tapar el mapa. Al acercarse
+     van apareciendo solos, primero los grandes del este.
+   - La PROVINCIA se escribe hasta que su nombre deja de ser una referencia: cuando ya no entra
+     entera en la caja uno no esta mirando el pais sino un pedazo de provincia, y el nombre
+     cruzado en el medio solo estorba a los nombres de adentro.
+
+   Nada de esto se puede hacer con el `hideOverlap` de ECharts, que decide una vez por dibujado:
+   el zoom y el arrastre NO redibujan, solo transforman. Por eso los nombres van en una serie
+   `custom`, que es la unica que vuelve a decidir en cada cuadro -lo mismo que hacen las capas
+   para saltear lo que no se ve-. */
+var FUENTE_DEL_DEPARTAMENTO = 10;
+var FUENTE_DE_LA_PROVINCIA = 11;
+var ANCHO_DE_LETRA = 0.62;
+
+function serieDeNombres(datos, fuente, opciones, comoDecide) {
+  var tinta = opciones.tintaDepartamento || opciones.tinta;
+  var memo = null;
+  /* El texto vacio se arma CADA vez: ECharts se queda con el objeto que devuelve `renderItem`
+     -lo usa para la transicion del elemento- y compartir uno solo entre los 27 nombres y entre
+     un cuadro y el siguiente hacia que, una vez escondido, el nombre no volviera a aparecer
+     nunca (probado: con el pais prendido y el mapa acercado sobre Santiago no salia ninguno). */
+  var escondido = function () {
+    return { type: "text", invisible: true, silent: true, style: { text: "" } };
+  };
+  return {
+    type: "custom", coordinateSystem: "geo", geoIndex: 0, silent: true, z: Z_DIVISION + 2,
+    tooltip: { show: false },
+    renderItem: function (params, api) {
+      var dato = datos[params.dataIndex];
+      var referencia = api.coord([-65, -27]);
+      if (!memo || memo.o[0] !== referencia[0] || memo.o[1] !== referencia[1]) {
+        memo = { o: referencia, px: Math.abs(api.coord([-64, -27])[0] - referencia[0]) };
+      }
+      if (!dato.grados || !memo.px) { return escondido(); }
+      var mide = dato.grados * memo.px;
+      if (comoDecide === "entra"
+          && mide < dato.name.length * fuente * ANCHO_DE_LETRA) { return escondido(); }
+      if (comoDecide === "marco" && mide > api.getWidth()) { return escondido(); }
+      var punto = api.coord(dato.value);
+      return {
+        type: "text", x: punto[0], y: punto[1], silent: true, invisible: false,
+        style: { text: dato.name, font: "600 " + fuente + "px sans-serif",
+                 fill: tinta, stroke: opciones.halo, lineWidth: 2.5, strokeFirst: true,
+                 textAlign: "center", textVerticalAlign: "middle" }
+      };
+    },
+    data: datos
+  };
+}
+
+function nombresDeDepartamentoPais(opciones) {
+  var cajas = cajasDeRegion(opciones.limites);
+  var datos = [];
+  opciones.rotulos.forEach(function (r) {
+    var c = cajas[r.id];
+    if (c) { datos.push({ name: r.nombre, value: r.punto, grados: c.ancho }); }
+  });
+  return datos.length ? serieDeNombres(datos, FUENTE_DEL_DEPARTAMENTO, opciones, "entra") : null;
+}
+
+function nombresDeProvincia(opciones) {
+  var cajas = cajasDeRegion(opciones.limitesPais);
+  var datos = [];
+  (opciones.rotulosProvincias || []).forEach(function (p) {
+    var c = cajas[p.id];
+    if (c) { datos.push({ name: p.nombre, value: c.punto, grados: c.ancho }); }
+  });
+  return datos.length ? serieDeNombres(datos, FUENTE_DE_LA_PROVINCIA, opciones, "marco") : null;
 }
 
 /* Las series de las capas prendidas y ya bajadas. `interactivas`: con tooltip (portada);
@@ -930,7 +1122,11 @@ function series(catalogo, ids, opciones) {
            provincia entera no entran todos: `hideOverlap` esconde los que se encimarian y, a
            medida que se hace zoom, van apareciendo. Es la misma regla que ya usan los nombres
            de los departamentos. El halo claro es para que el nombre se lea sobre una ruta. */
-        if (capa.rotulos) {
+        /* Con el PAIS a la vista los nombres no se escriben: son 165 nombres de 9 px sobre
+           una provincia que a esa escala mide 100 px, o sea una mancha que ademas tapa los
+           nombres de los departamentos y de las provincias. El punto sigue estando y el nombre
+           sigue saliendo al pasar el mouse. */
+        if (capa.rotulos && !opciones.pais) {
           punto.label = {
             show: true, position: "right", distance: 3, fontSize: 9,
             /* Los dos colores los trae el que llama (este modulo no ve `PIVOTAL`): son
@@ -1007,7 +1203,8 @@ function series(catalogo, ids, opciones) {
               }
               var t = memo.t;
               if (!t || !(dato.d || dato.niveles)) {
-                return { type: "path", style: Object.assign({}, api.style(), pincel),
+                return { type: "path", invisible: false,
+                         style: Object.assign({}, api.style(), pincel),
                          shape: { d: caminoAlVuelo(dato.partes, api, esArea) } };
               }
               if (dato.caja) {
@@ -1028,7 +1225,7 @@ function series(catalogo, ids, opciones) {
                 }
               }
               return { type: "path", x: t.x, y: t.y, scaleX: t.scaleX, scaleY: t.scaleY,
-                       style: memo.estilo,
+                       invisible: false, style: memo.estilo,
                        shape: { d: dato.niveles ? nivelDe(dato.niveles, t) : dato.d } };
             };
           }(datos, capa)),
@@ -1095,13 +1292,9 @@ export function capasDelMapa(nodo, catalogoCompleto, redibujar, proyeccion, opci
   var conArea = listasYa.some(function (id) {
     return catalogo.capas[id].geometria === "poligonos";
   });
-  var encima = conArea ? divisionDepartamental(opciones) : [];
-  var opcionesGeo = opciones;
-  if (encima.length > 1 && opciones.departamentos) {
-    opcionesGeo = Object.assign({}, opciones, {
-      departamentos: Object.assign({}, opciones.departamentos, { label: { show: false } })
-    });
-  }
-  return { geo: geo(proyeccion, opcionesGeo),
+  /* Con el pais a la vista el geo dibuja las PROVINCIAS, asi que los departamentos de
+     Santiago no los dibuja nadie: la division va siempre, haya o no una capa de area. */
+  var encima = (conArea || opciones.pais) ? divisionDepartamental(opciones) : [];
+  return { geo: geo(proyeccion, sinRotulosRepetidos(opciones, encima)),
            series: series(catalogo, listasYa, opciones).concat(encima) };
 }

@@ -3031,6 +3031,17 @@ dialog.zoom.zoom-visible::backdrop { opacity: 1; }
   margin: .5rem; z-index: 2; display: flex; flex-direction: column; gap: .25rem;
 }
 .mapa-mando .visor-boton { box-shadow: 0 1px 3px rgba(0, 0, 0, .18); }
+/* "Mostrar todo el pais" dentro de la pildorita (Infraestructura, 25-nov-2026): el mismo cromo
+   que los botones que tiene al lado, porque es un control mas de la misma pila. El texto va
+   corto -"Todo el pais"- porque la pildorita se estira al control mas ancho y con el nombre
+   entero los botones de zoom quedarian del largo de una frase; el nombre completo viaja en el
+   `aria-label`, que es lo que lee un lector de pantalla. */
+.mapa-mando .visor-control {
+  padding: .35rem .55rem; border-radius: var(--radio-pildora); cursor: pointer;
+  border: 1px solid var(--borde-panel); background: var(--fondo-cuadro); color: var(--texto);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .18); line-height: 1.1; font-weight: 600;
+}
+.mapa-mando .visor-control input { accent-color: var(--seleccion); cursor: pointer; }
 /* En el PDF no van: son controles. */
 .imprimiendo .mapa-mando { display: none; }
 /* ---------- EL MAPA DE CAPAS CON EL FORMATO DEL VISOR DE AGROCLIMA (24-nov-2026) ----------

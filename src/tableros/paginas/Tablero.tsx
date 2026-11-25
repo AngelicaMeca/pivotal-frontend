@@ -220,9 +220,21 @@ const FORMA_DEL_PANEL: Record<string, string> = {
    "SOLO PONEMOS COMO TITULO 'infraestructura'").
    Los engancha tablero.js (`engancharMandoDeMapa`); sin JS no se dibujan porque el mapa
    tampoco. */
-function MandoDeMapa() {
+function MandoDeMapa({ conPais }: { conPais?: boolean }) {
   return (
     <div className="mapa-mando" data-mapa-mando="">
+      {/* "Mostrar todo el país": la misma casilla que en la barra de Suelos y
+          Cuencas (`BarraDeMapa`), pero aca dentro de la pildorita, porque esta pagina no lleva
+          barra arriba del mapa (regla de JC: "SOLO PONEMOS COMO TITULO 'infraestructura'").
+          La engancha el mismo delegado de tablero.js: escucha en `[data-mapa-mando]`, que es
+          este mismo div. */}
+      {conPais ? (
+        <label className="visor-control mapa-mando-pais">
+          <input type="checkbox" data-mapa-pais=""
+                 aria-label="Mostrar todo el país" />{" "}
+          Todo el país
+        </label>
+      ) : null}
       <button type="button" className="visor-boton" data-mapa-zoom="acercar"
               title="Acercar" aria-label="Acercar el mapa">+</button>
       <button type="button" className="visor-boton" data-mapa-zoom="alejar"
@@ -406,7 +418,7 @@ function CuerpoPanel({ id: idPanelCompleto, mockup = false, panel }: { id: strin
         <div className="grafico" data-grafico=""></div>
         {/* Los botones de zoom van DESPUES del mapa en el markup a proposito: se dibujan
             encima de su esquina y el que esta despues queda arriba. */}
-        {panel?.zoom ? <MandoDeMapa /> : null}
+        {panel?.zoom ? <MandoDeMapa conPais={!!panel?.pais} /> : null}
       </>
     );
   } else if (id === "mapa") {
