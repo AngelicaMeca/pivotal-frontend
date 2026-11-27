@@ -601,7 +601,8 @@ fuentes:
       La leyenda lista 6 de las 16 macrocuencas del SLD: las otras diez no llegan a la
       provincia. El enlace al visor del INTA que había en la portada de Mapas salió el
       18-nov-2026 y no vuelve: entró como capa nuestra.
-    publicado_en: [specs/modelos/tablero-mapas-agua.yaml]
+    # 27-nov-2026: un mapa por capa (JC, backlog 143).
+    publicado_en: [specs/modelos/tablero-mapas-inta-cuencas-hidricas.yaml]
     publicado_como: capa
 
   - id: inta-visor-cursos-agua-noa
@@ -621,7 +622,8 @@ fuentes:
       atribucion: "Fuente: INTA - Instituto Nacional de Tecnología Agropecuaria"
       redistribucion: a-confirmar
     indicaciones: [evaluar-modo-de-acceso]
-    publicado_en: [specs/modelos/tablero-mapas-agua.yaml]
+    # 27-nov-2026: un mapa por capa (JC, backlog 143).
+    publicado_en: [specs/modelos/tablero-mapas-inta-cursos-de-agua.yaml]
     publicado_como: capa
     observaciones: >
       Bajada por el WFS de geo-backend y recortada con la misma rutina que las capas del IGN y
@@ -654,7 +656,8 @@ fuentes:
       sola clase, así que no lleva leyenda: el color del INTA va al lado de su casilla. Si
       hiciera falta la superficie exacta por departamento, el dato crudo trae `sup_ha` por
       parche y se calcula sin dibujarlo.
-    publicado_en: [specs/modelos/tablero-mapas-suelos.yaml]
+    # 27-nov-2026: un mapa por capa (JC, backlog 143).
+    publicado_en: [specs/modelos/tablero-mapas-inta-areas-deforestadas.yaml]
     publicado_como: capa
 
   - id: inta-visor-cobertura-suelo
@@ -681,7 +684,8 @@ fuentes:
       navegador baja recién cuando alguien prende la capa. El dato es de 2006-2007: sirve para
       leer la estructura del paisaje, no para decir qué hay hoy en un lote. La leyenda lista 16
       clases de las 41 del SLD; las otras no aparecen en la provincia.
-    publicado_en: [specs/modelos/tablero-mapas-suelos.yaml]
+    # 27-nov-2026: un mapa por capa (JC, backlog 143).
+    publicado_en: [specs/modelos/tablero-mapas-inta-cobertura-suelo.yaml]
     publicado_como: capa
 
   - id: conae-bosque-nativo-2020
@@ -763,7 +767,8 @@ fuentes:
       atribucion: "Fuente: INTA - Instituto Nacional de Tecnología Agropecuaria"
       redistribucion: a-confirmar
     indicaciones: [evaluar-modo-de-acceso, cruzar-con-limites-departamentales]
-    publicado_en: [specs/modelos/tablero-mapas-suelos.yaml]
+    # 27-nov-2026: un mapa por capa (JC, backlog 143).
+    publicado_en: [specs/modelos/tablero-mapas-inta-aptitud-tierras.yaml]
     publicado_como: capa
 
   - id: inta-suelo-sde
@@ -818,7 +823,8 @@ fuentes:
       redistribucion: a-confirmar
     indicaciones: [evaluar-modo-de-acceso, cruzar-con-limites-departamentales]
     observaciones: "Elaborada en el marco de la Ley provincial 6.841, de ordenamiento de las áreas forestales."
-    publicado_en: [specs/modelos/tablero-mapas-suelos.yaml]
+    # 27-nov-2026: un mapa por capa (JC, backlog 143).
+    publicado_en: [specs/modelos/tablero-mapas-inta-zonificacion-uso-suelo.yaml]
     publicado_como: capa
 
   - id: inta-otbn-2015

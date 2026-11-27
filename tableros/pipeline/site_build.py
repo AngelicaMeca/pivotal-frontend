@@ -9957,9 +9957,244 @@ def capas_del_panel(tablero, id_panel, definicion):
                 "El mapa de calor del tablero %s prende la capa %s al abrir. Sobre un mapa de "
                 "calor las capas arrancan APAGADAS (decision de la usuaria del 14-oct-2026)."
                 % (tablero["slug"], id_capa))
+        if "solo" in item:
+            solo_de_capa(tablero["slug"], id_panel, id_capa, item["solo"])
         salida.append({"id": id_capa, "etiqueta": catalogo[id_capa]["etiqueta"],
                        "prendida": prendida})
     return salida
+
+
+# ------------------------------------------------------------------ `solo:` de una capa
+# EL FILTRO `solo:` (JC, 27-nov-2026, backlog 142: del ferrocarril "dejar solo las OPERATIVAS
+# actuales"). Es un filtro sobre las propiedades de cada rasgo, con la misma forma que el
+# `cuando` de los estilos: `solo: {estado: [Activo]}` publica solo los rasgos cuyo `estado` es
+# `Activo`. Se aplica EN EL BUILD: el archivo que se publica ya no trae lo filtrado, asi que lo
+# que se saca no llega al navegador (no se baja para esconderlo ahi).
+#
+# Corta la corrida si el filtro deja la capa vacia, si nombra una propiedad que algun rasgo no
+# trae, o si nombra un valor que la capa no tiene. "El dominio de la capa" se lee como los
+# valores que la capa TIENE en su archivo, no los del catalogo del organismo: un valor que el
+# IGN define pero que en la provincia no aparece ("En construcción") filtraria todo y es casi
+# seguro un error de tipeo o un dato que cambio.
+_RASGOS_DE_CAPA = {}
+
+
+def rasgos_de_capa(ruta):
+    """El GeoJSON de una capa tal cual esta en configs/dims/, leido una sola vez por corrida."""
+    if ruta not in _RASGOS_DE_CAPA:
+        with open(ruta, encoding="utf-8") as f:
+            _RASGOS_DE_CAPA[ruta] = json.load(f)
+    return _RASGOS_DE_CAPA[ruta]
+
+
+def solo_de_capa(slug, id_panel, id_capa, solo):
+    """El `solo:` de una capa, validado contra su archivo: {propiedad: [valores]}."""
+    if not isinstance(solo, dict) or not solo:
+        raise pr.ErrorDeProtocolo(
+            "La capa %s del panel %s del tablero %s declara `solo: %r`: tiene que ser "
+            "{propiedad: [valores]}, como el `cuando` de los estilos."
+            % (id_capa, id_panel, slug, solo))
+    capa = catalogo_capas()["capas"][id_capa]
+    limpio = {}
+    for propiedad in sorted(solo):
+        valores = solo[propiedad]
+        if not isinstance(valores, list) or not valores:
+            raise pr.ErrorDeProtocolo(
+                "La capa %s del tablero %s declara `solo.%s: %r`: tiene que ser una lista de "
+                "valores." % (id_capa, slug, propiedad, valores))
+        limpio[propiedad] = [str(v) for v in valores]
+    for ruta in [capa["origen"]] + ([capa["origen_pais"]] if capa.get("origen_pais") else []):
+        rasgos = rasgos_de_capa(ruta)["features"]
+        for propiedad, valores in limpio.items():
+            sin_propiedad = sum(1 for r in rasgos
+                                if propiedad not in (r.get("properties") or {}))
+            if sin_propiedad:
+                raise pr.ErrorDeProtocolo(
+                    "El `solo` de la capa %s (tablero %s) filtra por `%s`, y %d rasgos de %s no "
+                    "traen esa propiedad." % (id_capa, slug, propiedad, sin_propiedad, ruta))
+            dominio = sorted({str(r["properties"][propiedad]) for r in rasgos})
+            fuera = [v for v in valores if v not in dominio]
+            if fuera:
+                raise pr.ErrorDeProtocolo(
+                    "El `solo` de la capa %s (tablero %s) nombra %s en `%s`, que la capa no "
+                    "tiene. Valores de la capa: %s"
+                    % (id_capa, slug, fuera, propiedad, ", ".join(dominio)))
+        if not filtrar_rasgos(rasgos, limpio):
+            raise pr.ErrorDeProtocolo(
+                "El `solo` de la capa %s (tablero %s) deja la capa vacia: ningun rasgo de %s "
+                "cumple %s." % (id_capa, slug, ruta, limpio))
+    return limpio
+
+
+def filtrar_rasgos(rasgos, solo):
+    """Los rasgos que cumplen TODAS las propiedades de `solo`, en el orden del archivo."""
+    return [r for r in rasgos
+            if all(str((r.get("properties") or {}).get(p)) in v for p, v in solo.items())]
+
+
+def solo_del_tablero(tablero):
+    """{id_capa: solo} de las capas que este tablero publica filtradas."""
+    salida = {}
+    for declarado in tablero["paneles"].get("orden") or []:
+        definicion = tablero["paneles"].get(declarado["id"]) or {}
+        for item in definicion.get("capas") or []:
+            if isinstance(item, dict) and "solo" in item:
+                salida[item["id"]] = solo_de_capa(tablero["slug"], declarado["id"], item["id"],
+                                                  item["solo"])
+    return salida
+
+
+def geojson_filtrado(ruta, solo):
+    """El GeoJSON de la capa con solo los rasgos que pide `solo`, escrito determinista."""
+    geo = dict(rasgos_de_capa(ruta))
+    geo["features"] = filtrar_rasgos(geo["features"], solo)
+    return json_determinista(geo)
+
+
+# ------------------------------------------------------- que capas se pueden ver juntas
+# `compatibilidad_de_capas` de un mapa con capas (JC, 27-nov-2026, backlog 142: "no se deben
+# poder marcar todas las variables juntas, solo las relacionadas"; doctrina-jc.md, seccion 11).
+# El build la VALIDA y le manda al navegador lo justo para resolverla: las combinaciones en el
+# orden declarado y el aviso con lo que ya se sabe escrito. Como se elige la combinacion al
+# prender una capa incompatible esta en `resolverCompatibilidad` (cliente/capas.js).
+REACCIONES_DE_COMPATIBILIDAD = ("apagar-las-otras",)
+MARCAS_DEL_AVISO = ("capa", "apagadas", "companeras")
+# Como se enumeran las capas en el aviso ("A, B y C"). Es texto de pantalla: lo escribe el
+# build y el navegador solo lo usa para juntar las apagadas, que recien se saben al clic.
+SEPARADORES_DE_LISTA = {"entre": ", ", "ultimo": " y "}
+
+
+def enumerar(nombres):
+    if len(nombres) <= 1:
+        return "".join(nombres)
+    return (SEPARADORES_DE_LISTA["entre"].join(nombres[:-1]) + SEPARADORES_DE_LISTA["ultimo"]
+            + nombres[-1])
+
+
+def compatibilidad_de_capas(spec, id_panel="mapa-capas"):
+    """La regla de capas combinables del panel, validada, lista para el navegador; None si el
+    panel no la declara (todas se combinan con todas, que es lo de siempre)."""
+    definicion = spec["paneles"].get(id_panel) or {}
+    regla = definicion.get("compatibilidad_de_capas")
+    if not regla:
+        return None
+    slug = spec["id"]
+    catalogo = catalogo_capas()["capas"]
+    capas = [c if isinstance(c, dict) else {"id": c} for c in definicion.get("capas") or []]
+    ids = [c["id"] for c in capas]
+    referencia = list(regla.get("referencia") or [])
+    combinaciones = regla.get("combinaciones") or []
+    if not combinaciones:
+        raise pr.ErrorDeProtocolo("`compatibilidad_de_capas` de %s no declara combinaciones."
+                                  % slug)
+    if regla.get("al_prender_incompatible") not in REACCIONES_DE_COMPATIBILIDAD:
+        raise pr.ErrorDeProtocolo(
+            "`compatibilidad_de_capas.al_prender_incompatible` de %s dice %r; se conoce: %s."
+            % (slug, regla.get("al_prender_incompatible"),
+               ", ".join(REACCIONES_DE_COMPATIBILIDAD)))
+    nombradas = set(referencia)
+    vistas_ids = set()
+    salida_combinaciones = []
+    for combinacion in combinaciones:
+        cid = combinacion.get("id")
+        miembros = list(combinacion.get("capas") or [])
+        if not cid or cid in vistas_ids or len(miembros) < 1:
+            raise pr.ErrorDeProtocolo(
+                "Una combinacion de `compatibilidad_de_capas` de %s no tiene id, lo repite o no "
+                "tiene capas (%r)." % (slug, combinacion))
+        vistas_ids.add(cid)
+        en_referencia = [m for m in miembros if m in referencia]
+        if en_referencia:
+            raise pr.ErrorDeProtocolo(
+                "La combinacion %s de %s nombra %s, que es de referencia: las de referencia se "
+                "combinan con todo y no van en ninguna combinacion." % (cid, slug, en_referencia))
+        nombradas.update(miembros)
+        salida_combinaciones.append({"id": cid, "capas": miembros})
+    extra = sorted(nombradas - set(ids))
+    if extra:
+        raise pr.ErrorDeProtocolo(
+            "`compatibilidad_de_capas` de %s nombra %s, que no estan en `capas` del panel."
+            % (slug, extra))
+    sueltas = [i for i in ids if i not in nombradas]
+    if sueltas:
+        raise pr.ErrorDeProtocolo(
+            "Las capas %s de %s no estan en ninguna combinacion ni en `referencia`: no se sabria "
+            "con que se pueden ver." % (sueltas, slug))
+    iniciales = [c["id"] for c in capas if c.get("prendida") and c["id"] not in referencia]
+    if not any(set(iniciales) <= set(c["capas"]) for c in salida_combinaciones):
+        raise pr.ErrorDeProtocolo(
+            "Las capas que %s prende al abrir (%s) no entran juntas en ninguna combinacion de "
+            "`compatibilidad_de_capas`." % (slug, ", ".join(iniciales)))
+    aviso = " ".join(str(regla.get("aviso") or "").split())
+    if not aviso:
+        raise pr.ErrorDeProtocolo("`compatibilidad_de_capas` de %s no tiene `aviso`." % slug)
+    marcas = set(re.findall(r"\{(\w+)\}", aviso))
+    raras = sorted(marcas - set(MARCAS_DEL_AVISO))
+    if raras:
+        raise pr.ErrorDeProtocolo("El `aviso` de %s usa %s; se conocen: %s."
+                                  % (slug, raras, ", ".join(MARCAS_DEL_AVISO)))
+    etiqueta = {i: catalogo[i]["etiqueta"] for i in ids}
+    # El aviso de cada (capa que se prende, combinacion elegida), con {capa} y {companeras} ya
+    # escritos. {apagadas} queda: depende de que habia prendido, que se sabe recien al clic.
+    avisos = {}
+    for combinacion in salida_combinaciones:
+        for capa in combinacion["capas"]:
+            companeras = [etiqueta[m] for m in combinacion["capas"] if m != capa]
+            avisos.setdefault(capa, {})[combinacion["id"]] = (
+                aviso.replace("{capa}", etiqueta[capa])
+                     .replace("{companeras}", enumerar(companeras)))
+    return {"referencia": referencia, "combinaciones": salida_combinaciones,
+            "avisos": avisos, "etiquetas": etiqueta, "separadores": SEPARADORES_DE_LISTA}
+
+
+# ------------------------------------------------------------- el pie de un mapa de capa
+# `pie` y `cita_de_origen` de los mapas del INTA (JC, 27-nov-2026, backlog 143; doctrina-jc.md,
+# seccion 12): el pie dice de donde se descargo la capa y, cuando este copiada, la cita del
+# lugar de origen. Reemplaza a la cita que arma `pintarPie` con las capas prendidas.
+ESTADOS_DE_CITA = ("pendiente", "completa")
+
+
+def pie_de_mapa_de_capas(spec, con_pais):
+    """{provincia, pais} con el texto del pie, o None si el panel no declara `pie`."""
+    definicion = spec["paneles"].get("mapa-capas") or {}
+    pie = definicion.get("pie")
+    if not pie:
+        return None
+    slug = spec["id"]
+    for clave in ("fuente", "descarga"):
+        if not str(pie.get(clave) or "").strip():
+            raise pr.ErrorDeProtocolo("El `pie` del mapa de %s no tiene `%s`." % (slug, clave))
+    if con_pais != bool(pie.get("descarga_pais")):
+        raise pr.ErrorDeProtocolo(
+            "El `pie` del mapa de %s %s `descarga_pais` y el panel %s «Mostrar todo el país»: "
+            "con el pais a la vista se dibuja otra descarga y el pie tiene que decir cual."
+            % (slug, "declara" if pie.get("descarga_pais") else "no declara",
+               "ofrece" if con_pais else "no ofrece"))
+    cita = definicion.get("cita_de_origen") or {"estado": "pendiente"}
+    if cita.get("estado") not in ESTADOS_DE_CITA:
+        raise pr.ErrorDeProtocolo("`cita_de_origen.estado` de %s dice %r (%s)."
+                                  % (slug, cita.get("estado"), ", ".join(ESTADOS_DE_CITA)))
+    copiada = []
+    if cita["estado"] == "completa":
+        if not str(cita.get("texto_literal") or "").strip():
+            raise pr.ErrorDeProtocolo(
+                "`cita_de_origen` de %s esta `completa` y no tiene `texto_literal`: la cita se "
+                "copia del lugar de origen, no se arma." % slug)
+        # Tal cual: ni se reescribe ni se completa. Solo se juntan los renglones del YAML.
+        copiada = [" ".join(str(cita[c]).split()) for c in ("autoria", "texto_literal")
+                   if str(cita.get(c) or "").strip()]
+
+    def texto(descarga):
+        renglones = [" ".join(str(pie["fuente"]).split()), " ".join(str(descarga).split())]
+        armado = " · ".join(renglones + copiada)
+        # Mientras la cita esta pendiente, el pie no puede anunciarlo (doctrina-jc.md, sec. 12).
+        if cita["estado"] == "pendiente" and "pendiente" in armado.lower():
+            raise pr.ErrorDeProtocolo("El pie del mapa de %s dice 'pendiente': %r"
+                                      % (slug, armado))
+        return armado
+
+    return {"provincia": texto(pie["descarga"]),
+            "pais": texto(pie["descarga_pais"]) if con_pais else None}
 
 
 def catalogo_del_tablero(tablero):
@@ -10120,6 +10355,7 @@ def valores_por_departamento(ctx, spec):
         cat = pr.cargar_yaml(ruta) or {}
         catalogos.update(((cat.get("publicacion") or {}).get("capas") or {}))
     salida = {}
+    deptos_geo = None
     for declarada in spec["paneles"]["mapa-capas"]["capas"]:
         cid = declarada["id"]
         if cid not in datos:
@@ -10127,6 +10363,24 @@ def valores_por_departamento(ctx, spec):
         dicho = catalogos.get(cid) or {}
         es_km = datos[cid]["medida"] == "km"
         porDepto = datos[cid]["por_departamento"]
+        # Una capa que se publica FILTRADA (`solo:`, el ferrocarril operativo) no puede decir
+        # en el cartel del departamento los km o las estaciones que el mapa no dibuja: se
+        # reparte de nuevo, aca, con los rasgos que quedan y la MISMA rutina que calculo el CSV
+        # (son una docena de tramos y cinco puntos).
+        if isinstance(declarada, dict) and declarada.get("solo"):
+            solo = solo_de_capa(spec["id"], "mapa-capas", cid, declarada["solo"])
+            rasgos = filtrar_rasgos(
+                rasgos_de_capa(catalogo_capas()["capas"][cid]["origen"])["features"], solo)
+            if deptos_geo is None:
+                deptos_geo = cap_dep.cargar_departamentos(RAIZ)
+            if es_km:
+                repartido = cap_dep.largo_por_departamento(
+                    deptos_geo, rasgos, cap_dep.APERTURA.get(cid))[0]
+            else:
+                repartido = cap_dep.puntos_por_departamento(deptos_geo, rasgos)[0]
+            porDepto = {}
+            for (geo_id, valor), cuanto in repartido.items():
+                porDepto.setdefault(geo_id, {})[valor] = cuanto
         textos = {}
         for geo_id in ctx.geo.deptos:
             valores = porDepto.get(geo_id)
@@ -10145,7 +10399,31 @@ def panel_mapa_capas(ctx, spec):
     capas del IGN encima. Las capas no viajan aca: las dibuja el navegador desde el catalogo
     del tablero, y el control para prenderlas lo arma la pagina."""
     declarado = spec["paneles"]["mapa-capas"]
-    return {"titulo": declarado["titulo"], "subtitulo": declarado.get("subtitulo", ""),
+    en_la_pagina = [p for p in spec["paneles"]["orden"] if p["id"] == "mapa-capas"]
+    con_pais = any(bool(p.get("pais")) for p in en_la_pagina)
+    # `zoom_maximo` (JC, 27-nov-2026, backlog 142: "permitir mas zoom"): veces el encuadre de
+    # la provincia. Va en `paneles.orden`, junto con `zoom`, porque es el tope de ese gesto. Sin
+    # declararlo, el payload no cambia y el tope es el de siempre (`geoDeMapa`, cliente/capas.js).
+    zoom_maximo = None
+    for p in en_la_pagina:
+        if "zoom_maximo" in p:
+            zoom_maximo = p["zoom_maximo"]
+            if (not p.get("zoom") or isinstance(zoom_maximo, bool)
+                    or not isinstance(zoom_maximo, (int, float)) or zoom_maximo <= 1):
+                raise pr.ErrorDeProtocolo(
+                    "El mapa de %s declara `zoom_maximo: %r`: tiene que ser un numero mayor que "
+                    "1 y el panel tiene que llevar `zoom: true`." % (spec["id"], zoom_maximo))
+    extras = {}
+    if zoom_maximo is not None:
+        extras["zoom_maximo"] = zoom_maximo
+    compatibilidad = compatibilidad_de_capas(spec)
+    if compatibilidad:
+        extras["compatibilidad"] = compatibilidad
+    pie_capas = pie_de_mapa_de_capas(spec, con_pais)
+    if pie_capas:
+        extras["pie_capas"] = pie_capas
+    return dict(extras, **{
+            "titulo": declarado["titulo"], "subtitulo": declarado.get("subtitulo", ""),
             "pie": ctx.fuente("mapa_base"), "geojson": GEOJSON,
             "aspecto": aspecto_mapa(), "relacion": relacion_mapa(),
             # `zoom`: rueda, pellizco y arrastre sobre la cartografia (JC, 15-nov-2026:
@@ -10168,8 +10446,7 @@ def panel_mapa_capas(ctx, spec):
                            # base: con el boton prendido las regiones del mapa son las
                            # provincias y no los departamentos.
                            "provincias": _pais()["provincias"]}
-                          if any(bool(p.get("pais")) for p in spec["paneles"]["orden"]
-                                 if p["id"] == "mapa-capas") else None),
+                          if con_pais else None),
             "deptos": [{"id": g, "nombre": ctx.nombre(g)} for g in ctx.geo.deptos],
             # Donde va escrito el nombre de cada departamento. Hace falta desde que la division
             # departamental se dibuja ENCIMA de las capas (21-nov-2026): arriba los nombres ya
@@ -10184,7 +10461,7 @@ def panel_mapa_capas(ctx, spec):
             # uno y consultarlos. Viajan los de todas las capas que la pagina declara -son 304
             # numeros, nada- y el navegador muestra los de las capas PRENDIDAS: cuales estan
             # prendidas lo decide el visitante, asi que no se puede resolver aca.
-            "por_departamento": valores_por_departamento(ctx, spec)}
+            "por_departamento": valores_por_departamento(ctx, spec)})
 
 
 def panel_tabla_red_vial(ctx, spec):
@@ -12244,14 +12521,17 @@ TABLEROS = {
     # General > Infraestructura y riesgo (capas del IGN, 14-oct-2026)
     "tablero-infraestructura-y-riesgo": construir_tablero_red_vial,
     "tablero-infraestructura-amenazas": construir_tablero_amenazas,
-    # Mapas > Suelos y uso del suelo: las dos capas de AREA del INTA en nuestro visor
-    # (JC, 18-nov-2026: "la idea era BAJAR LAS CAPAS Y PONER NUESTRO PROPIO VISOR"). Usa el
-    # MISMO constructor que Infraestructura: es la misma maqueta -titulo y mapa a toda la
-    # pagina con control de capas- y lo unico que cambia son las capas que declara el spec.
-    "tablero-mapas-suelos": construir_tablero_red_vial,
-    # Mapas > Cuencas y cursos de agua: las otras dos capas del INTA, las del nodo del visor.
-    # Misma maqueta y mismo constructor; una es de area y la otra de linea.
-    "tablero-mapas-agua": construir_tablero_red_vial,
+    # Mapas > las capas del INTA, UN MAPA POR CAPA (JC, 27-nov-2026, backlog 143: "DEJEMOS LOS
+    # MAPAS INDIVIDUALES"). Reemplazan a "Suelos y uso del suelo" y "Cuencas y cursos de agua"
+    # (tablero-mapas-suelos/agua.yaml, ahora `no-publicada`), que juntaban varias capas en un
+    # visor. Usan el MISMO constructor que Infraestructura: es la misma maqueta -titulo y mapa
+    # a toda la pagina- y lo que cambia lo declara el spec (una capa fija, sin control).
+    "tablero-mapas-inta-aptitud-tierras": construir_tablero_red_vial,
+    "tablero-mapas-inta-zonificacion-uso-suelo": construir_tablero_red_vial,
+    "tablero-mapas-inta-cobertura-suelo": construir_tablero_red_vial,
+    "tablero-mapas-inta-areas-deforestadas": construir_tablero_red_vial,
+    "tablero-mapas-inta-cuencas-hidricas": construir_tablero_red_vial,
+    "tablero-mapas-inta-cursos-de-agua": construir_tablero_red_vial,
     # AgroClima (maqueta "0000000000 Maqueta Clima 1.xlsx", 14-oct-2026)
     "tablero-agroclima": construir_tablero_agroclima,
     # Mapas · portada del area (JC, 15-nov-2026, punto 3.b)
@@ -13052,6 +13332,11 @@ ANCHOS_DE_PANEL = tuple(range(1, 13))
 
 ALTOS_DE_TABLERO = ("una-pantalla", "fluye")
 
+# Los altos con nombre de la caja de un mapa que se recorre (`alto_mapa` en `paneles.orden`).
+# `pantalla`: el alto de la ventana menos la cabecera y el titulo del cuadro, con un piso
+# (JC, 27-nov-2026, backlog 142). Los numeros estan en pivotal.css.j2, `[data-alto-mapa]`.
+ALTOS_DE_MAPA = ("pantalla",)
+
 
 def alto_de(tablero):
     declarado = tablero["paneles"].get("alto") or "una-pantalla"
@@ -13510,6 +13795,7 @@ def escribir_sitio(ctx, vistas, tableros):
     reservados = []
     # Las capas del IGN que nombra algun tablero: se copian a public/plataforma/geo/capas/.
     capas_a_copiar = set()
+    solo_de_las_capas = {}     # {id_capa: (solo o None, tablero que lo pidio primero)}
     for tablero in tableros:
         seccion = next(s for s in secciones if s["id"] == tablero["seccion"])
         # Los DATOS de una pagina reservada van con ella a _privado/: si quedaran en data/ se
@@ -13536,7 +13822,19 @@ def escribir_sitio(ctx, vistas, tableros):
         # Archivos que el constructor GENERA ademas del JSON (la miniatura de las estaciones).
         for ruta_extra in sorted(tablero.get("archivos_extra") or {}):
             escritor.texto(ruta_extra, tablero["archivos_extra"][ruta_extra])
+        # El `solo:` de cada capa (el ferrocarril operativo): el archivo publicado es UNO por
+        # capa, asi que todos los tableros que la publican tienen que pedir el mismo recorte.
+        # Si uno la quisiera entera y otro filtrada, alguno estaria mostrando algo que no pidio.
+        solo_aca = solo_del_tablero(tablero)
         for id_capa in sorted((tablero["capas_catalogo"] or {}).get("capas") or {}):
+            pedido = solo_aca.get(id_capa)
+            if id_capa in solo_de_las_capas and solo_de_las_capas[id_capa][0] != pedido:
+                raise pr.ErrorDeProtocolo(
+                    "La capa %s se publica con `solo: %r` en %s y con `solo: %r` en %s: el "
+                    "archivo publicado es uno solo, los dos tienen que pedir lo mismo."
+                    % (id_capa, solo_de_las_capas[id_capa][0], solo_de_las_capas[id_capa][1],
+                       pedido, tablero["slug"]))
+            solo_de_las_capas[id_capa] = (pedido, tablero["slug"])
             capas_a_copiar.add(id_capa)
         tablero["ruta_datos"] = escribir_datos(escritor, tablero, carpeta_tab, ruta_tab)
         # El panel de precios del MCBA tiene su propio JSON, partido por especie: no viaja en
@@ -13620,6 +13918,35 @@ def escribir_sitio(ctx, vistas, tableros):
                 # encabezado, que es como estaba.
                 if definicion.get("leyenda_titulo"):
                     panel["leyenda_titulo"] = definicion["leyenda_titulo"]
+                # `control_de_capas: false` (mapas del INTA, JC 27-nov-2026, backlog 143: "UN
+                # MAPA POR CAPA"): la capa se dibuja siempre y su renglon de la leyenda va SIN
+                # casilla, asi que no hay nada que prender encima ni nada que apagar. Una sola
+                # capa y prendida: con dos, se estarian superponiendo capas sin control.
+                if definicion.get("control_de_capas", True) is False:
+                    if len(capas) != 1 or not capas[0]["prendida"]:
+                        raise pr.ErrorDeProtocolo(
+                            "El panel %s del tablero %s declara `control_de_capas: false`: "
+                            "tiene que tener UNA sola capa y `prendida: true`."
+                            % (declarado["id"], tablero["slug"]))
+                    if definicion.get("compatibilidad_de_capas"):
+                        raise pr.ErrorDeProtocolo(
+                            "El panel %s del tablero %s no tiene control de capas y declara "
+                            "`compatibilidad_de_capas`." % (declarado["id"], tablero["slug"]))
+                    panel["capas_fijas"] = True
+                elif definicion.get("control_de_capas", True) is not True:
+                    raise pr.ErrorDeProtocolo(
+                        "`control_de_capas` del panel %s de %s tiene que ser true o false."
+                        % (declarado["id"], tablero["slug"]))
+            # `alto_mapa` (JC, 27-nov-2026, backlog 142: "el mapa es muy chico"). Un valor con
+            # nombre: el numero vive en el CSS (`[data-alto-mapa]`), no en cada spec.
+            if "alto_mapa" in declarado:
+                if declarado["alto_mapa"] not in ALTOS_DE_MAPA or not declarado.get("zoom") \
+                        or declarado.get("visor"):
+                    raise pr.ErrorDeProtocolo(
+                        "El panel %s de %s declara `alto_mapa: %r`: se conoce %s, y solo en un "
+                        "mapa con `zoom: true` sin `visor` (el visor tiene su propia caja)."
+                        % (declarado["id"], tablero["slug"], declarado["alto_mapa"],
+                           ", ".join(ALTOS_DE_MAPA)))
             comunes = tablero["paneles"].get("acciones_de_cuadro") or []
             propias = definicion.get("acciones") or []
             if comunes or propias:
@@ -13841,13 +14168,22 @@ def escribir_sitio(ctx, vistas, tableros):
 
     # Las capas de contexto, tal cual estan en configs/dims/<catalogo>/ (como el GeoJSON de los
     # departamentos). Solo las que nombra algun tablero.
+    # Una capa con `solo:` se escribe YA FILTRADA: lo que se saca no viaja al navegador.
     for id_capa in sorted(capas_a_copiar):
         capa = catalogo_capas()["capas"][id_capa]
-        escritor.copia(capa["origen"], "public" + capa["archivo"])
+        solo = solo_de_las_capas[id_capa][0]
+        if solo:
+            escritor.texto("public" + capa["archivo"], geojson_filtrado(capa["origen"], solo))
+        else:
+            escritor.copia(capa["origen"], "public" + capa["archivo"])
         # La version sin recortar, para "Mostrar todo el pais". Se copia aunque el visitante
         # no apriete el boton: el artefacto lleva los archivos, el navegador los pide o no.
         if capa.get("origen_pais"):
-            escritor.copia(capa["origen_pais"], "public" + capa["archivo_pais"])
+            if solo:
+                escritor.texto("public" + capa["archivo_pais"],
+                               geojson_filtrado(capa["origen_pais"], solo))
+            else:
+                escritor.copia(capa["origen_pais"], "public" + capa["archivo_pais"])
 
     # Iconos: al deploy van SOLO los que el sitio usa (los referencio algun filtro, la tarjeta
     # de contexto o una accion del pie). El catalogo completo queda en site/assets/iconos/.

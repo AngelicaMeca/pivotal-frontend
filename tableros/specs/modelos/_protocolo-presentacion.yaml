@@ -1218,30 +1218,53 @@ colores:
   # `estilos` se recorre en orden y cada tramo toma el PRIMERO cuyo `cuando` coincida con sus
   # propiedades (un `cuando` vacio es "todos"). `rotulo` es lo que dice la leyenda de ese
   # trazo. JC valida (backlog 106).
+  #
+  # CAMBIO DEL 27-nov-2026 (observaciones de JC sobre el mapa de red vial, backlog 142). JC:
+  # las rutas nacionales y provinciales pavimentadas "(y las consolidadas) son del mismo color y
+  # solo cambia el grosor", los caminos rurales "se confunden" y el tendido tiene que llevar
+  # "distinto color por cada nivel de tensión". Lo que se decidio:
+  #  - CADA CATEGORIA VIAL TIENE SU PROPIO TONO, no solo su grosor: nacional pavimentada en
+  #    rojo, provincial pavimentada en azul, lo CONSOLIDADO (de las dos redes) en naranja y lo
+  #    de TIERRA (de las dos redes) en marron, los dos punteados. Que lo consolidado y la tierra
+  #    se separen es una lectura nuestra de "(y las consolidadas)": antes iban juntos en un solo
+  #    estilo "consolidado o tierra", y con un color propio para lo consolidado la tierra tenia
+  #    que tener el suyo o quedaba confundida con el pavimento. La jerarquia nacional/provincial
+  #    dentro de consolidado y tierra la sigue marcando el grosor.
+  #  - LOS CAMINOS RURALES PASAN A VERDE (antes gris tierra, que se confundia con lo de tierra
+  #    de las rutas y con el fondo).
+  #  - EL FERROCARRIL SE PUBLICA SOLO OPERATIVO (JC: "dejar solo las OPERATIVAS actuales"; ver
+  #    el filtro `solo:` en tablero-infraestructura-y-riesgo.yaml): salen los estilos de
+  #    abandonado/desmantelado y sin servicio. Queda un estilo general por contrato del build
+  #    (el ultimo tiene que ser el general) que hoy no le toca a ningun tramo.
+  # Los tonos son una propuesta para que JC los valide (backlog 142). constructor-dashboards
+  # puede ajustar la luminosidad si un par no se distingue sobre el fondo, pero sin juntar dos
+  # categorias en la misma familia de color: eso es justo lo que JC objeto.
   capas_de_contexto:
     rutas-nacionales:
       halo: 1
       estilos:
-        - {cuando: {calzada: [Pavimentado]}, color: "#a8322b", ancho: 2.4, trazo: lleno, rotulo: "pavimentada"}
-        - {cuando: {}, color: "#a8322b", ancho: 2.0, trazo: punteado, rotulo: "consolidado o tierra"}
+        - {cuando: {calzada: [Pavimentado]}, color: "#c62828", ancho: 2.6, trazo: lleno, rotulo: "pavimentada"}
+        - {cuando: {calzada: [Consolidado]}, color: "#ef6c00", ancho: 2.0, trazo: punteado, rotulo: "consolidada"}
+        - {cuando: {}, color: "#8d6e63", ancho: 1.8, trazo: punteado, rotulo: "de tierra"}
     rutas-provinciales:
       halo: 0.8
       estilos:
-        - {cuando: {calzada: [Pavimentado]}, color: "#d0703a", ancho: 1.6, trazo: lleno, rotulo: "pavimentada"}
-        - {cuando: {}, color: "#d0703a", ancho: 1.2, trazo: punteado, rotulo: "consolidado o tierra"}
+        - {cuando: {calzada: [Pavimentado]}, color: "#1565c0", ancho: 1.8, trazo: lleno, rotulo: "pavimentada"}
+        - {cuando: {calzada: [Consolidado]}, color: "#ef6c00", ancho: 1.3, trazo: punteado, rotulo: "consolidada"}
+        - {cuando: {}, color: "#8d6e63", ancho: 1.1, trazo: punteado, rotulo: "de tierra"}
     caminos-terciarios:
       halo: 0
       estilos:
-        - {cuando: {}, color: "#7a6a58", ancho: 0.6, trazo: lleno, opacidad: 0.55, rotulo: ""}
+        - {cuando: {}, color: "#43a047", ancho: 0.6, trazo: lleno, opacidad: 0.7, rotulo: ""}
     ferrocarril:
       halo: 1
       estilos:
-        - {cuando: {estado: [Activo]}, color: "#2b2b2b", ancho: 1.8, trazo: lleno, rotulo: "activo"}
-        - {cuando: {}, color: "#5a5a5a", ancho: 1.3, trazo: punteado, opacidad: 0.8, rotulo: "abandonado o desmantelado"}
+        - {cuando: {estado: [Activo]}, color: "#212121", ancho: 1.8, trazo: lleno, rotulo: "operativo"}
+        - {cuando: {}, color: "#212121", ancho: 1.8, trazo: lleno, rotulo: ""}
     estaciones-ferrocarril:
       estilos:
-        - {cuando: {estado: [Activo]}, color: "#2b2b2b", borde: "#fbf4ec", tamanio: 7, rotulo: "activa"}
-        - {cuando: {}, color: "#fbf4ec", borde: "#2b2b2b", tamanio: 5, rotulo: "sin servicio"}
+        - {cuando: {estado: [Activo]}, color: "#212121", borde: "#fbf4ec", tamanio: 7, rotulo: "operativa"}
+        - {cuando: {}, color: "#212121", borde: "#fbf4ec", tamanio: 7, rotulo: ""}
     # Ciudades y pueblos (BAHRA del IGN), que JC pidio el 15-nov-2026 para que el mapa de
     # Infraestructura se pueda leer ("QUE SE VEA LA DIVISION DEPARTAMENTAL Y LAS PRINCIPALES
     # CIUDADES/PUEBLOS"). Es cromo de REFERENCIA, no un dato: punto chico gris oscuro con borde
@@ -1266,21 +1289,29 @@ colores:
     # JC pidio el 15-nov-2026 junto a las redes viales. Color NUEVO, para que JC lo valide
     # (backlog 115): violeta frio, una familia que no usa ninguna otra capa de contexto -las
     # viales son el rojo ladrillo, el naranja tostado y el gris tierra, y el ferrocarril los
-    # grises- y que no se confunde con el mapa de calor que tenga debajo. Un nivel se distingue
-    # del otro por ANCHO y luminosidad del mismo tono, que es como se distinguen las rutas.
+    # grises- y que no se confunde con el mapa de calor que tenga debajo. (Hasta el 27-nov-2026
+    # un nivel se distinguia del otro solo por ANCHO y luminosidad del mismo tono; ver abajo.)
     #
     # Los tres niveles van declarados uno por uno y el estilo general queda SIN rotulo: el
     # campo `tension` de la fuente no trae unidad documentada (ver configs/dims/capas-energia.yaml,
     # advertencias_para_jc), asi que el rotulo dice "nivel 13" y no "13 kV". Si el CFEE publica
     # manana un nivel nuevo, se dibuja punteado con el estilo general y no entra a la leyenda
     # con el nombre de otro.
+    #
+    # CAMBIO DEL 27-nov-2026 (JC, backlog 142): "distinto color por cada nivel de tensión". Los
+    # tres niveles dejan de ser tonos del mismo violeta y pasan a ser tres familias distintas:
+    # violeta (76), ambar (33) y verde azulado (13). El grosor sigue acompañando al nivel. Se
+    # eligieron lejos del rojo y el azul de las rutas pavimentadas, que son las unicas capas
+    # viales con las que el tendido se puede combinar (ver `compatibilidad_de_capas` en
+    # tablero-infraestructura-y-riesgo.yaml). Los rotulos siguen sin unidad, por lo mismo de
+    # arriba.
     tendido-media-tension:
       halo: 0.8
       estilos:
-        - {cuando: {tension: ["76"]}, color: "#4a3a78", ancho: 1.8, trazo: lleno, rotulo: "nivel 76"}
-        - {cuando: {tension: ["33"]}, color: "#6b58a0", ancho: 1.2, trazo: lleno, rotulo: "nivel 33"}
-        - {cuando: {tension: ["13"]}, color: "#9185bd", ancho: 0.7, trazo: lleno, opacidad: 0.8, rotulo: "nivel 13"}
-        - {cuando: {}, color: "#9185bd", ancho: 0.7, trazo: punteado, opacidad: 0.8, rotulo: ""}
+        - {cuando: {tension: ["76"]}, color: "#6a1b9a", ancho: 1.8, trazo: lleno, rotulo: "nivel 76"}
+        - {cuando: {tension: ["33"]}, color: "#f9a825", ancho: 1.2, trazo: lleno, rotulo: "nivel 33"}
+        - {cuando: {tension: ["13"]}, color: "#00897b", ancho: 0.7, trazo: lleno, opacidad: 0.85, rotulo: "nivel 13"}
+        - {cuando: {}, color: "#757575", ancho: 0.7, trazo: punteado, opacidad: 0.8, rotulo: ""}
     # ----------------------------------------------------------------- mapas de AREA del INTA
     #
     # Las dos primeras capas de POLIGONOS del sitio (18-nov-2026). Los colores y los rotulos

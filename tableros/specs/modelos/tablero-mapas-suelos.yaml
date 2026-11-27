@@ -52,10 +52,20 @@
 # lista de clases: su casilla del control tiene el color del INTA al lado. No se dibujan los
 # parches de menos de 1 ha (el 63% de los parches, el 0,99% de la superficie: medido).
 
+# DESPUBLICADA el 27-nov-2026 (backlog 143). JC: "O LO QUE SERIA PEOR QUE NOS ACUSEN DE
+# MEZCLAR CAPAS, YO LAS DEJARIA POR SEPARADO, TAL COMO SON DE ORIGEN Y ELIMINARIA LAS
+# OBSERVACIONES... DEJEMOS LOS MAPAS INDIVIDUALES". Esta pagina juntaba cuatro capas del INTA
+# en un mismo visor (y proponia mirar el desmonte ENCIMA de la cobertura, que es exactamente
+# mezclar capas) y llevaba la nota `capas-inta-suelos`, que salio. La reemplazan cuatro
+# paginas, una por capa:
+#   tablero-mapas-inta-aptitud-tierras.yaml, tablero-mapas-inta-zonificacion-uso-suelo.yaml,
+#   tablero-mapas-inta-cobertura-suelo.yaml y tablero-mapas-inta-areas-deforestadas.yaml.
+# Queda como registro: nada del sitio tiene que llevar aca (menu de Mapas y tarjetas de la
+# portada apuntan a las paginas nuevas).
 id: tablero-mapas-suelos
 tipo: tablero
 familia: capas-ign
-estado: publicada
+estado: no-publicada
 seccion: mapas
 pagina: suelos-y-uso-del-suelo
 
@@ -68,7 +78,7 @@ breadcrumb: "Mapas - Suelos y uso del suelo"
 indicadores: []
 kpis_sin_variacion: true
 
-notas_metodologicas: [capas-inta-suelos]
+notas_metodologicas: []   # la nota capas-inta-suelos salio el 27-nov-2026
 
 paneles:
   alto: fluye

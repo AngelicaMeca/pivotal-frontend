@@ -54,6 +54,24 @@
 # Decisiones de la usuaria (14-oct-2026): la seccion es nueva Y las capas tambien se prenden
 # sobre los mapas que ya existen; la red terciaria se publica COMPLETA (apagada al abrir: su
 # archivo de 2 MB se baja recien al prenderla). El tendido electrico (3,6 MB) va igual.
+#
+# OBSERVACIONES DE JC SOBRE EL MAPA DE "PARAJES" (registradas el 27-nov-2026, backlog 142).
+# Lo que la portada de Mapas llamaba "Parajes por provincia" ES ESTE MAPA, y JC dice que esta
+# mal nombrado: "el objeto central es la RED VIAL, no los parajes" y "va en INFRAESTRUCTURA".
+# Lo que cambia en este spec, punto por punto (numeracion de JC):
+#  1. La tarjeta sale de la portada de Mapas (tablero-mapas-ingreso.yaml) y el mapa pasa a
+#     llamarse por la red vial: titulo del cuadro "Red vial de Santiago del Estero" (ver
+#     `mapa-capas.titulo`). Los parajes siguen siendo una capa mas de este mapa, apagada.
+#  2. Ferrocarril y estaciones ARRANCAN APAGADOS (`prendida: false`).
+#  3. y 6. Colores: cada categoria vial con su tono y los caminos rurales en otro color. Viven
+#     en _protocolo-presentacion.yaml (`colores.capas_de_contexto`), como todo color de dato.
+#  4. Tendido: un color por nivel de tension. Mismo lugar.
+#  5. "No se deben poder marcar todas las variables juntas, solo las relacionadas": regla
+#     general, en `mapa-capas.compatibilidad_de_capas` y en doctrina-jc.md (seccion 11).
+#  7. Ferrocarril y estaciones: solo lo OPERATIVO (`solo:` en cada capa). El atributo es `fun`
+#     del IGN (dominio 2 Abandonado, 4 Desmantelado, 6 Activo, 9 En construccion), que
+#     pipeline/capas_ign.py ya traduce a `estado`. Quedan 12 de 26 tramos y 5 de 89 estaciones.
+#  8. Mapa mas grande y con mas zoom (`alto_mapa` y `zoom_maximo` en `paneles.orden`).
 id: tablero-infraestructura-y-riesgo
 tipo: tablero
 familia: capas-ign
@@ -61,7 +79,9 @@ estado: publicada
 seccion: infraestructura
 
 titulo: "Infraestructura"
-subtitulo: "Provincia de Santiago del Estero · red vial, ferrocarril y tendido eléctrico de media tensión"
+# La bajada arranca por la red vial, que es el objeto central del mapa (JC, 27-nov-2026, punto
+# 1), y dice "ferrocarril operativo" porque es lo unico que se publica (punto 7).
+subtitulo: "Provincia de Santiago del Estero · red vial, con el ferrocarril operativo, el tendido eléctrico de media tensión, las ciudades y los parajes"
 # La miga es solo "Infraestructura": el item "General" del que colgaba esta pagina DESAPARECIO
 # el 17-nov-2026 por pedido de JC, y la seccion es ahora un titulo del menu de la izquierda.
 breadcrumb: "Infraestructura"
@@ -97,22 +117,41 @@ paneles:
   acciones_de_tablero:
     - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
   mapa-capas:
-    # SIN TITULO a proposito (QA del 19-nov-2026, D1): el titulo de la pagina ya es
-    # "Infraestructura" y su bajada ya dice que es la red vial, el ferrocarril y el tendido.
-    # Un `titulo` aca era un SEGUNDO titulo que repetia la bajada palabra por palabra y le
-    # comia un renglon al mapa. El renglon vacio no queda (CSS: `h2:empty` del mapa-capas).
-    titulo: ""
+    # TITULO DE LA RED VIAL (JC, 27-nov-2026, punto 1: lo que se llamaba "Parajes por
+    # provincia" esta mal nombrado, "el objeto central es la RED VIAL"). Hasta el 27-nov este
+    # cuadro iba sin titulo (QA del 19-nov-2026, D1) porque repetia la bajada; ahora dice otra
+    # cosa que la bajada -nombra el objeto del mapa- y es el nombre con que la pagina se
+    # reconoce desde que salio la tarjeta de la portada de Mapas. La miga y el titulo de la
+    # pagina siguen siendo "Infraestructura", que es la regla de JC del 15-nov ("SOLO PONEMOS
+    # COMO TITULO 'infraestructura'").
+    # nota_interpretacion: JC pide "un titulo que hable de la red vial" para algo que vive en
+    # Infraestructura. Se eligio lo mas simple -el titulo del cuadro del mapa- en vez de
+    # renombrar la seccion o agregar una pagina. A confirmar (backlog 142).
+    titulo: "Red vial de Santiago del Estero"
     subtitulo: "Acerque con la rueda del mouse y arrastre para desplazarse · active o desactive cada capa; pase el mouse por un trazo para ver qué es"
     # Las capas del mapa, en el orden en que se dibujan (la primera abajo). `prendida` es como
     # arranca la pagina. Las dos capas pesadas arrancan apagadas: los caminos rurales son
     # ~11.700 tramos y 2 MB, y el tendido ~29.500 polilineas y 3,6 MB.
+    #
+    # `solo:` (NUEVO, 27-nov-2026, JC punto 7: "eliminar red y estaciones desmanteladas/sin
+    # servicio/etc.; dejar solo las OPERATIVAS actuales"). Es un filtro sobre las propiedades
+    # del rasgo, con la misma forma que el `cuando` de los estilos: el rasgo se publica solo si
+    # coincide. Se aplica en el BUILD (el archivo publicado ya no trae lo filtrado: no se baja
+    # al navegador para esconderlo ahi), y el build corta si el filtro deja la capa vacia o si
+    # nombra un valor que el dominio de la capa no tiene. Lo que sale es el estado `Activo` del
+    # campo `fun` del IGN; "En construccion" (dominio 9) hoy no aparece en la provincia, y si
+    # aparece tampoco se publica: no es operativo.
+    # nota_interpretacion: "operativo" se toma como el `Activo` del IGN. El IGN no publica si
+    # un ramal activo tiene hoy servicio de cargas o de pasajeros, ni la fecha de ese estado;
+    # preguntado (backlog 142).
     capas:
       - {id: caminos-terciarios, prendida: false}
       - {id: tendido-media-tension, prendida: false}
       - {id: rutas-provinciales, prendida: true}
       - {id: rutas-nacionales, prendida: true}
-      - {id: ferrocarril, prendida: true}
-      - {id: estaciones-ferrocarril, prendida: true}
+      # Apagados al abrir (JC, 27-nov-2026, punto 2).
+      - {id: ferrocarril, prendida: false, solo: {estado: [Activo]}}
+      - {id: estaciones-ferrocarril, prendida: false, solo: {estado: [Activo]}}
       # Los PARAJES (1.022 puntos, QA del 20-nov-2026, M1): entran aca porque es lo que JC
       # quiere hacer con ellos -"CRUZAR CON RED TERCIARIA Y RUTAS"-, y el portal del INDEC no
       # tiene el indicador que la tarjeta de la portada prometia. Apagados al abrir: son mil
@@ -121,6 +160,60 @@ paneles:
       # Las ciudades y pueblos van ULTIMAS para que sus puntos y sus nombres queden sobre las
       # lineas, y PRENDIDAS: son la referencia que permite ubicarse al acercar.
       - {id: localidades, prendida: true}
+
+    # QUE CAPAS SE PUEDEN VER JUNTAS (NUEVO, 27-nov-2026, JC punto 5). Regla general de JC:
+    # "no se deben poder marcar todas las variables juntas, solo las relacionadas", y su caso
+    # concreto: "lo ferroviario solo puede verse por separado o combinado unicamente con rutas
+    # nacionales y provinciales". Queda en doctrina-jc.md (seccion 11) para cualquier mapa con
+    # capas.
+    #
+    # Como se lee:
+    #  - `referencia`: capas de UBICACION, no de dato; se combinan con cualquier cosa y no
+    #    cuentan para la regla. Hoy solo las ciudades y pueblos, que JC pidio para poder leer
+    #    el mapa ("QUE SE VEA LA DIVISION DEPARTAMENTAL Y LAS PRINCIPALES CIUDADES/PUEBLOS",
+    #    15-nov-2026). La division departamental es el mapa base y tampoco cuenta.
+    #  - `combinaciones`: cada una es un conjunto de capas RELACIONADAS. Un conjunto de capas
+    #    prendidas es valido si, sacando las de referencia, entra entero en AL MENOS UNA
+    #    combinacion. Una capa puede estar en varias (las rutas nacionales y provinciales estan
+    #    en las tres: son la referencia vial de todo lo demas).
+    #  - `al_prender_incompatible: apagar-las-otras`: tildar una capa que no entra con las que
+    #    estan prendidas NO se bloquea (una casilla gris obliga al visitante a adivinar que
+    #    destildar). La capa se prende y se apagan las que sobran: de las combinaciones que la
+    #    contienen se elige la que conserva MAS capas de las ya prendidas (empate: la primera
+    #    declarada) y se apagan las que no estan en ella. Determinista.
+    #  - `aviso`: renglon que aparece un momento sobre el control cuando se apago algo, para
+    #    que no parezca que la capa desaparecio sola. {capa} es la etiqueta de la que se
+    #    prendio, {apagadas} la lista de las que se apagaron y {companeras} las otras capas de
+    #    la combinacion elegida, todas con la `etiqueta` de su config. Lo compone el build.
+    #  - El BUILD VALIDA: que toda capa de `capas` este en alguna combinacion o en
+    #    `referencia`, que toda capa nombrada aca este en `capas`, y que las `prendida: true`
+    #    formen un conjunto valido. Si no, corta la corrida.
+    #
+    # Las combinaciones de esta pagina:
+    #  - red-vial: las tres redes y los parajes. Es el cruce que JC pidio con los parajes
+    #    ("CRUZAR CON RED TERCIARIA Y RUTAS", nota de su Excel).
+    #  - ferrocarril: tendido y estaciones con las rutas nacionales y provinciales, ni una mas
+    #    (literal de JC).
+    #  - tendido-electrico: el tendido con las rutas nacionales y provinciales, para ubicarse.
+    # nota_interpretacion: JC solo dio la regla del ferrocarril. La del tendido (que no se
+    # combine con caminos rurales, parajes ni ferrocarril) y la de los parajes (solo con la red
+    # vial) son nuestras, con el criterio mas restrictivo que respeta "solo las relacionadas".
+    # A confirmar con el, en especial si quiere ver parajes junto al tendido (backlog 142).
+    compatibilidad_de_capas:
+      referencia: [localidades]
+      combinaciones:
+        - id: red-vial
+          capas: [rutas-nacionales, rutas-provinciales, caminos-terciarios, parajes]
+        - id: ferrocarril
+          capas: [ferrocarril, estaciones-ferrocarril, rutas-nacionales, rutas-provinciales]
+        - id: tendido-electrico
+          capas: [tendido-media-tension, rutas-nacionales, rutas-provinciales]
+      al_prender_incompatible: apagar-las-otras
+      # Redaccion neutra desde el 27-nov-2026: "se ve sola" no concordaba con las capas de
+      # nombre masculino ("Tendido eléctrico... se ve sola"). Ajuste de constructor-dashboards
+      # pedido junto con la tanda de JC (comentario en Asana) sobre la portada de Mapas.
+      aviso: "Se apagó {apagadas}: {capa} se puede ver sin otras capas o junto a {companeras}."
+
   # Un solo cuadro a todo el ancho: el mapa ES la pagina.
   #
   # `zoom: true` es zoom real sobre la CARTOGRAFIA, no sobre los textos (JC, 15-nov-2026:
@@ -137,6 +230,23 @@ paneles:
     # Las capas del IGN que publica esta pagina son SOLO de la provincia: con el pais a la
     # vista se ven las 24 provincias con su nombre y las rutas siguen estando donde estan, que
     # es todo lo que hay publicado.
-    - {id: mapa-capas, ancho: 12, zoom: true, pais: true}
+    #
+    # MAS GRANDE Y CON MAS ZOOM (JC, 27-nov-2026, punto 8: "El mapa es muy chico: agrandarlo,
+    # y permitir mas zoom"). Dos claves nuevas, que deciden el alto de la caja y el tope del
+    # gesto (las dos leen el mismo panel de la pagina, como `zoom`):
+    #  - `alto_mapa: pantalla`: la caja del mapa toma el alto de la ventana menos la cabecera
+    #    del sitio y el titulo del cuadro, con un piso de 760 px (hoy es
+    #    `max(640px, calc(100vh - 17rem))`, que en una pantalla de 908 px deja 716). Mantiene
+    #    la regla de que el que ocupa la pagina es el MAPA, no la caja: sin deformar la
+    #    provincia (doctrina-jc.md, seccion 3). `pantalla` es un valor con nombre para que el
+    #    numero viva en un solo lugar (el CSS) y no en cada spec.
+    #  - `zoom_maximo: 120`: veces el encuadre de la provincia (hoy el tope esta fijo en 40 en
+    #    `cliente/capas.js`, `scaleLimit.max`). A 40x un camino rural todavia se lee como una
+    #    maraña en los departamentos densos; 120x deja ver tramo por tramo. Es vector: acercar
+    #    no pixela, asi que el tope solo lo pone la utilidad.
+    # nota_interpretacion: "agrandarlo" se toma como mas alto, porque el ancho ya es el del
+    # cuadro entero (12 columnas). Los numeros (760 px, 120x) son una propuesta; si JC lo sigue
+    # viendo chico, se suben sin tocar codigo.
+    - {id: mapa-capas, ancho: 12, zoom: true, pais: true, alto_mapa: pantalla, zoom_maximo: 120}
 
 filtros: []

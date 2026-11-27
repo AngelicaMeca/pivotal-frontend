@@ -287,13 +287,24 @@ function BarraDeMapa({ conPais }: { conPais?: boolean }) {
   );
 }
 
-function ControlCapas({ capas, modo, rotulo, titulo, conPie }:
+/* `fijas` (mapas del INTA, JC 27-nov-2026: "UN MAPA POR CAPA"): la capa se dibuja siempre y su
+   renglon va SIN casilla, con `data-capa-fija`, que es lo que capas.js lee como prendida. La
+   leyenda es la misma; lo que no existe es el control. */
+function ControlCapas({ capas, modo, rotulo, titulo, conPie, fijas }:
                       { capas?: CapaDeMapa[]; modo?: string; rotulo?: string;
-                        titulo?: string; conPie?: boolean }) {
+                        titulo?: string; conPie?: boolean; fijas?: boolean }) {
   if (!capas || capas.length === 0) return null;
   const lista = (
     <ul className="capas-lista">
-      {capas.map((capa) => (
+      {capas.map((capa) => fijas ? (
+        <li key={capa.id} data-capa-item={capa.id} data-capa-fija={capa.id} className="prendida">
+          <span className="capas-fija">
+            <span className="capas-muestra" data-muestra-capa={capa.id}></span>
+            <span className="capas-etiqueta">{capa.etiqueta}</span>
+          </span>
+          <span className="capas-variantes" data-variantes-capa={capa.id}></span>
+        </li>
+      ) : (
         <li key={capa.id} data-capa-item={capa.id}>
           <label>
             <input type="checkbox" data-capa={capa.id} defaultChecked={capa.prendida} />
@@ -410,11 +421,12 @@ function CuerpoPanel({ id: idPanelCompleto, mockup = false, panel }: { id: strin
         <BarraDeMapa conPais={!!panel?.pais} />
         <div className="grafico visor-lienzo" data-grafico=""></div>
         <ControlCapas capas={panel?.capas} modo={panel?.capas_modo} rotulo={panel?.capas_rotulo}
-                      titulo={panel?.leyenda_titulo} conPie />
+                      titulo={panel?.leyenda_titulo} conPie fijas={!!panel?.capas_fijas} />
       </>
     ) : (
       <>
-        <ControlCapas capas={panel?.capas} modo={panel?.capas_modo} rotulo={panel?.capas_rotulo} />
+        <ControlCapas capas={panel?.capas} modo={panel?.capas_modo} rotulo={panel?.capas_rotulo}
+                      fijas={!!panel?.capas_fijas} />
         <div className="grafico" data-grafico=""></div>
         {/* Los botones de zoom van DESPUES del mapa en el markup a proposito: se dibujan
             encima de su esquina y el que esta despues queda arriba. */}
@@ -737,6 +749,7 @@ function PanelComun({ panel, filtro }: { panel: Panel; filtro?: Filtro }) {
       data-scroll-interno={panel.scroll_interno ? "" : undefined}
       data-con-zoom={panel.zoom ? "" : undefined}
       data-visor={panel.visor ? "" : undefined}
+      data-alto-mapa={panel.alto_mapa || undefined}
       data-compacta={panel.compacta ? "" : undefined}
       data-solo-provincia={panel.solo_provincia ? "" : undefined}
       data-nota-al-lado={panel.nota_al_lado || undefined}

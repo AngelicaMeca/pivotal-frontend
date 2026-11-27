@@ -158,6 +158,58 @@ publicado el registro es **formal, sin tuteo ni voseo** (revisión del 16-oct-20
 Cuando pide algo nuevo, lo pide con la forma de algo que ya vio funcionando. La forma anterior es
 parte del pedido.
 
+## 11. En un mapa con capas, solo se combinan las relacionadas
+
+> "no se deben poder marcar todas las variables juntas, solo las relacionadas" / "lo ferroviario
+> solo puede verse por separado o combinado únicamente con rutas nacionales y provinciales"
+> (observaciones sobre el mapa de red vial, registradas el 27-nov-2026, backlog 142)
+
+Que el usuario pueda "agregar o quitar capas" (sección 3) no quiere decir que pueda prenderlas
+todas. Cada mapa con capas declara qué conjuntos de capas son RELACIONADOS y el control no deja
+armar otra cosa: prender una capa que no entra con las que están a la vista apaga las que sobran,
+con un aviso. Las capas de ubicación (ciudades y pueblos, la división departamental) no son
+variables y se combinan con todo.
+
+Mismo pedido, dos reglas de lectura que lo acompañan: **lo que tiene que distinguirse se
+distingue por COLOR, no solo por grosor** (rutas nacionales, provinciales, consolidadas, caminos
+rurales, cada nivel de tensión), y **se publica lo que existe hoy**: del ferrocarril, solo lo
+operativo ("eliminar red y estaciones desmanteladas/sin servicio... dejar solo las OPERATIVAS
+actuales").
+
+Dónde: `compatibilidad_de_capas` en `specs/modelos/tablero-infraestructura-y-riesgo.yaml`;
+colores en `_protocolo-presentacion.yaml` (`colores.capas_de_contexto`); filtro `solo:` de cada
+capa en el mismo spec.
+
+## 12. Las capas de terceros se publican como son de origen, sin interpretación nuestra
+
+> "Para evitar problemas de interpretación, O LO QUE SERÍA PEOR QUE NOS ACUSEN DE MEZCLAR CAPAS,
+> YO LAS DEJARÍA POR SEPARADO, TAL COMO SON DE ORIGEN Y ELIMINARÍA LAS OBSERVACIONES. Conozco a
+> quienes hicieron esos mapas Y NOS VAN A CUESTIONAR SERIAMENTE. Limitémonos a ponerlos (está bien
+> mencionar que la capa fue descargada) PERO ELIMINEMOS CUALQUIER COMENTARIO DE INTERPRETACION,
+> INCLUSO EL QUE MENCIONA A LA FALTA DE FECHAS DE REFERENCIA... Es SU problema, no nuestro, y si
+> tienen dudas, QUE SE DIRIJAN AL INTA. También MENCIONEMOS A LAS AUTORAS (creo que son de 3 de
+> los mapas, no recuerdo) O SOLAMENTE COPIEMOS LAS REFERENCIAS Y CITAS MENCIONADAS EN EL LUGAR DE
+> DONDE SE BAJÓ CADA CAPA. Resumen: DEJEMOS LOS MAPAS INDIVIDUALES."
+> (mapas del INTA, registrado el 27-nov-2026, backlog 143)
+
+Para una capa cartográfica de otro organismo (hoy las seis del INTA):
+
+- **Un mapa por capa.** No se superpone con otra capa de dato en el mismo visor, ni se propone
+  leerla "encima" de otra.
+- **Sin texto nuestro sobre el dato**: ni qué mide, ni su antigüedad, ni lo que no puede, ni la
+  falta de fechas. Si hay dudas, son del organismo.
+- **Lo único que se agrega**: que la capa se descargó, de dónde y cuándo, y la cita, la autoría y
+  las referencias **copiadas** del lugar de donde se bajó. No se redactan ni se completan de
+  memoria: si no están registradas, el pie lleva solo la fuente y la descarga hasta que se copien.
+- La leyenda es la del organismo (sus clases y sus colores), como ya se hacía.
+
+Esto es más estricto que la sección 3 ("lo que quede debajo del mapa es lo que hay que saberle
+al dato"): para capas de terceros, lo que hay que saberle lo dice el organismo, no nosotros.
+
+Dónde: `specs/modelos/tablero-mapas-inta-*.yaml` (`notas_metodologicas: []`, `pie`,
+`cita_de_origen`); las notas `capas-inta-suelos` y `capas-inta-agua` salieron de
+`_comunes-capas-ign.yaml`.
+
 ---
 
 ## Cómo comenta JC (criterios de lectura, no reglas suyas)

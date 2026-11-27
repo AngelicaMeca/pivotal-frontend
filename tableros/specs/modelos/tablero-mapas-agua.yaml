@@ -30,10 +30,18 @@
 # provincia se podria calcular, pero seria un numero NUESTRO sobre un dato del INTA que el
 # INTA no publica, y el 4% de la provincia no pertenece a ninguna cuenca en su propio dato.
 
+# DESPUBLICADA el 27-nov-2026 (backlog 143), por la misma regla que tablero-mapas-suelos.yaml:
+# JC pide las capas del INTA "POR SEPARADO, TAL COMO SON DE ORIGEN" y sin observaciones. Esta
+# pagina superponia cuencas y cursos de agua en un mismo visor y llevaba la nota
+# `capas-inta-agua`, que salio. La reemplazan tablero-mapas-inta-cuencas-hidricas.yaml y
+# tablero-mapas-inta-cursos-de-agua.yaml.
+# nota_interpretacion: la tanda de JC habla de "MAPAS INTA" y de los mapas de suelos; se aplica
+# tambien a cuencas y cursos porque la razon que da (que no nos acusen de mezclar capas) vale
+# igual para dos capas del INTA superpuestas. A confirmar (backlog 143).
 id: tablero-mapas-agua
 tipo: tablero
 familia: capas-ign
-estado: publicada
+estado: no-publicada
 seccion: mapas
 pagina: cuencas-y-cursos-de-agua
 
@@ -45,7 +53,7 @@ breadcrumb: "Mapas - Cuencas y cursos de agua"
 indicadores: []
 kpis_sin_variacion: true
 
-notas_metodologicas: [capas-inta-agua]
+notas_metodologicas: []   # la nota capas-inta-agua salio el 27-nov-2026
 
 paneles:
   alto: fluye

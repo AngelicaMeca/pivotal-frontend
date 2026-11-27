@@ -37,49 +37,15 @@ notas_metodologicas:
       completa del IGN. Los kilómetros de línea eléctrica se calculan con la misma fórmula
       sobre el trazado del Consejo Federal de la Energía Eléctrica, también recortado al límite
       de la provincia.
-  # UNA NOTA POR PAGINA, y cada una describe SUS capas (QA de Francisco del 19-nov-2026,
-  # defecto D3). Antes habia una sola nota `capas-inta` compartida por las dos paginas de mapas
-  # del INTA, escrita cuando Suelos tenia dos capas: decia "estos dos mapas" y describia la
-  # aptitud de tierras, asi que la pagina de Cuencas y cursos de agua explicaba el mapa de otra
-  # pagina y Suelos prometia dos capas de las cuatro que tiene.
-  capas-inta-suelos:
-    titulo: "Qué muestran estos cuatro mapas"
-    texto: >
-      Son cuatro capas del INTA, descargadas de sus geoservicios el 18 de noviembre de 2026 y
-      publicadas acá como copia propia: el sitio no le pide nada al servidor del INTA al
-      dibujarlas. "Aptitud de tierras" clasifica cada pedazo de la provincia por para qué
-      sirve -agrícola, ganadera con su receptividad en hectáreas por unidad ganadera, agrícola
-      ganadera, con riego, afloramientos rocosos, salinas, lagunas y embalses-;
-      "Zonificación del uso del suelo" lo hace por zona de uso -forestal y ganadera, agrícola
-      ganadera y forestal, bañados y áreas inundables, bosques de protección, áreas
-      protegidas, urbana, con riego, salinas y lagunas saladas-; "Cobertura del suelo
-      2006-2007" dice qué había sobre el terreno según el sistema de clasificación LCCS de la
-      FAO -bosques, arbustales, pastizales, cultivos, suelo desnudo, agua-; y "Áreas ganaderas
-      deforestadas 2008-2017" marca el desmonte relevado en esos diez años. Los nombres de las
-      clases y sus colores son los que publica el INTA con cada capa, no una escala nuestra.
-      Las tres primeras cubren la provincia entera, así que conviene mirarlas de una por vez:
-      prendidas juntas, la de arriba tapa a la de abajo. La de áreas deforestadas es la única
-      que se mira encima de otra: con la cobertura prendida debajo se lee qué había antes y
-      qué se desmontó después. Dos cosas que el dato no puede: el catálogo del INTA no declara
-      en qué año se relevó la aptitud ni la zonificación, y la cobertura es de 2006-2007, es
-      decir que no describe el suelo de hoy. En el desmonte no se dibujan los parches de menos
-      de una hectárea, que son el 63% de los parches y el 1% de la superficie desmontada.
-  capas-inta-agua:
-    titulo: "Qué muestran estos dos mapas"
-    texto: >
-      Son dos capas del INTA, descargadas de sus geoservicios el 18 de noviembre de 2026 y
-      publicadas acá como copia propia: el sitio no le pide nada al servidor del INTA al
-      dibujarlas. "Cuencas hídricas" divide el territorio por la cuenca a la que drena cada
-      pedazo: en la provincia son las SEIS que lista la leyenda -Dulce, Dulce Superior,
-      Juramento - Salado, Juramento Medio Inferior, Rosario Horcones - Urueña y Sin Aporte
-      Significativo - Sureste de Salta-, con el nombre que les pone el INTA. Y "Cursos de
-      agua" dibuja los ríos, arroyos y cañadas con el tipo que les pone la fuente.
-      Las dos capas son de todo el Noroeste y se publican recortadas al límite de la
-      provincia. Los nombres de las clases y sus colores son los que publica el INTA con cada
-      capa, no una escala nuestra. Se pueden mirar juntas: las cuencas son áreas y los cursos
-      son líneas, así que los ríos quedan dibujados encima de su cuenca. Una cosa que el dato
-      no puede: el 4% de la superficie de la provincia no pertenece a ninguna cuenca en el
-      propio dato del INTA, y ahí el mapa queda sin pintar.
+  # LAS NOTAS DE LOS MAPAS DEL INTA SALIERON el 27-nov-2026 (`capas-inta-suelos` y
+  # `capas-inta-agua`). Pedido textual de JC: "Limitemonos a ponerlos (esta bien mencionar que
+  # la capa fue descargada) PERO ELIMINEMOS CUALQUIER COMENTARIO DE INTERPRETACION, INCLUSO EL
+  # QUE MENCIONA A LA FALTA DE FECHAS DE REFERENCIA... Es SU problema, no nuestro, y si tienen
+  # dudas, QUE SE DIRIJAN AL INTA" (doctrina-jc.md, seccion 12; backlog 143). Responde la
+  # pregunta 132(b) y la parte del INTA de la 137. No se reemplazan por otro texto: la mencion
+  # de la descarga y la cita del organismo van al pie de cada mapa (`pie` de cada
+  # tablero-mapas-inta-*.yaml). El texto viejo queda en el historial de este archivo.
+  #
   # UNA SOLA NOTA PARA INFRAESTRUCTURA (QA de Francisco del 20-nov-2026). Eran dos bloques de
   # texto debajo del mapa (`capas` y `tendido`) y el segundo cerraba con "Los kilómetros se
   # miden igual que los de la red vial", que remitía a la nota `km-de-red` que salió de esta
@@ -91,13 +57,21 @@ notas_metodologicas:
   # (de quién es cada capa, qué exactitud tiene, por qué dos arrancan apagadas), y van DEBAJO
   # del mapa, así que no le sacan alto. Si él los quiere afuera, es sacar `notas_metodologicas`
   # del spec de cada una de las tres páginas. Preguntado en el backlog 137.
+  #
+  # Actualizada el 27-nov-2026 (backlog 142): el ferrocarril se publica solo operativo, cada
+  # categoria vial tiene su color y no todas las capas se pueden prender juntas. JC NO pidio
+  # sacar esta nota (lo de "eliminar observaciones" fue sobre los mapas del INTA); la pregunta
+  # 137 sigue abierta para esta pagina.
   capas:
     titulo: "Qué muestra el mapa"
     texto: >
       Las rutas, el ferrocarril, las estaciones, las ciudades y los parajes son capas del
       catálogo "Capas SIG" del IGN (apartados Transporte y Asentamientos), descargadas por sus
-      servicios OGC. Lo pavimentado y lo activo va en trazo lleno; lo consolidado o de tierra,
-      y lo abandonado o desmantelado, en trazo punteado. El tendido eléctrico no es del IGN:
+      servicios OGC. Del ferrocarril se publican solo los tramos y las estaciones que el IGN
+      registra como activos. Lo pavimentado va en trazo lleno y lo consolidado o de tierra en
+      trazo punteado. El ferrocarril se ve solo o junto a las rutas nacionales y provinciales,
+      y el tendido eléctrico también: al prender una capa que no se combina con las que están a
+      la vista, esas se apagan. El tendido eléctrico no es del IGN:
       son las líneas de MEDIA TENSIÓN que publica el Consejo Federal de la Energía Eléctrica
       en el portal de datos abiertos de la Secretaría de Energía, con datos provistos por
       EDESE; esa fuente no declara su exactitud posicional, así que el mapa sirve para ver por
@@ -105,7 +79,8 @@ notas_metodologicas:
       el número que trae la fuente y sin unidad, porque ni el dataset ni su ficha de metadata
       documentan en qué unidad está ese campo. Los caminos rurales, el tendido eléctrico y los
       parajes están apagados al abrir la página porque son más de once mil, casi treinta mil y
-      mil trazos o puntos: se cargan recién al prenderlos.
+      mil trazos o puntos: se cargan recién al prenderlos. El ferrocarril y sus estaciones
+      también arrancan apagados.
   desinventar:
     titulo: "Qué son los registros de DESINVENTAR"
     texto: >

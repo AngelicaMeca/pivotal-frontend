@@ -459,8 +459,8 @@ secciones:
     titulo: "Infraestructura"
     bajada_corta: "Rutas, caminos rurales, ferrocarril y tendido eléctrico de media tensión."
     bajada: >
-      La red vial de Santiago del Estero por jerarquía y tipo de calzada, los tendidos y
-      estaciones de ferrocarril y las líneas eléctricas de media tensión, sobre el mapa de la
+      La red vial de Santiago del Estero por jerarquía y tipo de calzada, el ferrocarril
+      operativo y sus estaciones y las líneas eléctricas de media tensión, sobre el mapa de la
       provincia. Capas oficiales del Instituto Geográfico Nacional y del Consejo Federal de la
       Energía Eléctrica, recortadas al límite provincial.
     # Una sola pagina: sin pestañas Tablero/Analisis ni listado de vistas.
@@ -485,18 +485,21 @@ secciones:
     ruta: [Mapas]
     url: mapas
     titulo: "Mapas"
-    bajada_corta: "Suelos, uso del suelo, cuencas y cursos de agua en nuestro visor, y los mapas de INDEC y CONAE."
+    # 27-nov-2026 (JC, backlog 143): las capas del INTA pasan a ser UN MAPA POR CAPA y la bajada
+    # ya no las describe (sin interpretacion nuestra, doctrina-jc.md seccion 12): las nombra con
+    # las cuenta y dice de donde salen. La CONAE salio de la portada el 20-nov-2026.
+    bajada_corta: "Seis capas del INTA, cada una en su propio mapa, y los mapas departamentales del INDEC."
     bajada: >
-      Los mapas del INTA de aptitud de tierras, zonificación del uso del suelo, cuencas
-      hídricas y cursos de agua, dibujados dentro del sitio sobre la división departamental y
-      con zoom, y el acceso a los mapas departamentales del INDEC y a la cobertura de bosque
-      nativo de la CONAE.
+      Seis capas del INTA, descargadas de sus geoservicios y dibujadas dentro del sitio, cada
+      una en su propio mapa y tal como la publica el organismo, y el acceso a los mapas
+      departamentales del INDEC.
     sin_pestanias: true
     # El Mapa Nacional de Cultivos YA NO esta aca: JC, 18-nov-2026, "El de cultivos VA EN
     # AGRICULTURA". Pasa a colgar de Cultivos extensivos.
-    menu_paginas:
-      - {titulo: "Suelos y uso del suelo", destino: tablero-mapas-suelos}
-      - {titulo: "Cuencas y cursos de agua", destino: tablero-mapas-agua}
+    # SIN `menu_paginas` desde el 27-nov-2026 (JC, comentario en Asana: "PONGAMOS TODOS O
+    # SIMPLEMENTE EL MENU 'MAPAS' y que lleve a la pagina de inicio"; se eligio lo segundo):
+    # "Mapas" no despliega subitems y lleva a la portada, que tiene las tarjetas de los seis
+    # mapas del INTA.
     vistas_sueltas: []
     grupos: []
 

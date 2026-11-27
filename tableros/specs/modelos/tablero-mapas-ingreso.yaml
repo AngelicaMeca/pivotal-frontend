@@ -61,7 +61,9 @@ familia: agroclima
 seccion: mapas
 
 titulo: "Mapas"
-subtitulo: "Provincia de Santiago del Estero · mapas propios y visores departamentales de los organismos"
+# "mapas propios" salio el 27-nov-2026 por la misma razon que el titulo de `accesos-propios`
+# (JC, comentario en Asana: "pueden cuestionarnos que NO SON NUESTROS").
+subtitulo: "Provincia de Santiago del Estero · capas y visores departamentales de los organismos"
 breadcrumb: "Mapas - Provincia - Acceso a visores y capas"
 
 # Sin banda de KPIs, como la portada de AgroClima: del titulo directo a las tarjetas.
@@ -100,52 +102,62 @@ paneles:
   #
   # El panel de ACCESO a lo nuestro es el primero, porque es lo unico de esta portada que no
   # sale del sitio.
+  #
+  # CAMBIO DEL 27-nov-2026 (dos tandas de observaciones de JC, backlog 142 y 143):
+  #  - SALIO LA TARJETA "Parajes por provincia". JC: esta mal nombrada, "el objeto central es
+  #    la RED VIAL, no los parajes", y va en INFRAESTRUCTURA. El mapa ya vivia ahi
+  #    (tablero-infraestructura-y-riesgo.yaml), que ahora se titula por la red vial; se llega
+  #    por el item Infraestructura del menu. La miniatura parajes.png queda sin uso.
+  #  - LAS DOS TARJETAS DEL INTA ("Suelos y uso del suelo" y "Cuencas y cursos de agua") SE
+  #    ABREN EN SEIS, una por capa, porque cada capa pasa a ser un mapa individual. JC:
+  #    "YO LAS DEJARIA POR SEPARADO, TAL COMO SON DE ORIGEN... DEJEMOS LOS MAPAS INDIVIDUALES".
+  #    El titulo de cada tarjeta es el de la capa en el sitio del INTA, tal como se leyo en la
+  #    captura de JC (configs/dims/mapas-ingreso.yaml, `titulos_leidos`), con su ortografia.
+  #    Las bajadas que explicaban cada capa ("para que sirve cada tierra...") SALEN: eran
+  #    interpretacion nuestra, y JC pide eliminarla toda. `detalle` dice solo que es una capa
+  #    del INTA descargada, que es lo que el autoriza a decir.
+  #    Las miniaturas son las capturas de JC que ya estan publicadas (una por capa).
+  #
+  # SEGUNDA TANDA DEL 27-nov-2026 (JC, comentario en Asana sobre la portada de Mapas):
+  #  - "SAQUEMOS LO QUE DICE 'MAPAS DE AGRIFOOD' porque pueden cuestionarnos que NO SON
+  #    NUESTROS": el titulo del bloque nombra al organismo, igual que el de INDEC.
+  #  - "SAQUEMOS ESOS TEXTOS... DEJEMOS SOLO EL TITULO Y LA MINIATURA (que esta perfecta)":
+  #    las tarjetas ya no llevan `detalle`; quedan organismo, titulo y miniatura.
   accesos-propios:
-    titulo: "Mapas de B³ AgriFood"
-    subtitulo: "Dibujados dentro del sitio, sobre la división departamental y con zoom"
-    pie: "Fuente: INTA - Aptitud de Tierras, Zonificación del Uso del Suelo, Cobertura del Suelo 2006-2007, Áreas Ganaderas Deforestadas 2008-2017, Cuencas Hídricas del NOA y Cursos de Agua del NOA · IGN - BAHRA (dato del INDEC)"
+    titulo: "INTA · Capas descargadas de sus geoservicios"
+    subtitulo: "Capas del INTA descargadas y dibujadas dentro del sitio, cada una en su propio mapa"
+    pie: "Fuente: INTA - Instituto Nacional de Tecnología Agropecuaria · IGN - Límites departamentales"
     tarjetas:
-      - organismo: "B³ AgriFood"
-        titulo: "Suelos y uso del suelo"
-        detalle: "Aptitud, zonificación, cobertura del suelo y áreas deforestadas (INTA)"
-        bajada: >
-          Cuatro capas del INTA dibujadas en el mapa de la provincia, con sus clases y sus
-          colores oficiales: para qué sirve cada tierra, cómo está zonificado su uso, qué
-          cubría el suelo en 2006-2007 y qué se desmontó entre 2008 y 2017. Se prenden y se
-          apagan, y el mapa se acerca con la rueda del mouse.
-        destino: tablero-mapas-suelos
+      - organismo: "INTA"
+        titulo: "Aptitud de Tierras"
+        destino: tablero-mapas-inta-aptitud-tierras
         miniatura: imagen
         imagen: mapas/ingreso/aptitud-de-tierras.png
-
-      - organismo: "B³ AgriFood"
-        titulo: "Cuencas y cursos de agua"
-        detalle: "Cuencas hídricas y cursos de agua del NOA (INTA)"
-        bajada: >
-          Las macrocuencas y los cursos de agua del noroeste, recortados a la provincia y
-          dibujados en el mapa. Se prenden y se apagan por separado, y el mapa se acerca con
-          la rueda del mouse.
-        destino: tablero-mapas-agua
-        miniatura: imagenes
-        imagenes: [mapas/ingreso/cuencas-hidricas-noa.png, mapas/ingreso/cursos-de-agua-noa.png]
-
-      # PARAJES: la tarjeta pasa de "visor del INDEC" a NUESTRO visor (QA de Francisco del
-      # 20-nov-2026, M1). Abria el portal del INDEC en "Poblacion total, por sexo, segun
-      # jurisdiccion" -el indicador 92 es ese- y en el catalogo de 456 indicadores de ese
-      # portal no hay ninguno de parajes, asi que la tarjeta prometia algo que el visor del
-      # organismo no puede mostrar. La capa del IGN ya estaba bajada (1.022 parajes), asi que
-      # se publica en el mapa de Infraestructura, que es donde JC quiere usarla: "CRUZAR CON
-      # RED TERCIARIA Y RUTAS". El titulo sigue siendo el de su Excel.
-      - organismo: "B³ AgriFood"
-        titulo: "Parajes por provincia"
-        detalle: "Capa del IGN en nuestro visor, sobre la red vial (Infraestructura)"
-        bajada: >
-          Los 1.022 parajes de la provincia que releva el IGN, dibujados en el mapa de
-          Infraestructura y por lo tanto sobre las rutas, los caminos rurales y el tendido
-          eléctrico: se prende la capa "Parajes" y cada punto dice su nombre al pasar el
-          mouse. Es el paso previo a medir a qué distancia del pavimento queda cada paraje.
-        destino: tablero-infraestructura-y-riesgo
+      - organismo: "INTA"
+        titulo: "Zonificación del Uso del Suelo"
+        destino: tablero-mapas-inta-zonificacion-uso-suelo
         miniatura: imagen
-        imagen: mapas/ingreso/parajes.png
+        imagen: mapas/ingreso/zonificacion-uso-del-suelo.png
+      - organismo: "INTA"
+        titulo: "Cobertura del suelo de la Republica Argentina. Año 2006-2007 (LCCS-FAO)"
+        destino: tablero-mapas-inta-cobertura-suelo
+        miniatura: imagen
+        imagen: mapas/ingreso/cobertura-del-suelo-lccs-fao.png
+      - organismo: "INTA"
+        titulo: "Areas ganaderas deforestadas durante 2008-2017"
+        destino: tablero-mapas-inta-areas-deforestadas
+        miniatura: imagen
+        imagen: mapas/ingreso/areas-ganaderas-deforestadas.png
+      - organismo: "INTA"
+        titulo: "Cuencas hídricas del noroeste Argentino"
+        destino: tablero-mapas-inta-cuencas-hidricas
+        miniatura: imagen
+        imagen: mapas/ingreso/cuencas-hidricas-noa.png
+      - organismo: "INTA"
+        titulo: "Cursos de Agua Noroeste Argentino"
+        destino: tablero-mapas-inta-cursos-de-agua
+        miniatura: imagen
+        imagen: mapas/ingreso/cursos-de-agua-noa.png
 
   accesos-indec:
     # El titulo es el que JC escribe sobre ese grupo en el Excel (celda G217).
@@ -177,8 +189,8 @@ paneles:
         externo: "https://portalgeoestadistico.indec.gob.ar/?indicator_id=96&members=108"
         miniatura: imagen
         imagen: mapas/ingreso/densidad-de-poblacion.png
-  # Las tres tarjetas de lo nuestro arriba y las tres del INDEC abajo. Eran dos bandas con la
-  # de la CONAE al costado, que salio el 20-nov-2026.
+  # Las seis tarjetas del INTA arriba y las tres del INDEC abajo (27-nov-2026; antes eran tres
+  # de lo nuestro -suelos, agua y parajes- y, hasta el 20-nov, una banda de la CONAE).
   orden:
     - {id: accesos-propios, ancho: 12, columna: izq}
     - {id: accesos-indec, ancho: 12, columna: izq, nueva_banda: true}

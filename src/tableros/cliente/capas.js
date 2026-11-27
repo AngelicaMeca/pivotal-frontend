@@ -233,11 +233,16 @@ function vistaDelCatalogo(catalogo, pais) {
 }
 
 /* Las capas PRENDIDAS en el control de este cuadro, en el orden del control (que es el orden
-   de dibujo: la primera queda abajo). */
+   de dibujo: la primera queda abajo). Una capa FIJA (`data-capa-fija`, los mapas del INTA: un
+   mapa por capa y sin casilla) esta siempre prendida. */
+var RENGLONES_DE_CAPA = "input[data-capa], [data-capa-fija]";
+
 function prendidas(nodo, catalogo) {
   var ids = [];
-  Array.prototype.forEach.call(nodo.querySelectorAll("input[data-capa]"), function (input) {
-    if (input.checked && catalogo.capas[input.dataset.capa]) { ids.push(input.dataset.capa); }
+  Array.prototype.forEach.call(nodo.querySelectorAll(RENGLONES_DE_CAPA), function (renglon) {
+    var id = renglon.dataset.capa || renglon.dataset.capaFija;
+    var prendida = renglon.dataset.capaFija ? true : renglon.checked;
+    if (prendida && catalogo.capas[id]) { ids.push(id); }
   });
   return ids;
 }
@@ -355,7 +360,8 @@ function pintarControl(nodo, catalogo, opciones) {
        variantes de una linea y las muestran siempre, que es como JC aprobo Infraestructura. */
     if (capa.clases_al_prender) {
       var casilla = nodo.querySelector('input[data-capa="' + id + '"]');
-      hueco.hidden = !(casilla && casilla.checked);
+      var fija = nodo.querySelector('[data-capa-fija="' + id + '"]');
+      hueco.hidden = !(fija || (casilla && casilla.checked));
     }
   });
   Array.prototype.forEach.call(nodo.querySelectorAll("input[data-capa]"), function (input) {
@@ -387,16 +393,102 @@ function pintarLeyenda(nodo, catalogo, ids) {
 }
 
 /* La cita de las capas prendidas, al pie del cuadro: "Capas: IGN - ... · IGN - ...". Las
-   fuentes y el rotulo vienen del build; aca solo se listan sin repetir. */
-function pintarPie(nodo, catalogo, ids) {
+   fuentes y el rotulo vienen del build; aca solo se listan sin repetir.
+   Un mapa que declara su PIE en el spec (los del INTA, JC 27-nov-2026: la fuente, de donde y
+   cuando se descargo la capa y la cita copiada del lugar de origen) lo trae YA ESCRITO en
+   `opciones.pieCapas`, una version para la provincia y otra para "Mostrar todo el país", que
+   es otra descarga. Ese texto reemplaza a la lista de fuentes. */
+function pintarPie(nodo, catalogo, ids, opciones) {
   var pie = nodo.querySelector("[data-pie-capas]");
   if (!pie) { return; }
+  var propio = opciones && opciones.pieCapas;
+  if (propio) {
+    pie.textContent = (opciones.pais && propio.pais) ? propio.pais : propio.provincia;
+    return;
+  }
   var fuentes = [];
   ids.forEach(function (id) {
     var fuente = catalogo.capas[id].fuente;
     if (fuentes.indexOf(fuente) === -1) { fuentes.push(fuente); }
   });
   pie.textContent = fuentes.length ? catalogo.rotulo_fuentes + " " + fuentes.join(" · ") : "";
+}
+
+/* ------------------------- que capas se pueden ver juntas -------------------------
+   `compatibilidad_de_capas` del spec (JC, 27-nov-2026: "no se deben poder marcar todas las
+   variables juntas, solo las relacionadas"; doctrina-jc.md, seccion 11). Las combinaciones y
+   los avisos los valida y los escribe el build; aca solo se resuelve el clic.
+
+   Al PRENDER una capa que no entra con las que estan a la vista, la capa se prende igual y se
+   apagan las que sobran: de las combinaciones que la contienen se elige la que conserva MAS
+   capas de las ya prendidas (empate: la primera declarada) y se apaga lo que no esta en ella.
+   Las capas de `referencia` (las ciudades y pueblos) no cuentan y nunca se apagan. Apagar una
+   capa nunca rompe la regla, asi que eso no pasa por aca. */
+export function resolverCompatibilidad(regla, prendidasAhora, nueva) {
+  var esReferencia = function (id) { return regla.referencia.indexOf(id) !== -1; };
+  if (esReferencia(nueva)) { return { apagar: [], combinacion: null }; }
+  var otras = prendidasAhora.filter(function (id) { return id !== nueva && !esReferencia(id); });
+  var todas = otras.concat([nueva]);
+  var entra = regla.combinaciones.some(function (c) {
+    return todas.every(function (id) { return c.capas.indexOf(id) !== -1; });
+  });
+  if (entra) { return { apagar: [], combinacion: null }; }
+  var elegida = null;
+  var conservadas = -1;
+  regla.combinaciones.forEach(function (c) {
+    if (c.capas.indexOf(nueva) === -1) { return; }
+    var n = otras.filter(function (id) { return c.capas.indexOf(id) !== -1; }).length;
+    if (n > conservadas) { elegida = c; conservadas = n; }
+  });
+  if (!elegida) { return { apagar: [], combinacion: null }; }
+  return { apagar: otras.filter(function (id) { return elegida.capas.indexOf(id) === -1; }),
+           combinacion: elegida };
+}
+
+/* Cuanto queda a la vista el aviso de lo que se apago. Es un renglon de texto que se va solo,
+   sin animacion: alcanza con que se lea. */
+var SEGUNDOS_DEL_AVISO = 8;
+
+function aplicarCompatibilidad(nodo, regla, nueva) {
+  var ahora = [];
+  Array.prototype.forEach.call(nodo.querySelectorAll("input[data-capa]"), function (input) {
+    if (input.checked) { ahora.push(input.dataset.capa); }
+  });
+  var resultado = resolverCompatibilidad(regla, ahora, nueva);
+  if (!resultado.apagar.length) { return; }
+  resultado.apagar.forEach(function (id) {
+    var casilla = nodo.querySelector('input[data-capa="' + id + '"]');
+    if (casilla) { casilla.checked = false; }
+  });
+  var nombres = resultado.apagar.map(function (id) { return regla.etiquetas[id] || id; });
+  var separadores = regla.separadores;
+  var apagadas = nombres.length <= 1 ? nombres.join("")
+    : nombres.slice(0, -1).join(separadores.entre) + separadores.ultimo
+      + nombres[nombres.length - 1];
+  var texto = ((regla.avisos[nueva] || {})[resultado.combinacion.id] || "")
+    .replace("{apagadas}", apagadas);
+  mostrarAviso(nodo, texto);
+}
+
+/* El renglon va ARRIBA de la lista de capas, que es donde se acaba de hacer el clic. Lo crea
+   este archivo la primera vez: es un mensaje del control, no parte del cuadro. */
+function mostrarAviso(nodo, texto) {
+  var control = nodo.querySelector("[data-capas]");
+  if (!control || !texto) { return; }
+  var aviso = control.querySelector("[data-aviso-capas]");
+  if (!aviso) {
+    aviso = document.createElement("p");
+    aviso.className = "capas-aviso";
+    aviso.setAttribute("data-aviso-capas", "");
+    aviso.setAttribute("role", "status");
+    var lista = control.querySelector(".capas-lista");
+    control.insertBefore(aviso, lista || control.firstChild);
+  }
+  aviso.textContent = texto;
+  aviso.hidden = false;
+  if (aviso.temporizador) { window.clearTimeout(aviso.temporizador); }
+  aviso.temporizador = window.setTimeout(function () { aviso.hidden = true; },
+                                         SEGUNDOS_DEL_AVISO * 1000);
 }
 
 /* ------------------------------ dibujo en ECharts ------------------------------ */
@@ -431,6 +523,9 @@ export function mapaDeFondo(proyeccion, opciones) {
   return { geo: geoDeMapa(proyeccion, sinRotulosRepetidos(opciones, encima)), series: encima };
 }
 
+/* El tope de acercamiento de un mapa que se recorre si su spec no declara `zoom_maximo`. */
+var ZOOM_MAXIMO = 40;
+
 export function geoDeMapa(proyeccion, opciones) {
   var conZoom = !!(opciones && opciones.roam);
   var geo = {
@@ -448,7 +543,10 @@ export function geoDeMapa(proyeccion, opciones) {
        una cartografia vectorial no se despeina). Para ALEJAR, la misma holgura que el visor:
        un poco por debajo del encuadre inicial, asi el gesto no se topa con una pared justo
        donde arranco, y el boton del encuadre vuelve al exacto. */
-    scaleLimit: conZoom ? { min: HOLGURA_PARA_ALEJAR, max: 40 } : undefined,
+    /* El tope lo puede subir el spec (`zoom_maximo`: Infraestructura va a 120x, JC
+       27-nov-2026 "permitir mas zoom"); sin declararlo es el de siempre. */
+    scaleLimit: conZoom ? { min: HOLGURA_PARA_ALEJAR,
+                            max: (opciones && opciones.zoomMaximo) || ZOOM_MAXIMO } : undefined,
     silent: !conZoom,
     selectedMode: false,
     tooltip: { show: false },
@@ -1269,12 +1367,18 @@ export function capasPrendidas(nodo, catalogo) {
 
 export function capasDelMapa(nodo, catalogoCompleto, redibujar, proyeccion, opciones) {
   var catalogo = vistaDelCatalogo(catalogoCompleto, opciones && opciones.pais);
-  if (!catalogo || !catalogo.capas || !nodo.querySelector("input[data-capa]")) { return null; }
+  if (!catalogo || !catalogo.capas || !nodo.querySelector(RENGLONES_DE_CAPA)) { return null; }
   nodo.capasRedibujar = redibujar;
+  /* La regla de que capas se ven juntas viaja en el payload del cuadro y se guarda en el nodo
+     para que el escuchador -que se engancha una sola vez- lea siempre la ultima. */
+  nodo.capasCompatibilidad = (opciones && opciones.compatibilidad) || null;
   if (!nodo.dataset.capasEnganchadas) {
     nodo.dataset.capasEnganchadas = "1";
     nodo.addEventListener("change", function (evento) {
       if (evento.target && evento.target.matches && evento.target.matches("input[data-capa]")) {
+        if (evento.target.checked && nodo.capasCompatibilidad) {
+          aplicarCompatibilidad(nodo, nodo.capasCompatibilidad, evento.target.dataset.capa);
+        }
         nodo.capasRedibujar();
       }
     });
@@ -1282,7 +1386,7 @@ export function capasDelMapa(nodo, catalogoCompleto, redibujar, proyeccion, opci
   pintarControl(nodo, catalogo, opciones);
   var ids = prendidas(nodo, catalogo);
   pintarLeyenda(nodo, catalogo, ids);
-  pintarPie(nodo, catalogo, ids);
+  pintarPie(nodo, catalogo, ids, opciones);
   var listasYa = listas(nodo, catalogo, function () { nodo.capasRedibujar(); });
   precargar(catalogo);
   if (!listasYa.length) { return null; }

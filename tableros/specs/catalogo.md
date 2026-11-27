@@ -7,6 +7,10 @@
 > Última actualización: 10 de agosto de 2026 · Mantenido por `constructor-reglas` y
 > `constructor-dashboards`.
 >
+> **Actualización parcial del 27 de noviembre de 2026:** se agrega la sección "Infraestructura y
+> Mapas" (más abajo) con las observaciones de JC sobre el mapa de red vial y sobre los mapas del
+> INTA (backlog 142 y 143). El resto del catálogo no se revisó en esta pasada.
+>
 > Novedad de esta actualización: llegaron el **"Protocolo de formato - Versión 1"** de JC y su
 > **mockup propio de la página de cultivos** (Modelo 1.xlsx). El protocolo de presentación pasó a
 > versión 2 (`specs/modelos/_protocolo-presentacion.yaml`, sección `formato_v1`), el tablero de
@@ -331,6 +335,28 @@ backlog ("Cuarta tanda del 10-ago-2026") y en `_protocolo-presentacion.formato_v
 
 Lo que sigue abierto para confirmar está en las preguntas 26 (licencia), 27, 29, 30, 32, 36,
 39, 40 y la nueva 41 del backlog (la 38 quedó confirmada por la cuarta tanda).
+
+---
+
+## Infraestructura y Mapas · capas propias (IGN, Secretaría de Energía, INTA)
+
+Mapas dibujados por nosotros con capas bajadas de cada organismo. No pasan por `qa-datos` (no son
+bases de JC): cada capa tiene su procedencia, su recorte y su verificación escritos en
+`configs/dims/capas-ign.yaml`, `capas-energia.yaml` y `capas-inta.yaml`. Ninguna capa de esta
+lista es nueva: lo que cambia es cómo se presentan.
+
+| Título | Qué muestra | Estado |
+|---|---|---|
+| Infraestructura · **Red vial de Santiago del Estero** | Rutas nacionales, provinciales y caminos rurales, con el ferrocarril **solo operativo**, el tendido eléctrico de media tensión, ciudades y pueblos, y parajes. Cada categoría vial y cada nivel de tensión con su color; el ferrocarril solo se combina con las rutas nacionales y provinciales. Mapa más grande y zoom hasta 120 veces. | publicada · cambios del 27-nov **pendientes** de construir (backlog 142) |
+| Mapas · Aptitud de Tierras | La capa del INTA sola, con su leyenda original. Sin texto nuestro; al pie, fuente y descarga. | **pendiente** (backlog 143; cita y autoría por copiar de la ficha del INTA) |
+| Mapas · Zonificación del Uso del Suelo | Ídem. | **pendiente** (ídem) |
+| Mapas · Cobertura del suelo de la Republica Argentina. Año 2006-2007 (LCCS-FAO) | Ídem, con "Mostrar todo el país". | **pendiente** (ídem) |
+| Mapas · Areas ganaderas deforestadas durante 2008-2017 | Ídem, con "Mostrar todo el país". | **pendiente** (ídem) |
+| Mapas · Cuencas hídricas del noroeste Argentino | Ídem, con "Mostrar todo el país". | **pendiente** (ídem; JC confirma que también va separada) |
+| Mapas · Cursos de Agua Noroeste Argentino | Ídem, con "Mostrar todo el país". | **pendiente** (ídem) |
+| ~~Mapas · Suelos y uso del suelo~~ | Juntaba cuatro capas del INTA en un mismo mapa. | **registro (no publicada)** desde el 27-nov: la reemplazan las cuatro de arriba |
+| ~~Mapas · Cuencas y cursos de agua~~ | Juntaba dos capas del INTA en un mismo mapa. | **registro (no publicada)** desde el 27-nov: la reemplazan las dos de arriba |
+| ~~Mapas · tarjeta "Parajes por provincia"~~ | Llevaba al mapa de Infraestructura. | sale de la portada de Mapas: el mapa es el de la red vial y vive en Infraestructura |
 
 ---
 

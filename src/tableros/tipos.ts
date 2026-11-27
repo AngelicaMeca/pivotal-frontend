@@ -238,6 +238,9 @@ export type Panel = {
   // el spec en `paneles.orden`, junto con `zoom` y `visor`; aca solo dibuja la casilla, el
   // dibujo lo arma `pintarMapaCapas`.
   pais?: boolean;
+  // El alto con nombre de la caja de un mapa que se recorre (`alto_mapa` en `paneles.orden`;
+  // hoy solo "pantalla", JC 27-nov-2026). Los numeros estan en el CSS.
+  alto_mapa?: string;
   // Disposicion "columnas": en que columna de su banda va el cuadro ("izq" o "der"). Si el
   // spec no lo dice, lo decide el ancho (ver bandasEnColumnas en Tablero.tsx).
   columna?: "izq" | "centro" | "der" | "fila";
@@ -273,6 +276,9 @@ export type Panel = {
   // El encabezado de la tarjeta de la leyenda ("Referencias"), cuando el panel va con el cromo
   // del visor. Lo escribe el spec.
   leyenda_titulo?: string;
+  // Las capas se dibujan siempre y van sin casilla (`control_de_capas: false`: los mapas del
+  // INTA, un mapa por capa). La leyenda queda; lo que no hay es nada que prender o apagar.
+  capas_fijas?: boolean;
   // El rotulo del boton del desplegable ("Capas"), de configs/dims/capas-ign.yaml.
   capas_rotulo?: string;
   // `accion` solo la traen los items del panel UTILIDADES: con accion se dibujan como boton

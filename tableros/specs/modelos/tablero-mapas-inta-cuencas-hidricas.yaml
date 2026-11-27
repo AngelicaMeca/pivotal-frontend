@@ -1,0 +1,91 @@
+# Mapas > Cuencas hídricas del noroeste Argentino (INTA). UN MAPA POR CAPA, tal como la publica el INTA.
+#
+# Spec nuevo del 27-nov-2026 (backlog 143). Reemplaza, junto con los otros cinco
+# tablero-mapas-inta-*.yaml, a las dos paginas que juntaban capas del INTA en un mismo visor
+# (tablero-mapas-suelos.yaml y tablero-mapas-agua.yaml, que pasan a `no-publicada`). Pedido
+# textual de JC:
+#
+#   "Para evitar problemas de interpretacion, O LO QUE SERIA PEOR QUE NOS ACUSEN DE MEZCLAR
+#   CAPAS, YO LAS DEJARIA POR SEPARADO, TAL COMO SON DE ORIGEN Y ELIMINARIA LAS OBSERVACIONES.
+#   Conozco a quienes hicieron esos mapas Y NOS VAN A CUESTIONAR SERIAMENTE. Limitemonos a
+#   ponerlos (esta bien mencionar que la capa fue descargada) PERO ELIMINEMOS CUALQUIER
+#   COMENTARIO DE INTERPRETACION, INCLUSO EL QUE MENCIONA A LA FALTA DE FECHAS DE
+#   REFERENCIA... Es SU problema, no nuestro, y si tienen dudas, QUE SE DIRIJAN AL INTA.
+#   Tambien MENCIONEMOS A LAS AUTORAS (creo que son de 3 de los mapas, no recuerdo) O
+#   SOLAMENTE COPIEMOS LAS REFERENCIAS Y CITAS MENCIONADAS EN EL LUGAR DE DONDE SE BAJO CADA
+#   CAPA. Resumen: DEJEMOS LOS MAPAS INDIVIDUALES."
+#
+# Lo que eso decide para esta pagina (regla general en doctrina-jc.md, seccion 12):
+#  - UNA SOLA CAPA, siempre prendida, sin control de capas: no hay nada que prender ni apagar,
+#    asi que no hay forma de superponerla con otra capa del INTA ni de ninguna otra fuente. Lo
+#    unico debajo es el mapa base (division departamental y, con "Mostrar todo el pais", las
+#    provincias), que no es una capa de dato.
+#  - SIN NOTAS METODOLOGICAS NI TEXTO NUESTRO SOBRE EL DATO: ni que mide la capa, ni su
+#    antiguedad, ni lo que "no puede". `notas_metodologicas: []` a proposito.
+#  - La leyenda es la del INTA (clases y colores de su SLD, `colores.capas_de_contexto` del
+#    protocolo), sin rotulos ni agrupamientos nuestros.
+#  - El pie dice de donde se descargo y cuando, y la cita/autoria TAL COMO FIGURA EN LA FUENTE
+#    (`cita_de_origen`). Mientras la cita este `pendiente`, el pie publica solo la fuente y la
+#    descarga: NUNCA la palabra "pendiente" ni una cita armada por nosotros.
+#  - El mapa, el zoom y el formato son los del visor de AgroClima, igual que las paginas que
+#    reemplaza (`visor: true`, `zoom: true`).
+
+id: tablero-mapas-inta-cuencas-hidricas
+tipo: tablero
+familia: capas-ign
+estado: publicada
+seccion: mapas
+pagina: cuencas-hidricas-del-noroeste
+
+# El titulo es el de la capa en el lugar de donde se bajo, con su ortografia (leido de la
+# captura de JC, configs/dims/mapas-ingreso.yaml -> titulos_leidos.cuencas-hidricas-noa).
+titulo: "Cuencas hídricas del noroeste Argentino"
+subtitulo: "Provincia de Santiago del Estero · capa del INTA"
+titulo_pagina: "Cuencas hídricas del noroeste Argentino"
+breadcrumb: "Mapas - Cuencas hídricas del noroeste Argentino"
+
+indicadores: []
+kpis_sin_variacion: true
+
+# Sin notas: JC, 27-nov-2026, "ELIMINEMOS CUALQUIER COMENTARIO DE INTERPRETACION".
+notas_metodologicas: []
+
+paneles:
+  alto: fluye
+  acciones_de_tablero:
+    - {id: exportar-pdf, etiqueta: "Generar PDF", icono: exportar-como-pdf, accion: exportar-pdf}
+  mapa-capas:
+    titulo: "INTA - Cuencas hídricas del noroeste Argentino - Sgo del Estero"
+    leyenda_titulo: "Referencias"
+    subtitulo: "Acerque con la rueda del mouse y arrastre para desplazarse · pase el mouse por un área para ver de qué cuenca es"
+    # Una capa, prendida y sin casilla para apagarla (`control_de_capas: false`): la pagina ES
+    # este mapa. Si el control se dibujara con una sola casilla, apagarla dejaria la pagina sin
+    # mapa, que es lo que corrigio el D6 del QA del 19-nov-2026.
+    control_de_capas: false
+    capas:
+      - {id: inta-cuencas, prendida: true}
+    # PIE: la descarga y la cita del organismo, y nada mas. Reemplaza al pie que compone
+    # `pintarPie` con las capas prendidas.
+    pie:
+      fuente: "Fuente: INTA - Cuencas hídricas del noroeste Argentino"
+      descarga: "Capa descargada de los geoservicios del visor del INTA (geo-backend.inta.gob.ar) el 18 de noviembre de 2026."
+      # Con "Mostrar todo el país" prendido se dibuja la version entera de la capa, que se bajo
+      # aparte (configs/dims/capas-inta.yaml, todo_el_pais.descarga): el pie dice esa fecha.
+      descarga_pais: "Capa descargada de los geoservicios del visor del INTA (geo-backend.inta.gob.ar) el 25 de noviembre de 2026."
+    # LA CITA, TAL COMO FIGURA DONDE SE BAJO LA CAPA (JC: "MENCIONEMOS A LAS AUTORAS... O
+    # SOLAMENTE COPIEMOS LAS REFERENCIAS Y CITAS MENCIONADAS EN EL LUGAR DE DONDE SE BAJO CADA
+    # CAPA"). No se redacta, no se traduce y no se completa de memoria: se copia de
+    # `donde_buscarla`. `autoria` y `texto_literal` van al pie, en ese orden, cuando
+    # `estado: completa`.
+    cita_de_origen:
+      estado: pendiente
+      donde_buscarla: "https://visor.inta.gob.ar/es#5.45/-25.045/-65.584"
+      servida_por: "WFS de geo-backend.inta.gob.ar, geonode:cuencas_noa_ll"
+      autoria: null
+      texto_literal: null
+      motivo_pendiente: "En el repo no hay registrada ninguna cita ni autoria; capa del visor del INTA en Agua > Cuencas."
+  orden:
+    # Con "Mostrar todo el pais": el INTA la publica para todo el noroeste y asi se dibuja.
+    - {id: mapa-capas, ancho: 12, zoom: true, visor: true, pais: true}
+
+filtros: []

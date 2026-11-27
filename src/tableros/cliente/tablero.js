@@ -1101,6 +1101,12 @@ export default function iniciar(PIVOTAL) {
                                  control y cada capa se dibuja con la suya. */
                               opacidad: nodo.dataset.mapaOpacidad === undefined
                                 ? 1 : Number(nodo.dataset.mapaOpacidad),
+                              /* Lo que el spec le declara a ESTE mapa (JC, 27-nov-2026): el
+                                 tope del zoom, que capas se ven juntas y el pie propio de los
+                                 mapas del INTA. Sin declararlos no viajan y todo es como antes. */
+                              zoomMaximo: panel.zoom_maximo,
+                              compatibilidad: panel.compatibilidad,
+                              pieCapas: panel.pie_capas,
                               borde: PIVOTAL.color("--fondo-cuadro"),
                               trazoDepartamento: PIVOTAL.color("--texto-apoyo"),
                               tintaDepartamento: PIVOTAL.color("--texto-apoyo") };

@@ -309,6 +309,19 @@ export default function Cascara({ pagina, children }: { pagina: Comun; children:
                     )}
                   </ul>
                 </details>
+              ) : sector.href ? (
+                /* Sector con portada y SIN subitems (Mapas, JC 27-nov-2026: "SIMPLEMENTE EL
+                   MENU 'MAPAS' y que lleve a la pagina de inicio"): el nombre es el link a la
+                   portada y no despliega nada, asi que no lleva flecha. */
+                <div key={sector.id} className="menu-sector menu-sector-solo">
+                  <a
+                    className="menu-sector-portada"
+                    href={sector.href}
+                    aria-current={sector.portada_actual ? "page" : undefined}
+                  >
+                    {sector.titulo}
+                  </a>
+                </div>
               ) : (
                 // Sector sin secciones publicadas: se muestra igual, sin links muertos
                 <details key={sector.id} className="menu-sector">

@@ -242,6 +242,14 @@ a.boton-cabecera:hover { background: color-mix(in srgb, var(--sobre-cromo) 16%, 
 .menu-sector-portada { flex: 1 1 auto; color: inherit; text-decoration: none; }
 .menu-sector-portada:focus-visible { outline: 2px solid var(--sobre-cromo); outline-offset: 2px; }
 .menu-sector summary:has(.menu-sector-portada[aria-current]) { background: var(--cromo-oscuro); }
+/* Sector que es SOLO un link a su portada, sin subitems (Mapas, JC 27-nov-2026): el mismo
+   renglon que un sector desplegable, sin flecha. */
+.menu-sector-solo > .menu-sector-portada {
+  display: block; color: var(--sobre-cromo); font-weight: 650; font-size: .9rem;
+  padding: .3rem .35rem; border-radius: var(--radio-chico);
+}
+.menu-sector-solo > .menu-sector-portada:hover { background: color-mix(in srgb, var(--sobre-cromo) 14%, transparent); }
+.menu-sector-solo > .menu-sector-portada[aria-current] { background: var(--cromo-oscuro); }
 .menu-sector ul { list-style: none; margin: 0 0 .3rem; padding: 0 0 0 .5rem; }
 .menu-sector li a {
   display: block; color: color-mix(in srgb, var(--sobre-cromo) 92%, transparent); text-decoration: none; font-size: .8rem;
@@ -3022,6 +3030,14 @@ dialog.zoom.zoom-visible::backdrop { opacity: 1; }
   height: var(--alto-mapa);
   width: min(calc(var(--alto-mapa) * var(--relacion-mapa, 0.635)), 92vw);
 }
+/* `alto_mapa: pantalla` (JC, 27-nov-2026, backlog 142: "El mapa es muy chico: agrandarlo").
+   La caja toma el alto de la ventana menos la cabecera del sitio, la miga y el titulo del
+   cuadro (que volvio: "Red vial de Santiago del Estero"), con un piso de 760 px para una
+   pantalla baja. El ancho lo sigue poniendo la relacion de la provincia: se agranda el mapa,
+   no se deforma. */
+.panel[data-panel="mapa-capas"][data-con-zoom][data-alto-mapa="pantalla"] > .panel-cuerpo > .grafico {
+  --alto-mapa: max(760px, calc(100vh - 15rem));
+}
 /* Los botones de zoom, flotando sobre la esquina del mapa: comparten celda de la grilla con el
    dibujo y van en su esquina de arriba a la izquierda, que es donde los espera cualquiera que
    haya usado un mapa. No le quitan ni un pixel de alto al mapa, que es la regla de esta
@@ -3125,6 +3141,17 @@ dialog.zoom.zoom-visible::backdrop { opacity: 1; }
   border: 1px solid var(--fondo-apoyo); border-radius: var(--radio-chico);
 }
 .capas-a-la-vista li { display: flex; flex-direction: column; gap: .2rem; }
+/* El renglon de una capa FIJA (mapas del INTA, sin casilla): la muestra y el nombre, alineados
+   como los de un renglon con casilla. */
+.capas-fija { display: flex; align-items: center; gap: .45rem; color: var(--texto); }
+/* El aviso de las capas que se apagaron al prender una que no se combina con ellas (JC,
+   27-nov-2026). Arriba de la lista, en el tono de apoyo; se va solo, sin animacion. */
+.capas-aviso {
+  margin: 0 0 .5rem; padding: .4rem .55rem; border-radius: var(--radio-chico);
+  background: var(--fondo-apoyo); color: var(--texto); font-size: .72rem; line-height: 1.35;
+}
+.capas-aviso[hidden] { display: none; }
+.imprimiendo .capas-aviso { display: none; }
 .capas-a-la-vista .capas-variantes > span { flex-direction: column; gap: .15rem; }
 @media (max-width: 1100px) {
   .panel[data-panel="mapa-capas"] > .panel-cuerpo,
